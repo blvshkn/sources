@@ -15,7 +15,7 @@ const APP_URL: Record<LeagueApp, string> = {
   ESPN: "https://fantasy.espn.com/football/",
   Yahoo: "https://football.fantasysports.yahoo.com/",
 };
-export const CARD_LINK = "sources-fantasy.vercel.app";
+export const CARD_LINK = "sources-orpin.vercel.app";
 
 /** Draws the shareable trade card. It links back to Sources, which is how the growth loop starts. */
 async function drawCard(t: Trade): Promise<Blob | null> {

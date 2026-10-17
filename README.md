@@ -1,5 +1,7 @@
 # Sources
 
+**Live:** https://sources-orpin.vercel.app
+
 **Your fantasy insider.** Sources connects to your fantasy football league, learns what every team needs, and finds trades both sides will accept. It sets your best lineup each week, tells you who to pick up and what to bid, and remembers what your league mates said so you don't have to.
 
 > *Per sources, Mike's Mistakes needs a TE. Their starter is out and they're losing points every week at the spot. Here are two deals that help you both.*
