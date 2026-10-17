@@ -61,30 +61,77 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
   const [edited, setEdited] = useState(false);
-  const [y, setY] = useState(0);
-  const [settling, setSettling] = useState(false);
   const drag = useRef<{ start: number; hist: { y: number; t: number }[] } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
+  // Presentation state lives in refs so every frame writes straight to the DOM.
+  const yRef = useRef(0);
+  const vRef = useRef(0);
+  const raf = useRef(0);
+  const closing = useRef(false);
+  const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const height = () => (sheet.current?.offsetHeight ?? 600) + 40;
+  const apply = (y: number) => {
+    yRef.current = y;
+    if (sheet.current) sheet.current.style.transform = `translate3d(0, ${y}px, 0)`;
+    if (scrim.current) scrim.current.style.opacity = String(Math.min(1, Math.max(0, 1 - y / height())));
+  };
+  /** Spring in Apple's terms: damping ratio + response (s). Starts from the live value and carries velocity. */
+  const springTo = (target: number, damping: number, response: number, velocity: number, done?: () => void) => {
+    cancelAnimationFrame(raf.current);
+    if (reduce) { apply(target); vRef.current = 0; done?.(); return; }
+    const k = (2 * Math.PI / response) ** 2;
+    const c = (4 * Math.PI * damping) / response;
+    let v = velocity;
+    let y = yRef.current;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = Math.min(0.032, (now - last) / 1000);
+      last = now;
+      for (let i = 0; i < 4; i++) { const a = -k * (y - target) - c * v; v += (a * dt) / 4; y += (v * dt) / 4; }
+      vRef.current = v;
+      if (Math.abs(v) < 4 && Math.abs(y - target) < 0.5) { apply(target); vRef.current = 0; done?.(); return; }
+      apply(y);
+      raf.current = requestAnimationFrame(step);
+    };
+    raf.current = requestAnimationFrame(step);
+  };
+  const dismiss = (velocity = 0) => {
+    if (closing.current) return;
+    closing.current = true;
+    if (reduce) { sheet.current?.classList.add("fading"); scrim.current?.classList.add("fading"); window.setTimeout(onClose, 160); return; }
+    // Leave the way it came in: straight down, no bounce.
+    springTo(height(), 1, 0.3, Math.max(velocity, 0), onClose);
+  };
+
+  // Enter from below, critically damped.
+  useEffect(() => {
+    apply(reduce ? 0 : height());
+    if (!reduce) springTo(0, 1, 0.35, 0);
+    return () => cancelAnimationFrame(raf.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setText(draftPitch(trade, tone, audience)); setEdited(false); }, [tone, trade, audience]);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
-  }, [onClose]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const down = (e: RPE) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    setSettling(false);
-    drag.current = { start: e.clientY - y, hist: [{ y: e.clientY, t: performance.now() }] };
+    cancelAnimationFrame(raf.current); // grab it mid-flight: continue from where it is on screen
+    closing.current = false;
+    drag.current = { start: e.clientY - yRef.current, hist: [{ y: e.clientY, t: performance.now() }] };
   };
   const move = (e: RPE) => {
     if (!drag.current) return;
     const raw = e.clientY - drag.current.start;
-    setY(raw < 0 ? rubberband(raw, 200) : raw); // resist upward, track 1:1 downward
+    apply(raw < 0 ? rubberband(raw, 200) : raw); // resist upward, track 1:1 downward
     drag.current.hist = [...drag.current.hist.slice(-4), { y: e.clientY, t: performance.now() }];
   };
   const up = () => {
@@ -93,10 +140,9 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
     const a = h[0], b = h[h.length - 1];
     const v = b.t - a.t > 0 ? ((b.y - a.y) / (b.t - a.t)) * 1000 : 0; // px/s
     drag.current = null;
-    const height = sheet.current?.offsetHeight ?? 400;
-    const landing = y + project(v);
-    setSettling(true);
-    if (landing > height * 0.5) { setY(height + 40); window.setTimeout(onClose, 260); } else setY(0);
+    const landing = yRef.current + project(v);
+    if (landing > height() * 0.5) dismiss(v);
+    else springTo(0, 0.8, 0.3, v); // a flick earns a little bounce
   };
 
   const copy = async (): Promise<boolean> => {
@@ -132,16 +178,17 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share…" }[method];
 
   return (
-    <div className="scrim" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="scrim-wrap">
+      <div ref={scrim} className="scrim" onPointerDown={() => dismiss()} aria-hidden="true" />
       <div ref={sheet} className="sheet" role="dialog" aria-modal="true" aria-labelledby="pitch-title"
-        style={{ transform: `translateY(${y}px)`, transition: settling ? "transform 320ms cubic-bezier(0.2, 0.9, 0.3, 1)" : "none" }}>
+        style={{ transform: reduce ? undefined : "translate3d(0, 100vh, 0)" }}>
         <div className="sheet-handle" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />
         <div className="row sheet-grab" style={{ justifyContent: "space-between" }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
           <div>
             <span className="stamp">Pitch for {them.manager}</span>
             <h2 id="pitch-title" style={{ marginTop: 10 }}>Send the offer</h2>
           </div>
-          <button className="btn btn-sm btn-ghost" onPointerDown={(e) => e.stopPropagation()} onClick={onClose} aria-label="Close"><Icon name="x" size={18} /></button>
+          <button className="btn btn-sm btn-ghost" onPointerDown={(e) => e.stopPropagation()} onClick={() => dismiss()} aria-label="Close"><Icon name="x" size={18} /></button>
         </div>
 
         {trade.warnings.length > 0 && (

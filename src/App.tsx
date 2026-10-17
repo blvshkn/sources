@@ -28,6 +28,9 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
 const TAB_IDS = TABS.map((t) => t.id);
 
 const KEYS = ["tags", "myTags", "prices", "format", "level", "fade", "dismissed", "dismissedIds", "followUps", "onboarded", "username"];
+/** Short tap on Android for meaningful commits only (save, send). iOS Safari ignores it. */
+const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
+
 const store = {
   get<T>(k: string, fallback: T): T {
     try { const v = localStorage.getItem(`sources.${k}`); return v ? (JSON.parse(v) as T) : fallback; } catch { return fallback; }
@@ -61,7 +64,8 @@ export default function App() {
   const [give, setGive] = useState<string[]>([]);
   const [get, setGet] = useState<string[]>([]);
   const [pitch, setPitch] = useState<Trade | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
+  const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
 
   // Every engine call below reads the league format set here.
@@ -69,7 +73,7 @@ export default function App() {
   const fkey = `${format.scoring}|${format.superflex}|${format.tePremium}`;
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
-  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToast(null), 2800); return () => clearTimeout(t); }, [toast]);
+  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2800); return () => clearTimeout(t); }, [toast]);
   useEffect(() => {
     const onHash = () => { const h = location.hash.slice(1); if ((TAB_IDS as string[]).includes(h)) setTab(h as Tab); };
     window.addEventListener("hashchange", onHash);
@@ -205,13 +209,23 @@ export default function App() {
   const setPartner = (id: string) => { setPartnerId(id); setGet([]); };
   const addTag = (t: Omit<ManagerTag, "id">) => {
     setTags((cur) => [...cur.filter((x) => !(x.teamId === t.teamId && x.text === t.text)), { ...t, id: `u${Date.now()}` }]);
+    haptic();
     setToast(`Saved for ${teamById(t.teamId).manager}: "${t.text}". Suggestions now respect it.`);
   };
   const keepTag = (id: string) => { setTags((cur) => cur.map((t) => (t.id === id ? { ...t, weeksOld: 0 } : t))); setToast("Kept. The tag is fresh again."); };
-  const clearTag = (id: string) => { setTags((cur) => cur.filter((t) => t.id !== id)); setToast("Tag cleared. That player is back in trade ideas."); };
+  const clearTag = (id: string) => {
+    const prev = tags;
+    setTags((cur) => cur.filter((t) => t.id !== id));
+    setToast("Tag cleared. That player is back in trade ideas.", () => setTags(prev));
+  };
   const dismiss = (n: Nudge) => {
+    const prevIds = dismissedIds;
+    const prevKinds = dismissed;
+    const count = (dismissed[n.kind] ?? 0) + 1;
     setDismissedIds((c) => [...c, n.id]);
-    setDismissed((c) => { const next = { ...c, [n.kind]: (c[n.kind] ?? 0) + 1 }; if (next[n.kind] === 2) setToast(`Got it. You'll see fewer ${n.kind} nudges.`); else setToast("Hidden. Sources is learning what you care about."); return next; });
+    setDismissed((c) => ({ ...c, [n.kind]: (c[n.kind] ?? 0) + 1 }));
+    setToast(count === 2 ? `Got it. You'll see fewer ${n.kind} nudges.` : "Hidden. Sources is learning what you care about.",
+      () => { setDismissedIds(prevIds); setDismissed(prevKinds); });
   };
   const onLink = (l: Answer["links"][number]) => { if (l.trade) loadTrade(l.trade); else go(l.tab, l.teamId); };
   const resetAll = () => {
@@ -273,10 +287,11 @@ export default function App() {
             <Wire you={youNeeds} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
+              onCapture={() => go("league")}
               onKeepTag={keepTag} onClearTag={clearTag} />
           )}
           {tab === "league" && (
-            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners}
+            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />
           )}
           {tab === "trade" && (
@@ -315,13 +330,19 @@ export default function App() {
 
       {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onSent={(m, via) => {
         setToast(m);
+        if (via) haptic();
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
       {!onboarded && <FirstRun you={youNeeds} opener={partners[0]?.t ?? null} onDone={({ username: u, myTags: mt }) => {
         setUsername(u); setMyTags((c) => ({ ...c, ...mt })); setOnboarded(true); go("wire");
         setToast(`Connected to ${LEAGUE_NAME}. Per sources, here's your first look.`);
       }} />}
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {toast && (
+        <div className="toast" role="status" key={toast.id}>
+          <span>{toast.msg}</span>
+          {toast.undo && <button className="toast-undo" onClick={() => { toast.undo!(); setToastState(null); }}>Undo</button>}
+        </div>
+      )}
     </div>
   );
 }

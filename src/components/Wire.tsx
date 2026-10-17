@@ -2,7 +2,6 @@ import { useState } from "react";
 import { playerById, teamById, YOU, Pos, ManagerTag, DEADLINES, UPDATED, WEEK } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict } from "../engine";
 import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp } from "./ui";
-import { TagCapture } from "./TagCapture";
 
 export type NudgeKind = "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -129,7 +128,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, level }: {
+export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level }: {
   you: TeamNeeds;
   nudges: Nudge[];
   followUps: FollowUp[];
@@ -143,8 +142,16 @@ export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch,
   onResolve: (id: string, msg: string) => void;
   onKeepTag: (id: string) => void;
   onClearTag: (id: string) => void;
+  onCapture: () => void;
   level: string;
 }) {
+  const [leaving, setLeaving] = useState<string[]>([]);
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? nudges : nudges.slice(0, 2);
+  const leave = (n: Nudge) => {
+    setLeaving((c) => [...c, n.id]);
+    window.setTimeout(() => { onDismiss(n); setLeaving((c) => c.filter((x) => x !== n.id)); }, 200);
+  };
   return (
     <>
       <header className="page-head">
@@ -182,14 +189,6 @@ export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch,
 
       {followUps.map((f) => <FollowUpCard key={f.id} f={f} coach={coach} onTag={onTag} onResolve={onResolve} onOpen={onOpen} onPitch={onPitch} />)}
 
-      <section className="card card-pad capture-card">
-        <div className="row wrap" style={{ justifyContent: "space-between" }}>
-          <h2 className="section-title">Heard something in league chat?</h2>
-          <span className="tiny muted">Type or dictate. Tags stay private.</span>
-        </div>
-        <TagCapture onSave={onTag} />
-      </section>
-
       <div className="row wrap" style={{ justifyContent: "space-between" }}>
         <h2 className="section-title">Today's intel</h2>
         <span className="sample-note">{level === "light" ? "Light: top nudges only" : level === "hands" ? "Hands-on: every nudge" : "Standard nudges"} · <button className="linkish" onClick={() => onGo("settings")}>Change</button></span>
@@ -197,8 +196,8 @@ export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch,
 
       {nudges.length === 0 && <p className="empty-deal">You're caught up. Sources will nudge you when something changes.</p>}
 
-      {nudges.map((n) => (
-        <article key={n.id} className={`card nudge nudge-${n.kind}`}>
+      {visible.map((n) => (
+        <article key={n.id} className={`card nudge nudge-${n.kind}${leaving.includes(n.id) ? " leaving" : ""}`}>
           <div className="row wrap" style={{ justifyContent: "space-between" }}>
             <div className="row wrap">
               <Stamp>{STAMP[n.kind]}</Stamp>
@@ -227,10 +226,16 @@ export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch,
             )}
             {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
             {n.kind === "need" && n.teamId && <button className="btn btn-sm btn-ghost" onClick={() => onGo("league", n.teamId)}>See {teamById(n.teamId).name}'s needs</button>}
-            <button className="btn btn-sm btn-ghost dismiss" onClick={() => onDismiss(n)} aria-label="Not useful, show fewer like this">Not useful</button>
+            <button className="btn btn-sm btn-ghost dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
           </div>
         </article>
       ))}
+      {nudges.length > 2 && (
+        <button className="btn more-intel" onClick={() => setShowAll((x) => !x)} aria-expanded={showAll}>
+          {showAll ? "Show less" : `More intel (${nudges.length - 2})`}
+        </button>
+      )}
+      <p className="small muted" style={{ textAlign: "center" }}>Heard something in league chat? <button className="linkish" onClick={onCapture}>Log it on League Needs</button></p>
     </>
   );
 }

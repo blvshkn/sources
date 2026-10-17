@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ManagerTag, playerById, Pos, POS_ORDER, YOU } from "../data";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
+import { TagCapture } from "./TagCapture";
 
 function Bar({ label, diff, pct }: { label: string; diff: number; pct: number }) {
   const w = Math.min(Math.abs(pct) * 100 * 1.4, 50); // half track = 36% off league avg
@@ -18,7 +19,7 @@ function Bar({ label, diff, pct }: { label: string; diff: number; pct: number })
   );
 }
 
-export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, onRemoveTag, onKeepTag }: {
+export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, onRemoveTag, onKeepTag, onAddTag }: {
   needs: TeamNeeds[];
   tags: ManagerTag[];
   fade: FadeWeeks;
@@ -28,6 +29,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
   onOpen: (t: Trade) => void;
   onRemoveTag: (id: string) => void;
   onKeepTag: (id: string) => void;
+  onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
   const [view, setView] = useState<"needs" | "tendencies">("needs");
   const sorted = [...needs].sort((a, b) => a.rank - b.rank);
@@ -77,6 +79,14 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
           </div>
         </section>
       )}
+
+      <section className="card card-pad capture-card">
+        <div className="row wrap" style={{ justifyContent: "space-between" }}>
+          <h2 className="section-title">Heard something in league chat?</h2>
+          <span className="tiny muted">Type or dictate. Tags stay private.</span>
+        </div>
+        <TagCapture onSave={onAddTag} />
+      </section>
 
       {view === "needs" && (
         <div className="legend">
