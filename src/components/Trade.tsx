@@ -1,0 +1,239 @@
+import { useState } from "react";
+import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
+import { Lineup, Trade as TradeT, eff, lineupChanges, lineupFor, rosterAfter, tendencies, verdict, fmt } from "../engine";
+import { AiLabel, Delta, Icon, PosBadge, Stamp, StatusPill } from "./ui";
+import { TradeIdea } from "./Wire";
+import { TagCapture } from "./TagCapture";
+
+function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label }: {
+  team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
+  dimIds: Record<string, string>; lockIds: Record<string, string>; wantIds: Record<string, string>; label: string;
+}) {
+  const row = (id: string, slot: string) => {
+    const p = playerById(id);
+    const on = picked.includes(id);
+    const dim = dimIds[id];
+    const lock = lockIds[id];
+    const want = wantIds[id];
+    return (
+      <button key={id + slot} className={`pick${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
+        title={dim || lock || want || undefined}>
+        <PosBadge pos={p.pos} />
+        <span className="grow" style={{ minWidth: 0 }}>
+          <span className="pname" style={{ display: "block" }}>{p.name}</span>
+          <span className="pmeta">{p.nfl} · <span className="slot-tag">{slot}</span> <StatusPill p={p} />
+            {lock && <span className="lock row" style={{ gap: 3 }}><Icon name="lock" size={11} />{lock}</span>}
+            {want && <span className="want-tag">{want}</span>}
+            {dim && <span className="lock">{dim}</span>}
+          </span>
+        </span>
+        <span className="pproj">{eff(p).toFixed(1)}</span>
+        <span className="check">{on && <Icon name="check" size={13} />}</span>
+      </button>
+    );
+  };
+  return (
+    <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
+      <div className="roster-head">
+        <div style={{ minWidth: 0 }}><div className="eyebrow">{label}</div><b>{team.name}</b></div>
+        <span className="mono small num">{lineup.total.toFixed(1)}</span>
+      </div>
+      <div className="slot-label">Starters</div>
+      {lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}
+      <div className="slot-label">Bench</div>
+      {lineup.bench.map((p) => row(p.id, "BN"))}
+    </section>
+  );
+}
+
+function CompareBars({ before, after, label }: { before: number; after: number; label: string }) {
+  const max = Math.max(before, after) * 1.02;
+  const min = Math.min(before, after) * 0.9;
+  const h = (v: number) => `${22 + ((v - min) / (max - min || 1)) * 74}%`;
+  return (
+    <div className="compare-col">
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <span className="small" style={{ fontWeight: 600 }}>{label}</span>
+        <Delta n={Math.round((after - before) * 10) / 10} suffix="/wk" />
+      </div>
+      <div className="compare-bars" role="img" aria-label={`${label}: ${before.toFixed(1)} before, ${after.toFixed(1)} after`}>
+        <div className="cbar" style={{ height: h(before) }}>{before.toFixed(1)}</div>
+        <div className="cbar after" style={{ height: h(after) }}>{after.toFixed(1)}</div>
+      </div>
+      <div className="cbar-labels"><span>Now</span><span>After</span></div>
+    </div>
+  );
+}
+
+function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you" | "them" }) {
+  const ch = lineupChanges(lineupFor(team.roster), lineupFor(rosterAfter(team, trade, side)));
+  if (!ch.length) return <p className="tiny muted">Starting lineup doesn't change.</p>;
+  return (
+    <ul className="changes">
+      {ch.map((c, i) => (
+        <li key={i}>
+          <span className="slot-tag">{c.slot}</span>
+          <span className="grow">{c.out ? c.out.name : "Empty"} <span className="muted">→</span> {c.in ? c.in.name : "Empty"}</span>
+          <Delta n={c.delta} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, onPitch, onLoad, onAddTag }: {
+  partnerId: string; setPartner: (id: string) => void;
+  give: string[]; get: string[]; toggle: (side: "give" | "get", id: string) => void; clear: () => void;
+  trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
+  tip: string | null;
+  onPitch: (t: TradeT) => void; onLoad: (t: TradeT) => void;
+  onAddTag: (t: Omit<ManagerTag, "id">) => void;
+}) {
+  const them = TEAMS.find((t) => t.id === partnerId)!;
+  const theirTags = tags.filter((t) => t.teamId === them.id);
+  const dimThem: Record<string, string> = {};
+  theirTags.forEach((t) => {
+    if (t.kind !== "refuses") return;
+    them.roster.forEach((id) => { if (t.playerId ? id === t.playerId : playerById(id).pos === t.pos) dimThem[id] = "Won't move"; });
+  });
+  const dimYou: Record<string, string> = {};
+  theirTags.forEach((t) => {
+    if (t.kind !== "notInterested") return;
+    YOU.roster.forEach((id) => { if (t.playerId ? id === t.playerId : playerById(id).pos === t.pos) dimYou[id] = `${them.manager} passed`; });
+  });
+  const wantYou: Record<string, string> = {};
+  theirTags.forEach((t) => {
+    if (t.kind !== "wants") return;
+    YOU.roster.forEach((id) => { if (!dimYou[id] && (t.playerId ? id === t.playerId : playerById(id).pos === t.pos)) wantYou[id] = `${them.manager} wants`; });
+  });
+  const lockYou: Record<string, string> = {};
+  Object.entries(myTags).forEach(([id, v]) => {
+    if (v === "untouchable") lockYou[id] = "Untouchable";
+    if (v === "amazing") lockYou[id] = "Unless amazing";
+  });
+  const v = trade ? verdict(trade) : null;
+  const td = tendencies(them.id);
+  const [why, setWhy] = useState(false);
+
+  const [kind, setKind] = useState<ManagerTagKind>("wants");
+  const [target, setTarget] = useState<string>("pos:RB");
+  const addTag = () => {
+    const isPos = target.startsWith("pos:");
+    const val = target.slice(4);
+    const name = isPos ? val : playerById(target).name;
+    const text = kind === "wants" ? (isPos ? `Looking for ${name} help` : `Wants ${name}`) : kind === "refuses" ? `Won't move ${isPos ? `his ${name}` : name}` : `Not interested in ${isPos ? `your ${name}` : name}`;
+    onAddTag({ teamId: them.id, kind, pos: isPos ? (val as Pos) : undefined, playerId: isPos ? undefined : target, text, weeksOld: 0 });
+  };
+  const targetOptions = kind === "notInterested" ? YOU.roster : kind === "refuses" ? them.roster : YOU.roster;
+
+  return (
+    <>
+      <header className="page-head">
+        <div>
+          <div className="eyebrow">Trade builder · {UPDATED.toLowerCase()}</div>
+          <h1 className="page-title">Build a Deal</h1>
+          <p className="page-sub">Tap players on both rosters. Both starting lineups update as you go, so you can see if it helps them enough to accept.</p>
+        </div>
+      </header>
+
+      <div className="partner-scroll" role="group" aria-label="Trade partner">
+        {TEAMS.filter((t) => !t.you).map((t) => (
+          <button key={t.id} className="partner" aria-pressed={t.id === partnerId} onClick={() => setPartner(t.id)}>
+            <b className="small">{t.name}</b><small>{t.manager} · {t.record}</small>
+          </button>
+        ))}
+      </div>
+
+      <p className="small tend-line"><Icon name="eye" size={14} /><span><b>{them.manager}:</b> {td.summary}</span></p>
+
+      {suggestions.length > 0 && (
+        <section className="card nudge">
+          <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Deals that help both teams, built around what {them.manager} wants</span></div>
+          {suggestions.map((t) => <TradeIdea key={t.key} t={t} onOpen={onLoad} onPitch={onPitch} />)}
+        </section>
+      )}
+
+      <div className="builder">
+        <section className="card deal" aria-live="polite">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <h2 className="section-title">The deal</h2>
+            {(give.length > 0 || get.length > 0) && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>}
+          </div>
+          {!trade ? (
+            <p className="empty-deal">Pick at least one player from each roster to see who wins. Up to three players a side.</p>
+          ) : (
+            <>
+              <div className="deal-lists">
+                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
+                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
+              </div>
+              <div className="compare">
+                <CompareBars label="Your lineup" before={trade.youBefore} after={trade.youAfter} />
+                <CompareBars label={`${them.manager}'s lineup`} before={trade.themBefore} after={trade.themAfter} />
+              </div>
+              {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}</span></div>}
+              {(trade.youDrop.length > 0 || trade.themDrop.length > 0) && (
+                <p className="small drop-note">
+                  {trade.youDrop.length > 0 && <>You'd drop {trade.youDrop.map((id) => playerById(id).name).join(", ")} to make room. </>}
+                  {trade.themDrop.length > 0 && <>{them.manager} would drop {trade.themDrop.map((id) => playerById(id).name).join(", ")}. </>}
+                  Counted in the numbers above.
+                </p>
+              )}
+              {trade.warnings.map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
+              {tip && (
+                <div className="tip">
+                  <Stamp>Live tip</Stamp>
+                  <span className="small">{tip}</span>
+                </div>
+              )}
+              <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math: slot by slot"}</button>
+              {why && (
+                <div className="why">
+                  <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
+                  <div><span className="eyebrow">{them.manager}'s starters</span><Changes team={them} trade={trade} side="them" /></div>
+                  <p className="tiny muted">Weekly projected points for starting lineups only. Bench depth doesn't count, so three bench players can't fake their way to one star. Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
+                </div>
+              )}
+              <div className="row wrap">
+                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="send" size={16} />Prep the pitch</button>
+                {tip && <AiLabel />}
+              </div>
+            </>
+          )}
+        </section>
+
+        <div className="rosters">
+          <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={give} onToggle={(id) => toggle("give", id)} dimIds={dimYou} lockIds={lockYou} wantIds={wantYou} label="You send" />
+          <RosterPicker team={them} lineup={lineupFor(them.roster)} picked={get} onToggle={(id) => toggle("get", id)} dimIds={dimThem} lockIds={{}} wantIds={{}} label="You get" />
+        </div>
+      </div>
+
+      <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <h2 className="section-title">Log what {them.manager} said</h2>
+          <p className="small muted" style={{ marginTop: 6 }}>Private to you. Sources uses it to filter every suggestion. Type it the way they said it, or pick from the lists.</p>
+        </div>
+        <TagCapture onSave={onAddTag} placeholder={`${them.manager} said he's looking for a TE`} compact />
+        <div className="row wrap">
+          <label htmlFor="tag-kind" className="sr-only">Tag type</label>
+          <select id="tag-kind" className="tag-select" value={kind} onChange={(e) => { const k = e.target.value as ManagerTagKind; setKind(k); setTarget(k === "wants" ? "pos:RB" : k === "notInterested" ? YOU.roster[0] : them.roster[0]); }}>
+            <option value="wants">Wants</option>
+            <option value="refuses">Won't move</option>
+            <option value="notInterested">Not interested in</option>
+          </select>
+          <label htmlFor="tag-target" className="sr-only">Player or position</label>
+          <select id="tag-target" className="tag-select" style={{ maxWidth: 220 }} value={target} onChange={(e) => setTarget(e.target.value)}>
+            {POS_ORDER.map((p) => <option key={p} value={`pos:${p}`}>{kind === "wants" ? `${p} help` : kind === "refuses" ? `His ${p}` : `Your ${p}`}</option>)}
+            {targetOptions.map((id) => <option key={id} value={id}>{playerById(id).name}</option>)}
+          </select>
+          <button className="btn btn-sm" onClick={addTag}>Save tag</button>
+        </div>
+        {theirTags.length > 0 && (
+          <div className="row wrap">
+            {theirTags.map((t) => <span key={t.id} className={`chip ${t.kind === "wants" ? "chip-good" : t.kind === "refuses" ? "chip-bad" : "chip-warn"}`}>{t.text}</span>)}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
