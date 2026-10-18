@@ -3055,11 +3055,11 @@ html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#
 html:root:not(#_) .sb2-pts { font-weight: 600 !important; letter-spacing: -0.05em; }
 html:root:not(#_) .lu-mx-who { font-size: 1rem !important; }
 
-/* ==== Type v2: Roboto Flex everywhere, Roboto Mono for numbers, Array only for page titles ==== */
+/* ==== Type v2: Google Sans for copy and names, Geist Mono for numbers, Array only for page titles ==== */
 html:root:not([data-nf]):not(#_) {
-  --font-body: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Roboto Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-body: "Google Sans", "Google Sans Text", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Google Sans", "Google Sans Text", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 html:root:not(#_) body, html:root:not(#_) button, html:root:not(#_) input, html:root:not(#_) select, html:root:not(#_) textarea { font-family: var(--font-body); }
 html:root:not(#_) .brand-mark, html:root:not(#_) .sb-badge, html:root:not(#_) .avatar, html:root:not(#_) [class*="-av"],
@@ -3070,8 +3070,13 @@ html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#
   font-family: var(--font-body) !important;
 }
 html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .tp-who b, html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#_) .wt-name b {
-  font-size: inherit !important; font-weight: 650 !important; letter-spacing: -0.01em; font-stretch: 112%;
+  font-size: inherit !important; font-weight: 600 !important; letter-spacing: -0.01em;
 }
 html:root:not(#_) .lu-mx-who { font-size: 0.9375rem !important; }
 html:root:not(#_) .page-title { font-family: var(--font-array) !important; }
-html:root:not(#_) .ps-who b, html:root:not(#_) .topk-name { font-weight: 700 !important; font-stretch: 112%; letter-spacing: -0.02em; }
+html:root:not(#_) .ps-who b, html:root:not(#_) .topk-name { font-weight: 700 !important; letter-spacing: -0.02em; }
+.lg-spare { margin: -4px 0 4px; font-size: 0.875rem; color: var(--muted); }
+/* Icon button tooltips */
+.ui-tip { position: fixed; z-index: 200; transform: translate(-50%, -100%); padding: 6px 10px; border-radius: 8px; background: #F2F4F1; color: #121413; font: 500 0.75rem/1.2 var(--font-body); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
+.ui-tip[data-side="bottom"] { transform: translate(-50%, 0); }
+.ui-tip.on { opacity: 1; }

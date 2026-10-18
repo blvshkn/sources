@@ -125,7 +125,8 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
             <Stamp>Per sources</Stamp>
             <AiLabel />
           </div>
-          {headline && <h3>{headline}</h3>}
+          <h3>{partners.length === 1 ? "Your best trade partner this week" : `Your ${partners.length} best trade partners this week`}</h3>
+          {headline && <p className="lg-spare">{headline}</p>}
           <div className="partners">
             {partners.map(({ n, t, why }, i) => (
               <button key={n.team.id} className="partner-card" onClick={() => onOpen(t)}>

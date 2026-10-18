@@ -8,6 +8,7 @@ import {
   counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
   irReport, irLabel, parseTag,
 } from "./engine";
+import { installIconTooltips } from "./tooltips";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
@@ -452,6 +453,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
 /** Session wrapper: picks demo or live Sleeper, loads the league, runs first-run setup. */
 export default function App() {
+  useEffect(() => installIconTooltips(), []);
   const [session, setSession] = usePersist<Session>("session", { mode: "none" });
   const [status, setStatus] = useState<"loading" | "ready" | "error">(session.mode === "live" ? "loading" : "ready");
   const [step, setStep] = useState("Loading your league");

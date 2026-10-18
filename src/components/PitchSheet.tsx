@@ -35,7 +35,7 @@ async function drawCard(t: Trade): Promise<Blob | null> {
   const g = c.getContext("2d");
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
-  const F = (w: number, px: number) => `${w} ${px}px 'Roboto Flex', system-ui, sans-serif`;
+  const F = (w: number, px: number) => `${w} ${px}px 'Google Sans', system-ui, sans-serif`;
   const LIME = "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
 
