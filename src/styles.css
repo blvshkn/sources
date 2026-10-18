@@ -3003,3 +3003,35 @@ html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { rig
 /* Keep the decorative watermark inside the page so nothing scrolls sideways */
 html:root:not(#_) .page-head, html:root:not(#_) .lu-hero { overflow-x: clip; overflow-clip-margin: 0; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { right: -18px; }
+
+/* ==== Type system: Array for display and team names, Geist Mono for numbers and code, Google Sans for the rest ==== */
+html:root:not([data-nf]):not(#_) {
+  --font-display: "Array", "Google Sans", "Helvetica Neue", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+/* Display: page titles, section titles, headlines, player and team names */
+html:root:not(#_) .page-title, html:root:not(#_) .section-title, html:root:not(#_) .card h2, html:root:not(#_) .nudge h3,
+html:root:not(#_) .ps-who b, html:root:not(#_) .fb-head b, html:root:not(#_) .sheet h2, html:root:not(#_) .doc h2,
+html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .st-who b,
+html:root:not(#_) .tp-who b, html:root:not(#_) .psr-team, html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-n b,
+html:root:not(#_) .lsw-btn b, html:root:not(#_) .partner-card b, html:root:not(#_) .mu-side span, html:root:not(#_) .wt-name b, html:root:not(#_) .roster-head b {
+  font-family: var(--font-display) !important; letter-spacing: -0.01em;
+}
+html:root:not(#_) .page-title { font-weight: 700 !important; letter-spacing: -0.02em !important; }
+html:root:not(#_) .nudge h3 { font-weight: 600; letter-spacing: -0.005em; }
+/* Numbers: Geist Mono with tabular figures */
+html:root:not(#_) .lu-pts, html:root:not(#_) .wv-proj b, html:root:not(#_) .vb-val b, html:root:not(#_) .act-bid b, html:root:not(#_) .lu-week-sum b,
+html:root:not(#_) .num, html:root:not(#_) .delta, html:root:not(#_) .lu-mx-pts, html:root:not(#_) .lu-mx-mid b, html:root:not(#_) .mu-side b, html:root:not(#_) .mu-mid b,
+html:root:not(#_) .mu-pts, html:root:not(#_) .mu-edge, html:root:not(#_) .ti-stat dd, html:root:not(#_) .ps-hero-main b, html:root:not(#_) .ps-hero-side dd,
+html:root:not(#_) .ps-bar b, html:root:not(#_) .ss-pts, html:root:not(#_) .ss-gain, html:root:not(#_) .sb2-score, html:root:not(#_) .sb-score, html:root:not(#_) .numeral,
+html:root:not(#_) .st-num b, html:root:not(#_) .st-pp, html:root:not(#_) .sx-bar b, html:root:not(#_) .wt-readout, html:root:not(#_) .tend-stats b, html:root:not(#_) .faab b,
+html:root:not(#_) .sb2-side b, html:root:not(#_) .sb2-score b, html:root:not(#_) .idea-nums, html:root:not(#_) .vb-split, html:root:not(#_) code, html:root:not(#_) kbd {
+  font-family: var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+}
+html:root:not(#_) .lu-mx-pts, html:root:not(#_) .ps-hero-main b, html:root:not(#_) .mu-side b { font-weight: 600 !important; letter-spacing: -0.05em; }
+/* Mono caps in a few signature spots: source stamps, nudge kinds, slot and start/sit tags, live meta */
+html:root:not(#_) .stamp, html:root:not(#_) .ai-label, html:root:not(#_) .nudge-kind, html:root:not(#_) .ss-tag, html:root:not(#_) .lu-slot,
+html:root:not(#_) .ps-k, html:root:not(#_) .page-meta, html:root:not(#_) .mu-slot, html:root:not(#_) .sb2-head > span:first-child {
+  font-family: var(--font-mono) !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; font-size: 0.6875rem !important; font-weight: 500;
+}
+html:root:not(#_) .page-meta { font-size: 0.6875rem !important; }
