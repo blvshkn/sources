@@ -518,6 +518,9 @@ export default function App() {
       </div>
     );
   }
+  // The welcome page shows the demo league. After disconnecting, the live league is still loaded on this
+  // first render, so swap in the demo before drawing it (otherwise it looks up demo teams that aren't there).
+  if (session.mode === "none" && LEAGUE.mode !== "demo") setLeague(demoLeague());
   return (
     <>
       {boot !== "off" && <Boot step={step} leaving={boot === "leaving"} />}
