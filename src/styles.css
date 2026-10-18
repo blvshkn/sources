@@ -3054,3 +3054,24 @@ html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#
 }
 html:root:not(#_) .sb2-pts { font-weight: 600 !important; letter-spacing: -0.05em; }
 html:root:not(#_) .lu-mx-who { font-size: 1rem !important; }
+
+/* ==== Type v2: Roboto Flex everywhere, Roboto Mono for numbers, Array only for page titles ==== */
+html:root:not([data-nf]):not(#_) {
+  --font-body: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+html:root:not(#_) body, html:root:not(#_) button, html:root:not(#_) input, html:root:not(#_) select, html:root:not(#_) textarea { font-family: var(--font-body); }
+html:root:not(#_) .brand-mark, html:root:not(#_) .sb-badge, html:root:not(#_) .avatar, html:root:not(#_) [class*="-av"],
+html:root:not(#_) .section-title, html:root:not(#_) .card h2, html:root:not(#_) .nudge h3, html:root:not(#_) .st-who b, html:root:not(#_) .psr-team, html:root:not(#_) .lsw-n b,
+html:root:not(#_) .partner-card b, html:root:not(#_) .mu-side span, html:root:not(#_) .roster-head b, html:root:not(#_) .sheet h2,
+html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .tp-who b, html:root:not(#_) .st-dhead .st-who b,
+html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#_) .wt-name b, html:root:not(#_) .topk-name, html:root:not(#_) .ps-who b, html:root:not(#_) .fb-head b, html:root:not(#_) .doc h2 {
+  font-family: var(--font-body) !important;
+}
+html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .tp-who b, html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#_) .wt-name b {
+  font-size: inherit !important; font-weight: 650 !important; letter-spacing: -0.01em; font-stretch: 112%;
+}
+html:root:not(#_) .lu-mx-who { font-size: 0.9375rem !important; }
+html:root:not(#_) .page-title { font-family: var(--font-array) !important; }
+html:root:not(#_) .ps-who b, html:root:not(#_) .topk-name { font-weight: 700 !important; font-stretch: 112%; letter-spacing: -0.02em; }
