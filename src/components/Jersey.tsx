@@ -2,7 +2,12 @@ import { useId } from "react";
 import { Player } from "../data";
 import { jerseyNumber, teamColors, useJerseys } from "../jersey";
 
-/** A team-colored jersey with the player's real number. Team palette only, no logos. */
+const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
+const mix = (h: string, w: number) => { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * w)); return `rgb(${c.join(",")})`; };
+
+/** A team-colored jersey with the player's real number, in the same flat glyph style as the
+    defense helmets: one flat body color, flat shade and gloss, seams cut out in the row's
+    background, trim on the collar and sleeves. Team palette only, no logos. */
 export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad"; text?: string }) {
   useJerseys();
   const uid = useId().replace(/:/g, "");
@@ -10,35 +15,45 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
   if (/^[A-Z]{2,3}$/.test(p.id)) return <Helmet team={p.nfl || p.id} size={size} ring={ring} />;
   const num = jerseyNumber(p);
   const label = text ?? (num !== undefined ? String(num) : "");
-  const fs = label.length > 2 ? 15 : label.length > 1 ? 21 : 24;
+  const fs = label.length > 2 ? 16 : label.length > 1 ? 22 : 25;
+  const apart = (c: string, d: number) => Math.abs(lum(c) - lum(body)) > d;
+  const accent = apart(trim, 0.12) ? trim : apart(ink, 0.12) ? ink : mix(body, 0.4);
+  const numEdge = trim !== ink && apart(trim, 0.12) ? trim : lum(ink) > 0.5 ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.5)";
+  const dark = lum(body) < 0.2;
+  const bg = { stroke: "var(--surface, #fff)" } as const;
+  const clip = `jc${uid}`;
   return (
     <span className={`jersey${ring ? ` ring-${ring}` : ""}`} style={{ width: size, height: size }} role="img" aria-label={`${p.nfl} jersey${label ? ` number ${label}` : ""}`}>
-      <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-        <defs>
-          <linearGradient id={`jg${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#fff" stopOpacity="0.22" />
-            <stop offset="0.55" stopColor="#fff" stopOpacity="0" />
-            <stop offset="1" stopColor="#000" stopOpacity="0.18" />
-          </linearGradient>
-          <clipPath id={`jc${uid}`}><path d={SHAPE} /></clipPath>
-        </defs>
+      <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <defs><clipPath id={clip}><path d={SHAPE} /></clipPath></defs>
         <path d={SHAPE} fill={body} />
-        <g clipPath={`url(#jc${uid})`}>
-          <path d="M3 21 L13 17.5 M5 26 L14.5 22.5" stroke={trim} strokeWidth="2.6" />
-          <path d="M61 21 L51 17.5 M59 26 L49.5 22.5" stroke={trim} strokeWidth="2.6" />
-          <path d={SHAPE} fill={`url(#jg${uid})`} />
+        <g clipPath={`url(#${clip})`}>
+          {/* Flat shade along the hem, flat gloss on the shoulder: same treatment as the helmet */}
+          <path d="M0 50 C20 54 44 54 64 48 L64 64 L0 64 Z" fill="#000" opacity="0.14" />
+          {/* Sleeve stripes in trim, each set off by a background gap */}
+          <g strokeWidth="5.2" style={bg}><path d={SLEEVES} /></g>
+          <g strokeWidth="2.6" stroke={accent}><path d={SLEEVES} /></g>
         </g>
-        <path d="M24 6.5 Q32 14 40 6.5" fill="none" stroke={trim} strokeWidth="2.4" strokeLinecap="round" />
-        <path d={SHAPE} fill="none" stroke="rgba(0,0,0,0.28)" strokeWidth="1" />
+        {/* Seams cut out where the sleeves join the body */}
+        <g strokeWidth="1.6" style={bg}>
+          <path d="M15.5 25.5 L18.4 11.4" /><path d="M48.5 25.5 L45.6 11.4" />
+        </g>
+        {/* Collar: trim band with a background gap */}
+        <path d={COLLAR} strokeWidth="5.4" style={bg} />
+        <path d={COLLAR} strokeWidth="2.8" stroke={accent} />
+        <path d="M11 15 C13.4 13.4 15.6 12.6 18 12.2" strokeWidth="2" stroke="#fff" strokeOpacity="0.32" />
+        {dark && <path d={SHAPE} strokeWidth="0.9" stroke={mix(body, 0.32)} />}
         {label && (
-          <text x="32" y="44" textAnchor="middle" fontSize={fs} fontWeight="800" fill={ink} stroke={trim === ink ? "rgba(0,0,0,0.35)" : trim} strokeWidth="1.4"
-            paintOrder="stroke" fontFamily="'Geist', ui-sans-serif, system-ui, sans-serif" letterSpacing="-0.5">{label}</text>
+          <text x="32" y={label.length > 2 ? 37 : 39} textAnchor="middle" fontSize={fs} fontWeight="800" fill={ink} stroke={numEdge} strokeWidth="1.5"
+            paintOrder="stroke" fontFamily="'Geist', ui-sans-serif, system-ui, sans-serif" letterSpacing="-0.6">{label}</text>
         )}
       </svg>
     </span>
   );
 }
-const SHAPE = "M23 5 L27 3.5 Q32 9 37 3.5 L41 5 L56 11.5 Q59 13 60 16 L62 26 L50 29.5 L48.5 24 L48.5 58 Q48.5 61 45.5 61 L18.5 61 Q15.5 61 15.5 58 L15.5 24 L14 29.5 L2 26 L4 16 Q5 13 8 11.5 Z";
+const SHAPE = "M23.4 5.2 L27 4 Q32 8.6 37 4 L40.6 5.2 L55.2 11.2 Q58.4 12.6 59.2 15.8 L61.6 25.4 L50.6 28.8 L48.6 24.2 L48.6 57.6 Q48.6 60.6 45.6 60.6 L18.4 60.6 Q15.4 60.6 15.4 57.6 L15.4 24.2 L13.4 28.8 L2.4 25.4 L4.8 15.8 Q5.6 12.6 8.8 11.2 Z";
+const SLEEVES = "M3.4 21.6 L14.2 18.4 M49.8 18.4 L60.6 21.6";
+const COLLAR = "M25.6 5 Q32 12.4 38.4 5";
 
 /** Team defense: a flat glyph-style helmet, facing right.
     Built on circles so every curve agrees: the shell is one arc, the stripe and highlight are
@@ -46,8 +61,6 @@ const SHAPE = "M23 5 L27 3.5 Q32 9 37 3.5 L41 5 L56 11.5 Q59 13 60 16 L62 26 L50
 export function Helmet({ team, size = 36, ring }: { team: string; size?: number; ring?: "warn" | "bad" }) {
   const uid = useId().replace(/:/g, "");
   const [shell, ink, trim] = teamColors(team);
-  const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
-  const mix = (h: string, w: number) => { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * w)); return `rgb(${c.join(",")})`; };
   const apart = (c: string, d: number) => Math.abs(lum(c) - lum(shell)) > d;
   // Mask reads against the shell and on light or dark rows, so skip pure white and near-black
   const usable = (c: string) => apart(c, 0.22) && lum(c) > 0.14 && lum(c) < 0.86;

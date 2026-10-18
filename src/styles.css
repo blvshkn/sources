@@ -1121,7 +1121,7 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .ir-warn { color: var(--bad); padding: 8px 14px 14px; margin: 0; }
 
 /* ---- Lineup -------------------------------------------------------------- */
-.jersey { position: relative; display: inline-flex; flex: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22)); }
+.jersey { position: relative; display: inline-flex; flex: none; }
 .jersey svg { display: block; overflow: visible; }
 .jersey.ring-warn::after, .jersey.ring-bad::after { content: ""; position: absolute; right: 2%; top: 10%; width: 22%; height: 22%; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 2px var(--surface); }
 .jersey.ring-bad::after { background: var(--bad); }
