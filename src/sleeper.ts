@@ -135,6 +135,13 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
   ]);
+  // Which games have kicked off this week (Sleeper locks those players), and who is on bye
+  const schedule = await fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`).then((r) => (r.ok ? r.json() : [])).catch(() => []) as { week: number; home: string; away: string; status: string }[];
+  const games: Record<string, "pre_game" | "in_game" | "complete"> = {};
+  for (const g of schedule.filter((x) => x.week === week)) {
+    const st = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
+    games[g.home] = st; games[g.away] = st;
+  }
   const trendingDrops = await get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
@@ -461,7 +468,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board,
+    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

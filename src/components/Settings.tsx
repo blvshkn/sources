@@ -54,7 +54,6 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">Account</div>
           <h1 className="page-title">Settings</h1>
         </div>
       </header>

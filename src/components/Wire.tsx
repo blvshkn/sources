@@ -213,8 +213,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">Week {WEEK} · {DEADLINES.lock}</div>
           <h1 className="page-title">The Wire</h1>
+          <p className="page-meta">Week {WEEK} · {DEADLINES.lock}</p>
         </div>
       </header>
 

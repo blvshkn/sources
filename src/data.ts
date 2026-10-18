@@ -484,6 +484,8 @@ export interface LeagueData {
   lineupOrder?: string[];
   /** Last fantasy week of the season. */
   lastWeek?: number;
+  /** This week's NFL game state per team from Sleeper's schedule. Teams missing are on bye. */
+  games?: Record<string, GameState>;
   /** Taxi squad slots (dynasty), 0 if none. */
   taxiSlots: number;
   updated: string;
@@ -513,7 +515,16 @@ export interface LeagueData {
   opponentId?: string;
 }
 
+export type GameState = "pre_game" | "in_game" | "complete";
 export let LEAGUE: LeagueData;
+/** "bye", "pre_game", "in_game" or "complete" for a team this week. Unknown when we have no schedule. */
+export function gameState(team: string): GameState | "bye" | "unknown" {
+  const g = LEAGUE?.games;
+  if (!g || !Object.keys(g).length) return DEMO_BYES.includes(team) ? "bye" : "unknown";
+  return g[team] ?? "bye";
+}
+/** True once a team's game has kicked off this week, or when it has no game. Sleeper locks these players. */
+export const lockedThisWeek = (team: string) => { const s = gameState(team); return s === "bye" || s === "in_game" || s === "complete"; };
 export let WEEK = 7;
 export let LEAGUE_NAME = "";
 export let UPDATED = "";

@@ -1605,3 +1605,9 @@ p, .page-sub { max-width: 65ch; }
 .tp-opt[aria-selected="true"] b { color: var(--ink); }
 .tp-opt > svg { color: var(--ink); }
 .tp-opt .tp-who b { font-size: 0.9375rem; }
+.wv-hidden { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+.wv-hidden svg { flex: none; margin-top: 2px; color: var(--faint); }
+
+/* Page headers: title first, one plain status line under it */
+.page-head > div, .lu-hero-l { display: grid; gap: 4px; }
+.page-meta { margin: 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; font-family: var(--font-body); }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine } from "../data";
-import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
+import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport, waiverHidden } from "../engine";
 import { AiLabel, Icon, Seg } from "./ui";
 import { Avatar } from "./Avatar";
 
@@ -24,8 +24,8 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">{DEADLINES.waivers}</div>
           <h1 className="page-title">Waivers</h1>
+          <p className="page-meta">{DEADLINES.waivers}</p>
         </div>
         {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
           <span className="tiny muted">FAAB left</span>
@@ -70,6 +70,13 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </a>
           </section>
         );
+      })()}
+
+      {(() => {
+        const h = waiverHidden();
+        if (!h.played && !h.bye) return null;
+        const parts = [h.played ? `${h.played} who already played` : "", h.bye ? `${h.bye} on bye` : ""].filter(Boolean).join(" and ");
+        return <p className="wv-hidden"><Icon name="lock" size={14} />Not showing {parts} this week. Sleeper locks them until waivers run.</p>;
       })()}
 
       <div className="wv-filters">

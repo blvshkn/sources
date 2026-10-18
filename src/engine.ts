@@ -3,7 +3,7 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, FreeAgent, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -527,6 +527,8 @@ export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "b
 
 // ---- Lineup day -----------------------------------------------------------
 
+const started = (team: string) => { const g = gameState(team); return g === "in_game" || g === "complete"; };
+
 export function sleeperDiff(opt: Lineup): { benched: Player; start: Player; slot: string; gain: number }[] {
   const setIds = Object.values(SLEEPER_SET).flat();
   const optIds = opt.slots.map((s) => s.player?.id).filter(Boolean) as string[];
@@ -536,7 +538,8 @@ export function sleeperDiff(opt: Lineup): { benched: Player; start: Player; slot
     const sit = shouldSit[i];
     const slot = Object.entries(SLEEPER_SET).find(([, ids]) => ids.includes(sit?.id ?? ""))?.[0] ?? "FLEX";
     return { benched: sit, start: p, slot, gain: round1(eff(p, true) - (sit ? eff(sit, true) : 0)) };
-  }).filter((d) => d.benched);
+    // Sleeper won't move anyone whose game has kicked off, so never suggest those swaps
+  }).filter((d) => d.benched && !started(d.benched.nfl) && !started(d.start.nfl));
 }
 
 export function weakSlots(): { slot: string; misses: number; weeks: number; gap: number }[] {
@@ -585,9 +588,16 @@ export const bidsFor = (tier: BidTier["tier"]): { bids: number[]; estimated: boo
 
 export interface WaiverRec { fa: FreeAgent; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"]; estimated: boolean }
 
+/** Free agents Sleeper won't let you add for this week: their game kicked off already, or they're on bye. */
+export function waiverHidden() {
+  let played = 0, bye = 0;
+  for (const fa of FREE_AGENTS) { const s = gameState(fa.nfl); if (s === "bye") bye++; else if (s === "in_game" || s === "complete") played++; }
+  return { played, bye };
+}
+
 export function waiverRecs(you: Team): WaiverRec[] {
   const base = lineupFor(you.roster, true);
-  return FREE_AGENTS.map((fa) => {
+  return FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => {
     // Live free agents are already in PLAYERS; demo ones get a temporary entry.
     const existed = !!PLAYERS[fa.id];
     if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
