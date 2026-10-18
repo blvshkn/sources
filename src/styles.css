@@ -1694,3 +1694,18 @@ p, .page-sub { max-width: 65ch; }
 }
 .empty-deal { margin: 0; text-align: left !important; padding: 0 !important; font-size: 0.875rem; color: var(--muted); }
 .offer-toggle { font-size: 0.875rem; font-weight: 500; }
+
+/* Trade idea, refined: no inner box, aligned labels, divider with swap mark */
+.ti { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; }
+.ti-swap { background: none !important; border: 0 !important; border-radius: 0; position: relative; }
+.ti-side { display: grid !important; grid-template-columns: 64px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 0 !important; }
+.ti-side .ti-label { grid-row: 1 / span 4; align-self: start; padding-top: 8px; font-size: 0.75rem; color: var(--muted); }
+.ti-side + .ti-arrow + .ti-side { border-top: 0 !important; }
+.ti-arrow { display: grid !important; position: relative; margin: 10px 0; height: 1px; width: auto; border: 0; border-radius: 0; background: var(--line); }
+.ti-arrow svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(90deg); width: 22px; height: 22px; padding: 4px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); box-sizing: border-box; }
+.ti-player { grid-template-columns: 36px minmax(0, 1fr); gap: 10px; }
+.ti-pl b { font-size: 0.9375rem; }
+.ti-read { flex-wrap: wrap; gap: 6px 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ti-unit { font-size: 0.75rem; color: var(--faint); margin-left: -8px; }
+.ti-why { margin: 0; }
+.ti-actions { padding-top: 2px; }
