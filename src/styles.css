@@ -3111,3 +3111,13 @@ html:root:not(#_) .lg-sw { background: var(--lime); opacity: 1; } html:root:not(
 html:root:not(#_) .lg-line { background: var(--ink); opacity: 0.7; }
 html:root:not(#_) .slot-bars { height: 88px; gap: 4px; }
 html:root:not(#_) .lu-mx { align-items: start; } html:root:not(#_) .lu-mx-mid { align-self: center; }
+
+/* Section icon sits beside the title in lime; no background watermark */
+html:root:not(#_) .page-head h1.page-title, html:root:not(#_) .lu-hero h1.page-title { display: inline-flex !important; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 14px; }
+html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { position: static !important; transform: none !important; width: 30px !important; height: 30px !important; color: var(--lime) !important; background: none !important; display: grid !important; place-items: center; }
+html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 28px !important; height: 28px !important; stroke-width: 2 !important; }
+
+/* Borders only on things you can tap. Static surfaces separate by fill. */
+html:root:not(#_) .card, html:root:not(#_) .lu-mx, html:root:not(#_) .sb2, html:root:not(#_) .psr-list, html:root:not(#_) .ps, html:root:not(#_) .sheet,
+html:root:not(#_) .tp-card, html:root:not(#_) .tp-scout, html:root:not(#_) .scoreboard, html:root:not(#_) .lu-score, html:root:not(#_) .lu-banner, html:root:not(#_) .topk,
+html:root:not(#_) .verdict, html:root:not(#_) .note-good, html:root:not(#_) .lock-note, html:root:not(#_) .impact, html:root:not(#_) .faab, html:root:not(#_) .tc, html:root:not(#_) .team-card { border: 0 !important; }
