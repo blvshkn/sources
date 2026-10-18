@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LeagueSwitch } from "./LeagueSwitch";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
@@ -43,7 +44,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="gear" size={20} /></span>Settings</h1>
+          <LeagueSwitch title="Settings" />
         </div>
       </header>
 

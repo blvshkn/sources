@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
@@ -210,7 +211,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="trade" size={20} /></span>Build a deal</h1>
+          <LeagueSwitch title="Build a deal" />
           <p className="page-meta">{UPDATED}</p>
         </div>
       </header>

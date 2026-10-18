@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { Live, useLive } from "../live";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
@@ -265,7 +266,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     <>
       <header className="lu-hero">
         <div className="lu-hero-l">
-          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="helmet" size={20} /></span>Lineup</h1>
+          <LeagueSwitch title="Lineup" />
           <p className="page-meta">Week {WEEK} · {UPDATED}</p>
         </div>
         <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>

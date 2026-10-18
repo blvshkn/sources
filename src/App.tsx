@@ -11,6 +11,7 @@ import {
 import { installIconTooltips } from "./tooltips";
 import { Boot } from "./components/Boot";
 import { Logo, Mark } from "./components/Logo";
+import { LeagueCtx } from "./components/LeagueSwitch";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
@@ -367,11 +368,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button className="top-league" onClick={() => setSwitching(true)} aria-haspopup="dialog">
-          <Mark size={30} className="top-mark" />
-          <span className="top-league-n"><b>{LEAGUE_NAME}</b><span className="sr-only"> (switch league)</span><small>Week {WEEK} · {formatLabel(format)}</small></span>
-          <Icon name="switch" size={16} />
-        </button>
+        <button className="top-logo" onClick={() => go("wire")}><Logo height={26} /></button>
         <div className="row" style={{ gap: 4 }}>
           <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="ask" size={20} /></button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
@@ -380,6 +377,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
       <a className="skip-link" href="#main">Skip to content</a>
       <main className="main" id="main" tabIndex={-1}>
+        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `Week ${WEEK} · ${formatLabel(format)}`, open: () => setSwitching(true) }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
         <div className="main-inner" key={tab}>
           {tab === "wire" && (
@@ -422,6 +420,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {["wire", "league", "roster", "waivers"].includes(tab) && <section className="card card-pad rail-inline">{rail}</section>}
         </div>
         </IdeaFeedbackCtx.Provider>
+        </LeagueCtx.Provider>
       </main>
 
       <aside className="rail" aria-label="Live wire">{rail}</aside>

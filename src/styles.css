@@ -3217,3 +3217,15 @@ html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !
 .top-league .top-mark { flex: none; }
 .boot2-mark .boot2-logo { position: relative; z-index: 1; filter: drop-shadow(0 0 18px rgba(216, 242, 74, 0.45)); }
 .boot2-word { display: flex; justify-content: center; }
+
+/* ---- Top bar shows the full logo; the league selector sits where page titles were (phones only; desktop has it in the sidebar). ---- */
+.top-logo { display: flex; align-items: center; min-height: 44px; padding: 0 4px; border: 0; background: none; cursor: pointer; }
+.top-logo:active { transform: scale(0.98); }
+.page-league { display: none; }
+@media (max-width: 860px) {
+  html:root:not(#_) .page-league { display: inline-flex; align-self: flex-start; max-width: 100%; padding: 8px 14px 8px 16px; min-height: 52px; gap: 12px; }
+}
+/* Meta line under the league selector: plain text, no pill. Selector hugs its content. */
+html:root:not(#_) .page-meta { background: none !important; padding: 0 !important; margin-top: 10px !important; }
+html:root:not(#_) .page-league { justify-self: start; width: fit-content; }
+html:root:not(#_) .page-meta::before { margin-left: 3px; }

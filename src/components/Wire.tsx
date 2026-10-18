@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
@@ -260,7 +261,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="wire" size={20} /></span>The Wire</h1>
+          <LeagueSwitch title="The Wire" />
           <p className="page-meta">Week {WEEK} · {DEADLINES.lock}</p>
         </div>
       </header>

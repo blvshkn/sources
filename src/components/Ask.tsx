@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LeagueSwitch } from "./LeagueSwitch";
 import { Answer } from "../engine";
 import { AiLabel, Icon } from "./ui";
 import { Mark } from "./Logo";
@@ -24,7 +25,7 @@ export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answe
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="ask" size={20} /></span>Ask Sources</h1>
+          <LeagueSwitch title="Ask Sources" />
           <p className="page-meta">Ask your league</p>
         </div>
       </header>
