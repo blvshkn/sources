@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
 
-import { Icon } from "./icons";
+import { Icon, type IconName } from "./icons";
 export { Icon };
 export type { IconName } from "./icons";
 
@@ -37,10 +37,10 @@ export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: ()
 /** Build-phase labels were for internal review. Users never see them. */
 export const Phase = (_: { v: "MVP" | "v1" | "Later" }) => null;
 
-export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void; label: string }) {
   return (
     <div className="seg" role="group" aria-label={label}>
-      {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.label}</button>)}
+      {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.icon && <Icon name={o.icon} size={16} />}{o.label}</button>)}
     </div>
   );
 }

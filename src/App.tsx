@@ -8,6 +8,7 @@ import {
   counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
   irReport, irLabel, parseTag,
 } from "./engine";
+import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
 import { Icon, IconName } from "./components/ui";
@@ -55,8 +56,9 @@ const usePersist = <T,>(k: string, init: T) => {
 
 export type Session = { mode: "none" } | { mode: "demo" } | { mode: "live"; username: string; userId: string; leagueId: string };
 
-function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: {
+function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, onSwitchLeague }: {
   session: Session;
+  onSwitchLeague: (leagueId: string) => void;
   initialMyTags?: Record<string, MyTag>;
   onReconnect: () => void;
   onDeleteAll: () => void;
@@ -83,6 +85,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const [hiddenIdeas, setHiddenIdeas] = usePersist<string[]>(`${scope}.hiddenIdeas`, []);
   const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
+  const [switching, setSwitching] = useState(false);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
   const [give, setGive] = useState<string[]>([]);
   const [get, setGet] = useState<string[]>([]);
@@ -333,7 +336,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
           <span className="brand-mark" aria-hidden="true">“</span>
           <div><div className="brand-name">Sources</div><div className="brand-line">Your fantasy insider</div></div>
         </div>
-        <div className="league-pill"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></div>
+        <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-label={`${LEAGUE_NAME}. Switch league`}>
+          <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
+          <Icon name="switch" size={16} />
+        </button>
         <nav className="nav nav-ix" aria-label="Main">
           <div className="nav-main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
             data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
@@ -355,10 +361,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       </aside>
 
       <header className="topbar">
-        <div className="brand" style={{ padding: 0 }}>
-          <span className="brand-mark" aria-hidden="true" style={{ width: 30, height: 30, fontSize: 26 }}>“</span>
-          <div className="brand-name" style={{ fontSize: 22 }}>Sources</div>
-        </div>
+        <button className="top-league" onClick={() => setSwitching(true)} aria-label={`${LEAGUE_NAME}. Switch league`}>
+          <span className="brand-mark" aria-hidden="true">“</span>
+          <span className="top-league-n"><b>{LEAGUE_NAME}</b><small>Week {WEEK} · {formatLabel(format)}</small></span>
+          <Icon name="switch" size={16} />
+        </button>
         <div className="row" style={{ gap: 4 }}>
           <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="ask" size={20} /></button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
@@ -424,6 +431,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
         ))}
       </nav>
 
+      {switching && <LeagueSwitcher demo={demo} userId={session.mode === "live" ? session.userId : undefined} username={username}
+        onPick={onSwitchLeague} onConnect={onReconnect} onClose={() => setSwitching(false)} />}
       {feedbackFor && <IdeaFeedback trade={feedbackFor} onPick={(r) => ideaFeedback(feedbackFor, r)} onClose={() => setFeedbackFor(null)} />}
       {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onSent={(m, via) => {
         setToast(m);
@@ -504,7 +513,8 @@ export default function App() {
         <Shell key={`${leagueKey()}:${version}`} session={session} initialMyTags={initialMyTags}
           onReconnect={() => setSession({ mode: "none" })}
           onDeleteAll={() => { store.clear(); setSession({ mode: "none" }); }}
-          onRefresh={reload} />
+          onRefresh={reload}
+          onSwitchLeague={(id) => { if (session.mode === "live") setSession({ ...session, leagueId: id }); }} />
       ) : <Landing onLive={(st) => setStart({ kind: "live", ...st })} onDemo={() => { setLeague(demoLeague()); setStart({ kind: "demo" }); }} />}
       {session.mode === "none" && start && (
         <FirstRun start={start} onClose={() => { setStart(null); setLeague(demoLeague()); }}

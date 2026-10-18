@@ -76,3 +76,4 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - One type family (Google Sans) for text and numbers; numbers use tabular figures. Micro labels are sentence case with no wide tracking.
 - Toasts: dark floating pill with a lime Undo. Back links: small soft pill.
 - Trade ideas end with "Won't work? Tell Sources why", which opens a sheet of reasons that become tags, untouchables, paused managers or a hidden idea.
+- Page header: section icon in a soft lime circle + title on one line, meta below. The top bar on phones is the league switcher (tap to change leagues). View tabs carry icons.
