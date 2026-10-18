@@ -4,6 +4,7 @@ import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, Y
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
+import { StartSit } from "./StartSit";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -298,6 +299,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           </div>
         )}
       </div>
+
+      <StartSit a={diff[0]?.start.id ?? flex?.player.id} b={diff[0]?.benched.id ?? bestBench?.id} />
 
       <div className="roster-grid">
         <section className="card" style={{ overflow: "hidden" }} aria-label="Your roster and tags">
