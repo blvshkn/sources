@@ -3764,3 +3764,8 @@ html:root:not(#_) .plat-logo.mono { display: inline-grid; place-items: center; b
 html:root:not(#_) .plat-name { display: inline-flex; align-items: center; gap: 0.3em; white-space: nowrap; }
 html:root:not(#_) :is(.btn, a.btn) .plat-logo { margin-right: 2px; }
 html:root:not(#_) .ld2-eyebrow .plat-logo { border-radius: 4px; }
+/* Trade: the "Trading with" picker fills the row. Section tabs: unselected ones sit on the same graphite as the roster switch */
+html:root:not(#_) .tr-bar { max-width: none; width: 100%; }
+html:root:not(#_) { --chip-bg: rgba(25, 28, 27, 0.88); }
+html:root:not(#_) .page-tabs > .seg { gap: 8px !important; }
+html:root:not(#_) .page-tabs > .seg button:not([aria-pressed="true"]) { background: var(--chip-bg) !important; }
