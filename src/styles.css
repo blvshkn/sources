@@ -3000,3 +3000,6 @@ html:root:not(#_) .wv-pos { display: flex !important; gap: 6px; padding: 0 16px 
 html:root:not(#_) .wv-pos button { flex: none; height: 36px; padding: 0 16px; border: 0 !important; border-radius: 999px !important; background: none !important; box-shadow: none !important; color: var(--muted); font-weight: 500; }
 html:root:not(#_) .wv-pos button[aria-pressed="true"] { background: var(--lime) !important; color: var(--action-ink) !important; font-weight: 600; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { right: -34px; top: -6px; color: rgba(var(--lime-rgb), 0.09); }
+/* Keep the decorative watermark inside the page so nothing scrolls sideways */
+html:root:not(#_) .page-head, html:root:not(#_) .lu-hero { overflow-x: clip; overflow-clip-margin: 0; }
+html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { right: -18px; }
