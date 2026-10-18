@@ -263,6 +263,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const go = (t: string, teamId?: string) => {
     if (!(TAB_IDS as string[]).includes(t)) return;
     if (teamId) { setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
+    // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
+    if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
     setTab(t as Tab);
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     if (t === "league" && teamId) window.setTimeout(() => document.getElementById(`team-${teamId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
