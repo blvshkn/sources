@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Phase, PosBadge, Stamp } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Phase, Stamp } from "./ui";
 import { Avatar } from "./Avatar";
+import { TeamAvatar } from "./TeamPicker";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -98,35 +99,47 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
   const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
   const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
   const chance = theirs !== null ? Math.round(phi((mine - theirs) / 34) * 100) : null;
+  const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
+  const need = you.groups[you.need].diff;
+  const Row = ({ t, pts, side }: { t: typeof YOU; pts: number; side: "you" | "them" }) => (
+    <div className={`sb2-row ${side}`}>
+      <TeamBadge t={t} side={side} />
+      <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
+      <span className="sb2-pts">{pts.toFixed(1)}</span>
+    </div>
+  );
   return (
-    <section className="card scoreboard" aria-label="This week">
-      <div className="sb-top">
-        <div className="sb-team"><TeamBadge t={YOU} side="you" /><span className="sb-name">{YOU.name}</span><span className="sb-rec">{YOU.record}</span></div>
-        <div className="sb-mid">
-          <span>Week {WEEK} projected</span>
-          <span className="numeral-row"><span className="numeral">{mine.toFixed(1)}</span>{theirs !== null && <><span className="vs">vs</span><span className="numeral">{theirs.toFixed(1)}</span></>}</span>
-        </div>
-        {opp ? (
-          <div className="sb-team"><TeamBadge t={opp} side="them" /><span className="sb-name">{opp.name}</span><span className="sb-rec">{opp.record}</span></div>
-        ) : (
-          <div className="sb-team"><span className="sb-badge them">#{you.rank}</span><span className="sb-name">Power rank</span><span className="sb-rec">of {TEAMS.length}</span></div>
-        )}
+    <section className="card sb2" aria-label="This week">
+      <header className="sb2-head">
+        <span>Week {WEEK} matchup</span>
+        <span>Projected</span>
+      </header>
+      <div className="sb2-rows">
+        <Row t={YOU} pts={mine} side="you" />
+        {opp && theirs !== null && <Row t={opp} pts={theirs} side="them" />}
       </div>
       {chance !== null && (
-        <div className="sb-chance" aria-label={`Win chance from projections: ${chance} percent`}>
-          <div className="sb-chance-bar"><span style={{ flex: chance }} /><span style={{ flex: 100 - chance }} /></div>
-          <div className="sb-chance-lbl"><span>{chance}% win chance</span><span>{100 - chance}%</span></div>
+        <div className="sb2-chance" aria-label={`Win chance from projections: ${chance} percent`}>
+          <div className="sb2-bar"><span style={{ width: `${chance}%` }} /></div>
+          <div className="sb2-chance-lbl">
+            <span><b>{chance}%</b> to win</span>
+            <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</span>
+          </div>
         </div>
       )}
-      <div className="sb-stats">
-        <div className="sb-stat"><b>#{you.rank}</b><span>Power rank of {TEAMS.length}</span></div>
-        <div className="sb-stat"><b><PosBadge pos={you.need} /><span className={you.groups[you.need].diff < 0 ? "delta down" : "delta up"}>{fmt(you.groups[you.need].diff)}</span></b><span>Thinnest spot</span></div>
-        {partner && onPartner ? (
-          <button className="sb-stat sb-stat-link" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
-            <b>{partner}</b><span>Best trade partner</span><Icon name="chev" />
-          </button>
-        ) : <div className="sb-stat"><b>{partner ?? "None yet"}</b><span>Best trade partner</span></div>}
-      </div>
+      <dl className="ti-stats sb2-stats">
+        <div className="ti-stat"><dt>Power rank</dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
+        <div className="ti-stat"><dt>Thinnest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
+      </dl>
+      {partner && onPartner ? (
+        <button className="sb2-partner" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
+          {pt && <TeamAvatar t={pt} size={36} />}
+          <span className="sb2-who"><small>Best trade partner</small><b>{partner}</b></span>
+          <span className="sb2-go">Build a deal<Icon name="chev" size={16} /></span>
+        </button>
+      ) : (
+        <p className="sb2-none">No clear trade partner yet.</p>
+      )}
     </section>
   );
 }
