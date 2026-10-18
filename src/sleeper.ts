@@ -39,7 +39,7 @@ interface STxn {
   type: "trade" | "waiver" | "free_agent" | "commissioner"; status: string; leg: number;
   roster_ids: number[]; adds: Record<string, number> | null; settings?: { waiver_bid?: number } | null;
 }
-interface SMatchup { roster_id: number; starters: string[] | null; starters_points: number[] | null }
+interface SMatchup { roster_id: number; matchup_id?: number | null; starters: string[] | null; starters_points: number[] | null }
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
 // ---- Public calls --------------------------------------------------------
@@ -111,10 +111,12 @@ export async function loadLeague(leagueId: string, userId: string, username: str
 
   onStep?.("Checking trades, waivers and past weeks");
   const weeks = Array.from({ length: week }, (_, i) => i + 1);
-  const [txnsByWeek, matchupsByWeek] = await Promise.all([
+  const [txnsByWeek, allMatchups] = await Promise.all([
     Promise.all(weeks.map((w) => get<STxn[]>(`/v1/league/${leagueId}/transactions/${w}`).catch(() => [] as STxn[]))),
-    Promise.all(weeks.slice(0, -1).map((w) => get<SMatchup[]>(`/v1/league/${leagueId}/matchups/${w}`).catch(() => [] as SMatchup[]))),
+    Promise.all(weeks.map((w) => get<SMatchup[]>(`/v1/league/${leagueId}/matchups/${w}`).catch(() => [] as SMatchup[]))),
   ]);
+  const matchupsByWeek = allMatchups.slice(0, -1);
+  const thisWeek = live ? allMatchups[allMatchups.length - 1] ?? [] : [];
   const txns = txnsByWeek.flat();
 
   // Players: names, teams and injuries come with the projections feed.
@@ -255,6 +257,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return { week: `${season} Wk ${t.leg}`, a: String(a), b: String(b), aGot: got(a), bGot: got(b) };
   });
 
+  // This week's opponent
+  const mine = thisWeek.find((m) => String(m.roster_id) === you.id);
+  const opp = mine?.matchup_id ? thisWeek.find((m) => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : undefined;
+
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
@@ -268,5 +274,6 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     byeTeams, teams, players, sleeperSet, slotHistory,
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)) },
     faabHistory, freeAgents, trades, offers: null, username, type: leagueType(league),
+    opponentId: opp ? String(opp.roster_id) : undefined,
   };
 }

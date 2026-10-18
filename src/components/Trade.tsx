@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
-import { Lineup, Trade as TradeT, eff, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
+import { Lineup, Trade as TradeT, eff, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
 import { AiLabel, Delta, Icon, PosBadge, Stamp, StatusPill } from "./ui";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
@@ -46,21 +46,39 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
   );
 }
 
-function CompareBars({ before, after, label }: { before: number; after: number; label: string }) {
-  const max = Math.max(before, after) * 1.02;
-  const min = Math.min(before, after) * 0.9;
-  const h = (v: number) => `${22 + ((v - min) / (max - min || 1)) * 74}%`;
+/** Apple Sports "team stats" layout: big net change per side, then each slot group with a two-color bar. */
+export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
+  const youAfter = groupPoints(lineupFor(rosterAfter(YOU, trade, "you")));
+  const themAfter = groupPoints(lineupFor(rosterAfter(them, trade, "them")));
+  const cls = (n: number) => (n >= 0.05 ? "up" : n <= -0.05 ? "down" : "flat");
   return (
-    <div className="compare-col">
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <span className="small" style={{ fontWeight: 600 }}>{label}</span>
-        <Delta n={Math.round((after - before) * 10) / 10} suffix="/wk" />
+    <div className="tc" aria-label={`You ${fmt(trade.youDelta)} a week, ${them.manager} ${fmt(trade.themDelta)} a week`}>
+      <div className="tc-head">
+        <div className="tc-side">
+          <span className="who"><i />You</span>
+          <span className={`numeral ${cls(trade.youDelta)}`}>{fmt(trade.youDelta)}</span>
+          <span className="sub">{trade.youBefore.toFixed(1)} to {trade.youAfter.toFixed(1)}</span>
+        </div>
+        <span className="tc-mid">pts / wk</span>
+        <div className="tc-side right">
+          <span className="who">{them.manager}<i /></span>
+          <span className={`numeral ${cls(trade.themDelta)}`}>{fmt(trade.themDelta)}</span>
+          <span className="sub">{trade.themBefore.toFixed(1)} to {trade.themAfter.toFixed(1)}</span>
+        </div>
       </div>
-      <div className="compare-bars" role="img" aria-label={`${label}: ${before.toFixed(1)} before, ${after.toFixed(1)} after`}>
-        <div className="cbar" style={{ height: h(before) }}>{before.toFixed(1)}</div>
-        <div className="cbar after" style={{ height: h(after) }}>{after.toFixed(1)}</div>
+      <div className="tc-rows">
+        {groupsFor().map((g) => {
+          const a = youAfter[g], b = themAfter[g];
+          return (
+            <div key={g} className="tc-row">
+              <span className="v">{a.toFixed(1)}</span>
+              <span className="lbl">{g === "SF" ? "Superflex" : g === "FLEX" ? "Flex" : g}</span>
+              <span className="v r">{b.toFixed(1)}</span>
+              <span className="tc-bar" aria-hidden="true"><span style={{ flex: Math.max(a, 0.1) }} /><span style={{ flex: Math.max(b, 0.1) }} /></span>
+            </div>
+          );
+        })}
       </div>
-      <div className="cbar-labels"><span>Now</span><span>After</span></div>
     </div>
   );
 }
@@ -174,10 +192,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
                 <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
               </div>
-              <div className="compare">
-                <CompareBars label="Your lineup" before={trade.youBefore} after={trade.youAfter} />
-                <CompareBars label={`${them.manager}'s lineup`} before={trade.themBefore} after={trade.themAfter} />
-              </div>
+              <TradeCompare trade={trade} them={them} />
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
               {received && counter && (
                 <div className="coach">

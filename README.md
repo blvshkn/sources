@@ -33,17 +33,16 @@ Everything in the product spec's MVP, plus v1 previews (marked **v1 preview** in
 
 ## Design
 
-Layout follows Apple's interface guidelines and the WWDC *Designing Fluid Interfaces* principles: instant press feedback, translucent bars, a pitch sheet that tracks your finger 1:1, carries your flick velocity, uses momentum projection to decide dismiss or snap back, and rubber-bands at the edge. Reduced motion, reduced transparency and increased contrast are all respected. Light and dark themes follow the system.
+The visual language follows Apple Sports: a near-black canvas (with a matching light mode), borderless rounded cards, big tabular numerals, pill-shaped controls and SF Pro type on Apple devices (Geist elsewhere). One brand accent, amber, plus a "you vs them" color pair for comparisons. Icons are Phosphor.
 
-Visual references gathered on Mobbin, plus American football broadcast conventions:
+Motion follows Apple's WWDC *Designing Fluid Interfaces* principles: instant press feedback, a pitch sheet on a real spring that you can grab mid-motion, momentum projection, rubber-banding, and reduced-motion, reduced-transparency and high-contrast fallbacks.
 
-- Lineup: an offensive formation on a gridiron with the blue line of scrimmage and yellow first-down line from TV broadcasts
-- Injury status pills: NFL
-- Clean data cards with bars: Copilot Money
-- Before/after comparison bars: Public
-- Bottom sheets: Fixtured, Noom
+References gathered on Mobbin:
 
-Type: Big Shoulders Display for headlines, Figtree for text, IBM Plex Mono for numbers. The amber "Per sources" stamp is the brand's signature.
+- Apple Sports: scoreboard header, two-color team stat bars (used for trade comparisons), centered card titles, pill segmented controls
+- Public and Slopes: the floating glass tab bar
+- Grammarly and Better Stack: the split landing hero with a sign-up field
+- American football broadcasts: the lineup drawn on a gridiron with the blue line of scrimmage and yellow first-down line
 
 ## Run it
 

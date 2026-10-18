@@ -396,6 +396,8 @@ export interface LeagueData {
   offers: Record<string, number> | null;
   username?: string;
   type?: "redraft" | "keeper" | "dynasty";
+  /** This week's opponent (team id), if the league has head-to-head matchups. */
+  opponentId?: string;
 }
 
 export let LEAGUE: LeagueData;
@@ -413,6 +415,7 @@ export let FAAB_HISTORY: BidTier[] = [];
 export let FREE_AGENTS: FreeAgent[] = [];
 export let COMPLETED_TRADES: PastTrade[] = [];
 export let OFFERS_RECEIVED: Record<string, number> | null = null;
+export let OPPONENT_ID: string | undefined;
 let byeTeams = new Set<string>();
 let leagueVersion = 0;
 
@@ -441,6 +444,7 @@ export function setLeague(d: LeagueData) {
   FREE_AGENTS = d.freeAgents;
   COMPLETED_TRADES = d.trades;
   OFFERS_RECEIVED = d.offers;
+  OPPONENT_ID = d.opponentId;
   byeTeams = new Set(d.byeTeams);
   leagueVersion++;
 }
@@ -458,7 +462,7 @@ export function demoLeague(): LeagueData {
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
-    trades: DEMO_TRADES, offers: DEMO_OFFERS, type: "redraft",
+    trades: DEMO_TRADES, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
   };
 }
 

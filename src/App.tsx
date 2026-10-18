@@ -13,7 +13,8 @@ import { Roster } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
-import { FirstRun } from "./components/FirstRun";
+import { FirstRun, FirstRunStart } from "./components/FirstRun";
+import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
 
 type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings";
@@ -291,11 +292,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
         <div className="league-pill"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></div>
         <nav className="nav" aria-label="Main">
           {TABS.filter((t) => t.main).map((t) => (
-            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} />{t.label}</button>
+            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} active={tab === t.id} />{t.label}</button>
           ))}
           <div className="nav-sep" />
           {TABS.filter((t) => !t.main).map((t) => (
-            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} />{t.label}</button>
+            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} active={tab === t.id} />{t.label}</button>
           ))}
         </nav>
         <p className="side-foot">{demo ? <>Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></> : <>Live from Sleeper as @{username}. {LEAGUE.updated}.</>}</p>
@@ -315,7 +316,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       <main className="main">
         <div className="main-inner" key={tab}>
           {tab === "wire" && (
-            <Wire you={youNeeds} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
+            <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")}
@@ -354,7 +355,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       <nav className="tabbar" aria-label="Main">
         {TABS.filter((t) => t.main).map((t) => (
           <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
-            <Icon name={t.icon} size={22} />{t.short}
+            <Icon name={t.icon} size={22} active={tab === t.id} />{t.short}
           </button>
         ))}
       </nav>
@@ -384,6 +385,7 @@ export default function App() {
   const [version, setVersion] = useState(0);
   const [initialMyTags, setInitialMyTags] = useState<Record<string, MyTag> | undefined>();
   const justLoaded = useRef(false);
+  const [start, setStart] = useState<FirstRunStart | null>(null);
 
   useEffect(() => {
     if (session.mode !== "live") {
@@ -438,11 +440,11 @@ export default function App() {
           onReconnect={() => setSession({ mode: "none" })}
           onDeleteAll={() => { store.clear(); setSession({ mode: "none" }); }}
           onRefresh={reload} />
-      ) : <div className="boot-backdrop" aria-hidden="true" />}
-      {session.mode === "none" && (
-        <FirstRun
-          onLive={(s, myTags) => { setInitialMyTags(myTags); justLoaded.current = true; setSession({ mode: "live", ...s }); }}
-          onDemo={(myTags) => { setInitialMyTags(myTags); setLeague(demoLeague()); setSession({ mode: "demo" }); }} />
+      ) : <Landing onLive={(st) => setStart({ kind: "live", ...st })} onDemo={() => { setLeague(demoLeague()); setStart({ kind: "demo" }); }} />}
+      {session.mode === "none" && start && (
+        <FirstRun start={start} onClose={() => { setStart(null); setLeague(demoLeague()); }}
+          onLive={(s, myTags) => { setInitialMyTags(myTags); justLoaded.current = true; setStart(null); setSession({ mode: "live", ...s }); }}
+          onDemo={(myTags) => { setInitialMyTags(myTags); setLeague(demoLeague()); setStart(null); setSession({ mode: "demo" }); }} />
       )}
     </>
   );
