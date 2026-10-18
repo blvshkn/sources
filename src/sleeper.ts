@@ -24,7 +24,7 @@ export interface SLeague {
   league_id: string; name: string; season: string; status: string; total_rosters: number; avatar?: string | null;
   roster_positions: string[];
   scoring_settings: Record<string, number>;
-  settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number;
+  settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number; playoff_teams?: number;
     reserve_allow_out?: number; reserve_allow_doubtful?: number; reserve_allow_sus?: number; reserve_allow_na?: number; reserve_allow_cov?: number; reserve_allow_dnr?: number };
 }
 interface SRoster {
@@ -469,7 +469,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games,
+    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

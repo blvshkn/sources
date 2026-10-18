@@ -486,6 +486,9 @@ export interface LeagueData {
   lineupOrder?: string[];
   /** Last fantasy week of the season. */
   lastWeek?: number;
+  /** Teams that make the playoffs, and the first playoff week (live leagues). */
+  playoffTeams?: number;
+  playoffStart?: number;
   /** This week's NFL game state per team from Sleeper's schedule. Teams missing are on bye. */
   games?: Record<string, GameState>;
   /** Taxi squad slots (dynasty), 0 if none. */
