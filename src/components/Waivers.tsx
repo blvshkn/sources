@@ -39,22 +39,22 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         const starts = top.gain > 0.05;
         const game = gameLine(PLAYERS[top.fa.id] ?? {});
         return (
-          <section className="card pick" aria-label="Top pickup">
-            <div className="pick-head"><span className="pick-label">Top pickup</span><AiLabel /></div>
-            <div className="pick-who">
+          <section className="card topk" aria-label="Top pickup">
+            <div className="topk-head"><span className="topk-label">Top pickup</span><AiLabel /></div>
+            <div className="topk-who">
               <Avatar p={top.fa} size={52} />
-              <div className="pick-id">
-                <h3 className="pick-name">{top.fa.name}</h3>
+              <div className="topk-id">
+                <h3 className="topk-name">{top.fa.name}</h3>
                 <span className="wv-meta"><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b>{top.fa.nfl}{game && <span className="lu-game">· {game}</span>}</span>
               </div>
             </div>
-            <dl className="pick-stats">
+            <dl className="topk-stats">
               <div><dt>This week</dt><dd>{top.fa.proj.toFixed(1)}</dd></div>
               <div><dt>Per week after</dt><dd>{top.value.toFixed(1)}</dd></div>
               <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid) : "Priority"}</dd></div>
             </dl>
-            {!/^Projects /.test(top.fa.why) && <p className="pick-why">{top.fa.why}</p>}
-            <ul className="pick-plan">
+            {!/^Projects /.test(top.fa.why) && <p className="topk-why">{top.fa.why}</p>}
+            <ul className="topk-plan">
               <li className={starts ? "good" : ""}><Icon name={starts ? "check" : "eye"} size={16} />
                 {starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench depth for now. Your starters don't change this week.</span>}
               </li>
@@ -64,7 +64,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   : <span>You have an open roster spot.</span>}
               </li>
             </ul>
-            <a className="btn btn-primary pick-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+            <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
               onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${top.drop && !irMove ? `, drop ${top.drop.name}` : ""}.`)}>
               Claim in Sleeper
             </a>
