@@ -1,5 +1,6 @@
-// Sources icon set: Lucide (ISC, lucide-icons/lucide @1ef60af) plus our own icons drawn on
-// the same 24px grid with a 2px round stroke so they sit in one family.
+import { MARK } from "./Logo";
+// Sources icon set: Lucide (ISC, lucide-icons/lucide @1ef60af) plus our own icons, drawn to match the
+// logo: a thin even 1.6px line, flat cut ends, round joins. Dots are tiny filled circles (flat ends hide them).
 // Add a Lucide icon by copying its <path>s from lucide.dev; add a custom one under CUSTOM.
 
 export type IconName =
@@ -15,7 +16,7 @@ const LUCIDE: Record<string, any> = {
   trophy: <><path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" /><path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" /><path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" /><path d="M4 22h16" /><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" /><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" /></>,
   values: <><path d="M16 7h6v6" /><path d="m22 7-8.5 8.5-5-5L2 17" /></>,
   activity: <><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></>,
-  tendencies: <><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M2 12a10 10 0 0 1 18-6" /><path d="M2 16h.01" /><path d="M21.8 16c.2-2 .131-5.354 0-6" /><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" /><path d="M8.65 22c.21-.66.45-1.32.57-2" /><path d="M9 6.8a6 6 0 0 1 9 5.2v2" /></>,
+  tendencies: <><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M14 13.12c0 2.38 0 6.38-1 8.88" /><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /><path d="M2 12a10 10 0 0 1 18-6" /><circle cx="2" cy="16" r="0.9" fill="currentColor" stroke="none" /><path d="M21.8 16c.2-2 .131-5.354 0-6" /><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" /><path d="M8.65 22c.21-.66.45-1.32.57-2" /><path d="M9 6.8a6 6 0 0 1 9 5.2v2" /></>,
   switch: <><path d="m7 15 5 5 5-5" /><path d="m7 9 5-5 5 5" /></>,
   plus: <><path d="M5 12h14" /><path d="M12 5v14" /></>,
   pen: <><path d="M13 21h8" /><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /></>,
@@ -29,7 +30,7 @@ const LUCIDE: Record<string, any> = {
   msg: <><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></>,
   send: <><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></>,
   share: <><path d="M12 2v13" /><path d="m16 6-4-4-4 4" /><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /></>,
-  alert: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></>,
+  alert: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" /></>,
   waivers: <><circle cx="12" cy="12" r="10" /><path d="M8 12h8" /><path d="M12 8v8" /></>,
   ask: <><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /><path d="M7 11h10" /><path d="M7 15h6" /><path d="M7 7h8" /></>,
   gear: <><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></>,
@@ -51,19 +52,16 @@ const CUSTOM: Record<string, Glyph> = {
     <path d="M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73" />
     <path d="M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2" />
   </>,
-  // Football: a pointed oval on the diagonal with a seam and laces.
-  roster: (a) => <g strokeWidth={a ? 2.4 : 2}>
-    <path d="M5.2 18.8c-2.5-2.5-1.9-8.1 1.9-11.9s9.4-4.4 11.9-1.9 1.9 8.1-1.9 11.9-9.4 4.4-11.9 1.9Z" />
-    <path d="m9.5 14.5 5-5M10.6 11.4l2 2M12.4 9.6l2 2" />
-  </g>,
+  // The logo mark itself: two parallel lanes folded into a football with an S seam.
+  roster: (a) => <g transform="translate(12 12) scale(0.235)" strokeWidth={(a ? 2.1 : 1.7) / 0.235}>{MARK.map((d) => <path key={d.slice(0, 12)} d={d} />)}</g>,
 };
 
-/** One icon family: Lucide plus Sources customs. The active tab thickens Lucide's stroke and fills customs. */
+/** One icon family matched to the logo. The active tab thickens the line a little. */
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   const custom = CUSTOM[name];
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active && !custom ? 2.4 : name === "helmet" ? 1.8 : 2}
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="ic">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : name === "helmet" ? 1.5 : 1.6}
+      strokeLinecap="butt" strokeLinejoin="round" aria-hidden="true" className="ic">
       {custom ? custom(active) : LUCIDE[name]}
     </svg>
   );
