@@ -57,9 +57,8 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
       </div>
       <div className="ti-read">
         {t.accept && <span className={`ti-odds ${tone}`}>{t.accept.label}<i>{Math.round(t.accept.p * 100)}%</i></span>}
-        <span className="ti-gain"><small>You</small><Delta n={t.youDelta} /></span>
-        <span className="ti-gain"><small>Them</small><Delta n={t.themDelta} /></span>
-        <small className="ti-unit">pts/wk</small>
+        <span className="ti-gain"><small>You</small><Delta n={t.youDelta} /><small>/wk</small></span>
+        <span className="ti-gain"><small>Them</small><Delta n={t.themDelta} /><small>/wk</small></span>
       </div>
       {reasons.length > 0 && <p className="ti-why">{reasons.join(". ")}.</p>}
       <div className="ti-actions">

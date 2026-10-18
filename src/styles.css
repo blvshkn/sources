@@ -1709,3 +1709,8 @@ p, .page-sub { max-width: 65ch; }
 .ti-unit { font-size: 0.75rem; color: var(--faint); margin-left: -8px; }
 .ti-why { margin: 0; }
 .ti-actions { padding-top: 2px; }
+.ti-gain { gap: 3px; }
+.ti-gain small:last-child { color: var(--faint); }
+.ti-read { flex-wrap: nowrap; gap: 12px; }
+.ti-arrow { margin: 16px 0 !important; }
+.ti-arrow svg { left: 18px !important; transform: translate(0, -50%) rotate(90deg) !important; }
