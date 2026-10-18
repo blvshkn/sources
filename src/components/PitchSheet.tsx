@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { Trade, fmt, needsFor } from "../engine";
 import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
+import { sleeperId } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 
 // Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
@@ -21,7 +22,6 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
   const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => res(i); i.onerror = () => res(null); i.src = src;
   window.setTimeout(() => res(null), 2500);
 });
-const sid = (id: string) => (/^\d+$/.test(id) ? id : null);
 
 /**
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
@@ -58,7 +58,7 @@ async function drawCard(t: Trade): Promise<Blob | null> {
   // Players
   const total = t.give.length + t.get.length;
   const rowH = total <= 3 ? 122 : total <= 4 ? 108 : 94, av = rowH - 30;
-  const imgs = await Promise.all([...t.give, ...t.get].map((id) => (sid(id) ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`) : Promise.resolve(null))));
+  const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = sleeperId(playerById(id)); return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
   let y = 440, k = 0;
   const side = (label: string, ids: string[], hot: boolean) => {
     g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); track(label, X, y, 4); y += 26;
