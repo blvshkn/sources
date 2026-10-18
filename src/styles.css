@@ -2125,3 +2125,10 @@ body::after {
   :root:not(#_) .tabbar.ix { background: color-mix(in srgb, var(--bg) 97%, transparent) !important; }
   :root:not(#_) .ix-w::before { top: 48%; bottom: 1px; background: linear-gradient(90deg, rgba(var(--tab-rgb), 0.5), rgba(var(--tab-rgb), 0.16)); }
 }
+@media (max-width: 860px) {
+  :root:not(#_) .tabbar.ix button { height: 60px; gap: 4px !important; }
+  :root:not(#_) .ix-ic { display: grid; place-items: center; height: 24px; color: var(--faint); transition: color 200ms ease, transform 300ms cubic-bezier(0.23, 1, 0.32, 1); }
+  :root:not(#_) .tabbar.ix button[aria-current="page"] .ix-ic { color: rgb(var(--tab-rgb)); transform: translateY(-1px); }
+  :root:not(#_) .ix-w { font-size: 0.8125rem !important; }
+}
+@media (max-width: 860px) { :root:not(#_) .tabbar.ix button[aria-current="page"] svg { color: rgb(var(--tab-rgb)) !important; } :root:not(#_) .tabbar.ix button svg { color: inherit; } }

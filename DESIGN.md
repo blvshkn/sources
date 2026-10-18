@@ -37,7 +37,9 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 - **Lineup rows:** a row that needs a change in Sleeper gets a pale yellow highlighter wash and a 2px caution rule, like a marked-up page
 - **Headshots:** round on margin gray, team badge with a paper ring
 - **Chrome:** paper-colored top bar, hairline edge, light blur only on fixed bars
-- **Thumb index (phone nav):** a full-width paper strip with no icons. Each section is a mono number (01 to 05) over its name. The active name gets a highlighter stroke in the section's color, and a short rule in that color slides along the top edge
+- **Thumb index (phone nav):** a full-width paper strip. Each section is an icon over its name; Lineup uses the custom helmet. The active name gets a highlighter stroke in the section's color, and a short rule in that color slides along the top edge
+
+- **Icons:** Lucide (ISC) plus Sources customs, all on a 24px grid with a 2px round stroke, in `src/components/icons.tsx`. Active tab thickens the stroke to 2.4; customs may fill. No second icon family
 
 ## 5. Layout Principles
 - Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main column, live wire rail

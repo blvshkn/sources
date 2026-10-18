@@ -24,7 +24,7 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "wire", label: "The Wire", short: "Wire", icon: "wire", main: true },
   { id: "league", label: "League Needs", short: "League", icon: "league", main: true },
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
-  { id: "roster", label: "Lineup", short: "Lineup", icon: "roster", main: true },
+  { id: "roster", label: "Lineup", short: "Lineup", icon: "helmet", main: true },
   { id: "waivers", label: "Waivers", short: "Waivers", icon: "waivers", main: true },
   { id: "ask", label: "Ask Sources", short: "Ask", icon: "ask", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
@@ -374,9 +374,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
         data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
         <span className="ix-rule" aria-hidden="true" />
-        {TABS.filter((t) => t.main).map((t, i) => (
+        {TABS.filter((t) => t.main).map((t) => (
           <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
-            <span className="ix-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+            <span className="ix-ic"><Icon name={t.icon} size={22} active={tab === t.id} /></span>
             <span className="ix-w">{t.short}</span>
           </button>
         ))}

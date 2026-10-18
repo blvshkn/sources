@@ -2,28 +2,9 @@ import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
 
-import {
-  Newspaper, SquaresFour, ArrowsLeftRight, Football, Check, X, LockSimple, Copy, ChatCircle, PaperPlaneTilt,
-  Export, Warning, PlusCircle, ChatTeardropText, GearSix, Microphone, CaretRight, UsersThree, AppWindow, Plug,
-  Trash, Sparkle, Clock, Eye, type Icon as PhosphorIcon,
-} from "@phosphor-icons/react";
-
-export type IconName =
-  | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
-  | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye";
-
-const ICONS: Record<IconName, PhosphorIcon> = {
-  wire: Newspaper, league: SquaresFour, trade: ArrowsLeftRight, roster: Football, check: Check, x: X, lock: LockSimple,
-  copy: Copy, msg: ChatCircle, send: PaperPlaneTilt, share: Export, alert: Warning, waivers: PlusCircle, ask: ChatTeardropText,
-  gear: GearSix, mic: Microphone, chev: CaretRight, group: UsersThree, app: AppWindow, plug: Plug, trash: Trash,
-  spark: Sparkle, clock: Clock, eye: Eye,
-};
-
-/** One icon family (Phosphor), one weight scale: regular by default, fill for the active tab. */
-export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
-  const C = ICONS[name];
-  return <C size={size} weight={active ? "fill" : name === "check" ? "bold" : "regular"} aria-hidden="true" />;
-}
+import { Icon } from "./icons";
+export { Icon };
+export type { IconName } from "./icons";
 
 export const PosBadge = ({ pos }: { pos: string }) => <span className={`pos pos-${pos}`}>{pos}</span>;
 
