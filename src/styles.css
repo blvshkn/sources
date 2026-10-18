@@ -1579,3 +1579,29 @@ p, .page-sub { max-width: 65ch; }
 .topk-cta { justify-self: stretch; justify-content: center; height: 44px !important; }
 @media (min-width: 861px) { .topk-cta { justify-self: start; padding: 0 22px; } }
 .topk-cta, .topk-cta:hover { text-decoration: none !important; }
+
+/* ---------- Trade partner dropdown ---------- */
+.tp { position: relative; display: grid; gap: 6px; max-width: 520px; }
+.tp-label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+.tp-btn { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 10px 14px 10px 10px; text-align: left; color: var(--ink); font: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms ease; }
+.tp-btn:active { transform: scale(0.99); }
+.tp-btn > svg { color: var(--muted); transform: rotate(90deg); transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.tp-btn[aria-expanded="true"] { border-color: var(--faint); }
+.tp-btn[aria-expanded="true"] > svg { transform: rotate(-90deg); }
+.tp-btn:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+.tp-who { display: grid; gap: 1px; min-width: 0; }
+.tp-who b { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-who small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-av { flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-2); }
+.tp-av-ini { display: grid; place-items: center; font-weight: 600; color: var(--muted); }
+.tp-list { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; max-height: min(60vh, 440px); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 12px 32px -12px rgba(20, 18, 14, 0.18); outline: none;
+  transform-origin: top center; animation: tp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes tp-in { from { opacity: 0; transform: scale(0.98) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .tp-list { animation: none; } .tp-btn > svg { transition: none; } }
+.tp-opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--r-inner); cursor: pointer; }
+.tp-opt.hi { background: var(--surface-2); }
+.tp-opt[aria-selected="true"] b { color: var(--ink); }
+.tp-opt > svg { color: var(--ink); }
+.tp-opt .tp-who b { font-size: 0.9375rem; }

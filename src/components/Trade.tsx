@@ -5,6 +5,7 @@ import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
+import { TeamPicker } from "./TeamPicker";
 
 function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -195,13 +196,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       </header>
 
-      <div className="partner-scroll" role="group" aria-label="Trade partner">
-        {TEAMS.filter((t) => !t.you).map((t) => (
-          <button key={t.id} className="partner" aria-pressed={t.id === partnerId} onClick={() => setPartner(t.id)}>
-            <b className="small">{t.name}</b><small>{t.manager} · {t.record}</small>
-          </button>
-        ))}
-      </div>
+      <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
 
       <p className="small tend-line"><Icon name="eye" size={14} /><span><b>{them.manager}:</b> {td.summary}</span></p>
 
