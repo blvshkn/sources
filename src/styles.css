@@ -2316,3 +2316,52 @@ button.st-row:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-of
 .sx-change { display: inline-flex; align-items: center; gap: 2px; font-size: 0.75rem; font-weight: 600; color: rgb(var(--tab-rgb)); }
 .sx-change svg { transform: rotate(90deg); }
 .sx-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+
+/* ---------- Scoreboard opens the matchup ---------- */
+button.sb2-open { display: grid; width: 100%; padding: 4px 8px; margin: -4px -8px; width: calc(100% + 16px); border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color 140ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+button.sb2-open:hover { background: var(--surface-2); }
+button.sb2-open:active { transform: scale(0.99); }
+button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: 2px; }
+.sb2-more { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; margin-top: 4px; font-size: 0.8125rem; font-weight: 600; color: rgb(var(--you-rgb)); }
+:root[data-tab="matchup"] { --tab-rgb: 201, 138, 43; }
+
+/* ---------- Matchup page ---------- */
+.mu-back { margin: 0 0 12px; }
+:root:not(#_) .mu { padding: 18px; display: grid; gap: 14px; }
+.mu-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; }
+.mu-side { display: grid; gap: 2px; }
+.mu-side span { font-size: 0.8125rem; color: var(--muted); }
+.mu-side b { font: 600 2.25rem/1 var(--font-body); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.mu-side.them { text-align: right; } .mu-side.them b { color: var(--muted); }
+.mu-mid { display: grid; justify-items: center; padding-bottom: 4px; }
+.mu-mid b { font-size: 1.125rem; font-weight: 700; } .mu-mid small { font-size: 0.75rem; color: var(--muted); }
+.mu-bar { height: 8px; border-radius: 8px; background: var(--surface-3); overflow: hidden; }
+.mu-bar span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, rgba(var(--you-rgb), 0.55), rgb(var(--you-rgb))); transition: width 420ms cubic-bezier(0.23, 1, 0.32, 1); }
+.mu-sum { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--muted); }
+.mu-sum b { color: var(--ink); font-weight: 600; }
+.mu-whatif { display: grid; gap: 10px; padding: 12px; border-radius: 12px; border: 1px solid rgba(var(--warn-rgb), 0.35); background: rgba(var(--warn-rgb), 0.08); font-size: 0.8125rem; color: var(--muted); }
+.mu-whatif b { display: block; color: var(--warn); font-size: 0.875rem; margin-bottom: 2px; }
+.mu-wbtn { display: flex; gap: 8px; justify-content: flex-end; }
+:root:not(#_) .mu-wbtn .btn { text-decoration: none; height: 36px !important; }
+.mu-th { display: grid; grid-template-columns: 56px 1fr; gap: 10px; font-size: 0.75rem; color: var(--muted); padding-top: 4px; }
+.mu-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.mu-slot { grid-column: 1; grid-row: 1; align-self: center; justify-self: start; font-size: 0.75rem; font-weight: 700; color: var(--muted); padding: 3px 8px; border-radius: 6px; background: var(--surface-2); }
+.mu-edge { grid-column: 1; grid-row: 2; align-self: center; justify-self: start; font-size: 0.8125rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+.mu-edge.up { color: var(--good); } .mu-edge.down { color: var(--bad); }
+.mu-mine, .mu-theirs, .mu-opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.mu-mine { grid-column: 2; grid-row: 1; width: 100%; padding: 6px 8px; margin: 0 -8px; width: calc(100% + 16px); border: 1px solid transparent; border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mu-mine:hover, .mu-row.open .mu-mine { background: var(--surface-2); border-color: var(--line); }
+.mu-theirs { grid-column: 2; grid-row: 2; padding: 6px 0 0; opacity: 0.72; }
+.mu-p { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; }
+.mu-p.empty { grid-template-columns: 1fr; }
+.mu-n { display: grid; gap: 1px; min-width: 0; }
+.mu-n b { font-size: 0.9375rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-n small { font-size: 0.75rem; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.mu-pts { font: 600 0.9375rem/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.mu-swap { grid-column: 1 / -1; display: grid; gap: 4px; margin-top: 10px; padding: 10px; border-radius: 10px; background: var(--surface-2); }
+.mu-swap > small { font-size: 0.75rem; color: var(--muted); padding: 0 4px 4px; }
+.mu-opt { grid-template-columns: minmax(0, 1fr) auto 48px; width: 100%; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mu-opt:hover { background: var(--surface); }
+.mu-delta { font-size: 0.8125rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.mu-delta.up { color: var(--good); } .mu-delta.down { color: var(--bad); }
+.mu-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--muted); }

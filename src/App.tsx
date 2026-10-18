@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
+import { Matchup } from "./components/Matchup";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
   counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
@@ -19,8 +20,8 @@ import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
 
-type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings";
-const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean }[] = [
+type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup";
+const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean; hidden?: boolean }[] = [
   { id: "wire", label: "The Wire", short: "Wire", icon: "wire", main: true },
   { id: "league", label: "League Needs", short: "League", icon: "league", main: true },
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
@@ -28,6 +29,7 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "waivers", label: "Waivers", short: "Waivers", icon: "waivers", main: true },
   { id: "ask", label: "Ask Sources", short: "Ask", icon: "ask", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
+  { id: "matchup", label: "Matchup", short: "Matchup", icon: "helmet", main: false, hidden: true },
 ];
 const TAB_IDS = TABS.map((t) => t.id);
 
@@ -319,7 +321,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
             ))}
           </div>
           <div className="nav-sep" />
-          {TABS.filter((t) => !t.main).map((t) => (
+          {TABS.filter((t) => !t.main && !t.hidden).map((t) => (
             <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
               <span className="ix-ic"><Icon name={t.icon} size={20} active={tab === t.id} /></span><span className="ix-w">{t.short}</span>
             </button>
@@ -349,6 +351,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
               onCapture={() => go("league")}
               onKeepTag={keepTag} onClearTag={clearTag} />
           )}
+          {tab === "matchup" && <Matchup onBack={() => go("wire")} />}
           {tab === "league" && (
             <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />

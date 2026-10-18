@@ -47,7 +47,7 @@ export const slotsFor = (): SlotName[] => {
   return FORMAT.superflex ? [...base, ...Array<SlotName>(Math.max(1, sf)).fill("SF")] : base;
 };
 const FLEX_OK: Pos[] = ["RB", "WR", "TE"];
-const fits = (slot: SlotName, pos: Pos) =>
+export const fits = (slot: SlotName, pos: Pos) =>
   slot === "FLEX" ? FLEX_OK.includes(pos) : slot === "SF" ? true : pos === slot;
 export const rosterMax = () => LEAGUE.rosterMax;
 

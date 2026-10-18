@@ -96,7 +96,7 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 }
 
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
-export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partner: string | null; onPartner?: () => void }) {
+export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
   const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
@@ -104,11 +104,11 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
   const Row = ({ t, pts, side }: { t: typeof YOU; pts: number; side: "you" | "them" }) => (
-    <div className={`sb2-row ${side}`}>
+    <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
       <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       <span className="sb2-pts">{pts.toFixed(1)}</span>
-    </div>
+    </span>
   );
   return (
     <section className="card sb2" aria-label="This week">
@@ -116,13 +116,14 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
         <span>Week {WEEK} matchup</span>
         <span>Projected</span>
       </header>
-      <div className="sb2-rows">
+      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label="Open this week's matchup">
         <Row t={YOU} pts={mine} side="you" />
         {opp && theirs !== null && <>
-          <div className="sb2-div" aria-hidden="true"><span>vs</span></div>
+          <span className="sb2-div" aria-hidden="true"><span>vs</span></span>
           <Row t={opp} pts={theirs} side="them" />
         </>}
-      </div>
+        {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
+      </button>
       {chance !== null && (
         <div className="sb2-chance" aria-label={`Win chance from projections: ${chance} percent`}>
           <div className="sb2-bar"><span style={{ width: `${chance}%` }} /></div>
@@ -260,7 +261,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </div>
       </header>
 
-      <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} />
+      <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} onMatchup={() => onGo("matchup")} />
 
       <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
