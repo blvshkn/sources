@@ -242,11 +242,22 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           <h1 className="page-title">Lineup</h1>
           <p className="page-meta">Week {WEEK} · {UPDATED}</p>
         </div>
-        <div className="lu-score" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
-          <div className="lu-side"><span className="lu-who-l"><i className="you" />You</span><span className="numeral">{myTotal.toFixed(1)}</span></div>
+        <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
+          <div className="lu-mx-side you">
+            <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
+            <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
+            <small>Your best lineup</small>
+          </div>
           {opp && <>
-            <span className="lu-vs">{chance}%<small>win</small></span>
-            <div className="lu-side r"><span className="lu-who-l">{opp.manager}<i className="them" /></span><span className="numeral dim">{oppTotal!.toFixed(1)}</span></div>
+            <div className="lu-mx-mid" aria-hidden="true">
+              <b>{chance}%</b><small>to win</small>
+              <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
+            </div>
+            <div className="lu-mx-side them">
+              <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
+              <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
+              <small>{opp.manager}</small>
+            </div>
           </>}
         </div>
       </header>
