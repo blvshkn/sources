@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID, Player, onBye } from "../data";
-import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff } from "../engine";
+import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -101,7 +101,7 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 }
 
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
-export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void }) {
+export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
   const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
@@ -146,6 +146,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNe
         )}
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
       </button>
+      {extras && <>
       <dl className="ti-stats sb2-stats">
         <div className="ti-stat"><dt>Power rank</dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
         <div className="ti-stat"><dt>Weakest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
@@ -159,6 +160,65 @@ export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNe
       ) : (
         <p className="sb2-none">No clear trade partner yet.</p>
       )}
+      </>}
+    </section>
+  );
+}
+
+/** Where your team is thin and who can fix it: power rank, weakest slots, best trade partner. Each row opens the right screen. */
+function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: string | null; partnerId: string | null; onGo: (t: string, teamId?: string) => void }) {
+  const need = you.groups[you.need].diff;
+  const pt = partnerId ? teamById(partnerId) : undefined;
+  const short = weakSlots().slice(0, 2);
+  return (
+    <section className="card wk imp" aria-label="Where to improve">
+      <div className="wk-head"><h2 className="section-title">Where to improve</h2></div>
+      <button className="wk-row" onClick={() => onGo("league")}>
+        <span className="imp-k">Power rank</span>
+        <span className="wk-name">#{you.rank} of {TEAMS.length}<small>See the standings and every team's values</small></span>
+        <Icon name="chev" size={16} />
+      </button>
+      <button className="wk-row" onClick={() => onGo("roster:slots")}>
+        <span className="imp-k">Weakest spot</span>
+        <span className="wk-name"><span>{you.need} <em className={need < 0 ? "down" : "up"}>{fmt(need)}</em></span><small>{short.length ? short.map((w) => `${w.slot} short ${w.misses} of ${w.weeks} weeks`).join(" · ") : "Compared with the league's starters"}</small></span>
+        <Icon name="chev" size={16} />
+      </button>
+      {partner && partnerId ? (
+        <button className="wk-row" onClick={() => onGo("trade", partnerId)}>
+          <span className="imp-k">Trade partner</span>
+          <span className="wk-name imp-who">{pt && <TeamAvatar t={pt} size={28} />}<span>{partner}<small>Has what you need at {you.need}. Build a deal</small></span></span>
+          <Icon name="chev" size={16} />
+        </button>
+      ) : <p className="small muted">No clear trade partner yet.</p>}
+    </section>
+  );
+}
+
+const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
+
+/** The opponent's three biggest projections, with live points once their games start. */
+function Threats({ onGo }: { onGo: (t: string) => void }) {
+  const live = useLive();
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  if (!opp) return null;
+  const threats = (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
+  if (!threats.length) return null;
+  const Pts = ({ p }: { p: Player }) => {
+    const g = live.games[p.nfl] ?? null;
+    if (g === "in_game") return <span className="wk-pts live">{(live.points[p.id] ?? 0).toFixed(1)}</span>;
+    if (g === "complete") return <span className="wk-pts">{(live.points[p.id] ?? 0).toFixed(1)}<small>final</small></span>;
+    return <span className="wk-pts muted">{eff(p, true).toFixed(1)}</span>;
+  };
+  return (
+    <section className="card wk" aria-label="Opponent threats">
+      <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
+      {threats.map((p) => (
+        <button key={p.id} className="wk-row" onClick={() => onGo("matchup")}>
+          <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+          <span className="wk-name">{p.name}<small>{p.nfl} {vsOf(p)}</small></span>
+          <Pts p={p} />
+        </button>
+      ))}
     </section>
   );
 }
@@ -175,7 +235,6 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const hurt = (ps: Player[]) => ps.filter((p) => p.status && !onBye(p.nfl));
   const detail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
-  const threats = [...theirs].sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
   const dates = [DEADLINES.lock, DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
   const Pts = ({ p }: { p: Player }) => {
     const g = live.games[p.nfl] ?? null;
@@ -193,7 +252,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
             {ps.map((p) => (
               <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
                 <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-                <span className="wk-name">{p.name}<small>{p.nfl}{p.opp ? ` ${p.opp.replace(/^v\s/, "v ")}` : ""}</small></span>
+                <span className="wk-name">{p.name}<small>{p.nfl} {vsOf(p)}</small></span>
                 <Pts p={p} />
               </button>
             ))}
@@ -212,16 +271,6 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
         ))}
       </section>
 
-      {opp && threats.length > 0 && <section className="card wk" aria-label="Opponent threats">
-        <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
-        {threats.map((p) => (
-          <button key={p.id} className="wk-row" onClick={() => onGo("matchup")}>
-            <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-            <span className="wk-name">{p.name}<small>{p.nfl}{p.opp ? ` ${p.opp}` : ""}</small></span>
-            <Pts p={p} />
-          </button>
-        ))}
-      </section>}
 
       {dates.length > 0 && <section className="card wk" aria-label="Key dates">
         <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
@@ -342,13 +391,13 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </div>
       </header>
 
-      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Matchup", icon: "group" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
+      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Overview", icon: "app" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
 
-      {view === "matchup" && <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} onMatchup={() => onGo("matchup")} />}
+      {view === "matchup" && <Scoreboard you={you} partner={partner} extras={false} onMatchup={() => onGo("matchup")} />}
 
-      {view === "week" && <section className="card briefing" aria-label="Weekly briefing">
+      {view === "matchup" && <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
-          <div className="row"><h2 className="section-title">This week</h2><Phase v="v1" /></div>
+          <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
           <span className="tiny muted">{UPDATED}</span>
         </div>
         <button className="brief-row" onClick={() => onGo("roster")}>
@@ -363,6 +412,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
         </button>
       </section>}
+      {view === "matchup" && <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />}
+      {view === "matchup" && <Threats onGo={onGo} />}
       {view === "week" && <WeekMore onGo={onGo} />}
 
       {view === "intel" && <>

@@ -3303,3 +3303,50 @@ html:root:not(#_) .wv-off .wv-row, html:root:not(#_) .wv-dim .wv-row { opacity: 
 html:root:not(#_) .wv-off .wv-row { cursor: default; }
 html:root:not(#_) .wv-rank svg { color: var(--muted); }
 html:root:not(#_) .wv-ta-n mark { padding: 0 !important; margin: 0 !important; border-radius: 0; display: inline; }
+/* ---- Slot report detail ---- */
+html:root:not(#_) .sr-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 18px 0 0; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html:root:not(#_) .sr-sum > div { display: grid; gap: 6px; padding: 0 12px; }
+html:root:not(#_) .sr-sum > div:first-child { padding-left: 0; }
+html:root:not(#_) .sr-sum > div + div { border-left: 1px solid var(--line); }
+html:root:not(#_) .sr-sum dt { font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_) .sr-sum dd { margin: 0; display: flex; align-items: baseline; gap: 6px; font: 600 1.25rem/1 var(--font-mono); }
+html:root:not(#_) .sr-sum small { font: 600 0.8125rem/1 var(--font-mono); }
+html:root:not(#_) .slot-report .up { color: var(--good, #6BD58A); }
+html:root:not(#_) .slot-report .down { color: #FF7A66; }
+html:root:not(#_) .sr-list { margin-top: 8px; }
+html:root:not(#_) .sr-list-head, html:root:not(#_) .sr-main { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 16px; align-items: center; gap: 8px; }
+html:root:not(#_) .sr-list-head { padding: 10px 0 6px; font: 500 0.625rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .sr-list-head span:not(:first-child) { text-align: right; }
+html:root:not(#_) .sr-list-head::after { content: ""; }
+html:root:not(#_) .sr-row { border-top: 1px solid var(--line); }
+html:root:not(#_) .sr-main { width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; transition: transform 120ms ease-out; }
+html:root:not(#_) .sr-main:active { transform: scale(0.99); }
+html:root:not(#_) .sr-main > svg { color: var(--muted); transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_) .sr-row.open .sr-main > svg { transform: rotate(90deg); }
+html:root:not(#_) .sr-slot { display: flex; align-items: baseline; gap: 8px; font-weight: 600; font-size: 0.9375rem; }
+html:root:not(#_) .sr-slot small { font: 600 0.75rem/1 var(--font-mono); }
+html:root:not(#_) .sr-num { font: 600 0.9375rem/1 var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+html:root:not(#_) .sr-beat { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; font: 600 0.9375rem/1 var(--font-mono); }
+html:root:not(#_) .sr-beat i { font-style: normal; color: var(--muted); }
+html:root:not(#_) .sr-detail { display: grid; gap: 12px; padding: 4px 0 16px; animation: sr-in 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes sr-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) .sr-detail { animation: none; } }
+html:root:not(#_) .sr-weeks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+html:root:not(#_) .sr-weeks > span { display: grid; gap: 3px; justify-items: center; padding: 8px 2px; border-radius: 10px; background: var(--surface-2); }
+html:root:not(#_) .sr-weeks i { font: 500 0.625rem/1 var(--font-mono); font-style: normal; color: var(--muted); }
+html:root:not(#_) .sr-weeks b { font: 600 0.875rem/1 var(--font-mono); }
+html:root:not(#_) .sr-weeks small { font: 400 0.5625rem/1 var(--font-mono); color: var(--muted); }
+html:root:not(#_) .sr-weeks > span.up b { color: var(--lime); }
+html:root:not(#_) .sr-weeks > span.down b { color: #FF7A66; }
+html:root:not(#_) .sr-now { display: grid; gap: 8px; }
+html:root:not(#_) .sr-now-p { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 8px; font-size: 0.9375rem; }
+html:root:not(#_) .sr-now-p .lu-pos { font-size: 0.75rem; }
+html:root:not(#_) .sr-now-vs { font-size: 0.8125rem; }
+/* Where to improve */
+html:root:not(#_) .imp-k { flex: none; width: 96px; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_) .imp em { font: 600 0.875rem/1 var(--font-mono); font-style: normal; }
+html:root:not(#_) .imp em.down { color: #FF7A66; } html:root:not(#_) .imp em.up { color: var(--good, #6BD58A); }
+html:root:not(#_) .imp-who { display: flex !important; align-items: center; gap: 10px; }
+html:root:not(#_) .imp-who > span { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_) .imp .wk-row > svg { flex: none; color: var(--muted); }
+html:root:not(#_) .imp .wk-name small { white-space: normal; }

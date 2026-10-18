@@ -165,14 +165,26 @@ function WeekPanel({ v }: { v: WeekView }) {
   );
 }
 
-function SlotReport() {
+function SlotReport({ lineup }: { lineup: Lineup }) {
   const max = Math.max(...SLOT_HISTORY.flatMap((h) => [...h.you, ...h.avg]));
   const weak = weakSlots();
+  const [openSlot, setOpenSlot] = useState<string | null>(null);
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  const rows = SLOT_HISTORY.map((h) => {
+    const you = mean(h.you), lg = mean(h.avg), n = h.you.length, half = Math.max(1, Math.floor(n / 2));
+    const now = lineup.slots.filter((x) => x.slot === h.slot && x.player).map((x) => x.player!) as Player[];
+    return { h, you, lg, gap: you - lg, above: h.you.filter((v, i) => v >= h.avg[i]).length, n,
+      best: Math.max(...h.you), worst: Math.min(...h.you), trend: mean(h.you.slice(-half)) - mean(h.you.slice(0, half)),
+      now, nowProj: now.reduce((a, p) => a + eff(p, true), 0) };
+  });
+  const total = rows.reduce((a, r) => a + r.gap, 0);
+  const ranked = [...rows].sort((a, b) => b.gap - a.gap);
+  const weeks = SLOT_HISTORY[0]?.you.length ?? 0;
   return (
     <section className="card card-pad slot-report">
       <div className="row wrap" style={{ justifyContent: "space-between" }}>
         <h2 className="section-title">Slot report</h2>
-        <span className="tiny muted">Weeks 1 to 6 · you vs league average</span>
+        <span className="tiny muted">Weeks 1 to {weeks} · you vs league average</span>
       </div>
       {weak.length > 0 && (
         <p className="small"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} pts a week). Trade ideas target it.</p>
@@ -196,6 +208,45 @@ function SlotReport() {
         })}
       </div>
       <div className="legend"><span className="row"><span className="lg-sw you" />You</span><span className="row"><span className="lg-sw under" />Below avg</span><span className="row"><span className="lg-line" />League avg</span></div>
+
+      {rows.length > 0 && <dl className="sr-sum">
+        <div><dt>Vs league</dt><dd className={total >= 0 ? "up" : "down"}>{fmt(Math.round(total * 10) / 10)}</dd></div>
+        <div><dt>Strongest</dt><dd>{ranked[0].h.slot}<small className="up">{fmt(Math.round(ranked[0].gap * 10) / 10)}</small></dd></div>
+        <div><dt>Weakest</dt><dd>{ranked[ranked.length - 1].h.slot}<small className={ranked[ranked.length - 1].gap >= 0 ? "up" : "down"}>{fmt(Math.round(ranked[ranked.length - 1].gap * 10) / 10)}</small></dd></div>
+      </dl>}
+
+      <div className="sr-list">
+        <div className="sr-list-head"><span>Slot</span><span>You</span><span>League</span><span>Beat avg</span></div>
+        {rows.map((r) => {
+          const isOpen = openSlot === r.h.slot;
+          return (
+            <div key={r.h.slot} className={`sr-row${isOpen ? " open" : ""}`}>
+              <button className="sr-main" onClick={() => setOpenSlot(isOpen ? null : r.h.slot)} aria-expanded={isOpen}>
+                <span className={`sr-slot${r.gap < 0 ? " down" : ""}`}>{r.h.slot}<small className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</small></span>
+                <span className="sr-num">{r.you.toFixed(1)}</span>
+                <span className="sr-num muted">{r.lg.toFixed(1)}</span>
+                <span className="sr-beat">{r.above}/{r.n}<i className={r.trend >= 0.5 ? "up" : r.trend <= -0.5 ? "down" : ""} aria-label={r.trend >= 0.5 ? "trending up" : r.trend <= -0.5 ? "trending down" : "steady"}>{r.trend >= 0.5 ? "↑" : r.trend <= -0.5 ? "↓" : "→"}</i></span>
+                <Icon name="chev" size={14} />
+              </button>
+              {isOpen && (
+                <div className="sr-detail">
+                  <div className="sr-weeks">
+                    {r.h.you.map((v, i) => (
+                      <span key={i} className={v >= r.h.avg[i] ? "up" : "down"}><i>W{i + 1}</i><b>{v.toFixed(1)}</b><small>avg {r.h.avg[i].toFixed(1)}</small></span>
+                    ))}
+                  </div>
+                  <p className="small muted">Best week {r.best.toFixed(1)}, worst {r.worst.toFixed(1)}. {r.trend >= 0.5 ? `Up ${r.trend.toFixed(1)} a week lately.` : r.trend <= -0.5 ? `Down ${Math.abs(r.trend).toFixed(1)} a week lately.` : "Holding steady."}</p>
+                  {r.now.length > 0 && <div className="sr-now">
+                    <span className="eyebrow">Starting this week</span>
+                    {r.now.map((p) => <span key={p.id} className="sr-now-p"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><span className="sr-num">{eff(p, true).toFixed(1)}</span></span>)}
+                    <span className={`sr-now-vs ${r.nowProj >= r.lg ? "up" : "down"}`}>{r.nowProj.toFixed(1)} projected vs {r.lg.toFixed(1)} league average</span>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -467,7 +518,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         })}
       </section>}
 
-      {view === "slots" && <SlotReport />}
+      {view === "slots" && <SlotReport lineup={lineup} />}
     </>
   );
 }
