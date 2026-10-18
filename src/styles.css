@@ -2516,3 +2516,72 @@ html:root:not(#_) .lu-hero { flex-direction: column; align-items: stretch; gap: 
   .lu-mx-who { font-size: 0.8125rem; }
 }
 .lu-mx-who > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ==== Screen audit fixes ======================================================= */
+/* Nav: the highlighter smudge under the active label read as a muddy block on the night field.
+   The lime rule and lime icon already mark the active tab. */
+html:root:not(#_) .ix-w::before { display: none !important; }
+html:root:not(#_) .nav-ix button[aria-current="page"] .ix-w, html:root:not(#_) .tabbar.ix button[aria-current="page"] .ix-w { color: var(--ink); font-weight: 600; }
+
+/* League team cards: two roomy columns instead of three cramped ones that clipped names and "/wk" */
+html:root:not(#_) .needs-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+
+/* Trading-with facts: neutral chips, the lime outline made them look like warnings */
+html:root:not(#_) .tp-facts li { background: var(--surface-3) !important; border: 1px solid var(--line) !important; color: var(--ink); font-weight: 500; border-radius: 999px; padding: 6px 12px; }
+
+/* Trade ideas: when the card is wide, send and get sit side by side */
+.ti { container-type: inline-size; }
+@container (min-width: 600px) {
+  html:root:not(#_) .tx { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+  html:root:not(#_) .tx-swap { top: 50% !important; }
+  html:root:not(#_) .tx-swap svg { transform: none; }
+}
+
+/* Matchup page header: same scoreboard language as the Lineup strip */
+html:root:not(#_) .mu-score { align-items: center; gap: 12px; }
+html:root:not(#_) .mu-side span { font-size: 0.8125rem; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .mu-side b { font: 600 clamp(2rem, 1.4rem + 2.4vw, 2.75rem)/1 var(--font-display); letter-spacing: -0.035em; margin-top: 4px; }
+html:root:not(#_) .mu-mid { padding: 0; min-width: 64px; }
+html:root:not(#_) .mu-mid b { font: 600 1.25rem/1 var(--font-display); }
+html:root:not(#_) .mu-bar { height: 6px; background: rgba(255, 255, 255, 0.08); margin-top: 14px; }
+html:root:not(#_) .mu-bar span { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
+/* Start/Sit compare: losing side in chalk, winning side in lime with dark ink */
+html:root:not(#_) .sx-bar { background: rgba(255, 255, 255, 0.04); }
+html:root:not(#_) .sx-bar i { background: rgba(255, 255, 255, 0.12); }
+html:root:not(#_) .sx-bar.win i { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.75), var(--lime)); }
+html:root:not(#_) .sx-bar.a.win i { background: linear-gradient(270deg, rgba(var(--lime-rgb), 0.75), var(--lime)); }
+html:root:not(#_) .sx-bar.win b { color: var(--action-ink); }
+@container (min-width: 600px) {
+  html:root:not(#_) .tx-side.send { grid-column: 1; grid-row: 1; }
+  html:root:not(#_) .tx-side.get { grid-column: 2; grid-row: 1; }
+}
+
+/* ==== Tone down =================================================================
+   Lime is for the few things that should pop: your score, the active tab, the one main action on a
+   screen, and gains. Everything else steps back to chalk so those moments read first. */
+body::after {
+  background:
+    radial-gradient(70vw 46vh at 92% -8%, rgba(var(--lime-rgb), 0.08), transparent 68%),
+    repeating-linear-gradient(180deg, transparent 0 119px, rgba(255, 255, 255, 0.018) 119px 120px) !important;
+}
+html:root:not(#_) .btn-primary, html:root:not(#_) .btn-primary:hover, html:root:not(#_) .btn-primary:active { box-shadow: none; }
+/* Repeated actions inside lists and cards get a tinted button; the page's main action stays solid */
+html:root:not(#_) .ti .btn-primary, html:root:not(#_) .ti .btn-primary:hover, html:root:not(#_) .ti .btn-primary:active,
+html:root:not(#_) .mu-whatif .btn-primary {
+  background: rgba(var(--lime-rgb), 0.10) !important; color: var(--lime) !important; border-color: rgba(var(--lime-rgb), 0.28) !important;
+}
+@media (hover: hover) { html:root:not(#_) .ti .btn-primary:hover { background: rgba(var(--lime-rgb), 0.16) !important; } }
+/* Labels and links in chalk, not lime */
+html:root:not(#_) .stamp { color: var(--muted); background: none; }
+html:root:not(#_) .sb2-go, html:root:not(#_) .sb2-more { color: var(--ink); }
+html:root:not(#_) .sb2-go svg, html:root:not(#_) .sb2-more svg { color: var(--muted); }
+/* Start/Sit: neutral panel, only the gain pops */
+html:root:not(#_) .ss:not(.ok) { border-color: var(--line); background: var(--surface-2); }
+/* Scoreboards: a hint of light on your side, not a wash */
+html:root:not(#_) .lu-mx { background: radial-gradient(80% 120% at 0% 0%, rgba(var(--lime-rgb), 0.05), transparent 55%), var(--surface); }
+html:root:not(#_) .lu-mx-who i { box-shadow: none; }
+html:root:not(#_) .scoreboard, html:root:not(#_) .lu-score { background: linear-gradient(100deg, rgba(var(--lime-rgb), 0.05), transparent 45%), var(--surface) !important; }
+html:root:not(#_) .lu-row.has-swap { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.07), transparent 70%) !important; }
+html:root:not(#_) .tp-scout { background: var(--surface-2) !important; }
+html:root:not(#_) .tp-facts { flex-direction: row; flex-wrap: wrap; }
+html:root:not(#_) .tp-facts li { width: auto; }

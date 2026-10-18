@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
+import { usePullToDismiss } from "./sheetDrag";
 import { Trade, fmt, needsFor } from "../engine";
 import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
@@ -196,9 +197,14 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
     const v = b.t - a.t > 0 ? ((b.y - a.y) / (b.t - a.t)) * 1000 : 0; // px/s
     drag.current = null;
     const landing = yRef.current + project(v);
-    if (landing > height() * 0.5) dismiss(v);
+    if (landing > Math.min(height() * 0.35, 240)) dismiss(v);
     else springTo(0, 0.8, 0.3, v); // a flick earns a little bounce
   };
+
+  // Pull down from anywhere on the sheet once it's scrolled to the top
+  usePullToDismiss(sheet,
+    (y) => { cancelAnimationFrame(raf.current); closing.current = false; apply(y); },
+    (y, v) => { if (y + project(v) > Math.min(height() * 0.35, 240)) dismiss(v); else springTo(0, 0.8, 0.3, v); });
 
   const copy = async (): Promise<boolean> => {
     try { await navigator.clipboard.writeText(text); return true; } catch { textRef.current?.select(); return false; }

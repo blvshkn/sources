@@ -3,6 +3,7 @@ import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
 import { eff, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
+import { usePullToDismiss } from "./sheetDrag";
 
 /** Your past weekly points for this player, from the matchups Sleeper has on record. */
 const weekly = (p: Player) => Object.keys(LEAGUE.history ?? {}).map(Number).filter((w) => w < WEEK).sort((a, b) => a - b)
@@ -21,7 +22,22 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
   }, []);
-  const close = () => { setShown(false); window.setTimeout(onClose, 200); };
+  const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setShown(false); window.setTimeout(onClose, 220); };
+  const sheet = useRef<HTMLElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
+  // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it
+  usePullToDismiss(sheet,
+    (y) => {
+      if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }
+      if (scrim.current) { scrim.current.style.transition = "none"; scrim.current.style.opacity = String(Math.max(0, 1 - y / 400)); }
+    },
+    (y, v) => {
+      if (y > 120 || v > 700) close();
+      else {
+        if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
+        if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
+      }
+    });
 
   const games = weekly(p);
   const avg = games.length ? round1(games.reduce((a, g) => a + g.pts, 0) / games.length) : null;
@@ -30,8 +46,8 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
 
   return (
     <div className={`ps-wrap${shown ? " in" : ""}`}>
-      <div className="ps-scrim" onClick={close} aria-hidden="true" />
-      <section className="ps" role="dialog" aria-modal="true" aria-labelledby="ps-name">
+      <div ref={scrim} className="ps-scrim" onClick={close} aria-hidden="true" />
+      <section ref={sheet} className="ps" role="dialog" aria-modal="true" aria-labelledby="ps-name">
         <span className="ps-handle" aria-hidden="true" />
         <header className="ps-head">
           <Avatar p={p} size={56} />

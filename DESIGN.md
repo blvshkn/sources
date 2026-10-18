@@ -69,3 +69,5 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Floodlight lime #D8F24A is the one accent: you, primary actions, your next move. Anything on lime uses dark ink #0D1311.
 - Gains mint #7BE08F, warnings #F2BE55, losses #FF8473. Turf #1F6B47 for brand moments.
 - Every tab shares the lime section light. The shareable trade card and the app always match.
+- Lime is rationed: your score and dot, the active tab, the one main action per screen, gains. Repeated actions in lists use the tinted lime button. Labels, links and panels stay in chalk.
+- Sheets: pull down from anywhere once scrolled to the top, or tap outside, to dismiss. No confirmation step unless an action can't be undone.

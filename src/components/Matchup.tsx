@@ -71,7 +71,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
       <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>
       <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
         <header className="mu-score">
-          <div className="mu-side you"><span>You · {changed ? "what-if" : "as set in Sleeper"}</span><b>{myTotal.toFixed(1)}</b></div>
+          <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span><b>{myTotal.toFixed(1)}</b></div>
           <div className="mu-mid"><b>{chance}%</b><small>to win</small></div>
           <div className="mu-side them"><span>{opp.manager}</span><b>{oppTotal.toFixed(1)}</b></div>
         </header>
