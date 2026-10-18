@@ -1748,3 +1748,63 @@ p, .page-sub { max-width: 65ch; }
 .team-trade svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 @media (hover: hover) { .team-trade:hover svg { transform: translateX(2px); } }
 .team-trade:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; border-radius: 4px; }
+
+/* ==== Gradients with meaning ===================================================
+   Light that tells you where you are and what matters. Every gradient maps to a
+   role: section, your side, a gain, strength. No gradient text, no decoration. */
+:root:not(#_) {
+  --you-rgb: 31, 108, 159; --good-rgb: 52, 101, 56; --warn-rgb: 149, 100, 0; --them-rgb: 120, 118, 112;
+  --glow-a: 0.13;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not(#_) { --you-rgb: 125, 183, 222; --good-rgb: 143, 191, 138; --warn-rgb: 217, 178, 94; --them-rgb: 155, 152, 145; --glow-a: 0.11; } }
+:root[data-theme="dark"]:not(#_) { --you-rgb: 125, 183, 222; --good-rgb: 143, 191, 138; --warn-rgb: 217, 178, 94; --them-rgb: 155, 152, 145; --glow-a: 0.11; }
+
+/* Section light: each tab gets its own color of morning light at the top of the page */
+:root { --tab-rgb: 201, 138, 43; }
+:root[data-tab="wire"] { --tab-rgb: 201, 138, 43; }
+:root[data-tab="league"] { --tab-rgb: 120, 100, 180; }
+:root[data-tab="trade"] { --tab-rgb: var(--you-rgb); }
+:root[data-tab="roster"] { --tab-rgb: var(--good-rgb); }
+:root[data-tab="waivers"] { --tab-rgb: 46, 140, 120; }
+:root[data-tab="ask"], :root[data-tab="settings"] { --tab-rgb: var(--them-rgb); }
+body::after {
+  background:
+    radial-gradient(120% 60% at 50% -18%, rgba(var(--tab-rgb), var(--glow-a)), transparent 62%),
+    radial-gradient(60% 40% at 100% -6%, rgba(var(--tab-rgb), calc(var(--glow-a) * 0.6)), transparent 70%) !important;
+}
+
+/* Matchup: your blue fades into their gray across the card */
+.scoreboard, .lu-score {
+  background:
+    linear-gradient(100deg, rgba(var(--you-rgb), 0.10) 0%, rgba(var(--you-rgb), 0.03) 38%, transparent 50%, rgba(var(--them-rgb), 0.03) 62%, rgba(var(--them-rgb), 0.09) 100%),
+    var(--surface) !important;
+}
+.sb-chance-bar span:first-child { background: linear-gradient(90deg, rgba(var(--you-rgb), 0.45), rgb(var(--you-rgb))) !important; }
+.sb-chance-bar span:last-child { background: linear-gradient(90deg, rgba(var(--them-rgb), 0.85), rgba(var(--them-rgb), 0.4)) !important; }
+/* The one authored moment: the win chance fills in when the matchup appears */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-chance-bar span { transform-origin: left center; animation: bar-fill 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .sb-chance-bar span:last-child { transform-origin: right center; animation-delay: 80ms; }
+  @keyframes bar-fill { from { transform: scaleX(0.04); } }
+}
+
+/* Best opportunity on the screen gets a soft green glow from the top */
+.topk.gain { background: linear-gradient(180deg, rgba(var(--good-rgb), 0.12) 0, rgba(var(--good-rgb), 0.03) 120px, transparent 220px), var(--surface) !important; border-color: rgba(var(--good-rgb), 0.22) !important; }
+.ti.likely { background: linear-gradient(160deg, rgba(var(--good-rgb), 0.10), transparent 55%), var(--surface-2) !important; }
+
+/* A lineup change reads like a highlighter stroke that fades out */
+.lu-row.has-swap { background: linear-gradient(90deg, rgba(var(--warn-rgb), 0.16), rgba(var(--warn-rgb), 0.05) 70%, transparent) !important; }
+
+/* Strength bars deepen toward the end of their run */
+.vb-bar span { background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 18%, transparent), var(--ink)) !important; opacity: 0.85; }
+.vb-bar span.up, .lu-pos-bar.up { background: linear-gradient(90deg, rgba(var(--good-rgb), 0.3), rgb(var(--good-rgb))) !important; }
+
+/* Primary buttons: a faint top light, so they read as pressable objects */
+.btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--action) 86%, #fff), var(--action)) !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-primary { background: linear-gradient(180deg, #F7F5F1, color-mix(in srgb, var(--action) 88%, #000)) !important; } }
+.btn-primary:active { background: var(--action) !important; }
+
+/* Tab bar: the active tab carries its section color as a short underglow */
+@media (max-width: 860px) {
+  .tabbar button[aria-current="page"] { background: radial-gradient(60% 70% at 50% 0%, rgba(var(--tab-rgb), 0.18), transparent 75%) !important; }
+}

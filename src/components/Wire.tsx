@@ -49,7 +49,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
   const reasons = (t.accept?.reasons ?? []).filter((r) => !/lineup/i.test(r)).map((r) => r.charAt(0).toUpperCase() + r.slice(1));
   const tone = t.accept?.label === "Likely yes" ? "good" : "warn";
   return (
-    <article className="ti">
+    <article className={`ti${t.accept?.label === "Likely yes" ? " likely" : ""}`}>
       <div className="ti-swap">
         <IdeaSide label="You send" ids={t.give} />
         <span className="ti-arrow" aria-hidden="true"><Icon name="trade" size={16} /></span>

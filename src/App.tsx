@@ -86,7 +86,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const fkey = `${format.scoring}|${format.superflex}|${format.tePremium}`;
 
   useEffect(() => { loadJerseyNumbers(); }, []);
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
+  useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2800); return () => clearTimeout(t); }, [toast]);
   useEffect(() => {
     const onHash = () => { const h = location.hash.slice(1); if ((TAB_IDS as string[]).includes(h)) setTab(h as Tab); };

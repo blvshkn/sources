@@ -39,7 +39,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         const starts = top.gain > 0.05;
         const game = gameLine(PLAYERS[top.fa.id] ?? {});
         return (
-          <section className="card topk" aria-label="Top pickup">
+          <section className={`card topk${starts ? " gain" : ""}`} aria-label="Top pickup">
             <div className="topk-head"><span className="topk-label">Top pickup</span><AiLabel /></div>
             <div className="topk-who">
               <Avatar p={top.fa} size={52} />

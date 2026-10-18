@@ -1,7 +1,7 @@
 # Design System: Sources, Your Fantasy Insider
 
 ## 1. Visual Theme & Atmosphere
-"Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, one friendly grotesk (Google Sans) for everything, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
+"Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, one friendly grotesk (Google Sans) for everything, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Gradients appear only where they mean something: the section you're in, your side of a matchup, a gain, a change to make. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
 
 Light (bone paper) is the home edition. Night edition swaps the paper for warm charcoal with the same hierarchy.
 
@@ -42,11 +42,17 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 - Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main column, live wire rail
 - Lists over cards. No horizontal page scroll
 
-## 6. Texture & Motion
-- One fixed, pointer-events-none warm light spot in the top corner at about 10% opacity
-- Press feedback scale(0.98) with a strong ease-out. No list entrance animations
+## 6. Gradients, Texture & Motion
+Gradients are allowed only where they carry a role:
+- **Section light:** each tab casts its own low light from the top of the page (Wire amber, League lavender, Trade blue, Lineup green, Waivers teal, Ask and Settings neutral) at 11 to 13% opacity, on a fixed pointer-events-none layer. The active tab in the tab bar carries the same color as a short underglow
+- **Matchups:** scoreboards fade from your blue (left) to their gray (right). The win-chance bar fills your side with a blue gradient that deepens toward the split
+- **Best opportunity:** the top pickup that starts for you, and "Likely yes" trade ideas, get a soft green wash from the top or corner
+- **Lineup changes:** a pale yellow highlighter stroke that fades out to the right
+- **Strength bars:** value bars deepen toward the end of their run
+- **Primary buttons:** a faint top light so they read as pressable
+- **Motion:** the one authored moment is the win-chance bar filling in when a matchup appears (700ms, strong ease-out, off under reduced motion). Presses scale to 0.98. No list entrance animations
 
 ## 7. Anti-Patterns (Banned)
-- Shadows, gradients on content, neon, glass cards, bright colored sections
+- Shadows, decorative gradients with no role, gradient text, neon, glass cards, bright colored sections
 - Pill-shaped buttons or containers (pills are for tags only)
 - Emojis, team wordmarks, field views for lineups, em dashes in copy, AI cliches
