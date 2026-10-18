@@ -2631,3 +2631,18 @@ html:root:not(#_) .nudge-actions { display: flex; flex-wrap: nowrap; align-items
 html:root:not(#_) .nudge-link.dismiss { margin-left: auto; flex: none; color: var(--muted); font-weight: 500; }
 @media (hover: hover) { html:root:not(#_) .nudge-link.dismiss:hover { color: var(--ink); } }
 .nudge-link:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 6px; }
+
+/* Page view tabs (League): free-floating pills that side scroll edge to edge, no container */
+html:root:not(#_) .page-head > .seg {
+  display: flex !important; gap: 6px; padding: 2px 0; width: auto; max-width: none; align-self: stretch;
+  background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+html:root:not(#_) .page-head > .seg button {
+  flex: none; height: 36px; padding: 0 16px; border: 0 !important; border-radius: 999px !important; scroll-snap-align: start;
+  background: none !important; box-shadow: none !important; color: var(--muted); font-weight: 500;
+}
+html:root:not(#_) .page-head > .seg button[aria-pressed="true"] { background: rgba(244, 246, 242, 0.09) !important; color: var(--ink); font-weight: 600; }
+@media (max-width: 860px) {
+  html:root:not(#_) .page-head > .seg { margin: 0 -16px !important; padding: 2px 16px !important; scroll-padding-inline: 16px; width: calc(100% + 32px) !important; box-sizing: border-box; }
+}
