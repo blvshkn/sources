@@ -2612,3 +2612,12 @@ html:root:not(#_) .ps-bar b { color: var(--muted); }
 html:root:not(#_) .ps-bar.proj i { background: rgba(var(--lime-rgb), 0.12); border-color: var(--lime); }
 html:root:not(#_) .ps-bar.proj b { color: var(--lime); }
 html:root:not(#_) .tb-pick *, html:root:not(#_) .wv-sort * { border-radius: 999px !important; }
+
+/* Icon and secondary buttons: soft filled shape, no border (matches the sheet close button) */
+html:root:not(#_) .btn:not(.btn-primary), html:root:not(#_) .btn-ghost, html:root:not(#_) .ps-x, html:root:not(#_) .composer-btn:not(.send) {
+  border-color: transparent !important; background: rgba(244, 246, 242, 0.07) !important; box-shadow: none !important;
+}
+@media (hover: hover) { html:root:not(#_) .btn:not(.btn-primary):hover, html:root:not(#_) .ps-x:hover { background: rgba(244, 246, 242, 0.11) !important; } }
+html:root:not(#_) .btn:not(.btn-primary):active, html:root:not(#_) .ps-x:active { background: rgba(244, 246, 242, 0.14) !important; }
+html:root:not(#_) .btn:disabled { opacity: 0.4; }
+html:root:not(#_) .ti .btn-primary { border-color: transparent !important; background: rgba(var(--lime-rgb), 0.12) !important; }

@@ -71,3 +71,4 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Every tab shares the lime section light. The shareable trade card and the app always match.
 - Lime is rationed: your score and dot, the active tab, the one main action per screen, gains. Repeated actions in lists use the tinted lime button. Labels, links and panels stay in chalk.
 - Sheets: pull down from anywhere once scrolled to the top, or tap outside, to dismiss. No confirmation step unless an action can't be undone.
+- Buttons: primary is solid lime pill; secondary and icon buttons are soft filled pills/circles with no border.
