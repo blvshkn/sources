@@ -1429,3 +1429,94 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
 .vb-name { display: flex; align-items: center; gap: 6px; }
 .vb-split { flex: none; font-size: 0.5625rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; }
 .vb-split.up { color: var(--good); background: var(--good-soft); } .vb-split.down { color: var(--bad); background: var(--bad-soft); }
+
+/* ==== TACTICAL TELEMETRY ======================================================
+   Industrial brutalism, dark substrate only. One accent (hazard red), one functional
+   green reserved for gains. Square corners, visible compartments, mono data,
+   heavy uppercase grotesk headers. No gradients, blur or soft shadows. */
+:root, :root[data-theme="light"], :root[data-theme="dark"] {
+  --bg: #0B0B0B; --surface: #111111; --surface-2: #191919; --surface-3: #232323;
+  --ink: #EAEAEA; --muted: #8E8E8E; --faint: #5C5C5C; --line: rgba(234, 234, 234, 0.14);
+  --stamp: #FF2A2A; --stamp-ink: #0B0B0B; --stamp-soft: rgba(255, 42, 42, 0.12);
+  --action: #EAEAEA; --action-ink: #0B0B0B;
+  --good: #4AF626; --good-soft: rgba(74, 246, 38, 0.1);
+  --warn: #FFB020; --warn-soft: rgba(255, 176, 32, 0.12);
+  --bad: #FF2A2A; --bad-soft: rgba(255, 42, 42, 0.12);
+  --you: #FF2A2A; --them: #8E8E8E;
+  --qb: #EAEAEA; --rb: #EAEAEA; --wr: #EAEAEA; --te: #EAEAEA;
+  --shadow: none; --edge: none;
+  --font-display: "Archivo Black", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  --r: 0px; --r-inner: 0px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { color-scheme: dark; } }
+*, *::before, *::after { border-radius: 0 !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); letter-spacing: 0; font-feature-settings: normal; }
+
+/* CRT scanlines and grain, fixed so nothing scrolling repaints */
+body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.18) 2px 3px); mix-blend-mode: multiply; opacity: 0.55; }
+
+/* Macro type: heavy, uppercase, compressed */
+.page-title, .brand-name, .lu-hero .page-title { font-family: var(--font-display) !important; font-weight: 400 !important; text-transform: uppercase; letter-spacing: -0.045em !important; line-height: 0.88 !important; font-size: clamp(2.6rem, 11vw, 4.75rem) !important; }
+.brand-name { font-size: 1.5rem !important; letter-spacing: -0.03em !important; }
+.section-title, .lu-list-head b, .lu-checks-head b, .roster-head b, .card-title, .act-head b, .vb-move > b, h3 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: -0.02em; }
+.numeral, .lu-score .numeral { font-family: var(--font-display) !important; font-weight: 400 !important; letter-spacing: -0.05em !important; }
+
+/* Micro type: mono, uppercase, tracked */
+.eyebrow, .lu-kicker, .tiny, .lu-meta, .wv-meta, .pmeta, .lu-slot, .lu-pts i, .vb-head, .wv-stats i, .act-kind, .act-tag, .stamp, .ai-label, .deadline, .lu-who-l, .lu-vs small, .sb-name, .sb-rec, .lu-week-sum i, .accept-top .tiny, .vb-move-name i, .lu-inj, .lu-game, .nudge-kind, .chip, .phase {
+  font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.06em; }
+.eyebrow::before, .lu-kicker::before { content: "[ "; color: var(--stamp); }
+.eyebrow::after, .lu-kicker::after { content: " ]"; color: var(--stamp); }
+.lu-pts, .wv-proj b, .vb-val b, .act-bid b, .lu-week-sum b, .num, .mono, .delta { font-family: var(--font-mono) !important; letter-spacing: -0.02em; }
+
+/* Compartments: hard 1px rules instead of floating cards */
+.card, .field-shell, .lu-banner, .lu-score, .lu-checks, .accept, .tc-market, .lu-week-sum, .vb-move, .nudge, .chip-btn, .seg, .btn {
+  box-shadow: none !important; border: 1px solid var(--line) !important; background-image: none !important; }
+.card, .lu-banner, .lu-score { background: var(--surface) !important; }
+.lu-row + .lu-row, .wv + .wv, .act-row + .act-row, .vb-row + .vb-row, .lu-check + .lu-check { box-shadow: inset 0 1px 0 var(--line) !important; }
+.lu-list-head.sub { border-top: 1px solid var(--ink); }
+
+/* Controls: square, mono, uppercase. Primary is hazard red. */
+.btn { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem !important; font-weight: 700 !important; background: transparent !important; color: var(--ink) !important; }
+.btn-primary { background: var(--stamp) !important; color: #0B0B0B !important; border-color: var(--stamp) !important; }
+.btn:active { transform: translateY(1px) !important; }
+.chip-btn, .seg button { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.6875rem !important; background: transparent !important; color: var(--muted) !important; }
+.chip-btn.on, .seg button[aria-pressed="true"] { background: var(--ink) !important; color: #0B0B0B !important; }
+.seg { padding: 0 !important; gap: 0 !important; background: transparent !important; }
+.seg button { border: 0 !important; border-right: 1px solid var(--line) !important; }
+
+/* Slot tags: outlined, mono. Position color carried only by text weight. */
+.lu-slot, .lu-slot.s-QB, .lu-slot.s-RB, .lu-slot.s-WR, .lu-slot.s-TE, .lu-slot.s-FLEX, .lu-slot.s-SF, .lu-slot.s-K, .lu-slot.s-DEF, .lu-slot.s-BN, .lu-slot.s-TX, .lu-slot.s-IR {
+  background: transparent !important; color: var(--ink) !important; border: 1px solid var(--line); font-size: 0.625rem !important; font-weight: 700; }
+.lu-slot.s-BN, .lu-slot.s-TX { color: var(--faint) !important; }
+.lu-slot.s-IR { color: var(--stamp) !important; border-color: var(--stamp); }
+.lu-pos, .lu-pos.p-QB, .lu-pos.p-RB, .lu-pos.p-WR, .lu-pos.p-TE, .lu-pos.p-K, .lu-pos.p-DEF { color: var(--ink) !important; }
+.lu-tag, .vb-split, .accept-chip { font-family: var(--font-mono); border: 1px solid currentColor; background: transparent !important; }
+.lu-tag { color: var(--warn); } .lu-tag.bad { color: var(--stamp); }
+.lu-row.has-swap { background: var(--stamp-soft) !important; box-shadow: inset 3px 0 0 var(--stamp) !important; }
+
+/* Avatars go square: mugshot frames */
+.av { background: var(--surface-2); outline: 1px solid var(--line); }
+.av-photo { object-position: 50% 12%; filter: grayscale(0.35) contrast(1.08); }
+.av-badge { background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
+
+/* Bars and meters: flat, no rounded tracks */
+.vb-bar span, .tc-market-bar .give, .faab-track span { background: var(--stamp) !important; }
+.tc-market-bar .get { background: var(--ink) !important; }
+
+/* Navigation: hard docked terminal bar, no glass */
+.topbar { background: var(--bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-bottom: 1px solid var(--line) !important; }
+@media (max-width: 860px) {
+  .tabbar { left: 0 !important; right: 0 !important; bottom: 0 !important; padding: 0 0 env(safe-area-inset-bottom, 0px) !important; background: var(--bg) !important; border: 0 !important; border-top: 1px solid var(--ink) !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .tabbar button { padding: 10px 0 9px !important; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.5625rem !important; border-right: 1px solid var(--line) !important; }
+  .tabbar button:last-child { border-right: 0 !important; }
+  .tabbar button[aria-current="page"] { background: transparent !important; color: var(--ink) !important; box-shadow: inset 0 3px 0 var(--stamp); }
+  .main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+.nav button[aria-current="page"] { box-shadow: inset 3px 0 0 var(--stamp); background: var(--surface) !important; }
+
+/* Inputs */
+input, textarea, select { border-radius: 0 !important; font-family: var(--font-mono); }
