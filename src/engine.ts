@@ -350,7 +350,7 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   // 5. Don't gut a position they need: their group at the outgoing position can't fall more than it gains elsewhere.
   const before = groupPoints(lineupFor(them.roster)), after = groupPoints(lineupFor(themRosterAfter));
   const worstDrop = Math.min(...(Object.keys(before) as Group[]).map((g) => after[g] - before[g]));
-  if (worstDrop < -4) theirs(`it opens a big hole in ${them.manager}'s lineup`);
+  if (worstDrop < -4) theirs(`it leaves ${them.manager}'s lineup short`);
 
   // Likelihood. The value term matches RotoTrade's observed acceptance curve: 45% at even value,
   // plus one point for every point of value (on a 0-100 scale) the other side gains. On top of

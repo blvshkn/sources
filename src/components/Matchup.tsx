@@ -79,7 +79,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
         <p className="mu-sum">
           You win <b>{winning} of {mine.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
-          {edges[bigLoss] < 0 && <> Biggest hole: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
+          {edges[bigLoss] < 0 && <> Weakest spot: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
         </p>
 
         {changed && (

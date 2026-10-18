@@ -95,7 +95,7 @@ async function drawCard(t: Trade): Promise<Blob | null> {
   g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = F(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);
   g.textAlign = "left";
   const need = needsFor(them).need;
-  if (t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Fills your ${need} hole.`, X, py + ph + 50); }
+  if (t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Upgrades your starting ${need}.`, X, py + ph + 50); }
 
   // Footer
   g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - 40);

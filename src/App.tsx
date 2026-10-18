@@ -114,7 +114,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       const t = suggestionsByTeam[n.team.id][0];
       const g = n.groups[n.need];
       const want = active.find((x) => x.teamId === n.team.id && x.kind === "wants");
-      const lead = want ? `${want.text}` : g.diff < -0.5 ? `Thin at ${n.need} (${fmt(g.diff)}/wk)` : `No big hole, but deep enough to deal`;
+      const lead = want ? `${want.text}` : g.diff < -0.5 ? `Thin at ${n.need} (${fmt(g.diff)}/wk)` : `No glaring need, but deep enough to deal`;
       const why = `${lead}. Your ${t.give.map((id) => playerById(id).name).join(" + ")} gets it done.`;
       return { n, t, why };
     })
