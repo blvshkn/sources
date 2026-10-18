@@ -71,7 +71,11 @@ const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN"
 
 /** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
 type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number; left?: number };
-export const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0, left: live?.left?.[nfl] });
+/** A player's game right now. If his points haven't come in yet, treat it as not started so we show the projection, not a fake zero. */
+export const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => {
+  const pts = live?.points[id];
+  return { state: pts === undefined ? null : live?.games[nfl] ?? null, pts: pts ?? 0, left: live?.left?.[nfl] };
+};
 
 /** Points column: projection before kickoff, live points (with the projection beneath) during the game, final after. */
 /** Live only, the way Sleeper reads it: on fire once he's past his projection, heating up when he's on pace to pass

@@ -206,7 +206,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
 /** A player's points in a card row: projection before kickoff, then live and final points colored against it,
  *  with the flame once he's past his projection. */
 function WkPts({ p, live }: { p: Player; live: ReturnType<typeof useLive> }) {
-  const g = live.games[p.nfl] ?? null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
+  const known = live.points[p.id] !== undefined, g = known ? live.games[p.nfl] ?? null : null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);

@@ -44,7 +44,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
   const allProj = ids.reduce((a, id) => a + proj(id), 0) || 1;
   const spread = Math.max(3, 34 * Math.sqrt(stillToPlay(live, ids) / allProj));
   const chance = Math.min(99.5, Math.max(0.5, phi((myTotal - oppTotal) / spread) * 100));
-  const started = ids.some((id) => id && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
+  const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
   const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
   const scored = (list: { id: string | null }[]) => round1(list.reduce((a, s) => a + (s.id ? live.points[s.id] ?? 0 : 0), 0));
   const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);

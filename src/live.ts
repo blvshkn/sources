@@ -132,8 +132,9 @@ export function useLive(): Live {
   const [v, setV] = useState<Live>(() => {
     if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
       current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
-      // Pick up the game clock right away so on-pace numbers show without waiting for the first poll
-      if (LEAGUE.mode === "live" && anyLive(current.games)) clocks(current.games).then((left) => { if (current && Object.keys(left).length) { current = { ...current, left }; subs.forEach((f) => f(current!)); } });
+      // The saved league only has your team's points, so fetch every team's live points (and the clock) right away
+      // instead of waiting a minute for the first poll
+      if (LEAGUE.mode === "live" && anyLeft(current.games)) poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
     }
     return current;
   });
@@ -158,6 +159,8 @@ export function playerLive(l: Live, id: string, nfl: string): { state: GameState
 export const expect = (live: Live, id: string | null) => {
   if (!id) return 0;
   const p = playerById(id), st = live.games[p.nfl], now = live.points[id] ?? 0, pr = eff(p, true);
+  // Points not in yet (first refresh still loading): fall back to the projection rather than counting a zero
+  if (live.points[id] === undefined) return pr;
   if (st === "complete") return now;
   if (st === "in_game") return onPace(now, pr, live.left?.[p.nfl]) ?? Math.max(now, pr);
   return pr;
