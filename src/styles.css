@@ -1617,7 +1617,7 @@ p, .page-sub { max-width: 65ch; }
 .page-head > .seg::-webkit-scrollbar { display: none; }
 .page-head > .seg button { height: 36px; padding: 0 14px; white-space: nowrap; font-size: 0.875rem; }
 @media (max-width: 860px) {
-  .page-head { flex-direction: column; align-items: stretch; gap: 14px; }
+  .page-head:has(> .seg) { flex-direction: column; align-items: stretch; gap: 14px; }
   .page-head > .seg { display: grid !important; width: 100%; align-self: stretch; }
   .page-head > .seg button { padding: 0 8px; }
 }
