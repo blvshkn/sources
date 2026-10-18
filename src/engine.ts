@@ -3,7 +3,7 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, FreeAgent, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -57,6 +57,23 @@ export const isOut = (p: Player, thisWeek = false) =>
   (p.status === "O" && (p.longTerm || thisWeek)) || (thisWeek && (onBye(p.nfl) || p.wk === null));
 export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p, thisWeek)));
 export const round1 = (n: number) => Math.round(n * 10) / 10;
+
+// ---- Kickers and defenses ----------------------------------------------
+// Only for the lineup view and matchup totals. Trades and waivers ignore them.
+export interface SpecialLineup { slots: { slot: "K" | "DEF"; player: SpecialPlayer | null }[]; bench: SpecialPlayer[]; total: number }
+export const specialPts = (p: SpecialPlayer) => (p.wk ?? 0) * (p.status === "O" ? 0 : 1);
+export function specialLineup(team: Team): SpecialLineup {
+  const pool = (team.special ?? []).map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[];
+  pool.sort((a, b) => specialPts(b) - specialPts(a));
+  const used = new Set<string>();
+  const slots = (LEAGUE.specialSlots ?? []).map((slot) => {
+    const p = pool.find((x) => x.pos === slot && !used.has(x.id)) ?? null;
+    if (p) used.add(p.id);
+    return { slot, player: p };
+  });
+  const total = slots.reduce((s, x) => s + (x.player ? specialPts(x.player) : 0), 0);
+  return { slots, bench: pool.filter((p) => !used.has(p.id)), total };
+}
 
 // ---- Injured reserve -----------------------------------------------------
 export interface IrReport {

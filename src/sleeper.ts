@@ -1,6 +1,6 @@
 // Sleeper's public, read-only API. No password or token: a username is enough.
 // Everything here runs in the user's browser; nothing is stored on a server.
-import { BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
+import { SpecialPlayer, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
 const SKILL: Pos[] = ["QB", "RB", "WR", "TE"];
@@ -42,7 +42,15 @@ interface STxn {
   roster_ids: number[]; adds: Record<string, number> | null; drops?: Record<string, number> | null; settings?: { waiver_bid?: number } | null;
   transaction_id?: string; status_updated?: number; created?: number;
 }
-interface SMatchup { roster_id: number; matchup_id?: number | null; starters: string[] | null; starters_points: number[] | null }
+interface SMatchup { roster_id: number; matchup_id?: number | null; starters: string[] | null; starters_points: number[] | null; players?: string[] | null; players_points?: Record<string, number> | null; points?: number | null }
+
+/** Weekly stats or projections for every player, keyed by Sleeper id. Used by the week browser. */
+export type WeekRow = { team: string | null; stats: Record<string, number | undefined>; player?: SProj["player"] };
+export async function fetchWeekRows(season: string, week: number, kind: "stats" | "projections"): Promise<Map<string, WeekRow>> {
+  const q = "season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF";
+  const rows = await get<(WeekRow & { player_id: string })[]>(`/${kind}/nfl/${season}/${week}?${q}`);
+  return new Map(rows.map((r) => [r.player_id, r]));
+}
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
 // ---- Public calls --------------------------------------------------------
@@ -117,12 +125,15 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const fcUrl = `https://api.fantasycalc.com/values/current?isDynasty=${dynasty}&numQbs=${sfLeague ? 2 : 1}&numTeams=${league.total_rosters}&ppr=${recSetting >= 1 ? 1 : recSetting >= 0.5 ? 0.5 : 0}`;
 
   onStep?.("Loading projections and trade values");
-  const [weekProj, seasonProj, trending, futureProj, market] = await Promise.all([
+  const specialQuery = "position[]=K&position[]=DEF";
+  const [weekProj, seasonProj, trending, futureProj, market, kdefWeek, kdefSeason] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/add?lookback_hours=24&limit=40").catch(() => []),
     Promise.all(futureWeeks.map((w) => get<SProj[]>(`/projections/nfl/${season}/${w}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]))),
     fetch(fcUrl).then((r) => (r.ok ? r.json() : [])).catch(() => []) as Promise<{ player: { sleeperId?: string }; value: number }[]>,
+    get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
+    get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
   ]);
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
@@ -192,13 +203,35 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   seasonProj.forEach((p) => add(p.player_id, p.player, p.team));
   weekProj.forEach((p) => add(p.player_id, { ...seasonBy.get(p.player_id)?.player, ...p.player }, p.team));
 
-  // Rostered players missing from both feeds (rare): fetch the full player file once.
+  // Kickers and defenses: shown in the lineup, kept out of the trade engine.
+  const specials: Record<string, SpecialPlayer> = {};
+  const kWeek = new Map(kdefWeek.map((p) => [p.player_id, p]));
+  const kSeason = new Map(kdefSeason.map((p) => [p.player_id, p]));
+  const addSpecial = (id: string, info: SPlayerLite | undefined, team: string | null) => {
+    const isDef = /^[A-Z]{2,3}$/.test(id);
+    const pos = isDef ? "DEF" : info?.position === "K" ? "K" : null;
+    if (!pos) return;
+    const w = kWeek.get(id), s = kSeason.get(id);
+    const gp = Math.max(1, s?.stats?.gp ?? 17);
+    const wk = w?.stats?.pts_ppr;
+    const per = Math.round(((s?.stats?.pts_ppr ?? 0) / gp) * 10) / 10;
+    specials[id] = {
+      id, pos, nfl: isDef ? id : info?.team ?? team ?? "FA",
+      name: isDef ? defName(id) : [info?.first_name, info?.last_name].filter(Boolean).join(" ") || `Kicker ${id}`,
+      wk: wk && wk > 0 ? Math.round(wk * 10) / 10 : live ? null : per,
+      proj: per,
+      ...statusOf(info?.injury_status),
+    };
+  };
   const rostered = new Set(rosters.flatMap((r) => r.players ?? []));
-  const missing = [...rostered].filter((id) => !players[id] && !/^[A-Z]{2,3}$/.test(id));
+  rostered.forEach((id) => { if (!players[id]) { const src = kWeek.get(id) ?? kSeason.get(id); addSpecial(id, src?.player, src?.team ?? null); } });
+
+  // Rostered players missing from every feed (rare): fetch the full player file once.
+  const missing = [...rostered].filter((id) => !players[id] && !specials[id]);
   if (missing.length) {
     onStep?.("Loading player details");
     const all = await get<Record<string, SPlayerLite>>("/v1/players/nfl").catch(() => ({} as Record<string, SPlayerLite>));
-    missing.forEach((id) => add(id, all[id], null));
+    missing.forEach((id) => { add(id, all[id], null); if (!players[id]) addSpecial(id, all[id], null); });
   }
 
   // Teams
@@ -218,6 +251,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       roster: (r.players ?? []).filter((id) => players[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
       ir: (r.reserve ?? []).filter((id) => players[id]),
       taxi: (r.taxi ?? []).filter((id) => players[id]),
+      special: (r.players ?? []).filter((id) => specials[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
     };
   });
   const you = teams.find((t) => t.you);
@@ -237,6 +271,9 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const activeSpots = league.roster_positions.filter((p) => !["IR", "TAXI", "K", "DEF"].includes(p)).length;
   const rosterMax = Math.max(activeSpots, ...teams.map((t) => t.roster.length));
   const irSlots = league.roster_positions.filter((p) => p === "IR").length;
+  const specialSlots = league.roster_positions.filter((p) => p === "K" || p === "DEF") as ("K" | "DEF")[];
+  const nonBench = league.roster_positions.filter((p) => !["BN", "IR", "TAXI"].includes(p));
+  const sleeperSpecial = (myRoster.starters ?? []).filter((id, i) => (nonBench[i] === "K" || nonBench[i] === "DEF") && !!id && id !== "0");
   const taxiSlots = league.roster_positions.filter((p) => p === "TAXI").length;
 
   // Your lineup as set in Sleeper
@@ -305,6 +342,20 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return { week: `${season} Wk ${t.leg}`, a: String(a), b: String(b), aGot: got(a), bGot: got(b) };
   });
 
+  // Your weekly results, so past weeks show who you started and what they scored
+  const opponentName = (rid: number) => { const r = rosters.find((x) => x.roster_id === rid); const u = r?.owner_id ? userBy.get(r.owner_id) : undefined; return u?.display_name ?? `Team ${rid}`; };
+  const history: Record<number, WeekHistory> = {};
+  allMatchups.forEach((ms, i) => {
+    const m = ms.find((x) => String(x.roster_id) === you.id);
+    if (!m) return;
+    const o = m.matchup_id ? ms.find((x) => x.matchup_id === m.matchup_id && x.roster_id !== m.roster_id) : undefined;
+    history[i + 1] = {
+      starters: (m.starters ?? []).filter((id) => id && id !== "0"), players: m.players ?? [], points: m.players_points ?? {},
+      total: m.points ?? 0, oppTotal: o?.points ?? undefined, oppName: o ? opponentName(o.roster_id) : undefined,
+    };
+  });
+  const lineupOrder = league.roster_positions.filter((p) => !["BN", "IR", "TAXI"].includes(p));
+
   // League activity: the latest completed adds, drops, claims and trades
   const infoOf = (id: string) => {
     if (players[id]) return { id, name: players[id].name, pos: players[id].pos as string, nfl: players[id].nfl };
@@ -332,7 +383,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots,
+    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

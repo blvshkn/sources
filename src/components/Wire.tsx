@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
-import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor } from "../engine";
+import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, PosBadge, Stamp } from "./ui";
 import { Jersey } from "./Jersey";
 
@@ -61,8 +61,8 @@ const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const 
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
 export function Scoreboard({ you, partner }: { you: TeamNeeds; partner: string | null }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const mine = lineupFor(YOU.roster, true).total;
-  const theirs = opp ? lineupFor(opp.roster, true).total : null;
+  const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
+  const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
   const chance = theirs !== null ? Math.round(phi((mine - theirs) / 34) * 100) : null;
   return (
     <section className="card scoreboard" aria-label="This week">

@@ -3,13 +3,13 @@ import { Player } from "../data";
 import { jerseyNumber, teamColors, useJerseys } from "../jersey";
 
 /** A team-colored jersey with the player's real number. Team palette only, no logos. */
-export function Jersey({ p, size = 36, ring }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad" }) {
+export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad"; text?: string }) {
   useJerseys();
   const uid = useId().replace(/:/g, "");
   const [body, ink, trim] = teamColors(p.nfl);
   const num = jerseyNumber(p);
-  const label = num !== undefined ? String(num) : "";
-  const fs = label.length > 1 ? 21 : 24;
+  const label = text ?? (num !== undefined ? String(num) : "");
+  const fs = label.length > 2 ? 15 : label.length > 1 ? 21 : 24;
   return (
     <span className={`jersey${ring ? ` ring-${ring}` : ""}`} style={{ width: size, height: size }} role="img" aria-label={`${p.nfl} jersey${label ? ` number ${label}` : ""}`}>
       <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">

@@ -49,7 +49,14 @@ export interface Team {
   ir?: string[];
   /** Players on the taxi squad (dynasty). */
   taxi?: string[];
+  /** Kickers and defenses. Shown in the lineup; the trade engine leaves them out. */
+  special?: string[];
 }
+
+/** A kicker or team defense. Kept apart from skill players so trades and waivers ignore them. */
+/** What your team actually did in a past week, from Sleeper matchups. */
+export interface WeekHistory { starters: string[]; players: string[]; points: Record<string, number>; total: number; oppTotal?: number; oppName?: string }
+export interface SpecialPlayer { id: string; name: string; pos: "K" | "DEF"; nfl: string; wk: number | null; proj: number; status?: Status; note?: string }
 
 type Row = [string, Pos, string, number, Status?, string?];
 
@@ -271,6 +278,34 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
   },
 };
 
+// Demo kickers and defenses, one of each per team: [K name, K team, K proj, DEF team, DEF proj]
+const DEMO_SPECIAL: Record<string, [string, string, number, string, number]> = {
+  you: ["Brandon Aubrey", "DAL", 9.4, "SEA", 7.6], mike: ["Cameron Dicker", "LAC", 8.9, "PIT", 7.9], jake: ["Jake Bates", "DET", 8.6, "HOU", 8.4],
+  chris: ["Chris Boswell", "PIT", 8.8, "DEN", 8.1], dan: ["Ka'imi Fairbairn", "HOU", 8.5, "BAL", 7.2], kev: ["Tyler Bass", "BUF", 8.1, "MIN", 7.4],
+  taylor: ["Harrison Butker", "KC", 8.3, "PHI", 7.8], sam: ["Jason Myers", "SEA", 7.8, "NYJ", 6.6], pat: ["Wil Lutz", "DEN", 7.9, "GB", 7.1],
+  alex: ["Jake Elliott", "PHI", 7.5, "LAR", 6.9],
+};
+const DEF_NAMES: Record<string, string> = {
+  ARI: "Cardinals", ATL: "Falcons", BAL: "Ravens", BUF: "Bills", CAR: "Panthers", CHI: "Bears", CIN: "Bengals", CLE: "Browns", DAL: "Cowboys", DEN: "Broncos",
+  DET: "Lions", GB: "Packers", HOU: "Texans", IND: "Colts", JAX: "Jaguars", KC: "Chiefs", LV: "Raiders", LAC: "Chargers", LAR: "Rams", MIA: "Dolphins",
+  MIN: "Vikings", NE: "Patriots", NO: "Saints", NYG: "Giants", NYJ: "Jets", PHI: "Eagles", PIT: "Steelers", SF: "49ers", SEA: "Seahawks", TB: "Buccaneers",
+  TEN: "Titans", WAS: "Commanders",
+};
+export const defName = (team: string) => `${DEF_NAMES[team] ?? team} D/ST`;
+const DEMO_BYES = ["PIT", "NE"];
+function demoSpecials(teams: Team[]): Record<string, SpecialPlayer> {
+  const out: Record<string, SpecialPlayer> = {};
+  for (const t of teams) {
+    const d = DEMO_SPECIAL[t.id];
+    if (!d) continue;
+    const k: SpecialPlayer = { id: slug(d[0]), name: d[0], pos: "K", nfl: d[1], wk: DEMO_BYES.includes(d[1]) ? null : d[2], proj: d[2] };
+    const def: SpecialPlayer = { id: d[3], name: defName(d[3]), pos: "DEF", nfl: d[3], wk: DEMO_BYES.includes(d[3]) ? null : d[4], proj: d[4] };
+    out[k.id] = k; out[def.id] = def;
+    t.special = [k.id, def.id];
+  }
+  return out;
+}
+
 function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
   const players: Record<string, Player> = {};
   const toId = ([name, pos, nfl, proj, status, note]: Row, onIr = false) => {
@@ -409,6 +444,17 @@ export interface LeagueData {
   rosterMax: number;
   /** IR slots per team from the league settings. */
   irSlots: number;
+  /** K and DEF starting slots, in league order. */
+  specialSlots?: ("K" | "DEF")[];
+  specials?: Record<string, SpecialPlayer>;
+  /** Your K/DEF starters as set in Sleeper. */
+  sleeperSpecial?: string[];
+  /** Your matchup results by week (live leagues). */
+  history?: Record<number, WeekHistory>;
+  /** Starting slot order from the league settings, K and DEF included. */
+  lineupOrder?: string[];
+  /** Last fantasy week of the season. */
+  lastWeek?: number;
   /** Taxi squad slots (dynasty), 0 if none. */
   taxiSlots: number;
   updated: string;
@@ -498,16 +544,18 @@ const DEMO_ACTIVITY: Activity[] = [
 
 export function demoLeague(): LeagueData {
   const { teams, players } = demoTeams();
+  const specials = demoSpecials(teams);
   return {
     mode: "demo", id: "demo", name: "Demo League", season: "2026", week: 7,
     slots: ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX"],
     format: { scoring: "ppr", superflex: false, tePremium: false },
     rosterMax: 13,
     irSlots: 2,
+    specialSlots: ["K", "DEF"], specials, sleeperSpecial: teams.find((t) => t.you)?.special,
     taxiSlots: 0,
     updated: "Projections updated 14 min ago",
     deadlines: { waivers: "Waivers run Wed 3:00 AM ET", lock: "Lineups lock Sun 1:00 PM ET", trade: "Trade deadline Nov 18" },
-    byeTeams: ["PIT", "NE"],
+    byeTeams: DEMO_BYES,
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
