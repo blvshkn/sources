@@ -251,6 +251,52 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
   );
 }
 
+/** You vs this week's opponent: points scored once games start (projection as a footnote), win chance, Live tag. */
+export function MatchupStrip({ onOpen }: { onOpen?: () => void }) {
+  const live = useLive();
+  const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
+  const nowLive = Object.values(live.games).some((x) => x === "in_game");
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
+  const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
+  const oppTotal = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
+  const myTotal = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
+  const chance = oppTotal !== null ? Math.round(phi((myTotal - oppTotal) / 34) * 100) : 0;
+  const body = (
+    <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
+      <div className="lu-mx-side you">
+        <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
+        {inPlay ? <>
+          <span className="lu-mx-pts">{myNow!.toFixed(1)}</span>
+          <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
+        </> : <>
+          <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
+          {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
+          <small>Your best lineup</small>
+        </>}
+      </div>
+      {opp && <>
+        <div className="lu-mx-mid" aria-hidden="true">
+          {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
+          <b>{chance}%</b><small>to win</small>
+          <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
+        </div>
+        <div className="lu-mx-side them">
+          <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
+          {inPlay ? <>
+            <span className="lu-mx-pts">{oppNow!.toFixed(1)}</span>
+            <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>
+          </> : <>
+            <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
+            <small>{opp.manager}</small>
+          </>}
+        </div>
+      </>}
+    </div>
+  );
+  return onOpen ? <button className="lu-mx-open" onClick={onOpen} aria-label="Open this week's matchup">{body}</button> : body;
+}
+
 export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, onPitch }: {
   lineup: Lineup;
   myTags: Record<string, MyTag>;
@@ -274,7 +320,6 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const [cmp, setCmp] = useState<string | undefined>(undefined);
   const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
-  const nowLive = Object.values(live.games).some((x) => x === "in_game");
   const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup");
   const openPlayer = (p: Player, where: string) => setSheet({ p, where });
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
@@ -297,13 +342,6 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     return from && specialPts(p) - specialPts(from) >= 0.5 ? from : undefined;
   };
   const swapFor = (id: string) => { const d = diff.find((x) => x.start.id === id); return d ? { from: d.benched, gain: d.gain } : undefined; };
-  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
-  // Once games start, the big numbers are points scored and the projection drops to a footnote
-  const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
-  const oppTotal = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
-  const myTotal = lineup.total + specialLineup(YOU).total;
-  const chance = oppTotal !== null ? Math.round(phi((myTotal - oppTotal) / 34) * 100) : 0;
   const ir = irReport(YOU);
   const checks: { key: string; tone: "warn" | "bad" | "info"; icon: IconName; title: string; text: string }[] = [
     ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, title: `Activate ${p.name} from IR`, text: "He no longer qualifies. Sleeper blocks adds and trades until he's moved." })),
@@ -319,36 +357,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         <div className="lu-hero-l">
           <LeagueSwitch title="Lineup" />
         </div>
-        <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
-          <div className="lu-mx-side you">
-            <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
-            {inPlay ? <>
-              <span className="lu-mx-pts">{myNow!.toFixed(1)}</span>
-              <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
-            </> : <>
-              <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
-              {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
-              <small>Your best lineup</small>
-            </>}
-          </div>
-          {opp && <>
-            <div className="lu-mx-mid" aria-hidden="true">
-              {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
-              <b>{chance}%</b><small>to win</small>
-              <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
-            </div>
-            <div className="lu-mx-side them">
-              <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
-              {inPlay ? <>
-                <span className="lu-mx-pts">{oppNow!.toFixed(1)}</span>
-                <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>
-              </> : <>
-                <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
-                <small>{opp.manager}</small>
-              </>}
-            </div>
-          </>}
-        </div>
+        <MatchupStrip />
       </header>
 
       <PageTabs value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />

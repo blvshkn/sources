@@ -7,6 +7,7 @@ import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } fro
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { useLive } from "../live";
+import { MatchupStrip } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -413,6 +414,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       </section>}
       {view === "matchup" && <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />}
       {view === "matchup" && <Threats onGo={onGo} />}
+      {view === "week" && <div className="wk-strip"><MatchupStrip onOpen={() => onGo("matchup")} /></div>}
       {view === "week" && <WeekMore onGo={onGo} />}
 
       {view === "intel" && <>
