@@ -2591,3 +2591,24 @@ html:root:not(#_) .saved-tag { padding: 0 0 0 12px; gap: 8px; min-height: 36px; 
 .saved-x:active { transform: scale(0.9); }
 @media (hover: hover) { .saved-x:hover { color: var(--ink); } }
 .saved-x:focus-visible { outline: 2px solid var(--lime); outline-offset: -4px; }
+
+/* ==== Fully rounded controls ===================================================
+   Every button is a pill, every icon button a circle, segmented controls are pills, sheets get big soft tops. */
+html:root:not(#_) .btn, html:root:not(#_) .btn-sm, html:root:not(#_) .btn-xs, html:root:not(#_) .btn-primary,
+html:root:not(#_) .seg, html:root:not(#_) .seg button, html:root:not(#_) .sx-change,
+html:root:not(#_) .composer-btn, html:root:not(#_) .tb-chip, html:root:not(#_) select.btn { border-radius: 999px !important; }
+html:root:not(#_) .btn-icon, html:root:not(#_) .ps-x, html:root:not(#_) .composer-btn { border-radius: 50% !important; aspect-ratio: 1; }
+html:root:not(#_) .composer { border-radius: 999px; padding-left: 18px; }
+html:root:not(#_) .wv-sort, html:root:not(#_) .tb-pick { border-radius: 999px !important; }
+html:root:not(#_) .composer:has(textarea) { border-radius: 22px; }
+html:root:not(#_) .ps, html:root:not(#_) .sheet { border-radius: 28px 28px 0 0; }
+@media (min-width: 861px) { html:root:not(#_) .ps, html:root:not(#_) .sheet { border-radius: 28px; } }
+
+/* Player sheet: chalk text, lime only for where he plays and this week's projection */
+html:root:not(#_) .ps { color: var(--ink); }
+html:root:not(#_) .ps-sub b { color: var(--ink); }
+html:root:not(#_) .ps-bar i { background: rgba(244, 246, 242, 0.22); }
+html:root:not(#_) .ps-bar b { color: var(--muted); }
+html:root:not(#_) .ps-bar.proj i { background: rgba(var(--lime-rgb), 0.12); border-color: var(--lime); }
+html:root:not(#_) .ps-bar.proj b { color: var(--lime); }
+html:root:not(#_) .tb-pick *, html:root:not(#_) .wv-sort * { border-radius: 999px !important; }
