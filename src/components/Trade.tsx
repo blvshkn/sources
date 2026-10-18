@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
-import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
+import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
@@ -48,6 +48,18 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
 }
 
 /** Apple Sports "team stats" layout: big net change per side, then each slot group with a two-color bar. */
+/** Would they say yes? A plain read with the reasons, or what's standing in the way. */
+export function AcceptRead({ a, who }: { a: Acceptance; who: string }) {
+  const tone = a.label === "Likely yes" ? "good" : a.label === "Worth a shot" ? "warn" : "bad";
+  return (
+    <div className={`accept ${tone}`}>
+      <div className="accept-top"><b>{a.label}</b><span className="tiny muted">{Math.round(a.p * 100)}% chance {who} accepts</span></div>
+      {a.theirBlockers.length ? <ul>{a.theirBlockers.map((b) => <li key={b}>{b.charAt(0).toUpperCase() + b.slice(1)}</li>)}</ul>
+        : a.reasons.length ? <p className="tiny muted">{a.reasons.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" · ")}</p> : null}
+    </div>
+  );
+}
+
 export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
   const youAfter = groupPoints(lineupFor(rosterAfter(YOU, trade, "you")));
   const themAfter = groupPoints(lineupFor(rosterAfter(them, trade, "them")));
@@ -158,6 +170,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   });
   const [received, setReceived] = useState(false);
   const v = trade ? (received ? offerRead(trade) : verdict(trade)) : null;
+  const acc = trade && !received ? acceptance(trade, YOU, them) : null;
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
@@ -219,6 +232,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               </div>
               <TradeCompare trade={trade} them={them} />
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
+              {acc && <AcceptRead a={acc} who={them.manager} />}
               {received && counter && (
                 <div className="coach">
                   <p className="small"><b>Ready counter:</b> {counter.line}. You {fmt(counter.trade.youDelta)}, {them.manager} {fmt(counter.trade.themDelta)} a week.</p>

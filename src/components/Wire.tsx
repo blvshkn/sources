@@ -37,9 +37,11 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
           <span>their {swap(t.get)}</span>
         </div>
         <div className="idea-nums">
+          {t.accept && <span className={`accept-chip ${t.accept.label === "Likely yes" ? "good" : "warn"}`}>{t.accept.label}</span>}
           <span>They gain <Delta n={t.themDelta} />/wk</span>
           <span>You gain <Delta n={t.youDelta} />/wk</span>
         </div>
+        {t.accept?.reasons.length ? <span className="tiny muted">{t.accept.reasons.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" · ")}</span> : null}
       </div>
       <div className="row">
         <button className="btn btn-sm" onClick={() => onOpen(t)}>Open in builder</button>

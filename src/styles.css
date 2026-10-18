@@ -1389,3 +1389,11 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
 .card-pad { padding: 16px; }
 .nudge h3 { font-size: 1.0625rem; letter-spacing: -0.02em; line-height: 1.3; }
 .sb-img { object-fit: cover; padding: 0; }
+
+/* Acceptance read */
+.accept { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--r-inner); background: var(--surface-2); }
+.accept-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.accept.good b { color: var(--good); } .accept.warn b { color: var(--warn); } .accept.bad b { color: var(--bad); }
+.accept ul { margin: 0; padding-left: 18px; font-size: 0.8125rem; color: var(--muted); }
+.accept-chip { font-size: 0.6875rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.accept-chip.good { color: var(--good); background: var(--good-soft); } .accept-chip.warn { color: var(--warn); background: var(--warn-soft); }

@@ -240,13 +240,18 @@ export interface Trade {
   marketGap: number;
   fillsWant: boolean;
   warnings: string[];
+  /** How likely the other manager is to say yes, and why. Set by findTrades. */
+  accept?: Acceptance;
 }
 
 function settle(roster: string[], incoming: string[]): { ids: string[]; dropped: string[] } {
   const max = rosterMax();
   if (roster.length <= max) return { ids: roster, dropped: [] };
+  // Managers move injured players to IR before cutting anyone, and they cut their least valuable
+  // healthy bench player, not a hurt starter who'll be back.
   const lu = lineupFor(roster);
-  const cut = lu.bench.filter((p) => !incoming.includes(p.id)).sort((a, b) => eff(a) - eff(b))
+  const candidates = lu.bench.filter((p) => !incoming.includes(p.id) && !(p.status === "O" || p.irEligible));
+  const cut = candidates.sort((a, b) => marketValue(a) - marketValue(b) || eff(a) - eff(b))
     .slice(0, roster.length - max).map((p) => p.id);
   return { ids: roster.filter((id) => !cut.includes(id)), dropped: cut };
 }
@@ -313,6 +318,54 @@ export const isWinWin = (t: Trade) => t.youDelta >= 0.5 && t.themDelta >= 0.5;
 export const FAIR_GAP = 0.15;
 export const isFair = (t: Trade) => Math.abs(t.marketGap) <= FAIR_GAP;
 
+// ---- Would they actually say yes? ------------------------------------------
+// A trade idea only shows if a reasonable manager would accept it. Real managers:
+// won't lose market value, want a starter back (not bench depth), want their weak
+// spot fixed, won't hand over their best player for two lesser ones without a
+// premium, and ignore deals that barely move their lineup.
+export interface Acceptance { p: number; label: "Likely yes" | "Worth a shot" | "Long shot"; reasons: string[]; blockers: string[]; theirBlockers: string[] }
+const starts = (ids: string[], roster: string[]) => { const l = lineupFor(roster); const set = new Set(l.slots.map((s) => s.player?.id)); return ids.filter((id) => set.has(id)); };
+export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
+  const reasons: string[] = [], blockers: string[] = [], theirBlockers: string[] = [];
+  const theirs = (m: string) => { blockers.push(m); theirBlockers.push(m); };
+  const themRosterAfter = rosterAfter(them, t, "them");
+  const youRosterAfter = rosterAfter(you, t, "you");
+  // 1. Value: they won't take a loss on market value. Neither should you.
+  const theirGap = -t.marketGap; // positive = they receive more value
+  if (theirGap < -0.08) theirs(`${them.manager} gives up ${pct(theirGap).slice(1)} more value`);
+  if (t.marketGap < -0.15) blockers.push(`you overpay by ${pct(t.marketGap).slice(1)}`);
+  // 2. Their lineup has to get meaningfully better.
+  if (t.themDelta < 1) theirs(`${them.manager}'s lineup barely moves (${fmt(t.themDelta)}/wk)`);
+  if (t.youDelta < 1) blockers.push(`your lineup barely moves (${fmt(t.youDelta)}/wk)`);
+  // 3. Both sides must get at least one player who starts.
+  if (!starts(t.give, themRosterAfter).length) theirs(`nothing ${them.manager} gets would start`);
+  if (!starts(t.get, youRosterAfter).length) blockers.push("nothing you get would start");
+  // 4. No dollar-for-quarters: the best piece each side receives has to be in the same tier as what they give.
+  const best = (ids: string[]) => Math.max(...ids.map((id) => marketValue(playerById(id))), 1);
+  if (best(t.give) < best(t.get) * 0.7) theirs(`${them.manager} gives the best player and gets lesser pieces back`);
+  if (best(t.get) < best(t.give) * 0.7) blockers.push("you give the best player and get lesser pieces back");
+  // 5. Don't gut a position they need: their group at the outgoing position can't fall more than it gains elsewhere.
+  const before = groupPoints(lineupFor(them.roster)), after = groupPoints(lineupFor(themRosterAfter));
+  const worstDrop = Math.min(...(Object.keys(before) as Group[]).map((g) => after[g] - before[g]));
+  if (worstDrop < -4) theirs(`it opens a big hole in ${them.manager}'s lineup`);
+
+  // Likelihood from what's left
+  let p = 0.45;
+  p += Math.min(0.2, (t.themDelta - 1) * 0.05);
+  p += theirGap >= 0.03 ? 0.12 : theirGap >= -0.03 ? 0.06 : 0;
+  const need = needsFor(them).need;
+  if (t.give.some((id) => playerById(id).pos === need)) { p += 0.12; reasons.push(`fills their ${need} need`); }
+  if (t.fillsWant) { p += 0.12; reasons.push("they said they want this position"); }
+  if (t.give.length === 1 && t.get.length === 1) { p += 0.05; reasons.push("clean 1-for-1"); }
+  if (theirGap >= -0.03) reasons.push(theirGap >= 0.03 ? "they win on value" : "even on value");
+  if (t.themDelta >= 2) reasons.push(`their lineup +${t.themDelta.toFixed(1)}/wk`);
+  const td = tendencies(them.id);
+  if (td.closeRate !== null) p += (td.closeRate - 0.35) * 0.3;
+  if (theirBlockers.length) p = Math.min(p, 0.2);
+  p = Math.max(0.02, Math.min(0.95, p));
+  return { p, label: p >= 0.72 ? "Likely yes" : p >= 0.55 ? "Worth a shot" : "Long shot", reasons, blockers, theirBlockers };
+}
+
 export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Trade[] {
   const results: Trade[] = [];
   for (const give of combos(you.roster, 2)) {
@@ -320,13 +373,15 @@ export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Re
       if (give.length + get.length > 3) continue;
       const t = evaluate(you, them, give, get, tags, myTags, prices);
       if (t.warnings.length) continue;
-      if (!isWinWin(t)) continue;
-      // Both lenses: it helps both lineups AND neither side gives up much more market value.
-      if (Math.abs(t.marketGap) > 0.25) continue;
+      if (t.youDelta < 1 || t.themDelta < 1) continue;
+      const a = acceptance(t, you, them);
+      if (a.blockers.length || a.p < 0.55) continue;
+      t.accept = a;
       results.push(t);
     }
   }
-  const score = (t: Trade) => Math.min(t.youDelta, t.themDelta) + (t.fillsWant ? 1.5 : 0) - (t.give.length + t.get.length - 2) * 0.4 - Math.abs(t.marketGap) * 4;
+  // Rank by how likely they say yes, then by what it does for you
+  const score = (t: Trade) => (t.accept?.p ?? 0) * 6 + Math.min(t.youDelta, 4) - (t.give.length + t.get.length - 2) * 0.5;
   results.sort((a, b) => score(b) - score(a));
   // Keep variety: no repeat of the same headline pair, and no padded versions of a simpler deal.
   const seen = new Set<string>();
@@ -350,6 +405,7 @@ export function whatItWouldTake(you: Team, them: Team, playerId: string, tags: M
     const t = evaluate(you, them, [playerId], get, tags, {}, {});
     if (t.warnings.length) continue;
     if (!clearsPrice(playerId, get, t.youDelta, price) || t.themDelta < 0) continue;
+    if (acceptance(t, you, them).theirBlockers.length) continue;
     if (!best || t.youDelta < best.youDelta) best = t;
   }
   return best;
@@ -364,7 +420,7 @@ export function costToGet(you: Team, playerId: string, tags: ManagerTag[], myTag
   for (const give of combos(you.roster, 2)) {
     const t = evaluate(you, owner, give, [playerId], tags, myTags, prices);
     if (t.warnings.length) continue;
-    if (t.themDelta >= 0.5 && (!best || t.youDelta > best.youDelta)) best = t;
+    if (t.themDelta >= 1 && !acceptance(t, you, owner).theirBlockers.length && (!best || t.youDelta > best.youDelta)) best = t;
     if (t.youDelta >= 0 && (!closest || t.themDelta > closest.themDelta)) closest = t;
   }
   if (best) return { trade: best, works: true };
@@ -396,11 +452,13 @@ export function counterFor(t: Trade, tags: ManagerTag[], myTags: Record<string, 
     const n = evaluate(YOU, them, t.give.filter((x) => x !== id), t.get, tags, myTags, prices);
     if (!n.warnings.length) options.push({ trade: n, line: `Keep ${playerById(id).name} out of it` });
   });
-  // Prefer true win-wins, then the one closest to fair for them.
-  const good = options.filter((o) => isWinWin(o.trade)).sort((a, b) => Math.min(b.trade.youDelta, b.trade.themDelta) - Math.min(a.trade.youDelta, a.trade.themDelta));
-  if (good[0]) return good[0];
-  const near = options.filter((o) => o.trade.youDelta >= 0.5 && o.trade.themDelta >= -2).sort((a, b) => b.trade.themDelta - a.trade.themDelta);
-  return near[0] ?? null;
+  // Only counters they'd plausibly accept: nothing on their side blocks it, and it still helps you.
+  const scored = options.map((o) => ({ ...o, a: acceptance(o.trade, YOU, them) }))
+    .filter((o) => !o.a.theirBlockers.length && o.a.p >= 0.5 && o.trade.youDelta >= 0.5 && o.trade.marketGap >= -0.15)
+    .sort((a, b) => b.a.p - a.a.p || b.trade.youDelta - a.trade.youDelta);
+  if (!scored[0]) return null;
+  scored[0].trade.accept = scored[0].a;
+  return { trade: scored[0].trade, line: scored[0].line };
 }
 
 /** Live tip for the trade builder, phrased from engine numbers. */
