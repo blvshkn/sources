@@ -3035,3 +3035,21 @@ html:root:not(#_) .ps-k, html:root:not(#_) .page-meta, html:root:not(#_) .mu-slo
   font-family: var(--font-mono) !important; text-transform: uppercase !important; letter-spacing: 0.06em !important; font-size: 0.6875rem !important; font-weight: 500;
 }
 html:root:not(#_) .page-meta { font-size: 0.6875rem !important; }
+
+/* Array is a dotted display face: only at display sizes. Legacy var(--font-display) uses go back to Google Sans. */
+html:root:not([data-nf]):not(#_) { --font-display: "Google Sans", "Google Sans Text", "Helvetica Neue", sans-serif; --font-array: "Array", "Google Sans", sans-serif; }
+html:root:not(#_) .brand-mark, html:root:not(#_) .sb-badge, html:root:not(#_) .avatar, html:root:not(#_) [class*="-av"] { font-family: "Google Sans", sans-serif !important; }
+/* Array targets */
+html:root:not(#_) .page-title, html:root:not(#_) .topk-name, html:root:not(#_) .ps-who b, html:root:not(#_) .fb-head b, html:root:not(#_) .doc h2 { font-family: var(--font-array) !important; }
+html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .tp-who b, html:root:not(#_) .st-dhead .st-who b, html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#_) .wt-name b {
+  font-family: var(--font-array) !important; font-size: max(1.125rem, 1em) !important; font-weight: 600; letter-spacing: 0;
+}
+html:root:not(#_) .top-league-n b { font-size: 1.0625rem !important; }
+/* Small names and section titles stay in Google Sans for legibility */
+html:root:not(#_) .section-title, html:root:not(#_) .card h2, html:root:not(#_) .nudge h3, html:root:not(#_) .st-who b, html:root:not(#_) .psr-team, html:root:not(#_) .lsw-n b,
+html:root:not(#_) .partner-card b, html:root:not(#_) .mu-side span, html:root:not(#_) .roster-head b, html:root:not(#_) .sheet h2 { font-family: "Google Sans", sans-serif !important; }
+/* More numbers in Geist Mono */
+html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#_) .wv-rank, html:root:not(#_) .partner-rank, html:root:not(#_) .topk-stats dd, html:root:not(#_) .faab-num, html:root:not(#_) .faab b, html:root:not(#_) .lu-weeknav-lbl b {
+  font-family: var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+}
+html:root:not(#_) .sb2-pts { font-weight: 600 !important; letter-spacing: -0.05em; }
