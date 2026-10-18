@@ -2132,3 +2132,14 @@ body::after {
   :root:not(#_) .ix-w { font-size: 0.8125rem !important; }
 }
 @media (max-width: 860px) { :root:not(#_) .tabbar.ix button[aria-current="page"] svg { color: rgb(var(--tab-rgb)) !important; } :root:not(#_) .tabbar.ix button svg { color: inherit; } }
+
+/* ---------- Scoreboard face-off: two columns, score under each team ---------- */
+.sb2-vs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 8px; }
+.sb2-vs.solo { grid-template-columns: minmax(0, 1fr); }
+.sb2-side { display: grid; justify-items: center; text-align: center; gap: 4px; min-width: 0; }
+:root:not(#_) .sb2-side .sb-badge { width: 52px; height: 52px; margin-bottom: 6px; }
+.sb2-tn { font-size: 0.9375rem; font-weight: 600; line-height: 1.25; color: var(--ink); min-height: 2.5em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.sb2-side small { font-size: 0.8125rem; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb2-side .sb2-pts { margin-top: 8px; font-size: 2.375rem; }
+.sb2-side.them .sb2-pts { color: var(--muted); }
+.sb2-v { align-self: end; margin-bottom: 12px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); }
