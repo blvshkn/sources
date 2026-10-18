@@ -2,7 +2,7 @@ import { useState } from "react";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, PosBadge, Stamp } from "./ui";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -58,6 +58,14 @@ const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filte
 // Standard normal CDF (Abramowitz-Stegun), for a win chance from the two projections
 const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 
+/** Manager avatar from Sleeper, or initials when they haven't set one. */
+function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "you" | "them" }) {
+  const [bad, setBad] = useState(false);
+  return t.avatar && !bad
+    ? <img className={`sb-badge ${side} sb-img`} src={`https://sleepercdn.com/avatars/thumbs/${t.avatar}`} alt="" onError={() => setBad(true)} />
+    : <span className={`sb-badge ${side}`}>{initials(t.name)}</span>;
+}
+
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
 export function Scoreboard({ you, partner }: { you: TeamNeeds; partner: string | null }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
@@ -67,13 +75,13 @@ export function Scoreboard({ you, partner }: { you: TeamNeeds; partner: string |
   return (
     <section className="card scoreboard" aria-label="This week">
       <div className="sb-top">
-        <div className="sb-team"><span className="sb-badge you">{initials(YOU.name)}</span><span className="sb-name">{YOU.name}</span><span className="sb-rec">{YOU.record}</span></div>
+        <div className="sb-team"><TeamBadge t={YOU} side="you" /><span className="sb-name">{YOU.name}</span><span className="sb-rec">{YOU.record}</span></div>
         <div className="sb-mid">
           <span>Week {WEEK} projected</span>
           <span className="numeral-row"><span className="numeral">{mine.toFixed(1)}</span>{theirs !== null && <><span className="vs">vs</span><span className="numeral">{theirs.toFixed(1)}</span></>}</span>
         </div>
         {opp ? (
-          <div className="sb-team"><span className="sb-badge them">{initials(opp.name)}</span><span className="sb-name">{opp.name}</span><span className="sb-rec">{opp.record}</span></div>
+          <div className="sb-team"><TeamBadge t={opp} side="them" /><span className="sb-name">{opp.name}</span><span className="sb-rec">{opp.record}</span></div>
         ) : (
           <div className="sb-team"><span className="sb-badge them">#{you.rank}</span><span className="sb-name">Power rank</span><span className="sb-rec">of {TEAMS.length}</span></div>
         )}
@@ -151,8 +159,8 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   return (
     <>
       <div className="deal-lists">
-        <div><span className="eyebrow">You send</span><ul>{o.give.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
-        <div><span className="eyebrow">You get</span><ul>{o.get.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+        <div><span className="eyebrow">You send</span><ul>{o.give.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+        <div><span className="eyebrow">You get</span><ul>{o.get.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
       </div>
       <div className={`verdict ${read.tone}`}><b>{read.label}</b><span className="small">{read.line} {teamById(o.partnerId).manager} gains {fmt(o.themDelta)}.</span></div>
       {n.counter && (
@@ -200,7 +208,6 @@ export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen,
         <div>
           <div className="eyebrow">Week {WEEK} · {DEADLINES.lock}</div>
           <h1 className="page-title">The Wire</h1>
-          <p className="page-sub">What your league needs and the deals worth sending today.</p>
         </div>
       </header>
 
@@ -243,8 +250,8 @@ export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen,
             <span className="rail-time">{n.time}</span>
           </div>
           <h3>
-            {["need", "news", "waiver", "lineup", "slot"].includes(n.kind) && <span className="ps">Per sources, </span>}
-            {n.headline} {n.emph && <em>{n.emph}</em>}
+            
+            {n.headline.charAt(0).toUpperCase() + n.headline.slice(1)} {n.emph && <em>{n.emph}</em>}
           </h3>
           <p className="muted small">{n.why}</p>
           {n.impact && (

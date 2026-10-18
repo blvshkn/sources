@@ -456,10 +456,10 @@ export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad
 
 /** Plain-English read on an offer someone sent you. */
 export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
-  if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Per sources, this one helps you. Your starters gain ${fmt(t.youDelta)} a week and the market value is ${t.marketGap >= 0 ? "in your favor" : "close to even"}.` };
-  if (t.youDelta >= 0.5) return { label: "Helps now, costs value", tone: "warn", line: `Per sources, your starters gain ${fmt(t.youDelta)} a week, but you give up ${pct(t.marketGap).slice(1)} more market value.` };
-  if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `Per sources, it's close to even (${fmt(t.youDelta)} a week). A small add makes it fair.` };
-  return { label: "Light", tone: "bad", line: `Per sources, this one's light. Your starters lose ${fmt(t.youDelta).replace("−", "")} a week.` };
+  if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `This one helps you. Your starters gain ${fmt(t.youDelta)} a week and the market value is ${t.marketGap >= 0 ? "in your favor" : "close to even"}.` };
+  if (t.youDelta >= 0.5) return { label: "Helps now, costs value", tone: "warn", line: `Your starters gain ${fmt(t.youDelta)} a week, but you give up ${pct(t.marketGap).slice(1)} more market value.` };
+  if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `It's close to even (${fmt(t.youDelta)} a week). A small add makes it fair.` };
+  return { label: "Light", tone: "bad", line: `This one's light. Your starters lose ${fmt(t.youDelta).replace("−", "")} a week.` };
 }
 
 // ---- Lineup day -----------------------------------------------------------
@@ -622,15 +622,15 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     if (r && !r.works) {
       const t = r.trade;
       return {
-        text: `Per sources, ${named.name} is expensive. The closest you get is ${t.give.map((id) => playerById(id).name).join(" + ")}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
+        text: `${named.name} is expensive. The closest you get is ${t.give.map((id) => playerById(id).name).join(" + ")}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
         points: [`Your starters go ${fmt(t.youDelta)} a week.`, `${owner.manager}'s starters go ${fmt(t.themDelta)}. They'd need a reason, like a need you fill.`, "Your untouchables and his tags were left out."],
         links: [{ label: "Open it in builder", tab: "trade", trade: t }],
       };
     }
     const t = r?.trade;
-    if (!t) return { text: `Per sources, nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }] };
+    if (!t) return { text: `Nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }] };
     return {
-      text: `Per sources, ${t.give.map((id) => playerById(id).name).join(" + ")} gets it done with ${owner.manager}.`,
+      text: `${t.give.map((id) => playerById(id).name).join(" + ")} gets it done with ${owner.manager}.`,
       points: [`${owner.manager}'s starters gain ${fmt(t.themDelta)} a week.`, `Your starters go ${fmt(t.youDelta)} a week.`, ...(t.youDrop.length ? [`You'd drop ${t.youDrop.map((id) => playerById(id).name).join(", ")} to make room.`] : [])],
       links: [{ label: "Open in builder", tab: "trade", trade: t }],
     };
@@ -638,7 +638,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   if (/(need|thin|weak|hurting|short)/.test(s) && pos) {
     const ranked = needs.filter((n) => !n.team.you).sort((a, b) => a.groups[pos].pct - b.groups[pos].pct).slice(0, 3);
     return {
-      text: `Per sources, ${ranked[0].team.name} needs a ${pos} most.`,
+      text: `${ranked[0].team.name} needs a ${pos} most.`,
       points: ranked.map((n) => `${n.team.name}: ${fmt(n.groups[pos].diff)} pts a week vs league average at ${pos}.`),
       links: [{ label: "See the needs map", tab: "league", teamId: ranked[0].team.id }],
     };
@@ -648,7 +648,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     const flex = lu.slots.find((x) => x.slot === "FLEX")?.player;
     const diff = sleeperDiff(lu);
     return {
-      text: diff.length ? `Per sources, swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Per sources, your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
+      text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
       points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...lu.bench.filter((p) => isOut(p, true)).map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
     };
@@ -656,7 +656,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
     const r = waiverRecs(YOU)[0];
     return {
-      text: `Per sources, ${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
+      text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
       points: [`Adds ${fmt(r.gain)} to your starters this week.`, r.drop ? `Drop ${r.drop.name} (${eff(r.drop).toFixed(1)} projected).` : "You have an open spot.", r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
       links: [{ label: "Open waivers", tab: "waivers" }],
     };
@@ -664,9 +664,9 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   if (/(trade with|partner|who should i trade|best trade|deal)/.test(s)) {
     const top = needs.filter((n) => !n.team.you).map((n) => ({ n, t: findTrades(YOU, n.team, activeTags(tags, 4), myTags, prices, 1)[0] })).filter((x) => x.t)
       .sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) - Math.min(a.t.youDelta, a.t.themDelta)).slice(0, 3);
-    if (!top.length) return { text: "Per sources, no clean win-win trades right now.", points: [], links: [{ label: "See the needs map", tab: "league" }] };
+    if (!top.length) return { text: "No clean win-win trades right now.", points: [], links: [{ label: "See the needs map", tab: "league" }] };
     return {
-      text: `Per sources, ${top[0].n.team.name} is your best trade partner this week.`,
+      text: `${top[0].n.team.name} is your best trade partner this week.`,
       points: top.map((x) => `${x.n.team.name}: your ${x.t.give.map((id) => playerById(id).name).join(" + ")} for ${x.t.get.map((id) => playerById(id).name).join(" + ")} (you ${fmt(x.t.youDelta)}, them ${fmt(x.t.themDelta)}).`),
       links: [{ label: "Open the top deal", tab: "trade", trade: top[0].t }],
     };
@@ -676,7 +676,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     const n = needs.find((x) => x.team.id === team.id)!;
     const td = tendencies(team.id);
     return {
-      text: `Per sources, ${team.name} is a ${n.mode.toLowerCase()} that needs a ${n.need}.`,
+      text: `${team.name} is a ${n.mode.toLowerCase()} that needs a ${n.need}.`,
       points: [`${fmt(n.groups[n.need].diff)} pts a week vs league average at ${n.need}.`, n.surplusPlayer ? `Has a spare ${n.surplus}: ${n.surplusPlayer.name}.` : "No obvious spare starter on the bench.", td.summary],
       links: [{ label: `Build a trade with ${team.manager}`, tab: "trade", teamId: team.id }],
     };

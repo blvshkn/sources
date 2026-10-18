@@ -33,7 +33,7 @@ interface SRoster {
   settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number };
 }
 interface SProj {
-  player_id: string; team: string | null;
+  player_id: string; team: string | null; opponent?: string | null; date?: string | null;
   stats: Record<string, number | undefined>;
   player?: { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; injury_body_part?: string | null; years_exp?: number };
 }
@@ -194,6 +194,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       ...st,
       note: info.injury_status ? [info.injury_status, (w?.player ?? s?.player)?.injury_body_part].filter(Boolean).join(", ") : undefined,
       rookie: info.years_exp === 0,
+      opp: w?.opponent ?? undefined,
+      gameDate: w?.date ?? undefined,
       irEligible: irOk(info.injury_status),
       injury: info.injury_status ?? undefined,
       playoff: playoff ?? undefined,
@@ -220,6 +222,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       name: isDef ? defName(id) : [info?.first_name, info?.last_name].filter(Boolean).join(" ") || `Kicker ${id}`,
       wk: wk && wk > 0 ? Math.round(wk * 10) / 10 : live ? null : per,
       proj: per,
+      opp: w?.opponent ?? undefined,
+      gameDate: w?.date ?? undefined,
       ...statusOf(info?.injury_status),
     };
   };
@@ -247,6 +251,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       record,
       pf: (st.fpts ?? 0) + (st.fpts_decimal ?? 0) / 100,
       you: r.owner_id === userId || !!r.co_owners?.includes(userId),
+      avatar: u?.avatar ?? undefined,
       // Sleeper's players list includes IR and taxi. Split them out so they never count as active.
       roster: (r.players ?? []).filter((id) => players[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
       ir: (r.reserve ?? []).filter((id) => players[id]),

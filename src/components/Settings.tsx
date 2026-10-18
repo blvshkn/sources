@@ -56,7 +56,6 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <div>
           <div className="eyebrow">Account</div>
           <h1 className="page-title">Settings</h1>
-          <p className="page-sub">Your league, your nudges, and your data. Nothing here is ever shared with your league mates.</p>
         </div>
       </header>
 

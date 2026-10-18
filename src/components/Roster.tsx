@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
-import { LEAGUE, OPPONENT_ID, SpecialPlayer, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
+import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, PosBadge, Seg, Stamp, StatusPill } from "./ui";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Available",
@@ -32,7 +32,7 @@ function IrBlock() {
         return (
           <div key={p.id} className={`lu-row ir-row${stuck ? " ir-stuck" : ""}`}>
             <span className="lu-slot">IR</span>
-            <Jersey p={p} size={36} />
+            <Avatar p={p} size={36} />
             <span className="lu-who">
               <span className="lu-name">{p.name}</span>
               <span className="lu-meta">{p.pos} · {p.nfl}<b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
@@ -70,12 +70,13 @@ function LineupRow({ p, slot, bench, swap }: { p: Player; slot: string; bench?: 
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}`}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
-      <Jersey p={p} size={40} ring={ringOf(p)} />
+      <Avatar p={p} size={44} />
       <span className="lu-who">
-        <span className="lu-name">{p.name}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>{p.nfl}{st && st !== "Bye" && <b className={`lu-st ${ringOf(p)}`}>{st === "Questionable" ? "Q" : st}{p.status && !onBye(p.nfl) ? ` · ${injuryDetail(p)}` : ""}</b>}</span>
+        <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{p.status === "Q" ? "Q" : "OUT"}</b>}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
+        {p.status && !onBye(p.nfl) && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
-      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{eff(p, true).toFixed(1)}</span>}
+      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{eff(p, true).toFixed(1)}<i>proj</i></span>}
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -93,12 +94,12 @@ function SpecialRow({ p, slot, bench, swapFrom }: { p: SpecialPlayer; slot: stri
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swapFrom ? " has-swap" : ""}`}>
       <span className={`lu-slot s-${slot}`}>{slot}</span>
-      <Jersey p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} ring={bye || out ? "bad" : p.status === "Q" ? "warn" : undefined} />
+      <Avatar p={p} size={44} />
       <span className="lu-who">
-        <span className="lu-name">{p.name}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>{p.pos === "K" ? p.nfl : "Team defense"}{out && <b className="lu-st bad">Out</b>}</span>
+        <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
       </span>
-      {bye ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{specialPts(p).toFixed(1)}</span>}
+      {bye ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{specialPts(p).toFixed(1)}<i>proj</i></span>}
       {swapFrom && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -115,7 +116,7 @@ function WeekPanel({ v }: { v: WeekView }) {
   const row = (p: WeekView["bench"][number], slot: string, bench?: boolean) => (
     <div key={`${slot}-${p.id}`} className={`lu-row${bench ? " bench" : ""}`}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
-      <Jersey p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
+      <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>{p.pos === "DEF" ? "Team defense" : p.nfl}</span>
@@ -308,7 +309,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             const starting = s.find((x) => x.player.id === id);
             return (
               <div key={id} className="prow roster-row">
-                <Jersey p={p} size={36} />
+                <Avatar p={p} size={36} />
                 <div style={{ minWidth: 0 }}>
                   <div className="pname">{p.name}</div>
                   <div className="pmeta">{starting ? starting.slot : "Bench"} · {p.nfl} · {eff(p, true).toFixed(1)} pts this week <StatusPill p={p} /></div>
@@ -350,10 +351,10 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <span className="mono small num" style={{ minWidth: 72, textAlign: "right" }}>{price.mode === "pts" ? `${fmt(price.amount)}/wk` : `+${price.amount}%`}</span>
               </div>
               <p className="tiny muted">Only moves if the deal would {priceLabel(price)}{price.mode === "pct" ? " without lowering your starting lineup" : ""}.</p>
-              {real.map(({ t, o }, i) => (
+              {real.map(({ t, o }) => (
                 <div key={t.id} className="offer">
                   <div className="row wrap" style={{ justifyContent: "space-between" }}>
-                    <b className="small">{i === 0 ? `Per sources, ${t.name} could meet your price. ` : ""}{t.manager} sends {o!.get.map((id) => playerById(id).name).join(" + ")}</b>
+                    <b className="small">{t.manager} sends {o!.get.map((id) => playerById(id).name).join(" + ")}</b>
                     <button className="btn btn-sm" onClick={() => onPitch(o!)}>Write pitch</button>
                   </div>
                   <div className="idea-nums"><span>You gain <Delta n={o!.youDelta} />/wk</span><span>They gain <Delta n={o!.themDelta} />/wk</span></div>

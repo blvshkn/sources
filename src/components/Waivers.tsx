@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
 import { AiLabel, Icon, Seg, Stamp } from "./ui";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -23,7 +23,6 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         <div>
           <div className="eyebrow">{DEADLINES.waivers}</div>
           <h1 className="page-title">Waivers</h1>
-          <p className="page-sub">Who to add, who to drop, and what to bid, based on what wins in your league.</p>
         </div>
         {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
           <span className="tiny muted">FAAB left</span>
@@ -38,7 +37,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             <div className="row wrap"><Stamp>Waivers</Stamp><span className="deadline"><Icon name="clock" size={12} />{DEADLINES.waivers}</span></div>
             <AiLabel />
           </div>
-          <h3>Per sources, {top.fa.name} is your best add. <em>{FAAB.enabled ? `Bid ${top.bid[0]} to ${top.bid[1]} percent.` : "Put in a claim."}</em></h3>
+          <h3>{top.fa.name} is your best add. <em>{FAAB.enabled ? `Bid ${top.bid[0]} to ${top.bid[1]} percent.` : "Put in a claim."}</em></h3>
           <p className="small">{top.fa.why}</p>
           <p className="small muted">{top.fa.name} adds {fmt(top.gain)} to your starters this week{irMove ? `. Move ${irMove.name} to IR first and you won't need to drop anyone` : top.drop ? `. Drop ${top.drop.name} (${eff(top.drop).toFixed(1)} projected)` : ""}.</p>
         </section>
@@ -62,7 +61,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             <div key={r.fa.id} className={`wv${isOpen ? " open" : ""}`}>
               <button className="wv-row" onClick={() => setOpen(isOpen ? null : r.fa.id)} aria-expanded={isOpen}>
                 <span className="wv-rank">{i + 1}</span>
-                <Jersey p={r.fa} size={40} />
+                <Avatar p={r.fa} size={40} />
                 <span className="wv-who">
                   <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <Icon name="spark" size={14} />}</span>
                   <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>

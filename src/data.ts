@@ -34,6 +34,9 @@ export interface Player {
   irEligible?: boolean;
   /** Raw injury designation from Sleeper (IR, PUP, Out, Sus...). */
   injury?: string;
+  /** This week's opponent and game date (YYYY-MM-DD). */
+  opp?: string;
+  gameDate?: string;
 }
 
 export interface Team {
@@ -45,6 +48,8 @@ export interface Team {
   you?: boolean;
   /** Active roster only: starters and bench. IR and taxi players live below. */
   roster: string[];
+  /** Sleeper avatar id for the manager, when they have one. */
+  avatar?: string;
   /** Players in IR slots. They don't count against the roster limit. */
   ir?: string[];
   /** Players on the taxi squad (dynasty). */
@@ -56,7 +61,7 @@ export interface Team {
 /** A kicker or team defense. Kept apart from skill players so trades and waivers ignore them. */
 /** What your team actually did in a past week, from Sleeper matchups. */
 export interface WeekHistory { starters: string[]; players: string[]; points: Record<string, number>; total: number; oppTotal?: number; oppName?: string }
-export interface SpecialPlayer { id: string; name: string; pos: "K" | "DEF"; nfl: string; wk: number | null; proj: number; status?: Status; note?: string }
+export interface SpecialPlayer { id: string; name: string; pos: "K" | "DEF"; nfl: string; wk: number | null; proj: number; status?: Status; note?: string; opp?: string; gameDate?: string }
 
 type Row = [string, Pos, string, number, Status?, string?];
 
@@ -293,13 +298,32 @@ const DEF_NAMES: Record<string, string> = {
 };
 export const defName = (team: string) => `${DEF_NAMES[team] ?? team} D/ST`;
 const DEMO_BYES = ["PIT", "NE"];
+// Demo Week 7 slate: [away, home, date]. Thursday and Monday games plus a Sunday full of them.
+const DEMO_SLATE: [string, string, string][] = [
+  ["DEN", "KC", "2026-10-22"], ["BUF", "MIA", "2026-10-25"], ["CAR", "TB", "2026-10-25"], ["IND", "TEN", "2026-10-25"],
+  ["CIN", "CLE", "2026-10-25"], ["NYJ", "BAL", "2026-10-25"], ["JAX", "HOU", "2026-10-25"], ["NYG", "PHI", "2026-10-25"],
+  ["ATL", "NO", "2026-10-25"], ["LAR", "SEA", "2026-10-25"], ["ARI", "SF", "2026-10-25"], ["LV", "LAC", "2026-10-25"],
+  ["GB", "MIN", "2026-10-25"], ["DET", "DAL", "2026-10-25"], ["WAS", "CHI", "2026-10-26"],
+];
+/** "Sun vs LV" style game line. Live opponents come without home/away, so they read "v LV". */
+export function gameLine(x: { opp?: string; gameDate?: string }): string {
+  if (!x.opp) return "";
+  const day = x.gameDate ? new Date(`${x.gameDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" }) : "";
+  const opp = /^(vs|@)\s/.test(x.opp) ? x.opp : `v ${x.opp}`;
+  return [day, opp].filter(Boolean).join(" ");
+}
+export const demoGame = (team: string): { opp: string; home: boolean; date: string } | undefined => {
+  const g = DEMO_SLATE.find(([a, h]) => a === team || h === team);
+  return g ? { opp: g[0] === team ? g[1] : g[0], home: g[1] === team, date: g[2] } : undefined;
+};
 function demoSpecials(teams: Team[]): Record<string, SpecialPlayer> {
   const out: Record<string, SpecialPlayer> = {};
   for (const t of teams) {
     const d = DEMO_SPECIAL[t.id];
     if (!d) continue;
-    const k: SpecialPlayer = { id: slug(d[0]), name: d[0], pos: "K", nfl: d[1], wk: DEMO_BYES.includes(d[1]) ? null : d[2], proj: d[2] };
-    const def: SpecialPlayer = { id: d[3], name: defName(d[3]), pos: "DEF", nfl: d[3], wk: DEMO_BYES.includes(d[3]) ? null : d[4], proj: d[4] };
+    const gk = demoGame(d[1]), gd = demoGame(d[3]);
+    const k: SpecialPlayer = { id: slug(d[0]), name: d[0], pos: "K", nfl: d[1], wk: DEMO_BYES.includes(d[1]) ? null : d[2], proj: d[2], opp: gk ? `${gk.home ? "vs" : "@"} ${gk.opp}` : undefined, gameDate: gk?.date };
+    const def: SpecialPlayer = { id: d[3], name: defName(d[3]), pos: "DEF", nfl: d[3], wk: DEMO_BYES.includes(d[3]) ? null : d[4], proj: d[4], opp: gd ? `${gd.home ? "vs" : "@"} ${gd.opp}` : undefined, gameDate: gd?.date };
     out[k.id] = k; out[def.id] = def;
     t.special = [k.id, def.id];
   }
@@ -310,7 +334,8 @@ function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
   const players: Record<string, Player> = {};
   const toId = ([name, pos, nfl, proj, status, note]: Row, onIr = false) => {
     const pid = slug(name);
-    players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O", irEligible: status === "O", injury: onIr ? "IR" : status === "O" ? "Out" : undefined };
+    const g = demoGame(nfl);
+    players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O", irEligible: status === "O", injury: onIr ? "IR" : status === "O" ? "Out" : undefined, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date };
     return pid;
   };
   const teams = Object.entries(rosters).map(([id, t]) => {

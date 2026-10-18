@@ -6,6 +6,7 @@ import type { Player } from "./data";
 type Row = [number, string, string, string];
 let byId: Record<string, Row> = {};
 let byName = new Map<string, number>();
+let idByName = new Map<string, string>();
 let version = 0;
 const listeners = new Set<() => void>();
 const norm = (s: string) => s.toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, "").replace(/[^a-z]/g, "");
@@ -13,9 +14,12 @@ const norm = (s: string) => s.toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g,
 function ingest(players: Record<string, Row>) {
   byId = players;
   byName = new Map();
-  for (const [num, name, team] of Object.values(players)) {
+  idByName = new Map();
+  for (const [id, [num, name, team]] of Object.entries(players)) {
     byName.set(`${norm(name)}|${team}`, num);
     if (!byName.has(norm(name))) byName.set(norm(name), num);
+    idByName.set(`${norm(name)}|${team}`, id);
+    if (!idByName.has(norm(name))) idByName.set(norm(name), id);
   }
   version++;
   listeners.forEach((l) => l());
@@ -39,6 +43,12 @@ export function loadJerseyNumbers() {
       try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), players: d.players })); } catch { /* full or blocked */ }
     })
     .catch(() => { /* jerseys show without a number */ });
+}
+
+/** Sleeper player id: live players already carry one; demo players are matched by name and team. */
+export function sleeperId(p: Pick<Player, "id" | "name" | "nfl">): string | undefined {
+  if (/^\d+$/.test(p.id)) return p.id;
+  return idByName.get(`${norm(p.name)}|${p.nfl}`) ?? idByName.get(norm(p.name));
 }
 
 export function jerseyNumber(p: Pick<Player, "id" | "name" | "nfl">): number | undefined {

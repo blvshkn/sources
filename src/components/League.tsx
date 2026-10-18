@@ -3,7 +3,7 @@ import { ManagerTag, playerById, Pos, POS_ORDER, YOU, LEAGUE_NAME } from "../dat
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 import { LEAGUE, Activity, ActivityPlayer } from "../data";
 
 const KIND_LABEL: Record<Activity["kind"], string> = { free_agent: "Free agent", waiver: "Waiver claim", trade: "Trade", commissioner: "Commissioner" };
@@ -21,7 +21,7 @@ const managerOf = (id: string) => { const t = LEAGUE.teams.find((x) => x.id === 
 function Move({ p, add }: { p: ActivityPlayer; add: boolean }) {
   return (
     <div className="act-move">
-      <Jersey p={p} size={34} />
+      <Avatar p={p} size={34} />
       <span className="act-move-txt">
         <span className={`act-tag ${add ? "add" : "drop"}`}>{add ? "+ Add" : "− Drop"}</span>
         <b>{shortName(p.name)}</b>
@@ -113,7 +113,6 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
         <div>
           <div className="eyebrow">{LEAGUE_NAME} · {needs.length} teams</div>
           <h1 className="page-title">League needs</h1>
-          <p className="page-sub">Every team's starters compared to the league average. Red marks where a team is hurting.</p>
         </div>
         <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />
       </header>
@@ -124,7 +123,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
             <Stamp>Per sources</Stamp>
             <AiLabel />
           </div>
-          {headline && <h3>Per sources, {headline.charAt(0).toLowerCase() + headline.slice(1)}</h3>}
+          {headline && <h3>{headline}</h3>}
           <div className="partners">
             {partners.map(({ n, t, why }, i) => (
               <button key={n.team.id} className="partner-card" onClick={() => onOpen(t)}>

@@ -291,7 +291,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       {nudges.map((n) => (
         <div key={n.id} className="rail-item">
           <span className="rail-time">{n.time}{n.deadline ? ` · ${n.deadline}` : ""}</span>
-          <p>{["need", "news", "waiver", "lineup", "slot"].includes(n.kind) ? "Per sources, " : ""}{n.headline} {n.emph}</p>
+          <p>{n.headline.charAt(0).toUpperCase() + n.headline.slice(1)} {n.emph}</p>
           {n.trades[0] && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => loadTrade(n.trades[0])}>Open in builder</button>}
           {!n.trades[0] && n.go && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => go(n.go!.tab)}>{n.go.label}</button>}
         </div>

@@ -3,7 +3,7 @@ import { Trade, fmt, needsFor } from "../engine";
 import { playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
 import { AiLabel, Delta, Icon, Seg } from "./ui";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 
 // Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
 const project = (v: number, d = 0.998) => ((v / 1000) * d) / (1 - d);
@@ -203,8 +203,8 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
           <div className="pc-top"><span className="pc-stamp">Per sources</span><span className="pc-link">{CARD_LINK}</span></div>
           <div className="pc-title">A trade that works for {them.manager}</div>
           <div className="pc-cols">
-            <div><span className="pc-k">{them.manager} gets</span>{trade.give.map((id) => <div key={id} className="pc-p"><Jersey p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
-            <div><span className="pc-k">I get</span>{trade.get.map((id) => <div key={id} className="pc-p"><Jersey p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
+            <div><span className="pc-k">{them.manager} gets</span>{trade.give.map((id) => <div key={id} className="pc-p"><Avatar p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
+            <div><span className="pc-k">I get</span>{trade.get.map((id) => <div key={id} className="pc-p"><Avatar p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
           </div>
           <div className="pc-nums"><span>{them.manager} <Delta n={trade.themDelta} />/wk</span><span>Me <Delta n={trade.youDelta} />/wk</span></div>
           <figcaption className="pc-why">Fills their {need} spot. Starting lineup points from weekly projections.</figcaption>

@@ -46,7 +46,7 @@ export function Stamp({ children = "Per sources" }: { children?: ReactNode }) {
 export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: () => void; dataLabel?: string }) {
   return (
     <span className="ai-label">
-      <Icon name="spark" size={12} />AI-written from engine numbers
+      <Icon name="spark" size={12} />AI summary
       {onData && <button className="linkish" onClick={onData}>{dataLabel}</button>}
     </span>
   );

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
+import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
-import { Jersey } from "./Jersey";
+import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
 
@@ -19,10 +19,10 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     return (
       <button key={id + slot} className={`pick${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
         title={dim || lock || want || undefined}>
-        <Jersey p={p} size={34} />
+        <Avatar p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="pname" style={{ display: "block" }}>{p.name}</span>
-          <span className="pmeta">{p.nfl} · <span className="slot-tag">{slot}</span> <StatusPill p={p} />
+          <span className="pmeta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> {p.nfl}{gameLine(p) ? ` · ${gameLine(p)}` : ""} · <span className="slot-tag">{slot}</span> <StatusPill p={p} />
             {lock && <span className="lock row" style={{ gap: 3 }}><Icon name="lock" size={11} />{lock}</span>}
             {want && <span className="want-tag">{want}</span>}
             {dim && <span className="lock">{dim}</span>}
@@ -179,7 +179,6 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         <div>
           <div className="eyebrow">Trade builder · {UPDATED}</div>
           <h1 className="page-title">Build a deal</h1>
-          <p className="page-sub">Pick players from both rosters. Both lineups update as you go.</p>
         </div>
       </header>
 
@@ -215,8 +214,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           ) : (
             <>
               <div className="deal-lists">
-                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
-                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
               </div>
               <TradeCompare trade={trade} them={them} />
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
