@@ -2,11 +2,11 @@ import { useContext, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, onBye } from "../data";
-import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff, weakSlots } from "../engine";
+import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { useLive, onPace, expect, stillToPlay } from "../live";
+import { useLive, onPace, teamOutlook, winChance } from "../live";
 import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
 
@@ -92,7 +92,6 @@ const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
 };
 const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 // Standard normal CDF (Abramowitz-Stegun), for a win chance from the two projections
-const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 
 /** Manager avatar from Sleeper, or initials when they haven't set one. */
 function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "you" | "them" }) {
@@ -105,16 +104,12 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
 export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  // Expected finishes: projection before kickoff, on-pace while live, points once final. Moves with the games.
+  // Expected finishes from the lineups actually set in Sleeper (K/DEF included); win chance from what's left to play
   const liveNow = useLive();
-  const ids = (t: typeof YOU) => lineupFor(t.roster, true).slots.map((x) => x.player?.id ?? null);
-  const total = (t: typeof YOU) => ids(t).reduce((a, id) => a + expect(liveNow, id), 0) + specialLineup(t).total;
-  const mine = total(YOU);
-  const theirs = opp ? total(opp) : null;
-  const allIds = [...ids(YOU), ...(opp ? ids(opp) : [])];
-  const allProj = allIds.reduce((a, id) => a + (id ? eff(playerById(id), true) : 0), 0) || 1;
-  const spread = Math.max(3, 34 * Math.sqrt(stillToPlay(liveNow, allIds) / allProj));
-  const chance = theirs !== null ? Math.round(Math.min(99.5, Math.max(0.5, phi((mine - theirs) / spread) * 100))) : null;
+  const myO = teamOutlook(liveNow, YOU), oppO = opp ? teamOutlook(liveNow, opp) : null;
+  const mine = myO.expected;
+  const theirs = oppO ? oppO.expected : null;
+  const chance = oppO ? Math.round(winChance(myO, oppO)) : null;
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
   // Once games start, the big numbers are points scored and the projection drops to a footnote

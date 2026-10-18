@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
-import { eff, fits, fmt, lineupFor, round1, SlotName } from "../engine";
+import { eff, fits, fmt, lineupFor, round1, SlotName, specialLineup } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill, LiveNum } from "./ui";
-import { useLive, expect, stillToPlay } from "../live";
+import { useLive, expect, outlookOf, winChance } from "../live";
 import { PtsCell, gameNow } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 
-const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
 /** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
 function slotted(team: Team, starters: string[] | undefined): { slot: SlotName; id: string | null }[] {
@@ -38,16 +37,16 @@ export function Matchup({ onBack }: { onBack: () => void }) {
     <section className="card card-pad"><button className="st-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button><p className="small muted">No matchup this week.</p></section>
   );
 
-  const myTotal = round1(mine.reduce((a, s) => a + pts(s.id), 0));
-  const oppTotal = round1(theirs.reduce((a, s) => a + pts(s.id), 0));
-  const baseTotal = round1(sleeperMine.reduce((a, s) => a + pts(s.id), 0));
+  // Totals include K/DEF; win chance from expected finishes and what's still to play
+  const myO = outlookOf(live, mine.map((s) => s.id), specialLineup(YOU).slots.map((x) => x.player));
+  const oppO = outlookOf(live, theirs.map((s) => s.id), specialLineup(opp).slots.map((x) => x.player));
+  const baseO = outlookOf(live, sleeperMine.map((s) => s.id), specialLineup(YOU).slots.map((x) => x.player));
+  const myTotal = round1(myO.expected), oppTotal = round1(oppO.expected), baseTotal = round1(baseO.expected);
+  const chance = winChance(myO, oppO);
   const ids = [...mine.map((s) => s.id), ...theirs.map((s) => s.id)];
-  const allProj = ids.reduce((a, id) => a + proj(id), 0) || 1;
-  const spread = Math.max(3, 34 * Math.sqrt(stillToPlay(live, ids) / allProj));
-  const chance = Math.min(99.5, Math.max(0.5, phi((myTotal - oppTotal) / spread) * 100));
   const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
   const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
-  const scored = (list: { id: string | null }[]) => round1(list.reduce((a, s) => a + (s.id ? live.points[s.id] ?? 0 : 0), 0));
+  const scored = (o: { scored: number }) => round1(o.scored);
   const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
   const best = lineupFor(YOU.roster, true);
@@ -82,10 +81,10 @@ export function Matchup({ onBack }: { onBack: () => void }) {
       <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
         <header className="mu-score">
           <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span>
-            {started ? <><LiveNum v={scored(mine)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small></> : <b>{myTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small></> : <b>{myTotal.toFixed(1)}</b>}</div>
           <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<b>{Math.round(chance)}%</b><small>to win</small></div>
           <div className="mu-side them"><span>{opp.manager}</span>
-            {started ? <><LiveNum v={scored(theirs)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small></> : <b>{oppTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">

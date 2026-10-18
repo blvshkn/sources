@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
-import { Live, useLive, onPace, expect, stillToPlay } from "../live";
+import { Live, useLive, onPace, teamOutlook, winChance } from "../live";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
-import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -18,7 +18,6 @@ const TAG_LABEL: Record<MyTag, string> = {
   amazing: "Overpay only",
 };
 // Standard normal CDF, for a win chance from two projections
-const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - q : q; };
 const ringOf = (p: Player): "bad" | "warn" | undefined => (onBye(p.nfl) || p.status === "O" ? "bad" : p.status === "Q" ? "warn" : undefined);
 /** "Questionable, Groin" becomes "Groin". */
 export const injuryDetail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
@@ -317,14 +316,10 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
-  const ids = (t: Team) => lineupFor(t.roster, true).slots.map((x) => x.player?.id ?? null);
-  // Before kickoff these are projections; once games start they're expected finishes (final + on pace + projected)
-  const total = (t: Team) => ids(t).reduce((a, id) => a + expect(live, id), 0) + specialLineup(t).total;
-  const myTotal = total(YOU), oppTotal = opp ? total(opp) : null;
-  const all = [...ids(YOU), ...(opp ? ids(opp) : [])];
-  const allProj = all.reduce((a, id) => a + (id ? eff(playerById(id), true) : 0), 0) || 1;
-  const spread = Math.max(3, 34 * Math.sqrt(stillToPlay(live, all) / allProj));
-  const chance = oppTotal !== null ? Math.round(Math.min(99.5, Math.max(0.5, phi((myTotal - oppTotal) / spread) * 100))) : 0;
+  // Sleeper's set lineups, K/DEF included; expected finishes and win chance move with the games
+  const myO = teamOutlook(live, YOU), oppO = opp ? teamOutlook(live, opp) : null;
+  const myTotal = myO.expected, oppTotal = oppO ? oppO.expected : null;
+  const chance = oppO ? Math.round(winChance(myO, oppO)) : 0;
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: who you are, where you stand, score and where it's headed
     const wins = (t: Team) => Number(t.record.split("-")[0]) || 0;

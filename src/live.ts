@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById } from "./data";
-import { eff, lineupFor } from "./engine";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer } from "./data";
+import { eff, lineupFor, specialLineup, specialPts } from "./engine";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
 export interface Live {
@@ -170,3 +170,36 @@ export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a
   if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
   return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);
 }, 0);
+
+/** The lineup a team actually set in Sleeper (skill players), falling back to the best projected lineup. */
+export const startersOf = (t: Team): string[] => {
+  const set = (t.starters ?? []).filter((id) => PLAYERS[id]);
+  return set.length ? set : (lineupFor(t.roster, true).slots.map((x) => x.player?.id).filter(Boolean) as string[]);
+};
+
+export interface Outlook { expected: number; scored: number; variance: number }
+/** One player's outcome spread: about 0.8 of his projection, shrinking with the share of his game left. */
+const SPREAD = 0.8;
+function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number) {
+  const st = live.games[nfl], pts = live.points[id], known = pts !== undefined;
+  const frac = st === "complete" ? 0 : st === "in_game" ? live.left?.[nfl] ?? 0.5 : 1;
+  o.expected += !known ? pr : st === "complete" ? pts : st === "in_game" ? pts + pr * frac : pr;
+  o.scored += known ? pts : 0;
+  o.variance += (SPREAD * pr) ** 2 * frac;
+}
+/** Expected finish, points so far and outcome variance for a list of starters plus K/DEF. */
+export function outlookOf(live: Live, ids: (string | null)[], specials: (SpecialPlayer | null)[]): Outlook {
+  const o: Outlook = { expected: 0, scored: 0, variance: 0 };
+  for (const id of ids) if (id && PLAYERS[id]) { const p = playerById(id); addPlayer(o, live, id, p.nfl, eff(p, true)); }
+  for (const sp of specials) if (sp) addPlayer(o, live, sp.id, sp.nfl, specialPts(sp));
+  return o;
+}
+export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), specialLineup(t).slots.map((x) => x.player));
+/** Chance team A beats team B, from expected finishes and how much is still to be played. Matches Sleeper's style of read. */
+export function winChance(a: Outlook, b: Outlook): number {
+  const sd = Math.sqrt(a.variance + b.variance), d = a.expected - b.expected;
+  if (sd < 0.01) return d > 0 ? 100 : d < 0 ? 0 : 50;
+  const x = d / sd, t = 1 / (1 + 0.2316419 * Math.abs(x)), n = 0.3989423 * Math.exp(-x * x / 2);
+  const tail = n * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return Math.min(99.5, Math.max(0.5, (x > 0 ? 1 - tail : tail) * 100));
+}
