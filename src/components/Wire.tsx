@@ -319,8 +319,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
               </>
             )}
             {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
-            {n.kind === "need" && n.teamId && <button className="btn btn-sm btn-ghost" onClick={() => onGo("league", n.teamId)}>See {teamById(n.teamId).name}'s needs</button>}
-            <button className="btn btn-sm btn-ghost dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
+            {n.kind === "need" && n.teamId && <button className="nudge-link" onClick={() => onGo("league", n.teamId)}><span>See {teamById(n.teamId).manager}'s needs</span><Icon name="chev" size={14} /></button>}
+            <button className="nudge-link dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
           </div>
         </article>
       ))}
