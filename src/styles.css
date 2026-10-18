@@ -3053,3 +3053,4 @@ html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#
   font-family: var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
 }
 html:root:not(#_) .sb2-pts { font-weight: 600 !important; letter-spacing: -0.05em; }
+html:root:not(#_) .lu-mx-who { font-size: 1rem !important; }
