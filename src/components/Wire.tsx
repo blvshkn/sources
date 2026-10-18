@@ -1,8 +1,8 @@
 import { useContext, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
-import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
-import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
+import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID, Player, onBye } from "../data";
+import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -163,6 +163,74 @@ export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNe
   );
 }
 
+/** More for the This week tab: when your starters play, who's banged up, the opponent's threats, and the dates that matter. */
+function WeekMore({ onGo }: { onGo: (t: string) => void }) {
+  const live = useLive();
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const mine = lineupFor(YOU.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[];
+  const theirs = opp ? (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]) : [];
+  const dayOf = (p: Player) => (onBye(p.nfl) ? "Bye" : p.gameDate ? new Date(`${p.gameDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "long" }) : "This week");
+  const order = ["Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "This week", "Bye"];
+  const days = order.map((d) => ({ d, ps: mine.filter((p) => dayOf(p) === d) })).filter((x) => x.ps.length);
+  const hurt = (ps: Player[]) => ps.filter((p) => p.status && !onBye(p.nfl));
+  const detail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
+  const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
+  const threats = [...theirs].sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
+  const dates = [DEADLINES.lock, DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
+  const Pts = ({ p }: { p: Player }) => {
+    const g = live.games[p.nfl] ?? null;
+    if (g === "in_game") return <span className="wk-pts live">{(live.points[p.id] ?? 0).toFixed(1)}</span>;
+    if (g === "complete") return <span className="wk-pts">{(live.points[p.id] ?? 0).toFixed(1)}<small>final</small></span>;
+    return <span className="wk-pts muted">{eff(p, true).toFixed(1)}</span>;
+  };
+  return (
+    <>
+      <section className="card wk" aria-label="When your starters play">
+        <div className="wk-head"><h2 className="section-title">Game day</h2><span className="tiny muted">Your starters</span></div>
+        {days.map(({ d, ps }) => (
+          <div key={d} className="wk-day">
+            <span className="wk-day-k">{d}<small>{ps.length}</small></span>
+            {ps.map((p) => (
+              <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
+                <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+                <span className="wk-name">{p.name}<small>{p.nfl}{p.opp ? ` ${p.opp.replace(/^v\s/, "v ")}` : ""}</small></span>
+                <Pts p={p} />
+              </button>
+            ))}
+          </div>
+        ))}
+      </section>
+
+      <section className="card wk" aria-label="Injury watch">
+        <div className="wk-head"><h2 className="section-title">Injury watch</h2><span className="tiny muted">You and {opp?.manager ?? "your opponent"}</span></div>
+        {injured.length === 0 ? <p className="small muted">Nobody in this matchup carries an injury tag.</p> : injured.map(({ p, you }) => (
+          <button key={p.id} className="wk-row" onClick={() => onGo(you ? "roster" : "matchup")}>
+            <span className={`wk-tag s-${p.status}`}>{p.status}</span>
+            <span className="wk-name">{p.name}<small>{detail(p)}</small></span>
+            <span className={`wk-who${you ? " you" : ""}`}>{you ? "You" : "Them"}</span>
+          </button>
+        ))}
+      </section>
+
+      {opp && threats.length > 0 && <section className="card wk" aria-label="Opponent threats">
+        <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
+        {threats.map((p) => (
+          <button key={p.id} className="wk-row" onClick={() => onGo("matchup")}>
+            <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+            <span className="wk-name">{p.name}<small>{p.nfl}{p.opp ? ` ${p.opp}` : ""}</small></span>
+            <Pts p={p} />
+          </button>
+        ))}
+      </section>}
+
+      {dates.length > 0 && <section className="card wk" aria-label="Key dates">
+        <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
+        {dates.map((d) => <div key={d} className="wk-date"><Icon name="clock" size={16} /><span>{d}</span></div>)}
+      </section>}
+    </>
+  );
+}
+
 function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
   f: FollowUp;
   coach: (t: Trade) => { trade: Trade; line: string } | null;
@@ -295,6 +363,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
         </button>
       </section>}
+      {view === "week" && <WeekMore onGo={onGo} />}
 
       {view === "intel" && <>
       {followUps.map((f) => <FollowUpCard key={f.id} f={f} coach={coach} onTag={onTag} onResolve={onResolve} onOpen={onOpen} onPitch={onPitch} />)}
