@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport, waiverHidden } from "../engine";
-import { AiLabel, Icon } from "./ui";
+import { AiLabel, Icon, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 
 /** "$40-$90", or "Up to $150" when the low end is zero. */
@@ -9,8 +9,8 @@ const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
-  const [pos, setPos] = useState<"ALL" | "QB" | "RB" | "WR" | "TE">("ALL");
-  const [sort, setSort] = useState<"fit" | "trend" | "proj">("fit");
+  const [pos, setPos] = useSticky<"ALL" | "QB" | "RB" | "WR" | "TE">("waivers.pos", "ALL");
+  const [sort, setSort] = useSticky<"fit" | "trend" | "proj">("waivers.sort", "fit");
   const top = recs[0];
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;

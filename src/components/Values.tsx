@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
 import { marketValue } from "../engine";
 import { Avatar } from "./Avatar";
-import { Icon } from "./ui";
+import { Icon, useSticky } from "./ui";
 
 // Demo leagues have no market feed, so build the board from projection-based values.
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
@@ -32,8 +32,8 @@ const tier = (v: number) => v >= 8000 ? "Tier 1" : v >= 6000 ? "Tier 2" : v >= 4
 
 /** League-aware market board: every player's trade value, who owns him in your league, and who's moving. */
 export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: string) => void }) {
-  const [pos, setPos] = useState<(typeof POS)[number]>("ALL");
-  const [own, setOwn] = useState<"all" | "fa" | "mine">("all");
+  const [pos, setPos] = useSticky<(typeof POS)[number]>("values.pos", "ALL");
+  const [own, setOwn] = useSticky<"all" | "fa" | "mine">("values.own", "all");
   const board = useMemo(() => LEAGUE.board?.length ? LEAGUE.board : demoBoard(), []);
   const max = board[0]?.value || 1;
   const mine = TEAMS.find((t) => t.you)?.id;

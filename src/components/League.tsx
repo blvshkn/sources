@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { ManagerTag, playerById, Pos, POS_ORDER, YOU, LEAGUE_NAME } from "../data";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
-import { AiLabel, Delta, Icon, Phase, PosBadge, Seg, Stamp } from "./ui";
+import { AiLabel, Delta, Icon, Phase, PosBadge, Seg, Stamp, useSticky } from "./ui";
 import { TagCapture } from "./TagCapture";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -96,7 +95,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
   onKeepTag: (id: string) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
-  const [view, setView] = useState<"needs" | "standings" | "tendencies" | "activity" | "values">("needs");
+  const [view, setView] = useSticky<"needs" | "standings" | "tendencies" | "activity" | "values">("league.view", "needs");
   const sorted = [...needs].sort((a, b) => a.rank - b.rank);
   const you = needs.find((n) => n.team.you)!;
   // Starter copy: "Per sources, three teams are thin at RB. You have two to spare."

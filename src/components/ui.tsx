@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
@@ -42,4 +43,13 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
       {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.label}</button>)}
     </div>
   );
+}
+
+/** useState that survives a reload. Per-device convenience only; falls back to the default if storage is blocked. */
+export function useSticky<T extends string>(key: string, initial: T): [T, (v: T) => void] {
+  const [v, setV] = useState<T>(() => {
+    try { const s = localStorage.getItem(`sources.ui.${key}`); return (s as T) ?? initial; } catch { return initial; }
+  });
+  const set = (n: T) => { setV(n); try { localStorage.setItem(`sources.ui.${key}`, n); } catch { /* ignore */ } };
+  return [v, set];
 }
