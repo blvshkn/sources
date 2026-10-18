@@ -23,6 +23,7 @@ import { Roster } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
+import { PlatformName } from "./components/PlatformLogo";
 import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
@@ -104,6 +105,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
+  // Accent color follows the fantasy platform you're connected to. Chalk and graphite stay the same everywhere.
+  useEffect(() => { document.documentElement.dataset.platform = LEAGUE.platform ?? "sleeper"; }, []);
   // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
   const [toastOut, setToastOut] = useState(false);
   useEffect(() => {
@@ -372,7 +375,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             </button>
           ))}
         </nav>
-        <p className="side-foot">{demo ? <>Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></> : <>Live from Sleeper as @{username}. {LEAGUE.updated}.</>}</p>
+        <p className="side-foot">{demo ? <>Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></> : <>Live from <PlatformName size={12} /> as @{username}. {LEAGUE.updated}.</>}</p>
       </aside>
 
       <header className="topbar">

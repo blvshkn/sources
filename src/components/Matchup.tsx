@@ -5,6 +5,7 @@ import { Avatar } from "./Avatar";
 import { Icon, StatusPill, LiveNum } from "./ui";
 import { useLive, expect, stillToPlay } from "../live";
 import { PtsCell, gameNow } from "./Roster";
+import { PlatformLogo } from "./PlatformLogo";
 
 const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
@@ -98,7 +99,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
             <span><b>What-if lineup</b>{fmt(round1(myTotal - baseTotal))} pts vs your Sleeper lineup. Make the swap in Sleeper to lock it in.</span>
             <div className="mu-wbtn">
               <button className="btn btn-sm" onClick={() => { setMine(sleeperMine); setOpen(null); }}>Reset</button>
-              <a className="btn btn-sm btn-primary" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a>
+              <a className="btn btn-sm btn-primary" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
             </div>
           </div>
         )}

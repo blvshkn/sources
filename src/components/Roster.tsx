@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { StartSit } from "./StartSit";
 import { PlayerSheet } from "./PlayerSheet";
+import { PlatformLogo } from "./PlatformLogo";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -474,7 +475,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                       <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></div>
                     </div>
                   ))}
-                  <div className="ss-foot"><span>Make the {diff.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a></div>
+                  <div className="ss-foot"><span>Make the {diff.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>

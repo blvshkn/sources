@@ -4,6 +4,7 @@ import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, Free
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
 import { AiLabel, Icon, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
+import { PlatformLogo } from "./PlatformLogo";
 
 /** Why a free agent can't help this week, or null when he can. */
 type Avail = null | "played" | "bye" | "out" | "ir";
@@ -119,7 +120,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </ul>
             <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
               onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${top.drop && !irMove ? `, drop ${top.drop.name}` : ""}.`)}>
-              Claim in Sleeper
+              <PlatformLogo size={18} />Claim in Sleeper
             </a>
           </section>
         );
@@ -214,7 +215,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   {FAAB.enabled && <BidHistory tier={r.tier} range={r.bid} />}
                   <div className="row wrap">
                     <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. Bid ${r.bid[1]}% on ${r.fa.name}, drop ${r.drop?.name ?? "nobody"}.`)}>
-                      <Icon name="app" size={16} />Open Sleeper
+                      <PlatformLogo size={16} />Open Sleeper
                     </a>
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
                   </div>

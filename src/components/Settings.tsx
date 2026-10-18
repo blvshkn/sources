@@ -3,6 +3,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
+import { PlatformLogo } from "./PlatformLogo";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -54,13 +55,13 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
       <section className="card settings-group">
         <h2 className="section-title">League connection</h2>
         <div className="set-row">
-          <span className="set-ic"><Icon name="plug" size={18} /></span>
+          <span className="set-ic"><PlatformLogo size={20} /></span>
           <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
-          {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}>Connect Sleeper</button> : (
+          {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}><PlatformLogo size={16} />Connect Sleeper</button> : (
             <span className="row wrap">
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
               {confirm === "disconnect" ? (
-                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}>Disconnect Sleeper</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
+                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}><PlatformLogo size={16} />Disconnect Sleeper</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
               ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
             </span>
           )}

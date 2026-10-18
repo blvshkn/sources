@@ -3,6 +3,7 @@ import { findLeagues } from "../sleeper";
 import { LEAGUE, LEAGUE_NAME } from "../data";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
+import { PlatformLogo } from "./PlatformLogo";
 
 type Row = { id: string; name: string; teams: number; avatar?: string | null };
 
@@ -86,8 +87,8 @@ export function LeagueSwitcher({ userId, username, demo, onPick, onConnect, onCl
         </ul>
         <div className="lsw-foot">
           {demo
-            ? <button className="btn btn-primary" onClick={() => { close(); onConnect(); }}><Icon name="plug" size={16} />Connect Sleeper</button>
-            : <button className="btn" onClick={() => { close(); onConnect(); }}><Icon name="plus" size={16} />Use another Sleeper account</button>}
+            ? <button className="btn btn-primary" onClick={() => { close(); onConnect(); }}><PlatformLogo size={16} />Connect Sleeper</button>
+            : <button className="btn" onClick={() => { close(); onConnect(); }}><PlatformLogo size={16} />Use another Sleeper account</button>}
         </div>
       </section>
     </div>

@@ -490,6 +490,8 @@ export interface LeagueData {
   /** Teams that make the playoffs, and the first playoff week (live leagues). */
   playoffTeams?: number;
   playoffStart?: number;
+  /** Which fantasy platform the league comes from. Drives the accent color. */
+  platform?: "sleeper" | "yahoo" | "espn";
   /** Season grid: each NFL team's opponent by week ("@KC" / "vKC"), weekly projections ahead and points scored behind. */
   slate?: Slate;
   /** This week's NFL game state per team from Sleeper's schedule. Teams missing are on bye. */

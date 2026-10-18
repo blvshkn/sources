@@ -9,6 +9,7 @@ import { TradeIdea } from "./Wire";
 import { DealSchedule } from "./Schedule";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
+import { PlatformName } from "./PlatformLogo";
 
 function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -48,7 +49,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
         <div className="rp-t"><span>{label}</span><b>{team.name}</b></div>
         <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><small>starters pts/wk</small></span>
       </div>
-      <div className="slot-label">Starters{current ? <small> as set in Sleeper</small> : null}</div>
+      <div className="slot-label">Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</div>
       {current
         ? current.starters.map((id) => row(id, "ST"))
         : lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}

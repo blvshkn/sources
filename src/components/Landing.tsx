@@ -6,6 +6,7 @@ import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Delta, Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
+import { PlatformLogo, PlatformName } from "./PlatformLogo";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -61,7 +62,7 @@ export function Landing({ onLive, onDemo }: {
 
   const form = (id: string) => (
     <>
-      <label htmlFor={id} className="ld2-label">Your Sleeper username</label>
+      <label htmlFor={id} className="ld2-label">Your <PlatformName /> username</label>
       <form className="ld2-form" onSubmit={(e) => { setErrFor(id); connect(e); }} noValidate>
         <span className="at" aria-hidden="true">@</span>
         <input id={id} value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} aria-invalid={!!error && errFor === id} aria-describedby={`${id}-help`} name="username"
@@ -91,7 +92,7 @@ export function Landing({ onLive, onDemo }: {
       <main>
       <header className="ld-hero ld2-hero">
         <div className="ld2-copy">
-          <span className="ld2-eyebrow ld-rise"><i />For Sleeper leagues</span>
+          <span className="ld2-eyebrow ld-rise"><PlatformLogo size={14} />For Sleeper leagues</span>
           <h1 className="ld2-h1 ld-rise">Trades your league<br />will actually accept.</h1>
           <p className="ld2-sub ld-rise d1">Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld-rise d2">{form("ld-user")}</div>
