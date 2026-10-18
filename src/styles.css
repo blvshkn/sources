@@ -1674,3 +1674,8 @@ p, .page-sub { max-width: 65ch; }
 .ti-read { flex-wrap: nowrap; gap: 12px; padding-top: 0; border-top: 0; }
 .ti-gain { font-size: 0.875rem; white-space: nowrap; }
 .ti-why { margin: -4px 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+.vb-list .vb-head { border-top: 1px solid var(--line); }
+.vb-owner { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vb-owner.you { color: var(--you); font-weight: 600; }
+.vb-owner.fa { color: var(--good); }
+.vb-who { display: grid; gap: 2px; min-width: 0; }

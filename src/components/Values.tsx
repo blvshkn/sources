@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
 import { marketValue } from "../engine";
 import { Avatar } from "./Avatar";
+import { Icon } from "./ui";
 
 // Demo leagues have no market feed, so build the board from projection-based values.
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
@@ -62,16 +63,22 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
         ))}
       </section>
 
-      <div className="wv-filters">
-        <div className="chips" role="group" aria-label="Position">
-          {POS.map((p) => <button key={p} className={`chip-btn${pos === p ? " on" : ""}`} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>)}
+      <section className="card vb-list wv-card" aria-label="Player values">
+        <div className="wv-head">
+          <div className="wv-head-t"><b>Player values</b><span>Top 150 by trade value</span></div>
+          <label className="wv-sort">
+            <span className="sr-only">Show</span>
+            <select value={own} onChange={(e) => setOwn(e.target.value as typeof own)}>
+              <option value="all">Everyone</option>
+              <option value="mine">My team</option>
+              <option value="fa">Free agents</option>
+            </select>
+            <Icon name="chev" size={14} />
+          </label>
         </div>
-        <div className="chips" role="group" aria-label="Owner">
-          {([["all", "Everyone"], ["mine", "My team"], ["fa", "Free agents"]] as const).map(([k, l]) => <button key={k} className={`chip-btn${own === k ? " on" : ""}`} aria-pressed={own === k} onClick={() => setOwn(k)}>{l}</button>)}
+        <div className="wv-pos" role="group" aria-label="Position">
+          {POS.map((p) => <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>)}
         </div>
-      </div>
-
-      <section className="card vb-list" aria-label="Player values">
         <div className="vb-head"><span>#</span><span>Player</span><span>Value</span></div>
         {rows.slice(0, 150).map((r, i) => {
           const o = ownerName(r.ownerId);
@@ -81,7 +88,8 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
               <Avatar p={r} size={40} />
               <span className="vb-who">
                 <span className="vb-name">{r.name}{split(r)}</span>
-                <span className="lu-meta"><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{tier(r.value)}</span><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}<span className={o ? (o === "You" ? "vb-own you" : "vb-own") : "vb-own fa"}>{o ?? "Free agent"}</span></span>
+                <span className="lu-meta" title={tier(r.value)}><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}</span>
+                <span className={`vb-owner${o ? (o === "You" ? " you" : "") : " fa"}`}>{o ?? "Free agent"}</span>
               </span>
               <span className="vb-val">
                 <b>{r.value.toLocaleString()}</b>
