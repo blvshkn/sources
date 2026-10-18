@@ -3198,39 +3198,37 @@ html:root:not(#_) .page-meta::before { margin-left: 3px; }
   html:root:not(#_) .page-league .top-league-n { flex: 1; }
 }
 
-/* ---- Loader: one focal point. Mark settles in and its lanes draw (ease-out, 40ms stagger), a gradient light loops
-   along both lanes, the glow breathes behind it, the wordmark follows. Holds ~1s minimum, then lifts off (ease-in). ---- */
-.boot3 { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; background: radial-gradient(70% 45% at 50% 45%, #191C1A, #121413 62%, #0D0F0E); color: var(--ink); }
-.boot3-core { position: relative; display: grid; justify-items: center; gap: 26px; }
-.boot3-glow { position: absolute; left: 50%; top: 56px; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; background: radial-gradient(circle, rgba(216, 242, 74, 0.2), rgba(216, 242, 74, 0.05) 45%, transparent 70%); pointer-events: none; }
-.boot3-mark { position: relative; display: block; overflow: visible; filter: drop-shadow(0 0 14px rgba(216, 242, 74, 0.35)); }
-.boot3-base { stroke: #D8F24A; stroke-opacity: 0.3; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
-.boot3-comets { opacity: 0; }
-.boot3-word { position: relative; }
+/* ---- Loader: the full logo and tagline. Lanes sit in graphite and fill with green, then hand back.
+   Holds ~1s minimum, then lifts off (ease-in). ---- */
+.boot3 { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; background: #121413; color: var(--ink); }
+.boot3-core { position: relative; display: grid; justify-items: start; gap: 10px; --lh: 56px; }
+.boot3-glow { position: absolute; left: 28px; top: 28px; width: 240px; height: 240px; margin: -120px 0 0 -120px; border-radius: 50%; background: radial-gradient(circle, rgba(216, 242, 74, 0.14), transparent 65%); pointer-events: none; }
+.boot3-logo { position: relative; display: block; overflow: visible; }
+.boot3-base { stroke: #3A3F3C; }
+.boot3-fill { stroke: #D8F24A; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+.boot3-word { fill: #F2F4F1; }
+.boot3-tag { position: relative; margin-left: calc(var(--lh) * 1.4203); font: 500 0.8125rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.02em; color: var(--muted); white-space: nowrap; }
 @media (prefers-reduced-motion: no-preference) {
-  .boot3-mark { animation: boot3-pop 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .boot3-base { animation: boot3-draw 560ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .boot3-comets { animation: boot3-show 260ms ease-out 320ms forwards; }
-  .boot3-comet { animation: boot3-run 1.6s cubic-bezier(0.65, 0, 0.35, 1) 320ms infinite both; }
-  .boot3-glow { animation: boot3-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both, boot3-breathe 3.4s ease-in-out 700ms infinite; }
-  .boot3-word { animation: boot3-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) 140ms both; }
+  .boot3-core { animation: boot3-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  /* Green runs in along each lane (0 to 45%), holds, then runs out the far end (55 to 100%), back to graphite */
+  .boot3-fill { animation: boot3-run 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+  .boot3-glow { animation: boot3-breathe 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+  .boot3-tag { animation: boot3-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both; }
   .boot3.leaving { animation: boot3-out 400ms cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
   .boot3.leaving .boot3-core { animation: boot3-lift 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
-  @keyframes boot3-pop { from { opacity: 0; transform: scale(0.9); } }
-  @keyframes boot3-draw { from { stroke-dashoffset: 1; stroke-opacity: 1; } 70% { stroke-opacity: 0.9; } to { stroke-dashoffset: 0; stroke-opacity: 0.3; } }
-  @keyframes boot3-show { to { opacity: 1; } }
-  @keyframes boot3-run { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -1; } }
-  @keyframes boot3-breathe { 50% { transform: scale(1.08); opacity: 0.7; } }
-  @keyframes boot3-in { from { transform: scale(0.85); opacity: 0; } }
-  @keyframes boot3-rise { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
+  @keyframes boot3-in { from { opacity: 0; transform: scale(0.97); } }
+  @keyframes boot3-run { 0% { stroke-dashoffset: 1; } 45% { stroke-dashoffset: 0; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+  @keyframes boot3-breathe { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  @keyframes boot3-rise { from { opacity: 0; transform: translateY(4px); } }
   @keyframes boot3-out { to { opacity: 0; } }
-  @keyframes boot3-lift { to { transform: translateY(-10px) scale(1.04); filter: blur(4px); } }
+  @keyframes boot3-lift { to { transform: translateY(-8px) scale(1.02); filter: blur(4px); } }
 }
 @media (prefers-reduced-motion: reduce) {
-  .boot3-base { stroke-opacity: 1; animation: boot3-fade 2s ease-in-out infinite; }
+  .boot3-fill { animation: boot3-fade 2s ease-in-out infinite; }
   .boot3.leaving { opacity: 0; transition: opacity 200ms ease; }
-  @keyframes boot3-fade { 50% { stroke-opacity: 0.55; } }
+  @keyframes boot3-fade { 50% { opacity: 0.4; } }
 }
+@media (max-width: 400px) { .boot3-logo { height: 44px; } .boot3-core { --lh: 44px; } .boot3-glow { left: 22px; top: 22px; } }
 /* Slim league selector: one line, fills the row, chevron at the right. */
 html:root:not(#_) .page-league { display: none; }
 @media (max-width: 860px) {
