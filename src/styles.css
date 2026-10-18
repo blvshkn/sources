@@ -3620,3 +3620,10 @@ html:root:not(#_) :is(.lu-pts, .wk-pts).cemented small { color: var(--faint); }
     62% { transform: translateX(-1.5px); } 76% { transform: translateX(1px); } 100% { transform: none; }
   }
 }
+/* Final: carved into the row, not a raised slab (that read as a button). Granite tone digits with an engraved edge. */
+html:root:not(#_) :is(.lu-pts, .wk-pts).cemented b {
+  padding: 0; border-radius: 0; background: linear-gradient(180deg, #E4E7E3 0%, #A9AFAA 55%, #C7CCC7 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #C9CEC9;
+  box-shadow: none; text-shadow: none;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.06));
+}
