@@ -444,7 +444,10 @@ p { margin: 0; }
 }
 /* Reduced motion keeps gentle fades and drops movement, scale and bounce. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-name: rm-fade !important; animation-duration: 160ms !important; transition-property: opacity, background-color, color, border-color, box-shadow !important; transition-duration: 160ms !important; }
+  /* Transitions keep only color and opacity. Keyframes that move things fall back to a plain fade, scoped to the
+     ones without their own reduced-motion rule, so whole screens don't fade in on every tab switch. */
+  *, *::before, *::after { transition-property: opacity, background-color, color, border-color, box-shadow !important; transition-duration: 160ms !important; }
+  .bubble, .ob-step, .ld-rise, .nudge, .deal-tray, .wv-detail, .sr-detail, .wv-ta-list, .mu-swap { animation-name: rm-fade !important; animation-duration: 160ms !important; animation-iteration-count: 1 !important; }
   .btn:active, .partner:active, .seg button:active, .pick:active, .nav button:active, .tabbar button:active,
   .chip-btn:active, .partner-card:active, .method:active, .ob-option:active { transform: none !important; }
   .switch span { transition: none !important; }
@@ -1242,7 +1245,7 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .chip-btn:hover { color: var(--ink); }
 .chip-btn.on { background: var(--ink); color: var(--bg); }
 /* Skip link */
-.skip-link { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 600; transition: top 0.2s; }
+.skip-link { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 600; }
 .skip-link:focus { top: calc(env(safe-area-inset-top, 0px) + 12px); }
 .main:focus { outline: none; }
 :where(button, a, select, input, textarea, [tabindex]):focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
@@ -3477,3 +3480,23 @@ html:root:not(#_) .brand .lockup .logo { margin-bottom: 0; }
   html:root:not(#_) .dt-chip::after { content: ""; position: absolute; inset: -8px -2px; }
 }
 @media (max-width: 860px) { html:root:not(#_) .top-logo.lockup { gap: 7px; } }
+
+/* ==== Animation audit fixes ==== */
+/* Bottom nav is tapped all day: indicator moves fast, no delayed highlight, no icon nudge */
+html:root:not(#_) .ix-rule, html:root:not(#_) .nav-rule { transition-duration: 180ms !important; transition-delay: 0ms !important; }
+html:root:not(#_) .ix-w::before { transition: none !important; }
+html:root:not(#_) .ix-ic { transition: color 200ms ease !important; }
+/* Deal tray no longer replays its slide in on every section tab switch */
+html:root:not(#_) .deal-tray { animation: none; }
+/* Matchup swap options open with a short lift under the row you tapped; rows give press feedback */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) .mu-swap { transform-origin: top center; animation: mu-swap-in 220ms var(--ease-out); }
+  @keyframes mu-swap-in { from { opacity: 0; transform: translateY(-4px); } }
+  html:root:not(#_) .mu-mine, html:root:not(#_) .mu-opt, html:root:not(#_) .lsw-row { transition: transform 120ms ease-out, background-color 120ms ease-out; }
+  html:root:not(#_) .mu-mine:active, html:root:not(#_) .mu-opt:active, html:root:not(#_) .lsw-row:active { transform: scale(0.99); }
+}
+/* Toast exit plays under reduced motion too */
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_) .toast { animation: toast-fade 160ms ease both !important; }
+  html:root:not(#_) .toast.leaving { animation: toast-fade-out 160ms ease forwards !important; }
+}
