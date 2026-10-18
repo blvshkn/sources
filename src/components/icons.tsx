@@ -37,9 +37,8 @@ const LUCIDE: Record<string, any> = {
 
 /** Custom icons, same grid and stroke as Lucide. `active` fills the main shape. */
 const CUSTOM: Record<string, Glyph> = {
-  // Football helmet in profile: open shell with a neck notch, one top bar and an angled cage. A soft tint fills the shell; the active tab deepens it.
-  helmet: (a) => <>
-    <path d="M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 8.47l -2.42 -6.49 1.76 -3.19Z" fill="currentColor" fillOpacity={a ? 0.32 : 0.14} stroke="none" />
+  // Football helmet in profile: open shell with a neck notch, one top bar and an angled cage. Outline only, no fill.
+  helmet: () => <>
     <path d="M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73" />
     <path d="M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2" />
   </>,
@@ -54,7 +53,7 @@ const CUSTOM: Record<string, Glyph> = {
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   const custom = CUSTOM[name];
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active && !custom ? 2.4 : 2}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active && (!custom || name === "helmet") ? 2.4 : 2}
       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="ic">
       {custom ? custom(active) : LUCIDE[name]}
     </svg>
