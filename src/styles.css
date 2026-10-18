@@ -3627,3 +3627,5 @@ html:root:not(#_) :is(.lu-pts, .wk-pts).cemented b {
   box-shadow: none; text-shadow: none;
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.06));
 }
+/* Neutral live points are plain ink: the Live tag says it's live, and only heat states color the number */
+html:root:not(#_) .lu-pts.live:not([class*="heat-"]) b, html:root:not(#_) .wk-pts.live:not([class*="heat-"]) b { color: var(--ink); }
