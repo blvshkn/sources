@@ -359,7 +359,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); }} trade={trade} suggestions={suggestionsByTeam[partnerId] ?? []}
-              tags={active} myTags={myTags} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} />
+              tags={active} myTags={myTags} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (
             <Roster lineup={yourLineup} myTags={myTags} prices={prices} tags={active} level={level} onPitch={setPitch}

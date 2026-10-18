@@ -2585,3 +2585,9 @@ html:root:not(#_) .lu-row.has-swap { background: linear-gradient(90deg, rgba(var
 html:root:not(#_) .tp-scout { background: var(--surface-2) !important; }
 html:root:not(#_) .tp-facts { flex-direction: row; flex-wrap: wrap; }
 html:root:not(#_) .tp-facts li { width: auto; }
+/* Saved notes can be removed in one tap, no confirmation */
+html:root:not(#_) .saved-tag { padding: 0 0 0 12px; gap: 8px; min-height: 36px; border-radius: 999px; }
+.saved-x { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: color 140ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+.saved-x:active { transform: scale(0.9); }
+@media (hover: hover) { .saved-x:hover { color: var(--ink); } }
+.saved-x:focus-visible { outline: 2px solid var(--lime); outline-offset: -4px; }

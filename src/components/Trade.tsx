@@ -145,7 +145,7 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string) => void; clear: () => void;
   trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
@@ -153,6 +153,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   coach: (t: TradeT) => { trade: TradeT; line: string } | null;
   onPitch: (t: TradeT) => void; onLoad: (t: TradeT) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
+  onRemoveTag: (id: string) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const [side, setSide] = useState<"give" | "get">("give");
@@ -364,7 +365,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         {theirTags.length > 0 && (
           <div className="log-saved">
             <span className="tb-or">Saved</span>
-            <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i />{t.text}</li>)}</ul>
+            <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i /><span>{t.text}</span><button className="saved-x" onClick={() => onRemoveTag(t.id)} aria-label={`Remove: ${t.text}`}><Icon name="x" size={14} /></button></li>)}</ul>
           </div>
         )}
       </section>
