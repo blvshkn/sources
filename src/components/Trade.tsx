@@ -324,29 +324,40 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       )}
 
-      <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div>
-          <h2 className="section-title">Log what {them.manager} said</h2>
-          <p className="small muted" style={{ marginTop: 6 }}>Private to you. Type it the way they said it, or pick from the lists. Trade ideas follow it.</p>
+      <section className="card log-card" aria-label={`What ${them.manager} said`}>
+        <div className="log-head">
+          <h2 className="section-title">What did {them.manager} say?</h2>
+          <p>Private to you. Trade ideas use it.</p>
         </div>
-        <TagCapture onSave={onAddTag} placeholder={`${them.manager} said he's looking for a TE`} compact />
-        <div className="row wrap">
-          <label htmlFor="tag-kind" className="sr-only">Tag type</label>
-          <select id="tag-kind" className="tag-select" value={kind} onChange={(e) => { const k = e.target.value as ManagerTagKind; setKind(k); setTarget(k === "wants" ? "pos:RB" : k === "notInterested" ? YOU.roster[0] : them.roster[0]); }}>
-            <option value="wants">Wants</option>
-            <option value="refuses">Won't move</option>
-            <option value="notInterested">Not interested in</option>
-          </select>
-          <label htmlFor="tag-target" className="sr-only">Player or position</label>
-          <select id="tag-target" className="tag-select" style={{ maxWidth: 220 }} value={target} onChange={(e) => setTarget(e.target.value)}>
-            {POS_ORDER.map((p) => <option key={p} value={`pos:${p}`}>{kind === "wants" ? `${p} help` : kind === "refuses" ? `His ${p}` : `Your ${p}`}</option>)}
-            {targetOptions.map((id) => <option key={id} value={id}>{playerById(id).name}</option>)}
-          </select>
-          <button className="btn btn-sm" onClick={addTag}>Add tag</button>
+        <TagCapture onSave={onAddTag} placeholder={`${them.manager} said he wants a TE`} compact />
+        <div className="tag-builder">
+          <span className="tb-or">Or build it</span>
+          <div className="tb-sentence">
+            <b>{them.manager}</b>
+            <label className="wv-sort tb-pick">
+              <span className="sr-only">What kind</span>
+              <select id="tag-kind" value={kind} onChange={(e) => { const k = e.target.value as ManagerTagKind; setKind(k); setTarget(k === "wants" ? "pos:RB" : k === "notInterested" ? YOU.roster[0] : them.roster[0]); }}>
+                <option value="wants">wants</option>
+                <option value="refuses">won't move</option>
+                <option value="notInterested">isn't interested in</option>
+              </select>
+              <Icon name="chev" size={14} />
+            </label>
+            <label className="wv-sort tb-pick">
+              <span className="sr-only">Player or position</span>
+              <select id="tag-target" value={target} onChange={(e) => setTarget(e.target.value)}>
+                {POS_ORDER.map((p) => <option key={p} value={`pos:${p}`}>{kind === "wants" ? `${p} help` : kind === "refuses" ? `his ${p}` : `your ${p}`}</option>)}
+                {targetOptions.map((id) => <option key={id} value={id}>{playerById(id).name}</option>)}
+              </select>
+              <Icon name="chev" size={14} />
+            </label>
+            <button className="btn btn-sm tb-add" onClick={addTag}>Add</button>
+          </div>
         </div>
         {theirTags.length > 0 && (
-          <div className="row wrap">
-            {theirTags.map((t) => <span key={t.id} className={`chip ${t.kind === "wants" ? "chip-good" : t.kind === "refuses" ? "chip-bad" : "chip-warn"}`}>{t.text}</span>)}
+          <div className="log-saved">
+            <span className="tb-or">Saved</span>
+            <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i />{t.text}</li>)}</ul>
           </div>
         )}
       </section>

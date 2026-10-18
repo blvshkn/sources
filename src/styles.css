@@ -1869,3 +1869,98 @@ body::after {
 .tp-facts li { background: rgba(var(--tab-rgb), 0.14) !important; border: 1px solid rgba(var(--tab-rgb), 0.32); color: var(--ink); font-weight: 500; padding: 6px 10px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tp-facts li { background: rgba(var(--tab-rgb), 0.18) !important; border-color: rgba(var(--tab-rgb), 0.38); } }
 :root[data-theme="dark"] .tp-facts li { background: rgba(var(--tab-rgb), 0.18) !important; border-color: rgba(var(--tab-rgb), 0.38); }
+
+/* ---------- Log what they said: one composer, one sentence ---------- */
+.log-card { display: grid; gap: 16px; padding: 18px; max-width: 640px; }
+.log-head { display: grid; gap: 4px; }
+.log-head p { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+.composer { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px; padding: 4px 4px 4px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); transition: border-color 160ms ease, box-shadow 160ms ease; }
+.composer:focus-within { border-color: rgba(var(--tab-rgb), 0.55); box-shadow: 0 0 0 3px rgba(var(--tab-rgb), 0.16); }
+.composer.live { border-color: rgba(var(--bad-rgb, 159, 47, 45), 0.6); }
+.composer-input { min-width: 0; height: 40px; border: 0; outline: 0; background: transparent; color: var(--ink); font: 400 1rem/1.2 var(--font-body); }
+.composer-input::placeholder { color: var(--faint); }
+.composer-btn { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; transition: background 140ms ease, color 140ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+.composer-btn:active { transform: scale(0.94); }
+.composer-btn[aria-pressed="true"] { color: var(--bad); background: var(--bad-soft); }
+.composer-btn.send { background: var(--action); color: var(--action-ink); }
+.composer-btn.send:disabled { background: var(--surface-3); color: var(--faint); cursor: default; }
+.composer-btn:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: 2px; }
+.capture.compact .capture-preview { margin: 8px 2px 0; }
+.tag-builder, .log-saved { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.tb-or { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+.tb-sentence { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9375rem; }
+.tb-sentence > b { font-weight: 600; }
+.tb-pick select { height: 36px; font-size: 0.875rem !important; }
+.tb-add { height: 36px !important; margin-left: auto; padding: 0 16px; }
+.log-saved ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.saved-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; font-size: 0.8125rem; border: 1px solid var(--line); background: var(--surface-2); }
+.saved-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.saved-tag.wants i { background: var(--good); } .saved-tag.refuses i { background: var(--bad); }
+@media (max-width: 420px) { .tb-add { margin-left: 0; } }
+
+/* ---------- Trade idea read: stat strip, reason, paired actions ---------- */
+:root:not(#_) .ti-stats { display: grid; grid-template-columns: 1.2fr 1fr 1fr; margin: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+:root:not(#_) .ti-stat { position: relative; display: grid; gap: 2px; padding: 10px 12px 12px; min-width: 0; }
+:root:not(#_) .ti-stat + .ti-stat { border-left: 1px solid var(--line); }
+:root:not(#_) .ti-stat dt { font-size: 0.6875rem; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:not(#_) .ti-stat dd { margin: 0; display: flex; align-items: baseline; gap: 2px; font: 600 1.125rem/1.1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--ink); }
+:root:not(#_) .ti-stat dd .delta { font: inherit; }
+:root:not(#_) .ti-stat dd small { font-size: 0.6875rem; font-weight: 400; color: var(--faint); letter-spacing: 0; }
+:root:not(#_) .ti-stat.odds.good dt { color: var(--good); }
+:root:not(#_) .ti-stat.odds.warn dt { color: var(--warn); }
+:root:not(#_) .ti-meter { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--surface-3); }
+:root:not(#_) .ti-meter i { display: block; height: 100%; border-radius: 0 2px 2px 0; }
+:root:not(#_) .ti-stat.odds.good .ti-meter i { background: linear-gradient(90deg, rgba(var(--good-rgb), 0.5), rgb(var(--good-rgb))); }
+:root:not(#_) .ti-stat.odds.warn .ti-meter i { background: linear-gradient(90deg, rgba(var(--warn-rgb), 0.5), rgb(var(--warn-rgb))); }
+:root:not(#_) .ti-why { margin: 12px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); }
+:root:not(#_) .ti-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+:root:not(#_) .ti-btn { height: 40px !important; width: 100%; justify-content: center; gap: 6px; font-size: 0.875rem !important; border-radius: 9px !important; }
+:root:not(#_) .ti-stat dd .delta { font-family: var(--font-body) !important; font-weight: 600; letter-spacing: -0.02em; }
+:root:not(#_) .tb-pick select { width: auto !important; min-width: 0 !important; }
+
+/* ---------- Dock: floating tab bar with a sliding puck in the section's color ---------- */
+@media (max-width: 860px) {
+  :root:not(#_) .tabbar.dock {
+    left: 12px !important; right: 12px !important; bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px !important; border-radius: 20px !important;
+    border: 1px solid var(--line) !important;
+    background: color-mix(in srgb, var(--surface) 86%, transparent) !important;
+    backdrop-filter: blur(16px) saturate(160%) !important; -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+    box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    isolation: isolate;
+  }
+  :root:not(#_) .tabbar.dock::before { display: none !important; }
+  :root:not(#_) .dock-puck {
+    position: absolute; z-index: -1; top: 6px; bottom: 6px; left: 6px;
+    width: calc((100% - 12px) / 5); border-radius: 14px;
+    background: rgba(var(--tab-rgb), 0.16);
+    box-shadow: inset 0 0 0 1px rgba(var(--tab-rgb), 0.22);
+    transform: translateX(calc(var(--i, 0) * 100%));
+    transition: transform 380ms cubic-bezier(0.23, 1, 0.32, 1), background-color 240ms ease, box-shadow 240ms ease, opacity 200ms ease;
+    opacity: 0;
+  }
+  :root:not(#_) .tabbar.dock[data-on] .dock-puck { opacity: 1; }
+  :root:not(#_) .tabbar.dock button {
+    position: relative; height: 52px; padding: 0 !important; gap: 4px !important; justify-content: center;
+    background: transparent !important; border-radius: 14px !important;
+    color: var(--faint) !important; font-size: 0.6875rem !important; font-weight: 500 !important; letter-spacing: 0.01em;
+    transition: color 200ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  :root:not(#_) .tabbar.dock button svg { transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms ease; }
+  :root:not(#_) .tabbar.dock button[aria-current="page"] { color: var(--ink) !important; font-weight: 600 !important; }
+  :root:not(#_) .tabbar.dock button[aria-current="page"] svg { color: rgb(var(--tab-rgb)) !important; transform: translateY(-1px) scale(1.06); }
+  :root:not(#_) .tabbar.dock button:active { transform: scale(0.94); }
+  :root:not(#_) .tabbar.dock button:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: -2px; }
+  :root:not(#_) .main { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .main:has(.deal-tray) { padding-bottom: calc(196px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .deal-tray { bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .toast { bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) body:has(.deal-tray) .toast { bottom: calc(176px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+@media (prefers-reduced-motion: reduce) { :root:not(#_) .dock-puck, :root:not(#_) .tabbar.dock button svg { transition: none !important; } }
+@media (prefers-reduced-transparency: reduce) { :root:not(#_) .tabbar.dock { background: var(--surface) !important; backdrop-filter: none !important; } }
+@media (max-width: 860px) { :root:not(#_) .dock[data-i="1"] { --i: 1; } :root:not(#_) .dock[data-i="2"] { --i: 2; } :root:not(#_) .dock[data-i="3"] { --i: 3; } :root:not(#_) .dock[data-i="4"] { --i: 4; } }
+:root:not(#_) .tb-pick { position: relative; } :root:not(#_) .tb-pick select { field-sizing: content; padding-right: 30px !important; } :root:not(#_) .tb-pick svg { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+:root:not(#_) .tb-pick > :not(select):not(.sr-only) { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); } :root:not(#_) .tb-add { margin-left: 0 !important; }
+:root:not(#_) .tb-pick select { height: 40px !important; } :root:not(#_) .tb-add { height: 40px !important; min-height: 40px !important; }

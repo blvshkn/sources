@@ -40,17 +40,19 @@ export function TagCapture({ onSave, placeholder, compact }: { onSave: (t: Omit<
 
   return (
     <div className={`capture${compact ? " compact" : ""}`}>
-      <div className="capture-row">
+      <div className={`composer${listening ? " live" : ""}`}>
         <label htmlFor="capture" className="sr-only">What did they say?</label>
-        <input id="capture" className="capture-input" value={text} onChange={(e) => setText(e.target.value)}
+        <input id="capture" className="composer-input" value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder={placeholder ?? `${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said he won't move his RB`} autoComplete="off" />
+          placeholder={placeholder ?? `${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said he won't move his RB`} autoComplete="off" enterKeyHint="send" />
         {Speech && (
-          <button className={`btn btn-icon${listening ? " is-live" : ""}`} onClick={dictate} aria-label={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening}>
+          <button className="composer-btn" onClick={dictate} aria-label={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening}>
             <Icon name="mic" size={18} />
           </button>
         )}
-        <button className="btn btn-primary btn-sm" onClick={save} disabled={!parsed?.tag}>Save tag</button>
+        <button className="composer-btn send" onClick={save} disabled={!parsed?.tag} aria-label="Save tag">
+          <Icon name="send" size={16} />
+        </button>
       </div>
       {parsed && (
         parsed.tag ? (
