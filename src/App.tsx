@@ -308,13 +308,21 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
           <div><div className="brand-name">Sources</div><div className="brand-line">Your fantasy insider</div></div>
         </div>
         <div className="league-pill"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></div>
-        <nav className="nav" aria-label="Main">
-          {TABS.filter((t) => t.main).map((t) => (
-            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} active={tab === t.id} />{t.label}</button>
-          ))}
+        <nav className="nav nav-ix" aria-label="Main">
+          <div className="nav-main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
+            data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
+            <span className="nav-rule" aria-hidden="true" />
+            {TABS.filter((t) => t.main).map((t) => (
+              <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
+                <span className="ix-ic"><Icon name={t.icon} size={20} active={tab === t.id} /></span><span className="ix-w">{t.short}</span>
+              </button>
+            ))}
+          </div>
           <div className="nav-sep" />
           {TABS.filter((t) => !t.main).map((t) => (
-            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}><Icon name={t.icon} active={tab === t.id} />{t.label}</button>
+            <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
+              <span className="ix-ic"><Icon name={t.icon} size={20} active={tab === t.id} /></span><span className="ix-w">{t.short}</span>
+            </button>
           ))}
         </nav>
         <p className="side-foot">{demo ? <>Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></> : <>Live from Sleeper as @{username}. {LEAGUE.updated}.</>}</p>

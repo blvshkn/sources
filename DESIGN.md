@@ -38,6 +38,7 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 - **Headshots:** round on margin gray, team badge with a paper ring
 - **Chrome:** paper-colored top bar, hairline edge, light blur only on fixed bars
 - **Thumb index (phone nav):** a full-width paper strip. Each section is an icon over its name; Lineup uses the custom helmet. The active name gets a highlighter stroke in the section's color, and a short rule in that color slides along the top edge
+- **Desktop sidebar:** same short names (Wire, League, Trade, Lineup, Waivers, Ask, Settings), same icon tint and highlighter, and a section-colored rule on the left edge that slides between items
 
 - **Icons:** Lucide (ISC) plus Sources customs, all on a 24px grid with a 2px round stroke, in `src/components/icons.tsx`. Active tab thickens the stroke to 2.4; customs may fill. No second icon family
 

@@ -2158,3 +2158,32 @@ body::after {
 :root:not(#_) .sb2-row .sb2-who b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.9375rem; line-height: 1.25; overflow-wrap: anywhere; }
 :root:not(#_) .sb2-div::before { display: none; }
 :root:not(#_) .sb2-div span { width: 40px; box-sizing: border-box; text-align: center; padding: 3px 0; }
+
+/* ---------- Desktop sidebar: same names and motion as the phone thumb index ---------- */
+.nav-main { position: relative; display: flex; flex-direction: column; gap: 2px; }
+:root:not(#_) .nav-ix button {
+  position: relative; isolation: isolate; height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 14px !important;
+  border-radius: 8px !important; background: transparent !important; box-shadow: none !important;
+  color: var(--faint) !important; font-weight: 500 !important; font-size: 0.9375rem;
+  transition: color 200ms ease, background-color 160ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+:root:not(#_) .nav-ix button:hover { color: var(--ink) !important; background: var(--surface-2) !important; }
+:root:not(#_) .nav-ix button[aria-current="page"] { color: var(--ink) !important; background: transparent !important; }
+:root:not(#_) .nav-ix button[aria-current="page"] .ix-w { font-weight: 600; }
+:root:not(#_) .nav-ix .ix-ic { display: grid; place-items: center; color: inherit; transition: color 200ms ease, transform 300ms cubic-bezier(0.23, 1, 0.32, 1); }
+:root:not(#_) .nav-ix button svg { color: inherit !important; }
+:root:not(#_) .nav-ix button[aria-current="page"] .ix-ic, :root:not(#_) .nav-ix button[aria-current="page"] svg { color: rgb(var(--tab-rgb)) !important; }
+:root:not(#_) .nav-ix .ix-w { position: relative; padding: 2px 4px; letter-spacing: -0.01em; }
+:root:not(#_) .nav-ix .ix-w::before {
+  content: ""; position: absolute; z-index: -1; left: -2px; right: -6px; top: 48%; bottom: 1px; border-radius: 2px;
+  background: linear-gradient(90deg, rgba(var(--tab-rgb), 0.5), rgba(var(--tab-rgb), 0.16));
+  transform: scaleX(0); transform-origin: left; transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1) 60ms;
+}
+:root:not(#_) .nav-ix button[aria-current="page"] .ix-w::before { transform: scaleX(1); }
+:root:not(#_) .nav-ix button:active { transform: scale(0.97); }
+:root:not(#_) .nav-ix button:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: -2px; }
+.nav-rule { position: absolute; left: -12px; top: 10px; width: 3px; height: 24px; border-radius: 0 3px 3px 0; background: rgb(var(--tab-rgb)); opacity: 0; pointer-events: none;
+  transform: translateY(calc(var(--i, 0) * 46px)); transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1), background-color 240ms ease, opacity 200ms ease; }
+.nav-main[data-on] .nav-rule { opacity: 1; }
+.nav-main[data-i="1"] { --i: 1; } .nav-main[data-i="2"] { --i: 2; } .nav-main[data-i="3"] { --i: 3; } .nav-main[data-i="4"] { --i: 4; }
+@media (prefers-reduced-motion: reduce) { .nav-rule, :root:not(#_) .nav-ix .ix-w::before { transition: none !important; } }
