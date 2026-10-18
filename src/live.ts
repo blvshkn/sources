@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer } from "./data";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye } from "./data";
 import { eff, lineupFor, specialLineup, specialPts } from "./engine";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
@@ -166,6 +166,18 @@ export const expect = (live: Live, id: string | null) => {
   return pr;
 };
 /** Share of the projection still to be played, so the win chance tightens as games finish. */
+export interface PlayCount { done: number; live: number; left: number }
+/** How many starters are finished, playing right now, and still to play, by their NFL teams. Byes count as done. */
+export function playCount(live: Live, nfls: (string | null | undefined)[]): PlayCount {
+  const c = { done: 0, live: 0, left: 0 };
+  for (const t of nfls) {
+    if (!t) continue;
+    const st = live.games[t];
+    if (st === "complete" || (!st && onBye(t))) c.done++; else if (st === "in_game") c.live++; else c.left++;
+  }
+  return c;
+}
+
 export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a, id) => {
   if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
   return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);

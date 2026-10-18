@@ -3,8 +3,8 @@ import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, pla
 import { eff, fits, fmt, lineupFor, round1, SlotName, specialLineup } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill, LiveNum } from "./ui";
-import { useLive, expect, outlookOf, winChance } from "../live";
-import { PtsCell, gameNow } from "./Roster";
+import { useLive, expect, outlookOf, winChance, playCount } from "../live";
+import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
@@ -47,6 +47,10 @@ export function Matchup({ onBack }: { onBack: () => void }) {
   const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
   const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
   const scored = (o: { scored: number }) => round1(o.scored);
+  const nflOf = (id: string | null) => (id ? playerById(id).nfl : null);
+  const myCount = playCount(live, [...mine.map((s) => nflOf(s.id)), ...specialLineup(YOU).slots.map((x) => x.player?.nfl)]);
+  const oppCount = playCount(live, [...theirs.map((s) => nflOf(s.id)), ...specialLineup(opp).slots.map((x) => x.player?.nfl)]);
+  const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
   const best = lineupFor(YOU.roster, true);
@@ -81,10 +85,10 @@ export function Matchup({ onBack }: { onBack: () => void }) {
       <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
         <header className="mu-score">
           <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span>
-            {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small></> : <b>{myTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
           <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<b>{Math.round(chance)}%</b><small>to win</small></div>
           <div className="mu-side them"><span>{opp.manager}</span>
-            {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small></> : <b>{oppTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">
@@ -112,12 +116,12 @@ export function Matchup({ onBack }: { onBack: () => void }) {
           return (
             <div key={i} className={`mu-row${open === i ? " open" : ""}`}>
               <span className="mu-slot">{s.slot}</span>
-              <button className="mu-mine" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} aria-label={`Swap ${me?.name ?? "empty"} at ${s.slot}`}>
+              <button className={`mu-mine${rowCls(me)}`} onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} aria-label={`Swap ${me?.name ?? "empty"} at ${s.slot}`}>
                 <Who p={me} side="you" />
                 {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
               </button>
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className="mu-theirs"><Who p={them} side="them" />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}</span>
+              <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}</span>
               {open === i && (
                 <div className="mu-swap">
                   <small>Swap in at {s.slot}</small>

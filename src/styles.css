@@ -3769,3 +3769,30 @@ html:root:not(#_) .tr-bar { max-width: none; width: 100%; }
 html:root:not(#_) { --chip-bg: rgba(25, 28, 27, 0.88); }
 html:root:not(#_) .page-tabs > .seg { gap: 8px !important; }
 html:root:not(#_) .page-tabs > .seg button:not([aria-pressed="true"]) { background: var(--chip-bg) !important; }
+
+/* Game-day scanning: who is left to play */
+html:root:not(#_) .lu-row { position: relative; }
+html:root:not(#_) .lu-row.is-done > :is(.lu-slot, .av, .lu-who) { opacity: 0.42; transition: opacity 0.3s ease; }
+html:root:not(#_) .lu-row.is-done > :not(.lu-slot, .av, .lu-who, .lu-swap) { opacity: 0.72; }
+html:root:not(#_) .lu-row.is-live::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--lime); }
+html:root:not(#_) .lu-row.is-live { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.08), transparent 55%); }
+html:root:not(#_) :is(.mu-mine, .mu-theirs).is-done .mu-p { opacity: 0.42; transition: opacity 0.3s ease; }
+html:root:not(#_) :is(.mu-mine, .mu-theirs).is-done .mu-pts { opacity: 0.72; }
+html:root:not(#_) :is(.mu-mine, .mu-theirs).is-live .av { box-shadow: 0 0 0 2px var(--lime); border-radius: 50%; }
+html:root:not(#_) .lu-play { padding: 0 16px 8px; }
+html:root:not(#_) .pc { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.02em; color: var(--muted); }
+html:root:not(#_) .pc > span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: var(--chip-bg); border: 1px solid var(--line); }
+html:root:not(#_) .pc-left { color: var(--ink); }
+html:root:not(#_) .pc-left b { font-weight: 600; }
+html:root:not(#_) .pc-live { color: var(--lime); border-color: rgba(var(--lime-rgb), 0.35) !important; }
+html:root:not(#_) .pc-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+html:root:not(#_) .pc-compact { margin-top: 6px; gap: 4px; font-size: 10px; }
+html:root:not(#_) .pc-compact > span { padding: 2px 6px; }
+html:root:not(#_) .mu-side.them .pc-compact { justify-content: flex-end; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) :is(.lu-row, .mu-mine, .mu-theirs).is-done * { transition: none; } }
+html:root:not(#_) .mu-side .pc { display: flex; flex-direction: row; }
+html:root:not(#_) .mu-side .pc span, html:root:not(#_) .mu-side .pc b { font-family: "Geist Mono", ui-monospace, monospace !important; font-size: 10px !important; font-weight: 500 !important; letter-spacing: 0.02em !important; line-height: 1.4 !important; text-transform: none !important; }
+html:root:not(#_) .mu-side .pc b { font-weight: 600 !important; }
+html:root:not(#_) .mu-side .pc > span { padding: 2px 7px; }
+html:root:not(#_) .mu-side .pc > span { display: inline-flex !important; }
+html:root:not(#_) .pc-live i { flex: none; display: block !important; width: 6px !important; height: 6px !important; }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
-import { Live, useLive, onPace, teamOutlook, winChance } from "../live";
+import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
@@ -135,6 +135,25 @@ export function PtsCell({ id, g, proj, cls = "lu-pts" }: { id: string; g: GameNo
   if (g.state === "complete") return <FinalPts id={id} pts={g.pts} proj={proj} cls={cls} />;
   return <span className={cls}>{proj.toFixed(1)}</span>;
 }
+/** Row state for scanning on game day: finished rows fade back, live rows get an accent edge. */
+export const playCls = (g: GameNow, bye?: boolean) => (bye || g.state === "complete" ? " is-done" : g.state === "in_game" ? " is-live" : "");
+
+/** "2 live · 4 to play · 3 done" for a set of starters. */
+export function PlayCount({ c, compact }: { c: Counts; compact?: boolean }) {
+  if (compact) return (
+    <span className="pc pc-compact" aria-label={`${c.left} to play, ${c.live} playing now`}>
+      <span className={c.live ? "pc-live" : "pc-left"}>{c.live > 0 && <i aria-hidden="true" />}{c.left + c.live} left{c.live > 0 ? `, ${c.live} live` : ""}</span>
+    </span>
+  );
+  return (
+    <span className={`pc${compact ? " pc-compact" : ""}`} aria-label={`${c.left} to play, ${c.live} playing now, ${c.done} done`}>
+      {c.live > 0 && <span className="pc-live"><i aria-hidden="true" />{c.live} live</span>}
+      <span className="pc-left"><b>{c.left}</b> to play</span>
+      {!compact && <span className="pc-done">{c.done} done</span>}
+    </span>
+  );
+}
+
 /** Replaces the kickoff time once the game starts. */
 function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
   if (g.state === "in_game") return <span className="lu-live"><i aria-hidden="true" />Live</span>;
@@ -147,7 +166,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: st
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
+    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}${playCls(g, onBye(p.nfl))}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
       onClick={onOpen ? () => onOpen(p, where) : undefined}
       onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } : undefined}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
@@ -174,7 +193,7 @@ function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swapFrom ? " has-swap" : ""}`}>
+    <div className={`lu-row${bench ? " bench" : ""}${swapFrom ? " has-swap" : ""}${playCls(g, bye)}`}>
       <span className={`lu-slot s-${slot}`}>{slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
@@ -474,6 +493,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
+              {started && <div className="lu-play"><PlayCount c={playCount(live, [...s.map((x) => x.player.nfl), ...kdef.slots.map((x) => x.player?.nfl)])} /></div>}
               {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} onOpen={openPlayer} live={live} />)}
               {kdef.slots.map((x, i) => x.player
                 ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} live={live} />
