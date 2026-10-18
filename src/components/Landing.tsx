@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Logo } from "./Logo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById } from "../data";
 import { activeTags, allNeeds, applyFormat, DEFAULT_FORMAT, findTrades, fmt, groupsFor } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
@@ -49,8 +50,7 @@ export function Landing({ onLive, onDemo }: {
     <div className="landing">
       <nav className="ld-nav" aria-label="Sources">
         <div className="brand" style={{ padding: 0 }}>
-          <span className="brand-mark" aria-hidden="true">“</span>
-          <span className="brand-name">Sources</span>
+          <Logo height={28} />
         </div>
         <button className="btn btn-sm" onClick={onDemo}>Try the demo</button>
       </nav>

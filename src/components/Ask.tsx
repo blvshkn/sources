@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Answer } from "../engine";
 import { AiLabel, Icon } from "./ui";
+import { Mark } from "./Logo";
 
 type Msg = { id: number; from: "you" | "sources"; q?: string; a?: Answer };
 
@@ -31,7 +32,7 @@ export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answe
       <section className="card chat" aria-live="polite">
         {msgs.length === 0 && (
           <div className="chat-empty">
-            <span className="brand-mark" aria-hidden="true">“</span>
+            <Mark size={52} />
             <p className="small muted">Try one of these.</p>
           </div>
         )}

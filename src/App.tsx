@@ -10,6 +10,7 @@ import {
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
 import { Boot } from "./components/Boot";
+import { Logo, Mark } from "./components/Logo";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
@@ -339,8 +340,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     <div className={`shell${tab === "trade" ? " wide" : ""}`}>
       <aside className="side">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">“</span>
-          <div><div className="brand-name">Sources</div><div className="brand-line">Your fantasy insider</div></div>
+          <div><Logo height={30} /><div className="brand-line">Your fantasy insider</div></div>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-haspopup="dialog">
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
@@ -368,7 +368,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
       <header className="topbar">
         <button className="top-league" onClick={() => setSwitching(true)} aria-haspopup="dialog">
-          <span className="brand-mark" aria-hidden="true">“</span>
+          <Mark size={30} className="top-mark" />
           <span className="top-league-n"><b>{LEAGUE_NAME}</b><span className="sr-only"> (switch league)</span><small>Week {WEEK} · {formatLabel(format)}</small></span>
           <Icon name="switch" size={16} />
         </button>
@@ -496,7 +496,7 @@ export default function App() {
   if (status === "error") {
     return (
       <div className="boot">
-        <span className="brand-mark big" aria-hidden="true">“</span>
+        <Mark size={64} />
         <p className="boot-step">{error}</p>
         <div className="row wrap" style={{ justifyContent: "center" }}>
           <button className="btn btn-primary" onClick={reload}>Try again</button>

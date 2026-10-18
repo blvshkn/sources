@@ -1,4 +1,5 @@
 /** Loading screen: a floodlit field, the mark inside two counter-rotating rings, and the load steps ticking off. */
+import { Mark, Wordmark } from "./Logo";
 const STEPS = ["Loading your league", "Loading projections and trade values", "Loading trades, waivers and past weeks", "Loading player details"];
 const SHORT: Record<string, string> = {
   "Loading your league": "League and rosters",
@@ -16,9 +17,9 @@ export function Boot({ step }: { step: string }) {
       <div className="boot2-core">
         <div className="boot2-mark" aria-hidden="true">
           <span className="boot2-ring a" /><span className="boot2-ring b" /><span className="boot2-pulse" />
-          <span className="brand-mark big">“</span>
+          <Mark size={64} className="boot2-logo" />
         </div>
-        <div className="boot2-word" aria-hidden="true">Sources</div>
+        <div className="boot2-word" aria-hidden="true"><Wordmark height={30} /></div>
         <ol className="boot2-steps">
           {STEPS.map((s, i) => (
             <li key={s} className={i < at ? "done" : i === at ? "now" : ""}>

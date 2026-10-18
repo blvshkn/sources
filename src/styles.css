@@ -3207,3 +3207,13 @@ html:root:not(#_) .lu-mx-proj { font: 500 0.75rem/1.2 var(--font-mono); color: v
 html:root:not(#_) .lu-mx-mid .lu-live { margin-bottom: 6px; }
 /* Page titles: Array Regular, the narrower cut */
 html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !important; }
+
+/* ---- Logo: lime mark, chalk wordmark (brand kit). Light theme falls back to ink so it stays legible. ---- */
+:root { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }
+:root[data-theme="light"] { --logo-mark: var(--text); --logo-word: var(--text); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --logo-mark: var(--text); --logo-word: var(--text); } }
+.logo, .logo-mark, .logo-word { display: block; flex: none; overflow: visible; }
+.brand .logo { margin-bottom: 6px; }
+.top-league .top-mark { flex: none; }
+.boot2-mark .boot2-logo { position: relative; z-index: 1; filter: drop-shadow(0 0 18px rgba(216, 242, 74, 0.45)); }
+.boot2-word { display: flex; justify-content: center; }
