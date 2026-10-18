@@ -1426,3 +1426,6 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
 .vb-bar { width: 100%; height: 4px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
 .vb-bar span { display: block; height: 100%; border-radius: inherit; background: var(--stamp); }
 @media (max-width: 560px) { .vb-movers { grid-template-columns: minmax(0, 1fr); } .vb-row { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 10px; } }
+.vb-name { display: flex; align-items: center; gap: 6px; }
+.vb-split { flex: none; font-size: 0.5625rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 5px; border-radius: 4px; }
+.vb-split.up { color: var(--good); background: var(--good-soft); } .vb-split.down { color: var(--bad); background: var(--bad-soft); }

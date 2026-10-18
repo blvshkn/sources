@@ -9,13 +9,25 @@ function demoBoard(): BoardRow[] {
   const owner = new Map<string, string>();
   TEAMS.forEach((t) => [...t.roster, ...(t.ir ?? [])].forEach((id) => owner.set(id, t.id)));
   const ids = new Set([...Object.keys(PLAYERS), ...FREE_AGENTS.map((f) => f.id)]);
-  return [...ids].map((id) => PLAYERS[id] ?? FREE_AGENTS.find((f) => f.id === id)!).filter(Boolean).map((p) => {
+  const rows = [...ids].map((id) => PLAYERS[id] ?? FREE_AGENTS.find((f) => f.id === id)!).filter(Boolean).map((p) => {
     const value = marketValue({ ...p, value: undefined } as never);
     return { id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, value, trend: Math.round((hash(p.id) - 0.45) * value * 0.35), ownerId: owner.get(p.id) };
   }).filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
+  const k = 10000 / (rows[0]?.value || 1);
+  return rows.map((r) => ({ ...r, value: Math.round(r.value * k), trend: Math.round(r.trend * k) }));
 }
 
 const POS = ["ALL", "QB", "RB", "WR", "TE"] as const;
+
+/** Where the production model and the trade market disagree by a lot, there's an edge. */
+function split(r: BoardRow) {
+  if (!r.market || !r.model) return null;
+  const d = r.model / r.market - 1;
+  if (d > 0.25) return <span className="vb-split up" title={`Production model ${Math.round(d * 100)}% above the market`}>Buy low</span>;
+  if (d < -0.25) return <span className="vb-split down" title={`Production model ${Math.round(-d * 100)}% below the market`}>Sell high</span>;
+  return null;
+}
+const tier = (v: number) => v >= 8000 ? "Tier 1" : v >= 6000 ? "Tier 2" : v >= 4000 ? "Tier 3" : v >= 2500 ? "Tier 4" : "Depth";
 
 /** League-aware market board: every player's trade value, who owns him in your league, and who's moving. */
 export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: string) => void }) {
@@ -68,8 +80,8 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
               <span className="vb-rank">{pos === "ALL" ? i + 1 : posRank.get(r.id)}</span>
               <Avatar p={r} size={40} />
               <span className="vb-who">
-                <span className="vb-name">{r.name}</span>
-                <span className="lu-meta"><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}<span className={o ? (o === "You" ? "vb-own you" : "vb-own") : "vb-own fa"}>{o ?? "Free agent"}</span></span>
+                <span className="vb-name">{r.name}{split(r)}</span>
+                <span className="lu-meta"><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{tier(r.value)}</span><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}<span className={o ? (o === "You" ? "vb-own you" : "vb-own") : "vb-own fa"}>{o ?? "Free agent"}</span></span>
               </span>
               <span className="vb-val">
                 <b>{r.value.toLocaleString()}</b>

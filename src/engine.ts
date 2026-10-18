@@ -108,9 +108,9 @@ export const marketValue = (p: Player): number => {
  * Consolidation adjustment: the best player in a package counts in full, each
  * extra piece counts for less, so three bench players can't add up to one star.
  */
-const PIECE_WEIGHTS = [1, 0.72, 0.52, 0.4];
+const PIECE_WEIGHTS = [1, 0.85, 0.72, 0.61];
 export const packageValue = (ids: string[]) =>
-  Math.round(ids.map((id) => marketValue(playerById(id))).sort((a, b) => b - a).reduce((s, v, i) => s + v * (PIECE_WEIGHTS[i] ?? 0.3), 0));
+  Math.round(ids.map((id) => marketValue(playerById(id))).sort((a, b) => b - a).reduce((s, v, i) => s + v * (PIECE_WEIGHTS[i] ?? 0.5), 0));
 export const pct = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.round(Math.abs(n) * 100)}%`;
 
 
@@ -316,8 +316,8 @@ function combos(ids: string[], max: number): string[][] {
 }
 
 export const isWinWin = (t: Trade) => t.youDelta >= 0.5 && t.themDelta >= 0.5;
-/** Within 15% on market value: what a fair trade calculator would call even. */
-export const FAIR_GAP = 0.15;
+/** Within 10% on value: fair. */
+export const FAIR_GAP = 0.1;
 export const isFair = (t: Trade) => Math.abs(t.marketGap) <= FAIR_GAP;
 
 // ---- Would they actually say yes? ------------------------------------------

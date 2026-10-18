@@ -129,12 +129,13 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const [weekProj, seasonProj, trending, futureProj, market, kdefWeek, kdefSeason] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
-    get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/add?lookback_hours=24&limit=40").catch(() => []),
+    get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/add?lookback_hours=168&limit=200").catch(() => []),
     Promise.all(futureWeeks.map((w) => get<SProj[]>(`/projections/nfl/${season}/${w}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]))),
     fetch(fcUrl).then((r) => (r.ok ? r.json() : [])).catch(() => []) as Promise<{ player: { sleeperId?: string; name?: string; position?: string; maybeTeam?: string | null; maybeAge?: number | null }; value: number; trend30Day?: number }[]>,
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
   ]);
+  const trendingDrops = await get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
   const allWeeks = [weekProj, ...futureProj];
@@ -236,6 +237,68 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     onStep?.("Loading player details");
     const all = await get<Record<string, SPlayerLite>>("/v1/players/nfl").catch(() => ({} as Record<string, SPlayerLite>));
     missing.forEach((id) => { add(id, all[id], null); if (!players[id]) addSpecial(id, all[id], null); });
+  }
+
+  // ---- Value model -------------------------------------------------------------
+  // One number per player on a 0-10,000 scale, blended from two independent views:
+  //   55%  the trade market (FantasyCalc: real trades, matched to this league's QB format, scoring and size)
+  //   45%  our production model: rest-of-season projected points over replacement for THIS league,
+  //        read onto the market's own value curve by rank, and held within 0.5x-2x of the market
+  // then nudged up to +/-3% by Sleeper add/drop momentum over the past week.
+  {
+    const sk = recSetting >= 1 ? "ppr" : recSetting >= 0.5 ? "half" : "std";
+    const teBonus = league.scoring_settings.bonus_rec_te ?? 0;
+    const skill = Object.values(players);
+    // Rest-of-season points: every remaining week, byes count zero, fantasy playoff weeks count 1.3x
+    const rosTotal = (p: Player) => {
+      if (weekNums.length < 3) return (p.pts?.[sk] ?? p.proj) * Math.max(1, lastWeek - week + 1);
+      let t = 0;
+      weekNums.forEach((n, i) => { const w = weeklyBy[i].get(p.id); if (!w) return; t += (w[sk] + (p.pos === "TE" ? w.rec * teBonus : 0)) * (n >= playoffStart ? 1.3 : 1); });
+      return t;
+    };
+    // Replacement level from this league's real starting slots, not a generic 12-team guess
+    const share: Record<string, Partial<Record<Pos, number>>> = {
+      QB: { QB: 1 }, RB: { RB: 1 }, WR: { WR: 1 }, TE: { TE: 1 },
+      FLEX: { RB: 0.45, WR: 0.45, TE: 0.1 }, WRRB_FLEX: { RB: 0.5, WR: 0.5 }, REC_FLEX: { WR: 0.7, TE: 0.3 },
+      SUPER_FLEX: { QB: 0.85, RB: 0.05, WR: 0.07, TE: 0.03 },
+    };
+    const need: Record<Pos, number> = { QB: 0, RB: 0, WR: 0, TE: 0 };
+    league.roster_positions.forEach((slot) => Object.entries(share[slot] ?? {}).forEach(([pos, f]) => (need[pos as Pos] += (f ?? 0) * league.total_rosters)));
+    const pts = new Map(skill.map((p) => [p.id, rosTotal(p)]));
+    const replacement: Record<Pos, number> = { QB: 0, RB: 0, WR: 0, TE: 0 };
+    (Object.keys(need) as Pos[]).forEach((pos) => {
+      const sorted = skill.filter((p) => p.pos === pos).map((p) => pts.get(p.id) ?? 0).sort((a, b) => b - a);
+      replacement[pos] = sorted[Math.min(sorted.length - 1, Math.round(need[pos]))] ?? 0;
+    });
+    const vorp = skill.map((p) => ({ p, v: Math.max(0, (pts.get(p.id) ?? 0) - replacement[p.pos]) })).sort((a, b) => b.v - a.v);
+    // The market's value curve: the model's #10 player gets the market's #10 value
+    const curve = market.filter((m) => ["QB", "RB", "WR", "TE"].includes(m.player?.position ?? "")).map((m) => m.value).sort((a, b) => b - a);
+    const topV = vorp[0]?.v || 1;
+    const modelBy = new Map<string, number>();
+    vorp.forEach(({ p, v }, i) => {
+      let mv = v <= 0 ? 0 : curve.length ? curve[Math.min(i, curve.length - 1)] : (v / topV) * 10000;
+      const mk = valueBy.get(p.id);
+      if (mk) mv = Math.min(mk * 2, Math.max(mk * 0.5, mv));
+      modelBy.set(p.id, mv);
+    });
+    // Momentum from Sleeper adds minus drops over the past week, capped at +/-3%
+    const net = new Map<string, number>();
+    trending.forEach((t) => net.set(t.player_id, (net.get(t.player_id) ?? 0) + t.count));
+    trendingDrops.forEach((t) => net.set(t.player_id, (net.get(t.player_id) ?? 0) - t.count));
+    const maxNet = Math.max(1, ...[...net.values()].map(Math.abs));
+    const raw = new Map<string, number>();
+    skill.forEach((p) => {
+      const mk = valueBy.get(p.id), md = modelBy.get(p.id) ?? 0;
+      const blended = mk !== undefined ? 0.55 * mk + 0.45 * md : 0.6 * md; // unpriced breakouts sit below the market until it catches up
+      raw.set(p.id, blended * (1 + Math.max(-1, Math.min(1, (net.get(p.id) ?? 0) / maxNet)) * 0.03));
+    });
+    const scale = 10000 / Math.max(1, ...raw.values());
+    skill.forEach((p) => {
+      p.value = Math.round((raw.get(p.id) ?? 0) * scale);
+      const mk = valueBy.get(p.id);
+      p.fcValue = mk !== undefined ? Math.round(mk * scale) : undefined;
+      p.modelValue = Math.round((modelBy.get(p.id) ?? 0) * scale);
+    });
   }
 
   // Teams
@@ -366,7 +429,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   rosters.forEach((r) => (r.players ?? []).forEach((id) => ownerOf.set(id, String(r.roster_id))));
   const board: BoardRow[] = market.filter((m) => m.player?.sleeperId && ["QB", "RB", "WR", "TE"].includes(m.player.position ?? ""))
     .sort((a, b) => b.value - a.value).slice(0, 300)
-    .map((m) => { const id = String(m.player.sleeperId); return { id, name: players[id]?.name ?? m.player.name ?? `Player ${id}`, pos: m.player.position!, nfl: players[id]?.nfl ?? m.player.maybeTeam ?? "FA", age: m.player.maybeAge ? Math.floor(m.player.maybeAge) : undefined, value: Math.round(m.value), trend: Math.round(m.trend30Day ?? 0), ownerId: ownerOf.get(id) }; });
+    .map((m) => { const id = String(m.player.sleeperId); const p = players[id]; const k = p?.fcValue && m.value ? p.fcValue / m.value : 1;
+      return { id, name: p?.name ?? m.player.name ?? `Player ${id}`, pos: m.player.position!, nfl: p?.nfl ?? m.player.maybeTeam ?? "FA", age: m.player.maybeAge ? Math.floor(m.player.maybeAge) : undefined,
+        value: p?.value ?? Math.round(m.value * k), trend: Math.round((m.trend30Day ?? 0) * k), ownerId: ownerOf.get(id), market: p?.fcValue, model: p?.modelValue }; })
+    .sort((a, b) => b.value - a.value);
 
   // League activity: the latest completed adds, drops, claims and trades
   const infoOf = (id: string) => {
@@ -406,7 +472,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)) },
     faabHistory, freeAgents, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
-    valueSource: valueBy.size ? `FantasyCalc market values (${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams)` : "Estimated from projections (market values unavailable)",
+    valueSource: valueBy.size ? `Blended value: 55% trade market (FantasyCalc, ${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams), 45% rest-of-season production over replacement, plus up to 3% Sleeper add/drop momentum` : "Rest-of-season production over replacement (market values unavailable)",
     rosWeeks: weekNums.length,
   };
 }

@@ -28,8 +28,11 @@ export interface Player {
   rookie?: boolean;
   /** Average weekly points over the fantasy playoff weeks (live). */
   playoff?: Pts;
-  /** Market trade value (FantasyCalc, matched to league settings). */
+  /** Blended trade value on a 0-10,000 scale (top player = 10,000). See valueModel in sleeper.ts. */
   value?: number;
+  /** The two legs of the blend, on the same scale: the trade market and our production model. */
+  fcValue?: number;
+  modelValue?: number;
   /** Can go in an IR slot under this league's rules. */
   irEligible?: boolean;
   /** Raw injury designation from Sleeper (IR, PUP, Out, Sus...). */
@@ -430,7 +433,7 @@ export interface Activity {
   bid?: number;
   at: number;
 }
-export interface BoardRow { id: string; name: string; pos: string; nfl: string; age?: number; value: number; trend: number; ownerId?: string }
+export interface BoardRow { id: string; name: string; pos: string; nfl: string; age?: number; value: number; trend: number; ownerId?: string; market?: number; model?: number }
 export interface PastTrade { week: string; a: string; b: string; aGot: { name: string; pos: Pos; rookie?: boolean }[]; bGot: { name: string; pos: Pos; rookie?: boolean }[] }
 const DEMO_TRADES: PastTrade[] = [
   { week: "2025 Wk 4", a: "mike", b: "kev", aGot: [{ name: "Javonte Williams", pos: "RB" }], bGot: [{ name: "Hunter Henry", pos: "TE" }] },
