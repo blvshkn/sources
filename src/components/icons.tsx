@@ -36,13 +36,11 @@ const LUCIDE: Record<string, any> = {
 
 /** Custom icons, same grid and stroke as Lucide. `active` fills the main shape. */
 const CUSTOM: Record<string, Glyph> = {
-  // Football helmet in profile: open shell with a neck notch, rounded-triangle ear hole,
-  // two top bars and an angled cage. A soft tint fills the shell; the active tab deepens it.
+  // Football helmet in profile: open shell with a neck notch, one top bar and an angled cage. A soft tint fills the shell; the active tab deepens it.
   helmet: (a) => <>
     <path d="M18.6 9.6C17.4 5.4 14 2.6 10.2 2.6 5.5 2.6 2 6.5 2 11.2c0 1.7.5 3.2 1.4 4.3.3.4.4.8.4 1.3v.8c0 1.1.9 1.9 1.9 1.9h7.7l-2.2-5.9 1.6-2.9Z" fill="currentColor" fillOpacity={a ? 0.32 : 0.14} stroke="none" />
     <path d="M18.6 9.6C17.4 5.4 14 2.6 10.2 2.6 5.5 2.6 2 6.5 2 11.2c0 1.7.5 3.2 1.4 4.3.3.4.4.8.4 1.3v.8c0 1.1.9 1.9 1.9 1.9h4.3" />
-    <path d="M6.2 10.2c.5-.5 1.3-.4 1.6.2l1 1.8c.4.7-.1 1.5-.9 1.5H6.4c-.6 0-1-.4-1-1v-1.5c0-.4.3-.8.8-1Z" />
-    <path d="M10.6 10.8 13.6 7.6h8M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2" />
+    <path d="M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2" />
   </>,
   // Football: a pointed oval on the diagonal with a seam and laces.
   roster: (a) => <g strokeWidth={a ? 2.4 : 2}>
