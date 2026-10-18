@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
+import { Live, useLive } from "../live";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
@@ -67,8 +68,25 @@ function IrBlock() {
 const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
 
 /** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
-function LineupRow({ p, slot, bench, swap, onOpen }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number }; onOpen?: (p: Player, where: string) => void }) {
+type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number };
+const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0 });
+
+/** Points column: projection before kickoff, live points (with the projection beneath) during the game, final after. */
+function PtsCell({ g, proj }: { g: GameNow; proj: number }) {
+  if (g.state === "in_game") return <span className="lu-pts live" aria-label={`${g.pts.toFixed(1)} points so far, projected ${proj.toFixed(1)}`}><b>{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small></span>;
+  if (g.state === "complete") return <span className="lu-pts final" aria-label={`Final, ${g.pts.toFixed(1)} points`}><b>{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small></span>;
+  return <span className="lu-pts">{proj.toFixed(1)}</span>;
+}
+/** Replaces the kickoff time once the game starts. */
+function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
+  if (g.state === "in_game") return <span className="lu-live"><i aria-hidden="true" />Live</span>;
+  if (g.state === "complete") return <span className="lu-final">Final</span>;
+  return fallback ? <span className="lu-game">{fallback}</span> : null;
+}
+
+function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live }) {
   const st = statusWord(p);
+  const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
@@ -78,10 +96,10 @@ function LineupRow({ p, slot, bench, swap, onOpen }: { p: Player; slot: string; 
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{p.status === "Q" ? "Q" : "OUT"}</b>}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
-        {p.status && !onBye(p.nfl) && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
+        {p.status && !onBye(p.nfl) && (g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
-      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{eff(p, true).toFixed(1)}</span>}
+      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell g={g} proj={eff(p, true)} />}
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -93,8 +111,9 @@ function LineupRow({ p, slot, bench, swap, onOpen }: { p: Player; slot: string; 
 }
 
 /** Kicker or defense row. Same layout as a skill player. */
-function SpecialRow({ p, slot, bench, swapFrom }: { p: SpecialPlayer; slot: string; bench?: boolean; swapFrom?: SpecialPlayer }) {
+function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot: string; bench?: boolean; swapFrom?: SpecialPlayer; live?: Live }) {
   const bye = p.wk === null;
+  const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swapFrom ? " has-swap" : ""}`}>
@@ -102,9 +121,9 @@ function SpecialRow({ p, slot, bench, swapFrom }: { p: SpecialPlayer; slot: stri
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
       </span>
-      {bye ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{specialPts(p).toFixed(1)}</span>}
+      {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell g={g} proj={specialPts(p)} />}
       {swapFrom && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -201,6 +220,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const diff = sleeperDiff(lineup);
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
   const [cmp, setCmp] = useState<string | undefined>(undefined);
+  const live = useLive();
+  const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
+  const nowLive = Object.values(live.games).some((x) => x === "in_game");
   const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup");
   const openPlayer = (p: Player, where: string) => setSheet({ p, where });
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
@@ -248,6 +270,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
             <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
             {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
+            {started && live.teamPts[YOU.id] !== undefined && <span className="lu-mx-now">{nowLive && <i aria-hidden="true" />}{live.teamPts[YOU.id].toFixed(1)} scored</span>}
             <small>Your best lineup</small>
           </div>
           {opp && <>
@@ -258,6 +281,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             <div className="lu-mx-side them">
               <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
               <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
+              {started && live.teamPts[opp.id] !== undefined && <span className="lu-mx-now">{nowLive && <i aria-hidden="true" />}{live.teamPts[opp.id].toFixed(1)} scored</span>}
               <small>{opp.manager}</small>
             </div>
           </>}
@@ -293,14 +317,14 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   <div className="ss-foot"><span>Make the {diff.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a></div>
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
-              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
-              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} onOpen={openPlayer} />)}
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
+              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} onOpen={openPlayer} live={live} />)}
               {kdef.slots.map((x, i) => x.player
-                ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} />
+                ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} live={live} />
                 : <div key={`empty-${x.slot}-${i}`} className="lu-row"><span className={`lu-slot s-${x.slot}`}>{x.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span><span className="lu-meta">Pick up a {x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.</span></span><span /></div>)}
               <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length + kdef.bench.length} players</span></div>
-              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench onOpen={openPlayer} />)}
-              {kdef.bench.map((p) => <SpecialRow key={p.id} p={p} slot="BN" bench />)}
+              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench onOpen={openPlayer} live={live} />)}
+              {kdef.bench.map((p) => <SpecialRow key={p.id} p={p} slot="BN" bench live={live} />)}
               <IrBlock />
               </>}
             </section>
