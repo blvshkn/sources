@@ -3229,3 +3229,8 @@ html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !
 html:root:not(#_) .page-meta { background: none !important; padding: 0 !important; margin-top: 10px !important; }
 html:root:not(#_) .page-league { justify-self: start; width: fit-content; }
 html:root:not(#_) .page-meta::before { margin-left: 3px; }
+/* League selector fills the row on phones; chevron sits at the far right. */
+@media (max-width: 860px) {
+  html:root:not(#_) .page-league { justify-self: stretch; align-self: stretch; width: 100%; max-width: none; }
+  html:root:not(#_) .page-league .top-league-n { flex: 1; }
+}
