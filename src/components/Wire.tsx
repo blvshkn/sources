@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
-import { Ring } from "./Ring";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp } from "./ui";
@@ -128,13 +127,12 @@ export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNe
         </>}
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
       </button>
-      {chance !== null && theirs !== null && (
-        <div className="sb2-odds">
-          <Ring pct={chance} label={`${chance}%`} sub="to win" size={84} />
-          <div className="sb2-odds-t">
-            <b className={chance >= 55 ? "good" : chance <= 45 ? "bad" : ""}>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</b>
-            <span className={`margin-pill ${mine - theirs >= 0 ? "up" : "down"}`}>{mine - theirs >= 0 ? "+" : "−"}{Math.abs(mine - theirs).toFixed(1)} pts</span>
-            <small>Projected margin vs {opp?.manager}</small>
+      {chance !== null && (
+        <div className="sb2-chance" aria-label={`Win chance from projections: ${chance} percent`}>
+          <div className="sb2-bar"><span style={{ width: `${chance}%` }} /></div>
+          <div className="sb2-chance-lbl">
+            <span><b>{chance}%</b> to win</span>
+            <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</span>
           </div>
         </div>
       )}

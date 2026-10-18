@@ -3100,7 +3100,7 @@ html:root:not(#_) .ps-who b, html:root:not(#_) .topk-name { font-weight: 700 !im
 .sb2-odds-t b { font: 600 1.125rem/1.1 var(--font-body); color: var(--ink); }
 .sb2-odds-t b.good { color: var(--lime); } .sb2-odds-t b.bad { color: var(--bad); }
 .sb2-odds-t small { font-size: 0.8125rem; color: var(--muted); }
-html:root:not(#_) .lu-mx-mid { width: auto; }
+html:root:not(#_) .lu-mx-mid { width: 96px; }
 html:root:not(#_) .lu-mx-side .margin-pill { margin-top: 2px; }
 html:root:not(#_) .mu-mid { min-width: 76px; }
 /* Slot report: your bars in lime, short weeks coral, league average as a chalk tick */
