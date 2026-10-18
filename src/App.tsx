@@ -348,7 +348,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     <div className={`shell${tab === "trade" ? " wide" : ""}`}>
       <aside className="side">
         <div className="brand">
-          <div><Logo height={30} /><div className="brand-line">Your fantasy insider</div></div>
+          <div className="lockup" style={{ ["--lh" as string]: "30px" }}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></div>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-haspopup="dialog">
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
@@ -375,7 +375,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button className="top-logo" onClick={() => go("wire")}><Logo height={26} /></button>
+        <button className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} onClick={() => go("wire")}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <span className="top-upd" title={UPDATED}>{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span>}
           <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="spark" size={20} /></button>
