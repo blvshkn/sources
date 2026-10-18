@@ -1851,3 +1851,17 @@ body::after {
 .deal-lists .eyebrow { font-family: var(--font-body) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.75rem !important; font-weight: 600; }
 .deal-lists > div:first-child .eyebrow { color: rgb(var(--you-rgb)); }
 .deal-lists > div:last-child .eyebrow { color: rgb(var(--good-rgb)); }
+
+/* Trading-with card: partner picker on top, how they trade underneath */
+.tp-card { max-width: 520px; display: grid; gap: 0; }
+.tp-card .tp-btn { border-radius: var(--r) var(--r) 0 0; border-bottom-color: transparent; }
+.tp-card .tp-btn[aria-expanded="true"] { border-bottom-color: transparent; }
+.tp-scout { display: grid; gap: 10px; padding: 12px 14px 14px; border: 1px solid var(--line); border-top: 1px dashed var(--line); border-radius: 0 0 var(--r) var(--r);
+  background: linear-gradient(180deg, rgba(var(--tab-rgb), 0.06), transparent 80%), var(--surface); }
+.tp-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tp-facts li { font-size: 0.8125rem; line-height: 1.2; padding: 6px 10px; border-radius: 8px; background: var(--surface-2); color: var(--ink); }
+.tp-tip { margin: 0; display: grid; grid-template-columns: 16px 1fr; gap: 8px; align-items: start; font-size: 0.875rem; line-height: 1.45; font-weight: 500; color: var(--ink); }
+.tp-tip svg { margin-top: 2px; color: rgb(var(--tab-rgb)); }
+.side-hint { margin: -2px 0 10px; text-align: center; font-size: 0.8125rem; color: var(--muted); }
+@media (min-width: 861px) { .side-hint { text-align: left; } }
+.rosters > .side-hint { grid-column: 1 / -1; }

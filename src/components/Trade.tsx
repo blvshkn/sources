@@ -197,9 +197,23 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       </header>
 
-      <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
-
-      <p className="tp-note">{td.summary}</p>
+      <div className="tp-card">
+        <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
+        {(() => {
+          // Facts become tags; the closing advice gets its own line
+          const parts = td.summary.split(/(?<=\.)\s+/).map((x) => x.trim().replace(/\.$/, "")).filter(Boolean)
+            .map((x) => x.startsWith(them.manager + " ") ? x.slice(them.manager.length + 1) : x)
+            .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+          const tip = parts.length > 1 ? parts[parts.length - 1] : null;
+          const facts = tip ? parts.slice(0, -1) : parts;
+          return (
+            <div className="tp-scout" aria-label={`How ${them.manager} trades`}>
+              <ul className="tp-facts">{facts.map((f) => <li key={f}>{f}</li>)}</ul>
+              {tip && <p className="tp-tip"><Icon name="spark" size={14} /><span>{tip}.</span></p>}
+            </div>
+          );
+        })()}
+      </div>
 
       {suggestions.length > 0 && (
         <section className="card nudge">
@@ -208,7 +222,6 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </section>
       )}
 
-      {give.length === 0 && get.length === 0 && <p className="deal-hint">Tap players on either roster below to start a deal. The read on it shows up here.</p>}
 
       <div className="builder">
         <section className={`card deal${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-live="polite">
@@ -277,6 +290,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             <button role="tab" aria-selected={side === "give"} onClick={() => setSide("give")}><span>You send</span><b className="give">{give.length}</b></button>
             <button role="tab" aria-selected={side === "get"} onClick={() => setSide("get")}><span>You get</span><b className="get">{get.length}</b></button>
           </div>
+          {give.length === 0 && get.length === 0 && <p className="side-hint">Tap players on either side to build the deal.</p>}
           <div className="side-pane side-give" role="tabpanel">
             <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={give} onToggle={(id) => toggle("give", id)} dimIds={dimYou} lockIds={lockYou} wantIds={wantYou} label="You send" tone="give" />
           </div>
