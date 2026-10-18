@@ -51,16 +51,16 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
   return (
     <article className="ti">
       <div className="ti-swap">
-        <IdeaSide label="You send" ids={t.give} />
+        <IdeaSide label="Send" ids={t.give} />
         <span className="ti-arrow" aria-hidden="true"><Icon name="trade" size={16} /></span>
-        <IdeaSide label="You get" ids={t.get} />
+        <IdeaSide label="Get" ids={t.get} />
       </div>
       <div className="ti-read">
         {t.accept && <span className={`ti-odds ${tone}`}>{t.accept.label}<i>{Math.round(t.accept.p * 100)}%</i></span>}
         <span className="ti-gain"><small>You</small><Delta n={t.youDelta} /><small>/wk</small></span>
         <span className="ti-gain"><small>Them</small><Delta n={t.themDelta} /><small>/wk</small></span>
       </div>
-      {reasons.length > 0 && <ul className="ti-why">{reasons.map((r) => <li key={r}>{r}</li>)}</ul>}
+      {reasons.length > 0 && <p className="ti-why">{reasons.join(". ")}.</p>}
       <div className="ti-actions">
         <button className="btn btn-primary btn-sm" onClick={() => onPitch(t)}>Write pitch</button>
         <button className="ti-link" onClick={() => onOpen(t)}>Open in builder</button>
