@@ -75,8 +75,9 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
       {(() => {
         const h = waiverHidden();
         if (!h.played && !h.bye) return null;
-        const parts = [h.played ? `${h.played} who already played` : "", h.bye ? `${h.bye} on bye` : ""].filter(Boolean).join(" and ");
-        return <p className="wv-hidden"><Icon name="lock" size={14} />Not showing {parts} this week. Sleeper locks them until waivers run.</p>;
+        const n = (k: number) => `${k} ${k === 1 ? "player" : "players"}`;
+        const parts = [h.played ? `${n(h.played)} whose game already started` : "", h.bye ? `${n(h.bye)} on bye` : ""].filter(Boolean).join(" and ");
+        return <p className="wv-hidden"><Icon name="lock" size={14} />Hiding {parts}. They can't score for you this week.</p>;
       })()}
 
       <div className="wv-filters">
