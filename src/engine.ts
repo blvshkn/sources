@@ -3,7 +3,7 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, FreeAgent, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -527,7 +527,7 @@ export function waiverRecs(you: Team): WaiverRec[] {
   return FREE_AGENTS.map((fa) => {
     // Live free agents are already in PLAYERS; demo ones get a temporary entry.
     const existed = !!PLAYERS[fa.id];
-    if (!existed) PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj };
+    if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
     const p = PLAYERS[fa.id];
     const withFa = lineupFor([...you.roster, fa.id], true);
     const gain = round1(withFa.total - base.total);

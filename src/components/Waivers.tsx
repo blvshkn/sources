@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DEADLINES, FAAB, YOU, sleeperUrl } from "../data";
+import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
 import { AiLabel, Icon, Seg, Stamp } from "./ui";
 import { Avatar } from "./Avatar";
@@ -64,7 +64,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                 <Avatar p={r.fa} size={40} />
                 <span className="wv-who">
                   <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <Icon name="spark" size={14} />}</span>
-                  <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
+                  <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{gameLine(PLAYERS[r.fa.id] ?? {}) && <span className="lu-game">· {gameLine(PLAYERS[r.fa.id] ?? {})}</span>}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
                 </span>
                 <span className="wv-proj"><span>Proj</span><b>{r.value.toFixed(1)}</b></span>
                 <span className="wv-stats">
