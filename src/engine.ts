@@ -108,6 +108,7 @@ export const marketValue = (p: Player): number => {
  * Consolidation adjustment: the best player in a package counts in full, each
  * extra piece counts for less, so three bench players can't add up to one star.
  */
+// 85% on the second piece reproduces RotoTrade's package adjustment exactly on a tested 2-for-1.
 const PIECE_WEIGHTS = [1, 0.85, 0.72, 0.61];
 export const packageValue = (ids: string[]) =>
   Math.round(ids.map((id) => marketValue(playerById(id))).sort((a, b) => b - a).reduce((s, v, i) => s + v * (PIECE_WEIGHTS[i] ?? 0.5), 0));
@@ -351,21 +352,23 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   const worstDrop = Math.min(...(Object.keys(before) as Group[]).map((g) => after[g] - before[g]));
   if (worstDrop < -4) theirs(`it opens a big hole in ${them.manager}'s lineup`);
 
-  // Likelihood from what's left
-  let p = 0.45;
-  p += Math.min(0.2, (t.themDelta - 1) * 0.05);
-  p += theirGap >= 0.03 ? 0.12 : theirGap >= -0.03 ? 0.06 : 0;
+  // Likelihood. The value term matches RotoTrade's observed acceptance curve: 45% at even value,
+  // plus one point for every point of value (on a 0-100 scale) the other side gains. On top of
+  // that, things RotoTrade can't see: league need, stated wants, lineup gain and trade history.
+  const theirGainPts = (t.marketGive - t.marketGet) / 100;
+  let p = 0.45 + Math.max(-40, Math.min(45, theirGainPts)) / 100;
+  p += Math.min(0.1, Math.max(0, (t.themDelta - 1) * 0.03));
   const need = needsFor(them).need;
-  if (t.give.some((id) => playerById(id).pos === need)) { p += 0.12; reasons.push(`fills their ${need} need`); }
-  if (t.fillsWant) { p += 0.12; reasons.push("they said they want this position"); }
-  if (t.give.length === 1 && t.get.length === 1) { p += 0.05; reasons.push("clean 1-for-1"); }
+  if (t.give.some((id) => playerById(id).pos === need)) { p += 0.08; reasons.push(`fills their ${need} need`); }
+  if (t.fillsWant) { p += 0.08; reasons.push("they said they want this position"); }
+  if (t.give.length === 1 && t.get.length === 1) { p += 0.03; reasons.push("clean 1-for-1"); }
   if (theirGap >= -0.03) reasons.push(theirGap >= 0.03 ? "they win on value" : "even on value");
   if (t.themDelta >= 2) reasons.push(`their lineup +${t.themDelta.toFixed(1)}/wk`);
   const td = tendencies(them.id);
-  if (td.closeRate !== null) p += (td.closeRate - 0.35) * 0.3;
+  if (td.closeRate !== null) p += (td.closeRate - 0.35) * 0.2;
   if (theirBlockers.length) p = Math.min(p, 0.2);
   p = Math.max(0.02, Math.min(0.95, p));
-  return { p, label: p >= 0.72 ? "Likely yes" : p >= 0.55 ? "Worth a shot" : "Long shot", reasons, blockers, theirBlockers };
+  return { p, label: p >= 0.65 ? "Likely yes" : p >= 0.5 ? "Worth a shot" : "Long shot", reasons, blockers, theirBlockers };
 }
 
 export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Trade[] {
@@ -377,7 +380,7 @@ export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Re
       if (t.warnings.length) continue;
       if (t.youDelta < 1 || t.themDelta < 1) continue;
       const a = acceptance(t, you, them);
-      if (a.blockers.length || a.p < 0.55) continue;
+      if (a.blockers.length || a.p < 0.5) continue;
       t.accept = a;
       results.push(t);
     }
