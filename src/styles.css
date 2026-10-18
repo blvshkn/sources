@@ -1684,3 +1684,13 @@ p, .page-sub { max-width: 65ch; }
 .ti-side .ti-player + .ti-player { margin-top: 8px; }
 .ti-odds { white-space: nowrap; flex: none; }
 .vb-name { display: flex; align-items: center; gap: 6px; min-width: 0; } .vb-name { overflow: hidden; } .vb-who .vb-name { white-space: nowrap; text-overflow: ellipsis; display: block; }
+
+/* Build a deal: scouting note under the picker, no empty deal box on phones */
+.tp-note { margin: -4px 0 0; max-width: 520px; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+.deal-hint { display: none; margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); }
+@media (max-width: 860px) {
+  .deal.empty { display: none !important; }
+  .deal-hint { display: block; }
+}
+.empty-deal { margin: 0; text-align: left !important; padding: 0 !important; font-size: 0.875rem; color: var(--muted); }
+.offer-toggle { font-size: 0.875rem; font-weight: 500; }

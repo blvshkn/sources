@@ -198,7 +198,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
       <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
 
-      <p className="small tend-line"><Icon name="eye" size={14} /><span><b>{them.manager}:</b> {td.summary}</span></p>
+      <p className="tp-note">{td.summary}</p>
 
       {suggestions.length > 0 && (
         <section className="card nudge">
@@ -207,18 +207,22 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </section>
       )}
 
+      {give.length === 0 && get.length === 0 && <p className="deal-hint">Tap players on either roster below to start a deal. The read on it shows up here.</p>}
+
       <div className="builder">
-        <section className="card deal" aria-live="polite">
+        <section className={`card deal${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-live="polite">
           <div className="row" style={{ justifyContent: "space-between" }}>
             <h2 className="section-title">{received ? `Offer from ${them.manager}` : "The deal"}</h2>
             {(give.length > 0 || get.length > 0) && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>}
           </div>
-          <label className="offer-toggle">
-            <button role="switch" aria-checked={received} className={`switch${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label="This is an offer I received"><span /></button>
-            Judging an offer someone sent me
-          </label>
+          {(give.length > 0 || get.length > 0) && (
+            <label className="offer-toggle">
+              <button role="switch" aria-checked={received} className={`switch${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`${them.manager} sent me this offer`}><span /></button>
+              {them.manager} sent me this offer
+            </label>
+          )}
           {!trade ? (
-            <p className="empty-deal">No players picked yet. Pick at least one from each roster to see who wins.</p>
+            <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Tap players on either roster to start a deal." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
           ) : (
             <>
               <div className="deal-lists">
