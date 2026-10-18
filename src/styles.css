@@ -3467,3 +3467,4 @@ html:root:not(#_) .top-logo.lockup { display: grid; align-content: center; gap: 
 html:root:not(#_) .lockup-tag { margin-left: calc(var(--lh) * 1.4203); font: 500 0.6875rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.02em; color: var(--muted); white-space: nowrap; }
 html:root:not(#_) .top-logo .lockup-tag { font-size: 0.625rem; }
 html:root:not(#_) .brand .lockup .logo { margin-bottom: 0; }
+@media (max-width: 860px) { html:root:not(#_) .top-logo .lockup-tag { margin-left: 0; } }
