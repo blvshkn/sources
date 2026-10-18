@@ -11,6 +11,11 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
   dimIds: Record<string, string>; lockIds: Record<string, string>; wantIds: Record<string, string>; label: string; tone: "give" | "get";
 }) {
+  // Live leagues: show the lineup exactly as it's set in Sleeper right now. Demo falls back to the best lineup.
+  const current = team.starters?.length ? (() => {
+    const starters = team.starters!.filter((id) => team.roster.includes(id));
+    return { starters, bench: team.roster.filter((id) => !starters.includes(id)) };
+  })() : null;
   const row = (id: string, slot: string) => {
     const p = playerById(id);
     const on = picked.includes(id);
@@ -38,12 +43,14 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
       <div className="roster-head">
         <div className="rp-t"><span>{label}</span><b>{team.name}</b></div>
-        <span className="rp-total"><b>{lineup.total.toFixed(1)}</b><small>starters pts/wk</small></span>
+        <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><small>starters pts/wk</small></span>
       </div>
-      <div className="slot-label">Starters</div>
-      {lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}
+      <div className="slot-label">Starters{current ? <small> as set in Sleeper</small> : null}</div>
+      {current
+        ? current.starters.map((id) => row(id, "ST"))
+        : lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}
       <div className="slot-label">Bench</div>
-      {lineup.bench.map((p) => row(p.id, "BN"))}
+      {current ? current.bench.map((id) => row(id, "BN")) : lineup.bench.map((p) => row(p.id, "BN"))}
     </section>
   );
 }

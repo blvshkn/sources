@@ -2205,3 +2205,4 @@ body::after {
 .tx-swap svg { transform: rotate(90deg); }
 :root:not(#_) .tx { gap: 0; }
 :root:not(#_) .tx-swap { position: relative; left: auto; top: auto; margin: -10px auto; justify-self: center; }
+.slot-label small { margin-left: 6px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--faint); }

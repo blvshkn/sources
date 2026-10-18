@@ -51,6 +51,8 @@ export interface Team {
   you?: boolean;
   /** Active roster only: starters and bench. IR and taxi players live below. */
   roster: string[];
+  /** Current starters as set in Sleeper (skill players only, in slot order). Live leagues only. */
+  starters?: string[];
   /** Sleeper avatar id for the manager, when they have one. */
   avatar?: string;
   /** Players in IR slots. They don't count against the roster limit. */

@@ -324,6 +324,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       avatar: u?.avatar ?? undefined,
       // Sleeper's players list includes IR and taxi. Split them out so they never count as active.
       roster: (r.players ?? []).filter((id) => players[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
+      starters: (r.starters ?? []).filter((id) => !!id && id !== "0" && !!players[id]),
       ir: (r.reserve ?? []).filter((id) => players[id]),
       taxi: (r.taxi ?? []).filter((id) => players[id]),
       special: (r.players ?? []).filter((id) => specials[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
