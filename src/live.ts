@@ -15,21 +15,35 @@ export interface Live {
 // ESPN abbreviations that differ from Sleeper's
 const ESPN_FIX: Record<string, string> = { WSH: "WAS", LA: "LAR", JAC: "JAX" };
 type EComp = { status?: { period?: number; clock?: number; type?: { state?: string } }; competitors?: { team?: { abbreviation?: string } }[] };
-/** Fraction of each in-progress game left, from ESPN's scoreboard. Empty when it can't be reached. */
-async function clocks(): Promise<Record<string, number>> {
+/** When this session first saw each game go live. Last resort for the clock when every source is down. */
+const firstLive: Record<string, number> = {};
+const GAME_MS = 190 * 60 * 1000; // a typical NFL game, kickoff to final
+
+/** Fraction of each in-progress game left. Our server route tries Sleeper's scores feed, then ESPN, then ESPN's CDN;
+ *  if that fails the browser asks ESPN directly; if that fails too, estimate from when the game went live. */
+async function clocks(games?: Record<string, GameState>): Promise<Record<string, number>> {
+  try {
+    const r = await fetch(`/api/game-clock?season=${LEAGUE.season}&week=${WEEK}`);
+    if (r.ok) { const d = await r.json() as { teams?: Record<string, number> }; if (d.teams && Object.keys(d.teams).length) return d.teams; }
+  } catch { /* fall through */ }
   try {
     const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
-    if (!r.ok) return {};
-    const d = await r.json() as { events?: { competitions?: EComp[] }[] };
-    const out: Record<string, number> = {};
-    for (const e of d.events ?? []) for (const c of e.competitions ?? []) {
-      if (c.status?.type?.state !== "in") continue;
-      const q = c.status.period ?? 1, sec = c.status.clock ?? 0;
-      const left = q > 4 ? 0 : Math.max(0, Math.min(1, ((4 - q) * 900 + sec) / 3600));
-      for (const t of c.competitors ?? []) { const a = t.team?.abbreviation; if (a) out[ESPN_FIX[a] ?? a] = left; }
+    if (r.ok) {
+      const d = await r.json() as { events?: { competitions?: EComp[] }[] };
+      const out: Record<string, number> = {};
+      for (const e of d.events ?? []) for (const c of e.competitions ?? []) {
+        if (c.status?.type?.state !== "in") continue;
+        const q = c.status.period ?? 1, sec = c.status.clock ?? 0;
+        const left = q > 4 ? 0 : Math.max(0, Math.min(1, ((4 - q) * 900 + sec) / 3600));
+        for (const t of c.competitors ?? []) { const a = t.team?.abbreviation; if (a) out[ESPN_FIX[a] ?? a] = left; }
+      }
+      if (Object.keys(out).length) return out;
     }
-    return out;
-  } catch { return {}; }
+  } catch { /* fall through */ }
+  // Estimate: only for games this session watched kick off, so the guess has a real start time
+  const out: Record<string, number> = {}, now = Date.now();
+  for (const [t, st] of Object.entries(games ?? {})) if (st === "in_game" && firstLive[t]) out[t] = Math.max(0.05, 1 - (now - firstLive[t]) / GAME_MS);
+  return out;
 }
 
 /** Where a live player is on pace to finish: points so far plus his projection for the part of the game left. */
@@ -77,7 +91,7 @@ async function poll(): Promise<Live | null> {
     const [ms, sched, left] = await Promise.all([
       fetch(`https://api.sleeper.app/v1/league/${LEAGUE.id}/matchups/${WEEK}`).then((r) => (r.ok ? r.json() : null)) as Promise<SMatchup[] | null>,
       fetch(`https://api.sleeper.com/schedule/nfl/regular/${LEAGUE.season}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<SGame[] | null>,
-      clocks(),
+      Promise.resolve({} as Record<string, number>),
     ]);
     if (!ms) return null;
     const points: Record<string, number> = {}; const teamPts: Record<string, number> = {};
@@ -87,7 +101,10 @@ async function poll(): Promise<Live | null> {
       const st: GameState = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
       games[g.home] = st; games[g.away] = st;
     });
-    return { points, games, teamPts, left, at: Date.now() };
+    const prevGames = current?.games ?? {};
+    for (const [t, st] of Object.entries(games)) if (st === "in_game" && prevGames[t] !== "in_game" && !firstLive[t]) firstLive[t] = Date.now();
+    const clock = Object.keys(left).length ? left : await clocks(games);
+    return { points, games, teamPts, left: clock, at: Date.now() };
   } catch { return null; }
 }
 
@@ -116,7 +133,7 @@ export function useLive(): Live {
     if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
       current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
       // Pick up the game clock right away so on-pace numbers show without waiting for the first poll
-      if (LEAGUE.mode === "live" && anyLive(current.games)) clocks().then((left) => { if (current && Object.keys(left).length) { current = { ...current, left }; subs.forEach((f) => f(current!)); } });
+      if (LEAGUE.mode === "live" && anyLive(current.games)) clocks(current.games).then((left) => { if (current && Object.keys(left).length) { current = { ...current, left }; subs.forEach((f) => f(current!)); } });
     }
     return current;
   });
