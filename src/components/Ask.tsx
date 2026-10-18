@@ -23,7 +23,7 @@ export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answe
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title">Ask Sources</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="ask" size={20} /></span>Ask Sources</h1>
           <p className="page-meta">Ask your league</p>
         </div>
       </header>

@@ -113,7 +113,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title">League</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="league" size={20} /></span>League</h1>
           <p className="page-meta">{needs.length} teams · Week {WEEK}</p>
         </div>
         <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs", icon: "target" }, { v: "standings", label: "Standings", icon: "trophy" }, { v: "values", label: "Values", icon: "values" }, { v: "activity", label: "Activity", icon: "activity" }, { v: "tendencies", label: "Tendencies", icon: "tendencies" }]} />

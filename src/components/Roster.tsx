@@ -239,7 +239,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     <>
       <header className="lu-hero">
         <div className="lu-hero-l">
-          <h1 className="page-title">Lineup</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="helmet" size={20} /></span>Lineup</h1>
           <p className="page-meta">Week {WEEK} · {UPDATED}</p>
         </div>
         <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>

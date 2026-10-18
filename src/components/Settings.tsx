@@ -42,7 +42,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title">Settings</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="gear" size={20} /></span>Settings</h1>
         </div>
       </header>
 

@@ -11,7 +11,7 @@ export function HowItWorks({ onBack }: { onBack: () => void }) {
   return (
     <>
       <Back onBack={onBack} />
-      <header className="page-head"><div><h1 className="page-title">How Sources works</h1><p className="page-meta">What goes into the numbers, in plain terms</p></div></header>
+      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="spark" size={20} /></span>How Sources works</h1><p className="page-meta">What goes into the numbers, in plain terms</p></div></header>
       <article className="card doc">
         <section>
           <h2>Where the data comes from</h2>
@@ -68,7 +68,7 @@ export function Legal({ onBack }: { onBack: () => void }) {
   return (
     <>
       <Back onBack={onBack} />
-      <header className="page-head"><div><h1 className="page-title">Terms and legal</h1><p className="page-meta">Last updated {UPDATED}</p></div></header>
+      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="lock" size={20} /></span>Terms and legal</h1><p className="page-meta">Last updated {UPDATED}</p></div></header>
       <article className="card doc">
         <section>
           <h2>Terms of use</h2>

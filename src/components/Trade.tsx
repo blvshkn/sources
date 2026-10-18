@@ -200,7 +200,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title">Build a deal</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="trade" size={20} /></span>Build a deal</h1>
           <p className="page-meta">{UPDATED}</p>
         </div>
       </header>

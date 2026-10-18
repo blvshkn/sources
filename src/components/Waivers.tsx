@@ -24,7 +24,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
     <>
       <header className="page-head">
         <div>
-          <h1 className="page-title">Waivers</h1>
+          <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="waivers" size={20} /></span>Waivers</h1>
           <p className="page-meta">{DEADLINES.waivers}</p>
         </div>
         {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
