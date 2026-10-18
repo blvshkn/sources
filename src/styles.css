@@ -3158,3 +3158,8 @@ html:root:not(#_) .verdict, html:root:not(#_) .note-good, html:root:not(#_) .loc
   @keyframes boot2-breathe { 50% { transform: scale(1.25); opacity: 0.5; } }
   @keyframes boot2-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 }
+
+/* Sheet close button sits in the top-right corner, level with the grab handle */
+html:root:not(#_) .ps-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; z-index: 2; }
+html:root:not(#_) .ps-head { grid-template-columns: auto minmax(0, 1fr); padding-right: 36px; }
+html:root:not(#_) .fb-head { padding-right: 40px; }
