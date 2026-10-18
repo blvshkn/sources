@@ -371,12 +371,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
 
       <aside className="rail" aria-label="Live wire">{rail}</aside>
 
-      <nav className="tabbar dock" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
+      <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
         data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
-        <span className="dock-puck" aria-hidden="true" />
-        {TABS.filter((t) => t.main).map((t) => (
+        <span className="ix-rule" aria-hidden="true" />
+        {TABS.filter((t) => t.main).map((t, i) => (
           <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
-            <Icon name={t.icon} size={22} active={tab === t.id} /><span>{t.short}</span>
+            <span className="ix-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+            <span className="ix-w">{t.short}</span>
           </button>
         ))}
       </nav>

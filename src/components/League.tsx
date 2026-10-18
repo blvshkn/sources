@@ -4,6 +4,7 @@ import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrengt
 import { AiLabel, Delta, Icon, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
 import { Avatar } from "./Avatar";
+import { TeamAvatar } from "./TeamPicker";
 import { Values } from "./Values";
 import { LEAGUE, Activity, ActivityPlayer } from "../data";
 
@@ -151,11 +152,11 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
       </section>}
 
       {view === "needs" && (
-        <div className="legend">
-          <span className="row"><span className="tag-dot tag-wants" /> Wants</span>
-          <span className="row"><span className="tag-dot tag-refuses" /> Won't move</span>
-          <span className="row"><span className="tag-dot tag-notInterested" /> Not interested</span>
-          <span className="row muted">Tags fade after {fade} weeks</span>
+        <div className="legend lg2" aria-label="Tag key">
+          <span><i className="tag-dot tag-wants" />Wants</span>
+          <span><i className="tag-dot tag-refuses" />Won't move</span>
+          <span><i className="tag-dot tag-notInterested" />Not interested</span>
+          <small>Tags fade after {fade} weeks</small>
         </div>
       )}
       {view === "tendencies" && <p className="small muted">Built from completed trades and offers in this league over the last year. <Phase v="v1" /></p>}
@@ -167,23 +168,26 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
           const td = tendencies(t.id);
           return (
             <article key={t.id} id={`team-${t.id}`} className={`card team-card${t.you ? " is-you" : ""}${focusId === t.id ? " is-focus" : ""}`}>
-              <div className="row" style={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                <div className="grow" style={{ minWidth: 0 }}>
-                  <div className="team-name">{t.name}</div>
-                  <div className="team-sub">{t.manager} · {t.record} · {t.pf.toFixed(0)} PF · #{n.rank} power</div>
-                </div>
-                <span className={`chip ${n.mode === "Contender" ? "chip-good" : n.mode === "Seller" ? "chip-bad" : ""}`}>{n.mode}</span>
-              </div>
+              <header className="tc-head">
+                <TeamAvatar t={t} size={40} />
+                <span className="tc-who"><b className="team-name">{t.name}</b><small>{t.you ? "You" : t.manager} · {t.record}</small></span>
+                <span className={`tc-mode ${n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : ""}`}>{n.mode}</span>
+              </header>
+              <dl className="ti-stats tc-stats">
+                <div className="ti-stat"><dt>Power</dt><dd>#{n.rank}</dd></div>
+                <div className="ti-stat"><dt>Points for</dt><dd>{t.pf.toFixed(0)}</dd></div>
+                <div className="ti-stat"><dt>Projected</dt><dd>{n.lineup.total.toFixed(1)}<small>/wk</small></dd></div>
+              </dl>
 
               {view === "needs" ? (
                 <>
                   <div className="bars">
+                    <div className="bar-row tc-scale" aria-hidden="true"><span /><span className="tc-scale-lbl"><span>Weaker</span><span>League avg</span><span>Stronger</span></span><span /></div>
                     {groupsFor().map((g) => <Bar key={g} label={g} diff={n.groups[g].diff} pct={n.groups[g].pct} />)}
                   </div>
-                  <div className="row wrap tiny muted">
-                    <span className="row">Needs <PosBadge pos={n.need} /></span>
-                    {n.surplus && <span className="row">Spare <PosBadge pos={n.surplus as Pos} /></span>}
-                    <span className="num">{n.lineup.total.toFixed(1)} pts/wk</span>
+                  <div className="tc-fit">
+                    <span><small>Needs</small><PosBadge pos={n.need} /></span>
+                    {n.surplus && n.surplus !== n.need && <span><small>Has extra</small><PosBadge pos={n.surplus as Pos} /></span>}
                   </div>
                   {teamTags.length > 0 && (
                     <div className="tag-list">
@@ -213,7 +217,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
                   {!t.you && <AiLabel />}
                 </div>
               )}
-              {!t.you && <button className="team-trade" onClick={() => onTrade(t.id)}>Build a trade with {t.manager}<Icon name="chev" size={14} /></button>}
+              {!t.you && <button className="btn btn-sm tc-trade" onClick={() => onTrade(t.id)}>Build a trade with {t.manager}<Icon name="chev" size={16} /></button>}
               {t.you && <span className="tiny muted">This is you. {YOU.roster.length} rostered players.</span>}
             </article>
           );

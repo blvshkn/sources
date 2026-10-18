@@ -2039,3 +2039,89 @@ body::after {
 .sb2-go { display: inline-flex; align-items: center; gap: 2px; font-size: 0.8125rem; font-weight: 600; color: rgb(var(--you-rgb)); white-space: nowrap; }
 .sb2-none { margin: 0; font-size: 0.875rem; color: var(--muted); }
 .sb2-partner .tp-av { border-radius: 50%; object-fit: cover; } .sb2-partner .tp-av-ini { display: grid; place-items: center; background: var(--surface-3); color: var(--ink); font-weight: 600; }
+
+/* ---------- League team cards ---------- */
+:root:not(#_) .lg2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0; padding: 0 2px; font-size: 0.8125rem; color: var(--ink); overflow: visible; }
+.lg2 > span { display: inline-flex; align-items: center; gap: 6px; }
+.lg2 .tag-dot { margin: 0; }
+.lg2 small { flex-basis: 100%; font-size: 0.75rem; color: var(--muted); }
+:root:not(#_) .team-card { display: grid; gap: 14px; padding: 18px; }
+.tc-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.tc-head .tp-av { border-radius: 50%; object-fit: cover; }
+.tc-head .tp-av-ini { display: grid; place-items: center; background: var(--surface-3); color: var(--ink); font-weight: 600; }
+.tc-who { display: grid; gap: 2px; min-width: 0; }
+:root:not(#_) .tc-who .team-name { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.tc-who small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-mode { font-size: 0.75rem; font-weight: 600; padding: 4px 9px; border-radius: 6px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.tc-mode.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.tc-mode.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+:root:not(#_) .tc-stats { grid-template-columns: repeat(3, 1fr); }
+:root:not(#_) .team-card .bars { display: grid; gap: 8px; margin: 0; }
+:root:not(#_) .team-card .bar-label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); font-family: var(--font-body) !important; letter-spacing: 0 !important; }
+:root:not(#_) .team-card .bar-val { font: 600 0.875rem/1 var(--font-body) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; text-align: right; }
+:root:not(#_) .tc-scale { margin-bottom: -2px; }
+.tc-scale-lbl { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--faint); }
+.tc-fit { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.tc-fit > span { display: inline-flex; align-items: center; gap: 8px; }
+.tc-fit small { font-size: 0.8125rem; color: var(--muted); }
+:root:not(#_) .tc-trade { width: 100%; height: 44px !important; justify-content: space-between; padding: 0 14px; font-size: 0.875rem !important; border-radius: 10px !important; }
+:root:not(#_) .tc-trade svg { color: var(--muted); }
+:root:not(#_) .team-card .bar-track { position: relative; overflow: visible; }
+:root:not(#_) .team-card .bar-mid { display: block; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: 0.45; z-index: 1; }
+:root:not(#_) .team-card .tag-list { display: grid; gap: 6px; margin: 0; }
+:root:not(#_) .team-card .tag-line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 0.8125rem; color: var(--muted); }
+:root:not(#_) .team-card .tag-line b { color: var(--ink); font-weight: 600; }
+:root:not(#_) .team-card .tag-line .btn { height: 30px !important; min-height: 30px !important; padding: 0 10px; font-size: 0.75rem !important; border: 0 !important; background: transparent !important; color: var(--muted) !important; }
+
+/* ---------- Thumb index nav: an almanac's section tabs, set in type ---------- */
+@media (max-width: 860px) {
+  :root:not(#_) .tabbar.ix {
+    left: 0 !important; right: 0 !important; bottom: 0 !important;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)) !important;
+    border-radius: 0 !important; border: 0 !important; border-top: 1px solid var(--line) !important; box-shadow: none !important;
+    background: color-mix(in srgb, var(--bg) 92%, transparent) !important;
+    backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
+  }
+  :root:not(#_) .tabbar.ix::before { display: none !important; }
+  :root:not(#_) .ix-rule {
+    position: absolute; top: -1px; left: max(8px, env(safe-area-inset-left, 0px));
+    width: calc((100% - 2 * max(8px, env(safe-area-inset-left, 0px))) / 5); height: 2px;
+    display: flex; justify-content: center; pointer-events: none;
+    transform: translateX(calc(var(--i, 0) * 100%));
+    transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1); opacity: 0;
+  }
+  :root:not(#_) .ix-rule::after { content: ""; width: 28px; height: 2px; border-radius: 0 0 2px 2px; background: rgb(var(--tab-rgb)); transition: background-color 240ms ease; }
+  :root:not(#_) .tabbar.ix[data-on] .ix-rule { opacity: 1; }
+  :root:not(#_) .tabbar.ix[data-i="1"] { --i: 1; } :root:not(#_) .tabbar.ix[data-i="2"] { --i: 2; }
+  :root:not(#_) .tabbar.ix[data-i="3"] { --i: 3; } :root:not(#_) .tabbar.ix[data-i="4"] { --i: 4; }
+  :root:not(#_) .tabbar.ix button {
+    height: 58px; padding: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px !important;
+    background: transparent !important; border-radius: 0 !important; color: var(--faint) !important;
+    -webkit-tap-highlight-color: transparent; transition: color 200ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  :root:not(#_) .tabbar.ix button:active { transform: scale(0.95); }
+  :root:not(#_) .ix-n { font: 500 0.625rem/1 var(--font-mono, "Google Sans Code", monospace); letter-spacing: 0.08em; color: var(--faint); transition: color 200ms ease; }
+  :root:not(#_) .ix-w { position: relative; padding: 2px 4px; font: 500 0.9375rem/1.1 var(--font-body); letter-spacing: -0.015em; }
+  :root:not(#_) .ix-w::before {
+    content: ""; position: absolute; z-index: -1; left: -2px; right: -6px; top: 55%; bottom: -1px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(var(--tab-rgb), 0.38), rgba(var(--tab-rgb), 0.12));
+    transform: scaleX(0); transform-origin: left; transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1) 60ms;
+  }
+  :root:not(#_) .tabbar.ix button { isolation: isolate; }
+  :root:not(#_) .tabbar.ix button[aria-current="page"] { color: var(--ink) !important; }
+  :root:not(#_) .tabbar.ix button[aria-current="page"] .ix-w { font-weight: 600; }
+  :root:not(#_) .tabbar.ix button[aria-current="page"] .ix-w::before { transform: scaleX(1); }
+  :root:not(#_) .tabbar.ix button[aria-current="page"] .ix-n { color: rgb(var(--tab-rgb)); }
+  :root:not(#_) .tabbar.ix button:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: -4px; }
+  :root:not(#_) .main { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .main:has(.deal-tray) { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .deal-tray { bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; }
+  :root:not(#_) body:has(.deal-tray) .toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+@media (prefers-reduced-motion: reduce) { :root:not(#_) .ix-rule, :root:not(#_) .ix-w::before { transition: none !important; } }
+@media (max-width: 860px) {
+  :root:not(#_) .tabbar.ix { background: color-mix(in srgb, var(--bg) 97%, transparent) !important; }
+  :root:not(#_) .ix-w::before { top: 48%; bottom: 1px; background: linear-gradient(90deg, rgba(var(--tab-rgb), 0.5), rgba(var(--tab-rgb), 0.16)); }
+}
