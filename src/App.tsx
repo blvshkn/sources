@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { Matchup } from "./components/Matchup";
+import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
   counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
-  irReport, irLabel,
+  irReport, irLabel, parseTag,
 } from "./engine";
+import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
 import { Icon, IconName } from "./components/ui";
 import { Briefing, FollowUp, Nudge, Wire, needCopy } from "./components/Wire";
@@ -20,7 +22,7 @@ import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
 
-type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup";
+type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup" | "how" | "legal";
 const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean; hidden?: boolean }[] = [
   { id: "wire", label: "The Wire", short: "Wire", icon: "wire", main: true },
   { id: "league", label: "League Needs", short: "League", icon: "league", main: true },
@@ -30,6 +32,8 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "ask", label: "Ask Sources", short: "Ask", icon: "ask", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
   { id: "matchup", label: "Matchup", short: "Matchup", icon: "helmet", main: false, hidden: true },
+  { id: "how", label: "How Sources works", short: "How it works", icon: "spark", main: false, hidden: true },
+  { id: "legal", label: "Terms and legal", short: "Legal", icon: "lock", main: false, hidden: true },
 ];
 const TAB_IDS = TABS.map((t) => t.id);
 
@@ -75,6 +79,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const [dismissed, setDismissed] = usePersist<Record<string, number>>(`${scope}.dismissed`, {});
   const [dismissedIds, setDismissedIds] = usePersist<string[]>(`${scope}.dismissedIds`, []);
   const [followUps, setFollowUps] = usePersist<FollowUp[]>(`${scope}.followUps`, []);
+  // Ideas you said won't work, and managers who aren't trading right now
+  const [hiddenIdeas, setHiddenIdeas] = usePersist<string[]>(`${scope}.hiddenIdeas`, []);
+  const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
+  const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
   const [give, setGive] = useState<string[]>([]);
   const [get, setGet] = useState<string[]>([]);
@@ -105,9 +113,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
 
   const suggestionsByTeam = useMemo(() => {
     const out: Record<string, Trade[]> = {};
-    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = findTrades(YOU, t, active, myTags, prices)));
+    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : findTrades(YOU, t, active, myTags, prices).filter((x) => !hiddenIdeas.includes(x.key))));
     return out;
-  }, [active, myTags, prices, fkey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, myTags, prices, fkey, hiddenIdeas, pausedTeams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const partners = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
     .map((n) => {
@@ -276,6 +284,20 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
     setTags((cur) => cur.filter((t) => t.id !== id));
     setToast("Tag cleared. That player is back in trade ideas.", () => setTags(prev));
   };
+  /** "Won't work": hide the idea, then teach Sources the reason so similar ideas stop showing up. */
+  const ideaFeedback = (t: Trade, r: IdeaReason) => {
+    const them = teamById(t.partnerId);
+    const before = { tags, myTags, hiddenIdeas, pausedTeams };
+    setHiddenIdeas((c) => [...c.filter((k) => k !== t.key), t.key]);
+    let msg = "Hidden. Sources will skip ideas like this.";
+    if (r.kind === "refuses") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "refuses", playerId: r.playerId, text: `Won't move ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${playerById(r.playerId).name} is off the table in ideas with ${them.manager}.`; }
+    if (r.kind === "notInterested") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "notInterested", playerId: r.playerId, text: `Not interested in ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${them.manager} won't see ${playerById(r.playerId).name} in ideas.`; }
+    if (r.kind === "keeping") { setMyTags((c) => ({ ...c, [r.playerId]: "untouchable" })); msg = `${playerById(r.playerId).name} marked untouchable. He's out of every trade idea.`; }
+    if (r.kind === "paused") { setPausedTeams((c) => [...c.filter((x) => x !== them.id), them.id]); msg = `No more ideas with ${them.manager} for now. Turn it back on in Settings.`; }
+    if (r.kind === "note") { const parsed = parseTag(`${them.manager} ${r.text}`); if (parsed.tag) { setTags((c) => [...c, { ...parsed.tag!, id: `u${Date.now()}` }]); msg = `Saved: ${parsed.tag.text}. Ideas now follow it.`; } }
+    haptic();
+    setToast(msg, () => { setTags(before.tags); setMyTags(before.myTags); setHiddenIdeas(before.hiddenIdeas); setPausedTeams(before.pausedTeams); });
+  };
   const dismiss = (n: Nudge) => {
     const prevIds = dismissedIds;
     const prevKinds = dismissed;
@@ -343,6 +365,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
 
       <a className="skip-link" href="#main">Skip to content</a>
       <main className="main" id="main" tabIndex={-1}>
+        <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
         <div className="main-inner" key={tab}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
@@ -352,6 +375,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
               onKeepTag={keepTag} onClearTag={clearTag} />
           )}
           {tab === "matchup" && <Matchup onBack={() => go("wire")} />}
+          {tab === "how" && <HowItWorks onBack={() => go("settings")} />}
+          {tab === "legal" && <Legal onBack={() => go("settings")} />}
           {tab === "league" && (
             <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />
@@ -374,10 +399,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
               dismissed={dismissed} resetDismissed={() => { setDismissed({}); setDismissedIds([]); setToast("Nudges reset. You'll see everything again."); }}
               onDisconnect={onReconnect}
               onDelete={onDeleteAll}
+              onGo={(t) => go(t as Tab)}
+              paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
+              hiddenCount={hiddenIdeas.length} onUnhide={() => { setHiddenIdeas([]); setToast("Hidden trade ideas are back."); }}
               onReplay={onReconnect} />
           )}
           {["wire", "league", "roster", "waivers"].includes(tab) && <section className="card card-pad rail-inline">{rail}</section>}
         </div>
+        </IdeaFeedbackCtx.Provider>
       </main>
 
       <aside className="rail" aria-label="Live wire">{rail}</aside>
@@ -393,6 +422,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
         ))}
       </nav>
 
+      {feedbackFor && <IdeaFeedback trade={feedbackFor} onPick={(r) => ideaFeedback(feedbackFor, r)} onClose={() => setFeedbackFor(null)} />}
       {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onSent={(m, via) => {
         setToast(m);
         if (via) haptic();

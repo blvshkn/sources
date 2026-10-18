@@ -22,7 +22,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
@@ -32,6 +32,9 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   fade: FadeWeeks; setFade: (f: FadeWeeks) => void;
   dismissed: Record<string, number>; resetDismissed: () => void;
   onDisconnect: () => void; onDelete: () => void; onReplay: () => void;
+  onGo: (tab: string) => void;
+  paused: { id: string; manager: string }[]; onResume: (id: string) => void;
+  hiddenCount: number; onUnhide: () => void;
 }) {
   const [confirm, setConfirm] = useState<"none" | "disconnect" | "delete">("none");
   const muted = Object.entries(dismissed).filter(([, n]) => n >= 2).map(([k]) => k);
@@ -96,6 +99,16 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <span className="grow"><b>What Sources learned</b><span className="small muted" style={{ display: "block" }}>{muted.length ? `Showing fewer: ${muted.join(", ")} nudges.` : "Tap \"Not useful\" on a nudge and Sources shows fewer like it."}</span></span>
           {muted.length > 0 && <button className="btn btn-sm" onClick={resetDismissed}>Reset</button>}
         </div>
+        <div className="set-row">
+          <span className="grow"><b>Trade ideas you passed on</b><span className="small muted" style={{ display: "block" }}>{hiddenCount ? `${hiddenCount} hidden after you said they won't work.` : "Tap \"Won't work\" on a trade idea to tell Sources why."}</span></span>
+          {hiddenCount > 0 && <button className="btn btn-sm" onClick={onUnhide}>Show again</button>}
+        </div>
+        {paused.map((p) => (
+          <div key={p.id} className="set-row">
+            <span className="grow"><b>Paused: {p.manager}</b><span className="small muted" style={{ display: "block" }}>No trade ideas with {p.manager} until you turn them back on.</span></span>
+            <button className="btn btn-sm" onClick={() => onResume(p.id)}>Resume</button>
+          </div>
+        ))}
         <p className="tiny muted">Nudges line up with real deadlines: waivers, lineup lock, and the trade deadline.</p>
       </section>
 
@@ -127,6 +140,11 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         </div>
       </section>
 
+      <section className="card settings-group">
+        <h2 className="section-title">About Sources</h2>
+        <button className="set-link" onClick={() => onGo("how")}><span className="grow"><b>How Sources works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
+        <button className="set-link" onClick={() => onGo("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
+      </section>
     </>
   );
 }

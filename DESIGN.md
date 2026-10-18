@@ -73,3 +73,6 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Sheets: pull down from anywhere once scrolled to the top, or tap outside, to dismiss. No confirmation step unless an action can't be undone.
 - Buttons: primary is solid lime pill; secondary and icon buttons are soft filled pills/circles with no border.
 - One container level. Inside a card, group with space and a hairline, never another bordered box. Pickers and send/get panels may use a soft fill with no border.
+- One type family (Google Sans) for text and numbers; numbers use tabular figures. Micro labels are sentence case with no wide tracking.
+- Toasts: dark floating pill with a lime Undo. Back links: small soft pill.
+- Trade ideas end with "Won't work? Tell Sources why", which opens a sheet of reasons that become tags, untouchables, paused managers or a hidden idea.

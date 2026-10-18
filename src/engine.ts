@@ -522,7 +522,7 @@ export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "b
   if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Smash accept. Your lineup gains ${fmt(t.youDelta)} pts a week and the value is ${t.marketGap >= 0 ? "in your favor" : "about even"}.` };
   if (t.youDelta >= 0.5) return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} pts a week, but you give up ${pct(t.marketGap).slice(1)} more trade value.` };
   if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `About even (${fmt(t.youDelta)} pts a week). Ask for a small sweetener.` };
-  return { label: "Lowball", tone: "bad", line: `Lowball. Your lineup drops ${fmt(t.youDelta).replace("−", "")} pts a week.` };
+  return { label: "Lowball", tone: "bad", line: `Your lineup drops ${fmt(t.youDelta).replace("−", "")} pts a week.` };
 }
 
 // ---- Lineup day -----------------------------------------------------------

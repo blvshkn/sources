@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp } from "./ui";
@@ -51,6 +52,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
   // "Their lineup +x/wk" repeats the number shown above, so it's left out
   const reasons = (t.accept?.reasons ?? []).filter((r) => !/lineup/i.test(r)).map((r) => r.charAt(0).toUpperCase() + r.slice(1));
   const tone = t.accept?.label === "Likely yes" ? "good" : "warn";
+  const feedback = useContext(IdeaFeedbackCtx);
   return (
     <article className={`ti${t.accept?.label === "Likely yes" ? " likely" : ""}`}>
       <div className="tx">
@@ -74,6 +76,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
         <button className="btn btn-sm ti-btn" onClick={() => onOpen(t)}>Open in builder</button>
         <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(t)}><Icon name="pen" size={15} />Write pitch</button>
       </div>
+      {feedback && <button className="ti-nope" onClick={() => feedback(t)}>Won't work? Tell Sources why</button>}
     </article>
   );
 }

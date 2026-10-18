@@ -2685,3 +2685,150 @@ html:root:not(#_) .sx-pick.lead { background: rgba(var(--lime-rgb), 0.08) !impor
 /* League summary pick and partner cards: rows, not tiles */
 html:root:not(#_) .card .partner-card { background: none !important; border: 0 !important; border-radius: 0 !important; padding: 12px 0 !important; }
 html:root:not(#_) .card .partner-card + .partner-card { border-top: 1px solid var(--line) !important; }
+
+/* Stat columns: even gutters on both sides of every divider; the odds meter sits inside its column */
+html:root:not(#_) .card .ti-stat, html:root:not(#_) .ps-stats .ti-stat, html:root:not(#_) .ti .ti-stat { padding: 0 14px 2px !important; gap: 4px; }
+html:root:not(#_) .card .ti-stat:first-child, html:root:not(#_) .ps-stats .ti-stat:first-child, html:root:not(#_) .ti .ti-stat:first-child { padding-left: 0 !important; }
+html:root:not(#_) .card .ti-stat:last-child, html:root:not(#_) .ps-stats .ti-stat:last-child, html:root:not(#_) .ti .ti-stat:last-child { padding-right: 0 !important; }
+html:root:not(#_) .ti-meter { position: static !important; height: 4px; margin-top: 6px; border-radius: 4px; background: rgba(244, 246, 242, 0.08) !important; overflow: hidden; }
+html:root:not(#_) .ti-meter i { border-radius: 4px; }
+/* Small fixes from the lint pass */
+html:root:not(#_) .linkish { padding: 8px 0; margin: -8px 0; display: inline-block; }
+html:root:not(#_) .wt-price-top .seg button { min-height: 34px; padding: 0 14px; }
+html:root:not(#_) .wv-proj { padding: 6px 10px; }
+html:root:not(#_) .slot-col .slot-name { margin-top: 4px; }
+html:root:not(#_) .lu-mx-who { overflow: hidden; }
+
+/* Wire fine-comb fixes */
+html:root:not(#_) .verdict { gap: 6px; margin-top: 4px; }
+html:root:not(#_) .verdict b { font: 600 1rem/1.2 var(--font-body); }
+/* News impact: rows under hairlines, not a box inside the card */
+html:root:not(#_) .card .impact { border: 0; border-radius: 0; border-top: 1px solid var(--line); }
+html:root:not(#_) .card .impact-row { padding: 12px 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+/* VS marker: text on the line, no chip */
+html:root:not(#_) .sb2-div span { border: 0 !important; width: auto; padding: 0 2px; }
+
+/* Lineup fine-comb fixes */
+/* Numbers: one family everywhere (tabular body font), no mono mix */
+html:root:not(#_) .lu-pts, html:root:not(#_) .wv-proj b, html:root:not(#_) .vb-val b, html:root:not(#_) .act-bid b, html:root:not(#_) .lu-week-sum b, html:root:not(#_) .num, html:root:not(#_) .delta {
+  font-family: var(--font-body) !important; font-weight: 600 !important; letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+}
+html:root:not(#_) .lu-slot, html:root:not(#_) .lu-tag, html:root:not(#_) .vb-split, html:root:not(#_) .lu-line { font-family: var(--font-body); letter-spacing: 0.02em; }
+/* Injury note on its own line, no orphan separator */
+html:root:not(#_) .lu-meta > .lu-inj { flex-basis: 100%; }
+html:root:not(#_) .lu-meta > .lu-inj::before { content: none; }
+/* Spacing between the scoreboard and the lineup card matches the rest of the page */
+html:root:not(#_) .lu-hero { padding-bottom: 4px; }
+/* Roster tags suggestions: a section of the card, not a tinted box */
+html:root:not(#_) .suggest { background: none !important; border-bottom: 1px solid var(--line); }
+/* What would it take: team count as quiet text */
+html:root:not(#_) .wt-count { border: 0; background: rgba(244, 246, 242, 0.06); border-radius: 999px; padding: 6px 12px; }
+/* Slot report: no tiles inside the card; a weak slot shows in its label */
+html:root:not(#_) .slot-col, html:root:not(#_) .slot-col.weak { background: none !important; padding: 0 2px !important; }
+html:root:not(#_) .slot-col.weak .slot-name { color: var(--bad); }
+html:root:not(#_) .lu-meta > .lu-st { flex-basis: 100%; } html:root:not(#_) .lu-meta > .lu-st::before { content: none; } html:root:not(#_) .lu-meta:has(> .lu-st) { white-space: normal; }
+
+/* Trade fine-comb fixes */
+html:root:not(#_) .tp-facts { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 6px; }
+html:root:not(#_) .tp-facts li { border: 0 !important; background: rgba(244, 246, 242, 0.07) !important; }
+/* Stat values share one baseline whether they're a percent or a delta */
+html:root:not(#_) .ti-stat dd { align-items: baseline; line-height: 1.15; min-height: 1.3em; }
+html:root:not(#_) .ti-stat dd .delta, html:root:not(#_) .ti-stat dd > span { line-height: 1.15; display: inline; }
+/* Builder side switch: sticky glass pill, no border */
+@media (max-width: 860px) {
+  html:root:not(#_) .side-switch { border: 0; border-radius: 999px; background: rgba(20, 28, 25, 0.86); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
+  html:root:not(#_) .side-switch button { border-radius: 999px; }
+  html:root:not(#_) .side-switch button[aria-selected="true"] { background: rgba(244, 246, 242, 0.1); box-shadow: none; }
+  html:root:not(#_) .side-switch b { font-family: var(--font-body); }
+  html:root:not(#_) .side-switch button[aria-selected="true"] b { background: var(--lime); color: var(--action-ink); }
+}
+html:root:not([data-nf]):not(#_) { --font-mono: "Google Sans", "Google Sans Text", "SF Pro Text", "Helvetica Neue", sans-serif; }
+
+/* League fine-comb fixes */
+html:root:not(#_) .partners > :last-child { padding-bottom: 0 !important; }
+/* Tendencies: plain stats on a hairline, not four tiles in the card */
+html:root:not(#_) .tend-stats { gap: 0; border-top: 1px solid var(--line); padding-top: 12px; }
+html:root:not(#_) .tend-stats div { background: none; border-radius: 0; padding: 0 12px; }
+html:root:not(#_) .tend-stats div:first-child { padding-left: 0; }
+html:root:not(#_) .tend-stats div + div { border-left: 1px solid var(--line); }
+html:root:not(#_) .tend-stats b { font: 600 1.125rem/1.15 var(--font-body); }
+@media (max-width: 560px) {
+  html:root:not(#_) .tend-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+  html:root:not(#_) .tend-stats div:nth-child(3) { border-left: 0; padding-left: 0; }
+}
+/* Activity: transaction type as plain text, not tracked caps */
+html:root:not(#_) .act-kind { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 0.8125rem; color: var(--muted) !important; }
+/* Standings: give team names room so they don't wrap into three lines */
+html:root:not(#_) .st-row { grid-template-columns: minmax(0, 1fr) 56px 52px 46px; gap: 6px; padding: 10px 16px; }
+html:root:not(#_) .st-row.st-pos { grid-template-columns: minmax(0, 1fr) 78px 78px; }
+html:root:not(#_) .st-team .st-who b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2; }
+
+/* "Won't work" on trade ideas */
+.ti-nope { justify-self: center; align-self: center; margin-top: 2px; min-height: 40px; padding: 0 8px; border: 0; background: none; color: var(--muted); font: 500 0.8125rem/1.2 var(--font-body); cursor: pointer; }
+@media (hover: hover) { .ti-nope:hover { color: var(--ink); } }
+.ti-nope:active { opacity: 0.6; }
+.ti-nope:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }
+html:root:not(#_) .ti { display: grid; }
+.fb { gap: 14px; }
+.fb-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.fb-head b { display: block; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.fb-head small { display: block; margin-top: 4px; font-size: 0.875rem; line-height: 1.4; color: var(--muted); }
+.fb-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.fb-list li + li { border-top: 1px solid var(--line); }
+.fb-opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 2px; border: 0; background: none; color: var(--ink); font: 500 0.9375rem/1.3 var(--font-body); text-align: left; cursor: pointer; }
+.fb-opt span { flex: 1; }
+.fb-opt svg { color: var(--faint); flex: none; }
+.fb-opt:active { opacity: 0.6; }
+.fb-opt:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; border-radius: 10px; }
+.fb-note { display: grid; gap: 8px; padding-top: 4px; }
+.fb-note label { font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+.fb-note .composer-input { min-width: 0; border: 0; background: none; color: var(--ink); font: 400 1rem/1.3 var(--font-body); height: 44px; outline: none; }
+
+/* Settings links and long-form pages */
+.set-link { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.set-link .grow { display: grid; gap: 2px; }
+.set-link b { font-weight: 600; }
+.set-link svg { color: var(--faint); flex: none; }
+.set-link:active { opacity: 0.6; }
+.doc-back { margin-bottom: 4px; }
+.doc { padding: 4px 22px 8px; }
+.doc section { padding: 18px 0; }
+.doc section + section { border-top: 1px solid var(--line); }
+.doc h2 { margin: 0 0 10px; font: 600 1.0625rem/1.3 var(--font-body); letter-spacing: -0.01em; }
+.doc p { margin: 0 0 10px; color: var(--muted); line-height: 1.6; max-width: 68ch; }
+.doc p:last-child { margin-bottom: 0; }
+.doc ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: var(--muted); line-height: 1.6; max-width: 68ch; }
+.doc b { color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) { .doc { padding: 0 18px 4px; } }
+
+/* Toast: dark floating pill, full readable width, lime Undo */
+html:root:not(#_) .toast {
+  left: 16px; right: 16px; margin: 0 auto; width: fit-content; max-width: min(520px, calc(100% - 32px)); transform: none;
+  display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 18px; min-height: 48px; box-sizing: border-box;
+  background: rgba(34, 46, 41, 0.94); color: var(--ink); border-radius: 24px; text-align: left; font-weight: 500; line-height: 1.35;
+  backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
+html:root:not(#_) .toast:not(:has(.toast-undo)) { padding-right: 18px; }
+html:root:not(#_) .toast-undo { flex: none; color: var(--lime); background: rgba(var(--lime-rgb), 0.12); border-radius: 999px; padding: 0 14px; min-height: 36px; font-weight: 600; }
+/* Back links: a small pill, not a full-width bar */
+html:root:not(#_) .st-back { display: inline-flex !important; width: auto !important; align-self: flex-start; justify-self: start; align-items: center; gap: 4px; min-height: 36px; padding: 0 14px 0 10px !important; border: 0 !important; border-radius: 999px !important; background: rgba(244, 246, 242, 0.07) !important; color: var(--ink); font: 500 0.875rem/1 var(--font-body); }
+html:root:not(#_) .st-back svg { transform: rotate(180deg); color: var(--muted); }
+html:root:not(#_) .doc-back, html:root:not(#_) .mu-back { margin-left: 0; }
+
+/* Micro labels: sentence case, no wide tracking (the tracked-caps eyebrow everywhere read as templated) */
+html:root:not(#_) .eyebrow, html:root:not(#_) .lu-kicker, html:root:not(#_) .lu-pts i, html:root:not(#_) .vb-head, html:root:not(#_) .wv-stats i, html:root:not(#_) .deadline, html:root:not(#_) .lu-who-l, html:root:not(#_) .sb-rec, html:root:not(#_) .lu-week-sum i, html:root:not(#_) .nudge-kind {
+  text-transform: none !important; letter-spacing: 0 !important; font-size: 0.75rem !important; font-weight: 500;
+}
+/* Waivers: projection as text, not a tile */
+html:root:not(#_) .wv-proj { background: none !important; border: 0 !important; padding: 0 !important; text-align: right; }
+/* Segmented controls: selected option is a soft fill, no ring */
+html:root:not(#_) .seg button[aria-pressed="true"], html:root:not(#_) .seg button[aria-checked="true"], html:root:not(#_) .seg button[aria-selected="true"] { box-shadow: none !important; border: 0 !important; background: rgba(244, 246, 242, 0.1) !important; color: var(--ink) !important; }
+html:root:not(#_) .seg { border: 0 !important; background: rgba(244, 246, 242, 0.04) !important; }
+/* Ask suggestions: soft pills */
+html:root:not(#_) .chip-btn { border: 0 !important; border-radius: 999px !important; background: rgba(244, 246, 242, 0.07) !important; padding: 10px 16px !important; color: var(--ink); }
+/* Settings platform icon: soft circle */
+html:root:not(#_) .set-ic { border: 0 !important; border-radius: 50% !important; background: rgba(244, 246, 242, 0.07) !important; }
+@container (min-width: 600px) {
+  html:root:not(#_) .tx-swap { position: absolute !important; left: 50% !important; top: 50% !important; margin: -16px 0 0 -16px !important; transform: none !important; }
+}
+html:root:not(#_) .card .impact .impact-row { padding: 12px 0 !important; }
