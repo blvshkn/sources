@@ -91,7 +91,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: st
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
-      aria-label={onOpen ? `${p.name} details` : undefined} onClick={onOpen ? () => onOpen(p, where) : undefined}
+      onClick={onOpen ? () => onOpen(p, where) : undefined}
       onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } : undefined}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
       <Avatar p={p} size={44} />

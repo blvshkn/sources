@@ -18,6 +18,7 @@ export function Landing({ onLive, onDemo }: {
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [errFor, setErrFor] = useState("ld-user");
 
   applyFormat(DEFAULT_FORMAT);
   const demo = useMemo(() => {
@@ -61,13 +62,13 @@ export function Landing({ onLive, onDemo }: {
   const form = (id: string) => (
     <>
       <label htmlFor={id} className="ld2-label">Your Sleeper username</label>
-      <form className="ld2-form" onSubmit={connect} noValidate>
+      <form className="ld2-form" onSubmit={(e) => { setErrFor(id); connect(e); }} noValidate>
         <span className="at" aria-hidden="true">@</span>
-        <input id={id} value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} aria-invalid={!!error} aria-describedby={`${id}-help`}
-          placeholder="yourname" autoComplete="username" autoCapitalize="none" spellCheck={false} />
+        <input id={id} value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} aria-invalid={!!error && errFor === id} aria-describedby={`${id}-help`} name="username"
+          placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
         <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Finding your leagues…" : "Find my leagues"}</button>
       </form>
-      <p id={`${id}-help`} className={error ? "ld2-error" : "ld2-help"} role={error ? "alert" : undefined}>{error || "Free. No password. Read only, so Sources can't change anything in Sleeper."}</p>
+      <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Sources can't change anything in Sleeper."}</p>
     </>
   );
   const tagline = "Every offer judged by both starting lineups, then pitched around what the other manager needs.";
@@ -97,7 +98,7 @@ export function Landing({ onLive, onDemo }: {
           <button className="ld2-link ld-rise d3" onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
         </div>
 
-        <div className="ld-preview ld2-preview" aria-hidden="true">
+        <div className="ld-preview ld2-preview" aria-hidden="true" {...{ inert: "" }}>
           <div className="ld-rise d1"><Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} /></div>
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld-rise d2">

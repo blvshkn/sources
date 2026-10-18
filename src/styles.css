@@ -3468,3 +3468,12 @@ html:root:not(#_) .lockup-tag { margin-left: calc(var(--lh) * 1.4203); font: 500
 html:root:not(#_) .top-logo .lockup-tag { font-size: 0.625rem; }
 html:root:not(#_) .brand .lockup .logo { margin-bottom: 0; }
 @media (max-width: 860px) { html:root:not(#_) .top-logo .lockup-tag { margin-left: 0; } }
+/* Accessibility fixes from the interface review */
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) .boot3-fill { animation: none !important; } html:root:not(#_) .boot3-core, html:root:not(#_) .boot3-tag { animation: none !important; } }
+@media (pointer: coarse) {
+  html:root:not(#_) .toast-undo { min-height: 44px; min-width: 44px; }
+  /* Bigger hit area without changing how the chips look */
+  html:root:not(#_) .dt-chip { position: relative; }
+  html:root:not(#_) .dt-chip::after { content: ""; position: absolute; inset: -8px -2px; }
+}
+@media (max-width: 860px) { html:root:not(#_) .top-logo.lockup { gap: 7px; } }

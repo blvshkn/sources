@@ -64,7 +64,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
   }, [all, term]);
   const pick = (e: Entry) => {
     setQ(e.fa.name); setSuggest(false); setPos("ALL"); setOpen(e.rec ? e.fa.id : null);
-    requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
   };
   const onKey = (ev: { key: string; preventDefault: () => void }) => {
     if (!suggest || !hits.length) return;
@@ -146,14 +146,14 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             <Icon name="search" size={18} />
             <span className="sr-only">Search free agents</span>
             <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={() => window.setTimeout(() => setSuggest(false), 120)} onKeyDown={onKey}
-              placeholder="Search every free agent" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" />
+              placeholder="Search every free agent…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
             {q && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
           </label>
           {suggest && hits.length > 0 && (
             <ul className="wv-ta-list" id="wv-ta-list" role="listbox">
               {hits.map((e, i) => (
-                <li key={e.fa.id} role="option" aria-selected={i === hi}>
-                  <button onMouseDown={(ev) => ev.preventDefault()} onClick={() => pick(e)} onMouseEnter={() => setHi(i)} className={`${i === hi ? "on" : ""}${e.avail ? " off" : ""}`}>
+                <li key={e.fa.id} id={`wv-ta-${e.fa.id}`} role="option" aria-selected={i === hi}>
+                  <button tabIndex={-1} onMouseDown={(ev) => ev.preventDefault()} onClick={() => pick(e)} onMouseEnter={() => setHi(i)} className={`${i === hi ? "on" : ""}${e.avail ? " off" : ""}`}>
                     <b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>
                     <span className="wv-ta-n"><span><Hit name={e.fa.name} term={term} /></span><small>{e.fa.nfl}</small></span>
                     {e.avail ? <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span> : <span className="wv-ta-p">{e.value.toFixed(1)}</span>}
@@ -201,7 +201,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : ""}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
                   <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.tier}</b></span>
                   {r.fa.rostered !== undefined && <span><i>Rostered</i><b>{r.fa.rostered}%</b></span>}
-                  {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{r.fa.adds >= 1000 ? `${(r.fa.adds / 1000).toFixed(1)}K` : r.fa.adds}</b></span>}
+                  {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(r.fa.adds)}</b></span>}
                 </span>
               </button>
               {isOpen && (

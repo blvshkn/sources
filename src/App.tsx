@@ -346,6 +346,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   return (
     <div className={`shell${tab === "trade" ? " wide" : ""}`}>
+      <a className="skip-link" href="#main">Skip to content</a>
       <aside className="side">
         <div className="brand">
           <div className="lockup" style={{ ["--lh" as string]: "30px" }}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></div>
@@ -383,7 +384,6 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         </div>
       </header>
 
-      <a className="skip-link" href="#main">Skip to content</a>
       <main className="main" id="main" tabIndex={-1}>
         <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching(true) }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
