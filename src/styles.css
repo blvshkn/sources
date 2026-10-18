@@ -1,105 +1,109 @@
-/* Layout: app shell. Sidebar nav + main column + wire rail on desktop,
-   single column + bottom tab bar on phones. Insider-wire voice: amber "per sources" stamps. */
+/* Sources design system: "Press Box". See DESIGN.md.
+   Graphite neutrals with one accent (Press Box Amber). Geist for everything, tabular numbers.
+   Layout: sidebar + main + wire rail on desktop, single column + floating tab bar on phones. */
 :root {
-  /* Light (iOS grouped style) */
-  --bg: #f2f2f7;
-  --surface: #ffffff;
-  --surface-2: #ebebf0;
-  --surface-3: #dedee5;
-  --ink: #111114;
-  --muted: #6c6c73;
-  --faint: #9b9ba3;
-  --line: rgba(17, 17, 20, 0.08);
-  --stamp: #c98a12;
-  --stamp-ink: #1d1400;
-  --stamp-soft: rgba(201, 138, 18, 0.12);
-  --action: #111114;
-  --action-ink: #ffffff;
-  --good: #1f9d45;
-  --good-soft: rgba(31, 157, 69, 0.12);
-  --warn: #b86e00;
-  --warn-soft: rgba(184, 110, 0, 0.12);
-  --bad: #d93a30;
-  --bad-soft: rgba(217, 58, 48, 0.1);
-  --you: #d99a1e;
-  --them: #4a6cf0;
-  --qb: #e0466b;
-  --rb: #14a88d;
-  --wr: #3d74e6;
-  --te: #e5801f;
+  /* Light: daylight press box */
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #ECEEF1;
+  --surface-3: #E1E4E9;
+  --ink: #14161A;
+  --muted: #5F6672;
+  --faint: #9AA0AA;
+  --line: rgba(20, 22, 26, 0.08);
+  --stamp: #A8700F;
+  --stamp-ink: #FFFFFF;
+  --stamp-soft: rgba(168, 112, 15, 0.1);
+  --action: #14161A;
+  --action-ink: #FFFFFF;
+  --good: #1E8E52;
+  --good-soft: rgba(30, 142, 82, 0.1);
+  --warn: #B9601A;
+  --warn-soft: rgba(185, 96, 26, 0.1);
+  --bad: #C9372D;
+  --bad-soft: rgba(201, 55, 45, 0.09);
+  --you: #C78A22;
+  --them: #6B7486;
+  --qb: #C94B6A;
+  --rb: #1F9C80;
+  --wr: #3F6FD1;
+  --te: #C9772E;
   --field: #2e7d4c;
   --field-line: rgba(255, 255, 255, 0.28);
-  --shadow: 0 1px 2px rgba(17, 17, 20, 0.04), 0 6px 20px rgba(17, 17, 20, 0.05);
-  /* Apple Sports type: SF on Apple devices, Geist elsewhere */
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Geist", system-ui, sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", system-ui, sans-serif;
-  --font-mono: "SF Mono", "Geist Mono", ui-monospace, Menlo, monospace;
-  /* Shape lock: cards 22px, inner blocks 14px, every interactive control is a full pill */
-  --r: 22px;
-  --r-inner: 14px;
+  --edge: none;
+  --shadow: 0 0 0 1px rgba(20, 22, 26, 0.05), 0 1px 2px rgba(20, 22, 26, 0.04), 0 10px 28px -16px rgba(20, 22, 26, 0.18);
+  --font-display: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  /* Shape lock: cards 20px, inner blocks 12px, every interactive control is a full pill */
+  --r: 20px;
+  --r-inner: 12px;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-  --bg: #050506;
-  --surface: #161618;
-  --surface-2: #222225;
-  --surface-3: #2e2e32;
-  --ink: #f5f5f7;
-  --muted: #9a9aa1;
-  --faint: #66666d;
-  --line: rgba(255, 255, 255, 0.08);
-  --stamp: #f4b740;
-  --stamp-ink: #1d1400;
-  --stamp-soft: rgba(244, 183, 64, 0.14);
-  --action: #f5f5f7;
-  --action-ink: #0b0b0c;
-  --good: #32d74b;
-  --good-soft: rgba(50, 215, 75, 0.14);
-  --warn: #ffb340;
-  --warn-soft: rgba(255, 179, 64, 0.14);
-  --bad: #ff5a4f;
-  --bad-soft: rgba(255, 90, 79, 0.14);
-  --you: #f4b740;
-  --them: #6c8cff;
-  --qb: #ff6482;
-  --rb: #30d2b4;
-  --wr: #6c9bff;
-  --te: #ffa24a;
+  --bg: #0C0D10;
+  --surface: #15171C;
+  --surface-2: #1D2027;
+  --surface-3: #272A33;
+  --ink: #F2F3F5;
+  --muted: #9097A3;
+  --faint: #5E6470;
+  --line: rgba(255, 255, 255, 0.07);
+  --stamp: #E3A443;
+  --stamp-ink: #1C1406;
+  --stamp-soft: rgba(227, 164, 67, 0.14);
+  --action: #F2F3F5;
+  --action-ink: #0C0D10;
+  --good: #3CC27E;
+  --good-soft: rgba(60, 194, 126, 0.14);
+  --warn: #EE8B3A;
+  --warn-soft: rgba(238, 139, 58, 0.14);
+  --bad: #EF5D52;
+  --bad-soft: rgba(239, 93, 82, 0.14);
+  --you: #E3A443;
+  --them: #8B95A7;
+  --qb: #E06A86;
+  --rb: #3FBFA2;
+  --wr: #6E95E8;
+  --te: #E39A55;
   --field: #1d5a36;
   --field-line: rgba(255, 255, 255, 0.18);
-  --shadow: none;
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 12px 32px -18px rgba(0, 0, 0, 0.7);
   color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #050506;
-  --surface: #161618;
-  --surface-2: #222225;
-  --surface-3: #2e2e32;
-  --ink: #f5f5f7;
-  --muted: #9a9aa1;
-  --faint: #66666d;
-  --line: rgba(255, 255, 255, 0.08);
-  --stamp: #f4b740;
-  --stamp-ink: #1d1400;
-  --stamp-soft: rgba(244, 183, 64, 0.14);
-  --action: #f5f5f7;
-  --action-ink: #0b0b0c;
-  --good: #32d74b;
-  --good-soft: rgba(50, 215, 75, 0.14);
-  --warn: #ffb340;
-  --warn-soft: rgba(255, 179, 64, 0.14);
-  --bad: #ff5a4f;
-  --bad-soft: rgba(255, 90, 79, 0.14);
-  --you: #f4b740;
-  --them: #6c8cff;
-  --qb: #ff6482;
-  --rb: #30d2b4;
-  --wr: #6c9bff;
-  --te: #ffa24a;
+  --bg: #0C0D10;
+  --surface: #15171C;
+  --surface-2: #1D2027;
+  --surface-3: #272A33;
+  --ink: #F2F3F5;
+  --muted: #9097A3;
+  --faint: #5E6470;
+  --line: rgba(255, 255, 255, 0.07);
+  --stamp: #E3A443;
+  --stamp-ink: #1C1406;
+  --stamp-soft: rgba(227, 164, 67, 0.14);
+  --action: #F2F3F5;
+  --action-ink: #0C0D10;
+  --good: #3CC27E;
+  --good-soft: rgba(60, 194, 126, 0.14);
+  --warn: #EE8B3A;
+  --warn-soft: rgba(238, 139, 58, 0.14);
+  --bad: #EF5D52;
+  --bad-soft: rgba(239, 93, 82, 0.14);
+  --you: #E3A443;
+  --them: #8B95A7;
+  --qb: #E06A86;
+  --rb: #3FBFA2;
+  --wr: #6E95E8;
+  --te: #E39A55;
   --field: #1d5a36;
   --field-line: rgba(255, 255, 255, 0.18);
-  --shadow: none;
+  --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 12px 32px -18px rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
 
@@ -1287,3 +1291,62 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .lu-slot.s-K { background: color-mix(in srgb, #a78bfa 60%, #fff); }
 .lu-slot.s-DEF { background: color-mix(in srgb, #94a3b8 60%, #fff); }
 .lu-pos.p-K { color: #a78bfa; } .lu-pos.p-DEF { color: #94a3b8; }
+
+/* ==== Press Box layer ====================================================== */
+body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
+.page-title { font: 700 clamp(2rem, 4.6vw, 2.625rem)/1.02 var(--font-display); letter-spacing: -0.04em; }
+.eyebrow, .lu-kicker { font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.numeral { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.045em; }
+.lu-pts, .wv-proj b, .act-bid b, .lu-week-sum b, .ftok-meta b { letter-spacing: -0.02em; }
+.lu-line, .wv-stats b, .pmeta, .lu-meta { font-variant-numeric: tabular-nums; }
+.lu-line { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: -0.01em; }
+
+/* Cards: one hairline ring, a soft tinted drop, and a lit top edge in dark mode */
+.card, .field-shell, .lu-banner, .lu-score { border: 0; box-shadow: var(--shadow), var(--edge); }
+.lu-score { background: var(--surface); }
+
+/* Rows: tactile press, quick hover */
+.lu-row, .wv .wv-row, .act-row, .prow { transition: background-color 0.2s var(--ease); }
+@media (hover: hover) { .lu-row:hover, .wv .wv-row:hover { background-color: color-mix(in srgb, var(--surface-2) 55%, transparent); } }
+.wv .wv-row:active { background-color: var(--surface-2); }
+.btn { transition: background-color 0.2s var(--ease), transform 0.16s var(--ease), color 0.2s var(--ease); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--action); color: var(--action-ink); }
+
+/* Slot pills: calmer fills so the names lead, colors still sort the eye */
+.lu-slot { height: 28px; border-radius: 9px; font-size: 0.6875rem; letter-spacing: 0.04em; color: var(--ink); }
+.lu-slot.s-QB { background: color-mix(in srgb, var(--qb) 22%, var(--surface)); color: var(--qb); }
+.lu-slot.s-RB { background: color-mix(in srgb, var(--rb) 22%, var(--surface)); color: var(--rb); }
+.lu-slot.s-WR { background: color-mix(in srgb, var(--wr) 22%, var(--surface)); color: var(--wr); }
+.lu-slot.s-TE { background: color-mix(in srgb, var(--te) 22%, var(--surface)); color: var(--te); }
+.lu-slot.s-FLEX, .lu-slot.s-SF { background: linear-gradient(90deg, color-mix(in srgb, var(--wr) 22%, var(--surface)), color-mix(in srgb, var(--rb) 22%, var(--surface)) 50%, color-mix(in srgb, var(--te) 22%, var(--surface))); color: var(--ink); }
+.lu-slot.s-K { background: color-mix(in srgb, #9C8CE0 22%, var(--surface)); color: #9C8CE0; }
+.lu-slot.s-DEF { background: color-mix(in srgb, var(--them) 22%, var(--surface)); color: var(--them); }
+.lu-slot.s-BN, .lu-slot.s-TX { background: var(--surface-2); color: var(--faint); }
+.lu-slot.s-IR { background: var(--bad-soft); color: var(--bad); }
+.lu-pos.p-K { color: #9C8CE0; } .lu-pos.p-DEF { color: var(--them); }
+
+/* Swap rows: an accent rail instead of a full wash */
+.lu-row.has-swap { background: linear-gradient(90deg, var(--stamp-soft), transparent 70%); box-shadow: inset 3px 0 0 var(--stamp); }
+.lu-swap svg { color: var(--stamp); }
+.lu-banner-ic { background: var(--stamp-soft); color: var(--stamp); }
+
+/* Section heads */
+.lu-list-head b, .lu-checks-head b, .roster-head b { font-weight: 650; letter-spacing: -0.015em; }
+.lu-list-head.sub { border-top: 1px solid var(--line); margin-top: 6px; }
+
+/* Chips and segmented controls share one shape */
+.chip-btn { background: var(--surface); box-shadow: var(--shadow); border: 0; }
+.chip-btn.on { background: var(--ink); color: var(--bg); box-shadow: none; }
+
+/* Entry: rows cascade in once when a list mounts */
+@media (prefers-reduced-motion: no-preference) {
+  .lu-row, .wv, .act-row, .lu-check, .nudge { animation: rise 0.42s var(--ease) both; }
+  .lu-row:nth-child(2), .wv:nth-child(2), .act-row:nth-child(2) { animation-delay: 30ms; }
+  .lu-row:nth-child(3), .wv:nth-child(3), .act-row:nth-child(3) { animation-delay: 60ms; }
+  .lu-row:nth-child(4), .wv:nth-child(4), .act-row:nth-child(4) { animation-delay: 90ms; }
+  .lu-row:nth-child(5), .wv:nth-child(5), .act-row:nth-child(5) { animation-delay: 120ms; }
+  .lu-row:nth-child(6), .wv:nth-child(6), .act-row:nth-child(6) { animation-delay: 150ms; }
+  .lu-row:nth-child(n+7), .wv:nth-child(n+7), .act-row:nth-child(n+7) { animation-delay: 180ms; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
