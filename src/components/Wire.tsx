@@ -72,7 +72,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
       {reasons.length > 0 && <p className="ti-why">{reasons.join(". ")}.</p>}
       <div className="ti-actions">
         <button className="btn btn-sm ti-btn" onClick={() => onOpen(t)}>Open in builder</button>
-        <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(t)}><Icon name="send" size={15} />Write pitch</button>
+        <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(t)}><Icon name="pen" size={15} />Write pitch</button>
       </div>
     </article>
   );

@@ -378,7 +378,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                         <div className="ti-stat"><dt>You gain</dt><dd><Delta n={o!.youDelta} /><small>/wk</small></dd></div>
                         <div className="ti-stat"><dt>They gain</dt><dd><Delta n={o!.themDelta} /><small>/wk</small></dd></div>
                       </dl>
-                      <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(o!)}><Icon name="send" size={15} />Write pitch to {t.manager}</button>
+                      <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(o!)}><Icon name="pen" size={15} />Write pitch to {t.manager}</button>
                     </li>
                   ))}
                 </ul>

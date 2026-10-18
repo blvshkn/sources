@@ -278,7 +278,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 </div>
               )}
               <div className="row wrap">
-                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="send" size={16} />Write pitch</button>
+                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
                 {tip && <AiLabel />}
               </div>
             </>
