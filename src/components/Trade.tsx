@@ -211,8 +211,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Build a deal" />
-          <p className="page-meta">{UPDATED}</p>
+          <LeagueSwitch title="Build a deal" meta={<>{UPDATED}</>} />
         </div>
       </header>
 

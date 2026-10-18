@@ -25,8 +25,7 @@ export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answe
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Ask Sources" />
-          <p className="page-meta">Ask your league</p>
+          <LeagueSwitch title="Ask Sources" meta={<>Ask your league</>} />
         </div>
       </header>
 

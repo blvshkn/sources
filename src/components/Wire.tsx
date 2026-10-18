@@ -261,8 +261,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="The Wire" />
-          <p className="page-meta">Week {WEEK} · {DEADLINES.lock}</p>
+          <LeagueSwitch title="The Wire" meta={<>{DEADLINES.lock}</>} />
         </div>
       </header>
 

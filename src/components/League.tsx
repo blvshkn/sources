@@ -1,4 +1,4 @@
-import { ManagerTag, playerById, Pos, POS_ORDER, YOU, WEEK } from "../data";
+import { ManagerTag, playerById, Pos, POS_ORDER, YOU } from "../data";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp, useSticky, PageTabs } from "./ui";
@@ -114,8 +114,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="League" />
-          <p className="page-meta">{needs.length} teams · Week {WEEK}</p>
+          <LeagueSwitch title="League" meta={<>{needs.length} teams</>} />
         </div>
       </header>
 

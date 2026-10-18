@@ -377,7 +377,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
       <a className="skip-link" href="#main">Skip to content</a>
       <main className="main" id="main" tabIndex={-1}>
-        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `Week ${WEEK} · ${formatLabel(format)}`, open: () => setSwitching(true) }}>
+        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching(true) }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
         <div className="main-inner" key={tab}>
           {tab === "wire" && (

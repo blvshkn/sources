@@ -266,8 +266,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     <>
       <header className="lu-hero">
         <div className="lu-hero-l">
-          <LeagueSwitch title="Lineup" />
-          <p className="page-meta">Week {WEEK} · {UPDATED}</p>
+          <LeagueSwitch title="Lineup" meta={<>{UPDATED}</>} />
         </div>
         <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
           <div className="lu-mx-side you">

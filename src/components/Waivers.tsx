@@ -27,8 +27,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Waivers" />
-          <p className="page-meta">{DEADLINES.waivers}</p>
+          <LeagueSwitch title="Waivers" meta={<>{DEADLINES.waivers}</>} />
         </div>
         {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
           <span className="tiny muted">FAAB left</span>
