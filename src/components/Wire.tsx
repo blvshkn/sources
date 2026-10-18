@@ -144,7 +144,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
             <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
             <span className="sb2-chance-lbl">
               <span><b>{chance}%</b> to win</span>
-              <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</span>
+              <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span>
             </span>
           </span>
         )}
