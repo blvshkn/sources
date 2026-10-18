@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
@@ -43,6 +43,30 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
       {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.icon && <Icon name={o.icon} size={16} />}{o.label}</button>)}
     </div>
   );
+}
+
+/**
+ * Section tabs under a page title. Switching keeps the tab row exactly where it was on screen:
+ * the page never jumps when the new section is shorter, and nothing animates in.
+ */
+export function PageTabs<T extends string>({ value, options, onChange }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const pick = (v: T) => {
+    if (v === value) return;
+    const el = ref.current; const main = document.getElementById("main");
+    if (!el || !main) { onChange(v); return; }
+    const top = el.getBoundingClientRect().top;
+    const docTop = top + window.scrollY;
+    const bar = (document.querySelector(".topbar, header.top") as HTMLElement | null)?.getBoundingClientRect().bottom ?? 0;
+    // Enough room below the tabs that a short section can't pull the page up
+    main.style.minHeight = `${Math.ceil(docTop - main.getBoundingClientRect().top - window.scrollY + window.innerHeight)}px`;
+    onChange(v);
+    requestAnimationFrame(() => {
+      const target = top < bar ? docTop - bar - 8 : docTop - top;
+      window.scrollTo({ top: Math.max(0, target), behavior: "instant" as ScrollBehavior });
+    });
+  };
+  return <div ref={ref} className="page-tabs"><Seg label="Section" value={value} onChange={pick} options={options} /></div>;
 }
 
 /** useState that survives a reload. Per-device convenience only; falls back to the default if storage is blocked. */

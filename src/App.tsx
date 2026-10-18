@@ -272,6 +272,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (teamId) { setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
     // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
+    if (t !== tab) { const m = document.getElementById("main"); if (m) m.style.minHeight = ""; }
     if (section) { try { localStorage.setItem(`sources.ui.${t}.view`, section); } catch { /* ignore */ } }
     setTab(t as Tab);
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }

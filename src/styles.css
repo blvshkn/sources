@@ -3166,3 +3166,9 @@ html:root:not(#_) .fb-head { padding-right: 40px; }
 
 /* In-page section tabs: one row under the page title, so sections swap instead of stacking */
 html:root:not(#_) .page-tabs { display: flex; margin: -4px 0 4px; }
+
+/* Tabs hold still: one weight for every label so the selected one doesn't widen and shove its neighbors */
+html:root:not(#_) .page-tabs > .seg button, html:root:not(#_) .page-tabs > .seg button[aria-pressed="true"] { font-weight: 500 !important; transition: background-color 120ms ease, color 120ms ease; }
+html:root:not(#_) .page-tabs { margin: 0; }
+/* Cards that slid in on mount replayed on every tab switch; they now just appear */
+html:root:not(#_) .nudge:not(.leaving), html:root:not(#_) .sb2-bar span { animation: none !important; }

@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Phase, Seg, Stamp, useSticky } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 
@@ -263,8 +263,9 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="wire" size={20} /></span>The Wire</h1>
           <p className="page-meta">Week {WEEK} · {DEADLINES.lock}</p>
         </div>
-        <Seg label="Section" value={view} onChange={setView} options={[{ v: "matchup", label: "Matchup", icon: "group" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
       </header>
+
+      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Matchup", icon: "group" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
 
       {view === "matchup" && <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} onMatchup={() => onGo("matchup")} />}
 

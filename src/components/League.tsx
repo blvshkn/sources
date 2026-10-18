@@ -1,6 +1,6 @@
 import { ManagerTag, playerById, Pos, POS_ORDER, YOU, WEEK } from "../data";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
-import { AiLabel, Delta, Icon, Phase, PosBadge, Seg, Stamp, useSticky } from "./ui";
+import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp, useSticky, PageTabs } from "./ui";
 import { TagCapture } from "./TagCapture";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -116,8 +116,9 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
           <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="league" size={20} /></span>League</h1>
           <p className="page-meta">{needs.length} teams · Week {WEEK}</p>
         </div>
-        <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs", icon: "target" }, { v: "standings", label: "Standings", icon: "trophy" }, { v: "values", label: "Values", icon: "values" }, { v: "activity", label: "Activity", icon: "activity" }, { v: "tendencies", label: "Tendencies", icon: "tendencies" }]} />
       </header>
+
+      <PageTabs value={view} onChange={setView} options={[{ v: "needs", label: "Needs", icon: "target" }, { v: "standings", label: "Standings", icon: "trophy" }, { v: "values", label: "Values", icon: "values" }, { v: "activity", label: "Activity", icon: "activity" }, { v: "tendencies", label: "Tendencies", icon: "tendencies" }]} />
 
       {view === "needs" && partners.length > 0 && (
         <section className="card nudge" aria-label="Best trade partners">

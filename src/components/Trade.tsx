@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
-import { AiLabel, Delta, Icon, Stamp, StatusPill, Seg, useSticky } from "./ui";
+import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
@@ -233,9 +233,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         })()}
       </div>
 
-      <div className="page-tabs">
-        <Seg label="Section" value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }]} />
-      </div>
+      <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }]} />
 
       {view === "ideas" && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
       {view === "ideas" && suggestions.length > 0 && (

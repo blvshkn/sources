@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
-import { Icon, Seg, useSticky } from "./ui";
+import { Icon, Seg, useSticky, PageTabs } from "./ui";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -45,8 +45,9 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <div>
           <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="gear" size={20} /></span>Settings</h1>
         </div>
-        <Seg label="Section" value={view} onChange={setView} options={[{ v: "league", label: "League", icon: "plug" }, { v: "nudges", label: "Nudges", icon: "spark" }, { v: "privacy", label: "Privacy", icon: "lock" }, { v: "about", label: "About", icon: "app" }]} />
       </header>
+
+      <PageTabs value={view} onChange={setView} options={[{ v: "league", label: "League", icon: "plug" }, { v: "nudges", label: "Nudges", icon: "spark" }, { v: "privacy", label: "Privacy", icon: "lock" }, { v: "about", label: "About", icon: "app" }]} />
 
       {view === "league" && <>
       <section className="card settings-group">

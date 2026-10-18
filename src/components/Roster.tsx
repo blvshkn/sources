@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { PlayerSheet } from "./PlayerSheet";
@@ -264,9 +264,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         </div>
       </header>
 
-      <div className="page-tabs">
-        <Seg label="Section" value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
-      </div>
+      <PageTabs value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
