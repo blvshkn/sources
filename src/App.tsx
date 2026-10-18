@@ -336,7 +336,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <span className="brand-mark" aria-hidden="true">“</span>
           <div><div className="brand-name">Sources</div><div className="brand-line">Your fantasy insider</div></div>
         </div>
-        <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-label={`${LEAGUE_NAME}. Switch league`}>
+        <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-haspopup="dialog">
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
           <Icon name="switch" size={16} />
         </button>
@@ -361,9 +361,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button className="top-league" onClick={() => setSwitching(true)} aria-label={`${LEAGUE_NAME}. Switch league`}>
+        <button className="top-league" onClick={() => setSwitching(true)} aria-haspopup="dialog">
           <span className="brand-mark" aria-hidden="true">“</span>
-          <span className="top-league-n"><b>{LEAGUE_NAME}</b><small>Week {WEEK} · {formatLabel(format)}</small></span>
+          <span className="top-league-n"><b>{LEAGUE_NAME}</b><span className="sr-only"> (switch league)</span><small>Week {WEEK} · {formatLabel(format)}</small></span>
           <Icon name="switch" size={16} />
         </button>
         <div className="row" style={{ gap: 4 }}>

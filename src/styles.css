@@ -2910,3 +2910,67 @@ html:root:not(#_) .lsw-btn, html:root:not(#_) .top-league { background: var(--su
 html:root:not(#_) .seg, html:root:not(#_) .chip-btn, html:root:not(#_) .set-ic, html:root:not(#_) .st-back, html:root:not(#_) .wt-count { background: var(--surface-2) !important; }
 html:root:not(#_) .btn:not(.btn-primary), html:root:not(#_) .ps-x, html:root:not(#_) .composer-btn:not(.send) { background: var(--surface-3) !important; }
 html:root:not(#_) .ti .btn-primary, html:root:not(#_) .mu-whatif .btn-primary { background: var(--surface-3) !important; color: var(--lime) !important; }
+
+/* ==== Player sheet: hierarchy and color that point at the decision ============ */
+html:root:not(#_) .ps { gap: 20px; padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
+html:root:not(#_) .ps-where { display: inline-flex; align-self: start; margin-top: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; color: var(--action-ink) !important; background: var(--lime); width: fit-content; }
+html:root:not(#_) .ps-where.bench { color: var(--ink) !important; background: var(--surface-3); }
+/* Hero: this week is the decision, so it leads */
+.ps-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; padding: 18px; border-radius: 20px; background: linear-gradient(135deg, rgba(var(--lime-rgb), 0.16), rgba(var(--lime-rgb), 0.03) 60%), var(--surface-2); }
+.ps-hero-main { display: grid; align-content: start; gap: 2px; }
+.ps-k { font-size: 0.8125rem; color: var(--muted); }
+.ps-hero-main b { font: 600 3rem/1 var(--font-body); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--lime); margin-top: 4px; }
+.ps-hero-main b.bye { color: var(--muted); }
+.ps-trend { margin-top: 8px; font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
+.ps-trend.up { color: var(--good); } .ps-trend.down { color: var(--bad); }
+.ps-hero-side { margin: 0; display: grid; gap: 10px; align-content: center; padding-left: 16px; border-left: 1px solid var(--line); }
+.ps-hero-side div { display: grid; gap: 1px; }
+.ps-hero-side dt { font-size: 0.75rem; color: var(--muted); }
+.ps-hero-side dd { margin: 0; font-size: 1.0625rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+/* Game log: average line, beat-average bars in lime, bench weeks hatched */
+html:root:not(#_) .ps-bars { position: relative; height: 150px; gap: 8px; }
+.ps-avg { position: absolute; left: 0; right: 0; z-index: 1; height: 0; border-top: 1.5px dashed rgba(244, 246, 242, 0.28); pointer-events: none; }
+html:root:not(#_) .ps-bar i { background: var(--surface-3); border-radius: 6px 6px 3px 3px; }
+html:root:not(#_) .ps-bar.hi i { background: var(--lime); }
+html:root:not(#_) .ps-bar.hi b { color: var(--ink); }
+html:root:not(#_) .ps-bar.bn i { opacity: 1; background: repeating-linear-gradient(135deg, rgba(244, 246, 242, 0.14) 0 3px, transparent 3px 6px); }
+html:root:not(#_) .ps-bar.proj i { background: rgba(var(--lime-rgb), 0.1); border: 1.5px dashed var(--lime); }
+html:root:not(#_) .ps-bar span { max-width: 34px; }
+.ps-sub span { display: inline-flex; align-items: center; gap: 6px; }
+.ps-avg-key { width: 14px; border-top: 1.5px dashed rgba(244, 246, 242, 0.4); }
+.ps-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 0; font-size: 0.75rem; color: var(--muted); }
+.ps-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ps-legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--surface-3); }
+.ps-legend i.hi { background: var(--lime); }
+.ps-legend i.bn { background: repeating-linear-gradient(135deg, rgba(244, 246, 242, 0.3) 0 2px, transparent 2px 4px); }
+.ps-legend i.proj { background: rgba(var(--lime-rgb), 0.1); border: 1.5px dashed var(--lime); box-sizing: border-box; }
+html:root:not(#_) .ps-cta { height: 52px !important; font-size: 1rem; }
+
+/* ==== Page header: bold title, live meta chip, section icon as a big floodlit watermark ==== */
+html:root:not(#_) .page-head { position: relative; isolation: isolate; padding-top: 10px !important; padding-bottom: 10px !important; }
+html:root:not(#_) .page-head > * { position: relative; z-index: 1; }
+html:root:not(#_) .page-title { display: block; font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem) !important; font-weight: 700 !important; letter-spacing: -0.045em !important; line-height: 1 !important; }
+html:root:not(#_) .page-head .page-ic { position: absolute; z-index: 0; right: -14px; top: -18px; width: 132px; height: 132px; display: block; background: none; color: rgba(var(--lime-rgb), 0.13); pointer-events: none; transform: rotate(-10deg); }
+html:root:not(#_) .page-head .page-ic svg { width: 132px; height: 132px; stroke-width: 1.1; }
+html:root:not(#_) .page-head h1 { position: static; }
+html:root:not(#_) .page-meta { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0 0 !important; padding: 6px 12px 6px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 0.8125rem; line-height: 1.2; max-width: 100%; }
+html:root:not(#_) .page-meta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 3px rgba(var(--lime-rgb), 0.18); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) .page-meta::before { animation: live-pulse 2.4s ease-in-out infinite; }
+  @keyframes live-pulse { 50% { box-shadow: 0 0 0 5px rgba(var(--lime-rgb), 0.06); } }
+}
+html:root:not(#_) .page-meta { align-self: flex-start; width: fit-content; }
+html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { width: 112px; height: 112px; top: -10px; right: -10px; }
+html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 112px; height: 112px; stroke-width: 1.1; }
+html:root:not(#_) .lu-hero { position: relative; isolation: isolate; }
+html:root:not(#_) .lu-hero > * { position: relative; z-index: 1; }
+html:root:not(#_) .lu-hero .page-ic { position: absolute; z-index: 0; display: block; background: none; color: rgba(var(--lime-rgb), 0.13); pointer-events: none; transform: rotate(-10deg); }
+html:root:not(#_) .lu-hero h1 { position: static; }
+html:root:not(#_) .lu-hero-l { position: static; display: grid; justify-items: start; }
+
+/* lintapple fixes: readable faint text, explicit page background, real gaps between controls */
+html:root:not([data-nf]):not(#_) { --faint: #858B86; background: #121413; }
+html:root:not(#_) .skip-link:not(:focus) { top: 0; left: 0; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+html:root:not(#_) .topbar .row { gap: 8px !important; }
+@media (max-width: 860px) { html:root:not(#_) .tabbar.ix { column-gap: 8px; } }
+html:root:not(#_) .nudge-actions, html:root:not(#_) .ti-actions, html:root:not(#_) .mu-wbtn, html:root:not(#_) .lsw-foot, html:root:not(#_) .sa2-row { gap: 8px !important; }

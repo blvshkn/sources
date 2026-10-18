@@ -54,44 +54,66 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
           <span className="ps-who">
             <b id="ps-name">{p.name}</b>
             <small>{p.pos} · {p.nfl}{onBye(p.nfl) ? "" : gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small>
-            {where && <small className="ps-where">{where}</small>}
+            {where && <span className={`ps-where${/bench/i.test(where) ? " bench" : ""}`}>{where}</span>}
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
         {(p.note || p.injury) && <p className="ps-inj"><Icon name="alert" size={14} />{[p.injury, p.note].filter(Boolean).join(" · ")}</p>}
 
-        <dl className="ti-stats ps-stats">
-          <div className="ti-stat"><dt>This week</dt><dd>{onBye(p.nfl) ? "Bye" : eff(p, true).toFixed(1)}</dd></div>
-          <div className="ti-stat"><dt>ROS / wk</dt><dd>{eff(p).toFixed(1)}</dd></div>
-          <div className="ti-stat"><dt>Playoffs / wk</dt><dd>{playoff !== null ? playoff.toFixed(1) : "n/a"}</dd></div>
-        </dl>
+        {(() => {
+          const bye = onBye(p.nfl);
+          const wk = eff(p, true), ros = eff(p);
+          const trend = bye ? null : round1(wk - ros);
+          return (
+            <div className="ps-hero">
+              <div className="ps-hero-main">
+                <span className="ps-k">This week</span>
+                <b className={bye ? "bye" : ""}>{bye ? "Bye" : wk.toFixed(1)}</b>
+                {trend !== null && Math.abs(trend) >= 0.5 && <span className={`ps-trend ${trend > 0 ? "up" : "down"}`}>{trend > 0 ? "+" : ""}{trend.toFixed(1)} vs his ROS avg</span>}
+                {bye && <span className="ps-trend">No game this week</span>}
+              </div>
+              <dl className="ps-hero-side">
+                <div><dt>ROS / wk</dt><dd>{ros.toFixed(1)}</dd></div>
+                <div><dt>Playoffs / wk</dt><dd>{playoff !== null ? playoff.toFixed(1) : "n/a"}</dd></div>
+                {p.value !== undefined && <div><dt>Trade value</dt><dd>{Math.round(p.value).toLocaleString()}</dd></div>}
+              </dl>
+            </div>
+          );
+        })()}
 
         <div className="ps-games">
-          <div className="ps-sub"><b>Game log</b>{avg !== null && <span>{avg.toFixed(1)} avg</span>}</div>
+          <div className="ps-sub"><b>Game log</b>{avg !== null && <span><i className="ps-avg-key" />{avg.toFixed(1)} avg</span>}</div>
           {games.length ? (
             <div className="ps-bars" role="list">
-              {games.map((g) => (
-                <div key={g.w} className={`ps-bar${g.started ? "" : " bn"}`} role="listitem" aria-label={`Week ${g.w}: ${g.pts.toFixed(1)} points${g.started ? "" : ", on your bench"}`}>
-                  <b>{g.pts.toFixed(1)}</b>
-                  <span><i style={{ height: `${(g.pts / max) * 100}%` }} /></span>
-                  <small>W{g.w}</small>
-                </div>
-              ))}
-              <div className="ps-bar proj" role="listitem" aria-label={`Week ${WEEK} projection: ${eff(p, true).toFixed(1)}`}>
-                <b>{eff(p, true).toFixed(1)}</b>
-                <span><i style={{ height: `${(eff(p, true) / max) * 100}%` }} /></span>
+              {avg !== null && <span className="ps-avg" aria-hidden="true" style={{ bottom: `calc(18px + (100% - 36px) * ${(avg / max).toFixed(3)})` }} />}
+              {games.map((g) => {
+                const tone = !g.started ? " bn" : avg !== null && g.pts >= avg ? " hi" : "";
+                return (
+                  <div key={g.w} className={`ps-bar${tone}`} role="listitem" aria-label={`Week ${g.w}: ${g.pts.toFixed(1)} points${g.started ? "" : ", on your bench"}`}>
+                    <b>{g.pts.toFixed(1)}</b>
+                    <span><i style={{ height: `${Math.max(2, (g.pts / max) * 100)}%` }} /></span>
+                    <small>W{g.w}</small>
+                  </div>
+                );
+              })}
+              <div className="ps-bar proj" role="listitem" aria-label={onBye(p.nfl) ? `Week ${WEEK}: bye` : `Week ${WEEK} projection: ${eff(p, true).toFixed(1)}`}>
+                <b>{onBye(p.nfl) ? "Bye" : eff(p, true).toFixed(1)}</b>
+                <span><i style={{ height: `${onBye(p.nfl) ? 0 : Math.max(2, (eff(p, true) / max) * 100)}%` }} /></span>
                 <small>W{WEEK}</small>
               </div>
             </div>
           ) : <p className="ps-none">No games on record with your team yet.</p>}
-          {games.some((g) => !g.started) && <p className="ps-key">Faded bars were bench weeks. The outlined bar is this week's projection.</p>}
+          {games.length > 0 && (
+            <p className="ps-legend">
+              <span><i className="hi" />Beat his average</span>
+              <span><i />Below</span>
+              {games.some((g) => !g.started) && <span><i className="bn" />Bench week</span>}
+              <span><i className="proj" />Projected</span>
+            </p>
+          )}
         </div>
 
-        {p.value !== undefined && (
-          <div className="ps-row"><span>Trade value</span><b>{Math.round(p.value).toLocaleString()}</b></div>
-        )}
-
-        {onCompare && <button className="btn ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
+        {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
       </section>
     </div>
   );
