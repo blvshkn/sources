@@ -1,64 +1,47 @@
 # Design System: Sources, Your Fantasy Insider
 
 ## 1. Visual Theme & Atmosphere
-"Press Box." A late-night broadcast booth: graphite neutrals, one warm amber light, and numbers you can read at a glance. Daily App density (5 of 10): lists are tight like a box score, but every row has room to breathe. Variance stays low inside the app (3 of 10). Familiar list patterns win over clever layouts, because people use this at 12:58 on a Sunday. Motion is Fluid CSS (4 of 10): rows rise in once, buttons press, nothing loops for show.
-
-Dark is the home theme. Light is a daylight press box with the same hierarchy, never an inversion.
+"Tactical Telemetry." Industrial brutalism on a dead CRT: a classified scouting terminal, not a consumer app. Dark substrate only. Every zone is a visible compartment with hard 1px rules. Headers are heavy, uppercase and compressed into solid blocks; data is monospaced, uppercase and tracked like a typewriter. Density is high (7 of 10). Motion is restrained (2 of 10): presses translate 1px, nothing loops.
 
 ## 2. Color Palette & Roles
-Dark
-- **Graphite Night** (#0C0D10): app canvas
-- **Booth Panel** (#15171C): cards, lists, sheets
-- **Raised Panel** (#1D2027): inner blocks, projection boxes, skeletons
-- **Pressed Panel** (#272A33): active and selected fills
-- **Chalk Ink** (#F2F3F5): primary text and primary button fill
-- **Steel Muted** (#9097A3): metadata, team abbreviations, helper copy
-- **Faint Rail** (#5E6470): rank numbers, empty values, bench slot labels
-- **Hairline** (rgba(255,255,255,0.07)): dividers and card rings
-- **Press Box Amber** (#E3A443): the one accent. Your side of a matchup, swap rails, focus rings, "per sources" stamps
-- **Opponent Slate** (#8B95A7): the other side of any comparison. A neutral, not a second accent
+- **Dead CRT** (#0B0B0B): app canvas. Never pure black
+- **Panel** (#111111), **Raised** (#191919), **Pressed** (#232323): compartments and fills
+- **White Phosphor** (#EAEAEA): primary text, selected chips, secondary bars
+- **Muted** (#8E8E8E) and **Faint** (#5C5C5C): metadata, bench slots, rank numbers
+- **Rule** (rgba(234,234,234,0.14)): every divider and compartment border
+- **Hazard Red** (#FF2A2A): the only accent. Your side, active tab, primary button, swap rows, IR, losses, bracket marks
+- **Terminal Green** (#4AF626): gains only (value up, points added). Never body text
+- **Caution Amber** (#FFB020): questionable tags only
 
-Light
-- Canvas #F4F5F7, Panel #FFFFFF, Raised #ECEEF1, Ink #14161A, Muted #5F6672, Faint #9AA0AA, Amber #A8700F (text-safe), Slate #6B7486
-
-Status (data, not decoration): Gain Green #3CC27E / #1E8E52, Loss Red #EF5D52 / #C9372D, Caution Orange #EE8B3A / #B9601A.
-Position tints, always at 22% over the panel with the full color as text: QB #E06A86, RB #3FBFA2, WR #6E95E8, TE #E39A55, K #9C8CE0, DEF uses Opponent Slate.
+Position color is gone. Positions read from the mono tag, not a tint.
 
 ## 3. Typography Rules
-- **Display:** Geist 700, tracking -0.04em on page titles, -0.045em on big numerals. Hierarchy comes from weight and color before size.
-- **Body:** Geist 400 to 600 at 15px, leading 1.5, max 65 characters.
-- **Mono:** Geist Mono for stat lines ("22/28, 363 yd, 4 TD") and other dense numeric metadata.
-- **Numbers:** tabular figures everywhere a number can change.
-- **Banned:** Inter, any serif, all-caps headlines. Small caps labels only on stat strips.
+- **Macro:** Archivo Black, uppercase, tracking -0.045em, leading 0.88, `clamp(2.6rem, 11vw, 4.75rem)` for page titles. Section titles in the same face at small sizes
+- **Body:** Archivo 400 to 700 for names and sentences
+- **Micro:** JetBrains Mono, uppercase, tracking 0.06em, 9 to 12px. All metadata, labels, nav, buttons, chips, projections
+- **Framing:** eyebrows wrapped as `[ LABEL ]` with red brackets
 
 ## 4. Component Stylings
-- **Buttons:** full pills. Primary is Chalk Ink on dark and Ink on light, never amber. Press scales to 0.97. No glows.
-- **Cards:** 20px corners, no border. A 1px hairline ring plus a soft tinted drop, and a lit top edge in dark mode. Inner blocks use 12px corners.
-- **Lineup rows:** slot pill, jersey, name with position and team, projection on the right. Byes read BYE with no number. Rows needing a Sleeper change get a 3px amber rail and the swap line underneath.
-- **Jerseys:** team palette only, real numbers from Sleeper, no logos or wordmarks.
-- **Chips and segmented controls:** pill shapes. The selected chip inverts to Ink on canvas.
-- **Inputs:** label above, error below, amber focus ring.
-- **Loaders:** skeleton rows the exact height of a lineup row. No spinners.
-- **Empty states:** one plain sentence saying what's missing and how to fill it.
+- **Corners:** 0 everywhere, avatars included
+- **Compartments:** 1px rule border, flat panel fill, no shadows, no gradients, no blur
+- **Buttons:** square, mono uppercase. Primary is hazard red with dark text; secondary is outlined
+- **Chips and segments:** joined square cells; selected inverts to phosphor on canvas
+- **Slot tags:** outlined mono boxes. Bench and taxi faint, IR red
+- **Lineup rows:** swap rows get a red wash and a 3px red rail. Byes read BYE with no number
+- **Avatars:** square mugshot frames, slightly desaturated, team logo badge
+- **Tab bar (phone):** docked full width, phosphor top rule, mono labels split by rules, red top indicator on the active tab
 
 ## 5. Layout Principles
-- Phone first: one column, a floating glass tab bar, 16px side gutters, 44px minimum touch targets.
-- Desktop: sidebar, main column, live wire rail. Content max width 1400px.
-- Lists over cards. Group with hairlines and space; cards only where a group needs to lift off the canvas.
-- No horizontal page scroll. Chip rows scroll inside their own track.
+- Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main, live wire rail
+- Lists over cards; compartments only where a group needs separation
+- No horizontal page scroll
 
-## 6. Motion & Interaction
-- Ease: cubic-bezier(0.32, 0.72, 0, 1) for UI transitions; springs (damping 1.0, response 0.4) for sheets and drags.
-- Lists rise in once on mount, 30ms apart, capped at 180ms.
-- Hover tints rows on pointer devices only. Press feedback on every tappable row and button.
-- Transform and opacity only. Everything collapses to a crossfade under reduced motion.
+## 6. Texture & Motion
+- Fixed, pointer-events-none scanline overlay on `body::after`
+- Press feedback: translateY(1px). No entrance animations on lists
 
 ## 7. Anti-Patterns (Banned)
-- No emojis, no Inter, no serif, no pure black
-- No second accent color, no purple or neon glows, no gradient headline text
-- No team logos or trademarked marks
-- No field or formation views for setting a lineup; the list is the lineup
-- No internal labels in the UI ("v1 preview", phase badges)
-- No fake precision, no "John Doe" names, no AI cliches ("elevate", "seamless", "unleash")
-- No em dashes in copy
-- No scroll cues, bouncing chevrons or perpetual decorative loops
+- Rounded corners, glass, backdrop blur, soft or tinted shadows, gradients
+- A second accent; green as decoration
+- Light mode
+- Emojis, team wordmarks, field views for lineups, em dashes in copy, AI cliches
