@@ -9,6 +9,7 @@ import {
   irReport, irLabel, parseTag,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
+import { Boot } from "./components/Boot";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
@@ -487,15 +488,7 @@ export default function App() {
 
   const reload = () => setSession((s) => ({ ...s }));
 
-  if (status === "loading") {
-    return (
-      <div className="boot" role="status" aria-live="polite">
-        <span className="brand-mark big" aria-hidden="true">“</span>
-        <p className="boot-step">{step}…</p>
-        <span className="boot-bar"><span /></span>
-      </div>
-    );
-  }
+  if (status === "loading") return <Boot step={step} />;
   if (status === "error") {
     return (
       <div className="boot">
