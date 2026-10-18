@@ -3599,3 +3599,24 @@ html:root:not(#_) .heatwave, html:root:not(#_) .ice { flex: none; overflow: visi
   html:root:not(#_) .ice { animation: ice-glint 2.8s ease-in-out infinite; }
   @keyframes ice-glint { 0%, 70%, 100% { opacity: 0.75; } 80% { opacity: 1; filter: drop-shadow(0 0 3px #CFEFFF); } }
 }
+/* Live second line is the on-pace finish, colored against projection like Sleeper; finals stay plain */
+html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace { font-weight: 600; }
+html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace.up { color: var(--good, #6BD58A); }
+html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace.down { color: #FF7A66; }
+html:root:not(#_) .wk-pts.vs-up b, html:root:not(#_) .wk-pts.vs-down b, html:root:not(#_) .lu-pts.final b { color: var(--ink); }
+/* Final: set in stone. The number is engraved on a small slab; it stamps down once if you watched it go final. */
+html:root:not(#_) :is(.lu-pts, .wk-pts).cemented b {
+  padding: 3px 8px 2px; border-radius: 8px; color: #C9CEC9;
+  background: linear-gradient(180deg, #2E322F, #232624);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+html:root:not(#_) :is(.lu-pts, .wk-pts).cemented small { color: var(--faint); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) :is(.lu-pts, .wk-pts).cemented.stamp b { animation: cement-stamp 520ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+  @keyframes cement-stamp {
+    0% { transform: translateY(-10px) scale(1.18); opacity: 0; }
+    45% { transform: translateY(0) scale(0.96); opacity: 1; }
+    62% { transform: translateX(-1.5px); } 76% { transform: translateX(1px); } 100% { transform: none; }
+  }
+}

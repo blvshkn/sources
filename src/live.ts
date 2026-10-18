@@ -7,8 +7,33 @@ export interface Live {
   points: Record<string, number>;
   games: Record<string, GameState>;
   teamPts: Record<string, number>;
+  /** Share of each live game still to play, 0 to 1, by NFL team. From ESPN's public scoreboard (Sleeper has no clock). */
+  left: Record<string, number>;
   at: number;
 }
+
+// ESPN abbreviations that differ from Sleeper's
+const ESPN_FIX: Record<string, string> = { WSH: "WAS", LA: "LAR", JAC: "JAX" };
+type EComp = { status?: { period?: number; clock?: number; type?: { state?: string } }; competitors?: { team?: { abbreviation?: string } }[] };
+/** Fraction of each in-progress game left, from ESPN's scoreboard. Empty when it can't be reached. */
+async function clocks(): Promise<Record<string, number>> {
+  try {
+    const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
+    if (!r.ok) return {};
+    const d = await r.json() as { events?: { competitions?: EComp[] }[] };
+    const out: Record<string, number> = {};
+    for (const e of d.events ?? []) for (const c of e.competitions ?? []) {
+      if (c.status?.type?.state !== "in") continue;
+      const q = c.status.period ?? 1, sec = c.status.clock ?? 0;
+      const left = q > 4 ? 0 : Math.max(0, Math.min(1, ((4 - q) * 900 + sec) / 3600));
+      for (const t of c.competitors ?? []) { const a = t.team?.abbreviation; if (a) out[ESPN_FIX[a] ?? a] = left; }
+    }
+    return out;
+  } catch { return {}; }
+}
+
+/** Where a live player is on pace to finish: points so far plus his projection for the part of the game left. */
+export const onPace = (pts: number, proj: number, left: number | undefined) => (left === undefined ? null : pts + proj * left);
 
 type SMatchup = { roster_id: number; players_points?: Record<string, number> | null; points?: number | null };
 type SGame = { week: number; home: string; away: string; status: string };
@@ -21,7 +46,7 @@ function seed(): Live {
   const h = LEAGUE?.history?.[WEEK];
   const teamPts: Record<string, number> = {};
   if (h) { teamPts[YOU.id] = h.total; if (OPPONENT_ID && h.oppTotal !== undefined) teamPts[OPPONENT_ID] = h.oppTotal; }
-  return { points: h?.points ?? {}, games: LEAGUE?.games ?? {}, teamPts, at: Date.now() };
+  return { points: h?.points ?? {}, games: LEAGUE?.games ?? {}, teamPts, left: {}, at: Date.now() };
 }
 
 /** Sample data so the demo league shows what a Sunday looks like: one game final, one in progress. */
@@ -31,6 +56,7 @@ function demo(): Live {
   const teamPts: Record<string, number> = {};
   const done = ["MIA", "KC", "CAR", "BAL", "IND"]; const live = ["BUF", "CIN", "PHI", "TB"];
   done.forEach((t) => (games[t] = "complete")); live.forEach((t) => (games[t] = "in_game"));
+  const left: Record<string, number> = { BUF: 0.4, CIN: 0.55, PHI: 0.25, TB: 0.6 };
   const sideTotal = (ids: string[]) => ids.reduce((a, id) => {
     const p = LEAGUE.players[id]; if (!p) return a;
     const g = games[p.nfl]; if (!g) return a;
@@ -43,14 +69,15 @@ function demo(): Live {
   const starters = (ids: string[]) => lineupFor(ids, true).slots.map((x) => x.player?.id).filter(Boolean) as string[];
   sideTotal(YOU.roster); teamPts[YOU.id] = Math.round(starters(YOU.roster).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10;
   if (OPPONENT_ID) { const r = teamById(OPPONENT_ID).roster; sideTotal(r); teamPts[OPPONENT_ID] = Math.round(starters(r).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10; }
-  return { points, games, teamPts, at: Date.now() };
+  return { points, games, teamPts, left, at: Date.now() };
 }
 
 async function poll(): Promise<Live | null> {
   try {
-    const [ms, sched] = await Promise.all([
+    const [ms, sched, left] = await Promise.all([
       fetch(`https://api.sleeper.app/v1/league/${LEAGUE.id}/matchups/${WEEK}`).then((r) => (r.ok ? r.json() : null)) as Promise<SMatchup[] | null>,
       fetch(`https://api.sleeper.com/schedule/nfl/regular/${LEAGUE.season}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<SGame[] | null>,
+      clocks(),
     ]);
     if (!ms) return null;
     const points: Record<string, number> = {}; const teamPts: Record<string, number> = {};
@@ -60,7 +87,7 @@ async function poll(): Promise<Live | null> {
       const st: GameState = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
       games[g.home] = st; games[g.away] = st;
     });
-    return { points, games, teamPts, at: Date.now() };
+    return { points, games, teamPts, left, at: Date.now() };
   } catch { return null; }
 }
 
@@ -86,7 +113,11 @@ function schedule() {
 /** Live scoring that refreshes itself while games are on. Shared across every component that uses it. */
 export function useLive(): Live {
   const [v, setV] = useState<Live>(() => {
-    if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) { current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule(); }
+    if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
+      current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
+      // Pick up the game clock right away so on-pace numbers show without waiting for the first poll
+      if (LEAGUE.mode === "live" && anyLive(current.games)) clocks().then((left) => { if (current && Object.keys(left).length) { current = { ...current, left }; subs.forEach((f) => f(current!)); } });
+    }
     return current;
   });
   useEffect(() => {

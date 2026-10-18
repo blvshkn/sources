@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
-import { Live, useLive } from "../live";
+import { Live, useLive, onPace } from "../live";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
@@ -69,15 +69,15 @@ function IrBlock() {
 const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
 
 /** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
-type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number };
-const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0 });
+type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number; left?: number };
+const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0, left: live?.left?.[nfl] });
 
 /** Points column: projection before kickoff, live points (with the projection beneath) during the game, final after. */
-/** How a player is doing against his projection. On fire once he passes it. Heating up while his game is on and
- *  he's within 15 percent, on track to pass it. Cold when a finished game comes up more than 15 percent short.
- *  Mid game, being behind isn't news (Sleeper gives no game clock to judge pace), so it stays neutral. */
-export const heatOf = (pts: number, proj: number, final: boolean): "fire" | "heating" | "cold" | null =>
-  proj <= 0 ? (pts > 0 ? "fire" : null) : pts >= proj ? "fire" : !final && pts >= proj * 0.85 ? "heating" : final && pts < proj * 0.85 ? "cold" : null;
+/** Live only, the way Sleeper reads it: on fire once he's past his projection, heating up when he's on pace to pass
+ *  it, cold when he's on pace to finish more than 15 percent short. Pace needs the game clock; without it, no read.
+ *  Once the game is final there's no effect, just what he scored against what he was projected. */
+export const heatOf = (pts: number, proj: number, pace: number | null): "fire" | "heating" | "cold" | null =>
+  pts >= proj && proj > 0 ? "fire" : pace === null || proj <= 0 ? null : pace >= proj ? "heating" : pace < proj * 0.85 ? "cold" : null;
 
 /** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. */
 export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => heat === "fire" ? <Flame /> : heat === "heating" ? (
@@ -99,16 +99,35 @@ export const Flame = () => (
   </svg>
 );
 
-function PtsCell({ g, proj }: { g: GameNow; proj: number }) {
-  if (g.state === "in_game" || g.state === "complete") {
-    const final = g.state === "complete", heat = heatOf(g.pts, proj, final);
-    const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", closing in on his projection" : heat === "cold" ? ", short of his projection" : "";
+/** Players whose game was live while you had the app open, and finals that have already stamped. */
+const wasLive = new Set<string>(), stamped = new Set<string>();
+export const markLive = (id: string) => wasLive.add(id);
+
+/** A final score set in stone: the number sits engraved on a small slab. If you watched the game go final, it stamps
+ *  down once; finals that were already final when you opened the app just sit there, and tab switches never replay it. */
+export function FinalPts({ id, pts, proj, cls }: { id: string; pts: number; proj: number; cls: string }) {
+  const stamp = useRef(wasLive.has(id) && !stamped.has(id));
+  if (stamp.current) stamped.add(id);
+  return (
+    <span className={`${cls} final cemented${stamp.current ? " stamp" : ""}`} aria-label={`Final, ${pts.toFixed(1)} points, projected ${proj.toFixed(1)}`}>
+      <b>{pts.toFixed(1)}</b><small>{proj.toFixed(1)}</small>
+    </span>
+  );
+}
+
+function PtsCell({ id, g, proj }: { id: string; g: GameNow; proj: number }) {
+  if (g.state === "in_game") {
+    markLive(id);
+    const pace = onPace(g.pts, proj, g.left), heat = heatOf(g.pts, proj, pace);
+    const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
     return (
-      <span className={`lu-pts ${final ? "final" : "live"}${heat ? ` heat-${heat}` : ""}`} aria-label={`${final ? "Final, " : ""}${g.pts.toFixed(1)} points${final ? "" : " so far"}, projected ${proj.toFixed(1)}${note}`}>
-        <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
+      <span className={`lu-pts live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
+        <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
+        {pace !== null ? <small className={`lu-pace ${pace >= proj ? "up" : "down"}`}>{pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
   }
+  if (g.state === "complete") return <FinalPts id={id} pts={g.pts} proj={proj} cls="lu-pts" />;
   return <span className="lu-pts">{proj.toFixed(1)}</span>;
 }
 /** Replaces the kickoff time once the game starts. */
@@ -133,7 +152,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: st
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
         {p.status && !onBye(p.nfl) && (g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
-      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell g={g} proj={eff(p, true)} />}
+      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} />}
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -157,7 +176,7 @@ function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
       </span>
-      {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell g={g} proj={specialPts(p)} />}
+      {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
       {swapFrom && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />

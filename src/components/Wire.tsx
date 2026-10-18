@@ -6,8 +6,8 @@ import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, e
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { useLive } from "../live";
-import { MatchupStrip, heatOf, HeatMark } from "./Roster";
+import { useLive, onPace } from "../live";
+import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -199,9 +199,13 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
  *  with the flame once he's past his projection. */
 function WkPts({ p, live }: { p: Player; live: ReturnType<typeof useLive> }) {
   const g = live.games[p.nfl] ?? null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
-  if (g !== "in_game" && g !== "complete") return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
-  const heat = heatOf(pts, proj, g === "complete");
-  return <span className={`wk-pts${g === "in_game" ? " live" : ""}${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small>{g === "complete" ? "final" : `proj ${proj.toFixed(1)}`}</small></span>;
+  if (g === "in_game") {
+    markLive(p.id);
+    const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${pace >= proj ? "up" : "down"}` : undefined}>{pace !== null ? pace.toFixed(1) : `proj ${proj.toFixed(1)}`}</small></span>;
+  }
+  if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
+  return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
 }
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
