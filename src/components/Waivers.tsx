@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
-import { AiLabel, Icon, Seg, Stamp } from "./ui";
+import { AiLabel, Icon, Seg } from "./ui";
 import { Avatar } from "./Avatar";
+
+/** "$40-$90", or "Up to $150" when the low end is zero. */
+const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -31,17 +34,43 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         </div>}
       </header>
 
-      {top && (
-        <section className="card nudge nudge-waiver">
-          <div className="row wrap" style={{ justifyContent: "space-between" }}>
-            <div className="row wrap"><Stamp>Waivers</Stamp><span className="deadline"><Icon name="clock" size={12} />{DEADLINES.waivers}</span></div>
-            <AiLabel />
-          </div>
-          <h3>{top.fa.name} is your best add. <em>{FAAB.enabled ? `Bid ${top.bid[0]} to ${top.bid[1]} percent.` : "Put in a claim."}</em></h3>
-          <p className="small">{top.fa.why}</p>
-          <p className="small muted">{top.fa.name} adds {fmt(top.gain)} to your starters this week{irMove ? `. Move ${irMove.name} to IR first and you won't need to drop anyone` : top.drop ? `. Drop ${top.drop.name} (${eff(top.drop).toFixed(1)} projected)` : ""}.</p>
-        </section>
-      )}
+      {top && (() => {
+        const hi = bidDollars(top.bid[1]);
+        const starts = top.gain > 0.05;
+        const game = gameLine(PLAYERS[top.fa.id] ?? {});
+        return (
+          <section className="card pick" aria-label="Top pickup">
+            <div className="pick-head"><span className="pick-label">Top pickup</span><AiLabel /></div>
+            <div className="pick-who">
+              <Avatar p={top.fa} size={52} />
+              <div className="pick-id">
+                <h3 className="pick-name">{top.fa.name}</h3>
+                <span className="wv-meta"><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b>{top.fa.nfl}{game && <span className="lu-game">· {game}</span>}</span>
+              </div>
+            </div>
+            <dl className="pick-stats">
+              <div><dt>This week</dt><dd>{top.fa.proj.toFixed(1)}</dd></div>
+              <div><dt>Per week after</dt><dd>{top.value.toFixed(1)}</dd></div>
+              <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid) : "Priority"}</dd></div>
+            </dl>
+            {!/^Projects /.test(top.fa.why) && <p className="pick-why">{top.fa.why}</p>}
+            <ul className="pick-plan">
+              <li className={starts ? "good" : ""}><Icon name={starts ? "check" : "eye"} size={16} />
+                {starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench depth for now. Your starters don't change this week.</span>}
+              </li>
+              <li><Icon name="trade" size={16} />
+                {irMove ? <span>Move <b>{irMove.name}</b> to IR first. No drop needed.</span>
+                  : top.drop ? <span>Drop <b>{top.drop.name}</b> ({eff(top.drop).toFixed(1)} projected).</span>
+                  : <span>You have an open roster spot.</span>}
+              </li>
+            </ul>
+            <a className="btn btn-primary pick-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${top.drop && !irMove ? `, drop ${top.drop.name}` : ""}.`)}>
+              Claim in Sleeper
+            </a>
+          </section>
+        );
+      })()}
 
       <div className="wv-filters">
         <div className="chips" role="group" aria-label="Position">
@@ -69,7 +98,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                 <span className="wv-proj"><span>Proj</span><b>{r.value.toFixed(1)}</b></span>
                 <span className="wv-stats">
                   <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : ""}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
-                  <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? `$${bidDollars(r.bid[0])}-$${bidDollars(r.bid[1])}` : r.tier}</b></span>
+                  <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.tier}</b></span>
                   {r.fa.rostered !== undefined && <span><i>Rostered</i><b>{r.fa.rostered}%</b></span>}
                   {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{r.fa.adds >= 1000 ? `${(r.fa.adds / 1000).toFixed(1)}K` : r.fa.adds}</b></span>}
                 </span>
@@ -80,7 +109,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   <div className="wv-grid">
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {r.tier.toLowerCase()} tier</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{r.drop ? <><b>{r.drop.name}</b> ({eff(r.drop).toFixed(1)} proj, your lowest bench player)</> : "Open roster spot"}</p></div>
-                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{r.bid[0]} to {r.bid[1]} percent</b> of budget</> : <>Rolling waiver priority in your league</>}</p></div>
+                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && <BidHistory tier={r.tier} range={r.bid} />}
                   <div className="row wrap">
