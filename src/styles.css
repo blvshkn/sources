@@ -1683,3 +1683,4 @@ p, .page-sub { max-width: 65ch; }
 .ti-side .ti-label { grid-row: 1 / span 4; padding-top: 0; align-self: center; }
 .ti-side .ti-player + .ti-player { margin-top: 8px; }
 .ti-odds { white-space: nowrap; flex: none; }
+.vb-name { display: flex; align-items: center; gap: 6px; min-width: 0; } .vb-name { overflow: hidden; } .vb-who .vb-name { white-space: nowrap; text-overflow: ellipsis; display: block; }
