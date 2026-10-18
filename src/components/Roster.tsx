@@ -1,4 +1,4 @@
-import { MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK } from "../data";
+import { MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, PosBadge, Seg, Stamp, StatusPill } from "./ui";
 
@@ -22,6 +22,46 @@ function Token({ p, slot }: { p: Player; slot: string }) {
       <div className="token-name">{p.name}</div>
       <div className="token-proj">{eff(p, true).toFixed(1)}</div>
     </div>
+  );
+}
+
+/** Your starters lined up in an offensive formation on a football field, broadcast style. */
+function Gridiron({ starters }: { starters: { slot: string; player: Player }[] }) {
+  // 5-column grid. Row 1 is on the line of scrimmage, row 2 is off the ball, row 3 is the backfield.
+  const grid: (({ slot: string; player: Player }) | null)[][] = [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]];
+  const extra: { slot: string; player: Player }[] = [];
+  const place = (x: { slot: string; player: Player }, spots: [number, number][]) => {
+    const spot = spots.find(([r, c]) => !grid[r][c]);
+    if (spot) grid[spot[0]][spot[1]] = x; else extra.push(x);
+  };
+  const of = (slot: string) => starters.filter((x) => x.slot === slot);
+  const te = of("TE");
+  of("WR").forEach((x) => place(x, [[0, 0], [0, 4], [1, 1], [1, 3], [1, 0]]));
+  of("QB").forEach((x) => place(x, [[1, 2], [2, 0]]));
+  of("SF").forEach((x) => place(x, [[1, 3], [1, 4], [2, 4]]));
+  of("RB").forEach((x) => place(x, [[2, 1], [2, 3], [2, 2]]));
+  of("FLEX").forEach((x) => place(x, [[2, 2], [2, 4], [2, 0], [1, 4]]));
+  te.slice(1).forEach((x) => place(x, [[1, 3], [1, 4]]));
+  const cell = (x: { slot: string; player: Player } | null, i: number) => <div key={i} className="g-cell">{x && <Token p={x.player} slot={x.slot} />}</div>;
+  return (
+    <section className="gridiron" aria-label="Optimal starting lineup on a football field">
+      <span className="hash left" aria-hidden="true" /><span className="hash right" aria-hidden="true" />
+      <span className="yard-num l" style={{ top: "6%" }} aria-hidden="true">4 0</span><span className="yard-num r" style={{ top: "6%" }} aria-hidden="true">4 0</span>
+      <span className="yard-num l" style={{ top: "54%" }} aria-hidden="true">3 0</span><span className="yard-num r" style={{ top: "54%" }} aria-hidden="true">3 0</span>
+      <div className="first-down" aria-hidden="true" />
+      <div className="g-row">
+        {cell(grid[0][0], 0)}
+        <div className="g-cell" />
+        <div className="g-cell g-ol"><span className="ol" aria-hidden="true"><i /><i /><i className="c" /><i /><i /></span></div>
+        <div className="g-cell">{te[0] && <Token p={te[0].player} slot="TE" />}</div>
+        {cell(grid[0][4], 4)}
+      </div>
+      <div className="los" aria-hidden="true" />
+      <div className="g-row g-five">{grid[1].map(cell)}</div>
+      <div className="g-row g-five">{grid[2].map(cell)}</div>
+      {extra.length > 0 && <div className="g-row g-five">{extra.map((x, i) => cell(x, i))}</div>}
+      <span className="g-legend" aria-hidden="true"><span className="lg-los" />Line of scrimmage<span className="lg-fd" />First down</span>
+    </section>
   );
 }
 
@@ -105,7 +145,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             </div>
           ))}
           <div className="row wrap">
-            <a className="btn btn-primary btn-sm" href="https://sleeper.com/" target="_blank" rel="noreferrer"><Icon name="app" size={16} />Apply in Sleeper</a>
+            <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><Icon name="app" size={16} />Apply in Sleeper</a>
             <span className="tiny muted">Sleeper's API is read-only, so you make the swap there.</span>
           </div>
         </section>
@@ -113,11 +153,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
 
       <div className="roster-grid">
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
-          <section className="field" aria-label="Optimal starting lineup">
-            <div className="field-row">{[...by("QB"), ...by("SF")].map((x) => <Token key={x.player.id} p={x.player} slot={x.slot} />)}</div>
-            <div className="field-row">{[...by("RB"), flex].filter(Boolean).map((x) => <Token key={x.player.id} p={x.player} slot={x.slot} />)}</div>
-            <div className="field-row">{[...by("WR"), ...by("TE")].map((x) => <Token key={x.player.id} p={x.player} slot={x.slot} />)}</div>
-          </section>
+          <Gridiron starters={s} />
           {(closeCall || injured.length > 0 || benchOut.length > 0) && (
             <section className="card nudge">
               <Stamp>Per sources</Stamp>
@@ -179,7 +215,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           return (
             <div key={pid} className="wiwt-player">
               <div className="row wrap" style={{ justifyContent: "space-between" }}>
-                <div className="row"><PosBadge pos={playerById(pid).pos} /><b>{playerById(pid).name}</b><span className="tiny muted">{real.length} of 9 teams can meet your price</span></div>
+                <div className="row"><PosBadge pos={playerById(pid).pos} /><b>{playerById(pid).name}</b><span className="tiny muted">{real.length} of {TEAMS.length - 1} teams can meet your price</span></div>
                 <Seg label="Price type" value={price.mode} onChange={(m) => setPrice(pid, { mode: m, amount: m === "pts" ? 3 : 25 })}
                   options={[{ v: "pts", label: "Pts a week" }, { v: "pct", label: "% over value" }]} />
               </div>

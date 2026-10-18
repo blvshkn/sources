@@ -3,7 +3,7 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, FreeAgent, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -24,7 +24,14 @@ export const formatLabel = (f: Format = FORMAT) =>
 // Projections are licensed in PPR. Receptions are estimated by position so
 // Half, Standard and TE Premium can be derived from the same number.
 const REC_SHARE: Record<Pos, number> = { QB: 0, RB: 0.17, WR: 0.32, TE: 0.36 };
-export function scored(p: { pos: Pos; proj: number }) {
+export function scored(p: Pick<Player, "pos" | "proj" | "pts" | "wk">, thisWeek = false) {
+  // Live players carry real projections for every scoring type.
+  const src = thisWeek && p.wk !== undefined ? p.wk : p.pts;
+  if (src) {
+    let v = FORMAT.scoring === "ppr" ? src.ppr : FORMAT.scoring === "half" ? src.half : src.std;
+    if (FORMAT.tePremium && p.pos === "TE") v += src.rec * 0.5;
+    return v;
+  }
   const rec = p.proj * REC_SHARE[p.pos];
   let v = p.proj;
   if (FORMAT.scoring === "half") v -= rec * 0.5;
@@ -34,17 +41,21 @@ export function scored(p: { pos: Pos; proj: number }) {
 }
 
 export type SlotName = "QB" | "RB" | "WR" | "TE" | "FLEX" | "SF";
-export const slotsFor = (): SlotName[] =>
-  FORMAT.superflex ? ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX", "SF"] : ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX"];
+export const slotsFor = (): SlotName[] => {
+  const base = LEAGUE.slots.filter((s) => s !== "SF") as SlotName[];
+  const sf = LEAGUE.slots.filter((s) => s === "SF").length;
+  return FORMAT.superflex ? [...base, ...Array<SlotName>(Math.max(1, sf)).fill("SF")] : base;
+};
 const FLEX_OK: Pos[] = ["RB", "WR", "TE"];
 const fits = (slot: SlotName, pos: Pos) =>
   slot === "FLEX" ? FLEX_OK.includes(pos) : slot === "SF" ? true : pos === slot;
-export const ROSTER_MAX = 13;
+export const rosterMax = () => LEAGUE.rosterMax;
 
 // Trades and needs use rest-of-season weekly projections (a bye shouldn't sink a deal).
 // The lineup screen passes thisWeek = true so byes count as zero.
-export const isOut = (p: Player, thisWeek = false) => p.status === "O" || (thisWeek && onBye(p.nfl));
-export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p)));
+export const isOut = (p: Player, thisWeek = false) =>
+  (p.status === "O" && (p.longTerm || thisWeek)) || (thisWeek && (onBye(p.nfl) || p.wk === null));
+export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p, thisWeek)));
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export interface Lineup {
@@ -83,7 +94,7 @@ export function groupPoints(l: Lineup): Record<Group, number> {
 }
 
 export function leagueAvg(): Record<Group, number> {
-  const key = fkey(FORMAT);
+  const key = fkey(FORMAT) + leagueKey();
   if (avgCache?.key === key) return avgCache.avg;
   const sums: Record<Group, number> = { QB: 0, RB: 0, WR: 0, TE: 0, FLEX: 0, SF: 0 };
   TEAMS.forEach((t) => {
@@ -173,10 +184,11 @@ export interface Trade {
 }
 
 function settle(roster: string[], incoming: string[]): { ids: string[]; dropped: string[] } {
-  if (roster.length <= ROSTER_MAX) return { ids: roster, dropped: [] };
+  const max = rosterMax();
+  if (roster.length <= max) return { ids: roster, dropped: [] };
   const lu = lineupFor(roster);
   const cut = lu.bench.filter((p) => !incoming.includes(p.id)).sort((a, b) => eff(a) - eff(b))
-    .slice(0, roster.length - ROSTER_MAX).map((p) => p.id);
+    .slice(0, roster.length - max).map((p) => p.id);
   return { ids: roster.filter((id) => !cut.includes(id)), dropped: cut };
 }
 
@@ -428,31 +440,40 @@ export function suggestTags(lineup: Lineup, myTags: Record<string, MyTag>, tags:
 
 // ---- Waivers and FAAB -----------------------------------------------------
 
-export interface WaiverRec { fa: FreeAgent; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: string }
+
+const DEFAULT_BIDS: Record<BidTier["tier"], number[]> = { Starter: [10, 14, 18, 24], Flex: [4, 6, 9], Depth: [1, 2, 3], Stash: [0, 1, 2] };
+export const bidsFor = (tier: BidTier["tier"]): { bids: number[]; estimated: boolean } => {
+  const t = FAAB_HISTORY.find((h) => h.tier === tier);
+  return t && t.bids.length >= 2 ? { bids: t.bids, estimated: !!t.estimated } : { bids: DEFAULT_BIDS[tier], estimated: true };
+};
+
+export interface WaiverRec { fa: FreeAgent; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"]; estimated: boolean }
 
 export function waiverRecs(you: Team): WaiverRec[] {
   const base = lineupFor(you.roster, true);
   return FREE_AGENTS.map((fa) => {
-    // Pretend the free agent is on your roster for a moment
-    const temp: Player = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj };
-    PLAYERS[fa.id] = temp;
+    // Live free agents are already in PLAYERS; demo ones get a temporary entry.
+    const existed = !!PLAYERS[fa.id];
+    if (!existed) PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj };
+    const p = PLAYERS[fa.id];
     const withFa = lineupFor([...you.roster, fa.id], true);
     const gain = round1(withFa.total - base.total);
     // Drop by rest-of-season value, never by a one-week bye
-    const drop = you.roster.map(playerById).filter((p) => !withFa.slots.some((sl) => sl.player?.id === p.id)).sort((a, b) => eff(a) - eff(b))[0] ?? null;
-    const value = eff(temp);
-    const tier = gain >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
-    const bids = FAAB_HISTORY.find((h) => h.tier === tier)!.bids.slice().sort((a, b) => a - b);
-    const q = (p: number) => bids[Math.min(bids.length - 1, Math.max(0, Math.round(p * (bids.length - 1))))];
-    delete PLAYERS[fa.id];
-    return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier };
+    const drop = you.roster.map(playerById).filter((x) => !withFa.slots.some((sl) => sl.player?.id === x.id)).sort((a, b) => eff(a) - eff(b))[0] ?? null;
+    const value = eff(p);
+    const tier: BidTier["tier"] = gain >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
+    const { bids, estimated } = bidsFor(tier);
+    const sorted = bids.slice().sort((a, b) => a - b);
+    const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
+    if (!existed) delete PLAYERS[fa.id];
+    return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated };
   }).sort((a, b) => b.gain - a.gain || b.value - a.value);
 }
 export const bidDollars = (pct: number) => Math.round((pct / 100) * FAAB.budget);
 
 // ---- Manager tendencies ---------------------------------------------------
 
-export interface Tendency { teamId: string; trades: number; offers: number; closeRate: number; buys: Pos[]; rookieShare: number; summary: string }
+export interface Tendency { teamId: string; trades: number; offers: number | null; closeRate: number | null; buys: Pos[]; rookieShare: number; summary: string }
 
 export function tendencies(teamId: string): Tendency {
   const done = COMPLETED_TRADES.filter((t) => t.a === teamId || t.b === teamId);
@@ -461,16 +482,16 @@ export function tendencies(teamId: string): Tendency {
   got.forEach((g) => (count[g.pos] = (count[g.pos] ?? 0) + 1));
   const buys = (Object.keys(count) as Pos[]).sort((a, b) => (count[b] ?? 0) - (count[a] ?? 0)).filter((p) => (count[p] ?? 0) >= 1).slice(0, 2);
   const rookieShare = got.length ? got.filter((g) => g.rookie).length / got.length : 0;
-  const offers = OFFERS_RECEIVED[teamId] ?? 0;
-  const closeRate = offers ? done.length / offers : 0;
+  const offers = OFFERS_RECEIVED ? OFFERS_RECEIVED[teamId] ?? 0 : null;
+  const closeRate = offers ? done.length / offers : null;
   const mgr = teamById(teamId).manager;
   const parts: string[] = [];
-  if (!done.length) parts.push(`${mgr} hasn't completed a trade in the last year. Expect a slow reply and a hard bargain.`);
+  if (!done.length) parts.push(`${mgr} hasn't completed a trade ${OFFERS_RECEIVED ? "in the last year" : "this season"}. Expect a slow reply and a hard bargain.`);
   else {
-    parts.push(`${mgr} has closed ${done.length} of ${offers} offers.`);
+    parts.push(closeRate !== null ? `${mgr} has closed ${done.length} of ${offers} offers.` : `${mgr} has made ${done.length} trade${done.length === 1 ? "" : "s"} this season.`);
     if (buys.length) parts.push(`Usually buys ${buys.join(" and ")}.`);
     if (rookieShare >= 0.5) parts.push("Chases rookies, so lead with youth.");
-    else if (closeRate >= 0.4) parts.push("Says yes more than most. Lead with a clean 1-for-1.");
+    else if (closeRate !== null ? closeRate >= 0.4 : done.length >= 2) parts.push("Says yes more than most. Lead with a clean 1-for-1.");
     else parts.push("Tough to close. Make the first offer clearly fair.");
   }
   return { teamId, trades: done.length, offers, closeRate, buys, rookieShare, summary: parts.join(" ") };
@@ -489,7 +510,7 @@ export function parseTag(text: string): ParsedTag {
   const s = text.trim();
   if (!s) return { tag: null, reason: "Type what they said." };
   const team = TEAMS.filter((t) => !t.you).find((t) => new RegExp(`\\b${t.manager}\\b`, "i").test(s) || s.toLowerCase().includes(t.name.toLowerCase()));
-  if (!team) return { tag: null, reason: "Couldn't tell who said it. Start with their name, like \"Mike said…\"." };
+  if (!team) return { tag: null, reason: `Couldn't tell who said it. Start with their name, like "${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said…".` };
   const lower = s.toLowerCase();
   let kind: ManagerTag["kind"] | null = null;
   if (/(not interested|doesn'?t want|does not want|pass(ed)? on|no thanks|don'?t want)/.test(lower)) kind = "notInterested";
@@ -562,8 +583,8 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
     const r = waiverRecs(YOU)[0];
     return {
-      text: `Per sources, ${r.fa.name} is your best add. Bid ${r.bid[0]} to ${r.bid[1]} percent.`,
-      points: [`Adds ${fmt(r.gain)} to your starters this week.`, r.drop ? `Drop ${r.drop.name} (${eff(r.drop).toFixed(1)} projected).` : "You have an open spot.", `Based on ${FAAB_HISTORY.find((h) => h.tier === r.tier)!.bids.length} winning ${r.tier.toLowerCase()} bids in your league this year.`],
+      text: `Per sources, ${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
+      points: [`Adds ${fmt(r.gain)} to your starters this week.`, r.drop ? `Drop ${r.drop.name} (${eff(r.drop).toFixed(1)} projected).` : "You have an open spot.", r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
       links: [{ label: "Open waivers", tab: "waivers" }],
     };
   }
@@ -589,7 +610,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   }
   return {
     text: "I can answer questions about your league's rosters, needs, trades, lineup and waivers.",
-    points: ["Try: \"Who needs a WR most?\"", "\"What would it take to get Gibbs?\"", "\"Who should I start at flex?\""],
+    points: ["Try: \"Who needs a WR most?\"", "\"Who should I trade with?\"", "\"Who should I start at flex?\""],
     links: [],
   };
 }

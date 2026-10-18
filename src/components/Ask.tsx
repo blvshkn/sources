@@ -4,9 +4,8 @@ import { AiLabel, Icon } from "./ui";
 
 type Msg = { id: number; from: "you" | "sources"; q?: string; a?: Answer };
 
-const STARTERS = ["Who needs a WR most?", "What would it take to get Gibbs?", "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", "What does Mike need?"];
 
-export function Ask({ answer, onLink }: { answer: (q: string) => Answer; onLink: (l: Answer["links"][number]) => void }) {
+export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answer; onLink: (l: Answer["links"][number]) => void; starters: string[] }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
   const end = useRef<HTMLDivElement>(null);
@@ -51,7 +50,7 @@ export function Ask({ answer, onLink }: { answer: (q: string) => Answer; onLink:
         ))}
         <div ref={end} />
         <div className="chips-row">
-          {STARTERS.map((s) => <button key={s} className="chip-btn" onClick={() => send(s)}>{s}</button>)}
+          {starters.map((s) => <button key={s} className="chip-btn" onClick={() => send(s)}>{s}</button>)}
         </div>
         <form className="chat-input" onSubmit={(e) => { e.preventDefault(); send(q); }}>
           <label htmlFor="ask" className="sr-only">Ask a question about your league</label>

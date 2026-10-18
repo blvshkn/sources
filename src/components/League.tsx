@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ManagerTag, playerById, Pos, POS_ORDER, YOU } from "../data";
+import { ManagerTag, playerById, Pos, POS_ORDER, YOU, LEAGUE_NAME } from "../data";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
@@ -49,7 +49,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">Sample League · 10 teams</div>
+          <div className="eyebrow">{LEAGUE_NAME} · {needs.length} teams</div>
           <h1 className="page-title">League Needs</h1>
           <p className="page-sub">Every starting slot measured against the league average. Red is where a team is hurting, which is where your offer lands.</p>
         </div>
@@ -143,7 +143,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
                 <div className="tend">
                   <div className="tend-stats">
                     <div><b className="num">{td.trades}</b><span>trades</span></div>
-                    <div><b className="num">{td.offers ? Math.round(td.closeRate * 100) : 0}%</b><span>close rate</span></div>
+                    <div><b className="num">{td.closeRate !== null ? `${Math.round(td.closeRate * 100)}%` : "n/a"}</b><span>close rate</span></div>
                     <div><b className="row" style={{ gap: 4 }}>{td.buys.length ? td.buys.map((p) => <PosBadge key={p} pos={p} />) : "None"}</b><span>buys</span></div>
                     <div><b className="num">{Math.round(td.rookieShare * 100)}%</b><span>rookies</span></div>
                   </div>

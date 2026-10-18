@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Format, FadeWeeks, Scoring } from "../engine";
+import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
+import { LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Phase, Seg } from "./ui";
 
 export type Level = "light" | "standard" | "hands";
@@ -36,8 +37,11 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay }: {
   username: string;
+  demo: boolean;
+  leagueFormat: LeagueFormat;
+  onRefresh: () => void;
   format: Format; setFormat: (f: Format) => void;
   level: Level; setLevel: (l: Level) => void;
   fade: FadeWeeks; setFade: (f: FadeWeeks) => void;
@@ -60,10 +64,15 @@ export function Settings({ username, format, setFormat, level, setLevel, fade, s
         <h2 className="section-title">League connection</h2>
         <div className="set-row">
           <span className="set-ic"><Icon name="plug" size={18} /></span>
-          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>Connected as @{username} · Sample League · read-only</span></span>
-          {confirm === "disconnect" ? (
-            <span className="row"><button className="btn btn-sm btn-danger" onClick={onDisconnect}>Disconnect</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
-          ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
+          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
+          {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}>Connect Sleeper</button> : (
+            <span className="row wrap">
+              <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
+              {confirm === "disconnect" ? (
+                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}>Disconnect</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
+              ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
+            </span>
+          )}
         </div>
         <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Sources connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
         <div className="table-wrap">
@@ -72,13 +81,13 @@ export function Settings({ username, format, setFormat, level, setLevel, fade, s
             <tbody>{PLATFORMS.map((p) => <tr key={p.name}><td><b>{p.name}</b></td><td>{p.how}</td><td>{p.when === "n/a" ? <span className="muted">n/a</span> : <Phase v={p.when} />}</td></tr>)}</tbody>
           </table>
         </div>
-        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>Replay first-run setup</button>
+        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Replay first-run setup" : "Switch league or account"}</button>
       </section>
 
       <section className="card settings-group">
         <h2 className="section-title">League format</h2>
         <div className="set-row">
-          <span className="grow"><b>Scoring</b><span className="small muted" style={{ display: "block" }}>Changes every projection, need and trade.</span></span>
+          <span className="grow"><b>Scoring</b><span className="small muted" style={{ display: "block" }}>{demo ? "Changes every projection, need and trade." : `Your league is set to ${formatLabel(leagueFormat)}. Changing it here only changes how Sources scores.`}</span></span>
           <Seg<Scoring> label="Scoring" value={format.scoring} onChange={(v) => setFormat({ ...format, scoring: v })}
             options={[{ v: "ppr", label: "PPR" }, { v: "half", label: "Half" }, { v: "std", label: "Standard" }]} />
         </div>
@@ -90,7 +99,7 @@ export function Settings({ username, format, setFormat, level, setLevel, fade, s
           <span className="grow"><b>TE Premium</b><span className="small muted" style={{ display: "block" }}>+0.5 per TE reception.</span></span>
           <Toggle label="TE Premium" on={format.tePremium} onChange={(v) => setFormat({ ...format, tePremium: v })} />
         </div>
-        <p className="tiny muted">Projections are licensed in PPR. Half, Standard and TE Premium are derived using estimated receptions by position.</p>
+        <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."}</p>
         <div className="table-wrap">
           <table className="tbl">
             <thead><tr><th>Format</th><th>When</th></tr></thead>

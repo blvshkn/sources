@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { Trade, fmt, needsFor } from "../engine";
-import { playerById, teamById } from "../data";
+import { playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
 import { AiLabel, Delta, Icon, PosBadge, Seg } from "./ui";
 
@@ -172,7 +172,7 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const primary = async () => {
     if (method === "text") { onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
     if (method === "group") { const ok = await copy(); onSent(ok ? "Copied for the group chat. Paste it in." : "Selected. Copy it and paste in the group chat.", "group chat"); }
-    if (method === "app") { const ok = await copy(); window.open(APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the pitch from the box.`, app); }
+    if (method === "app") { const ok = await copy(); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the pitch from the box.`, app); }
     if (method === "share") await share();
   };
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share…" }[method];

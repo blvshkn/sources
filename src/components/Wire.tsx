@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { playerById, teamById, YOU, Pos, ManagerTag, DEADLINES, UPDATED, WEEK } from "../data";
+import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict } from "../engine";
 import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp } from "./ui";
 
@@ -165,7 +165,7 @@ export function Wire({ you, nudges, followUps, briefing, coach, onOpen, onPitch,
       <section className="card snapshot" aria-label="Your team at a glance">
         <div className="snap"><span>{YOU.name}</span><b className="num">{YOU.record}</b><span>Record</span></div>
         <div className="snap"><span>Starters this week</span><b className="num">{you.lineup.total.toFixed(1)}</b><span>Projected points</span></div>
-        <div className="snap"><span>League power rank</span><b className="num">#{you.rank}</b><span>of 10 by starting lineup</span></div>
+        <div className="snap"><span>League power rank</span><b className="num">#{you.rank}</b><span>of {TEAMS.length} by starting lineup</span></div>
         <div className="snap"><span>Thinnest spot</span><b><PosBadge pos={you.need} /></b><span>{fmt(you.groups[you.need].diff)} vs league avg</span></div>
       </section>
 

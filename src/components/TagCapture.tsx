@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ManagerTag, playerById, teamById } from "../data";
+import { ManagerTag, TEAMS, playerById, teamById } from "../data";
 import { parseTag } from "../engine";
 import { Icon } from "./ui";
 
@@ -44,7 +44,7 @@ export function TagCapture({ onSave, placeholder, compact }: { onSave: (t: Omit<
         <label htmlFor="capture" className="sr-only">What did they say?</label>
         <input id="capture" className="capture-input" value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder={placeholder ?? "Mike said he won't move his RB"} autoComplete="off" />
+          placeholder={placeholder ?? `${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said he won't move his RB`} autoComplete="off" />
         {Speech && (
           <button className={`btn btn-icon${listening ? " is-live" : ""}`} onClick={dictate} aria-label={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening}>
             <Icon name="mic" size={18} />

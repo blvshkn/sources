@@ -1,30 +1,31 @@
-// Sample league used by the prototype. Players are real NFL names with
-// illustrative weekly PPR projections; teams and managers are fictional.
+// League data store. The app runs on a live Sleeper league (see sleeper.ts)
+// or on the built-in demo league below. Everything the UI reads lives in the
+// mutable exports at the bottom of this file, swapped in by setLeague().
+// Demo players are real NFL names with illustrative projections; demo teams,
+// managers, trades and bids are fictional.
 
 export type Pos = "QB" | "RB" | "WR" | "TE";
 export type Status = "Q" | "O";
 
-// League meta for the sample season
-export const WEEK = 7;
-export const LEAGUE_NAME = "Sample League";
-export const UPDATED = "Projections updated 14 min ago";
-export const DEADLINES = {
-  waivers: "Waivers run Wed 3:00 AM ET",
-  lock: "Lineups lock Sun 1:00 PM ET",
-  trade: "Trade deadline Nov 18",
-};
-/** NFL teams on bye this week (sample). */
-export const BYES: Record<string, number> = { PIT: 7, NE: 7, ARI: 9, KC: 10, DET: 8, SF: 11 };
-export const onBye = (nfl: string) => BYES[nfl] === WEEK;
+/** Points by scoring type. `rec` is projected receptions, used for TE premium. */
+export interface Pts { ppr: number; half: number; std: number; rec: number }
 
 export interface Player {
   id: string;
   name: string;
   pos: Pos;
   nfl: string;
+  /** Rest-of-season weekly PPR value (demo players carry only this). */
   proj: number;
+  /** Rest-of-season weekly points by scoring type (live). */
+  pts?: Pts;
+  /** This week's projection. null = bye or not projected to play. */
+  wk?: Pts | null;
   status?: Status;
+  /** Out long term (IR, PUP, suspended). Weekly "Out" only zeroes this week. */
+  longTerm?: boolean;
   note?: string;
+  rookie?: boolean;
 }
 
 export interface Team {
@@ -256,19 +257,18 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
   },
 };
 
-export const PLAYERS: Record<string, Player> = {};
-export const TEAMS: Team[] = Object.entries(rosters).map(([id, t]) => {
-  const ids = t.rows.map(([name, pos, nfl, proj, status, note]) => {
-    const pid = slug(name);
-    PLAYERS[pid] = { id: pid, name, pos, nfl, proj, status, note };
-    return pid;
+function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
+  const players: Record<string, Player> = {};
+  const teams = Object.entries(rosters).map(([id, t]) => {
+    const ids = t.rows.map(([name, pos, nfl, proj, status, note]) => {
+      const pid = slug(name);
+      players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O" };
+      return pid;
+    });
+    return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, roster: ids };
   });
-  return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, roster: ids };
-});
-
-export const YOU = TEAMS.find((t) => t.you)!;
-export const teamById = (id: string) => TEAMS.find((t) => t.id === id)!;
-export const playerById = (id: string) => PLAYERS[id];
+  return { teams, players };
+}
 
 // ---- Intent tags ---------------------------------------------------------
 
@@ -310,13 +310,13 @@ export const ROOKIES = new Set([
 
 // ---- Your lineup as currently set in Sleeper (read-only API) --------------
 // Sources compares this to the optimal lineup and flags the difference.
-export const SLEEPER_SET: Record<string, string[]> = {
+const DEMO_SLEEPER_SET: Record<string, string[]> = {
   QB: ["josh-allen"], RB: ["james-cook", "chuba-hubbard"], WR: ["zay-flowers", "jalen-coker", "deebo-samuel"],
   TE: ["tyler-warren"], FLEX: ["jaylen-warren"],
 };
 
 // ---- Slot history: your weekly points by slot vs league average ----------
-export const SLOT_HISTORY: { slot: "QB" | "RB" | "WR" | "TE" | "FLEX"; you: number[]; avg: number[] }[] = [
+const DEMO_SLOT_HISTORY: SlotHistory[] = [
   { slot: "QB", you: [26.1, 18.4, 31.2, 22.0, 24.8, 19.6], avg: [19.8, 18.2, 20.4, 19.1, 18.7, 19.5] },
   { slot: "RB", you: [33.0, 28.4, 36.1, 24.9, 30.2, 27.7], avg: [27.9, 26.6, 29.4, 27.0, 28.1, 26.8] },
   { slot: "WR", you: [41.2, 38.7, 33.0, 45.6, 39.1, 36.4], avg: [40.3, 39.0, 38.2, 41.5, 39.9, 40.1] },
@@ -325,9 +325,9 @@ export const SLOT_HISTORY: { slot: "QB" | "RB" | "WR" | "TE" | "FLEX"; you: numb
 ];
 
 // ---- Waivers and FAAB ----------------------------------------------------
-export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered: number; why: string; trend: "up" | "flat"; rookie?: boolean }
-export const FAAB = { budget: 100, remaining: 64 };
-export const FREE_AGENTS: FreeAgent[] = [
+export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean }
+const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64 };
+const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
   { id: "jalen-tolbert", name: "Jalen Tolbert", pos: "WR", nfl: "DAL", proj: 10.4, rostered: 18, trend: "up", why: "Runs every route with Lamb questionable. 9 targets last week." },
   { id: "chig-okonkwo", name: "Chig Okonkwo", pos: "TE", nfl: "TEN", proj: 9.8, rostered: 31, trend: "up", why: "Top-12 TE in targets over the last three weeks. Solves a bye-week hole." },
@@ -336,7 +336,7 @@ export const FREE_AGENTS: FreeAgent[] = [
   { id: "mason-rudolph", name: "Mason Rudolph", pos: "QB", nfl: "PIT", proj: 0, rostered: 4, trend: "flat", why: "On bye this week. Only matters in Superflex." },
 ];
 /** Winning bids in this league this season, as a percent of the $100 budget. */
-export const FAAB_HISTORY: { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids: number[] }[] = [
+const DEMO_FAAB_HISTORY: BidTier[] = [
   { tier: "Starter", bids: [14, 18, 21, 12, 16, 27] },
   { tier: "Flex", bids: [6, 9, 8, 11, 7] },
   { tier: "Depth", bids: [2, 3, 1, 4, 2, 3, 2] },
@@ -345,7 +345,7 @@ export const FAAB_HISTORY: { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids:
 
 // ---- Completed trades, for manager tendencies ----------------------------
 export interface PastTrade { week: string; a: string; b: string; aGot: { name: string; pos: Pos; rookie?: boolean }[]; bGot: { name: string; pos: Pos; rookie?: boolean }[] }
-export const COMPLETED_TRADES: PastTrade[] = [
+const DEMO_TRADES: PastTrade[] = [
   { week: "2025 Wk 4", a: "mike", b: "kev", aGot: [{ name: "Javonte Williams", pos: "RB" }], bGot: [{ name: "Hunter Henry", pos: "TE" }] },
   { week: "2025 Wk 9", a: "mike", b: "pat", aGot: [{ name: "Kyren Williams", pos: "RB" }], bGot: [{ name: "Jaylen Waddle", pos: "WR" }] },
   { week: "2026 Wk 2", a: "mike", b: "alex", aGot: [{ name: "Isaiah Likely", pos: "TE" }], bGot: [{ name: "Jake Ferguson", pos: "TE" }] },
@@ -360,4 +360,106 @@ export const COMPLETED_TRADES: PastTrade[] = [
   { week: "2025 Wk 8", a: "pat", b: "alex", aGot: [{ name: "Michael Wilson", pos: "WR" }], bGot: [{ name: "Travis Etienne", pos: "RB" }] },
 ];
 /** Trade offers each manager received in the last calendar year. */
-export const OFFERS_RECEIVED: Record<string, number> = { mike: 7, dan: 9, jake: 11, chris: 6, kev: 5, taylor: 8, sam: 4, pat: 6, alex: 5, you: 6 };
+const DEMO_OFFERS: Record<string, number> = { mike: 7, dan: 9, jake: 11, chris: 6, kev: 5, taylor: 8, sam: 4, pat: 6, alex: 5, you: 6 };
+
+
+// ---- League store --------------------------------------------------------
+
+export type SlotKey = "QB" | "RB" | "WR" | "TE" | "FLEX" | "SF";
+export interface SlotHistory { slot: SlotKey; you: number[]; avg: number[] }
+export interface Faab { enabled: boolean; budget: number; remaining: number }
+export interface BidTier { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids: number[]; estimated?: boolean }
+export interface LeagueFormat { scoring: "ppr" | "half" | "std"; superflex: boolean; tePremium: boolean }
+
+export interface LeagueData {
+  mode: "live" | "demo";
+  id: string;
+  name: string;
+  season: string;
+  week: number;
+  /** Starting slots from the league settings (skill positions only). */
+  slots: SlotKey[];
+  format: LeagueFormat;
+  rosterMax: number;
+  updated: string;
+  deadlines: { waivers: string; lock: string; trade: string };
+  byeTeams: string[];
+  teams: Team[];
+  players: Record<string, Player>;
+  sleeperSet: Record<string, string[]>;
+  slotHistory: SlotHistory[];
+  faab: Faab;
+  faabHistory: BidTier[];
+  freeAgents: FreeAgent[];
+  trades: PastTrade[];
+  /** Offers each manager received. Sleeper doesn't expose this, so it's null for live leagues. */
+  offers: Record<string, number> | null;
+  username?: string;
+  type?: "redraft" | "keeper" | "dynasty";
+}
+
+export let LEAGUE: LeagueData;
+export let WEEK = 7;
+export let LEAGUE_NAME = "";
+export let UPDATED = "";
+export let DEADLINES = { waivers: "", lock: "", trade: "" };
+export const PLAYERS: Record<string, Player> = {};
+export const TEAMS: Team[] = [];
+export let YOU: Team;
+export let SLEEPER_SET: Record<string, string[]> = {};
+export let SLOT_HISTORY: SlotHistory[] = [];
+export let FAAB: Faab = { enabled: true, budget: 100, remaining: 100 };
+export let FAAB_HISTORY: BidTier[] = [];
+export let FREE_AGENTS: FreeAgent[] = [];
+export let COMPLETED_TRADES: PastTrade[] = [];
+export let OFFERS_RECEIVED: Record<string, number> | null = null;
+let byeTeams = new Set<string>();
+let leagueVersion = 0;
+
+export const onBye = (nfl: string) => byeTeams.has(nfl);
+export const teamById = (id: string) => TEAMS.find((t) => t.id === id)!;
+export const playerById = (id: string) => PLAYERS[id];
+export const leagueKey = () => `${LEAGUE.mode}:${LEAGUE.id}:${leagueVersion}`;
+export const isDemo = () => LEAGUE.mode === "demo";
+export const sleeperUrl = (path = "") => (LEAGUE.mode === "live" ? `https://sleeper.com/leagues/${LEAGUE.id}${path}` : "https://sleeper.com/");
+
+export function setLeague(d: LeagueData) {
+  LEAGUE = d;
+  WEEK = d.week;
+  LEAGUE_NAME = d.name;
+  UPDATED = d.updated;
+  DEADLINES = d.deadlines;
+  Object.keys(PLAYERS).forEach((k) => delete PLAYERS[k]);
+  Object.assign(PLAYERS, d.players);
+  TEAMS.length = 0;
+  TEAMS.push(...d.teams);
+  YOU = TEAMS.find((t) => t.you) ?? TEAMS[0];
+  SLEEPER_SET = d.sleeperSet;
+  SLOT_HISTORY = d.slotHistory;
+  FAAB = d.faab;
+  FAAB_HISTORY = d.faabHistory;
+  FREE_AGENTS = d.freeAgents;
+  COMPLETED_TRADES = d.trades;
+  OFFERS_RECEIVED = d.offers;
+  byeTeams = new Set(d.byeTeams);
+  leagueVersion++;
+}
+
+export function demoLeague(): LeagueData {
+  const { teams, players } = demoTeams();
+  return {
+    mode: "demo", id: "demo", name: "Demo League", season: "2026", week: 7,
+    slots: ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX"],
+    format: { scoring: "ppr", superflex: false, tePremium: false },
+    rosterMax: 13,
+    updated: "Projections updated 14 min ago",
+    deadlines: { waivers: "Waivers run Wed 3:00 AM ET", lock: "Lineups lock Sun 1:00 PM ET", trade: "Trade deadline Nov 18" },
+    byeTeams: ["PIT", "NE"],
+    teams, players,
+    sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
+    faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
+    trades: DEMO_TRADES, offers: DEMO_OFFERS, type: "redraft",
+  };
+}
+
+setLeague(demoLeague());

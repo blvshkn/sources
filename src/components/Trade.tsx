@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
-import { Lineup, Trade as TradeT, eff, lineupChanges, lineupFor, rosterAfter, tendencies, verdict, fmt } from "../engine";
+import { Lineup, Trade as TradeT, eff, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
 import { AiLabel, Delta, Icon, PosBadge, Stamp, StatusPill } from "./ui";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
@@ -81,11 +81,12 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, onPitch, onLoad, onAddTag }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string) => void; clear: () => void;
   trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
   tip: string | null;
+  coach: (t: TradeT) => { trade: TradeT; line: string } | null;
   onPitch: (t: TradeT) => void; onLoad: (t: TradeT) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
@@ -111,7 +112,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     if (v === "untouchable") lockYou[id] = "Untouchable";
     if (v === "amazing") lockYou[id] = "Unless amazing";
   });
-  const v = trade ? verdict(trade) : null;
+  const [received, setReceived] = useState(false);
+  const v = trade ? (received ? offerRead(trade) : verdict(trade)) : null;
+  const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
 
@@ -156,9 +159,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       <div className="builder">
         <section className="card deal" aria-live="polite">
           <div className="row" style={{ justifyContent: "space-between" }}>
-            <h2 className="section-title">The deal</h2>
+            <h2 className="section-title">{received ? `Offer from ${them.manager}` : "The deal"}</h2>
             {(give.length > 0 || get.length > 0) && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>}
           </div>
+          <label className="offer-toggle">
+            <button role="switch" aria-checked={received} className={`switch${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label="This is an offer I received"><span /></button>
+            Judging an offer someone sent me
+          </label>
           {!trade ? (
             <p className="empty-deal">Pick at least one player from each roster to see who wins. Up to three players a side.</p>
           ) : (
@@ -171,7 +178,16 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <CompareBars label="Your lineup" before={trade.youBefore} after={trade.youAfter} />
                 <CompareBars label={`${them.manager}'s lineup`} before={trade.themBefore} after={trade.themAfter} />
               </div>
-              {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}</span></div>}
+              {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
+              {received && counter && (
+                <div className="coach">
+                  <p className="small"><b>Ready counter:</b> {counter.line}. You {fmt(counter.trade.youDelta)}, {them.manager} {fmt(counter.trade.themDelta)} a week.</p>
+                  <div className="row wrap">
+                    <button className="btn btn-sm" onClick={() => onLoad(counter.trade)}>Load counter</button>
+                    <button className="btn btn-sm btn-primary" onClick={() => onPitch(counter.trade)}>Send counter</button>
+                  </div>
+                </div>
+              )}
               {(trade.youDrop.length > 0 || trade.themDrop.length > 0) && (
                 <p className="small drop-note">
                   {trade.youDrop.length > 0 && <>You'd drop {trade.youDrop.map((id) => playerById(id).name).join(", ")} to make room. </>}
