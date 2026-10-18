@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { Player } from "../data";
-import { jerseyNumber, teamColors, useJerseys } from "../jersey";
+import { TEAM_STYLE, jerseyNumber, teamColors, useJerseys } from "../jersey";
 
 const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
 /** Visible difference between two colors: hue counts, not just brightness (red on royal blue reads fine). */
@@ -19,8 +19,14 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
   const label = text ?? (num !== undefined ? String(num) : "");
   const fs = label.length > 2 ? 16 : label.length > 1 ? 22 : 25;
   const shows = (c: string) => dist(c, body) > 110;
-  const accent = shows(trim) ? trim : shows(ink) ? ink : mix(body, 0.4);
-  const numEdge = trim !== ink && shows(trim) ? trim : lum(ink) > 0.5 ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.5)";
+  const js = TEAM_STYLE[p.nfl]?.jersey ?? {};
+  const accent = js.collar ?? (shows(trim) ? trim : shows(ink) ? ink : mix(body, 0.4));
+  const stripes = js.stripes ?? [accent];
+  const numFill = js.number ?? ink;
+  const numEdge = js.numberEdge ?? (trim !== ink && shows(trim) ? trim : lum(ink) > 0.5 ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.5)");
+  // Stack sleeve bands across the sleeve, perpendicular to the cuff
+  const bandW = stripes.length > 1 ? 1.7 : 2.6, step = stripes.length > 1 ? 2.1 : 0;
+  const band = (k: number) => { const o = (k - (stripes.length - 1) / 2) * step; return `M${3.4 - 0.28 * o} ${21.6 - 0.96 * o} L${14.2 - 0.28 * o} ${18.4 - 0.96 * o} M${49.8 + 0.28 * o} ${18.4 - 0.96 * o} L${60.6 + 0.28 * o} ${21.6 - 0.96 * o}`; };
   const dark = lum(body) < 0.2;
   const bg = { stroke: "var(--surface, #fff)" } as const;
   const clip = `jc${uid}`;
@@ -33,8 +39,8 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
           {/* Flat shade along the hem, flat gloss on the shoulder: same treatment as the helmet */}
           <path d="M0 50 C20 54 44 54 64 48 L64 64 L0 64 Z" fill="#000" opacity="0.14" />
           {/* Sleeve stripes in trim, each set off by a background gap */}
-          <g strokeWidth="5.2" style={bg}><path d={SLEEVES} /></g>
-          <g strokeWidth="2.6" stroke={accent}><path d={SLEEVES} /></g>
+          <g strokeWidth={step * (stripes.length - 1) + bandW + 2.6} style={bg}><path d={SLEEVES} /></g>
+          {stripes.map((c, k) => <path key={k} d={band(k)} strokeWidth={bandW} stroke={c} strokeLinecap="butt" />)}
         </g>
         {/* Seams cut out where the sleeves join the body */}
         <g strokeWidth="1.6" style={bg}>
@@ -46,7 +52,7 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
         <path d="M11 15 C13.4 13.4 15.6 12.6 18 12.2" strokeWidth="2" stroke="#fff" strokeOpacity="0.32" />
         {dark && <path d={SHAPE} strokeWidth="0.9" stroke={mix(body, 0.32)} />}
         {label && (
-          <text x="32" y={label.length > 2 ? 37 : 39} textAnchor="middle" fontSize={fs} fontWeight="800" fill={ink} stroke={numEdge} strokeWidth="1.5"
+          <text x="32" y={label.length > 2 ? 37 : 39} textAnchor="middle" fontSize={fs} fontWeight="800" fill={numFill} stroke={numEdge} strokeWidth="1.5"
             paintOrder="stroke" fontFamily="'Geist', ui-sans-serif, system-ui, sans-serif" letterSpacing="-0.6">{label}</text>
         )}
       </svg>
@@ -62,14 +68,16 @@ const COLLAR = "M25.6 5 Q32 12.4 38.4 5";
     concentric with it. Details are cut out in the row's background so it reads at any size. */
 export function Helmet({ team, size = 36, ring }: { team: string; size?: number; ring?: "warn" | "bad" }) {
   const uid = useId().replace(/:/g, "");
-  const [shell, ink, trim] = teamColors(team);
+  const [jerseyBody, ink, trim] = teamColors(team);
+  const hs = TEAM_STYLE[team]?.helmet ?? {};
+  const shell = hs.shell ?? jerseyBody;
   const apart = (c: string, d: number) => Math.abs(lum(c) - lum(shell)) > d;
   // Mask reads against the shell and on light or dark rows, so skip pure white and near-black
   const usable = (c: string) => apart(c, 0.22) && lum(c) > 0.14 && lum(c) < 0.86;
-  const mask = usable(trim) ? trim : usable(ink) ? ink : "#8E949E";
+  const mask = hs.mask ?? (usable(trim) ? trim : usable(ink) ? ink : "#8E949E");
   // Stripe: ink core with trim borders when the team has both, otherwise a single band
-  const core = dist(ink, shell) > 110 ? ink : dist(trim, shell) > 110 ? trim : "#FFFFFF";
-  const edge = dist(trim, shell) > 110 && trim !== core ? trim : null;
+  const core = hs.stripe?.[0] ?? (dist(ink, shell) > 110 ? ink : dist(trim, shell) > 110 ? trim : "#FFFFFF");
+  const edge = hs.stripe ? hs.stripe[1] ?? null : dist(trim, shell) > 110 && trim !== core ? trim : null;
   const dark = lum(shell) < 0.2;
   const bg = { stroke: "var(--surface, #fff)" } as const;
   const clip = `hg${uid}`;

@@ -66,3 +66,17 @@ export const TEAM_COLORS: Record<string, [string, string, string]> = {
   TEN: ["#0C2340", "#FFFFFF", "#4B92DB"], WAS: ["#5A1414", "#FFB612", "#FFB612"],
 };
 export const teamColors = (team: string): [string, string, string] => TEAM_COLORS[team] ?? ["#3A3A3E", "#FFFFFF", "#8E8E93"];
+
+/** Where a team's real look differs from the plain palette: helmet shell, stripe and mask, and
+    jersey sleeve stripes and numbers. Teams not listed use their palette. */
+export interface TeamStyle {
+  helmet?: { shell?: string; stripe?: [core: string, edge?: string]; mask?: string };
+  jersey?: { number?: string; numberEdge?: string; stripes?: string[]; collar?: string };
+}
+export const TEAM_STYLE: Record<string, TeamStyle> = {
+  // Browns: orange helmet with a brown and white stripe, brown jersey, orange-white-orange sleeves, white numbers
+  CLE: {
+    helmet: { shell: "#FF3C00", stripe: ["#311D00", "#FFFFFF"], mask: "#D9DCE1" },
+    jersey: { number: "#FFFFFF", numberEdge: "#FF3C00", stripes: ["#FF3C00", "#FFFFFF", "#FF3C00"], collar: "#FF3C00" },
+  },
+};
