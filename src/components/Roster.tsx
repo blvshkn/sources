@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Ring } from "./Ring";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
@@ -246,12 +247,12 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           <div className="lu-mx-side you">
             <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
             <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
+            {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
             <small>Your best lineup</small>
           </div>
           {opp && <>
-            <div className="lu-mx-mid" aria-hidden="true">
-              <b>{chance}%</b><small>to win</small>
-              <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
+            <div className="lu-mx-mid">
+              <Ring pct={chance} label={`${chance}%`} sub="to win" size={72} />
             </div>
             <div className="lu-mx-side them">
               <span className="lu-mx-who"><span>{opp.name}</span><i /></span>

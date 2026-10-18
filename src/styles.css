@@ -3080,3 +3080,34 @@ html:root:not(#_) .ps-who b, html:root:not(#_) .topk-name { font-weight: 700 !im
 .ui-tip { position: fixed; z-index: 200; transform: translate(-50%, -100%); padding: 6px 10px; border-radius: 8px; background: #F2F4F1; color: #121413; font: 500 0.75rem/1.2 var(--font-body); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 120ms ease; }
 .ui-tip[data-side="bottom"] { transform: translate(-50%, 0); }
 .ui-tip.on { opacity: 1; }
+
+/* ==== CollectUI round 1: rings, margin pills, slot bars ==== */
+.ring { position: relative; display: inline-grid; place-items: center; flex: none; }
+.ring svg { position: absolute; inset: 0; }
+.ring-track { stroke: var(--surface-3); }
+.ring-fill { stroke: var(--lime); transition: stroke-dasharray 700ms cubic-bezier(0.16, 1, 0.3, 1); }
+.ring.even .ring-fill { stroke: var(--ink); }
+.ring.bad .ring-fill { stroke: var(--bad); }
+.ring-c { position: relative; display: grid; justify-items: center; line-height: 1; }
+.ring-c b { font: 600 1.125rem/1 var(--font-mono); letter-spacing: -0.04em; color: var(--ink); }
+.ring-c small { margin-top: 3px; font-size: 0.625rem; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { @starting-style { .ring-fill { stroke-dasharray: 0 999; } } }
+.margin-pill { display: inline-flex; align-items: center; width: fit-content; padding: 3px 8px; border-radius: 999px; font: 600 0.75rem/1.2 var(--font-mono); letter-spacing: -0.02em; }
+.margin-pill.up { color: var(--action-ink); background: var(--lime); }
+.margin-pill.down { color: var(--bad); background: var(--bad-soft); }
+.sb2-odds { display: flex; align-items: center; gap: 16px; padding: 14px 0 4px; border-top: 1px solid var(--line); margin-top: 6px; }
+.sb2-odds-t { display: grid; gap: 6px; }
+.sb2-odds-t b { font: 600 1.125rem/1.1 var(--font-body); color: var(--ink); }
+.sb2-odds-t b.good { color: var(--lime); } .sb2-odds-t b.bad { color: var(--bad); }
+.sb2-odds-t small { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_) .lu-mx-mid { width: auto; }
+html:root:not(#_) .lu-mx-side .margin-pill { margin-top: 2px; }
+html:root:not(#_) .mu-mid { min-width: 76px; }
+/* Slot report: your bars in lime, short weeks coral, league average as a chalk tick */
+html:root:not(#_) .sb-you { background: var(--lime); opacity: 1; border-radius: 4px 4px 2px 2px; }
+html:root:not(#_) .sb-you.under { background: var(--bad); opacity: 0.85; }
+html:root:not(#_) .sb-avg { background: var(--ink); height: 2px; opacity: 0.7; }
+html:root:not(#_) .lg-sw { background: var(--lime); opacity: 1; } html:root:not(#_) .lg-sw.under { background: var(--bad); }
+html:root:not(#_) .lg-line { background: var(--ink); opacity: 0.7; }
+html:root:not(#_) .slot-bars { height: 88px; gap: 4px; }
+html:root:not(#_) .lu-mx { align-items: start; } html:root:not(#_) .lu-mx-mid { align-self: center; }

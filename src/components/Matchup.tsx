@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Ring } from "./Ring";
 import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
 import { eff, fits, fmt, lineupFor, round1, SlotName } from "../engine";
 import { Avatar } from "./Avatar";
@@ -72,10 +73,9 @@ export function Matchup({ onBack }: { onBack: () => void }) {
       <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
         <header className="mu-score">
           <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span><b>{myTotal.toFixed(1)}</b></div>
-          <div className="mu-mid"><b>{chance}%</b><small>to win</small></div>
+          <div className="mu-mid"><Ring pct={chance} label={`${chance}%`} sub="to win" size={76} /></div>
           <div className="mu-side them"><span>{opp.manager}</span><b>{oppTotal.toFixed(1)}</b></div>
         </header>
-        <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">
           You win <b>{winning} of {mine.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
