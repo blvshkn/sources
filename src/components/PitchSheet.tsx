@@ -36,11 +36,11 @@ async function drawCard(t: Trade): Promise<Blob | null> {
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Google Sans', system-ui, sans-serif`;
-  const LIME = "#D8F24A", INK = "#F4F6F2", MUTED = "#98A39B", FAINT = "#5E6A62";
+  const LIME = "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
 
   // Night field: dark turf, a floodlight glow, faint yard lines
-  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#111916"); bg.addColorStop(1, "#090C0B");
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#181A19"); bg.addColorStop(1, "#0F1110");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
   glow.addColorStop(0, "rgba(216,242,74,0.26)"); glow.addColorStop(1, "rgba(216,242,74,0)");

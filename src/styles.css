@@ -2407,7 +2407,7 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 /* ---------- Trade card preview (the shared image) ---------- */
 .tcard { margin: 0; display: grid; gap: 8px; }
 .tcard img, .tcard-skel { display: block; width: 100%; aspect-ratio: 4 / 5; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.6); }
-.tcard img { object-fit: cover; background: #0b0f0d; }
+.tcard img { object-fit: cover; background: #121413; }
 .tcard-skel { background: linear-gradient(110deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 200% 100%; animation: tc-shim 1.2s linear infinite; }
 @keyframes tc-shim { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .tcard-skel { animation: none; } }
@@ -2426,11 +2426,11 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
    one floodlight lime for you and your next move, faint yard lines, chalk ink.
    One scheme for every device, so the app and the card you share always match. */
 html:root:not([data-nf]):not(#_) {
-  --bg: #0D1311; --surface: #141C19; --surface-2: #1A2420; --surface-3: #222E29;
+  --bg: #121413; --surface: #191C1B; --surface-2: #202322; --surface-3: #282B2A;
   --ink: #F4F6F2; --muted: #98A39B; --faint: #5E6A62; --line: rgba(244, 246, 242, 0.075);
   --lime: #D8F24A; --lime-rgb: 216, 242, 74; --turf: #1F6B47;
-  --stamp: #D8F24A; --stamp-ink: #0D1311; --stamp-soft: rgba(216, 242, 74, 0.10);
-  --action: #D8F24A; --action-ink: #0D1311;
+  --stamp: #D8F24A; --stamp-ink: #121413; --stamp-soft: rgba(216, 242, 74, 0.10);
+  --action: #D8F24A; --action-ink: #121413;
   --you: #D8F24A; --them: #7C877F;
   --good: #7BE08F; --good-soft: rgba(123, 224, 143, 0.12);
   --warn: #F2BE55; --warn-soft: rgba(242, 190, 85, 0.12);
@@ -2444,7 +2444,7 @@ html:root:not([data-nf]):not(#_) {
 html:root:not(#_)[data-tab] { --tab-rgb: 216, 242, 74; }
 
 /* The field: night gradient, a floodlight from the top right, yard lines every 120px */
-body { background: linear-gradient(180deg, #111916 0%, #0B100E 55%, #090C0B 100%) fixed var(--bg) !important; }
+body { background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%) fixed var(--bg) !important; }
 body::after {
   background:
     radial-gradient(70vw 46vh at 92% -8%, rgba(var(--lime-rgb), 0.17), transparent 68%),
@@ -2462,8 +2462,8 @@ html:root:not(#_) .btn-primary, html:root:not(#_) .btn-primary:hover, html:root:
 }
 @media (hover: hover) { html:root:not(#_) .btn-primary:hover { background: #E2F76A !important; } }
 html:root:not(#_) .sb-badge.you, html:root:not(#_) .pick.tone-give[aria-pressed="true"] .check { color: var(--action-ink) !important; }
-html:root:not(#_) .pick.tone-get[aria-pressed="true"] .check { color: #0D1311 !important; }
-html:root:not(#_) .sb-badge.them { color: #0D1311 !important; }
+html:root:not(#_) .pick.tone-get[aria-pressed="true"] .check { color: #121413 !important; }
+html:root:not(#_) .sb-badge.them { color: #121413 !important; }
 
 /* Your side of a matchup reads in floodlight, theirs in chalk */
 html:root:not(#_) .scoreboard, html:root:not(#_) .lu-score {

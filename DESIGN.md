@@ -61,7 +61,7 @@ Gradients are allowed only where they carry a role:
 - Pill-shaped buttons or containers (pills are for tags only)
 - Emojis, team wordmarks, field views for lineups, em dashes in copy, AI cliches
 
-## Night Field (current theme)
+## Night Field (superseded by Graphite below)
 The app uses the trade card's palette on every device: one dark scheme, no light mode.
 - Field: #111916 to #090C0B gradient, lime floodlight glow from the top right, faint yard lines every 120px.
 - Surfaces: #141C19, #1A2420, #222E29. Hairline rgba(244,246,242,0.075).
