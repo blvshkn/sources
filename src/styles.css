@@ -2646,3 +2646,42 @@ html:root:not(#_) .page-head > .seg button[aria-pressed="true"] { background: rg
 @media (max-width: 860px) {
   html:root:not(#_) .page-head > .seg { margin: 0 -16px !important; padding: 2px 16px !important; scroll-padding-inline: 16px; width: calc(100% + 32px) !important; box-sizing: border-box; }
 }
+
+/* ==== Flatten ===================================================================
+   One container level. Cards hold content; inside a card, groups are separated by space and a
+   hairline, never by another box. Interactive pickers keep a soft fill, no border. */
+html:root:not(#_) .card .ti-stats, html:root:not(#_) .ti .ti-stats, html:root:not(#_) .ps-stats, html:root:not(#_) .topk-stats, html:root:not(#_) .tc-stats, html:root:not(#_) .sb2-stats {
+  background: none !important; border: 0 !important; border-top: 1px solid var(--line) !important; border-radius: 0 !important; box-shadow: none !important; padding: 12px 0 0 !important; overflow: visible;
+}
+html:root:not(#_) .card .ti-stat, html:root:not(#_) .ps-stats .ti-stat, html:root:not(#_) .topk-stats > div { background: none !important; padding-top: 0 !important; padding-bottom: 4px !important; }
+html:root:not(#_) .card .ti-stat:first-child, html:root:not(#_) .ps-stats .ti-stat:first-child, html:root:not(#_) .topk-stats > div:first-child { padding-left: 0 !important; }
+
+/* Best trade partner: a plain row under a hairline */
+html:root:not(#_) .sb2-partner { background: none !important; border: 0 !important; border-top: 1px solid var(--line) !important; border-radius: 0 !important; padding: 14px 0 0 !important; }
+
+/* Trade ideas inside a card: ideas split by hairlines, send/get panels soft-filled with no border */
+html:root:not(#_) .card .ti, html:root:not(#_) .ti.likely { background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; }
+html:root:not(#_) .card .ti + .ti { border-top: 1px solid var(--line) !important; padding-top: 20px !important; margin-top: 4px; }
+html:root:not(#_) .tx-side { border: 0 !important; background: rgba(244, 246, 242, 0.04) !important; }
+html:root:not(#_) .tx-side.get { background: rgba(var(--good-rgb), 0.07) !important; }
+
+/* Offer verdict, notes, explainers: text, not boxes */
+html:root:not(#_) .card .verdict { background: none !important; border: 0 !important; padding: 0 !important; border-radius: 0 !important; }
+html:root:not(#_) .tag-line { background: none !important; border: 0 !important; border-radius: 0 !important; padding: 10px 0 !important; border-top: 1px solid var(--line) !important; }
+html:root:not(#_) .sx-verdict { background: none !important; border: 0 !important; padding: 0 !important; }
+html:root:not(#_) .wt-price { background: none !important; border: 0 !important; border-top: 1px solid var(--line) !important; border-radius: 0 !important; padding: 16px 0 0 !important; }
+html:root:not(#_) .note-good { border: 0 !important; }
+
+/* Start / Sit inside the lineup card: a section, not a box in a box */
+html:root:not(#_) .ss, html:root:not(#_) .ss:not(.ok) { background: none !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; margin: 0 !important; padding: 16px !important; }
+html:root:not(#_) .ss-move { border: 0 !important; border-radius: 0 !important; gap: 0; background: none; }
+html:root:not(#_) .ss-p { background: none !important; padding: 10px 0 !important; }
+html:root:not(#_) .ss-p + .ss-p { border-top: 1px solid var(--line); }
+
+/* Start/Sit compare pickers: soft fill, no border */
+html:root:not(#_) .sx-pick { border: 0 !important; background: rgba(244, 246, 242, 0.05) !important; }
+html:root:not(#_) .sx-pick.lead { background: rgba(var(--lime-rgb), 0.08) !important; }
+
+/* League summary pick and partner cards: rows, not tiles */
+html:root:not(#_) .card .partner-card { background: none !important; border: 0 !important; border-radius: 0 !important; padding: 12px 0 !important; }
+html:root:not(#_) .card .partner-card + .partner-card { border-top: 1px solid var(--line) !important; }
