@@ -35,7 +35,7 @@ function IrBlock() {
             <Avatar p={p} size={36} />
             <span className="lu-who">
               <span className="lu-name">{p.name}</span>
-              <span className="lu-meta">{p.pos} · {p.nfl}<b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
+              <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span><b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
             </span>
             {stuck ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Activate</a> : <span className="lu-pts dim">{(p.proj || 0).toFixed(1)}</span>}
           </div>

@@ -117,7 +117,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
         <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />
       </header>
 
-      {partners.length > 0 && (
+      {view === "needs" && partners.length > 0 && (
         <section className="card nudge" aria-label="Best trade partners">
           <div className="row wrap" style={{ justifyContent: "space-between" }}>
             <Stamp>Per sources</Stamp>
@@ -141,13 +141,13 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
         </section>
       )}
 
-      <section className="card card-pad capture-card">
+      {view !== "activity" && <section className="card card-pad capture-card">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <h2 className="section-title">Heard something in league chat?</h2>
           <span className="tiny muted">Type or dictate. Tags stay private.</span>
         </div>
         <TagCapture onSave={onAddTag} />
-      </section>
+      </section>}
 
       {view === "needs" && (
         <div className="legend">
