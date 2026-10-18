@@ -69,7 +69,7 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 }
 
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
-export function Scoreboard({ you, partner }: { you: TeamNeeds; partner: string | null }) {
+export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partner: string | null; onPartner?: () => void }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
   const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
@@ -97,7 +97,11 @@ export function Scoreboard({ you, partner }: { you: TeamNeeds; partner: string |
       <div className="sb-stats">
         <div className="sb-stat"><b>#{you.rank}</b><span>Power rank of {TEAMS.length}</span></div>
         <div className="sb-stat"><b><PosBadge pos={you.need} /><span className={you.groups[you.need].diff < 0 ? "delta down" : "delta up"}>{fmt(you.groups[you.need].diff)}</span></b><span>Thinnest spot</span></div>
-        <div className="sb-stat"><b>{partner ?? "None yet"}</b><span>Best trade partner</span></div>
+        {partner && onPartner ? (
+          <button className="sb-stat sb-stat-link" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
+            <b>{partner}</b><span>Best trade partner</span><Icon name="chev" />
+          </button>
+        ) : <div className="sb-stat"><b>{partner ?? "None yet"}</b><span>Best trade partner</span></div>}
       </div>
     </section>
   );
@@ -179,9 +183,10 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level }: {
   you: TeamNeeds;
   partner: string | null;
+  partnerId: string | null;
   nudges: Nudge[];
   followUps: FollowUp[];
   briefing: Briefing;
@@ -213,7 +218,7 @@ export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen,
         </div>
       </header>
 
-      <Scoreboard you={you} partner={partner} />
+      <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} />
 
       <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>

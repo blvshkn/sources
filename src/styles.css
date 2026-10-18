@@ -1551,3 +1551,10 @@ body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-event
 
 /* Big blocks of text stay readable */
 p, .page-sub { max-width: 65ch; }
+
+/* Tappable scoreboard stat (best trade partner opens the trade builder) */
+.sb-stat-link { position: relative; text-align: left; border: 0; color: inherit; font: inherit; cursor: pointer; padding-right: 36px; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background 160ms ease; }
+.sb-stat-link > svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+.sb-stat-link:active { transform: scale(0.98); }
+@media (hover: hover) { .sb-stat-link:hover { background: var(--surface-3); } }
+.sb-stat-link:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }

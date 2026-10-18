@@ -335,7 +335,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
       <main className="main" id="main" tabIndex={-1}>
         <div className="main-inner" key={tab}>
           {tab === "wire" && (
-            <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
+            <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")}
