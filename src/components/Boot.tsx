@@ -1,12 +1,12 @@
 /** Loading screen: the mark draws itself in, then a gradient light runs along both lanes until the league is ready. */
 import { MARK, Wordmark } from "./Logo";
 
-// Comet layers along each lane: [dash length, opacity]. Heads stay aligned so the shorter, brighter dashes read as the tip.
-const TAIL: [number, number][] = [[0.44, 0.1], [0.32, 0.2], [0.22, 0.36], [0.13, 0.62], [0.06, 1]];
+// Comet: ten stacked dashes, each a little longer and all sharing one head, so the tail fades smoothly toward the back.
+const TAIL: [number, number][] = Array.from({ length: 10 }, (_, i) => [0.035 + i * 0.04, 0.17]);
 
-export function Boot({ step }: { step: string }) {
+export function Boot({ step, leaving = false }: { step: string; leaving?: boolean }) {
   return (
-    <div className="boot3" role="status" aria-live="polite">
+    <div className={`boot3${leaving ? " leaving" : ""}`} role="status" aria-live="polite">
       <span className="sr-only">{step}…</span>
       <div className="boot3-core" aria-hidden="true">
         <span className="boot3-glow" />
@@ -21,10 +21,14 @@ export function Boot({ step }: { step: string }) {
           </defs>
           <g fill="none" strokeWidth="5.26" strokeLinejoin="round" strokeLinecap="butt">
             {MARK.map((d, i) => <path key={"b" + i} className="boot3-base" d={d} pathLength={1} style={{ animationDelay: `${i * 40}ms` }} />)}
-            {MARK.map((d, i) => TAIL.map(([l, o], j) => (
-              <path key={`c${i}-${j}`} className="boot3-comet" d={d} pathLength={1} stroke="url(#boot3-sweep)"
-                style={{ "--l": l, opacity: o, strokeDasharray: `${l} ${1 - l}` } as {}} />
-            )))}
+            <g className="boot3-comets">
+              {TAIL.map(([l, o], j) => (
+                <g key={j} opacity={o}>
+                  {/* Gap first, then the dash: every layer's head lands at the same point as the offset runs 0 → -1 */}
+                  {MARK.map((d, i) => <path key={i} className="boot3-comet" d={d} pathLength={1} stroke="url(#boot3-sweep)" strokeDasharray={`0 ${1 - l} ${l} 0`} />)}
+                </g>
+              ))}
+            </g>
           </g>
         </svg>
         <Wordmark height={28} className="boot3-word" />

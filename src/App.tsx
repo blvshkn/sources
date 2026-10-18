@@ -491,6 +491,18 @@ export default function App() {
 
   const reload = () => setSession((s) => ({ ...s }));
 
+  // Loader holds long enough for the mark to form and the light to make a pass, then lifts off over the app.
+  const [boot, setBoot] = useState<"off" | "on" | "leaving">("off");
+  const bootAt = useRef(0);
+  useEffect(() => {
+    if (status === "loading") { bootAt.current = Date.now(); setBoot("on"); return; }
+    if (boot !== "on") return;
+    if (status !== "ready") { setBoot("off"); return; }
+    const t1 = window.setTimeout(() => setBoot("leaving"), Math.max(0, 950 - (Date.now() - bootAt.current)));
+    const t2 = window.setTimeout(() => setBoot("off"), Math.max(0, 950 - (Date.now() - bootAt.current)) + 420);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (status === "loading") return <Boot step={step} />;
   if (status === "error") {
     return (
@@ -507,6 +519,7 @@ export default function App() {
   }
   return (
     <>
+      {boot !== "off" && <Boot step={step} leaving={boot === "leaving"} />}
       {session.mode !== "none" ? (
         <Shell key={`${leagueKey()}:${version}`} session={session} initialMyTags={initialMyTags}
           onReconnect={() => setSession({ mode: "none" })}
