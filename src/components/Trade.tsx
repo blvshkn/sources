@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
@@ -204,6 +205,12 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <p className="page-meta">{UPDATED}</p>
         </div>
       </header>
+
+      <PlayerSearch picked={[...give, ...get]} onPick={(id, team) => {
+        if (team.you) { toggle("give", id); return; }
+        if (team.id !== partnerId) setPartner(team.id);
+        toggle("get", id);
+      }} />
 
       <div className="tp-card">
         <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />

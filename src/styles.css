@@ -2974,3 +2974,29 @@ html:root:not(#_) .skip-link:not(:focus) { top: 0; left: 0; width: 1px; height: 
 html:root:not(#_) .topbar .row { gap: 8px !important; }
 @media (max-width: 860px) { html:root:not(#_) .tabbar.ix { column-gap: 8px; } }
 html:root:not(#_) .nudge-actions, html:root:not(#_) .ti-actions, html:root:not(#_) .mu-wbtn, html:root:not(#_) .lsw-foot, html:root:not(#_) .sa2-row { gap: 8px !important; }
+
+/* Player search (Build a deal, Waivers) */
+.psr { display: grid; gap: 8px; margin-bottom: 14px; }
+.psr-field { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 6px 0 16px; border-radius: 999px; background: var(--surface-2); color: var(--muted); cursor: text; }
+.psr-field:focus-within { box-shadow: 0 0 0 2px rgba(var(--lime-rgb), 0.6); color: var(--ink); }
+.psr-field input { flex: 1; min-width: 0; height: 46px; border: 0; background: none; color: var(--ink); font: 400 1rem/1.2 var(--font-body); outline: none; }
+.psr-field input::placeholder { color: var(--faint); }
+.psr-clear { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--surface-3); color: var(--muted); cursor: pointer; }
+.psr-list { list-style: none; margin: 0; padding: 6px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); display: grid; }
+.psr-list li + li { border-top: 1px solid var(--line); }
+.psr-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 10px; border: 0; background: none; color: var(--ink); text-align: left; font: inherit; cursor: pointer; border-radius: 14px; }
+@media (hover: hover) { .psr-row:hover { background: var(--surface-2); } }
+.psr-n { display: grid; gap: 1px; min-width: 0; }
+.psr-n b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psr-n small { font-size: 0.8125rem; color: var(--muted); }
+.psr-team { max-width: 128px; padding: 4px 10px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psr-team.you { background: rgba(var(--lime-rgb), 0.14); color: var(--lime); }
+.psr-act { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--action-ink); }
+.psr-row.on .psr-act { background: var(--surface-3); color: var(--lime); }
+.psr-none { padding: 14px 10px; font-size: 0.875rem; color: var(--muted); }
+.wv-search { margin: 0 16px 10px; }
+/* Waivers position filter: free pills like the League tabs */
+html:root:not(#_) .wv-pos { display: flex !important; gap: 6px; padding: 0 16px 12px !important; background: none !important; border: 0 !important; overflow-x: auto; scrollbar-width: none; }
+html:root:not(#_) .wv-pos button { flex: none; height: 36px; padding: 0 16px; border: 0 !important; border-radius: 999px !important; background: none !important; box-shadow: none !important; color: var(--muted); font-weight: 500; }
+html:root:not(#_) .wv-pos button[aria-pressed="true"] { background: var(--lime) !important; color: var(--action-ink) !important; font-weight: 600; }
+html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { right: -34px; top: -6px; color: rgba(var(--lime-rgb), 0.09); }

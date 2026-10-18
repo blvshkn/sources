@@ -11,15 +11,17 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
   const [open, setOpen] = useState<string | null>(null);
   const [pos, setPos] = useSticky<"ALL" | "QB" | "RB" | "WR" | "TE">("waivers.pos", "ALL");
   const [sort, setSort] = useSticky<"fit" | "trend" | "proj">("waivers.sort", "fit");
+  const [q, setQ] = useState("");
   const top = recs[0];
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
   const shown = useMemo(() => {
-    const list = recs.filter((r) => pos === "ALL" || r.fa.pos === pos);
+    const term = q.trim().toLowerCase();
+    const list = recs.filter((r) => (pos === "ALL" || r.fa.pos === pos) && (!term || r.fa.name.toLowerCase().includes(term) || r.fa.nfl.toLowerCase() === term));
     if (sort === "trend") return [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0));
     if (sort === "proj") return [...list].sort((a, b) => b.value - a.value);
     return list;
-  }, [recs, pos, sort]);
+  }, [recs, pos, sort, q]);
   return (
     <>
       <header className="page-head">
@@ -88,12 +90,18 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             <Icon name="chev" size={14} />
           </label>
         </div>
+        <label className="psr-field wv-search">
+          <Icon name="search" size={18} />
+          <span className="sr-only">Search free agents</span>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search free agents" autoComplete="off" spellCheck={false} />
+          {q && <button className="psr-clear" onClick={() => setQ("")} aria-label="Clear search"><Icon name="x" size={16} /></button>}
+        </label>
         <div className="wv-pos" role="group" aria-label="Position">
           {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => (
             <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>
           ))}
         </div>
-        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>No {pos} worth adding right now. Check back after waivers run.</p>}
+        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos} worth adding right now. Check back after waivers run.`}</p>}
         {shown.map((r, i) => {
           const isOpen = open === r.fa.id;
           return (
