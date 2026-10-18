@@ -60,3 +60,12 @@ Gradients are allowed only where they carry a role:
 - Shadows, decorative gradients with no role, gradient text, neon, glass cards, bright colored sections
 - Pill-shaped buttons or containers (pills are for tags only)
 - Emojis, team wordmarks, field views for lineups, em dashes in copy, AI cliches
+
+## Night Field (current theme)
+The app uses the trade card's palette on every device: one dark scheme, no light mode.
+- Field: #111916 to #090C0B gradient, lime floodlight glow from the top right, faint yard lines every 120px.
+- Surfaces: #141C19, #1A2420, #222E29. Hairline rgba(244,246,242,0.075).
+- Ink #F4F6F2, muted #98A39B, faint #5E6A62.
+- Floodlight lime #D8F24A is the one accent: you, primary actions, your next move. Anything on lime uses dark ink #0D1311.
+- Gains mint #7BE08F, warnings #F2BE55, losses #FF8473. Turf #1F6B47 for brand moments.
+- Every tab shares the lime section light. The shareable trade card and the app always match.

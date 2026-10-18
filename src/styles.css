@@ -2420,3 +2420,67 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 :root:not(#_) .sa2-main { width: 100%; height: 52px !important; justify-content: center; gap: 8px; font-size: 1rem !important; border-radius: 12px !important; }
 .sa2-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 :root:not(#_) .sa2-sub { width: 100%; height: 44px !important; justify-content: center; gap: 6px; font-size: 0.875rem !important; border-radius: 12px !important; }
+
+/* ==== NIGHT FIELD ==============================================================
+   The trade card's world, everywhere: a stadium at night. Deep green-black turf,
+   one floodlight lime for you and your next move, faint yard lines, chalk ink.
+   One scheme for every device, so the app and the card you share always match. */
+html:root:not([data-nf]):not(#_) {
+  --bg: #0D1311; --surface: #141C19; --surface-2: #1A2420; --surface-3: #222E29;
+  --ink: #F4F6F2; --muted: #98A39B; --faint: #5E6A62; --line: rgba(244, 246, 242, 0.075);
+  --lime: #D8F24A; --lime-rgb: 216, 242, 74; --turf: #1F6B47;
+  --stamp: #D8F24A; --stamp-ink: #0D1311; --stamp-soft: rgba(216, 242, 74, 0.10);
+  --action: #D8F24A; --action-ink: #0D1311;
+  --you: #D8F24A; --them: #7C877F;
+  --good: #7BE08F; --good-soft: rgba(123, 224, 143, 0.12);
+  --warn: #F2BE55; --warn-soft: rgba(242, 190, 85, 0.12);
+  --bad: #FF8473; --bad-soft: rgba(255, 132, 115, 0.12);
+  --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #C2B3F0;
+  --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(194, 179, 240, 0.13);
+  --you-rgb: 216, 242, 74; --good-rgb: 123, 224, 143; --warn-rgb: 242, 190, 85; --them-rgb: 152, 163, 155;
+  --tab-rgb: 216, 242, 74; --glow-a: 0.15;
+  color-scheme: dark;
+}
+html:root:not(#_)[data-tab] { --tab-rgb: 216, 242, 74; }
+
+/* The field: night gradient, a floodlight from the top right, yard lines every 120px */
+body { background: linear-gradient(180deg, #111916 0%, #0B100E 55%, #090C0B 100%) fixed var(--bg) !important; }
+body::after {
+  background:
+    radial-gradient(70vw 46vh at 92% -8%, rgba(var(--lime-rgb), 0.17), transparent 68%),
+    radial-gradient(90vw 30vh at 10% -12%, rgba(var(--lime-rgb), 0.05), transparent 70%),
+    repeating-linear-gradient(180deg, transparent 0 119px, rgba(255, 255, 255, 0.028) 119px 120px) !important;
+}
+
+/* Surfaces: dark glass panes with a chalk hairline, a touch of light along the top edge */
+:root:not(#_) .card { background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 120px), var(--surface); border-color: var(--line); }
+
+/* Lime is a fill, so whatever sits on it uses dark turf ink */
+html:root:not(#_) .btn-primary, html:root:not(#_) .btn-primary:hover, html:root:not(#_) .btn-primary:active {
+  background: var(--lime) !important; color: var(--action-ink) !important; border-color: var(--lime) !important;
+  box-shadow: 0 0 0 1px rgba(var(--lime-rgb), 0.3), 0 8px 24px -10px rgba(var(--lime-rgb), 0.55);
+}
+@media (hover: hover) { html:root:not(#_) .btn-primary:hover { background: #E2F76A !important; } }
+html:root:not(#_) .sb-badge.you, html:root:not(#_) .pick.tone-give[aria-pressed="true"] .check { color: var(--action-ink) !important; }
+html:root:not(#_) .pick.tone-get[aria-pressed="true"] .check { color: #0D1311 !important; }
+html:root:not(#_) .sb-badge.them { color: #0D1311 !important; }
+
+/* Your side of a matchup reads in floodlight, theirs in chalk */
+html:root:not(#_) .scoreboard, html:root:not(#_) .lu-score {
+  background:
+    linear-gradient(100deg, rgba(var(--lime-rgb), 0.11) 0%, rgba(var(--lime-rgb), 0.03) 38%, transparent 50%, rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.05) 100%),
+    var(--surface) !important;
+}
+
+/* Focus rings and selection in lime */
+:root:not(#_) :focus-visible { outline-color: var(--lime); }
+::selection { background: rgba(var(--lime-rgb), 0.35); color: var(--ink); }
+
+/* Sliders: chalk thumb on turf */
+html:root:not(#_) .wt-range::-webkit-slider-thumb { background: var(--lime) !important; }
+html:root:not(#_) .wt-range::-moz-range-thumb { background: var(--lime) !important; }
+
+/* Your next move glows in floodlight, not amber */
+html:root:not(#_) .ss:not(.ok) { border-color: rgba(var(--lime-rgb), 0.32); background: radial-gradient(120% 90% at 100% 0%, rgba(var(--lime-rgb), 0.12), transparent 60%), var(--surface-2); }
+html:root:not(#_) .ss:not(.ok) .ss-gain { color: var(--lime); }
+html:root:not(#_) .lu-row.has-swap { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.13), rgba(var(--lime-rgb), 0.03) 70%, transparent) !important; }
