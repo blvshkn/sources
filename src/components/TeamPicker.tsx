@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Team } from "../data";
 import { Icon } from "./ui";
 
@@ -34,7 +34,7 @@ export function TeamPicker({ teams, value, onChange }: { teams: Team[]; value: s
   useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: "nearest" }); }, [hi, open]);
 
   const pick = (t: Team) => { onChange(t.id); setOpen(false); };
-  const onKey = (e: KeyboardEvent) => {
+  const onKey = (e: { key: string; preventDefault(): void }) => {
     if (e.key === "Escape") { setOpen(false); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(teams.length - 1, h + 1)); }
     if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }
