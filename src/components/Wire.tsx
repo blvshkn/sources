@@ -3,7 +3,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff, weakSlots } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { useLive } from "../live";
@@ -120,7 +120,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
       <TeamBadge t={t} side={side} />
       <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       {inPlay && now !== undefined
-        ? <span className="sb2-pts sb2-now">{now.toFixed(1)}<small>proj {pts.toFixed(1)}</small></span>
+        ? <span className="sb2-pts sb2-now"><LiveNum v={now} /><small>proj {pts.toFixed(1)}</small></span>
         : <span className="sb2-pts">{pts.toFixed(1)}</span>}
     </span>
   );

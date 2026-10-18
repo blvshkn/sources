@@ -104,7 +104,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
-  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2800); return () => clearTimeout(t); }, [toast]);
+  // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
+  const [toastOut, setToastOut] = useState(false);
+  useEffect(() => {
+    if (!toast) return; setToastOut(false);
+    const t = window.setTimeout(() => setToastOut(true), toast.undo ? 5000 : 2800);
+    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + 200);
+    return () => { clearTimeout(t); clearTimeout(t2); };
+  }, [toast]);
   useEffect(() => {
     const onHash = () => { const h = location.hash.slice(1); if ((TAB_IDS as string[]).includes(h)) setTab(h as Tab); };
     window.addEventListener("hashchange", onHash);
@@ -446,7 +453,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
       {toast && (
-        <div className="toast" role="status" key={toast.id}>
+        <div className={`toast${toastOut ? " leaving" : ""}`} role="status" key={toast.id}>
           <span>{toast.msg}</span>
           {toast.undo && <button className="toast-undo" onClick={() => { toast.undo!(); setToastState(null); }}>Undo</button>}
         </div>

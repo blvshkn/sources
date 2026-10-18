@@ -4,7 +4,7 @@ import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { Live, useLive } from "../live";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { PlayerSheet } from "./PlayerSheet";
@@ -267,7 +267,7 @@ export function MatchupStrip({ onOpen }: { onOpen?: () => void }) {
       <div className="lu-mx-side you">
         <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
         {inPlay ? <>
-          <span className="lu-mx-pts">{myNow!.toFixed(1)}</span>
+          <LiveNum className="lu-mx-pts" v={myNow!} />
           <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
         </> : <>
           <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
@@ -284,7 +284,7 @@ export function MatchupStrip({ onOpen }: { onOpen?: () => void }) {
         <div className="lu-mx-side them">
           <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
           {inPlay ? <>
-            <span className="lu-mx-pts">{oppNow!.toFixed(1)}</span>
+            <LiveNum className="lu-mx-pts" v={oppNow!} />
             <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>
           </> : <>
             <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>

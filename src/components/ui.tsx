@@ -89,3 +89,12 @@ export function useSticky<T extends string>(key: string, initial: T): [T, (v: T)
   const set = (n: T) => { setV(n); try { localStorage.setItem(`sources.ui.${key}`, n); } catch { /* ignore */ } };
   return [v, set];
 }
+
+/** A live score. When it goes up, it ticks lime for a moment so you notice the change. Alternates two
+ *  animation names so back to back updates restart the tick. */
+export function LiveNum({ v, className }: { v: number; className?: string }) {
+  const prev = useRef(v);
+  const [bump, setBump] = useState(0);
+  useEffect(() => { if (v > prev.current + 0.05) setBump((b) => b + 1); prev.current = v; }, [v]);
+  return <span className={className} data-bump={bump ? (bump % 2 ? "a" : "b") : undefined}>{v.toFixed(1)}</span>;
+}
