@@ -246,6 +246,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   };
   const swapFor = (id: string) => { const d = diff.find((x) => x.start.id === id); return d ? { from: d.benched, gain: d.gain } : undefined; };
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
+  // Once games start, the big numbers are points scored and the projection drops to a footnote
+  const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
   const oppTotal = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
   const myTotal = lineup.total + specialLineup(YOU).total;
   const chance = oppTotal !== null ? Math.round(phi((myTotal - oppTotal) / 34) * 100) : 0;
@@ -268,21 +271,30 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
           <div className="lu-mx-side you">
             <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
-            <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
-            {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
-            {started && live.teamPts[YOU.id] !== undefined && <span className="lu-mx-now">{nowLive && <i aria-hidden="true" />}{live.teamPts[YOU.id].toFixed(1)} scored</span>}
-            <small>Your best lineup</small>
+            {inPlay ? <>
+              <span className="lu-mx-pts">{myNow!.toFixed(1)}</span>
+              <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
+            </> : <>
+              <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
+              {oppTotal !== null && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
+              <small>Your best lineup</small>
+            </>}
           </div>
           {opp && <>
             <div className="lu-mx-mid" aria-hidden="true">
+              {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
               <b>{chance}%</b><small>to win</small>
               <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
             </div>
             <div className="lu-mx-side them">
               <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
-              <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
-              {started && live.teamPts[opp.id] !== undefined && <span className="lu-mx-now">{nowLive && <i aria-hidden="true" />}{live.teamPts[opp.id].toFixed(1)} scored</span>}
-              <small>{opp.manager}</small>
+              {inPlay ? <>
+                <span className="lu-mx-pts">{oppNow!.toFixed(1)}</span>
+                <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>
+              </> : <>
+                <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
+                <small>{opp.manager}</small>
+              </>}
             </div>
           </>}
         </div>
