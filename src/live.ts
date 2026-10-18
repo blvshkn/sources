@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById } from "./data";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById } from "./data";
 import { eff, lineupFor } from "./engine";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
@@ -152,3 +152,18 @@ export function playerLive(l: Live, id: string, nfl: string): { state: GameState
   const state = l.games[nfl] ?? null;
   return { state, pts: l.points[id] ?? 0 };
 }
+
+/** What a player is expected to finish with right now: his points once final, his on-pace finish while live,
+ *  his projection before kickoff. Totals, edges and win chance all use this so they move with the games. */
+export const expect = (live: Live, id: string | null) => {
+  if (!id) return 0;
+  const p = playerById(id), st = live.games[p.nfl], now = live.points[id] ?? 0, pr = eff(p, true);
+  if (st === "complete") return now;
+  if (st === "in_game") return onPace(now, pr, live.left?.[p.nfl]) ?? Math.max(now, pr);
+  return pr;
+};
+/** Share of the projection still to be played, so the win chance tightens as games finish. */
+export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a, id) => {
+  if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
+  return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);
+}, 0);

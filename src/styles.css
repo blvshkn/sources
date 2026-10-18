@@ -3629,3 +3629,32 @@ html:root:not(#_) :is(.lu-pts, .wk-pts).cemented b {
 }
 /* Neutral live points are plain ink: the Live tag says it's live, and only heat states color the number */
 html:root:not(#_) .lu-pts.live:not([class*="heat-"]) b, html:root:not(#_) .wk-pts.live:not([class*="heat-"]) b { color: var(--ink); }
+/* Matchup screen live: scored total big, projected finish beneath, Live tag over the win chance */
+html:root:not(#_) .mu-side .mu-big { font: inherit; }
+html:root:not(#_) .mu-side { display: grid; gap: 4px; }
+html:root:not(#_) .mu-side .mu-big { font-size: 2.75rem; font-weight: 600; line-height: 1; letter-spacing: -0.04em; font-family: var(--font-mono); }
+html:root:not(#_) .mu-side.them .mu-big { color: var(--muted); }
+html:root:not(#_) .mu-proj { font: 500 0.75rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .mu-mid .lu-live { margin-bottom: 6px; justify-content: center; }
+html:root:not(#_) .mu-pts.lu-pts { justify-items: end; text-align: right; }
+/* Lineup strip shows just you: your score on the left, win chance on the right */
+html:root:not(#_) .lu-mx.mine-only { grid-template-columns: minmax(0, 1fr) auto; }
+html:root:not(#_) .lu-mx.mine-only .lu-mx-mid { width: 120px; justify-self: end; }
+/* Lineup: your week card (team, standing, score and projected finish, win chance) */
+html:root:not(#_) .mw { display: grid; gap: 14px; padding: 16px; border-radius: 20px; background: var(--surface); }
+html:root:not(#_) .mw-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+html:root:not(#_) .mw-id { flex: 1; min-width: 0; display: grid; gap: 4px; }
+html:root:not(#_) .mw-id b { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .mw-id small { font: 500 0.75rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--muted); }
+html:root:not(#_) .mw-score { flex: none; display: grid; justify-items: end; gap: 4px; }
+html:root:not(#_) .mw-pts { font: 600 1.75rem/1 var(--font-mono); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+html:root:not(#_) .mw-score small { font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .mw-win { display: flex; align-items: center; gap: 8px; }
+html:root:not(#_) .mw-win .lu-live { margin-right: 4px; }
+html:root:not(#_) .mw-win b { font: 600 0.9375rem/1 var(--font-mono); }
+html:root:not(#_) .mw-win.up b { color: var(--lime); } html:root:not(#_) .mw-win.down b { color: #FF7A66; }
+html:root:not(#_) .mw-lbl { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_) .mw-bar { flex: 1; height: 6px; margin-left: 4px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+html:root:not(#_) .mw-bar i { display: block; height: 100%; border-radius: inherit; transition: width 600ms var(--ease-out); }
+html:root:not(#_) .mw-win.up .mw-bar i { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
+html:root:not(#_) .mw-win.down .mw-bar i { background: linear-gradient(90deg, rgba(255, 122, 102, 0.5), #FF7A66); }
