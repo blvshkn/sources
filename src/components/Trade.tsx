@@ -7,9 +7,9 @@ import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 
-function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label }: {
+function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
-  dimIds: Record<string, string>; lockIds: Record<string, string>; wantIds: Record<string, string>; label: string;
+  dimIds: Record<string, string>; lockIds: Record<string, string>; wantIds: Record<string, string>; label: string; tone: "give" | "get";
 }) {
   const row = (id: string, slot: string) => {
     const p = playerById(id);
@@ -18,7 +18,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     const lock = lockIds[id];
     const want = wantIds[id];
     return (
-      <button key={id + slot} className={`pick${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
+      <button key={id + slot} className={`pick tone-${tone}${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
         title={dim || lock || want || undefined}>
         <Avatar p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
@@ -148,6 +148,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
+  const [side, setSide] = useState<"give" | "get">("give");
   const theirTags = tags.filter((t) => t.teamId === them.id);
   const dimThem: Record<string, string> = {};
   theirTags.forEach((t) => {
@@ -271,11 +272,43 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           )}
         </section>
 
-        <div className="rosters">
-          <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={give} onToggle={(id) => toggle("give", id)} dimIds={dimYou} lockIds={lockYou} wantIds={wantYou} label="You send" />
-          <RosterPicker team={them} lineup={lineupFor(them.roster)} picked={get} onToggle={(id) => toggle("get", id)} dimIds={dimThem} lockIds={{}} wantIds={{}} label="You get" />
+        <div className="rosters" data-side={side}>
+          <div className="side-switch" role="tablist" aria-label="Which roster">
+            <button role="tab" aria-selected={side === "give"} onClick={() => setSide("give")}><span>You send</span><b className="give">{give.length}</b></button>
+            <button role="tab" aria-selected={side === "get"} onClick={() => setSide("get")}><span>You get</span><b className="get">{get.length}</b></button>
+          </div>
+          <div className="side-pane side-give" role="tabpanel">
+            <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={give} onToggle={(id) => toggle("give", id)} dimIds={dimYou} lockIds={lockYou} wantIds={wantYou} label="You send" tone="give" />
+          </div>
+          <div className="side-pane side-get" role="tabpanel">
+            <RosterPicker team={them} lineup={lineupFor(them.roster)} picked={get} onToggle={(id) => toggle("get", id)} dimIds={dimThem} lockIds={{}} wantIds={{}} label="You get" tone="get" />
+          </div>
         </div>
       </div>
+
+      {(give.length > 0 || get.length > 0) && (
+        <div className="deal-tray" role="region" aria-label="Your deal so far">
+          <div className="dt-sides">
+            {(["give", "get"] as const).map((k) => {
+              const ids = k === "give" ? give : get;
+              return (
+                <div key={k} className={`dt-side ${k}`}>
+                  <button className="dt-label" onClick={() => setSide(k)}>{k === "give" ? "Send" : "Get"}</button>
+                  <div className="dt-chips">
+                    {ids.map((id) => { const p = playerById(id); return (
+                      <button key={id} className="dt-chip" onClick={() => toggle(k, id)} aria-label={`Remove ${p.name}`}>
+                        <Avatar p={p} size={22} badge={false} /><span>{p.name.split(" ").slice(-1)[0]}</span><Icon name="x" size={12} />
+                      </button>
+                    ); })}
+                    {ids.length === 0 && <button className="dt-empty" onClick={() => setSide(k)}>{k === "give" ? "Pick from your roster" : `Pick from ${them.manager}`}</button>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button className="btn btn-primary dt-go" disabled={!trade} onClick={() => document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the read</button>
+        </div>
+      )}
 
       <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>

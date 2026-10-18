@@ -1808,3 +1808,46 @@ body::after {
 @media (max-width: 860px) {
   .tabbar button[aria-current="page"] { background: radial-gradient(60% 70% at 50% 0%, rgba(var(--tab-rgb), 0.18), transparent 75%) !important; }
 }
+
+/* ---------- Build a deal: one roster at a time, tray of picks ---------- */
+.side-switch { display: none; }
+.pick.tone-give[aria-pressed="true"] { background: linear-gradient(90deg, rgba(var(--you-rgb), 0.14), rgba(var(--you-rgb), 0.04)) !important; }
+.pick.tone-give[aria-pressed="true"] .check { background: rgb(var(--you-rgb)) !important; border-color: rgb(var(--you-rgb)) !important; color: #fff; }
+.pick.tone-get[aria-pressed="true"] { background: linear-gradient(90deg, rgba(var(--good-rgb), 0.14), rgba(var(--good-rgb), 0.04)) !important; }
+.pick.tone-get[aria-pressed="true"] .check { background: rgb(var(--good-rgb)) !important; border-color: rgb(var(--good-rgb)) !important; color: #fff; }
+.side-pane > .card { height: 100%; }
+.deal-tray { display: none; }
+
+@media (max-width: 860px) {
+  .rosters { display: block !important; }
+  .side-switch { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 20; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-2) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .side-switch button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 500 0.9375rem/1 var(--font-body); cursor: pointer; transition: background 160ms ease, color 160ms ease; }
+  .side-switch button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+  .side-switch b { min-width: 22px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 999px; font: 600 0.75rem/1 var(--font-mono); background: var(--surface-3); color: var(--muted); }
+  .rosters[data-side="give"] .side-switch b.give, .rosters[data-side="get"] .side-switch b.get { background: var(--ink); color: var(--bg); }
+  .rosters[data-side="give"] .side-get, .rosters[data-side="get"] .side-give { display: none; }
+
+  .deal-tray { position: fixed; z-index: 29; left: 8px; right: 8px; bottom: calc(68px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 10px 10px 12px;
+    border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.35); }
+  @media (prefers-reduced-motion: no-preference) { .deal-tray { animation: tray-in 260ms cubic-bezier(0.16, 1, 0.3, 1); } @keyframes tray-in { from { transform: translateY(12px); opacity: 0; } } }
+  .main:has(.deal-tray) { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)) !important; }
+  .dt-sides { display: grid; gap: 6px; min-width: 0; }
+  .dt-side { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; }
+  .dt-label { border: 0; background: none; padding: 0; text-align: left; font: 600 0.75rem/1 var(--font-body); cursor: pointer; }
+  .dt-side.give .dt-label { color: rgb(var(--you-rgb)); } .dt-side.get .dt-label { color: rgb(var(--good-rgb)); }
+  .dt-chips { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .dt-chips::-webkit-scrollbar { display: none; }
+  .dt-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 6px 0 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 500 0.8125rem/1 var(--font-body); cursor: pointer; }
+  .dt-side.give .dt-chip { background: rgba(var(--you-rgb), 0.12); border-color: rgba(var(--you-rgb), 0.25); }
+  .dt-side.get .dt-chip { background: rgba(var(--good-rgb), 0.12); border-color: rgba(var(--good-rgb), 0.25); }
+  .dt-chip svg { color: var(--muted); }
+  .dt-chip .av { flex: none; }
+  .dt-empty { border: 1px dashed var(--line); background: none; height: 28px; padding: 0 10px; border-radius: 999px; color: var(--muted); font: 500 0.75rem/1 var(--font-body); cursor: pointer; white-space: nowrap; }
+  .dt-go { height: 40px !important; padding: 0 14px; white-space: nowrap; }
+  .dt-go:disabled { opacity: 0.45; }
+  body:has(.deal-tray) .toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)) !important; }
+}
+.deal-lists .eyebrow { font-family: var(--font-body) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.75rem !important; font-weight: 600; }
+.deal-lists > div:first-child .eyebrow { color: rgb(var(--you-rgb)); }
+.deal-lists > div:last-child .eyebrow { color: rgb(var(--good-rgb)); }
