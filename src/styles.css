@@ -2146,3 +2146,15 @@ body::after {
 :root:not(#_) .sb2-side .sb-badge { width: 40px; height: 40px; margin-bottom: 4px; font-size: 0.8125rem; }
 :root:not(#_) .sb2-tn { font-size: 0.8125rem; line-height: 1.25; }
 :root:not(#_) .sb2-side small { font-size: 0.75rem; }
+
+/* ---------- Scoreboard: stacked rows with a VS divider ---------- */
+:root:not(#_) .sb2-rows { gap: 0; }
+:root:not(#_) .sb2-row + .sb2-row { border-top: 0; }
+:root:not(#_) .sb2-row { padding: 6px 0; }
+.sb2-div { display: flex; align-items: center; gap: 10px; margin: 2px 0; }
+.sb2-div::before, .sb2-div::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.sb2-div::before { flex: 0 0 52px; }
+.sb2-div span { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line); }
+:root:not(#_) .sb2-row .sb2-who b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.9375rem; line-height: 1.25; overflow-wrap: anywhere; }
+:root:not(#_) .sb2-div::before { display: none; }
+:root:not(#_) .sb2-div span { width: 40px; box-sizing: border-box; text-align: center; padding: 3px 0; }

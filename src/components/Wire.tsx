@@ -101,11 +101,10 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
   const chance = theirs !== null ? Math.round(phi((mine - theirs) / 34) * 100) : null;
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
-  const Side = ({ t, pts, side }: { t: typeof YOU; pts: number; side: "you" | "them" }) => (
-    <div className={`sb2-side ${side}`}>
+  const Row = ({ t, pts, side }: { t: typeof YOU; pts: number; side: "you" | "them" }) => (
+    <div className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
-      <b className="sb2-tn">{t.name}</b>
-      <small>{side === "you" ? "You" : t.manager} · {t.record}</small>
+      <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       <span className="sb2-pts">{pts.toFixed(1)}</span>
     </div>
   );
@@ -115,11 +114,11 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
         <span>Week {WEEK} matchup</span>
         <span>Projected</span>
       </header>
-      <div className={`sb2-vs${opp && theirs !== null ? "" : " solo"}`}>
-        <Side t={YOU} pts={mine} side="you" />
+      <div className="sb2-rows">
+        <Row t={YOU} pts={mine} side="you" />
         {opp && theirs !== null && <>
-          <span className="sb2-v" aria-hidden="true">vs</span>
-          <Side t={opp} pts={theirs} side="them" />
+          <div className="sb2-div" aria-hidden="true"><span>vs</span></div>
+          <Row t={opp} pts={theirs} side="them" />
         </>}
       </div>
       {chance !== null && (
