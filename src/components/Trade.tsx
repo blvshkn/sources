@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
-import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
+import { AiLabel, Delta, Icon, Stamp, StatusPill, Seg, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
@@ -185,6 +185,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
+  const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build");
+  const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
 
   const [kind, setKind] = useState<ManagerTagKind>("wants");
   const [target, setTarget] = useState<string>("pos:RB");
@@ -207,6 +209,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       </header>
 
       <PlayerSearch picked={[...give, ...get]} onPick={(id, team) => {
+        setView("build");
         if (team.you) { toggle("give", id); return; }
         if (team.id !== partnerId) setPartner(team.id);
         toggle("get", id);
@@ -230,15 +233,20 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         })()}
       </div>
 
-      {suggestions.length > 0 && (
+      <div className="page-tabs">
+        <Seg label="Section" value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }]} />
+      </div>
+
+      {view === "ideas" && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
+      {view === "ideas" && suggestions.length > 0 && (
         <section className="card nudge">
           <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>
-          {suggestions.map((t) => <TradeIdea key={t.key} t={t} onOpen={onLoad} onPitch={onPitch} />)}
+          {suggestions.map((t) => <TradeIdea key={t.key} t={t} onOpen={loadIdea} onPitch={onPitch} />)}
         </section>
       )}
 
 
-      <div className="builder">
+      {view === "build" && <div className="builder">
         <section className={`card deal${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-live="polite">
           <div className="row" style={{ justifyContent: "space-between" }}>
             <h2 className="section-title">{received ? `Offer from ${them.manager}` : "The deal"}</h2>
@@ -313,9 +321,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             <RosterPicker team={them} lineup={lineupFor(them.roster)} picked={get} onToggle={(id) => toggle("get", id)} dimIds={dimThem} lockIds={{}} wantIds={{}} label="You get" tone="get" />
           </div>
         </div>
-      </div>
+      </div>}
 
-      {(give.length > 0 || get.length > 0) && (
+      {view === "build" && (give.length > 0 || get.length > 0) && (
         <div className="deal-tray" role="region" aria-label="Your deal so far">
           <div className="dt-sides">
             {(["give", "get"] as const).map((k) => {
@@ -339,7 +347,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       )}
 
-      <section className="card log-card" aria-label={`What ${them.manager} said`}>
+      {view === "notes" && <section className="card log-card" aria-label={`What ${them.manager} said`}>
         <div className="log-head">
           <h2 className="section-title">What did {them.manager} say?</h2>
           <p>Private to you. Trade ideas use it.</p>
@@ -375,7 +383,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i /><span>{t.text}</span><button className="saved-x" onClick={() => onRemoveTag(t.id)} aria-label={`Remove: ${t.text}`}><Icon name="x" size={14} /></button></li>)}</ul>
           </div>
         )}
-      </section>
+      </section>}
     </>
   );
 }

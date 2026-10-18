@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Phase, Stamp } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Phase, Seg, Stamp, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 
@@ -250,6 +250,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
 }) {
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup");
   const visible = showAll ? nudges : nudges.slice(0, 2);
   const leave = (n: Nudge) => {
     setLeaving((c) => [...c, n.id]);
@@ -262,11 +263,12 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="wire" size={20} /></span>The Wire</h1>
           <p className="page-meta">Week {WEEK} · {DEADLINES.lock}</p>
         </div>
+        <Seg label="Section" value={view} onChange={setView} options={[{ v: "matchup", label: "Matchup", icon: "group" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
       </header>
 
-      <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} onMatchup={() => onGo("matchup")} />
+      {view === "matchup" && <Scoreboard you={you} partner={partner} onPartner={partnerId ? () => onGo("trade", partnerId) : undefined} onMatchup={() => onGo("matchup")} />}
 
-      <section className="card briefing" aria-label="Weekly briefing">
+      {view === "week" && <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">This week</h2><Phase v="v1" /></div>
           <span className="tiny muted">{UPDATED}</span>
@@ -282,13 +284,14 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         <button className="brief-row" onClick={() => onGo("waivers")}>
           <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
         </button>
-      </section>
+      </section>}
 
+      {view === "intel" && <>
       {followUps.map((f) => <FollowUpCard key={f.id} f={f} coach={coach} onTag={onTag} onResolve={onResolve} onOpen={onOpen} onPitch={onPitch} />)}
 
       <div className="row wrap" style={{ justifyContent: "space-between" }}>
         <h2 className="section-title">Today's intel</h2>
-        <span className="sample-note">{level === "light" ? "Light: top nudges only" : level === "hands" ? "Hands-on: every nudge" : "Standard nudges"} · <button className="linkish" onClick={() => onGo("settings")}>Change</button></span>
+        <span className="sample-note">{level === "light" ? "Light: top nudges only" : level === "hands" ? "Hands-on: every nudge" : "Standard nudges"} · <button className="linkish" onClick={() => onGo("settings:nudges")}>Change</button></span>
       </div>
 
       {nudges.length === 0 && <p className="empty-deal">You're caught up. Sources will nudge you when something changes.</p>}
@@ -333,6 +336,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </button>
       )}
       <p className="small muted" style={{ textAlign: "center" }}>Heard something in league chat? <button className="linkish" onClick={onCapture}>Log it on League Needs</button></p>
+      </>}
     </>
   );
 }

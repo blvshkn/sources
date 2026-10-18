@@ -265,11 +265,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const trade = give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null;
   const tip = trade && level !== "light" ? builderTip(trade, active, myTags, prices) : null;
 
-  const go = (t: string, teamId?: string) => {
+  const go = (dest: string, teamId?: string) => {
+    // "settings:nudges" opens a screen on a specific section tab
+    const [t, section] = dest.split(":");
     if (!(TAB_IDS as string[]).includes(t)) return;
     if (teamId) { setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
     // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
+    if (section) { try { localStorage.setItem(`sources.ui.${t}.view`, section); } catch { /* ignore */ } }
     setTab(t as Tab);
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     if (t === "league" && teamId) window.setTimeout(() => document.getElementById(`team-${teamId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
@@ -386,8 +389,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               onKeepTag={keepTag} onClearTag={clearTag} />
           )}
           {tab === "matchup" && <Matchup onBack={() => go("wire")} />}
-          {tab === "how" && <HowItWorks onBack={() => go("settings")} />}
-          {tab === "legal" && <Legal onBack={() => go("settings")} />}
+          {tab === "how" && <HowItWorks onBack={() => go("settings:about")} />}
+          {tab === "legal" && <Legal onBack={() => go("settings:about")} />}
           {tab === "league" && (
             <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />

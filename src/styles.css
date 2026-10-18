@@ -1613,13 +1613,13 @@ p, .page-sub { max-width: 65ch; }
 .page-meta { margin: 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; font-family: var(--font-body); }
 
 /* Segmented view switch in a page header: one row, full width under the title on phones */
-.page-head > .seg { display: inline-grid !important; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); flex-direction: row !important; align-self: flex-end; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-.page-head > .seg::-webkit-scrollbar { display: none; }
-.page-head > .seg button { height: 36px; padding: 0 14px; white-space: nowrap; font-size: 0.875rem; }
+:is(.page-head, .page-tabs) > .seg { display: inline-grid !important; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); flex-direction: row !important; align-self: flex-end; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+:is(.page-head, .page-tabs) > .seg::-webkit-scrollbar { display: none; }
+:is(.page-head, .page-tabs) > .seg button { height: 36px; padding: 0 14px; white-space: nowrap; font-size: 0.875rem; }
 @media (max-width: 860px) {
   .page-head:has(> .seg) { flex-direction: column; align-items: stretch; gap: 14px; }
-  .page-head > .seg { display: grid !important; width: 100%; align-self: stretch; }
-  .page-head > .seg button { padding: 0 8px; }
+  :is(.page-head, .page-tabs) > .seg { display: grid !important; width: 100%; align-self: stretch; }
+  :is(.page-head, .page-tabs) > .seg button { padding: 0 8px; }
 }
 
 /* ---------- Waivers list: header toolbar ---------- */
@@ -2230,9 +2230,9 @@ body::after {
 :root:not(#_) .ss-foot .btn { text-decoration: none; }
 
 /* ---------- League > Standings ---------- */
-.page-head .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-.page-head .seg::-webkit-scrollbar { display: none; }
-.page-head .seg button { flex: none; }
+:is(.page-head, .page-tabs) .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+:is(.page-head, .page-tabs) .seg::-webkit-scrollbar { display: none; }
+:is(.page-head, .page-tabs) .seg button { flex: none; }
 :root:not(#_) .st { padding: 18px 0 8px; display: grid; gap: 14px; }
 .st-head { padding: 0 18px; display: grid; gap: 6px; }
 .st-head p { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
@@ -2633,18 +2633,18 @@ html:root:not(#_) .nudge-link.dismiss { margin-left: auto; flex: none; color: va
 .nudge-link:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 6px; }
 
 /* Page view tabs (League): free-floating pills that side scroll edge to edge, no container */
-html:root:not(#_) .page-head > .seg {
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg {
   display: flex !important; gap: 6px; padding: 2px 0; width: auto; max-width: none; align-self: stretch;
   background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
-html:root:not(#_) .page-head > .seg button {
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button {
   flex: none; height: 36px; padding: 0 16px; border: 0 !important; border-radius: 999px !important; scroll-snap-align: start;
   background: none !important; box-shadow: none !important; color: var(--muted); font-weight: 500;
 }
-html:root:not(#_) .page-head > .seg button[aria-pressed="true"] { background: rgba(244, 246, 242, 0.09) !important; color: var(--ink); font-weight: 600; }
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button[aria-pressed="true"] { background: rgba(244, 246, 242, 0.09) !important; color: var(--ink); font-weight: 600; }
 @media (max-width: 860px) {
-  html:root:not(#_) .page-head > .seg { margin: 0 -16px !important; padding: 2px 16px !important; scroll-padding-inline: 16px; width: calc(100% + 32px) !important; box-sizing: border-box; }
+  html:root:not(#_) :is(.page-head, .page-tabs) > .seg { margin: 0 -16px !important; padding: 2px 16px !important; scroll-padding-inline: 16px; width: calc(100% + 32px) !important; box-sizing: border-box; }
 }
 
 /* ==== Flatten ===================================================================
@@ -2866,9 +2866,9 @@ html:root:not(#_) .lu-hero { padding-top: 4px; }
 
 /* Icons in view tabs */
 .seg button .ic { flex: none; }
-html:root:not(#_) .page-head > .seg button { display: inline-flex; align-items: center; gap: 6px; }
-html:root:not(#_) .page-head > .seg button .ic { color: var(--muted); }
-html:root:not(#_) .page-head > .seg button[aria-pressed="true"] .ic { color: var(--lime); }
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button { display: inline-flex; align-items: center; gap: 6px; }
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button .ic { color: var(--muted); }
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button[aria-pressed="true"] .ic { color: var(--lime); }
 html:root:not(#_) .league-pill.lsw-btn { display: flex !important; flex-direction: row !important; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(244, 246, 242, 0.05); }
 html:root:not(#_) .league-pill.lsw-btn .grow { display: grid; }
 @media (hover: hover) { html:root:not(#_) .league-pill.lsw-btn:hover { background: rgba(244, 246, 242, 0.08); } }
@@ -3163,3 +3163,6 @@ html:root:not(#_) .verdict, html:root:not(#_) .note-good, html:root:not(#_) .loc
 html:root:not(#_) .ps-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; z-index: 2; }
 html:root:not(#_) .ps-head { grid-template-columns: auto minmax(0, 1fr); padding-right: 36px; }
 html:root:not(#_) .fb-head { padding-right: 40px; }
+
+/* In-page section tabs: one row under the page title, so sections swap instead of stacking */
+html:root:not(#_) .page-tabs { display: flex; margin: -4px 0 4px; }

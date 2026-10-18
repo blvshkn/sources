@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { PlayerSheet } from "./PlayerSheet";
@@ -201,6 +201,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const diff = sleeperDiff(lineup);
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
   const [cmp, setCmp] = useState<string | undefined>(undefined);
+  const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup");
   const openPlayer = (p: Player, where: string) => setSheet({ p, where });
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
   const kdef = specialLineup(YOU);
@@ -263,7 +264,11 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         </div>
       </header>
 
-      <div className="lu-grid">
+      <div className="page-tabs">
+        <Seg label="Section" value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
+      </div>
+
+      {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
             <section className="card lu-list" aria-label="Starters and bench">
@@ -317,13 +322,13 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             </section>
           </div>
         )}
-      </div>
+      </div>}
 
-      <StartSit key={cmp ?? "default"} a={cmp ?? diff[0]?.start.id ?? flex?.player.id} b={cmp ? (cmp === (diff[0]?.start.id ?? flex?.player.id) ? (diff[0]?.benched.id ?? bestBench?.id) : (diff[0]?.start.id ?? flex?.player.id)) : (diff[0]?.benched.id ?? bestBench?.id)} />
+      {view === "compare" && <StartSit key={cmp ?? "default"} a={cmp ?? diff[0]?.start.id ?? flex?.player.id} b={cmp ? (cmp === (diff[0]?.start.id ?? flex?.player.id) ? (diff[0]?.benched.id ?? bestBench?.id) : (diff[0]?.start.id ?? flex?.player.id)) : (diff[0]?.benched.id ?? bestBench?.id)} />}
       {sheet && <PlayerSheet p={sheet.p} where={sheet.where} onClose={() => setSheet(null)}
-        onCompare={() => { setCmp(sheet.p.id); window.setTimeout(() => document.querySelector(".sx")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }} />}
+        onCompare={() => { setCmp(sheet.p.id); setView("compare"); window.setTimeout(() => document.querySelector(".page-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }} />}
 
-      <div className="roster-grid">
+      {view === "tags" && <div className="roster-grid">
         <section className="card" style={{ overflow: "hidden" }} aria-label="Your roster and tags">
           <div className="roster-head"><b>Roster tags</b><span className="tiny muted">Private to you</span></div>
           {suggestions.length > 0 && (
@@ -356,14 +361,14 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             );
           })}
         </section>
-      </div>
+      </div>}
 
-      <section className="card wt" aria-labelledby="wt-title">
+      {view === "price" && <section className="card wt" aria-labelledby="wt-title">
         <header className="wt-head">
           <h2 className="section-title" id="wt-title">What would it take?</h2>
           <p>Set an asking price for your overpay-only guys. Sources finds the cheapest offer from each team that meets it.</p>
         </header>
-        {locked.length === 0 && <p className="wt-empty">No one tagged "Overpay only" yet. Tag a player in Roster tags to set an asking price.</p>}
+        {locked.length === 0 && <p className="wt-empty">No one tagged "Overpay only" yet. <button className="linkish" onClick={() => setView("tags")}>Tag a player</button> to set an asking price.</p>}
         {locked.map((pid) => {
           const p = playerById(pid);
           const price = prices[pid] ?? DEFAULT_PRICE;
@@ -426,9 +431,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             </div>
           );
         })}
-      </section>
+      </section>}
 
-      <SlotReport />
+      {view === "slots" && <SlotReport />}
     </>
   );
 }

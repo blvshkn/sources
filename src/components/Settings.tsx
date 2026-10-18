@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
-import { Icon, Seg } from "./ui";
+import { Icon, Seg, useSticky } from "./ui";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -36,6 +36,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   paused: { id: string; manager: string }[]; onResume: (id: string) => void;
   hiddenCount: number; onUnhide: () => void;
 }) {
+  const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league");
   const [confirm, setConfirm] = useState<"none" | "disconnect" | "delete">("none");
   const muted = Object.entries(dismissed).filter(([, n]) => n >= 2).map(([k]) => k);
   return (
@@ -44,8 +45,10 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <div>
           <h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="gear" size={20} /></span>Settings</h1>
         </div>
+        <Seg label="Section" value={view} onChange={setView} options={[{ v: "league", label: "League", icon: "plug" }, { v: "nudges", label: "Nudges", icon: "spark" }, { v: "privacy", label: "Privacy", icon: "lock" }, { v: "about", label: "About", icon: "app" }]} />
       </header>
 
+      {view === "league" && <>
       <section className="card settings-group">
         <h2 className="section-title">League connection</h2>
         <div className="set-row">
@@ -82,7 +85,9 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         </div>
         <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."} Trade values: {LEAGUE.valueSource}.</p>
       </section>
+      </>}
 
+      {view === "nudges" && <>
       <section className="card settings-group">
         <h2 className="section-title">Nudges</h2>
         <div className="set-row">
@@ -120,7 +125,9 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
             options={[{ v: "2", label: "2 wks" }, { v: "4", label: "4 wks" }, { v: "6", label: "6 wks" }]} />
         </div>
       </section>
+      </>}
 
+      {view === "privacy" && <>
       <section className="card settings-group">
         <h2 className="section-title">Privacy and trust</h2>
         <ul className="trust">
@@ -139,12 +146,15 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete my data</button>}
         </div>
       </section>
+      </>}
 
+      {view === "about" && <>
       <section className="card settings-group">
         <h2 className="section-title">About Sources</h2>
         <button className="set-link" onClick={() => onGo("how")}><span className="grow"><b>How Sources works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
         <button className="set-link" onClick={() => onGo("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
       </section>
+      </>}
     </>
   );
 }
