@@ -1434,7 +1434,7 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
    Industrial brutalism, dark substrate only. One accent (hazard red), one functional
    green reserved for gains. Square corners, visible compartments, mono data,
    heavy uppercase grotesk headers. No gradients, blur or soft shadows. */
-:root, :root[data-theme="light"], :root[data-theme="dark"] {
+:root:not(#_), :root[data-theme]:not(#_) {
   --bg: #0B0B0B; --surface: #111111; --surface-2: #191919; --surface-3: #232323;
   --ink: #EAEAEA; --muted: #8E8E8E; --faint: #5C5C5C; --line: rgba(234, 234, 234, 0.14);
   --stamp: #FF2A2A; --stamp-ink: #0B0B0B; --stamp-soft: rgba(255, 42, 42, 0.12);
@@ -1520,3 +1520,11 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 90; pointer-event
 
 /* Inputs */
 input, textarea, select { border-radius: 0 !important; font-family: var(--font-mono); }
+
+/* Kill leftover gradients and tints from the old system */
+.ld-cell.gradient, .lu-slot.s-FLEX, .lu-slot.s-SF, .lu-skel span { background: var(--surface-2) !important; animation: none !important; }
+.nudge h3 em { background: none; color: var(--stamp); }
+[class*="hero"]::before, [class*="hero"]::after, .ld-hero::before { background: none !important; -webkit-mask-image: none !important; mask-image: none !important; }
+.scoreboard::before { display: none !important; }
+.sb-badge.you { color: #0B0B0B; }
+body::after { opacity: 0.35; }
