@@ -3658,3 +3658,14 @@ html:root:not(#_) .mw-bar { flex: 1; height: 6px; margin-left: 4px; border-radiu
 html:root:not(#_) .mw-bar i { display: block; height: 100%; border-radius: inherit; transition: width 600ms var(--ease-out); }
 html:root:not(#_) .mw-win.up .mw-bar i { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
 html:root:not(#_) .mw-win.down .mw-bar i { background: linear-gradient(90deg, rgba(255, 122, 102, 0.5), #FF7A66); }
+/* News */
+html:root:not(#_) .nw-list { display: grid; }
+html:root:not(#_) .nw { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+html:root:not(#_) .nw-list > .nw:first-child { border-top: 0; }
+html:root:not(#_) .nw-body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+html:root:not(#_) .nw-meta { font: 500 0.6875rem/1.2 var(--font-mono); letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+html:root:not(#_) .nw-meta b { color: var(--ink); font-weight: 600; }
+html:root:not(#_) .nw-title { font-size: 0.9375rem; font-weight: 600; line-height: 1.35; text-wrap: pretty; }
+html:root:not(#_) .nw-sum { font-size: 0.8125rem; line-height: 1.45; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html:root:not(#_) .nw > svg { flex: none; margin-top: 2px; color: var(--muted); }
+html:root:not(#_) .nw:active { opacity: 0.8; }

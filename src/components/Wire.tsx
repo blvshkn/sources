@@ -6,7 +6,8 @@ import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, e
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { useLive, onPace } from "../live";
+import { useLive, onPace, expect, stillToPlay } from "../live";
+import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
@@ -104,9 +105,16 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 /** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
 export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const mine = lineupFor(YOU.roster, true).total + specialLineup(YOU).total;
-  const theirs = opp ? lineupFor(opp.roster, true).total + specialLineup(opp).total : null;
-  const chance = theirs !== null ? Math.round(phi((mine - theirs) / 34) * 100) : null;
+  // Expected finishes: projection before kickoff, on-pace while live, points once final. Moves with the games.
+  const liveNow = useLive();
+  const ids = (t: typeof YOU) => lineupFor(t.roster, true).slots.map((x) => x.player?.id ?? null);
+  const total = (t: typeof YOU) => ids(t).reduce((a, id) => a + expect(liveNow, id), 0) + specialLineup(t).total;
+  const mine = total(YOU);
+  const theirs = opp ? total(opp) : null;
+  const allIds = [...ids(YOU), ...(opp ? ids(opp) : [])];
+  const allProj = allIds.reduce((a, id) => a + (id ? eff(playerById(id), true) : 0), 0) || 1;
+  const spread = Math.max(3, 34 * Math.sqrt(stillToPlay(liveNow, allIds) / allProj));
+  const chance = theirs !== null ? Math.round(Math.min(99.5, Math.max(0.5, phi((mine - theirs) / spread) * 100))) : null;
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
   // Once games start, the big numbers are points scored and the projection drops to a footnote
@@ -421,6 +429,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       {view === "week" && <WeekMore onGo={onGo} />}
 
       {view === "intel" && <>
+      <RosterNews />
       {followUps.map((f) => <FollowUpCard key={f.id} f={f} coach={coach} onTag={onTag} onResolve={onResolve} onOpen={onOpen} onPitch={onPitch} />)}
 
       <div className="row wrap" style={{ justifyContent: "space-between" }}>

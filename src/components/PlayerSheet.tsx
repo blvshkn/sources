@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ScheduleStrip } from "./Schedule";
+import { PlayerNews } from "./News";
+
+/** Latest news, shown only when there is some. */
+const PlayerNewsBlock = ({ p }: { p: Player }) => <div className="ps-games ps-news"><div className="ps-sub"><b>Latest news</b></div><PlayerNews p={p} /></div>;
 import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
 import { eff, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
@@ -117,6 +121,7 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
           <div className="ps-sub"><b>Season schedule</b><span className="sch-key"><i className="t-good" />Good<i className="t-tough" />Tough</span></div>
           <ScheduleStrip p={p} />
         </div>
+        <PlayerNewsBlock p={p} />
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
       </section>
