@@ -6,6 +6,7 @@ import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, li
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
+import { DealSchedule } from "./Schedule";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 
@@ -147,6 +148,39 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
+/** One side of the deal, editable in place: remove with the x, add from a searchable list of that roster. */
+function DealSide({ title, team, ids, pool, onToggle }: { title: string; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const options = pool.filter((id) => !ids.includes(id)).map(playerById)
+    .filter((p) => !term || p.name.toLowerCase().includes(term) || p.pos.toLowerCase() === term || p.nfl.toLowerCase() === term)
+    .sort((a, b) => eff(b) - eff(a)).slice(0, 8);
+  return (
+    <div className="qs">
+      <span className="eyebrow">{title}</span>
+      {ids.length > 0 && <ul>{ids.map((id) => { const p = playerById(id); return (
+        <li key={id}><Avatar p={p} size={26} /><span className="qs-n">{p.name}<small>{p.pos} · {p.nfl}</small></span>
+          <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={14} /></button></li>
+      ); })}</ul>}
+      {adding ? (
+        <div className="qs-pick">
+          <label className="qs-search"><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
+              onKeyDown={(e) => { if (e.key === "Escape") { setAdding(false); setQ(""); } if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
+          <ul className="qs-opts">
+            {options.map((p) => (
+              <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }}><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><small>{eff(p).toFixed(1)}</small><Icon name="plus" size={14} /></button></li>
+            ))}
+            {options.length === 0 && <li className="qs-none">No one matches. Try a position like WR.</li>}
+          </ul>
+          <button className="qs-done" onClick={() => { setAdding(false); setQ(""); }}>Done</button>
+        </div>
+      ) : <button className="qs-add" onClick={() => setAdding(true)}><Icon name="plus" size={14} />Add player</button>}
+    </div>
+  );
+}
+
 export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string) => void; clear: () => void;
@@ -259,15 +293,16 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               {them.manager} sent me this offer
             </label>
           )}
+          <div className="deal-lists qs-wrap">
+            <DealSide title="You send" team="your roster" ids={give} pool={YOU.roster} onToggle={(id) => toggle("give", id)} />
+            <DealSide title="You get" team={`${them.manager}'s roster`} ids={get} pool={them.roster} onToggle={(id) => toggle("get", id)} />
+          </div>
           {!trade ? (
             <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Tap players on either roster to start a deal." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
           ) : (
             <>
-              <div className="deal-lists">
-                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
-                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
-              </div>
               <TradeCompare trade={trade} them={them} />
+              <DealSchedule give={give.map(playerById)} get={get.map(playerById)} />
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
               {acc && <AcceptRead a={acc} who={them.manager} />}
               {received && counter && (
@@ -311,10 +346,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
         <div className="rosters" data-side={side}>
           <div className="side-switch" role="tablist" aria-label="Which roster">
-            <button role="tab" aria-selected={side === "give"} onClick={() => setSide("give")}><span>You send</span><b className="give">{give.length}</b></button>
-            <button role="tab" aria-selected={side === "get"} onClick={() => setSide("get")}><span>You get</span><b className="get">{get.length}</b></button>
+            <button role="tab" aria-selected={side === "give"} onClick={() => setSide("give")}><span>Your roster</span><b className="give">{give.length}</b></button>
+            <button role="tab" aria-selected={side === "get"} onClick={() => setSide("get")}><span>{them.manager}</span><b className="get">{get.length}</b></button>
           </div>
-          {give.length === 0 && get.length === 0 && <p className="side-hint">Tap players on either side to build the deal.</p>}
+          <p className="side-hint">{side === "give" ? "Tap your players to send them." : `Tap ${them.manager}'s players to ask for them.`} Tap again to remove.</p>
           <div className="side-pane side-give" role="tabpanel">
             <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={give} onToggle={(id) => toggle("give", id)} dimIds={dimYou} lockIds={lockYou} wantIds={wantYou} label="You send" tone="give" />
           </div>

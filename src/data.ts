@@ -461,6 +461,7 @@ export type SlotKey = "QB" | "RB" | "WR" | "TE" | "FLEX" | "SF";
 export interface SlotHistory { slot: SlotKey; you: number[]; avg: number[] }
 export interface Faab { enabled: boolean; budget: number; remaining: number }
 export interface BidTier { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids: number[]; estimated?: boolean }
+export interface Slate { opp: Record<string, Record<number, string>>; proj: Record<string, Record<number, number>>; pts: Record<string, Record<number, number>> }
 export interface LeagueFormat { scoring: "ppr" | "half" | "std"; superflex: boolean; tePremium: boolean }
 
 export interface LeagueData {
@@ -489,6 +490,8 @@ export interface LeagueData {
   /** Teams that make the playoffs, and the first playoff week (live leagues). */
   playoffTeams?: number;
   playoffStart?: number;
+  /** Season grid: each NFL team's opponent by week ("@KC" / "vKC"), weekly projections ahead and points scored behind. */
+  slate?: Slate;
   /** This week's NFL game state per team from Sleeper's schedule. Teams missing are on bye. */
   games?: Record<string, GameState>;
   /** Taxi squad slots (dynasty), 0 if none. */

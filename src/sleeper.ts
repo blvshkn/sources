@@ -142,6 +142,12 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     const st = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
     games[g.home] = st; games[g.away] = st;
   }
+  // Season grid for every player: opponents all season, projections for the weeks ahead, points for weeks played
+  const scoreKey: "ppr" | "half" | "std" = recSetting >= 1 ? "ppr" : recSetting >= 0.5 ? "half" : "std";
+  const slateOpp: Record<string, Record<number, string>> = {};
+  for (const g of schedule) { (slateOpp[g.home] ??= {})[g.week] = `v${g.away}`; (slateOpp[g.away] ??= {})[g.week] = `@${g.home}`; }
+  const slateProj: Record<string, Record<number, number>> = {};
+  [weekProj, ...futureProj].forEach((wp, i) => { const w = [week, ...futureWeeks][i]; wp.forEach((p) => { const v = ptsOf(p.stats); if (v && v[scoreKey] > 0) (slateProj[p.player_id] ??= {})[w] = Math.round(v[scoreKey] * 10) / 10; }); });
   const trendingDrops = await get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
@@ -164,6 +170,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     Promise.all(weeks.map((w) => get<SMatchup[]>(`/v1/league/${leagueId}/matchups/${w}`).catch(() => [] as SMatchup[]))),
   ]);
   const matchupsByWeek = allMatchups.slice(0, -1);
+  const slatePts: Record<string, Record<number, number>> = {};
+  matchupsByWeek.forEach((ms, i) => ms.forEach((m) => Object.entries(m.players_points ?? {}).forEach(([pid, v]) => { (slatePts[pid] ??= {})[i + 1] = Math.round(v * 10) / 10; })));
   const thisWeek = live ? allMatchups[allMatchups.length - 1] ?? [] : [];
   const txns = txnsByWeek.flat();
 
@@ -469,7 +477,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
+    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, slate: { opp: slateOpp, proj: slateProj, pts: slatePts }, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

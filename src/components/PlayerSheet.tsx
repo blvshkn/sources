@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ScheduleStrip } from "./Schedule";
 import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
 import { eff, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
@@ -111,6 +112,10 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
               <span><i className="proj" />Projected</span>
             </p>
           )}
+        </div>
+        <div className="ps-games ps-sched">
+          <div className="ps-sub"><b>Season schedule</b><span className="sch-key"><i className="t-good" />Good<i className="t-tough" />Tough</span></div>
+          <ScheduleStrip p={p} />
         </div>
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
