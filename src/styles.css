@@ -2484,3 +2484,10 @@ html:root:not(#_) .wt-range::-moz-range-thumb { background: var(--lime) !importa
 html:root:not(#_) .ss:not(.ok) { border-color: rgba(var(--lime-rgb), 0.32); background: radial-gradient(120% 90% at 100% 0%, rgba(var(--lime-rgb), 0.12), transparent 60%), var(--surface-2); }
 html:root:not(#_) .ss:not(.ok) .ss-gain { color: var(--lime); }
 html:root:not(#_) .lu-row.has-swap { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.13), rgba(var(--lime-rgb), 0.03) 70%, transparent) !important; }
+
+/* Start / Sit tags: compact pills that size to their word, equal width so the avatars line up */
+html:root:not(#_) .ss-p { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+html:root:not(#_) .ss-tag { display: inline-grid; place-items: center; width: 52px; height: 20px; padding: 0; box-sizing: border-box;
+  font: 700 0.625rem/1 var(--font-body); letter-spacing: 0.08em; border-radius: 999px; white-space: nowrap; }
+html:root:not(#_) .ss-p.start .ss-tag { color: var(--good); background: var(--good-soft); box-shadow: inset 0 0 0 1px rgba(var(--good-rgb), 0.28); }
+html:root:not(#_) .ss-p.sit .ss-tag { color: var(--muted); background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
