@@ -1679,3 +1679,7 @@ p, .page-sub { max-width: 65ch; }
 .vb-owner.you { color: var(--you); font-weight: 600; }
 .vb-owner.fa { color: var(--good); }
 .vb-who { display: grid; gap: 2px; min-width: 0; }
+.ti-side { row-gap: 0 !important; }
+.ti-side .ti-label { grid-row: 1 / span 4; padding-top: 0; align-self: center; }
+.ti-side .ti-player + .ti-player { margin-top: 8px; }
+.ti-odds { white-space: nowrap; flex: none; }
