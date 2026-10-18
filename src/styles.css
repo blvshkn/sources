@@ -3205,3 +3205,5 @@ html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { background: #FF4D
 /* Live hero: scored is the headline, projection a mono footnote, Live tag sits over the odds */
 html:root:not(#_) .lu-mx-proj { font: 500 0.75rem/1.2 var(--font-mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; }
 html:root:not(#_) .lu-mx-mid .lu-live { margin-bottom: 6px; }
+/* Page titles: Array Regular, the narrower cut */
+html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !important; }
