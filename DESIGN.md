@@ -1,47 +1,52 @@
 # Design System: Sources, Your Fantasy Insider
 
 ## 1. Visual Theme & Atmosphere
-"Tactical Telemetry." Industrial brutalism on a dead CRT: a classified scouting terminal, not a consumer app. Dark substrate only. Every zone is a visible compartment with hard 1px rules. Headers are heavy, uppercase and compressed into solid blocks; data is monospaced, uppercase and tracked like a typewriter. Density is high (7 of 10). Motion is restrained (2 of 10): presses translate 1px, nothing loops.
+"Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, a newspaper serif for titles and scores, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
+
+Light (bone paper) is the home edition. Night edition swaps the paper for warm charcoal with the same hierarchy.
 
 ## 2. Color Palette & Roles
-- **Dead CRT** (#0B0B0B): app canvas. Never pure black
-- **Panel** (#111111), **Raised** (#191919), **Pressed** (#232323): compartments and fills
-- **White Phosphor** (#EAEAEA): primary text, selected chips, secondary bars
-- **Muted** (#8E8E8E) and **Faint** (#5C5C5C): metadata, bench slots, rank numbers
-- **Rule** (rgba(234,234,234,0.14)): every divider and compartment border
-- **Hazard Red** (#FF2A2A): the only accent. Your side, active tab, primary button, swap rows, IR, losses, bracket marks
-- **Terminal Green** (#4AF626): gains only (value up, points added). Never body text
-- **Caution Amber** (#FFB020): questionable tags only
+Light
+- **Bone Paper** (#F7F6F3): canvas
+- **Sheet** (#FFFFFF): cards and lists
+- **Margin** (#F3F2EE) and **Fold** (#EAE8E2): inner blocks, segmented tracks, skeletons
+- **Charcoal Ink** (#2A2B2D): primary text. Never pure black
+- **Pencil** (#787774): metadata. **Faint** (#A9A7A1): bench slots, inactive tabs
+- **Hairline** (#EAEAEA): every card border and divider
+- **Press Black** (#111111): primary buttons and selected chips
+- **Your Side** (#1F6C9F) vs **Their Side** (#A9A7A1) in matchups
 
-Position color is gone. Positions read from the mono tag, not a tint.
+Night: canvas #191817, sheet #201F1D, ink #ECEAE5, muted #9B9891, hairline rgba(236,234,229,0.08). Pastels become 14% tints of lighter versions.
+
+Status: Gain #346538 on #EDF3EC, Loss #9F2F2D on #FDEBEC, Caution #956400 on #FBF3DB.
+Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue, TE pale yellow, K/DEF pale lavender (#5B4B8A on #F1EEF8). FLEX is outlined white, bench is outlined faint, IR is pale red.
 
 ## 3. Typography Rules
-- **Macro:** Archivo Black, uppercase, tracking -0.045em, leading 0.88, `clamp(2.6rem, 11vw, 4.75rem)` for page titles. Section titles in the same face at small sizes
-- **Body:** Archivo 400 to 700 for names and sentences
-- **Micro:** JetBrains Mono, uppercase, tracking 0.06em, 9 to 12px. All metadata, labels, nav, buttons, chips, projections
-- **Framing:** eyebrows wrapped as `[ LABEL ]` with red brackets
+- **Display:** Newsreader 500, optical sizing, tracking -0.03em, leading 1.02. Page titles, section titles, team names in the brand
+- **Scores:** Newsreader 400 with lining tabular figures, like a printed box score
+- **Body:** Geist 400 to 600, leading 1.55, max 65 characters
+- **Mono:** Geist Mono for projections, stat lines, and small uppercase labels (tracking 0.06em)
+- **Banned:** Inter, Roboto, all-caps headlines
 
 ## 4. Component Stylings
-- **Corners:** 0 everywhere, avatars included
-- **Compartments:** 1px rule border, flat panel fill, no shadows, no gradients, no blur
-- **Buttons:** square, mono uppercase. Primary is hazard red with dark text; secondary is outlined
-- **Chips and segments:** joined square cells; selected inverts to phosphor on canvas
-- **Slot tags:** outlined mono boxes. Bench and taxi faint, IR red
-- **Lineup rows:** swap rows get a red wash and a 3px red rail. Byes read BYE with no number
-- **Avatars:** square mugshot frames, slightly desaturated, team logo badge
-- **Tab bar (phone):** docked full width, phosphor top rule, mono labels split by rules, red top indicator on the active tab
+- **Cards:** white sheet, 1px hairline, 12px corners, no shadow
+- **Buttons:** 6px corners. Primary is Press Black with white text, hover #333. Secondary is a white sheet with a hairline
+- **Chips:** 6px corners, hairline, selected inverts to Press Black
+- **Segmented controls:** margin-gray track, selected cell is a white sheet with a hairline
+- **Tags:** pastel pills, mono, uppercase, wide tracking
+- **Lineup rows:** a row that needs a change in Sleeper gets a pale yellow highlighter wash and a 2px caution rule, like a marked-up page
+- **Headshots:** round on margin gray, team badge with a paper ring
+- **Chrome:** paper-colored top bar and docked tab bar, hairline edge, light blur only on these fixed bars
 
 ## 5. Layout Principles
-- Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main, live wire rail
-- Lists over cards; compartments only where a group needs separation
-- No horizontal page scroll
+- Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main column, live wire rail
+- Lists over cards. No horizontal page scroll
 
 ## 6. Texture & Motion
-- Fixed, pointer-events-none scanline overlay on `body::after`
-- Press feedback: translateY(1px). No entrance animations on lists
+- One fixed, pointer-events-none warm light spot in the top corner at about 10% opacity
+- Press feedback scale(0.98) with a strong ease-out. No list entrance animations
 
 ## 7. Anti-Patterns (Banned)
-- Rounded corners, glass, backdrop blur, soft or tinted shadows, gradients
-- A second accent; green as decoration
-- Light mode
+- Shadows, gradients on content, neon, glass cards, bright colored sections
+- Pill-shaped buttons or containers (pills are for tags only)
 - Emojis, team wordmarks, field views for lineups, em dashes in copy, AI cliches
