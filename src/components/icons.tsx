@@ -53,7 +53,7 @@ const CUSTOM: Record<string, Glyph> = {
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   const custom = CUSTOM[name];
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active && (!custom || name === "helmet") ? 2.4 : 2}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active && !custom ? 2.4 : name === "helmet" ? 1.8 : 2}
       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="ic">
       {custom ? custom(active) : LUCIDE[name]}
     </svg>
