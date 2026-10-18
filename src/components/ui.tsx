@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
@@ -51,6 +51,18 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
  */
 export function PageTabs<T extends string>({ value, options, onChange }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Keep the selected tab visible in the scrolling row: jump there on open, glide there on change
+  const first = useRef(true);
+  useEffect(() => {
+    const row = ref.current?.querySelector<HTMLElement>(".seg");
+    const btn = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!row || !btn || row.scrollWidth <= row.clientWidth) { first.current = false; return; }
+    const r = row.getBoundingClientRect(), bb = btn.getBoundingClientRect();
+    const left = row.scrollLeft + (bb.left - r.left) - (row.clientWidth - bb.width) / 2;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollTo({ left: Math.max(0, left), behavior: first.current || reduce ? ("instant" as ScrollBehavior) : "smooth" });
+    first.current = false;
+  }, [value]);
   const pick = (v: T) => {
     if (v === value) return;
     const el = ref.current; const main = document.getElementById("main");

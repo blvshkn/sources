@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
+import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { Matchup } from "./components/Matchup";
 import { HowItWorks, Legal } from "./components/About";
@@ -370,6 +370,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <header className="topbar">
         <button className="top-logo" onClick={() => go("wire")}><Logo height={26} /></button>
         <div className="row" style={{ gap: 4 }}>
+          {UPDATED && <span className="top-upd" title={UPDATED}>{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span>}
           <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="spark" size={20} /></button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
         </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { Live, useLive } from "../live";
-import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
+import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
@@ -317,7 +317,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     <>
       <header className="lu-hero">
         <div className="lu-hero-l">
-          <LeagueSwitch title="Lineup" meta={<>{UPDATED}</>} />
+          <LeagueSwitch title="Lineup" />
         </div>
         <div className="lu-mx" aria-label={`Your best lineup projects ${myTotal.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
           <div className="lu-mx-side you">

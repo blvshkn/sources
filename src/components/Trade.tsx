@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
-import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED , gameLine } from "../data";
+import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
@@ -211,7 +211,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Build a deal" meta={<>{UPDATED}</>} />
+          <LeagueSwitch title="Build a deal" />
         </div>
       </header>
 

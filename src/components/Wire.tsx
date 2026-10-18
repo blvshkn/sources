@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
-import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID, Player, onBye } from "../data";
+import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
@@ -398,7 +398,6 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       {view === "matchup" && <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
-          <span className="tiny muted">{UPDATED}</span>
         </div>
         <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />

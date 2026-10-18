@@ -3350,3 +3350,6 @@ html:root:not(#_) .imp-who { display: flex !important; align-items: center; gap:
 html:root:not(#_) .imp-who > span { display: grid; gap: 2px; min-width: 0; }
 html:root:not(#_) .imp .wk-row > svg { flex: none; color: var(--muted); }
 html:root:not(#_) .imp .wk-name small { white-space: normal; }
+/* Last refresh time sits in the top bar, beside the Ask and Settings buttons. */
+html:root:not(#_) .top-upd { margin-right: 6px; font: 500 0.6875rem/1.2 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; text-align: right; }
+html:root:not(#_) .top-upd::before { content: "Updated"; display: block; font-size: 0.5625rem; opacity: 0.7; }
