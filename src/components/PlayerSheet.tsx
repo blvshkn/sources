@@ -3,7 +3,7 @@ import { ScheduleStrip } from "./Schedule";
 import { PlayerNews } from "./News";
 
 /** Latest news, shown only when there is some. */
-const PlayerNewsBlock = ({ p }: { p: Player }) => <div className="ps-games ps-news"><div className="ps-sub"><b>Latest news</b></div><PlayerNews p={p} /></div>;
+const PlayerNewsBlock = ({ p }: { p: Player }) => <PlayerNews p={p} wrap={(list) => <div className="ps-games ps-news"><div className="ps-sub"><b>Latest news</b></div>{list}</div>} />;
 import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
 import { eff, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";

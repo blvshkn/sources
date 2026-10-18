@@ -18,10 +18,11 @@ function Story({ n, p }: { n: NewsItem; p?: Player }) {
 }
 
 /** Latest stories naming one player. */
-export function PlayerNews({ p }: { p: Player }) {
+export function PlayerNews({ p, wrap }: { p: Player; wrap?: (list: JSX.Element) => JSX.Element }) {
   const items = newsFor(useNews(), p).slice(0, 4);
   if (!items.length) return null;
-  return <div className="nw-list">{items.map((n) => <Story key={n.url} n={n} />)}</div>;
+  const list = <div className="nw-list">{items.map((n) => <Story key={n.url} n={n} />)}</div>;
+  return wrap ? wrap(list) : list;
 }
 
 /** Stories about anyone on your roster, newest first. */
