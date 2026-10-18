@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { LEAGUE, OPPONENT_ID, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
-import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, PosBadge, Seg, Stamp, StatusPill } from "./ui";
+import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 
 const TAG_LABEL: Record<MyTag, string> = {
@@ -325,42 +325,71 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         </section>
       </div>
 
-      <section className="card card-pad wiwt">
-        <div>
-          <h2 className="section-title">What would it take</h2>
-          <p className="small muted" style={{ marginTop: 6 }}>For each player marked "Unless amazing," set your price. Sources shows the cheapest offer from each team that clears it.</p>
-        </div>
-        {locked.length === 0 && <p className="small muted">No locked players yet. Mark one "Unless amazing" above to set a price.</p>}
+      <section className="card wt" aria-labelledby="wt-title">
+        <header className="wt-head">
+          <h2 className="section-title" id="wt-title">What would it take?</h2>
+          <p>Name your price for players you'd only move for a lot. Sources finds the cheapest offer from each team that pays it.</p>
+        </header>
+        {locked.length === 0 && <p className="wt-empty">No players marked "Unless amazing" yet. Tag one in Roster tags above to set a price.</p>}
         {locked.map((pid) => {
+          const p = playerById(pid);
           const price = prices[pid] ?? DEFAULT_PRICE;
           const offers = TEAMS.filter((t) => !t.you).map((t) => ({ t, o: whatItWouldTake(YOU, t, pid, tags, price) }));
           const real = offers.filter((x) => x.o).sort((a, b) => a.o!.youDelta - b.o!.youDelta);
           const none = offers.filter((x) => !x.o);
+          const pts = price.mode === "pts";
+          const [min, max, step] = pts ? [0.5, 6, 0.5] : [5, 60, 5];
+          const fill = ((price.amount - min) / (max - min)) * 100;
           return (
-            <div key={pid} className="wiwt-player">
-              <div className="row wrap" style={{ justifyContent: "space-between" }}>
-                <div className="row"><PosBadge pos={playerById(pid).pos} /><b>{playerById(pid).name}</b><span className="tiny muted">{real.length} of {TEAMS.length - 1} teams can meet your price</span></div>
-                <Seg label="Price type" value={price.mode} onChange={(m) => setPrice(pid, { mode: m, amount: m === "pts" ? 3 : 25 })}
-                  options={[{ v: "pts", label: "Pts a week" }, { v: "pct", label: "% over value" }]} />
+            <div key={pid} className="wt-player">
+              <div className="wt-who">
+                <Avatar p={p} size={40} />
+                <span className="wt-name"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
+                <span className={`wt-count${real.length ? " on" : ""}`}><b>{real.length}</b> of {TEAMS.length - 1} teams</span>
               </div>
-              <div className="bar-input">
-                <label htmlFor={`bar-${pid}`} className="small" style={{ fontWeight: 600, whiteSpace: "nowrap" }}>Your price</label>
-                {price.mode === "pts"
-                  ? <input id={`bar-${pid}`} type="range" min={0.5} max={6} step={0.5} value={price.amount} onChange={(e) => setPrice(pid, { mode: "pts", amount: Number(e.target.value) })} />
-                  : <input id={`bar-${pid}`} type="range" min={5} max={60} step={5} value={price.amount} onChange={(e) => setPrice(pid, { mode: "pct", amount: Number(e.target.value) })} />}
-                <span className="mono small num" style={{ minWidth: 72, textAlign: "right" }}>{price.mode === "pts" ? `${fmt(price.amount)}/wk` : `+${price.amount}%`}</span>
-              </div>
-              <p className="tiny muted">Only moves if the deal would {priceLabel(price)}{price.mode === "pct" ? " without lowering your starting lineup" : ""}.</p>
-              {real.map(({ t, o }) => (
-                <div key={t.id} className="offer">
-                  <div className="row wrap" style={{ justifyContent: "space-between" }}>
-                    <b className="small">{t.manager} sends {o!.get.map((id) => playerById(id).name).join(" + ")}</b>
-                    <button className="btn btn-sm" onClick={() => onPitch(o!)}>Write pitch</button>
-                  </div>
-                  <div className="idea-nums"><span>You gain <Delta n={o!.youDelta} />/wk</span><span>They gain <Delta n={o!.themDelta} />/wk</span></div>
+
+              <div className="wt-price">
+                <div className="wt-price-top">
+                  <label htmlFor={`bar-${pid}`}>Your price</label>
+                  <Seg label="Price type" value={price.mode} onChange={(m) => setPrice(pid, { mode: m, amount: m === "pts" ? 3 : 25 })}
+                    options={[{ v: "pts", label: "Points" }, { v: "pct", label: "% value" }]} />
                 </div>
-              ))}
-              {none.length > 0 && <p className="tiny muted">Can't get there: {none.map((x) => x.t.name).join(", ")}.</p>}
+                <output className="wt-readout" htmlFor={`bar-${pid}`}>
+                  {pts ? <>+{price.amount.toFixed(1)}<small> pts a week</small></> : <>+{price.amount}%<small> over value</small></>}
+                </output>
+                <input id={`bar-${pid}`} className="wt-range" type="range" min={min} max={max} step={step} value={price.amount}
+                  style={{ background: `linear-gradient(90deg, rgb(var(--tab-rgb)) ${fill}%, var(--surface-3) ${fill}%)` }}
+                  onChange={(e) => setPrice(pid, { mode: price.mode, amount: Number(e.target.value) })} />
+                <div className="wt-scale" aria-hidden="true"><span>{pts ? "+0.5" : "+5%"}</span><span>{pts ? "+6" : "+60%"}</span></div>
+                <p className="wt-note">{pts ? `Only moves if the deal adds at least ${price.amount.toFixed(1)} pts a week to your lineup.` : `Only moves if the return beats his value by ${price.amount}% without lowering your lineup.`}</p>
+              </div>
+
+              {real.length > 0 ? (
+                <ul className="wt-offers">
+                  {real.map(({ t, o }) => (
+                    <li key={t.id} className="wt-offer">
+                      <span className="wt-from">{t.manager} sends</span>
+                      <ul className="wt-gets">
+                        {o!.get.map((id) => { const g = playerById(id); return (
+                          <li key={id}><Avatar p={g} size={32} /><span><b>{g.name}</b><small>{g.pos} · {g.nfl}</small></span></li>
+                        ); })}
+                      </ul>
+                      <dl className="ti-stats wt-stats">
+                        <div className="ti-stat"><dt>You gain</dt><dd><Delta n={o!.youDelta} /><small>/wk</small></dd></div>
+                        <div className="ti-stat"><dt>They gain</dt><dd><Delta n={o!.themDelta} /><small>/wk</small></dd></div>
+                      </dl>
+                      <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(o!)}><Icon name="send" size={15} />Write pitch to {t.manager}</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="wt-empty">No team can pay that yet. Lower your price to see offers.</p>}
+
+              {none.length > 0 && (
+                <details className="wt-none">
+                  <summary>{none.length} {none.length === 1 ? "team" : "teams"} can't get there<Icon name="chev" size={14} /></summary>
+                  <p>{none.map((x) => x.t.name).join(", ")}</p>
+                </details>
+              )}
             </div>
           );
         })}
