@@ -1103,3 +1103,19 @@ h1, h2, h3 { letter-spacing: -0.015em; }
   .sb-name { font-size: 0.75rem; }
   .sb-mid .numeral-row { gap: 8px; }
 }
+
+/* Landing pre-flight fixes */
+.ld-label { display: block; margin-top: 28px; font-weight: 600; font-size: 0.875rem; }
+.ld-label + .ld-form { margin-top: 8px; }
+.ld-help { margin-top: 8px; font-size: 0.8125rem; color: var(--muted); padding-left: 18px; }
+.ld-trust { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 40px; align-items: start; }
+.ld-trust-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
+.ld-trust-list li { display: flex; gap: 14px; align-items: flex-start; }
+.ld-trust-list li svg { flex: none; color: var(--stamp); margin-top: 2px; }
+@media (max-width: 960px) { .ld-trust { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+/* Scroll reveal on the feature grid: tells the story cell by cell, CSS only, off for reduced motion */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { animation: ld-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 30%; }
+  }
+}

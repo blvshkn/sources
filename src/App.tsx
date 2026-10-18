@@ -218,7 +218,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const briefing: Briefing = {
     lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
     trade: partners[0]?.t ?? null,
-    waiver: recs[0] ? `${recs[0].fa.name}: bid ${recs[0].bid[0]}–${recs[0].bid[1]}%${recs[0].drop ? `, drop ${recs[0].drop.name}` : ""}` : "Nothing worth a claim this week.",
+    waiver: recs[0] ? `${recs[0].fa.name}: bid ${recs[0].bid[0]}-${recs[0].bid[1]}%${recs[0].drop ? `, drop ${recs[0].drop.name}` : ""}` : "Nothing worth a claim this week.",
   };
 
   const askStarters = useMemo(() => {

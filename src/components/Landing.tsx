@@ -59,15 +59,15 @@ export function Landing({ onLive, onDemo }: {
         <div>
           <h1 className="ld-h1 ld-rise">Trades your league will actually accept.</h1>
           <p className="ld-sub ld-rise d1">Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
+          <label htmlFor="ld-user" className="ld-label ld-rise d2">Your Sleeper username</label>
           <form className="ld-form ld-rise d2" onSubmit={connect}>
-            <label htmlFor="ld-user" className="sr-only">Sleeper username</label>
             <span className="at" aria-hidden="true">@</span>
             <input id="ld-user" value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }}
-              placeholder="Sleeper username" autoComplete="username" autoCapitalize="none" spellCheck={false} />
+              placeholder="yourname" autoComplete="username" autoCapitalize="none" spellCheck={false} />
             <button className="btn btn-primary" type="submit" disabled={!username.trim() || busy}>{busy ? "Finding you…" : "Connect Sleeper"}</button>
           </form>
-          {error && <p className="small ob-error ld-error" role="alert">{error}</p>}
-          <button className="linkish ld-rise d3" style={{ marginTop: 16 }} onClick={onDemo}>Or try the demo league</button>
+          {error ? <p className="small ob-error ld-error" role="alert">{error}</p> : <p className="ld-help">No password needed.</p>}
+          <button className="btn ld-rise d3" style={{ marginTop: 18 }} onClick={onDemo}>Try the demo</button>
         </div>
 
         <div className="ld-preview" aria-hidden="true">
@@ -85,7 +85,7 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld-section" aria-labelledby="ld-how">
         <h2 id="ld-how" className="ld-h2">Built on your league, not a value chart.</h2>
         <div className="ld-bento">
-          <article className="card ld-cell tall gradient">
+          <article className="card ld-cell reveal tall gradient">
             <h3>Know who needs what</h3>
             <p>Every starting slot measured against your league's average, so you know exactly where an offer lands.</p>
             <div className="bars">
@@ -108,14 +108,14 @@ export function Landing({ onLive, onDemo }: {
             </div>
           </article>
           {demo.trade && (
-            <article className="card ld-cell">
+            <article className="card ld-cell reveal">
               <h3>Verdicts in starting points</h3>
               <p>Every deal is judged by what it does to both starting lineups, so three bench players can't fake a star.</p>
               <TradeCompare trade={demo.trade} them={demo.mike} />
             </article>
           )}
           {demo.trade && (
-            <article className="card ld-cell">
+            <article className="card ld-cell reveal">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
               <figure className="pitch-card" style={{ margin: 0 }}>
@@ -131,10 +131,13 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </section>
 
-      <section className="ld-trust" aria-label="Privacy">
-        <div><b>No passwords</b><p>Connect with your Sleeper username. Sources reads your league straight from Sleeper's public API.</p></div>
-        <div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div>
-        <div><b>Nothing sends on its own</b><p>Sources drafts the offer. You decide if and where it goes.</p></div>
+      <section className="ld-trust" aria-labelledby="ld-private">
+        <h2 id="ld-private" className="ld-h2">Private by default.</h2>
+        <ul className="ld-trust-list">
+          <li><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
+          <li><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
+          <li><Icon name="send" size={22} /><div><b>Nothing sends on its own</b><p>Sources drafts the offer. You decide if and where it goes.</p></div></li>
+        </ul>
       </section>
 
       <footer className="ld-foot">

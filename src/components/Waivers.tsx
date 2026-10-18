@@ -45,7 +45,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   <span className="pname" style={{ display: "block" }}>{r.fa.name} {r.fa.trend === "up" && <span className="trend">Trending</span>}{r.fa.rookie && <span className="trend">Rookie</span>}</span>
                   <span className="pmeta">{r.fa.nfl} · {r.value.toFixed(1)} a week{r.fa.rostered !== undefined ? ` · ${r.fa.rostered}% rostered` : ""}</span>
                 </span>
-                {FAAB.enabled ? <span className="wv-bid"><b className="num">{r.bid[0]}–{r.bid[1]}%</b><span className="tiny muted">${bidDollars(r.bid[0])}–${bidDollars(r.bid[1])}</span></span> : <span className="wv-bid"><span className="tiny muted">{r.tier}</span></span>}
+                {FAAB.enabled ? <span className="wv-bid"><b className="num">{r.bid[0]}-{r.bid[1]}%</b><span className="tiny muted">${bidDollars(r.bid[0])}-${bidDollars(r.bid[1])}</span></span> : <span className="wv-bid"><span className="tiny muted">{r.tier}</span></span>}
                 <Delta n={r.gain} />
               </button>
               {isOpen && (
