@@ -1865,3 +1865,7 @@ body::after {
 .side-hint { margin: -2px 0 10px; text-align: center; font-size: 0.8125rem; color: var(--muted); }
 @media (min-width: 861px) { .side-hint { text-align: left; } }
 .rosters > .side-hint { grid-column: 1 / -1; }
+/* Scout tags: visible fill and edge in the section color, both themes */
+.tp-facts li { background: rgba(var(--tab-rgb), 0.14) !important; border: 1px solid rgba(var(--tab-rgb), 0.32); color: var(--ink); font-weight: 500; padding: 6px 10px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tp-facts li { background: rgba(var(--tab-rgb), 0.18) !important; border-color: rgba(var(--tab-rgb), 0.38); } }
+:root[data-theme="dark"] .tp-facts li { background: rgba(var(--tab-rgb), 0.18) !important; border-color: rgba(var(--tab-rgb), 0.38); }
