@@ -28,20 +28,22 @@ export interface Briefing { lineup: string; trade: Trade | null; waiver: string 
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
-function IdeaSide({ label, ids }: { label: string; ids: string[] }) {
+function IdeaSide({ label, ids, tone }: { label: string; ids: string[]; tone: "send" | "get" }) {
   return (
-    <div className="ti-side">
-      <span className="ti-label">{label}</span>
-      {ids.map((id) => {
-        const p = playerById(id);
-        return (
-          <div key={id} className="ti-player">
-            <Avatar p={p} size={32} />
-            <span className="ti-pl"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
-          </div>
-        );
-      })}
-    </div>
+    <section className={`tx-side ${tone}`} aria-label={label}>
+      <header><span>{label}</span><small>{ids.length} {ids.length === 1 ? "player" : "players"}</small></header>
+      <ul>
+        {ids.map((id) => {
+          const p = playerById(id);
+          return (
+            <li key={id}>
+              <Avatar p={p} size={40} />
+              <span className="tx-pl"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -51,10 +53,10 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
   const tone = t.accept?.label === "Likely yes" ? "good" : "warn";
   return (
     <article className={`ti${t.accept?.label === "Likely yes" ? " likely" : ""}`}>
-      <div className="ti-swap">
-        <IdeaSide label="You send" ids={t.give} />
-        <span className="ti-arrow" aria-hidden="true"><Icon name="trade" size={16} /></span>
-        <IdeaSide label="You get" ids={t.get} />
+      <div className="tx">
+        <IdeaSide label="You send" ids={t.give} tone="send" />
+        <span className="tx-swap" aria-hidden="true"><Icon name="trade" size={16} /></span>
+        <IdeaSide label="You get" ids={t.get} tone="get" />
       </div>
       <dl className="ti-stats">
         {t.accept && (

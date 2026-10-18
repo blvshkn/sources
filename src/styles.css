@@ -2187,3 +2187,21 @@ body::after {
 .nav-main[data-on] .nav-rule { opacity: 1; }
 .nav-main[data-i="1"] { --i: 1; } .nav-main[data-i="2"] { --i: 2; } .nav-main[data-i="3"] { --i: 3; } .nav-main[data-i="4"] { --i: 4; }
 @media (prefers-reduced-motion: reduce) { .nav-rule, :root:not(#_) .nav-ix .ix-w::before { transition: none !important; } }
+
+/* ---------- Trade idea swap: two labeled panels with a swap mark between ---------- */
+.tx { position: relative; display: grid; gap: 8px; }
+.tx-side { border-radius: 12px; padding: 12px 14px 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.tx-side.get { background: linear-gradient(180deg, rgba(var(--good-rgb), 0.10), rgba(var(--good-rgb), 0.03)), var(--surface-2); border-color: rgba(var(--good-rgb), 0.22); }
+.tx-side header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.tx-side header span { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.tx-side.get header span { color: var(--good); }
+.tx-side header small { font-size: 0.75rem; color: var(--faint); }
+.tx-side ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tx-side li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.tx-pl { display: grid; gap: 2px; min-width: 0; }
+.tx-pl b { font-size: 1rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-pl small { font-size: 0.8125rem; color: var(--muted); }
+.tx-swap { position: absolute; left: 50%; top: var(--swap-y, 50%); width: 32px; height: 32px; margin: -16px 0 0 -16px; z-index: 1; display: grid; place-items: center; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.tx-swap svg { transform: rotate(90deg); }
+:root:not(#_) .tx { gap: 0; }
+:root:not(#_) .tx-swap { position: relative; left: auto; top: auto; margin: -10px auto; justify-self: center; }
