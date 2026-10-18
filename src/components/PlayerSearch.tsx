@@ -5,7 +5,7 @@ import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
 
 /** Find any rostered player in the league and see whose fantasy team he's on. */
-export function PlayerSearch({ onPick, picked }: { onPick: (id: string, team: Team) => void; picked: string[] }) {
+export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string, team: Team) => void; picked: string[]; onClose?: () => void }) {
   const [q, setQ] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const all = useMemo(() => TEAMS.flatMap((t) => t.roster.map((id) => ({ p: playerById(id), team: t }))), []);
@@ -20,8 +20,9 @@ export function PlayerSearch({ onPick, picked }: { onPick: (id: string, team: Te
       <label className="psr-field">
         <Icon name="search" size={18} />
         <span className="sr-only">Search players in your league</span>
-        <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
-        {q && <button className="psr-clear" onClick={() => { setQ(""); input.current?.focus(); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
+        <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key === "Escape" && onClose) onClose(); }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
+        {q && !onClose && <button className="psr-clear" onClick={() => { setQ(""); input.current?.focus(); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
+        {onClose && <button className="psr-clear" onClick={onClose} aria-label="Close search"><Icon name="x" size={16} /></button>}
       </label>
       {term.length >= 2 && (
         <ul className="psr-list" aria-label="Search results">
@@ -29,7 +30,7 @@ export function PlayerSearch({ onPick, picked }: { onPick: (id: string, team: Te
             const on = picked.includes(p.id);
             return (
               <li key={p.id}>
-                <button className={`psr-row${on ? " on" : ""}`} onClick={() => { onPick(p.id, team); setQ(""); }}>
+                <button className={`psr-row${on ? " on" : ""}`} onClick={() => { onPick(p.id, team); setQ(""); onClose?.(); }}>
                   <Avatar p={p} size={36} />
                   <span className="psr-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
                   <span className={`psr-team${team.you ? " you" : ""}`}>{team.you ? "Your team" : team.name}</span>

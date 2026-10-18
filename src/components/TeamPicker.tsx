@@ -14,7 +14,7 @@ export function TeamAvatar({ t, size = 40 }: { t: Team; size?: number }) {
 }
 
 /** Trade partner dropdown: the selected team's avatar, name and record, opening a list of every other team. */
-export function TeamPicker({ teams, value, onChange }: { teams: Team[]; value: string; onChange: (id: string) => void }) {
+export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[]; value: string; onChange: (id: string) => void; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
   const wrap = useRef<HTMLDivElement>(null);
@@ -43,13 +43,13 @@ export function TeamPicker({ teams, value, onChange }: { teams: Team[]; value: s
 
   if (!cur) return null;
   return (
-    <div className="tp" ref={wrap}>
-      <span className="tp-label" id={`${id}-l`}>Trading with</span>
+    <div className={`tp${compact ? " tp-compact" : ""}`} ref={wrap}>
+      <span className={compact ? "sr-only" : "tp-label"} id={`${id}-l`}>Trading with</span>
       <button className="tp-btn" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${id}-l ${id}-b`} id={`${id}-b`}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}>
-        <TeamAvatar t={cur} size={44} />
-        <span className="tp-who"><b>{cur.name}</b><small>{cur.manager} · {cur.record}</small></span>
+        <TeamAvatar t={cur} size={compact ? 34 : 44} />
+        <span className="tp-who">{compact ? <><small>Trading with</small><b>{cur.name}</b></> : <><b>{cur.name}</b><small>{cur.manager} · {cur.record}</small></>}</span>
         <Icon name="chev" size={18} />
       </button>
       {open && (

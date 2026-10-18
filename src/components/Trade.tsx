@@ -187,6 +187,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const [why, setWhy] = useState(false);
   const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build");
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
+  const [searching, setSearching] = useState(false);
+  // How this manager trades: short facts plus one piece of advice
+  const scoutParts = td.summary.split(/(?<=\.)\s+/).map((x) => x.trim().replace(/\.$/, "")).filter(Boolean)
+    .map((x) => x.startsWith(them.manager + " ") ? x.slice(them.manager.length + 1) : x)
+    .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+  const scoutTip = scoutParts.length > 1 ? scoutParts[scoutParts.length - 1] : null;
+  const scoutFacts = scoutTip ? scoutParts.slice(0, -1) : scoutParts;
 
   const [kind, setKind] = useState<ManagerTagKind>("wants");
   const [target, setTarget] = useState<string>("pos:RB");
@@ -208,33 +215,29 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       </header>
 
-      <PlayerSearch picked={[...give, ...get]} onPick={(id, team) => {
-        setView("build");
-        if (team.you) { toggle("give", id); return; }
-        if (team.id !== partnerId) setPartner(team.id);
-        toggle("get", id);
-      }} />
-
-      <div className="tp-card">
-        <TeamPicker teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
-        {(() => {
-          // Facts become tags; the closing advice gets its own line
-          const parts = td.summary.split(/(?<=\.)\s+/).map((x) => x.trim().replace(/\.$/, "")).filter(Boolean)
-            .map((x) => x.startsWith(them.manager + " ") ? x.slice(them.manager.length + 1) : x)
-            .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
-          const tip = parts.length > 1 ? parts[parts.length - 1] : null;
-          const facts = tip ? parts.slice(0, -1) : parts;
-          return (
-            <div className="tp-scout" aria-label={`How ${them.manager} trades`}>
-              <ul className="tp-facts">{facts.map((f) => <li key={f}>{f}</li>)}</ul>
-              {tip && <p className="tp-tip"><Icon name="spark" size={14} /><span>{tip}.</span></p>}
-            </div>
-          );
-        })()}
-      </div>
+      {searching ? (
+        <PlayerSearch picked={[...give, ...get]} onClose={() => setSearching(false)} onPick={(id, team) => {
+          setView("build");
+          if (team.you) { toggle("give", id); return; }
+          if (team.id !== partnerId) setPartner(team.id);
+          toggle("get", id);
+        }} />
+      ) : (
+        <div className="tr-bar">
+          <TeamPicker compact teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
+          <button className="btn btn-icon" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={20} /></button>
+        </div>
+      )}
 
       <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }]} />
 
+      {view === "ideas" && (
+        <div className="tr-scout" aria-label={`How ${them.manager} trades`}>
+          <span className="eyebrow">How {them.manager} trades</span>
+          <p>{scoutFacts.join(" · ")}</p>
+          {scoutTip && <p className="tr-tip"><Icon name="spark" size={14} /><span>{scoutTip}.</span></p>}
+        </div>
+      )}
       {view === "ideas" && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
       {view === "ideas" && suggestions.length > 0 && (
         <section className="card nudge">

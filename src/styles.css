@@ -3172,3 +3172,16 @@ html:root:not(#_) .page-tabs > .seg button, html:root:not(#_) .page-tabs > .seg 
 html:root:not(#_) .page-tabs { margin: 0; }
 /* Cards that slid in on mount replayed on every tab switch; they now just appear */
 html:root:not(#_) .nudge:not(.leaving), html:root:not(#_) .sb2-bar span { animation: none !important; }
+
+/* Trade: one calm row for partner + search; scouting notes live on the Ideas tab */
+html:root:not(#_) .tr-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; max-width: 520px; }
+html:root:not(#_) .tr-bar .btn-icon { width: 48px; height: 48px; }
+html:root:not(#_) .tp-compact .tp-btn { min-height: 48px; padding: 6px 14px 6px 7px; gap: 10px; border: 0 !important; border-radius: 999px !important; background: var(--surface-2) !important; }
+html:root:not(#_) .tp-compact .tp-who { display: grid; gap: 0; min-width: 0; }
+html:root:not(#_) .tp-compact .tp-who small { font-size: 0.75rem; color: var(--muted); order: 0; }
+html:root:not(#_) .tp-compact .tp-who b { font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .psr { margin-bottom: 0; }
+html:root:not(#_) .tr-scout { display: grid; gap: 6px; padding: 0 2px; max-width: 520px; }
+html:root:not(#_) .tr-scout p { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); }
+html:root:not(#_) .tr-tip { display: grid; grid-template-columns: 16px 1fr; gap: 8px; color: var(--ink) !important; font-weight: 500; }
+html:root:not(#_) .tr-tip svg { margin-top: 3px; color: var(--lime); }
