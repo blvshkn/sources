@@ -3282,3 +3282,24 @@ html:root:not(#_) .wk-head + .wk-date { border-top: 0; }
 html:root:not(#_) .wk-date svg { color: var(--muted); flex: none; }
 html:root:not(#_) .card.wk { padding: 18px 18px 8px; }
 html:root:not(#_) .wk-head .tiny { white-space: nowrap; }
+/* ---- Waivers: type-ahead and unavailable players ---- */
+html:root:not(#_) .wv-ta { position: relative; margin: 0 16px 10px; }
+html:root:not(#_) .wv-ta .wv-search { margin: 0; }
+html:root:not(#_) .wv-ta-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; border-radius: 18px; background: var(--surface-2); box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line); transform-origin: top center; animation: wv-ta-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes wv-ta-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) .wv-ta-list { animation: none; } }
+html:root:not(#_) .wv-ta-list button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 12px; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+html:root:not(#_) .wv-ta-list button.on { background: rgba(255, 255, 255, 0.06); }
+html:root:not(#_) .wv-ta-list button.off .wv-ta-n { color: var(--muted); }
+html:root:not(#_) .wv-ta-list .lu-pos { flex: none; width: 26px; font-size: 0.75rem; }
+html:root:not(#_) .wv-ta-n { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.9375rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .wv-ta-n mark { background: none; color: var(--lime); }
+html:root:not(#_) .wv-ta-n small { font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+html:root:not(#_) .wv-ta-p { flex: none; font: 600 0.875rem/1 var(--font-mono); color: var(--muted); }
+html:root:not(#_) .wv-tag { flex: none; display: inline-flex; align-items: center; height: 20px; padding: 0 7px; margin-left: 8px; border-radius: 6px; font: 600 0.625rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; background: var(--surface-3); color: var(--muted); vertical-align: middle; }
+html:root:not(#_) .wv-ta-list .wv-tag { margin-left: 0; }
+html:root:not(#_) .wv-tag.t-out, html:root:not(#_) .wv-tag.t-ir { background: rgba(255, 92, 72, 0.14); color: #FF7A66; }
+html:root:not(#_) .wv-off .wv-row, html:root:not(#_) .wv-dim .wv-row { opacity: 0.55; }
+html:root:not(#_) .wv-off .wv-row { cursor: default; }
+html:root:not(#_) .wv-rank svg { color: var(--muted); }
+html:root:not(#_) .wv-ta-n mark { padding: 0 !important; margin: 0 !important; border-radius: 0; display: inline; }
