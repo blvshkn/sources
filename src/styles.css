@@ -3231,3 +3231,14 @@ html:root:not(#_) .page-league { display: none; }
   html:root:not(#_) .page-league:active { transform: scale(0.98); }
 }
 @media (max-width: 860px) { html:root:not(#_) .page-head > div { flex: 1 1 100%; min-width: 0; } }
+/* Wire matchup card: the whole top half opens the matchup; live scores replace projections once games start. */
+html:root:not(#_) .sb2-open .sb2-head { margin-bottom: 12px; align-items: center; }
+html:root:not(#_) .sb2-open .sb2-chance { margin-top: 16px; }
+html:root:not(#_) .sb2-now { display: grid; justify-items: end; gap: 4px; }
+html:root:not(#_) .sb2-now small { font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+/* FAAB: its own full-width row under the league selector. */
+html:root:not(#_) .faab-row { display: grid; gap: 8px; min-width: 0; padding: 0; background: none; }
+html:root:not(#_) .faab-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 0.875rem; }
+html:root:not(#_) .faab-row b { font-size: 1.375rem !important; }
+html:root:not(#_) .faab-row .faab-track { height: 4px; border: 0; background: var(--surface-3); }
+html:root:not(#_) .faab-row .faab-track span { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }

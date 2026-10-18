@@ -29,12 +29,12 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         <div>
           <LeagueSwitch title="Waivers" meta={<>{DEADLINES.waivers}</>} />
         </div>
-        {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
-          <span className="tiny muted">FAAB left</span>
-          <b className="num">${FAAB.remaining}<span className="muted">/{FAAB.budget}</span></b>
-          <span className="faab-track"><span style={{ width: `${(FAAB.remaining / FAAB.budget) * 100}%` }} /></span>
-        </div>}
       </header>
+
+      {FAAB.enabled && <div className="faab faab-row" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
+        <span className="faab-row-top"><span className="muted">FAAB left</span><b className="num">${FAAB.remaining}<span className="muted">/{FAAB.budget}</span></b></span>
+        <span className="faab-track"><span style={{ width: `${(FAAB.remaining / FAAB.budget) * 100}%` }} /></span>
+      </div>}
 
       {top && (() => {
         const hi = bidDollars(top.bid[1]);

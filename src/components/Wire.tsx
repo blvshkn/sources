@@ -6,6 +6,7 @@ import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor , specialLineup } 
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
+import { useLive } from "../live";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -107,36 +108,44 @@ export function Scoreboard({ you, partner, onPartner, onMatchup }: { you: TeamNe
   const chance = theirs !== null ? Math.round(phi((mine - theirs) / 34) * 100) : null;
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
-  const Row = ({ t, pts, side }: { t: typeof YOU; pts: number; side: "you" | "them" }) => (
+  // Once games start, the big numbers are points scored and the projection drops to a footnote
+  const live = useLive();
+  const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
+  const nowLive = Object.values(live.games).some((x) => x === "in_game");
+  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
+  const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
+  const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
     <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
       <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
-      <span className="sb2-pts">{pts.toFixed(1)}</span>
+      {inPlay && now !== undefined
+        ? <span className="sb2-pts sb2-now">{now.toFixed(1)}<small>proj {pts.toFixed(1)}</small></span>
+        : <span className="sb2-pts">{pts.toFixed(1)}</span>}
     </span>
   );
   return (
     <section className="card sb2" aria-label="This week">
-      <header className="sb2-head">
-        <span>Week {WEEK} matchup</span>
-        <span>Projected</span>
-      </header>
-      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label="Open this week's matchup">
-        <Row t={YOU} pts={mine} side="you" />
+      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label={`Open this week's matchup${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}>
+        <span className="sb2-head">
+          <span>Week {WEEK} matchup</span>
+          {inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
+        </span>
+        <Row t={YOU} pts={mine} now={myNow} side="you" />
         {opp && theirs !== null && <>
           <span className="sb2-div" aria-hidden="true"><span>vs</span></span>
-          <Row t={opp} pts={theirs} side="them" />
+          <Row t={opp} pts={theirs} now={oppNow} side="them" />
         </>}
+        {chance !== null && (
+          <span className="sb2-chance" aria-hidden="true">
+            <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
+            <span className="sb2-chance-lbl">
+              <span><b>{chance}%</b> to win</span>
+              <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</span>
+            </span>
+          </span>
+        )}
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
       </button>
-      {chance !== null && (
-        <div className="sb2-chance" aria-label={`Win chance from projections: ${chance} percent`}>
-          <div className="sb2-bar"><span style={{ width: `${chance}%` }} /></div>
-          <div className="sb2-chance-lbl">
-            <span><b>{chance}%</b> to win</span>
-            <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Underdog" : "Toss-up"}</span>
-          </div>
-        </div>
-      )}
       <dl className="ti-stats sb2-stats">
         <div className="ti-stat"><dt>Power rank</dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
         <div className="ti-stat"><dt>Weakest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
