@@ -430,6 +430,7 @@ export interface Activity {
   bid?: number;
   at: number;
 }
+export interface BoardRow { id: string; name: string; pos: string; nfl: string; age?: number; value: number; trend: number; ownerId?: string }
 export interface PastTrade { week: string; a: string; b: string; aGot: { name: string; pos: Pos; rookie?: boolean }[]; bGot: { name: string; pos: Pos; rookie?: boolean }[] }
 const DEMO_TRADES: PastTrade[] = [
   { week: "2025 Wk 4", a: "mike", b: "kev", aGot: [{ name: "Javonte Williams", pos: "RB" }], bGot: [{ name: "Hunter Henry", pos: "TE" }] },
@@ -499,6 +500,8 @@ export interface LeagueData {
   offers: Record<string, number> | null;
   /** Where market values come from, shown in the UI. */
   valueSource: string;
+  /** League-wide market board: top players by trade value with owners and 30-day movement. */
+  board?: BoardRow[];
   /** How many weeks the rest-of-season projections cover. */
   rosWeeks?: number;
   username?: string;

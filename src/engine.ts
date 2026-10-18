@@ -100,7 +100,9 @@ export const irLabel = (p: Player) => p.injury === "IR" ? "Injured reserve" : p.
 export const marketValue = (p: Player): number => {
   if (p.value !== undefined) return p.value;
   if (p.status === "O" && p.longTerm) return 0;
-  return Math.round(9 * Math.pow(Math.max(0, p.proj), 2.2));
+  // Real 1QB markets discount quarterbacks heavily (there are plenty to start); Superflex prices them up.
+  const posFactor = p.pos === "QB" ? (FORMAT.superflex ? 1.05 : 0.42) : p.pos === "TE" ? 0.9 : 1;
+  return Math.round(9 * Math.pow(Math.max(0, p.proj), 2.2) * posFactor);
 };
 /**
  * Consolidation adjustment: the best player in a package counts in full, each

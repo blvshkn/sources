@@ -4,6 +4,7 @@ import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrengt
 import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
 import { Avatar } from "./Avatar";
+import { Values } from "./Values";
 import { LEAGUE, Activity, ActivityPlayer } from "../data";
 
 const KIND_LABEL: Record<Activity["kind"], string> = { free_agent: "Free agent", waiver: "Waiver claim", trade: "Trade", commissioner: "Commissioner" };
@@ -93,7 +94,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
   onKeepTag: (id: string) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
-  const [view, setView] = useState<"needs" | "tendencies" | "activity">("needs");
+  const [view, setView] = useState<"needs" | "tendencies" | "activity" | "values">("needs");
   const sorted = [...needs].sort((a, b) => a.rank - b.rank);
   const you = needs.find((n) => n.team.you)!;
   // Starter copy: "Per sources, three teams are thin at RB. You have two to spare."
@@ -112,9 +113,9 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
       <header className="page-head">
         <div>
           <div className="eyebrow">{LEAGUE_NAME} · {needs.length} teams</div>
-          <h1 className="page-title">League needs</h1>
+          <h1 className="page-title">League</h1>
         </div>
-        <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />
+        <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "values", label: "Values" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />
       </header>
 
       {view === "needs" && partners.length > 0 && (
@@ -141,7 +142,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
         </section>
       )}
 
-      {view !== "activity" && <section className="card card-pad capture-card">
+      {view !== "activity" && view !== "values" && <section className="card card-pad capture-card">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <h2 className="section-title">Heard something in league chat?</h2>
           <span className="tiny muted">Type or dictate. Tags stay private.</span>
@@ -159,7 +160,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
       )}
       {view === "tendencies" && <p className="small muted">Built from completed trades and offers in this league over the last year. <Phase v="v1" /></p>}
 
-      {view === "activity" ? <ActivityFeed /> : <div className="needs-grid">
+      {view === "activity" ? <ActivityFeed /> : view === "values" ? <Values onTarget={(_, ownerId) => onTrade(ownerId)} /> : <div className="needs-grid">
         {sorted.map((n) => {
           const t = n.team;
           const teamTags = tags.filter((x) => x.teamId === t.id);
