@@ -23,7 +23,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
         <Avatar p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="pname" style={{ display: "block" }}>{p.name}</span>
-          <span className="pmeta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> {p.nfl}{gameLine(p) ? ` · ${gameLine(p)}` : ""} · <span className="slot-tag">{slot}</span> <StatusPill p={p} />
+          <span className="pmeta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> {p.nfl}{gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} />
             {lock && <span className="lock row" style={{ gap: 3 }}><Icon name="lock" size={11} />{lock}</span>}
             {want && <span className="want-tag">{want}</span>}
             {dim && <span className="lock">{dim}</span>}
@@ -37,8 +37,8 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
   return (
     <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
       <div className="roster-head">
-        <div style={{ minWidth: 0 }}><div className="eyebrow">{label}</div><b>{team.name}</b></div>
-        <span className="mono small num">{lineup.total.toFixed(1)}</span>
+        <div className="rp-t"><span>{label}</span><b>{team.name}</b></div>
+        <span className="rp-total"><b>{lineup.total.toFixed(1)}</b><small>starters pts/wk</small></span>
       </div>
       <div className="slot-label">Starters</div>
       {lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}
@@ -295,7 +295,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             {POS_ORDER.map((p) => <option key={p} value={`pos:${p}`}>{kind === "wants" ? `${p} help` : kind === "refuses" ? `His ${p}` : `Your ${p}`}</option>)}
             {targetOptions.map((id) => <option key={id} value={id}>{playerById(id).name}</option>)}
           </select>
-          <button className="btn btn-sm" onClick={addTag}>Save tag</button>
+          <button className="btn btn-sm" onClick={addTag}>Add tag</button>
         </div>
         {theirTags.length > 0 && (
           <div className="row wrap">

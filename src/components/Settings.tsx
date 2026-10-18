@@ -14,21 +14,6 @@ const PLATFORMS: { name: string; how: string; when: "MVP" | "v1" | "Later" | "n/
   { name: "CBS", how: "Needs a technical check", when: "Later" },
   { name: "NFL.com", how: "Not needed; leagues moved to ESPN", when: "n/a" },
 ];
-const FORMATS: { name: string; when: string }[] = [
-  { name: "Redraft (PPR, Half, Standard)", when: "MVP" },
-  { name: "Superflex and TE Premium", when: "MVP" },
-  { name: "Dynasty, with rookie picks", when: "v1 (offseason build)" },
-  { name: "Keeper, with keeper cost in value", when: "v1" },
-  { name: "Guillotine, with FAAB pacing", when: "Later" },
-  { name: "IDP", when: "Later" },
-  { name: "Best ball", when: "Not planned (few trades)" },
-];
-const PHASES = [
-  { phase: "MVP (private beta)", when: "Rest of 2026 season", what: "Sleeper redraft: needs map, intent tags, trade finder, what would it take, trade builder, verdicts, optimal lineup, Per Sources nudges, pitch and send" },
-  { phase: "v1 (public launch)", when: "Aug 2027", what: "iOS, Android, web; ESPN and Yahoo; dynasty and keeper; waivers and FAAB; manager tendencies; full AI nudges; Pro tier" },
-  { phase: "Later", when: "2028", what: "MFL, CBS, IDP, guillotine, commissioner tools, trade report cards" },
-];
-
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button role="switch" aria-checked={on} className={`switch${on ? " on" : ""}`} onClick={() => onChange(!on)} aria-label={label}>
@@ -73,12 +58,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           )}
         </div>
         <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Sources connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
-        <div className="table-wrap">
-          <table className="tbl">
-            <thead><tr><th>Platform</th><th>How you connect</th><th>When</th></tr></thead>
-            <tbody>{PLATFORMS.map((p) => <tr key={p.name}><td><b>{p.name}</b></td><td>{p.how}</td><td>{p.when === "n/a" ? <span className="muted">n/a</span> : <span className={`when when-${p.when}`}>{p.when === "MVP" ? "Available" : p.when === "v1" ? "Next" : "Later"}</span>}</td></tr>)}</tbody>
-          </table>
-        </div>
+        <p className="tiny muted">Next up: {PLATFORMS.filter((p) => p.when === "v1").map((p) => p.name).join(" and ")}. Later: {PLATFORMS.filter((p) => p.when !== "v1" && p.when !== "MVP" && p.when !== "n/a").map((p) => p.name).join(" and ")}.</p>
         <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Run setup again" : "Switch league or account"}</button>
       </section>
 
@@ -98,12 +78,6 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <Toggle label="TE Premium" on={format.tePremium} onChange={(v) => setFormat({ ...format, tePremium: v })} />
         </div>
         <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."} Trade values: {LEAGUE.valueSource}.</p>
-        <div className="table-wrap">
-          <table className="tbl">
-            <thead><tr><th>Format</th><th>When</th></tr></thead>
-            <tbody>{FORMATS.map((f) => <tr key={f.name}><td>{f.name}</td><td>{f.when}</td></tr>)}</tbody>
-          </table>
-        </div>
       </section>
 
       <section className="card settings-group">
@@ -153,15 +127,6 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         </div>
       </section>
 
-      <section className="card settings-group">
-        <h2 className="section-title">Release phases</h2>
-        <div className="table-wrap">
-          <table className="tbl">
-            <thead><tr><th>Phase</th><th>Timing</th><th>What ships</th></tr></thead>
-            <tbody>{PHASES.map((p) => <tr key={p.phase}><td><b>{p.phase}</b></td><td>{p.when}</td><td>{p.what}</td></tr>)}</tbody>
-          </table>
-        </div>
-      </section>
     </>
   );
 }

@@ -9,7 +9,7 @@ const TAG_LABEL: Record<MyTag, string> = {
   available: "Available",
   shopping: "Shopping",
   untouchable: "Untouchable",
-  amazing: "Untouchable unless amazing",
+  amazing: "Unless amazing",
 };
 // Standard normal CDF, for a win chance from two projections
 const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - q : q; };
@@ -47,7 +47,7 @@ function IrBlock() {
           <span className="ir-empty" aria-hidden="true" />
           <span className="lu-who">
             <span className="lu-name muted">Open spot</span>
-            <span className="lu-meta">{ir.moveIn[i] ? `${ir.moveIn[i].name} qualifies. Moving him frees a bench spot.` : "Nobody on your roster qualifies right now."}</span>
+            <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} qualifies. Moving him frees a bench spot.` : "Nobody on your roster qualifies right now."}</span>
           </span>
           {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Move</a> : <span />}
         </div>
@@ -76,7 +76,7 @@ function LineupRow({ p, slot, bench, swap }: { p: Player; slot: string; bench?: 
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
         {p.status && !onBye(p.nfl) && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
-      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{eff(p, true).toFixed(1)}<i>proj</i></span>}
+      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{eff(p, true).toFixed(1)}</span>}
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -99,7 +99,7 @@ function SpecialRow({ p, slot, bench, swapFrom }: { p: SpecialPlayer; slot: stri
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && gameLine(p) && <span className="lu-game">{gameLine(p)}</span>}</span>
       </span>
-      {bye ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{specialPts(p).toFixed(1)}<i>proj</i></span>}
+      {bye ? <span className="lu-pts bye">BYE</span> : <span className="lu-pts">{specialPts(p).toFixed(1)}</span>}
       {swapFrom && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -312,7 +312,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <Avatar p={p} size={36} />
                 <div style={{ minWidth: 0 }}>
                   <div className="pname">{p.name}</div>
-                  <div className="pmeta">{starting ? starting.slot : "Bench"} · {p.nfl} · {eff(p, true).toFixed(1)} pts this week <StatusPill p={p} /></div>
+                  <div className="pmeta">{p.pos} · {p.nfl}{!starting && " · Bench"} <StatusPill p={p} /></div>
                 </div>
                 <label htmlFor={`tag-${id}`} className="sr-only">Tag for {p.name}</label>
                 <select id={`tag-${id}`} className="tag-select" value={myTags[id] ?? ""} onChange={(e) => setTag(id, e.target.value as MyTag | "")}>
@@ -328,9 +328,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       <section className="card card-pad wiwt">
         <div>
           <h2 className="section-title">What would it take</h2>
-          <p className="small muted" style={{ marginTop: 6 }}>For each player marked "Untouchable unless amazing," set your price. Sources shows the cheapest offer from each team that clears it.</p>
+          <p className="small muted" style={{ marginTop: 6 }}>For each player marked "Unless amazing," set your price. Sources shows the cheapest offer from each team that clears it.</p>
         </div>
-        {locked.length === 0 && <p className="small muted">No locked players yet. Mark one "Untouchable unless amazing" above to set a price.</p>}
+        {locked.length === 0 && <p className="small muted">No locked players yet. Mark one "Unless amazing" above to set a price.</p>}
         {locked.map((pid) => {
           const price = prices[pid] ?? DEFAULT_PRICE;
           const offers = TEAMS.filter((t) => !t.you).map((t) => ({ t, o: whatItWouldTake(YOU, t, pid, tags, price) }));

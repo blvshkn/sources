@@ -1719,3 +1719,32 @@ p, .page-sub { max-width: 65ch; }
 .ti-gain small { font-size: 0.6875rem; }
 .ti-odds { height: 24px; padding: 0 8px; font-size: 0.6875rem; gap: 4px; }
 @media (max-width: 400px) { .ti { padding: 14px; } .ti-side { grid-template-columns: 56px minmax(0, 1fr); } }
+
+/* Audit fixes: nothing essential gets cut off */
+.lu-meta.wrap { white-space: normal !important; overflow: visible; }
+.roster-row { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; }
+.roster-row .pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tag-select { width: auto; min-width: 128px; max-width: 150px; }
+/* Settings rows with a segmented control stack on phones so the description gets full width */
+@media (max-width: 600px) {
+  .set-row:has(> .seg) { flex-direction: column; align-items: stretch; gap: 10px; }
+  .set-row:has(> .seg) > .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+}
+/* Trade roster lists: plain header with a labeled total */
+.rp-t { display: grid; gap: 1px; min-width: 0; }
+.rp-t span { font-size: 0.75rem; color: var(--muted); }
+.rp-t b { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-total { display: grid; justify-items: end; gap: 1px; flex: none; }
+.rp-total b { font: 500 1rem/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.rp-total small { font-size: 0.6875rem; color: var(--muted); }
+/* Small card labels: plain sans, sentence case. Mono stays for numbers only. */
+.ai-label, .deadline, .nudge-kind, .ai-label .linkish { font-family: var(--font-body) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.75rem !important; font-weight: 500; color: var(--muted); }
+.nudge-kind { color: var(--ink); font-weight: 600; }
+.ai-label { gap: 4px; }
+.ai-label svg, .deadline svg { color: var(--faint); }
+.lu-pts { font-size: 1.0625rem; }
+/* League team cards: a quiet text action instead of a full-width button on every card */
+.team-trade { justify-self: start; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--ink); font: 500 0.875rem/1 var(--font-body); cursor: pointer; }
+.team-trade svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) { .team-trade:hover svg { transform: translateX(2px); } }
+.team-trade:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; border-radius: 4px; }

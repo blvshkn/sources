@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ManagerTag, playerById, Pos, POS_ORDER, YOU, LEAGUE_NAME } from "../data";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
-import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
+import { AiLabel, Delta, Icon, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
 import { Avatar } from "./Avatar";
 import { Values } from "./Values";
@@ -213,7 +213,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
                   {!t.you && <AiLabel />}
                 </div>
               )}
-              {!t.you && <button className="btn btn-sm" onClick={() => onTrade(t.id)}>Build a trade with {t.manager}</button>}
+              {!t.you && <button className="team-trade" onClick={() => onTrade(t.id)}>Build a trade with {t.manager}<Icon name="chev" size={14} /></button>}
               {t.you && <span className="tiny muted">This is you. {YOU.roster.length} rostered players.</span>}
             </article>
           );
