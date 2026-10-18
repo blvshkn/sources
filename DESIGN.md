@@ -1,7 +1,7 @@
 # Design System: Sources, Your Fantasy Insider
 
 ## 1. Visual Theme & Atmosphere
-"Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, a newspaper serif for titles and scores, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
+"Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, one friendly grotesk (Google Sans) for everything, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
 
 Light (bone paper) is the home edition. Night edition swaps the paper for warm charcoal with the same hierarchy.
 
@@ -22,11 +22,11 @@ Status: Gain #346538 on #EDF3EC, Loss #9F2F2D on #FDEBEC, Caution #956400 on #FB
 Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue, TE pale yellow, K/DEF pale lavender (#5B4B8A on #F1EEF8). FLEX is outlined white, bench is outlined faint, IR is pale red.
 
 ## 3. Typography Rules
-- **Display:** Newsreader 500, optical sizing, tracking -0.03em, leading 1.02. Page titles, section titles, team names in the brand
-- **Scores:** Newsreader 400 with lining tabular figures, like a printed box score
-- **Body:** Geist 400 to 600, leading 1.55, max 65 characters
-- **Mono:** Geist Mono for projections, stat lines, and small uppercase labels (tracking 0.06em)
-- **Banned:** Inter, Roboto, all-caps headlines
+- **Display:** Google Sans 600, tracking -0.03em, leading 1.05. Page titles and section titles
+- **Scores:** Google Sans 500, tabular figures, tracking -0.04em
+- **Body:** Google Sans 400 to 600, leading 1.55, max 65 characters
+- **Mono:** Google Sans Code for projections, stat lines, and small uppercase labels (tracking 0.06em)
+- **Banned:** serifs, Inter, Roboto, all-caps headlines
 
 ## 4. Component Stylings
 - **Cards:** white sheet, 1px hairline, 12px corners, no shadow
