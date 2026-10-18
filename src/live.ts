@@ -29,12 +29,14 @@ function demo(): Live {
   const games: Record<string, GameState> = {};
   const points: Record<string, number> = {};
   const teamPts: Record<string, number> = {};
-  const done = ["MIA", "KC"]; const live = ["BUF", "CIN", "PHI"];
+  const done = ["MIA", "KC", "CAR", "BAL", "IND"]; const live = ["BUF", "CIN", "PHI", "TB"];
   done.forEach((t) => (games[t] = "complete")); live.forEach((t) => (games[t] = "in_game"));
   const sideTotal = (ids: string[]) => ids.reduce((a, id) => {
     const p = LEAGUE.players[id]; if (!p) return a;
     const g = games[p.nfl]; if (!g) return a;
-    const pts = Math.round(eff(p, true) * (g === "complete" ? 1.08 : 0.55) * 10) / 10;
+    // Spread outcomes so the sample Sunday shows every state: some past their projection, some close, some short
+    const h = [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) / 4294967295;
+    const pts = Math.round(eff(p, true) * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
     points[id] = pts; return a + pts;
   }, 0);
   // Everyone on a roster gets points; only starters count toward the team score

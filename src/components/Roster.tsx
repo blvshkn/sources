@@ -73,9 +73,30 @@ type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number 
 const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0 });
 
 /** Points column: projection before kickoff, live points (with the projection beneath) during the game, final after. */
+/** How a player is doing against his projection: past it (heating up), close to it, or short of it. While his game
+ *  is still on, being behind isn't news, so only "close" and "hot" show until it's final. */
+const heatOf = (pts: number, proj: number, final: boolean): "hot" | "close" | "below" | null =>
+  proj <= 0 ? (pts > 0 ? "hot" : null) : pts >= proj ? "hot" : pts >= proj * 0.85 ? "close" : final ? "below" : null;
+
+/** A small flame, drawn in the logo's line family, that flickers while a player is heating up. */
+const Flame = () => (
+  <svg className="flame" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+    <defs><linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#FF5A36" /><stop offset="0.6" stopColor="#FF9A3D" /><stop offset="1" stopColor="#FFD166" /></linearGradient></defs>
+    <path className="flame-outer" d="M12 22c-4.1 0-7-2.8-7-6.6 0-3.1 1.9-5.2 3.6-7 .4 1.7 1.3 2.8 2.4 3.3C11 7.6 12.6 4.6 15.4 2c-.3 3.4 1 5.6 2.4 7.6 1.1 1.6 1.7 3.4 1.2 5.8C18.4 19.5 15.5 22 12 22z" fill="url(#flame-g)" />
+    <path className="flame-inner" d="M12 20.5c-1.9 0-3.2-1.3-3.2-3 0-1.6 1.1-2.7 2.1-3.6.2 1 .7 1.6 1.4 1.8.1-1.6.9-3 2.1-4.1-.1 1.6.6 2.7 1.1 3.6.5.8.6 1.6.4 2.6-.3 1.6-1.9 2.7-3.9 2.7z" fill="#FFE8A3" />
+  </svg>
+);
+
 function PtsCell({ g, proj }: { g: GameNow; proj: number }) {
-  if (g.state === "in_game") return <span className="lu-pts live" aria-label={`${g.pts.toFixed(1)} points so far, projected ${proj.toFixed(1)}`}><b>{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small></span>;
-  if (g.state === "complete") return <span className="lu-pts final" aria-label={`Final, ${g.pts.toFixed(1)} points`}><b>{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small></span>;
+  if (g.state === "in_game" || g.state === "complete") {
+    const final = g.state === "complete", heat = heatOf(g.pts, proj, final);
+    const note = heat === "hot" ? ", past his projection" : heat === "close" ? ", close to his projection" : heat === "below" ? ", short of his projection" : "";
+    return (
+      <span className={`lu-pts ${final ? "final" : "live"}${heat ? ` heat-${heat}` : ""}`} aria-label={`${final ? "Final, " : ""}${g.pts.toFixed(1)} points${final ? "" : " so far"}, projected ${proj.toFixed(1)}${note}`}>
+        <b>{heat === "hot" && <Flame />}{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
+      </span>
+    );
+  }
   return <span className="lu-pts">{proj.toFixed(1)}</span>;
 }
 /** Replaces the kickoff time once the game starts. */
