@@ -112,7 +112,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
       <header className="page-head">
         <div>
           <div className="eyebrow">{LEAGUE_NAME} · {needs.length} teams</div>
-          <h1 className="page-title">League Needs</h1>
+          <h1 className="page-title">League needs</h1>
           <p className="page-sub">Every team's starters compared to the league average. Red marks where a team is hurting.</p>
         </div>
         <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />

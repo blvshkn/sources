@@ -331,7 +331,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
         </div>
       </header>
 
-      <main className="main">
+      <a className="skip-link" href="#main">Skip to content</a>
+      <main className="main" id="main" tabIndex={-1}>
         <div className="main-inner" key={tab}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}

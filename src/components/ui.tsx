@@ -52,7 +52,8 @@ export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: ()
   );
 }
 
-export const Phase = ({ v }: { v: "MVP" | "v1" | "Later" }) => <span className={`phase phase-${v}`}>{v === "v1" ? "v1 preview" : v}</span>;
+/** Build-phase labels were for internal review. Users never see them. */
+export const Phase = (_: { v: "MVP" | "v1" | "Later" }) => null;
 
 export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; label: string }[]; onChange: (v: T) => void; label: string }) {
   return (

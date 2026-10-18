@@ -283,13 +283,14 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const rosteredAll = new Set(rosters.flatMap((r) => r.players ?? []));
   const trend = new Map(trending.map((t) => [t.player_id, t.count]));
   const pool = Object.values(players).filter((p) => !rosteredAll.has(p.id) && p.nfl !== "FA" && !(p.status === "O" && p.longTerm));
-  const byValue = pool.slice().sort((a, b) => (b.pts?.ppr ?? 0) - (a.pts?.ppr ?? 0)).slice(0, 10);
-  const byTrend = pool.filter((p) => trend.has(p.id)).sort((a, b) => trend.get(b.id)! - trend.get(a.id)!).slice(0, 4);
-  const freeAgents: FreeAgent[] = Array.from(new Map([...byTrend, ...byValue].map((p) => [p.id, p])).values()).slice(0, 10).map((p) => {
+  // Top available at each position plus the most-added players across Sleeper, so position filters always have depth
+  const byValue = SKILL.flatMap((pos) => pool.filter((p) => p.pos === pos).sort((a, b) => (b.pts?.ppr ?? 0) - (a.pts?.ppr ?? 0)).slice(0, 8));
+  const byTrend = pool.filter((p) => trend.has(p.id)).sort((a, b) => trend.get(b.id)! - trend.get(a.id)!).slice(0, 12);
+  const freeAgents: FreeAgent[] = Array.from(new Map([...byTrend, ...byValue].map((p) => [p.id, p])).values()).map((p) => {
     const t = trend.get(p.id);
     const wk = p.wk ? p.wk.ppr : 0;
     return {
-      id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: p.proj, rookie: p.rookie, trend: t ? "up" : "flat",
+      id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: p.proj, rookie: p.rookie, trend: t ? "up" : "flat", adds: t,
       why: t ? `Added in ${t.toLocaleString()} Sleeper leagues in the last day. Projects ${wk.toFixed(1)} this week.`
         : p.wk === null ? `On bye this week, but projects ${p.proj.toFixed(1)} a week going forward.`
         : `Projects ${wk.toFixed(1)} this week and ${p.proj.toFixed(1)} a week going forward.`,

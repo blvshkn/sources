@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
-import { Icon, Phase, Seg } from "./ui";
+import { Icon, Seg } from "./ui";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -78,7 +78,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <div className="table-wrap">
           <table className="tbl">
             <thead><tr><th>Platform</th><th>How you connect</th><th>When</th></tr></thead>
-            <tbody>{PLATFORMS.map((p) => <tr key={p.name}><td><b>{p.name}</b></td><td>{p.how}</td><td>{p.when === "n/a" ? <span className="muted">n/a</span> : <Phase v={p.when} />}</td></tr>)}</tbody>
+            <tbody>{PLATFORMS.map((p) => <tr key={p.name}><td><b>{p.name}</b></td><td>{p.how}</td><td>{p.when === "n/a" ? <span className="muted">n/a</span> : <span className={`when when-${p.when}`}>{p.when === "MVP" ? "Available" : p.when === "v1" ? "Next" : "Later"}</span>}</td></tr>)}</tbody>
           </table>
         </div>
         <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Run setup again" : "Switch league or account"}</button>
@@ -163,7 +163,6 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
             <tbody>{PHASES.map((p) => <tr key={p.phase}><td><b>{p.phase}</b></td><td>{p.when}</td><td>{p.what}</td></tr>)}</tbody>
           </table>
         </div>
-        <p className="tiny muted">Screens marked <Phase v="v1" /> are previews of v1 features running on sample data. Native iOS and Android apps (React Native) follow each platform's own patterns.</p>
       </section>
     </>
   );

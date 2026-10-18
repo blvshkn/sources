@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl } from "../data";
-import { WaiverRec, bidDollars, bidsFor, eff, fmt } from "../engine";
-import { AiLabel, Delta, Icon, Phase, Stamp } from "./ui";
+import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
+import { AiLabel, Icon, Seg, Stamp } from "./ui";
 import { Jersey } from "./Jersey";
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
-  const [open, setOpen] = useState<string | null>(recs[0]?.fa.id ?? null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [pos, setPos] = useState<"ALL" | "QB" | "RB" | "WR" | "TE">("ALL");
+  const [sort, setSort] = useState<"fit" | "trend" | "proj">("fit");
   const top = recs[0];
+  const ir = irReport(YOU);
+  const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
+  const shown = useMemo(() => {
+    const list = recs.filter((r) => pos === "ALL" || r.fa.pos === pos);
+    if (sort === "trend") return [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0));
+    if (sort === "proj") return [...list].sort((a, b) => b.value - a.value);
+    return list;
+  }, [recs, pos, sort]);
   return (
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">{DEADLINES.waivers} · <Phase v="v1" /></div>
+          <div className="eyebrow">{DEADLINES.waivers}</div>
           <h1 className="page-title">Waivers</h1>
           <p className="page-sub">Who to add, who to drop, and what to bid, based on what wins in your league.</p>
         </div>
@@ -30,24 +40,40 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
           </div>
           <h3>Per sources, {top.fa.name} is your best add. <em>{FAAB.enabled ? `Bid ${top.bid[0]} to ${top.bid[1]} percent.` : "Put in a claim."}</em></h3>
           <p className="small">{top.fa.why}</p>
-          <p className="small muted">{top.fa.name} adds {fmt(top.gain)} to your starters this week{top.drop ? `. Drop ${top.drop.name} (${eff(top.drop).toFixed(1)} projected)` : ""}.</p>
+          <p className="small muted">{top.fa.name} adds {fmt(top.gain)} to your starters this week{irMove ? `. Move ${irMove.name} to IR first and you won't need to drop anyone` : top.drop ? `. Drop ${top.drop.name} (${eff(top.drop).toFixed(1)} projected)` : ""}.</p>
         </section>
       )}
 
+      <div className="wv-filters">
+        <div className="chips" role="group" aria-label="Position">
+          {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => (
+            <button key={p} className={`chip-btn${pos === p ? " on" : ""}`} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>
+          ))}
+        </div>
+        <Seg label="Sort" value={sort} onChange={setSort} options={[{ v: "fit", label: "Best fit" }, { v: "trend", label: "Trending" }, { v: "proj", label: "Projected" }]} />
+      </div>
+
       <section className="card" style={{ overflow: "hidden" }} aria-label="Waiver targets">
-        <div className="roster-head"><b>Best available for {YOU.name}</b><span className="tiny muted">Ranked by points added to your starters</span></div>
-        {recs.map((r) => {
+        <div className="roster-head"><b>Available</b><span className="tiny muted">{sort === "fit" ? "Ranked by points added to your starters" : sort === "trend" ? "Most added across Sleeper first" : "Ranked by weekly projection"}</span></div>
+        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>No {pos} worth adding right now. Check back after waivers run.</p>}
+        {shown.map((r, i) => {
           const isOpen = open === r.fa.id;
           return (
             <div key={r.fa.id} className={`wv${isOpen ? " open" : ""}`}>
               <button className="wv-row" onClick={() => setOpen(isOpen ? null : r.fa.id)} aria-expanded={isOpen}>
-                <Jersey p={r.fa} size={34} />
-                <span className="grow" style={{ minWidth: 0 }}>
-                  <span className="pname" style={{ display: "block" }}>{r.fa.name} {r.fa.trend === "up" && <span className="trend">Trending</span>}{r.fa.rookie && <span className="trend">Rookie</span>}</span>
-                  <span className="pmeta">{r.fa.nfl} · {r.value.toFixed(1)} a week{r.fa.rostered !== undefined ? ` · ${r.fa.rostered}% rostered` : ""}</span>
+                <span className="wv-rank">{i + 1}</span>
+                <Jersey p={r.fa} size={40} />
+                <span className="wv-who">
+                  <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <Icon name="spark" size={14} />}</span>
+                  <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
                 </span>
-                {FAAB.enabled ? <span className="wv-bid"><b className="num">{r.bid[0]}-{r.bid[1]}%</b><span className="tiny muted">${bidDollars(r.bid[0])}-${bidDollars(r.bid[1])}</span></span> : <span className="wv-bid"><span className="tiny muted">{r.tier}</span></span>}
-                <Delta n={r.gain} />
+                <span className="wv-proj"><span>Proj</span><b>{r.value.toFixed(1)}</b></span>
+                <span className="wv-stats">
+                  <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : ""}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
+                  <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? `$${bidDollars(r.bid[0])}-$${bidDollars(r.bid[1])}` : r.tier}</b></span>
+                  {r.fa.rostered !== undefined && <span><i>Rostered</i><b>{r.fa.rostered}%</b></span>}
+                  {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{r.fa.adds >= 1000 ? `${(r.fa.adds / 1000).toFixed(1)}K` : r.fa.adds}</b></span>}
+                </span>
               </button>
               {isOpen && (
                 <div className="wv-detail">

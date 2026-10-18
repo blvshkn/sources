@@ -340,7 +340,7 @@ const DEMO_SLOT_HISTORY: SlotHistory[] = [
 ];
 
 // ---- Waivers and FAAB ----------------------------------------------------
-export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean }
+export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean; /** Sleeper-wide adds in the last 24 hours. */ adds?: number }
 const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64 };
 const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
