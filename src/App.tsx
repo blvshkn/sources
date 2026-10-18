@@ -34,7 +34,7 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
   { id: "roster", label: "Lineup", short: "Lineup", icon: "helmet", main: true },
   { id: "waivers", label: "Waivers", short: "Waivers", icon: "waivers", main: true },
-  { id: "ask", label: "Ask Sources", short: "Ask", icon: "ask", main: false },
+  { id: "ask", label: "Ask Sources", short: "Ask", icon: "spark", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
   { id: "matchup", label: "Matchup", short: "Matchup", icon: "helmet", main: false, hidden: true },
   { id: "how", label: "How Sources works", short: "How it works", icon: "spark", main: false, hidden: true },
@@ -333,7 +333,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {!n.trades[0] && n.go && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => go(n.go!.tab)}>{n.go.label}</button>}
         </div>
       ))}
-      <button className="rail-ask" onClick={() => go("ask")}><Icon name="ask" size={18} /><span>Ask your league anything</span></button>
+      <button className="rail-ask" onClick={() => go("ask")}><Icon name="spark" size={18} /><span>Ask your league anything</span></button>
     </>
   );
 
@@ -370,7 +370,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <header className="topbar">
         <button className="top-logo" onClick={() => go("wire")}><Logo height={26} /></button>
         <div className="row" style={{ gap: 4 }}>
-          <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="ask" size={20} /></button>
+          <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="spark" size={20} /></button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
         </div>
       </header>
