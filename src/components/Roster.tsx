@@ -127,7 +127,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         <div>
           <div className="eyebrow">{YOU.name} · Week {WEEK} · {UPDATED}</div>
           <h1 className="page-title">Your Lineup</h1>
-          <p className="page-sub">Your best lineup is already set from this week's projections, with flex filled by the highest-projected eligible player.</p>
+          <p className="page-sub">Your best lineup for this week, based on the latest projections.</p>
         </div>
         <span className="chip chip-good num">{lineup.total.toFixed(1)} projected</span>
       </header>
@@ -145,7 +145,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             </div>
           ))}
           <div className="row wrap">
-            <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><Icon name="app" size={16} />Apply in Sleeper</a>
+            <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><Icon name="app" size={16} />Open Sleeper</a>
             <span className="tiny muted">Sleeper's API is read-only, so you make the swap there.</span>
           </div>
         </section>
@@ -206,7 +206,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           <h2 className="section-title">What would it take</h2>
           <p className="small muted" style={{ marginTop: 6 }}>For each player marked "Untouchable unless amazing," set your price. Sources shows the cheapest offer from each team that clears it.</p>
         </div>
-        {locked.length === 0 && <p className="small muted">Mark a player "Untouchable unless amazing" above to set a price.</p>}
+        {locked.length === 0 && <p className="small muted">No locked players yet. Mark one "Untouchable unless amazing" above to set a price.</p>}
         {locked.map((pid) => {
           const price = prices[pid] ?? DEFAULT_PRICE;
           const offers = TEAMS.filter((t) => !t.you).map((t) => ({ t, o: whatItWouldTake(YOU, t, pid, tags, price) }));
@@ -231,7 +231,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <div key={t.id} className="offer">
                   <div className="row wrap" style={{ justifyContent: "space-between" }}>
                     <b className="small">{i === 0 ? `Per sources, ${t.name} could meet your price. ` : ""}{t.manager} sends {o!.get.map((id) => playerById(id).name).join(" + ")}</b>
-                    <button className="btn btn-sm" onClick={() => onPitch(o!)}>Prep pitch</button>
+                    <button className="btn btn-sm" onClick={() => onPitch(o!)}>Write pitch</button>
                   </div>
                   <div className="idea-nums"><span>You gain <Delta n={o!.youDelta} />/wk</span><span>They gain <Delta n={o!.themDelta} />/wk</span></div>
                 </div>

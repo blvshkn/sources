@@ -37,10 +37,10 @@ export function Landing({ onLive, onDemo }: {
       const u = await findUser(name);
       if (!u) { setError(`No Sleeper account named @${name}. It's your Sleeper username, not your email.`); setBusy(false); return; }
       const { leagues } = await findLeagues(u.user_id);
-      if (!leagues.length) { setError("That account isn't in any NFL leagues on Sleeper yet."); setBusy(false); return; }
+      if (!leagues.length) { setError("That account isn't in any NFL leagues on Sleeper yet. Join one on Sleeper, or try the demo."); setBusy(false); return; }
       onLive({ username: name, user: { id: u.user_id, name: u.display_name || name }, leagues });
     } catch (err) {
-      setError(err instanceof SleeperError ? err.message : "Couldn't reach Sleeper. Try again in a moment.");
+      setError(err instanceof SleeperError ? err.message : "We couldn't reach Sleeper. Check your connection and try again.");
     }
     setBusy(false);
   };
@@ -64,7 +64,7 @@ export function Landing({ onLive, onDemo }: {
             <span className="at" aria-hidden="true">@</span>
             <input id="ld-user" value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }}
               placeholder="yourname" autoComplete="username" autoCapitalize="none" spellCheck={false} />
-            <button className="btn btn-primary" type="submit" disabled={!username.trim() || busy}>{busy ? "Finding you…" : "Connect Sleeper"}</button>
+            <button className="btn btn-primary" type="submit" disabled={!username.trim() || busy}>{busy ? "Finding your leagues…" : "Connect Sleeper"}</button>
           </form>
           {error ? <p className="small ob-error ld-error" role="alert">{error}</p> : <p className="ld-help">No password needed.</p>}
           <button className="btn ld-rise d3" style={{ marginTop: 18 }} onClick={onDemo}>Try the demo</button>

@@ -150,7 +150,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
     const offer = demo ? evaluate(YOU, teamById("dan"), ["zay-flowers"], ["ladd-mcconkey"], active, myTags, prices) : null;
     if (offer) list.push({
       id: "offer-dan", kind: "offer", teamId: "dan", headline: "Dan offered Ladd McConkey for your Zay Flowers.",
-      why: `${offerRead(offer).line} Here's the read and a counter that respects his tags.`, trades: [], time: "12 min ago",
+      why: `${offerRead(offer).line} Here's the read and a counter that respects their tags.`, trades: [], time: "12 min ago",
       offer, counter: counterFor(offer, active, myTags, prices), deadline: DEADLINES.trade,
     });
     // Needs: teams with a stated or measured need where you have a win-win
@@ -248,9 +248,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   const addTag = (t: Omit<ManagerTag, "id">) => {
     setTags((cur) => [...cur.filter((x) => !(x.teamId === t.teamId && x.text === t.text)), { ...t, id: `u${Date.now()}` }]);
     haptic();
-    setToast(`Saved for ${teamById(t.teamId).manager}: "${t.text}". Suggestions now respect it.`);
+    setToast(`Tag saved. Trade ideas for ${teamById(t.teamId).manager} now follow it.`);
   };
-  const keepTag = (id: string) => { setTags((cur) => cur.map((t) => (t.id === id ? { ...t, weeksOld: 0 } : t))); setToast("Kept. The tag is fresh again."); };
+  const keepTag = (id: string) => { setTags((cur) => cur.map((t) => (t.id === id ? { ...t, weeksOld: 0 } : t))); setToast("Tag kept."); };
   const clearTag = (id: string) => {
     const prev = tags;
     setTags((cur) => cur.filter((t) => t.id !== id));
@@ -262,7 +262,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
     const count = (dismissed[n.kind] ?? 0) + 1;
     setDismissedIds((c) => [...c, n.id]);
     setDismissed((c) => ({ ...c, [n.kind]: (c[n.kind] ?? 0) + 1 }));
-    setToast(count === 2 ? `Got it. You'll see fewer ${n.kind} nudges.` : "Hidden. Sources is learning what you care about.",
+    setToast(count === 2 ? `Got it. You'll see fewer ${n.kind} nudges.` : "Hidden. You'll see fewer like this.",
       () => { setDismissedIds(prevIds); setDismissed(prevKinds); });
   };
   const onLink = (l: Answer["links"][number]) => { if (l.trade) loadTrade(l.trade); else go(l.tab, l.teamId); };
@@ -274,7 +274,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
         <div key={n.id} className="rail-item">
           <span className="rail-time">{n.time}{n.deadline ? ` · ${n.deadline}` : ""}</span>
           <p>{["need", "news", "waiver", "lineup", "slot"].includes(n.kind) ? "Per sources, " : ""}{n.headline} {n.emph}</p>
-          {n.trades[0] && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => loadTrade(n.trades[0])}>Open deal</button>}
+          {n.trades[0] && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => loadTrade(n.trades[0])}>Open in builder</button>}
           {!n.trades[0] && n.go && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => go(n.go!.tab)}>{n.go.label}</button>}
         </div>
       ))}
@@ -341,7 +341,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
-              dismissed={dismissed} resetDismissed={() => { setDismissed({}); setDismissedIds([]); setToast("Nudges reset."); }}
+              dismissed={dismissed} resetDismissed={() => { setDismissed({}); setDismissedIds([]); setToast("Nudges reset. You'll see everything again."); }}
               onDisconnect={onReconnect}
               onDelete={onDeleteAll}
               onReplay={onReconnect} />
@@ -380,7 +380,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
 export default function App() {
   const [session, setSession] = usePersist<Session>("session", { mode: "none" });
   const [status, setStatus] = useState<"loading" | "ready" | "error">(session.mode === "live" ? "loading" : "ready");
-  const [step, setStep] = useState("Reading your league");
+  const [step, setStep] = useState("Loading your league");
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0);
   const [initialMyTags, setInitialMyTags] = useState<Record<string, MyTag> | undefined>();
@@ -405,7 +405,7 @@ export default function App() {
     setStatus("loading");
     loadLeague(session.leagueId, session.userId, session.username, setStep)
       .then((d) => { if (cancelled) return; setLeague(d); setVersion((v) => v + 1); setStatus("ready"); })
-      .catch((e: unknown) => { if (cancelled) return; setError(e instanceof Error ? e.message : "Something went wrong loading your league."); setStatus("error"); });
+      .catch((e: unknown) => { if (cancelled) return; setError(e instanceof Error ? e.message : "We couldn't load your league from Sleeper. Try again in a minute."); setStatus("error"); });
     return () => { cancelled = true; };
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 

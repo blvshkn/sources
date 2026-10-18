@@ -42,7 +42,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
       </div>
       <div className="row">
         <button className="btn btn-sm" onClick={() => onOpen(t)}>Open in builder</button>
-        <button className="btn btn-sm btn-primary" onClick={() => onPitch(t)}>Prep pitch</button>
+        <button className="btn btn-sm btn-primary" onClick={() => onPitch(t)}>Write pitch</button>
       </div>
     </div>
   );
@@ -112,8 +112,8 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
       <p className="muted small">You offered {swap(f.trade.give)} for {swap(f.trade.get)}. One tap turns the answer into a tag so the next idea is smarter.</p>
       {!no ? (
         <div className="chips-row">
-          <button className="chip-btn good" onClick={() => onResolve(f.id, `Nice. Logged the deal with ${them.manager}.`)}>He's in</button>
-          <button className="chip-btn" onClick={() => setNo(true)}>He said no</button>
+          <button className="chip-btn good" onClick={() => onResolve(f.id, `Deal logged with ${them.manager}.`)}>They're in</button>
+          <button className="chip-btn" onClick={() => setNo(true)}>They said no</button>
           {f.trade.give.map((id) => (
             <button key={id} className="chip-btn" onClick={() => { onTag({ teamId: them.id, kind: "notInterested", playerId: id, text: `Not interested in ${playerById(id).name}`, weeksOld: 0 }); onResolve(f.id, `Tagged: ${them.manager} isn't interested in ${playerById(id).name}.`); }}>
               Not interested in {playerById(id).name.split(" ").slice(-1)[0]}
@@ -124,11 +124,11 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
               Won't move {playerById(id).name.split(" ").slice(-1)[0]}
             </button>
           ))}
-          <button className="chip-btn ghost" onClick={() => onResolve(f.id, "Okay. Sources will check back tomorrow.")}>No reply yet</button>
+          <button className="chip-btn ghost" onClick={() => onResolve(f.id, "Got it. Sources will ask again tomorrow.")}>No reply yet</button>
         </div>
       ) : (
         <div className="coach">
-          <div className="row"><Stamp>Counteroffer coach</Stamp><Phase v="v1" /></div>
+          <div className="row"><Stamp>Suggested counter</Stamp><Phase v="v1" /></div>
           {c ? (
             <>
               <p className="small"><b>{c.line}.</b> {verdict(c.trade).line}</p>
@@ -136,7 +136,7 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
               <AiLabel />
             </>
           ) : <p className="small muted">No single tweak makes this work for both of you while respecting {them.manager}'s tags. Try another partner.</p>}
-          <div className="row"><button className="btn btn-sm btn-ghost" onClick={() => onResolve(f.id, "Closed out the follow-up.")}>Done</button></div>
+          <div className="row"><button className="btn btn-sm btn-ghost" onClick={() => onResolve(f.id, "Follow-up closed.")}>Done</button></div>
         </div>
       )}
     </article>
@@ -157,7 +157,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
         <div className="coach">
           <p className="small"><b>Ready counter:</b> {n.counter.line}. You {fmt(n.counter.trade.youDelta)}, {teamById(o.partnerId).manager} {fmt(n.counter.trade.themDelta)} a week.</p>
           <div className="row wrap">
-            <button className="btn btn-sm" onClick={() => onOpen(n.counter!.trade)}>Open counter in builder</button>
+            <button className="btn btn-sm" onClick={() => onOpen(n.counter!.trade)}>Open in builder</button>
             <button className="btn btn-sm btn-primary" onClick={() => onPitch(n.counter!.trade)}>Send counter</button>
           </div>
         </div>
@@ -198,7 +198,7 @@ export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen,
         <div>
           <div className="eyebrow">Week {WEEK} · {DEADLINES.lock}</div>
           <h1 className="page-title">The Wire</h1>
-          <p className="page-sub">What your league needs, who can help, and the deals worth sending today.</p>
+          <p className="page-sub">What your league needs and the deals worth sending today.</p>
         </div>
       </header>
 
@@ -214,7 +214,7 @@ export function Wire({ you, partner, nudges, followUps, briefing, coach, onOpen,
         </button>
         <button className="brief-row" onClick={() => briefing.trade ? onOpen(briefing.trade) : onGo("trade")}>
           <span className="brief-k">Top trade</span>
-          <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No clean win-win this week."}</span>
+          <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No trade helps both sides this week."}</span>
           <Icon name="chev" size={16} />
         </button>
         <button className="brief-row" onClick={() => onGo("waivers")}>

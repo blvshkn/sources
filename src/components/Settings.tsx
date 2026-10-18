@@ -69,7 +69,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
             <span className="row wrap">
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
               {confirm === "disconnect" ? (
-                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}>Disconnect</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
+                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}>Disconnect Sleeper</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
               ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
             </span>
           )}
@@ -81,7 +81,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
             <tbody>{PLATFORMS.map((p) => <tr key={p.name}><td><b>{p.name}</b></td><td>{p.how}</td><td>{p.when === "n/a" ? <span className="muted">n/a</span> : <Phase v={p.when} />}</td></tr>)}</tbody>
           </table>
         </div>
-        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Replay first-run setup" : "Switch league or account"}</button>
+        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Run setup again" : "Switch league or account"}</button>
       </section>
 
       <section className="card settings-group">
@@ -148,10 +148,10 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <li><b>Nothing sends on its own.</b> Sources preps the message. You tap send.</li>
         </ul>
         <div className="set-row danger-row">
-          <span className="grow"><b>Delete account and data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device right away.</span></span>
+          <span className="grow"><b>Delete account and data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device. This can't be undone.</span></span>
           {confirm === "delete" ? (
-            <span className="row"><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete everything</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
-          ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete…</button>}
+            <span className="row"><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete my data</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
+          ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete my data</button>}
         </div>
       </section>
 

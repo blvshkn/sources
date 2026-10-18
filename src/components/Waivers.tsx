@@ -12,7 +12,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         <div>
           <div className="eyebrow">{DEADLINES.waivers} · <Phase v="v1" /></div>
           <h1 className="page-title">Waivers</h1>
-          <p className="page-sub">Who to add, who to drop, and how much to bid, based on what actually wins in your league.</p>
+          <p className="page-sub">Who to add, who to drop, and what to bid, based on what wins in your league.</p>
         </div>
         {FAAB.enabled && <div className="faab" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
           <span className="tiny muted">FAAB left</span>
@@ -59,7 +59,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                   {FAAB.enabled && <BidHistory tier={r.tier} range={r.bid} />}
                   <div className="row wrap">
                     <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. Bid ${r.bid[1]}% on ${r.fa.name}, drop ${r.drop?.name ?? "nobody"}.`)}>
-                      <Icon name="app" size={16} />Place claim in Sleeper
+                      <Icon name="app" size={16} />Open Sleeper
                     </a>
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
                   </div>

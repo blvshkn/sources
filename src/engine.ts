@@ -212,7 +212,7 @@ export function evaluate(you: Team, them: Team, give: string[], get: string[], t
   theirTags.forEach((t) => {
     if (t.kind === "refuses") {
       const hit = get.filter((id) => (t.playerId ? id === t.playerId : t.pos && playerById(id).pos === t.pos));
-      hit.forEach((id) => warnings.push(`${them.manager} said he won't move ${playerById(id).name}.`));
+      hit.forEach((id) => warnings.push(`${them.manager} said they won't move ${playerById(id).name}.`));
     }
     if (t.kind === "notInterested") {
       const hit = give.filter((id) => (t.playerId ? id === t.playerId : t.pos && playerById(id).pos === t.pos));
@@ -550,7 +550,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
       const t = r.trade;
       return {
         text: `Per sources, ${named.name} is expensive. The closest you get is ${t.give.map((id) => playerById(id).name).join(" + ")}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
-        points: [`Your starters go ${fmt(t.youDelta)} a week.`, `${owner.manager}'s starters go ${fmt(t.themDelta)}. He'd need a reason, like a need you fill.`, "Your untouchables and his tags were left out."],
+        points: [`Your starters go ${fmt(t.youDelta)} a week.`, `${owner.manager}'s starters go ${fmt(t.themDelta)}. They'd need a reason, like a need you fill.`, "Your untouchables and his tags were left out."],
         links: [{ label: "Open it in builder", tab: "trade", trade: t }],
       };
     }

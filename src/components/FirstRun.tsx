@@ -24,7 +24,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
   const [intel, setIntel] = useState<{ you: TeamNeeds; opener: Trade | null } | null>(null);
   const isDemoRun = leagueId === "demo";
 
-  const fail = (e: unknown) => { setBusy(""); setError(e instanceof SleeperError ? e.message : "Something went wrong talking to Sleeper. Try again in a moment."); };
+  const fail = (e: unknown) => { setBusy(""); setError(e instanceof SleeperError ? e.message : "We couldn't load that league from Sleeper. Try again in a minute."); };
 
   const computeIntel = () => {
     applyFormat({ scoring: "ppr", superflex: false, tePremium: false });
@@ -120,7 +120,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 <div className="idea-swap"><span>Your {intel.opener.give.map((id) => playerById(id).name).join(" + ")}</span><span className="arrow">for</span><span>{teamById(intel.opener.partnerId).manager}'s {intel.opener.get.map((id) => playerById(id).name).join(" + ")}</span></div>
                 <div className="idea-nums"><span>You gain <Delta n={intel.opener.youDelta} />/wk</span><span>They gain <Delta n={intel.opener.themDelta} />/wk</span></div>
               </div>
-            ) : <p className="small muted">No clean win-win trade right now. Sources will nudge you when one opens up.</p>}
+            ) : <p className="small muted">No trade helps both sides right now. Sources will tell you when one opens up.</p>}
             <AiLabel />
             <button className="btn btn-primary" onClick={() => setStep("untouchables")}>Continue</button>
           </div>

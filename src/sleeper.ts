@@ -11,8 +11,8 @@ export class SleeperError extends Error {}
 async function get<T>(path: string): Promise<T> {
   let r: Response;
   try { r = await fetch(API + path); } catch { throw new SleeperError("Couldn't reach Sleeper. Check your connection and try again."); }
-  if (r.status === 429) throw new SleeperError("Sleeper is rate limiting requests. Give it a minute and try again.");
-  if (!r.ok) throw new SleeperError(`Sleeper returned an error (${r.status}).`);
+  if (r.status === 429) throw new SleeperError("Sleeper is busy right now. Try again in a minute.");
+  if (!r.ok) throw new SleeperError("Sleeper didn't respond normally. Try again in a minute.");
   return r.json() as Promise<T>;
 }
 
@@ -91,7 +91,7 @@ const positionsQuery = SKILL.map((p) => `position[]=${p}`).join("&");
 // ---- Load a whole league -------------------------------------------------
 
 export async function loadLeague(leagueId: string, userId: string, username: string, onStep?: (s: string) => void): Promise<LeagueData> {
-  onStep?.("Reading your league");
+  onStep?.("Loading your league");
   const [state, league, users, rosters] = await Promise.all([
     getState(),
     get<SLeague>(`/v1/league/${leagueId}`),
@@ -102,14 +102,14 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const live = state.season === season && state.season_type === "regular";
   const week = live ? Math.max(1, state.display_week ?? state.week) : 1;
 
-  onStep?.("Pulling this week's projections");
+  onStep?.("Loading this week's projections");
   const [weekProj, seasonProj, trending] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/add?lookback_hours=24&limit=40").catch(() => []),
   ]);
 
-  onStep?.("Checking trades, waivers and past weeks");
+  onStep?.("Loading trades, waivers and past weeks");
   const weeks = Array.from({ length: week }, (_, i) => i + 1);
   const [txnsByWeek, allMatchups] = await Promise.all([
     Promise.all(weeks.map((w) => get<STxn[]>(`/v1/league/${leagueId}/transactions/${w}`).catch(() => [] as STxn[]))),
@@ -156,7 +156,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const rostered = new Set(rosters.flatMap((r) => r.players ?? []));
   const missing = [...rostered].filter((id) => !players[id] && !/^[A-Z]{2,3}$/.test(id));
   if (missing.length) {
-    onStep?.("Filling in a few players");
+    onStep?.("Loading player details");
     const all = await get<Record<string, SPlayerLite>>("/v1/players/nfl").catch(() => ({} as Record<string, SPlayerLite>));
     missing.forEach((id) => add(id, all[id], null));
   }
@@ -178,7 +178,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     };
   });
   const you = teams.find((t) => t.you);
-  if (!you) throw new SleeperError("We couldn't find your team in that league. Is this the right Sleeper account?");
+  if (!you) throw new SleeperError("We couldn't find your team in that league. Check that you used the right Sleeper username.");
   const myRoster = rosters.find((r) => String(r.roster_id) === you.id)!;
 
   // Slots and format

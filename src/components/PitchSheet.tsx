@@ -171,11 +171,11 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
 
   const primary = async () => {
     if (method === "text") { onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
-    if (method === "group") { const ok = await copy(); onSent(ok ? "Copied for the group chat. Paste it in." : "Selected. Copy it and paste in the group chat.", "group chat"); }
-    if (method === "app") { const ok = await copy(); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the pitch from the box.`, app); }
+    if (method === "group") { const ok = await copy(); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
+    if (method === "app") { const ok = await copy(); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
     if (method === "share") await share();
   };
-  const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share…" }[method];
+  const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share" }[method];
 
   return (
     <div className="scrim-wrap">
@@ -236,10 +236,10 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
 
         <div className="row wrap send-actions">
           <button className="btn btn-primary" onClick={primary}><Icon name="send" size={16} />{primaryLabel}</button>
-          <button className="btn" onClick={async () => { const ok = await copy(); onSent(ok ? "Pitch copied." : "Selected. Press Copy to grab the pitch."); }}><Icon name="copy" size={16} />Copy text</button>
-          <button className="btn btn-ghost" onClick={saveCard}><Icon name="share" size={16} />Save card</button>
+          <button className="btn" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied." : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
+          <button className="btn btn-ghost" onClick={saveCard}><Icon name="share" size={16} />Save image</button>
         </div>
-        <p className="tiny muted">Nothing sends until you hit send in your messaging app. Sources preps it, you send it.</p>
+        <p className="tiny muted">Nothing sends until you hit send in your messaging app.</p>
       </div>
     </div>
   );

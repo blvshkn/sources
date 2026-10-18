@@ -153,7 +153,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         <div>
           <div className="eyebrow">Trade builder · {UPDATED}</div>
           <h1 className="page-title">Build a Deal</h1>
-          <p className="page-sub">Tap players on both rosters. Both starting lineups update as you go, so you can see if it helps them enough to accept.</p>
+          <p className="page-sub">Pick players from both rosters. Both lineups update as you go.</p>
         </div>
       </header>
 
@@ -185,7 +185,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             Judging an offer someone sent me
           </label>
           {!trade ? (
-            <p className="empty-deal">Pick at least one player from each roster to see who wins. Up to three players a side.</p>
+            <p className="empty-deal">No players picked yet. Pick at least one from each roster to see who wins.</p>
           ) : (
             <>
               <div className="deal-lists">
@@ -198,7 +198,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <div className="coach">
                   <p className="small"><b>Ready counter:</b> {counter.line}. You {fmt(counter.trade.youDelta)}, {them.manager} {fmt(counter.trade.themDelta)} a week.</p>
                   <div className="row wrap">
-                    <button className="btn btn-sm" onClick={() => onLoad(counter.trade)}>Load counter</button>
+                    <button className="btn btn-sm" onClick={() => onLoad(counter.trade)}>Open in builder</button>
                     <button className="btn btn-sm btn-primary" onClick={() => onPitch(counter.trade)}>Send counter</button>
                   </div>
                 </div>
@@ -213,11 +213,11 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               {trade.warnings.map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
               {tip && (
                 <div className="tip">
-                  <Stamp>Live tip</Stamp>
+                  <Stamp>Tip</Stamp>
                   <span className="small">{tip}</span>
                 </div>
               )}
-              <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math: slot by slot"}</button>
+              <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math"}</button>
               {why && (
                 <div className="why">
                   <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
@@ -226,7 +226,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 </div>
               )}
               <div className="row wrap">
-                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="send" size={16} />Prep the pitch</button>
+                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="send" size={16} />Write pitch</button>
                 {tip && <AiLabel />}
               </div>
             </>
@@ -242,7 +242,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       <section className="card card-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div>
           <h2 className="section-title">Log what {them.manager} said</h2>
-          <p className="small muted" style={{ marginTop: 6 }}>Private to you. Sources uses it to filter every suggestion. Type it the way they said it, or pick from the lists.</p>
+          <p className="small muted" style={{ marginTop: 6 }}>Private to you. Type it the way they said it, or pick from the lists. Trade ideas follow it.</p>
         </div>
         <TagCapture onSave={onAddTag} placeholder={`${them.manager} said he's looking for a TE`} compact />
         <div className="row wrap">

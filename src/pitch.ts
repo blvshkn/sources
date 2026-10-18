@@ -22,11 +22,11 @@ export function draftPitch(t: Trade, tone: Tone, audience: Audience = "dm"): str
   if (audience === "group") {
     switch (tone) {
       case "straight":
-        return `Trade offer on the table for @${them.manager}: my ${give} for his ${get}. His starters go ${gain} a week, mine ${me}. Fair for both. Thoughts?`;
+        return `Trade offer on the table for @${them.manager}: my ${give} for their ${get}. Their starters go ${gain} a week, mine ${me}. Fair for both. Thoughts?`;
       case "friendly":
-        return `Putting this out there so nobody says I hide my offers: @${them.manager} gets ${give} for ${get}. Fills his ${pos} spot (${gain} a week). Group, tell him to take it.`;
+        return `Putting this out there so nobody says I hide my offers: @${them.manager} gets ${give} for ${get}. Fills their ${pos} spot (${gain} a week). Group, tell them to take it.`;
       case "trash":
-        return `Public service announcement: @${them.manager} has been starting nobody ${hook} for weeks. I'm offering ${give} for ${get}. ${gain} a week for him. If he says no, that's on him.`;
+        return `Public service announcement: @${them.manager} has been starting nobody ${hook} for weeks. I'm offering ${give} for ${get}. ${gain} a week for them. If they say no, that's on them.`;
     }
   }
   switch (tone) {

@@ -25,7 +25,7 @@ export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answe
         <div>
           <div className="eyebrow">Ask your league</div>
           <h1 className="page-title">Ask Sources</h1>
-          <p className="page-sub">Ask about your league in plain English. Every answer comes from your league's rosters and the trade engine, and links to the numbers behind it.</p>
+          <p className="page-sub">Ask anything about your league. Every answer comes from your league's rosters and links to the numbers.</p>
         </div>
       </header>
 
