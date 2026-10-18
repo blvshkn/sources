@@ -126,28 +126,26 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
       })()}
 
       <section className="card wv-card" aria-label="Waiver targets">
-        <div className="wv-head">
-          <div className="wv-head-t">
-            <b>Available</b>
-            <span>{ready} can help this week{shown.length > ready ? ` · ${shown.length - ready} can't` : ""}</span>
-          </div>
-          <label className="wv-sort">
+        <div className="wv-head wv2-head">
+          <b>Available</b>
+          <span><em>{ready}</em> can help this week{shown.length > ready ? <> · {shown.length - ready} can't</> : null}</span>
+        </div>
+        <div className="wv-ta wv2-bar">
+          <label className="psr-field wv-search">
+            <Icon name="search" size={18} />
+            <span className="sr-only">Search free agents</span>
+            <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={() => window.setTimeout(() => setSuggest(false), 120)} onKeyDown={onKey}
+              placeholder="Search players…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
+            {q && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
+          </label>
+          <label className="wv2-sort">
             <span className="sr-only">Sort</span>
             <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
               <option value="fit">Best fit</option>
               <option value="trend">Trending</option>
               <option value="proj">Projected</option>
             </select>
-            <Icon name="chev" size={14} />
-          </label>
-        </div>
-        <div className="wv-ta">
-          <label className="psr-field wv-search">
-            <Icon name="search" size={18} />
-            <span className="sr-only">Search free agents</span>
-            <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={() => window.setTimeout(() => setSuggest(false), 120)} onKeyDown={onKey}
-              placeholder="Search every free agent…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
-            {q && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
+            <Icon name="switch" size={14} />
           </label>
           {suggest && hits.length > 0 && (
             <ul className="wv-ta-list" id="wv-ta-list" role="listbox">
@@ -163,10 +161,11 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </ul>
           )}
         </div>
-        <div className="wv-pos" role="group" aria-label="Position">
-          {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => (
-            <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>
-          ))}
+        <div className="wv2-pos" role="group" aria-label="Position">
+          {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => {
+            const n = all.filter((e) => p === "ALL" || e.fa.pos === p).length;
+            return <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}><span>{p === "ALL" ? "All" : p}</span><small>{n}</small></button>;
+          })}
         </div>
         <div ref={listRef}>
         {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos} available right now. Check back after waivers run.`}</p>}
