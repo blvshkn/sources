@@ -1528,3 +1528,6 @@ input, textarea, select { border-radius: 0 !important; font-family: var(--font-m
 .scoreboard::before { display: none !important; }
 .sb-badge.you { color: #0B0B0B; }
 body::after { opacity: 0.35; }
+.lu-meta, .wv-meta, .pmeta { letter-spacing: 0.01em !important; font-size: 0.6875rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-wrap: nowrap !important; }
+.lu-meta > * + *::before { margin: 0 4px; }
+.lu-row { grid-template-columns: 50px 44px minmax(0, 1fr) auto; gap: 10px; }
