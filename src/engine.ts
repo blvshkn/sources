@@ -58,6 +58,24 @@ export const isOut = (p: Player, thisWeek = false) =>
 export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p, thisWeek)));
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
+// ---- Market value ---------------------------------------------------------
+// Live leagues use FantasyCalc values (real fantasy trades, matched to league
+// settings). The demo league estimates value from projections on a similar scale.
+export const marketValue = (p: Player): number => {
+  if (p.value !== undefined) return p.value;
+  if (p.status === "O" && p.longTerm) return 0;
+  return Math.round(9 * Math.pow(Math.max(0, p.proj), 2.2));
+};
+/**
+ * Consolidation adjustment: the best player in a package counts in full, each
+ * extra piece counts for less, so three bench players can't add up to one star.
+ */
+const PIECE_WEIGHTS = [1, 0.72, 0.52, 0.4];
+export const packageValue = (ids: string[]) =>
+  Math.round(ids.map((id) => marketValue(playerById(id))).sort((a, b) => b - a).reduce((s, v, i) => s + v * (PIECE_WEIGHTS[i] ?? 0.3), 0));
+export const pct = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.round(Math.abs(n) * 100)}%`;
+
+
 export interface Lineup {
   slots: { slot: SlotName; player: Player | null }[];
   bench: Player[];
@@ -179,6 +197,11 @@ export interface Trade {
   themDelta: number;
   youDrop: string[]; // bench players you'd cut to make roster room
   themDrop: string[];
+  /** Market value of each side's package after the consolidation adjustment. */
+  marketGive: number;
+  marketGet: number;
+  /** (get - give) / larger side. Positive = you receive more market value. */
+  marketGap: number;
   fillsWant: boolean;
   warnings: string[];
 }
@@ -227,13 +250,16 @@ export function evaluate(you: Team, them: Team, give: string[], get: string[], t
         warnings.push(`${playerById(id).name} only moves if you ${priceLabel(price)}. This deal doesn't get there.`);
     }
   });
+  const marketGive = packageValue(give);
+  const marketGet = packageValue(get);
+  const marketGap = Math.max(marketGive, marketGet) > 0 ? (marketGet - marketGive) / Math.max(marketGive, marketGet) : 0;
   const wants = theirTags.filter((t) => t.kind === "wants");
   const fillsWant = give.some((id) => wants.some((w) => (w.playerId ? w.playerId === id : w.pos === playerById(id).pos)));
   return {
     key: `${them.id}:${give.join(",")}>${get.join(",")}`,
     partnerId: them.id,
     give, get, youBefore, youAfter, themBefore, themAfter, youDelta, themDelta,
-    youDrop: youS.dropped, themDrop: themS.dropped, fillsWant, warnings,
+    youDrop: youS.dropped, themDrop: themS.dropped, marketGive, marketGet, marketGap, fillsWant, warnings,
   };
 }
 
@@ -247,6 +273,9 @@ function combos(ids: string[], max: number): string[][] {
 }
 
 export const isWinWin = (t: Trade) => t.youDelta >= 0.5 && t.themDelta >= 0.5;
+/** Within 15% on market value: what a fair trade calculator would call even. */
+export const FAIR_GAP = 0.15;
+export const isFair = (t: Trade) => Math.abs(t.marketGap) <= FAIR_GAP;
 
 export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Trade[] {
   const results: Trade[] = [];
@@ -256,10 +285,12 @@ export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Re
       const t = evaluate(you, them, give, get, tags, myTags, prices);
       if (t.warnings.length) continue;
       if (!isWinWin(t)) continue;
+      // Both lenses: it helps both lineups AND neither side gives up much more market value.
+      if (Math.abs(t.marketGap) > 0.25) continue;
       results.push(t);
     }
   }
-  const score = (t: Trade) => Math.min(t.youDelta, t.themDelta) + (t.fillsWant ? 1.5 : 0) - (t.give.length + t.get.length - 2) * 0.4;
+  const score = (t: Trade) => Math.min(t.youDelta, t.themDelta) + (t.fillsWant ? 1.5 : 0) - (t.give.length + t.get.length - 2) * 0.4 - Math.abs(t.marketGap) * 4;
   results.sort((a, b) => score(b) - score(a));
   // Keep variety: no repeat of the same headline pair, and no padded versions of a simpler deal.
   const seen = new Set<string>();
@@ -373,18 +404,24 @@ export const fmt = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.a
 
 export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
   const them = teamById(t.partnerId).manager;
+  const market = Math.abs(t.marketGap) <= FAIR_GAP ? "Fair by market value" : t.marketGap > 0 ? `You get ${pct(t.marketGap).slice(1)} more market value` : `You give up ${pct(t.marketGap).slice(1)} more market value`;
+  if (isWinWin(t) && isFair(t))
+    return { label: "Win-win", tone: "good", line: `${market}, and both lineups improve: you ${fmt(t.youDelta)} a week, ${them} ${fmt(t.themDelta)}. Both sides have a reason to say yes.` };
+  if (isWinWin(t) && t.marketGap > 0)
+    return { label: "Helps both, tilted your way", tone: "good", line: `${market}. Both lineups improve, but ${them} may want a little more before saying yes.` };
   if (isWinWin(t))
-    return { label: "Win-win", tone: "good", line: `Your starters gain ${fmt(t.youDelta)} a week and ${them}'s gain ${fmt(t.themDelta)}. Both sides have a reason to say yes.` };
+    return { label: "Helps both, you overpay", tone: "warn", line: `${market}. Both lineups improve, so it can still be worth it if you need the fit.` };
   if (t.youDelta >= 0.5)
-    return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup drops ${fmt(t.themDelta)}. Expect a no unless you add something.` };
+    return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup drops ${fmt(t.themDelta)}. ${market}. Expect a no unless you add something.` };
   if (t.themDelta >= 0.5)
-    return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. Ask for more or walk.` };
-  return { label: "Lateral", tone: "warn", line: `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)}). Only worth it for depth or byes.` };
+    return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. ${market}. Ask for more or walk.` };
+  return { label: "Lateral", tone: "warn", line: `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)}). ${market}.` };
 }
 
 /** Plain-English read on an offer someone sent you. */
 export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
-  if (t.youDelta >= 0.5) return { label: "Take it", tone: "good", line: `Per sources, this one helps you. Your starters gain ${fmt(t.youDelta)} a week.` };
+  if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Per sources, this one helps you. Your starters gain ${fmt(t.youDelta)} a week and the market value is ${t.marketGap >= 0 ? "in your favor" : "close to even"}.` };
+  if (t.youDelta >= 0.5) return { label: "Helps now, costs value", tone: "warn", line: `Per sources, your starters gain ${fmt(t.youDelta)} a week, but you give up ${pct(t.marketGap).slice(1)} more market value.` };
   if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `Per sources, it's close to even (${fmt(t.youDelta)} a week). A small add makes it fair.` };
   return { label: "Light", tone: "bad", line: `Per sources, this one's light. Your starters lose ${fmt(t.youDelta).replace("−", "")} a week.` };
 }

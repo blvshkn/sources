@@ -1035,6 +1035,13 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .tc-side.right .who i { background: var(--them); }
 .tc-side .numeral.up { color: var(--good); } .tc-side .numeral.down { color: var(--bad); } .tc-side .numeral.flat { color: var(--muted); }
 .tc-side .sub { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tc-market { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); }
+.tc-market-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tc-market-bar { display: flex; gap: 3px; height: 6px; border-radius: 999px; overflow: hidden; }
+.tc-market-bar .give { background: var(--you); } .tc-market-bar .get { background: var(--them); }
+.tc-fair { font-size: 0.75rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.tc-fair.good { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.tc-fair.warn { color: var(--warn, #f4b740); background: color-mix(in srgb, var(--warn, #f4b740) 14%, transparent); }
 .tc-mid { font-size: 0.75rem; color: var(--faint); font-weight: 600; padding-bottom: 10px; }
 .tc-rows { display: flex; flex-direction: column; gap: 10px; }
 .tc-row { display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }

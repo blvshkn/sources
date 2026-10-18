@@ -102,12 +102,38 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const live = state.season === season && state.season_type === "regular";
   const week = live ? Math.max(1, state.display_week ?? state.week) : 1;
 
-  onStep?.("Loading this week's projections");
-  const [weekProj, seasonProj, trending] = await Promise.all([
+  // Rest of season: every remaining week through the fantasy playoffs
+  const playoffStart = Math.min(17, Math.max(13, league.settings.playoff_week_start || 15));
+  const lastWeek = Math.min(18, playoffStart + 2);
+  const futureWeeks = live ? Array.from({ length: Math.max(0, lastWeek - week) }, (_, i) => week + 1 + i) : [];
+
+  // Market values: FantasyCalc, built from real fantasy trades, matched to this league's settings
+  const recSetting = league.scoring_settings.rec ?? 0;
+  const sfLeague = league.roster_positions.includes("SUPER_FLEX");
+  const dynasty = leagueType(league) === "dynasty";
+  const fcUrl = `https://api.fantasycalc.com/values/current?isDynasty=${dynasty}&numQbs=${sfLeague ? 2 : 1}&numTeams=${league.total_rosters}&ppr=${recSetting >= 1 ? 1 : recSetting >= 0.5 ? 0.5 : 0}`;
+
+  onStep?.("Loading projections and trade values");
+  const [weekProj, seasonProj, trending, futureProj, market] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
     get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/add?lookback_hours=24&limit=40").catch(() => []),
+    Promise.all(futureWeeks.map((w) => get<SProj[]>(`/projections/nfl/${season}/${w}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]))),
+    fetch(fcUrl).then((r) => (r.ok ? r.json() : [])).catch(() => []) as Promise<{ player: { sleeperId?: string }; value: number }[]>,
   ]);
+  const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
+  // Weekly projections for every remaining week, this week included
+  const allWeeks = [weekProj, ...futureProj];
+  const weeklyBy = allWeeks.map((wp) => new Map(wp.map((p) => [p.player_id, ptsOf(p.stats)])));
+  const weekNums = [week, ...futureWeeks];
+  const rosOf = (id: string, from: (n: number) => boolean): Pts | null => {
+    const idx = weekNums.map((n, i) => (from(n) ? i : -1)).filter((i) => i >= 0);
+    if (idx.length < 2) return null;
+    const sum = { ppr: 0, half: 0, std: 0, rec: 0 };
+    idx.forEach((i) => { const p = weeklyBy[i].get(id); if (p) { sum.ppr += p.ppr; sum.half += p.half; sum.std += p.std; sum.rec += p.rec; } });
+    const n = idx.length;
+    return { ppr: sum.ppr / n, half: sum.half / n, std: sum.std / n, rec: sum.rec / n };
+  };
 
   onStep?.("Loading trades, waivers and past weeks");
   const weeks = Array.from({ length: week }, (_, i) => i + 1);
@@ -135,7 +161,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     const gp = Math.max(1, s?.stats?.gp ?? 17);
     const weekPts = ptsOf(w?.stats);
     const seasonPts = ptsOf(s?.stats, gp);
-    const pts = round(blend(weekPts, seasonPts)) ?? { ppr: 0, half: 0, std: 0, rec: 0 };
+    // Rest-of-season weekly average from the real schedule (byes count as zero); fall back to a blend
+    const ros = rosOf(id, () => true);
+    const pts = round(ros ?? blend(weekPts, seasonPts)) ?? { ppr: 0, half: 0, std: 0, rec: 0 };
+    const playoff = round(rosOf(id, (n) => n >= playoffStart));
     const team = info.team ?? fallbackTeam ?? "FA";
     const st = statusOf(info.injury_status);
     players[id] = {
@@ -147,6 +176,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       ...st,
       note: info.injury_status ? [info.injury_status, (w?.player ?? s?.player)?.injury_body_part].filter(Boolean).join(", ") : undefined,
       rookie: info.years_exp === 0,
+      playoff: playoff ?? undefined,
+      value: valueBy.get(id),
     };
   };
   seasonProj.forEach((p) => add(p.player_id, p.player, p.team));
@@ -275,5 +306,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)) },
     faabHistory, freeAgents, trades, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
+    valueSource: valueBy.size ? `FantasyCalc market values (${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams)` : "Estimated from projections (market values unavailable)",
+    rosWeeks: weekNums.length,
   };
 }

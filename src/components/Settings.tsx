@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
-import { LEAGUE_NAME, LeagueFormat } from "../data";
+import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Phase, Seg } from "./ui";
 
 export type Level = "light" | "standard" | "hands";
@@ -99,7 +99,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <span className="grow"><b>TE Premium</b><span className="small muted" style={{ display: "block" }}>+0.5 per TE reception.</span></span>
           <Toggle label="TE Premium" on={format.tePremium} onChange={(v) => setFormat({ ...format, tePremium: v })} />
         </div>
-        <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."}</p>
+        <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."} Trade values: {LEAGUE.valueSource}.</p>
         <div className="table-wrap">
           <table className="tbl">
             <thead><tr><th>Format</th><th>When</th></tr></thead>

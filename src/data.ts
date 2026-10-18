@@ -26,6 +26,10 @@ export interface Player {
   longTerm?: boolean;
   note?: string;
   rookie?: boolean;
+  /** Average weekly points over the fantasy playoff weeks (live). */
+  playoff?: Pts;
+  /** Market trade value (FantasyCalc, matched to league settings). */
+  value?: number;
 }
 
 export interface Team {
@@ -394,6 +398,10 @@ export interface LeagueData {
   trades: PastTrade[];
   /** Offers each manager received. Sleeper doesn't expose this, so it's null for live leagues. */
   offers: Record<string, number> | null;
+  /** Where market values come from, shown in the UI. */
+  valueSource: string;
+  /** How many weeks the rest-of-season projections cover. */
+  rosWeeks?: number;
   username?: string;
   type?: "redraft" | "keeper" | "dynasty";
   /** This week's opponent (team id), if the league has head-to-head matchups. */
@@ -463,6 +471,7 @@ export function demoLeague(): LeagueData {
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
     trades: DEMO_TRADES, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
+    valueSource: "Demo estimate from projections",
   };
 }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
-import { Lineup, Trade as TradeT, eff, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
+import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
 import { AiLabel, Delta, Icon, PosBadge, Stamp, StatusPill } from "./ui";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
@@ -66,6 +66,7 @@ export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
           <span className="sub">{trade.themBefore.toFixed(1)} to {trade.themAfter.toFixed(1)}</span>
         </div>
       </div>
+      <MarketRow trade={trade} them={them} />
       <div className="tc-rows">
         {groupsFor().map((g) => {
           const a = youAfter[g], b = themAfter[g];
@@ -78,6 +79,30 @@ export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/** Market value of both packages, the fairness lens a trade calculator uses. */
+function MarketRow({ trade, them }: { trade: TradeT; them: Team }) {
+  const g = trade.marketGap;
+  const fair = Math.abs(g) <= FAIR_GAP;
+  const total = Math.max(1, trade.marketGive + trade.marketGet);
+  const label = fair ? "Fair" : g > 0 ? `You win by ${pct(g).slice(1)}` : `${them.manager} wins by ${pct(g).slice(1)}`;
+  return (
+    <div className="tc-market" aria-label={`Market value. You give ${trade.marketGive}, you get ${trade.marketGet}. ${label}.`}>
+      <div className="tc-market-top">
+        <span className="tiny muted">Market value</span>
+        <span className={`tc-fair ${fair ? "good" : "warn"}`}>{label}</span>
+      </div>
+      <div className="tc-market-bar" aria-hidden="true">
+        <span className="give" style={{ flex: trade.marketGive / total }} />
+        <span className="get" style={{ flex: trade.marketGet / total }} />
+      </div>
+      <div className="tc-market-top">
+        <span className="small"><b className="num">{trade.marketGive.toLocaleString()}</b> <span className="muted">you give</span></span>
+        <span className="small"><span className="muted">you get</span> <b className="num">{trade.marketGet.toLocaleString()}</b></span>
       </div>
     </div>
   );
@@ -222,7 +247,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <div className="why">
                   <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
                   <div><span className="eyebrow">{them.manager}'s starters</span><Changes team={them} trade={trade} side="them" /></div>
-                  <p className="tiny muted">Weekly projected points for starting lineups only. Bench depth doesn't count, so three bench players can't fake their way to one star. Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
+                  <p className="tiny muted">Two lenses. Points per week counts starting lineups only. Market value weighs the best player in full and each extra piece for less, so three bench players can't add up to one star. Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
                 </div>
               )}
               <div className="row wrap">
