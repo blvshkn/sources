@@ -3353,3 +3353,77 @@ html:root:not(#_) .imp .wk-name small { white-space: normal; }
 /* Last refresh time sits in the top bar, beside the Ask and Settings buttons. */
 html:root:not(#_) .top-upd { margin-right: 6px; font: 500 0.6875rem/1.2 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; text-align: right; }
 html:root:not(#_) .top-upd::before { content: "Updated"; display: block; font-size: 0.5625rem; opacity: 0.7; }
+
+/* ==== Landing v2: one action, proof beside the claim, tagline that lights up word by word ==== */
+html:root:not(#_) .ld2 { --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1); }
+html:root:not(#_) .ld2-hero { align-items: center; padding-block: 48px 80px; }
+html:root:not(#_) .ld2-copy { max-width: 680px; }
+html:root:not(#_) .ld2-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); font: 500 0.75rem/1rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .ld2-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+html:root:not(#_) .ld2-h1 { margin: 0; font: 600 3rem/1 var(--font-display); letter-spacing: -0.04em; text-wrap: balance; background: linear-gradient(90deg, #FFFFFF, #9B9B9B); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 4px; }
+@media (min-width: 861px) { html:root:not(#_) .ld2-h1 { font-size: 3.75rem; } }
+:root[data-theme="light"] .ld2-h1 { background-image: linear-gradient(90deg, #000000, #666666) !important; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ld2-h1 { background-image: linear-gradient(90deg, #000000, #666666) !important; } }
+html:root:not(#_) .ld2-sub { max-width: 680px; margin: 24px 0 32px; font-size: 1.125rem; line-height: 1.75rem; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_) .ld2-label { display: block; margin-bottom: 8px; font-size: 0.875rem; font-weight: 600; }
+html:root:not(#_) .ld2-form { display: flex; align-items: center; gap: 8px; max-width: 480px; padding: 4px 4px 4px 16px; border-radius: 999px; background: var(--surface-2); transition: box-shadow 300ms var(--ease-fluid); }
+html:root:not(#_) .ld2-form:focus-within { box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_) .ld2-form .at { color: var(--muted); font-weight: 600; }
+html:root:not(#_) .ld2-form input { flex: 1; min-width: 0; height: 48px; border: 0; background: none; color: var(--ink); font-size: 1rem; outline: none; }
+html:root:not(#_) .ld2-form .btn { height: 48px; padding: 0 24px; font-size: 1rem; font-weight: 600; transition: transform 160ms var(--ease-fluid), filter 160ms ease; }
+html:root:not(#_) .ld2-form .btn:hover { filter: brightness(1.06); }
+html:root:not(#_) .ld2-form .btn:active { transform: scale(0.98); }
+html:root:not(#_) .ld2-form input[aria-invalid="true"] { color: #FF7A66; }
+html:root:not(#_) .ld2-help, html:root:not(#_) .ld2-error { max-width: 480px; margin: 12px 0 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_) .ld2-error { color: #FF7A66; }
+html:root:not(#_) .ld2-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 24px; padding: 8px 0; border: 0; background: none; color: var(--ink); font-size: 1rem; font-weight: 600; cursor: pointer; }
+html:root:not(#_) .ld2-link svg { color: var(--muted); transition: transform 300ms var(--ease-fluid); }
+html:root:not(#_) .ld2-link:hover svg { transform: translateX(4px); }
+html:root:not(#_) .ld2-link:focus-visible, html:root:not(#_) .ld2-faq summary:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; border-radius: 8px; }
+@media (max-width: 860px) {
+  html:root:not(#_) .ld2-hero { padding-block: 24px 64px; }
+  html:root:not(#_) .ld2-h1 { font-size: 2.25rem; line-height: 2.5rem; }
+  html:root:not(#_) .ld2-form { flex-wrap: wrap; padding: 8px; border-radius: 24px; }
+  html:root:not(#_) .ld2-form .at { display: none; }
+  html:root:not(#_) .ld2-form input { flex-basis: 100%; padding: 0 12px; }
+  html:root:not(#_) .ld2-form .btn { width: 100%; }
+  html:root:not(#_) .ld2-idea { display: none; }
+}
+
+/* Tagline: each word goes from muted to full ink as it crosses the trigger line */
+html:root:not(#_) .ld2-tagwrap { max-width: 1200px; margin: 0 auto; padding: 96px max(20px, env(safe-area-inset-left, 0px)); }
+html:root:not(#_) .ld2-tag { max-width: 880px; margin: 0; font: 600 2.25rem/2.5rem var(--font-display); letter-spacing: -0.035em; text-wrap: balance; }
+@media (min-width: 861px) { html:root:not(#_) .ld2-tag { font-size: 3.75rem; line-height: 1; } }
+html:root:not(#_) .ld2-tag span { color: color-mix(in srgb, var(--ink) 28%, transparent); transition: color 700ms var(--ease-fluid); }
+html:root:not(#_) .ld2-tag span.on { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) .ld2-tag span { color: var(--ink); transition: none; } }
+
+/* Sections fade up as they arrive */
+html:root:not(#_) .ld2-reveal { opacity: 0; transform: translateY(64px); filter: blur(12px); transition: opacity 900ms var(--ease-fluid), transform 900ms var(--ease-fluid), filter 900ms var(--ease-fluid); }
+html:root:not(#_) .ld2-reveal.in { opacity: 1; transform: none; filter: none; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_) .ld2-reveal { opacity: 1; transform: none; filter: none; transition: none; } }
+html:root:not(#_) .ld2 .ld-cell.reveal, html:root:not(#_) .ld2 .reveal { animation: none; }
+
+/* How it works */
+html:root:not(#_) .ld2-steps ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 32px 0 0; padding: 0; list-style: none; }
+html:root:not(#_) .ld2-steps li { display: grid; gap: 8px; align-content: start; padding: 24px; border-radius: 24px; background: var(--surface); }
+html:root:not(#_) .ld2-steps li b { display: grid; place-items: center; width: 32px; height: 32px; margin-bottom: 8px; border-radius: 50%; background: rgba(var(--lime-rgb), 0.12); color: var(--lime); font: 600 0.875rem/1 var(--font-mono); }
+html:root:not(#_) .ld2-steps h3 { margin: 0; font-size: 1.125rem; line-height: 1.75rem; font-weight: 600; }
+html:root:not(#_) .ld2-steps p { margin: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--muted); text-wrap: pretty; }
+@media (max-width: 860px) { html:root:not(#_) .ld2-steps ol { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+html:root:not(#_) .ld2-steps li:nth-child(2) { transition-delay: 80ms; } html:root:not(#_) .ld2-steps li:nth-child(3) { transition-delay: 160ms; }
+
+/* FAQ */
+html:root:not(#_) .ld2-faq-list { max-width: 760px; margin-top: 32px; }
+html:root:not(#_) .ld2-faq details { border-top: 1px solid var(--line); }
+html:root:not(#_) .ld2-faq details:last-child { border-bottom: 1px solid var(--line); }
+html:root:not(#_) .ld2-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 16px 0; font-size: 1.125rem; line-height: 1.75rem; font-weight: 600; cursor: pointer; list-style: none; }
+html:root:not(#_) .ld2-faq summary::-webkit-details-marker { display: none; }
+html:root:not(#_) .ld2-faq summary svg { flex: none; color: var(--muted); transform: rotate(90deg); transition: transform 300ms var(--ease-fluid); }
+html:root:not(#_) .ld2-faq details[open] summary svg { transform: rotate(-90deg); }
+html:root:not(#_) .ld2-faq details p { margin: 0 0 24px; max-width: 640px; font-size: 1rem; line-height: 1.5rem; color: var(--muted); text-wrap: pretty; }
+
+/* Final call to action */
+html:root:not(#_) .ld2-final { max-width: 1200px; margin: 0 auto; padding: 96px max(20px, env(safe-area-inset-left, 0px)) 80px; display: grid; justify-items: center; text-align: center; }
+html:root:not(#_) .ld2-final-h { max-width: 680px; }
+html:root:not(#_) .ld2-final-form { width: 100%; max-width: 480px; margin-top: 32px; text-align: left; }
