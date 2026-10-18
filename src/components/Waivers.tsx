@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport, waiverHidden } from "../engine";
-import { AiLabel, Icon, Seg } from "./ui";
+import { AiLabel, Icon } from "./ui";
 import { Avatar } from "./Avatar";
 
 /** "$40-$90", or "Up to $150" when the low end is zero. */
@@ -72,25 +72,27 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         );
       })()}
 
-      {(() => {
-        const h = waiverHidden();
-        if (!h.played && !h.bye) return null;
-        const n = (k: number) => `${k} ${k === 1 ? "player" : "players"}`;
-        const parts = [h.played ? `${n(h.played)} whose game already started` : "", h.bye ? `${n(h.bye)} on bye` : ""].filter(Boolean).join(" and ");
-        return <p className="wv-hidden"><Icon name="lock" size={14} />Hiding {parts}. They can't score for you this week.</p>;
-      })()}
-
-      <div className="wv-filters">
-        <div className="chips" role="group" aria-label="Position">
+      <section className="card wv-card" aria-label="Waiver targets">
+        <div className="wv-head">
+          <div className="wv-head-t">
+            <b>Available</b>
+            <span>{sort === "fit" ? "Ranked by points added to your starters" : sort === "trend" ? "Most added across Sleeper first" : "Ranked by weekly projection"}</span>
+          </div>
+          <label className="wv-sort">
+            <span className="sr-only">Sort</span>
+            <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
+              <option value="fit">Best fit</option>
+              <option value="trend">Trending</option>
+              <option value="proj">Projected</option>
+            </select>
+            <Icon name="chev" size={14} />
+          </label>
+        </div>
+        <div className="wv-pos" role="group" aria-label="Position">
           {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => (
-            <button key={p} className={`chip-btn${pos === p ? " on" : ""}`} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>
+            <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>
           ))}
         </div>
-        <Seg label="Sort" value={sort} onChange={setSort} options={[{ v: "fit", label: "Best fit" }, { v: "trend", label: "Trending" }, { v: "proj", label: "Projected" }]} />
-      </div>
-
-      <section className="card" style={{ overflow: "hidden" }} aria-label="Waiver targets">
-        <div className="roster-head"><b>Available</b><span className="tiny muted">{sort === "fit" ? "Ranked by points added to your starters" : sort === "trend" ? "Most added across Sleeper first" : "Ranked by weekly projection"}</span></div>
         {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>No {pos} worth adding right now. Check back after waivers run.</p>}
         {shown.map((r, i) => {
           const isOpen = open === r.fa.id;
@@ -131,6 +133,13 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </div>
           );
         })}
+        {(() => {
+          const h = waiverHidden();
+          if (!h.played && !h.bye) return null;
+          const n = (k: number) => `${k} ${k === 1 ? "player" : "players"}`;
+          const parts = [h.played ? `${n(h.played)} whose game already started` : "", h.bye ? `${n(h.bye)} on bye` : ""].filter(Boolean).join(" and ");
+          return <p className="wv-hidden"><Icon name="lock" size={14} />Hiding {parts}. They can't score for you this week.</p>;
+        })()}
       </section>
     </>
   );
