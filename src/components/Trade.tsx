@@ -151,7 +151,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <>
       <header className="page-head">
         <div>
-          <div className="eyebrow">Trade builder · {UPDATED.toLowerCase()}</div>
+          <div className="eyebrow">Trade builder · {UPDATED}</div>
           <h1 className="page-title">Build a Deal</h1>
           <p className="page-sub">Tap players on both rosters. Both starting lineups update as you go, so you can see if it helps them enough to accept.</p>
         </div>

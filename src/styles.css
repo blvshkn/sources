@@ -1119,3 +1119,9 @@ h1, h2, h3 { letter-spacing: -0.015em; }
     .reveal { animation: ld-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 30%; }
   }
 }
+
+/* Icon buttons: the pill padding on .btn was squeezing icons to a few pixels */
+.btn.btn-icon { padding: 0; width: 40px; flex: none; }
+.btn svg, .btn [data-icon] { flex: none; }
+@media (pointer: coarse) { .btn.btn-icon { width: 44px; height: 44px; } }
+.topbar .btn.btn-icon svg { width: 22px; height: 22px; }
