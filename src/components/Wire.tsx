@@ -7,7 +7,7 @@ import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, Live
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { useLive } from "../live";
-import { MatchupStrip } from "./Roster";
+import { MatchupStrip, heatOf, HeatMark } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -195,6 +195,15 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
   );
 }
 
+/** A player's points in a card row: projection before kickoff, then live and final points colored against it,
+ *  with the flame once he's past his projection. */
+function WkPts({ p, live }: { p: Player; live: ReturnType<typeof useLive> }) {
+  const g = live.games[p.nfl] ?? null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
+  if (g !== "in_game" && g !== "complete") return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
+  const heat = heatOf(pts, proj, g === "complete");
+  return <span className={`wk-pts${g === "in_game" ? " live" : ""}${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small>{g === "complete" ? "final" : `proj ${proj.toFixed(1)}`}</small></span>;
+}
+
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
 
 /** The opponent's three biggest projections, with live points once their games start. */
@@ -204,19 +213,14 @@ function Threats({ onGo }: { onGo: (t: string) => void }) {
   if (!opp) return null;
   const threats = (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
   if (!threats.length) return null;
-  const Pts = ({ p }: { p: Player }) => {
-    const g = live.games[p.nfl] ?? null;
-    if (g === "in_game") return <span className="wk-pts live">{(live.points[p.id] ?? 0).toFixed(1)}</span>;
-    if (g === "complete") return <span className="wk-pts">{(live.points[p.id] ?? 0).toFixed(1)}<small>final</small></span>;
-    return <span className="wk-pts muted">{eff(p, true).toFixed(1)}</span>;
-  };
+  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
   return (
     <section className="card wk" aria-label="Opponent threats">
       <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
       {threats.map((p) => (
         <button key={p.id} className="wk-row" onClick={() => onGo("matchup")}>
-          <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-          <span className="wk-name">{p.name}<small>{p.nfl} {vsOf(p)}</small></span>
+          <Avatar p={p} size={40} />
+          <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {vsOf(p)}</small></span>
           <Pts p={p} />
         </button>
       ))}
@@ -237,12 +241,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const detail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [DEADLINES.lock, DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
-  const Pts = ({ p }: { p: Player }) => {
-    const g = live.games[p.nfl] ?? null;
-    if (g === "in_game") return <span className="wk-pts live">{(live.points[p.id] ?? 0).toFixed(1)}</span>;
-    if (g === "complete") return <span className="wk-pts">{(live.points[p.id] ?? 0).toFixed(1)}<small>final</small></span>;
-    return <span className="wk-pts muted">{eff(p, true).toFixed(1)}</span>;
-  };
+  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
   return (
     <>
       <section className="card wk" aria-label="When your starters play">
@@ -252,8 +251,8 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
             <span className="wk-day-k">{d}<small>{ps.length}</small></span>
             {ps.map((p) => (
               <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
-                <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-                <span className="wk-name">{p.name}<small>{p.nfl} {vsOf(p)}</small></span>
+                <Avatar p={p} size={40} />
+                <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {vsOf(p)}</small></span>
                 <Pts p={p} />
               </button>
             ))}
@@ -265,8 +264,8 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
         <div className="wk-head"><h2 className="section-title">Injury watch</h2><span className="tiny muted">You and {opp?.manager ?? "your opponent"}</span></div>
         {injured.length === 0 ? <p className="small muted">Nobody in this matchup carries an injury tag.</p> : injured.map(({ p, you }) => (
           <button key={p.id} className="wk-row" onClick={() => onGo(you ? "roster" : "matchup")}>
-            <span className={`wk-tag s-${p.status}`}>{p.status}</span>
-            <span className="wk-name">{p.name}<small>{detail(p)}</small></span>
+            <Avatar p={p} size={40} />
+            <span className="wk-name"><span className="wk-nm">{p.name}<span className={`wk-tag s-${p.status}`}>{p.status}</span></span><small>{detail(p)}</small></span>
             <span className={`wk-who${you ? " you" : ""}`}>{you ? "You" : "Them"}</span>
           </button>
         ))}

@@ -73,13 +73,25 @@ type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number 
 const gameNow = (live: Live | undefined, id: string, nfl: string): GameNow => ({ state: live?.games[nfl] ?? null, pts: live?.points[id] ?? 0 });
 
 /** Points column: projection before kickoff, live points (with the projection beneath) during the game, final after. */
-/** How a player is doing against his projection: past it (heating up), close to it, or short of it. While his game
- *  is still on, being behind isn't news, so only "close" and "hot" show until it's final. */
-const heatOf = (pts: number, proj: number, final: boolean): "hot" | "close" | "below" | null =>
-  proj <= 0 ? (pts > 0 ? "hot" : null) : pts >= proj ? "hot" : pts >= proj * 0.85 ? "close" : final ? "below" : null;
+/** How a player is doing against his projection. On fire once he passes it. Heating up while his game is on and
+ *  he's within 15 percent, on track to pass it. Cold when a finished game comes up more than 15 percent short.
+ *  Mid game, being behind isn't news (Sleeper gives no game clock to judge pace), so it stays neutral. */
+export const heatOf = (pts: number, proj: number, final: boolean): "fire" | "heating" | "cold" | null =>
+  proj <= 0 ? (pts > 0 ? "fire" : null) : pts >= proj ? "fire" : !final && pts >= proj * 0.85 ? "heating" : final && pts < proj * 0.85 ? "cold" : null;
+
+/** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. */
+export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => heat === "fire" ? <Flame /> : heat === "heating" ? (
+  <svg className="heatwave" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#FFB547" strokeWidth="2" strokeLinecap="round">
+    <path d="M7 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M12 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M17 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" />
+  </svg>
+) : (
+  <svg className="ice" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#9AD8FF" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5" />
+  </svg>
+);
 
 /** A small flame, drawn in the logo's line family, that flickers while a player is heating up. */
-const Flame = () => (
+export const Flame = () => (
   <svg className="flame" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
     <defs><linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#FF5A36" /><stop offset="0.6" stopColor="#FF9A3D" /><stop offset="1" stopColor="#FFD166" /></linearGradient></defs>
     <path className="flame-outer" d="M12 22c-4.1 0-7-2.8-7-6.6 0-3.1 1.9-5.2 3.6-7 .4 1.7 1.3 2.8 2.4 3.3C11 7.6 12.6 4.6 15.4 2c-.3 3.4 1 5.6 2.4 7.6 1.1 1.6 1.7 3.4 1.2 5.8C18.4 19.5 15.5 22 12 22z" fill="url(#flame-g)" />
@@ -90,10 +102,10 @@ const Flame = () => (
 function PtsCell({ g, proj }: { g: GameNow; proj: number }) {
   if (g.state === "in_game" || g.state === "complete") {
     const final = g.state === "complete", heat = heatOf(g.pts, proj, final);
-    const note = heat === "hot" ? ", past his projection" : heat === "close" ? ", close to his projection" : heat === "below" ? ", short of his projection" : "";
+    const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", closing in on his projection" : heat === "cold" ? ", short of his projection" : "";
     return (
       <span className={`lu-pts ${final ? "final" : "live"}${heat ? ` heat-${heat}` : ""}`} aria-label={`${final ? "Final, " : ""}${g.pts.toFixed(1)} points${final ? "" : " so far"}, projected ${proj.toFixed(1)}${note}`}>
-        <b>{heat === "hot" && <Flame />}{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
+        <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
       </span>
     );
   }
