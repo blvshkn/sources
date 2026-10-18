@@ -27,27 +27,45 @@ export interface Briefing { lineup: string; trade: Trade | null; waiver: string 
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
-export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade) => void; onPitch: (t: Trade) => void }) {
+function IdeaSide({ label, ids }: { label: string; ids: string[] }) {
   return (
-    <div className="idea">
-      <div className="grow" style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
-        <div className="idea-swap">
-          <span>Your {swap(t.give)}</span>
-          <span className="arrow">for</span>
-          <span>their {swap(t.get)}</span>
-        </div>
-        <div className="idea-nums">
-          {t.accept && <span className={`accept-chip ${t.accept.label === "Likely yes" ? "good" : "warn"}`}>{t.accept.label}</span>}
-          <span>They gain <Delta n={t.themDelta} />/wk</span>
-          <span>You gain <Delta n={t.youDelta} />/wk</span>
-        </div>
-        {t.accept?.reasons.length ? <span className="tiny muted">{t.accept.reasons.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" · ")}</span> : null}
-      </div>
-      <div className="row">
-        <button className="btn btn-sm" onClick={() => onOpen(t)}>Open in builder</button>
-        <button className="btn btn-sm btn-primary" onClick={() => onPitch(t)}>Write pitch</button>
-      </div>
+    <div className="ti-side">
+      <span className="ti-label">{label}</span>
+      {ids.map((id) => {
+        const p = playerById(id);
+        return (
+          <div key={id} className="ti-player">
+            <Avatar p={p} size={32} />
+            <span className="ti-pl"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade) => void; onPitch: (t: Trade) => void }) {
+  // "Their lineup +x/wk" repeats the number shown above, so it's left out
+  const reasons = (t.accept?.reasons ?? []).filter((r) => !/lineup/i.test(r)).map((r) => r.charAt(0).toUpperCase() + r.slice(1));
+  const tone = t.accept?.label === "Likely yes" ? "good" : "warn";
+  return (
+    <article className="ti">
+      <div className="ti-swap">
+        <IdeaSide label="You send" ids={t.give} />
+        <span className="ti-arrow" aria-hidden="true"><Icon name="trade" size={16} /></span>
+        <IdeaSide label="You get" ids={t.get} />
+      </div>
+      <div className="ti-read">
+        {t.accept && <span className={`ti-odds ${tone}`}>{t.accept.label}<i>{Math.round(t.accept.p * 100)}%</i></span>}
+        <span className="ti-gain"><small>You</small><Delta n={t.youDelta} /><small>/wk</small></span>
+        <span className="ti-gain"><small>Them</small><Delta n={t.themDelta} /><small>/wk</small></span>
+      </div>
+      {reasons.length > 0 && <ul className="ti-why">{reasons.map((r) => <li key={r}>{r}</li>)}</ul>}
+      <div className="ti-actions">
+        <button className="btn btn-primary btn-sm" onClick={() => onPitch(t)}>Write pitch</button>
+        <button className="ti-link" onClick={() => onOpen(t)}>Open in builder</button>
+      </div>
+    </article>
   );
 }
 

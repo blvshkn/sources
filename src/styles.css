@@ -1638,3 +1638,28 @@ p, .page-sub { max-width: 65ch; }
 .wv-pos button:focus-visible { outline: 2px solid var(--you); outline-offset: 1px; }
 .wv-card > .wv:first-of-type, .wv-card .wv-pos + * { border-top: 1px solid var(--line); }
 .wv-card .wv-hidden { margin: 0; padding: 12px 16px 14px; border-top: 1px solid var(--line); font-size: 0.75rem; }
+
+/* ---------- Trade idea card ---------- */
+.ti { display: grid; gap: 14px; padding: 16px; border-radius: var(--r-inner); background: var(--surface-2); border: 1px solid var(--line); }
+.ti + .ti { margin-top: 10px; }
+.ti-swap { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: start; }
+.ti-side { display: grid; gap: 8px; min-width: 0; }
+.ti-label { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+.ti-player { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: center; min-width: 0; }
+.ti-pl { display: grid; min-width: 0; line-height: 1.2; }
+.ti-pl b { font-size: 0.875rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ti-pl small { font-size: 0.6875rem; color: var(--muted); }
+.ti-arrow { align-self: center; margin-top: 18px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.ti-read { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ti-odds { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.ti-odds i { font-style: normal; font-weight: 500; opacity: 0.8; font-variant-numeric: tabular-nums; }
+.ti-odds.good { background: var(--good-soft); color: var(--good); }
+.ti-odds.warn { background: var(--warn-soft); color: var(--warn); }
+.ti-gain { display: inline-flex; align-items: baseline; gap: 4px; font-size: 0.9375rem; }
+.ti-gain small { font-size: 0.75rem; color: var(--muted); }
+.ti-why { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ti-why li { font-size: 0.75rem; color: var(--muted); padding: 3px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
+.ti-actions { display: flex; align-items: center; gap: 16px; }
+.ti-actions .btn { height: 36px !important; padding: 0 16px; }
+.ti-link { border: 0; background: none; padding: 6px 0; color: var(--ink); font: 500 0.875rem/1 var(--font-body); cursor: pointer; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+.ti-link:hover { text-decoration-color: var(--ink); }
