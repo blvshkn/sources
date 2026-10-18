@@ -5,6 +5,7 @@ import { irReport, irLabel, lineupFor, specialLineup, specialPts, Lineup, Price,
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
+import { PlayerSheet } from "./PlayerSheet";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -66,10 +67,13 @@ function IrBlock() {
 const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
 
 /** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
-function LineupRow({ p, slot, bench, swap }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number } }) {
+function LineupRow({ p, slot, bench, swap, onOpen }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number }; onOpen?: (p: Player, where: string) => void }) {
   const st = statusWord(p);
+  const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}`}>
+    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
+      aria-label={onOpen ? `${p.name} details` : undefined} onClick={onOpen ? () => onOpen(p, where) : undefined}
+      onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } : undefined}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
@@ -195,6 +199,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const benchOut = lineup.bench.filter((p) => isOut(p, true));
   const locked = YOU.roster.filter((id) => myTags[id] === "amazing");
   const diff = sleeperDiff(lineup);
+  const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
+  const [cmp, setCmp] = useState<string | undefined>(undefined);
+  const openPlayer = (p: Player, where: string) => setSheet({ p, where });
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
   const kdef = specialLineup(YOU);
   const [week, setWeek] = useState(WEEK);
@@ -272,12 +279,12 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
-              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} />)}
+              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} onOpen={openPlayer} />)}
               {kdef.slots.map((x, i) => x.player
                 ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} />
                 : <div key={`empty-${x.slot}-${i}`} className="lu-row"><span className={`lu-slot s-${x.slot}`}>{x.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span><span className="lu-meta">Pick up a {x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.</span></span><span /></div>)}
               <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length + kdef.bench.length} players</span></div>
-              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench />)}
+              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench onOpen={openPlayer} />)}
               {kdef.bench.map((p) => <SpecialRow key={p.id} p={p} slot="BN" bench />)}
               <IrBlock />
               </>}
@@ -300,7 +307,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         )}
       </div>
 
-      <StartSit a={diff[0]?.start.id ?? flex?.player.id} b={diff[0]?.benched.id ?? bestBench?.id} />
+      <StartSit key={cmp ?? "default"} a={cmp ?? diff[0]?.start.id ?? flex?.player.id} b={cmp ? (cmp === (diff[0]?.start.id ?? flex?.player.id) ? (diff[0]?.benched.id ?? bestBench?.id) : (diff[0]?.start.id ?? flex?.player.id)) : (diff[0]?.benched.id ?? bestBench?.id)} />
+      {sheet && <PlayerSheet p={sheet.p} where={sheet.where} onClose={() => setSheet(null)}
+        onCompare={() => { setCmp(sheet.p.id); window.setTimeout(() => document.querySelector(".sx")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }} />}
 
       <div className="roster-grid">
         <section className="card" style={{ overflow: "hidden" }} aria-label="Your roster and tags">

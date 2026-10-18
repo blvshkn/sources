@@ -2365,3 +2365,41 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 .mu-delta { font-size: 0.8125rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 .mu-delta.up { color: var(--good); } .mu-delta.down { color: var(--bad); }
 .mu-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--muted); }
+
+/* ---------- Player sheet ---------- */
+.lu-row.tap { cursor: pointer; transition: background-color 140ms ease; }
+.lu-row.tap:hover { background: var(--surface-2); }
+.lu-row.tap:active { background: var(--surface-3); }
+.lu-row.tap:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: -2px; }
+.ps-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+.ps-scrim { position: absolute; inset: 0; background: rgba(8, 10, 9, 0.55); opacity: 0; transition: opacity 220ms ease; }
+.ps-wrap.in .ps-scrim { opacity: 1; }
+.ps { position: relative; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; display: grid; gap: 16px; padding: 10px 18px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0; background: var(--surface); border: 1px solid var(--line); border-bottom: 0;
+  transform: translateY(100%); transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1); }
+.ps-wrap.in .ps { transform: translateY(0); }
+@media (min-width: 861px) { .ps-wrap { align-items: center; } .ps { border-radius: 20px; border-bottom: 1px solid var(--line); transform: translateY(16px) scale(0.98); opacity: 0; transition: transform 240ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease; } .ps-wrap.in .ps { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ps, .ps-scrim { transition: opacity 160ms ease !important; transform: none !important; } }
+.ps-handle { justify-self: center; width: 36px; height: 4px; border-radius: 4px; background: var(--surface-3); }
+.ps-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.ps-who { display: grid; gap: 3px; min-width: 0; }
+.ps-who b { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.ps-who small { font-size: 0.8125rem; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ps-where { color: rgb(var(--tab-rgb)) !important; font-weight: 600; }
+.ps-x { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.ps-inj { margin: 0; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px; background: rgba(var(--warn-rgb), 0.12); color: var(--warn); font-size: 0.8125rem; font-weight: 500; }
+:root:not(#_) .ps-stats { grid-template-columns: repeat(3, 1fr); }
+.ps-games { display: grid; gap: 10px; }
+.ps-sub { display: flex; justify-content: space-between; align-items: baseline; }
+.ps-sub b { font-size: 0.9375rem; font-weight: 600; } .ps-sub span { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ps-bars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; align-items: end; height: 140px; }
+.ps-bar { display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 4px; height: 100%; }
+.ps-bar b { font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ps-bar span { width: 100%; max-width: 28px; display: flex; align-items: flex-end; }
+.ps-bar i { display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 2px 2px; background: rgb(var(--tab-rgb)); }
+.ps-bar.bn i { opacity: 0.35; }
+.ps-bar.proj i { background: transparent; border: 1.5px dashed rgb(var(--tab-rgb)); box-sizing: border-box; }
+.ps-bar small { font-size: 0.6875rem; color: var(--muted); }
+.ps-none, .ps-key { margin: 0; font-size: 0.75rem; color: var(--faint); }
+.ps-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--line); font-size: 0.875rem; color: var(--muted); }
+.ps-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+:root:not(#_) .ps-cta { width: 100%; height: 44px !important; }
