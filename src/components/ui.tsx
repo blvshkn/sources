@@ -82,9 +82,13 @@ export function PageTabs<T extends string>({ value, options, onChange }: { value
 }
 
 /** useState that survives a reload. Per-device convenience only; falls back to the default if storage is blocked. */
-export function useSticky<T extends string>(key: string, initial: T): [T, (v: T) => void] {
+export function useSticky<T extends string>(key: string, initial: T, allowed?: readonly T[]): [T, (v: T) => void] {
   const [v, setV] = useState<T>(() => {
-    try { const s = localStorage.getItem(`sources.ui.${key}`); return (s as T) ?? initial; } catch { return initial; }
+    try {
+      const s = localStorage.getItem(`sources.ui.${key}`) as T | null;
+      // A value saved by an older version may name a tab or filter that no longer exists.
+      return s && (!allowed || allowed.includes(s)) ? s : initial;
+    } catch { return initial; }
   });
   const set = (n: T) => { setV(n); try { localStorage.setItem(`sources.ui.${key}`, n); } catch { /* ignore */ } };
   return [v, set];

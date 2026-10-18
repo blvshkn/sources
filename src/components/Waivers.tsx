@@ -34,8 +34,8 @@ const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
-  const [pos, setPos] = useSticky<"ALL" | "QB" | "RB" | "WR" | "TE">("waivers.pos", "ALL");
-  const [sort, setSort] = useSticky<"fit" | "trend" | "proj">("waivers.sort", "fit");
+  const [pos, setPos] = useSticky<"ALL" | "QB" | "RB" | "WR" | "TE">("waivers.pos", "ALL", ["ALL", "QB", "RB", "WR", "TE"]);
+  const [sort, setSort] = useSticky<"fit" | "trend" | "proj">("waivers.sort", "fit", ["fit", "trend", "proj"]);
   const [q, setQ] = useState("");
   const [suggest, setSuggest] = useState(false);
   const [hi, setHi] = useState(0);

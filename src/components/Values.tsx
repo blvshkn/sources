@@ -32,8 +32,8 @@ const tier = (v: number) => v >= 8000 ? "Tier 1" : v >= 6000 ? "Tier 2" : v >= 4
 
 /** League-aware market board: every player's trade value, who owns him in your league, and who's moving. */
 export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: string) => void }) {
-  const [pos, setPos] = useSticky<(typeof POS)[number]>("values.pos", "ALL");
-  const [own, setOwn] = useSticky<"all" | "fa" | "mine">("values.own", "all");
+  const [pos, setPos] = useSticky<(typeof POS)[number]>("values.pos", "ALL", POS);
+  const [own, setOwn] = useSticky<"all" | "fa" | "mine">("values.own", "all", ["all", "fa", "mine"]);
   const board = useMemo(() => LEAGUE.board?.length ? LEAGUE.board : demoBoard(), []);
   const max = board[0]?.value || 1;
   const mine = TEAMS.find((t) => t.you)?.id;

@@ -38,7 +38,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   paused: { id: string; manager: string }[]; onResume: (id: string) => void;
   hiddenCount: number; onUnhide: () => void;
 }) {
-  const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league");
+  const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league", ["league", "nudges", "privacy", "about"]);
   const [confirm, setConfirm] = useState<"none" | "disconnect" | "delete">("none");
   const muted = Object.entries(dismissed).filter(([, n]) => n >= 2).map(([k]) => k);
   return (

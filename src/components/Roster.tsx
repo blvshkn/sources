@@ -404,7 +404,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const [cmp, setCmp] = useState<string | undefined>(undefined);
   const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
-  const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup");
+  const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup", ["lineup", "compare", "tags", "price", "slots"]);
   const openPlayer = (p: Player, where: string) => setSheet({ p, where });
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
   const kdef = specialLineup(YOU);

@@ -384,7 +384,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
 }) {
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
-  const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup");
+  const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup", ["matchup", "week", "intel"]);
   const visible = showAll ? nudges : nudges.slice(0, 2);
   const leave = (n: Nudge) => {
     setLeaving((c) => [...c, n.id]);

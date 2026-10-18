@@ -221,7 +221,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
-  const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build");
+  const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build", ["build", "ideas", "notes"]);
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
   const [searching, setSearching] = useState(false);
   // How this manager trades: short facts plus one piece of advice

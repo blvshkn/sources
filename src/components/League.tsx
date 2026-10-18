@@ -96,7 +96,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
   onKeepTag: (id: string) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
-  const [view, setView] = useSticky<"needs" | "standings" | "tendencies" | "activity" | "values">("league.view", "needs");
+  const [view, setView] = useSticky<"needs" | "standings" | "tendencies" | "activity" | "values">("league.view", "needs", ["needs", "standings", "tendencies", "activity", "values"]);
   const sorted = [...needs].sort((a, b) => a.rank - b.rank);
   const you = needs.find((n) => n.team.you)!;
   // Starter copy: "Per sources, three teams are thin at RB. You have two to spare."
