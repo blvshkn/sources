@@ -40,41 +40,64 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
 }
 const SHAPE = "M23 5 L27 3.5 Q32 9 37 3.5 L41 5 L56 11.5 Q59 13 60 16 L62 26 L50 29.5 L48.5 24 L48.5 58 Q48.5 61 45.5 61 L18.5 61 Q15.5 61 15.5 58 L15.5 24 L14 29.5 L2 26 L4 16 Q5 13 8 11.5 Z";
 
-/** Team defense: a flat glyph-style helmet, facing right. Solid team-color shell, facemask in a
-    contrasting team color, and details cut out in the row's background so it reads at any size. */
+/** Team defense: a flat glyph-style helmet, facing right.
+    Built on circles so every curve agrees: the shell is one arc, the stripe and highlight are
+    concentric with it. Details are cut out in the row's background so it reads at any size. */
 export function Helmet({ team, size = 36, ring }: { team: string; size?: number; ring?: "warn" | "bad" }) {
+  const uid = useId().replace(/:/g, "");
   const [shell, ink, trim] = teamColors(team);
   const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
-  // Mask must stand out from the shell and from both light and dark backgrounds, so skip pure white and near-black
-  const usable = (c: string) => Math.abs(lum(c) - lum(shell)) > 0.22 && lum(c) > 0.14 && lum(c) < 0.86;
+  const mix = (h: string, w: number) => { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * w)); return `rgb(${c.join(",")})`; };
+  const apart = (c: string, d: number) => Math.abs(lum(c) - lum(shell)) > d;
+  // Mask reads against the shell and on light or dark rows, so skip pure white and near-black
+  const usable = (c: string) => apart(c, 0.22) && lum(c) > 0.14 && lum(c) < 0.86;
   const mask = usable(trim) ? trim : usable(ink) ? ink : "#8E949E";
-  const cut = { stroke: "var(--surface, #fff)" } as const;
+  // Stripe: ink core with trim borders when the team has both, otherwise a single band
+  const core = apart(ink, 0.15) ? ink : apart(trim, 0.15) ? trim : "#FFFFFF";
+  const edge = apart(trim, 0.15) && trim !== core ? trim : null;
+  const dark = lum(shell) < 0.2;
+  const bg = { stroke: "var(--surface, #fff)" } as const;
+  const clip = `hg${uid}`;
   return (
     <span className={`jersey helmet${ring ? ` ring-${ring}` : ""}`} style={{ width: size, height: size }} role="img" aria-label={`${team} defense helmet`}>
       <svg viewBox="45 45 520 520" width={size} height={size} aria-hidden="true" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <defs><clipPath id={clip}><path d={SHELL} /></clipPath></defs>
         <g transform="matrix(-1 0 0 1 610 0)">
-          {/* A faint rim so dark shells still read on a dark background */}
-          <path d={SHELL} fill={shell} strokeWidth="7" style={{ stroke: "var(--faint, #9AA0AA)", strokeOpacity: 0.55 }} />
-          {/* Back bumper seam and vent dots, cut out of the shell */}
-          <path d="M432 484 C440 460 452 444 472 438 L530 436" strokeWidth="10" style={cut} />
-          <g style={{ fill: "var(--surface, #fff)" }}>
-            <circle cx="311" cy="278" r="10" /><circle cx="276" cy="462" r="10" /><circle cx="322" cy="485" r="10" /><circle cx="409" cy="460" r="10" />
+          <path d={SHELL} fill={shell} />
+          <g clipPath={`url(#${clip})`}>
+            <path d="M200 436 C280 470 420 468 560 372 L600 600 L200 600 Z" fill="#000" opacity="0.14" />
+            {edge && <path d={STRIPE} strokeWidth="28" stroke={edge} strokeLinecap="butt" />}
+            <path d={STRIPE} strokeWidth={edge ? 12 : 20} stroke={core} strokeLinecap="butt" />
+            <path d={GLOSS} strokeWidth="12" stroke="#fff" strokeOpacity="0.28" />
           </g>
-          {/* Facemask: a background-colored gap, then the bar */}
-          <g strokeWidth="30" style={cut}>{MASK.map((d) => <path key={d} d={d} />)}</g>
-          <g strokeWidth="16" stroke={mask}>{MASK.map((d) => <path key={d} d={d} />)}</g>
+          {/* Dark shells get a rim in a lighter tone of their own color so they hold up on dark rows */}
+          {dark && <path d={SHELL} strokeWidth="7" stroke={mix(shell, 0.32)} />}
+          {/* Cut-outs: brow seam, jaw pad, bumper seam, vents */}
+          <g strokeWidth="10" style={bg}>
+            <path d="M204 206 C198 214 197 226 202 236" />
+            <path d="M250 306 L286 382 L238 406" />
+            <path d="M434 484 C442 462 454 446 474 440 L534 438" />
+          </g>
+          <g style={{ fill: "var(--surface, #fff)" }}>
+            <circle cx="314" cy="280" r="11" /><circle cx="278" cy="462" r="10" /><circle cx="324" cy="484" r="10" /><circle cx="410" cy="460" r="10" />
+          </g>
+          {/* Facemask: background gap first, then the bar, so every crossing reads cleanly */}
+          <g strokeWidth="34" style={bg}>{MASK.map((d) => <path key={d} d={d} />)}</g>
+          <g strokeWidth="18" stroke={mask}>{MASK.map((d) => <path key={d} d={d} />)}</g>
         </g>
       </svg>
     </span>
   );
 }
-// 612-grid, left-facing glyph: brow knob, round crown, back bumper, jaw sweeping to the face
-const SHELL = "M178 196 C220 140 280 108 335 106 C430 104 520 160 548 260 C560 320 552 390 530 432 L490 488 L438 484 C410 482 385 488 360 496 C340 504 315 508 292 498 C262 486 244 470 232 452 L222 430 C210 410 205 380 205 350 L198 300 C192 270 190 250 186 236 C176 236 160 236 152 228 C146 218 152 206 162 204 C168 202 174 200 178 196 Z";
+// Left-facing on a 612 grid. Dome: circle at (365, 298), r 188. Brow knob at the front, bumper at the back.
+const SHELL = "M202 204 A188 188 0 0 1 531 386 L536 432 C532 452 512 476 490 488 L440 484 C410 482 385 488 360 496 C338 503 314 506 292 498 C262 487 243 470 232 452 C224 430 220 400 218 370 C216 330 212 290 206 252 C205 246 204 240 202 236 L188 236 C177 236 170 228 171 218 C172 210 180 204 190 204 Z";
+// Concentric with the dome: stripe at r 164 (a sliver of shell shows above it), gloss at r 128
+const STRIPE = "M220 221 A164 164 0 0 1 515 365";
+const GLOSS = "M252 238 A128 128 0 0 1 317 179";
 const MASK = [
-  "M128 242 L276 284 L326 388 L238 434",
-  "M232 302 L256 334 L290 380 L236 410",
-  "M66 356 L242 386",
-  "M66 406 L240 412",
+  "M126 244 L270 284 Q300 330 318 384 L240 432",
+  "M64 356 L244 386",
+  "M64 406 L242 412",
   "M76 360 L74 484 L170 472",
   "M212 288 L176 472",
 ];
