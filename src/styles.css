@@ -1206,3 +1206,52 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .ir-empty { width: 32px; height: 32px; margin: 2px; border-radius: 50%; border: 1.5px dashed var(--faint); }
 .ir-stuck { background: var(--bad-soft); }
 .lu-pts.dim { color: var(--faint); }
+
+/* Lineup list, Sleeper-style slot pills */
+.lu-tabs { display: flex; align-items: center; gap: 12px; }
+.lu-hint { display: block; font-weight: 400; margin-top: 2px; }
+.lu-row { grid-template-columns: 56px 40px minmax(0, 1fr) auto; min-height: 64px; }
+.lu-slot { display: grid; place-items: center; height: 30px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; color: #111; background: var(--surface-3); }
+.lu-slot.s-QB { background: color-mix(in srgb, var(--qb) 80%, #fff); }
+.lu-slot.s-RB { background: color-mix(in srgb, var(--rb) 60%, #fff); }
+.lu-slot.s-WR { background: color-mix(in srgb, var(--wr) 55%, #fff); }
+.lu-slot.s-TE { background: color-mix(in srgb, var(--te) 75%, #fff); }
+.lu-slot.s-FLEX { background: linear-gradient(90deg, color-mix(in srgb, var(--wr) 55%, #fff), color-mix(in srgb, var(--rb) 60%, #fff) 50%, color-mix(in srgb, var(--te) 75%, #fff)); font-size: 0.625rem; }
+.lu-slot.s-SF { background: linear-gradient(90deg, color-mix(in srgb, var(--qb) 80%, #fff), color-mix(in srgb, var(--wr) 55%, #fff)); font-size: 0.625rem; }
+.lu-slot.s-BN { background: var(--surface-2); color: var(--muted); }
+.lu-slot.s-IR { background: var(--ink); color: var(--bg); }
+.lu-slot.s-TX { background: var(--surface-2); color: var(--muted); font-size: 0.625rem; }
+.lu-pos { font-weight: 700; }
+.lu-pos.p-QB { color: var(--qb); } .lu-pos.p-RB { color: var(--rb); } .lu-pos.p-WR { color: var(--wr); } .lu-pos.p-TE { color: var(--te); }
+.lu-row.has-swap { background: var(--warn-soft); }
+.lu-swap { grid-column: 2 / -1; display: flex; align-items: flex-start; gap: 6px; font-size: 0.75rem; color: var(--ink); margin-top: -2px; }
+.lu-swap svg { flex: none; margin-top: 1px; color: var(--warn); }
+.lu-swap .good { color: var(--good); }
+.lu-banner { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 16px; border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow); }
+.lu-banner-ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--warn-soft); color: var(--warn); }
+.lu-banner-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lu-banner-txt b { font-size: 0.9375rem; } .lu-banner-txt span { font-size: 0.8125rem; color: var(--muted); }
+@media (max-width: 560px) {
+  .lu-row { grid-template-columns: 50px 36px minmax(0, 1fr) auto; }
+  .lu-banner { grid-template-columns: 36px minmax(0, 1fr); }
+  .lu-banner .btn { grid-column: 1 / -1; justify-self: stretch; justify-content: center; }
+}
+
+/* League activity */
+.act-feed { overflow: hidden; }
+.act-row { padding: 14px 16px; }
+.act-row + .act-row { box-shadow: inset 0 1px 0 var(--line); }
+.act-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.act-head b { font-size: 0.875rem; }
+.act-kind { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+.act-kind.trade { color: var(--them); } .act-kind.waiver { color: var(--you); }
+.act-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.act-moves, .act-trade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; flex: 1; min-width: 0; }
+.act-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.act-move { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.act-move-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.act-move-txt b { font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-tag { font-size: 0.6875rem; font-weight: 700; }
+.act-tag.add { color: var(--good); } .act-tag.drop { color: var(--bad); }
+.act-bid { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.act-bid b { font: 700 1.25rem/1 var(--font-display); font-variant-numeric: tabular-nums; }

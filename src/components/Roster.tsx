@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { LEAGUE, OPPONENT_ID, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, lineupFor, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, PosBadge, Seg, Stamp, StatusPill } from "./ui";
@@ -108,18 +109,26 @@ function Field({ starters }: { starters: { slot: string; player: Player }[] }) {
   );
 }
 
-/** Box-score style row: slot, jersey, name, projection. */
-function LineupRow({ p, slot, bench }: { p: Player; slot: string; bench?: boolean }) {
+const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
+
+/** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
+function LineupRow({ p, slot, bench, swap }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number } }) {
   const st = statusWord(p);
   return (
-    <div className={`lu-row${bench ? " bench" : ""}`}>
-      <span className="lu-slot">{slot}</span>
-      <Jersey p={p} size={36} ring={ringOf(p)} />
+    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}`}>
+      <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
+      <Jersey p={p} size={40} ring={ringOf(p)} />
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
-        <span className="lu-meta">{p.pos} · {p.nfl}{st && <b className={`lu-st ${ringOf(p)}`}>{st}{p.status && !onBye(p.nfl) ? `, ${injuryDetail(p)}` : ""}</b>}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>{p.nfl}{st && <b className={`lu-st ${ringOf(p)}`}>{st === "Questionable" ? "Q" : st}{p.status && !onBye(p.nfl) ? ` · ${injuryDetail(p)}` : ""}</b>}</span>
       </span>
       <span className="lu-pts">{eff(p, true).toFixed(1)}</span>
+      {swap && (
+        <span className="lu-swap">
+          <Icon name="trade" size={14} />
+          <span>Sleeper has <b>{swap.from.name}</b>{onBye(swap.from.nfl) ? " (bye)" : isOut(swap.from, true) ? " (out)" : ""} here. Swap for <b className="good">+{swap.gain.toFixed(1)}</b>.</span>
+        </span>
+      )}
     </div>
   );
 }
@@ -179,6 +188,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const locked = YOU.roster.filter((id) => myTags[id] === "amazing");
   const diff = sleeperDiff(lineup);
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
+  const [view, setView] = useState<"list" | "field">("list");
+  const swapFor = (id: string) => { const d = diff.find((x) => x.start.id === id); return d ? { from: d.benched, gain: d.gain } : undefined; };
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const oppTotal = opp ? lineupFor(opp.roster, true).total : null;
   const chance = oppTotal !== null ? Math.round(phi((lineup.total - oppTotal) / 34) * 100) : 0;
@@ -208,28 +219,30 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       </header>
 
       {diff.length > 0 && (
-        <section className="card nudge nudge-lineup">
-          <div className="row wrap" style={{ justifyContent: "space-between" }}>
-            <div className="row wrap"><Stamp>Lineup day</Stamp><span className="deadline"><Icon name="clock" size={12} />{DEADLINES.lock}</span></div>
-          </div>
-          <h3>Per sources, your Sleeper lineup is leaving <em>{fmt(diff.reduce((a, d) => a + d.gain, 0))} pts</em> on the bench.</h3>
-          {diff.map((d) => (
-            <div key={d.start.id} className="swap-row">
-              <span className="small"><b>{d.slot}:</b> {d.benched.name} {isOut(d.benched, true) ? <StatusPill p={d.benched} /> : null} <span className="muted">to</span> {d.start.name}</span>
-              <Delta n={d.gain} />
-            </div>
-          ))}
-          <div className="row wrap">
-            <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><Icon name="app" size={16} />Open Sleeper</a>
-            <span className="tiny muted">Sleeper's API is read-only, so you make the swap there.</span>
-          </div>
-        </section>
+        <div className="lu-banner" role="status">
+          <span className="lu-banner-ic"><Icon name="alert" size={18} /></span>
+          <span className="lu-banner-txt"><b>{diff.length} {diff.length > 1 ? "changes" : "change"} to make in Sleeper</b><span>Worth {fmt(diff.reduce((a, d) => a + d.gain, 0))} pts. {DEADLINES.lock}.</span></span>
+          <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a>
+        </div>
       )}
 
       <div className="lu-grid">
         <div className="lu-col">
-          <Field starters={s} />
-          {checks.length > 0 && (
+          <div className="lu-tabs">
+            <Seg label="Lineup view" value={view} onChange={setView} options={[{ v: "list", label: "List" }, { v: "field", label: "Field" }]} />
+          </div>
+          {view === "field" ? <Field starters={s} /> : (
+            <section className="card lu-list" aria-label="Starters and bench">
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Your best lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
+              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} />)}
+              <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length} of {LEAGUE.rosterMax - s.length}</span></div>
+              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench />)}
+              <IrBlock />
+            </section>
+          )}
+        </div>
+        {checks.length > 0 && (
+          <div className="lu-col">
             <section className="card lu-checks" aria-label="Before kickoff">
               <div className="lu-checks-head"><b>Before kickoff</b><span className="tiny muted">{DEADLINES.lock}</span></div>
               {checks.map((c) => (
@@ -240,16 +253,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
               ))}
               <div className="lu-checks-foot"><AiLabel /></div>
             </section>
-          )}
-        </div>
-
-        <section className="card lu-list" aria-label="Starters and bench">
-          <div className="lu-list-head"><b>Starters</b><span className="tiny muted">Proj</span></div>
-          {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot === "FLEX" ? "FLX" : x.slot} />)}
-          <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length} of {LEAGUE.rosterMax - s.length}</span></div>
-          {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench />)}
-          <IrBlock />
-        </section>
+          </div>
+        )}
       </div>
 
       <div className="roster-grid">

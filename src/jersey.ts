@@ -41,7 +41,7 @@ export function loadJerseyNumbers() {
     .catch(() => { /* jerseys show without a number */ });
 }
 
-export function jerseyNumber(p: Player): number | undefined {
+export function jerseyNumber(p: Pick<Player, "id" | "name" | "nfl">): number | undefined {
   const row = byId[p.id];
   if (row) return row[0];
   return byName.get(`${norm(p.name)}|${p.nfl}`) ?? byName.get(norm(p.name));

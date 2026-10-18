@@ -359,6 +359,17 @@ const DEMO_FAAB_HISTORY: BidTier[] = [
 ];
 
 // ---- Completed trades, for manager tendencies ----------------------------
+/** One league transaction, newest first. Names are snapshotted so dropped players still read right. */
+export interface ActivityPlayer { id: string; name: string; pos: string; nfl: string }
+export interface Activity {
+  id: string;
+  kind: "trade" | "waiver" | "free_agent" | "commissioner";
+  teamIds: string[];
+  adds: (ActivityPlayer & { teamId: string })[];
+  drops: (ActivityPlayer & { teamId: string })[];
+  bid?: number;
+  at: number;
+}
 export interface PastTrade { week: string; a: string; b: string; aGot: { name: string; pos: Pos; rookie?: boolean }[]; bGot: { name: string; pos: Pos; rookie?: boolean }[] }
 const DEMO_TRADES: PastTrade[] = [
   { week: "2025 Wk 4", a: "mike", b: "kev", aGot: [{ name: "Javonte Williams", pos: "RB" }], bGot: [{ name: "Hunter Henry", pos: "TE" }] },
@@ -411,6 +422,8 @@ export interface LeagueData {
   faabHistory: BidTier[];
   freeAgents: FreeAgent[];
   trades: PastTrade[];
+  /** Recent league transactions, newest first. */
+  activity?: Activity[];
   /** Offers each manager received. Sleeper doesn't expose this, so it's null for live leagues. */
   offers: Record<string, number> | null;
   /** Where market values come from, shown in the UI. */
@@ -472,6 +485,17 @@ export function setLeague(d: LeagueData) {
   leagueVersion++;
 }
 
+const hoursAgo = (h: number) => Date.UTC(2026, 9, 15, 16) - h * 3600e3;
+const ap = (name: string, pos: string, nfl: string, teamId: string) => ({ id: slug(name), name, pos, nfl, teamId });
+const DEMO_ACTIVITY: Activity[] = [
+  { id: "a1", kind: "free_agent", teamIds: ["mike"], adds: [ap("Kenneth Gainwell", "RB", "TB", "mike")], drops: [ap("Will Shipley", "RB", "PHI", "mike")], at: hoursAgo(2) },
+  { id: "a2", kind: "waiver", teamIds: ["chris"], adds: [ap("Jalen Tolbert", "WR", "DAL", "chris")], drops: [ap("Ashton Dulin", "WR", "IND", "chris")], bid: 18, at: hoursAgo(14) },
+  { id: "a3", kind: "trade", teamIds: ["mike", "kev"], adds: [ap("Javonte Williams", "RB", "DAL", "mike"), ap("Hunter Henry", "TE", "NE", "kev")], drops: [], at: hoursAgo(30) },
+  { id: "a4", kind: "free_agent", teamIds: ["sam"], adds: [ap("Kirk Cousins", "QB", "LV", "sam")], drops: [], at: hoursAgo(41) },
+  { id: "a5", kind: "free_agent", teamIds: ["pat"], adds: [], drops: [ap("Tyreek Hill", "WR", "FA", "pat")], at: hoursAgo(50) },
+  { id: "a6", kind: "waiver", teamIds: ["dan"], adds: [ap("Sean Tucker", "RB", "TB", "dan")], drops: [ap("Kalif Raymond", "WR", "CHI", "dan")], bid: 31, at: hoursAgo(62) },
+];
+
 export function demoLeague(): LeagueData {
   const { teams, players } = demoTeams();
   return {
@@ -487,7 +511,7 @@ export function demoLeague(): LeagueData {
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
-    trades: DEMO_TRADES, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
+    trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     valueSource: "Demo estimate from projections",
   };
 }

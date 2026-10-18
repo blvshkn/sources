@@ -3,6 +3,68 @@ import { ManagerTag, playerById, Pos, POS_ORDER, YOU, LEAGUE_NAME } from "../dat
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Phase, PosBadge, Seg, Stamp } from "./ui";
 import { TagCapture } from "./TagCapture";
+import { Jersey } from "./Jersey";
+import { LEAGUE, Activity, ActivityPlayer } from "../data";
+
+const KIND_LABEL: Record<Activity["kind"], string> = { free_agent: "Free agent", waiver: "Waiver claim", trade: "Trade", commissioner: "Commissioner" };
+const shortName = (n: string) => { const w = n.split(" "); return w.length > 1 && !n.endsWith("defense") ? `${w[0][0]}. ${w.slice(1).join(" ")}` : n; };
+const when = (at: number) => {
+  if (!at) return "";
+  const d = new Date(at);
+  const mins = Math.round((Date.now() - at) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)}m ago`;
+  if (mins < 24 * 60) return `${Math.round(mins / 60)}h ago`;
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+};
+const managerOf = (id: string) => { const t = LEAGUE.teams.find((x) => x.id === id); return t ? (t.you ? "You" : t.manager) : "Unknown"; };
+
+function Move({ p, add }: { p: ActivityPlayer; add: boolean }) {
+  return (
+    <div className="act-move">
+      <Jersey p={p} size={34} />
+      <span className="act-move-txt">
+        <span className={`act-tag ${add ? "add" : "drop"}`}>{add ? "+ Add" : "− Drop"}</span>
+        <b>{shortName(p.name)}</b>
+        <span className="tiny muted">{[p.pos, p.nfl].filter(Boolean).join(" · ")}</span>
+      </span>
+    </div>
+  );
+}
+
+/** Sleeper-style league activity: who added, dropped, claimed and traded. */
+function ActivityFeed() {
+  const items = LEAGUE.activity ?? [];
+  if (!items.length) return <section className="card card-pad"><p className="small muted">No moves yet this season. Adds, drops, claims and trades show up here as they clear.</p></section>;
+  return (
+    <section className="card act-feed" aria-label="League activity">
+      {items.map((a) => a.kind === "trade" ? (
+        <div key={a.id} className="act-row">
+          <div className="act-head"><b>{a.teamIds.map(managerOf).join(" and ")}</b><span className="act-kind trade">Trade</span><span className="tiny muted">{when(a.at)}</span></div>
+          <div className="act-trade">
+            {a.teamIds.map((tid) => (
+              <div key={tid} className="act-side">
+                <span className="tiny muted">{managerOf(tid)} gets</span>
+                {a.adds.filter((x) => x.teamId === tid).map((x) => <Move key={x.id} p={x} add />)}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div key={a.id} className="act-row">
+          <div className="act-head"><b>{managerOf(a.teamIds[0])}</b><span className={`act-kind ${a.kind}`}>{KIND_LABEL[a.kind]}</span><span className="tiny muted">{when(a.at)}</span></div>
+          <div className="act-body">
+            <div className="act-moves">
+              {a.adds.map((x) => <Move key={x.id} p={x} add />)}
+              {a.drops.map((x) => <Move key={x.id} p={x} add={false} />)}
+            </div>
+            {a.bid !== undefined && <span className="act-bid"><span className="tiny muted">Bid</span><b>${a.bid}</b></span>}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 
 function Bar({ label, diff, pct }: { label: string; diff: number; pct: number }) {
   const w = Math.min(Math.abs(pct) * 100 * 1.4, 50); // half track = 36% off league avg
@@ -31,7 +93,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
   onKeepTag: (id: string) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
 }) {
-  const [view, setView] = useState<"needs" | "tendencies">("needs");
+  const [view, setView] = useState<"needs" | "tendencies" | "activity">("needs");
   const sorted = [...needs].sort((a, b) => a.rank - b.rank);
   const you = needs.find((n) => n.team.you)!;
   // Starter copy: "Per sources, three teams are thin at RB. You have two to spare."
@@ -53,7 +115,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
           <h1 className="page-title">League Needs</h1>
           <p className="page-sub">Every team's starters compared to the league average. Red marks where a team is hurting.</p>
         </div>
-        <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "tendencies", label: "Tendencies" }]} />
+        <Seg label="View" value={view} onChange={setView} options={[{ v: "needs", label: "Needs" }, { v: "activity", label: "Activity" }, { v: "tendencies", label: "Tendencies" }]} />
       </header>
 
       {partners.length > 0 && (
@@ -98,7 +160,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
       )}
       {view === "tendencies" && <p className="small muted">Built from completed trades and offers in this league over the last year. <Phase v="v1" /></p>}
 
-      <div className="needs-grid">
+      {view === "activity" ? <ActivityFeed /> : <div className="needs-grid">
         {sorted.map((n) => {
           const t = n.team;
           const teamTags = tags.filter((x) => x.teamId === t.id);
@@ -156,7 +218,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
             </article>
           );
         })}
-      </div>
+      </div>}
     </>
   );
 }

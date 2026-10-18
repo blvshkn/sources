@@ -3,7 +3,7 @@ import { Player } from "../data";
 import { jerseyNumber, teamColors, useJerseys } from "../jersey";
 
 /** A team-colored jersey with the player's real number. Team palette only, no logos. */
-export function Jersey({ p, size = 36, ring }: { p: Player; size?: number; ring?: "warn" | "bad" }) {
+export function Jersey({ p, size = 36, ring }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad" }) {
   useJerseys();
   const uid = useId().replace(/:/g, "");
   const [body, ink, trim] = teamColors(p.nfl);

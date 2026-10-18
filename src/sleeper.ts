@@ -1,6 +1,6 @@
 // Sleeper's public, read-only API. No password or token: a username is enough.
 // Everything here runs in the user's browser; nothing is stored on a server.
-import { BidTier, FreeAgent, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
+import { BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
 const SKILL: Pos[] = ["QB", "RB", "WR", "TE"];
@@ -39,7 +39,8 @@ interface SProj {
 }
 interface STxn {
   type: "trade" | "waiver" | "free_agent" | "commissioner"; status: string; leg: number;
-  roster_ids: number[]; adds: Record<string, number> | null; settings?: { waiver_bid?: number } | null;
+  roster_ids: number[]; adds: Record<string, number> | null; drops?: Record<string, number> | null; settings?: { waiver_bid?: number } | null;
+  transaction_id?: string; status_updated?: number; created?: number;
 }
 interface SMatchup { roster_id: number; matchup_id?: number | null; starters: string[] | null; starters_points: number[] | null }
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
@@ -303,6 +304,26 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return { week: `${season} Wk ${t.leg}`, a: String(a), b: String(b), aGot: got(a), bGot: got(b) };
   });
 
+  // League activity: the latest completed adds, drops, claims and trades
+  const infoOf = (id: string) => {
+    if (players[id]) return { id, name: players[id].name, pos: players[id].pos as string, nfl: players[id].nfl };
+    if (/^[A-Z]{2,3}$/.test(id)) return { id, name: `${id} defense`, pos: "DEF", nfl: id };
+    const s = seasonBy.get(id)?.player ?? weekBy.get(id)?.player;
+    return { id, name: s ? [s.first_name, s.last_name].filter(Boolean).join(" ") : `Player ${id}`, pos: s?.position ?? "", nfl: s?.team ?? "" };
+  };
+  const activity: Activity[] = txns.filter((t) => t.status === "complete")
+    .sort((a, b) => (b.status_updated ?? b.created ?? 0) - (a.status_updated ?? a.created ?? 0))
+    .slice(0, 40)
+    .map((t, i) => ({
+      id: t.transaction_id ?? `t${i}`,
+      kind: t.type,
+      teamIds: t.roster_ids.map(String),
+      adds: Object.entries(t.adds ?? {}).map(([id, r]) => ({ ...infoOf(id), teamId: String(r) })),
+      drops: Object.entries(t.drops ?? {}).map(([id, r]) => ({ ...infoOf(id), teamId: String(r) })),
+      bid: t.type === "waiver" ? t.settings?.waiver_bid : undefined,
+      at: t.status_updated ?? t.created ?? 0,
+    }));
+
   // This week's opponent
   const mine = thisWeek.find((m) => String(m.roster_id) === you.id);
   const opp = mine?.matchup_id ? thisWeek.find((m) => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : undefined;
@@ -319,7 +340,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     },
     byeTeams, teams, players, sleeperSet, slotHistory,
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)) },
-    faabHistory, freeAgents, trades, offers: null, username, type: leagueType(league),
+    faabHistory, freeAgents, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     valueSource: valueBy.size ? `FantasyCalc market values (${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams)` : "Estimated from projections (market values unavailable)",
     rosWeeks: weekNums.length,
