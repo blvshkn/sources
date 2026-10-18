@@ -243,14 +243,6 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         </div>
       </header>
 
-      {diff.length > 0 && (
-        <div className="lu-banner" role="status">
-          <span className="lu-banner-ic"><Icon name="alert" size={18} /></span>
-          <span className="lu-banner-txt"><b>{diff.length} {diff.length > 1 ? "changes" : "change"} to make in Sleeper</b><span>Worth {fmt(diff.reduce((a, d) => a + d.gain, 0))} pts. {DEADLINES.lock}.</span></span>
-          <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a>
-        </div>
-      )}
-
       <div className="lu-grid">
         <div className="lu-col">
           {(
@@ -261,6 +253,23 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <button className="btn btn-icon btn-sm" aria-label="Next week" disabled={week >= lastWeek()} onClick={() => setWeek(week + 1)}><Icon name="chev" size={18} /></button>
               </div>
               {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : wv ? <WeekPanel v={wv} /> : <div className="lu-skel" aria-label={`Loading Week ${week}`}>{Array.from({ length: 6 }).map((_, i) => <span key={i} />)}</div>) : <>
+              <div className={`ss${diff.length ? "" : " ok"}`} aria-label="Start and sit">
+                <div className="ss-head">
+                  <b>Start / Sit</b>
+                  {diff.length > 0
+                    ? <span className="ss-gain">{fmt(diff.reduce((a, d) => a + d.gain, 0))} pts</span>
+                    : <span className="ss-ok"><Icon name="check" size={14} />Lineup set</span>}
+                </div>
+                {diff.length > 0 ? <>
+                  {diff.map((d) => (
+                    <div key={d.start.id} className="ss-move">
+                      <div className="ss-p start"><span className="ss-tag">Start</span><Avatar p={d.start} size={32} /><span className="ss-n"><b>{d.start.name}</b><small>{d.start.pos} · {d.start.nfl}</small></span><span className="ss-pts">{eff(d.start, true).toFixed(1)}</span></div>
+                      <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></div>
+                    </div>
+                  ))}
+                  <div className="ss-foot"><span>Make the {diff.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer">Open Sleeper</a></div>
+                </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
+              </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
               {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} />)}
               {kdef.slots.map((x, i) => x.player
