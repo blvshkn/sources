@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { Trade, fmt, needsFor } from "../engine";
-import { playerById, teamById, sleeperUrl } from "../data";
+import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
-import { AiLabel, Delta, Icon, Seg } from "./ui";
-import { Avatar } from "./Avatar";
+import { AiLabel, Icon, Seg } from "./ui";
 
 // Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
 const project = (v: number, d = 0.998) => ((v / 1000) * d) / (1 - d);
@@ -18,46 +17,101 @@ const APP_URL: Record<LeagueApp, string> = {
 };
 export const CARD_LINK = "sources-orpin.vercel.app";
 
-/** Draws the shareable trade card. It links back to Sources, which is how the growth loop starts. */
+const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
+  const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => res(i); i.onerror = () => res(null); i.src = src;
+  window.setTimeout(() => res(null), 2500);
+});
+const sid = (id: string) => (/^\d+$/.test(id) ? id : null);
+
+/**
+ * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
+ * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
+ */
 async function drawCard(t: Trade): Promise<Blob | null> {
   const them = teamById(t.partnerId);
-  const c = document.createElement("canvas");
-  c.width = 1200; c.height = 630;
+  const W = 1080, H = 1350, X = 72;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
-  const css = getComputedStyle(document.documentElement);
-  const v = (k: string, f: string) => css.getPropertyValue(k).trim() || f;
-  g.fillStyle = "#13161b"; g.fillRect(0, 0, 1200, 630);
-  g.fillStyle = v("--stamp", "#f2b134"); g.fillRect(0, 0, 1200, 10);
-  g.fillStyle = "#f2b134"; g.font = "800 30px 'Big Shoulders Display', Impact, sans-serif";
-  g.fillText("PER SOURCES", 64, 84);
-  g.fillStyle = "#ffffff"; g.font = "800 64px 'Big Shoulders Display', Impact, sans-serif";
-  g.fillText(`A trade that works for ${them.manager}`.toUpperCase(), 64, 158);
-  const col = (x: number, label: string, ids: string[]) => {
-    g.fillStyle = "#9aa3ae"; g.font = "600 24px Figtree, system-ui, sans-serif"; g.fillText(label, x, 238);
-    ids.forEach((id, i) => {
-      const p = playerById(id);
-      g.fillStyle = "#ffffff"; g.font = "700 40px Figtree, system-ui, sans-serif"; g.fillText(p.name, x, 292 + i * 76);
-      g.fillStyle = "#9aa3ae"; g.font = "500 22px 'IBM Plex Mono', monospace"; g.fillText(`${p.pos} · ${p.nfl}`, x, 324 + i * 76);
+  const F = (w: number, px: number) => `${w} ${px}px 'Google Sans', system-ui, sans-serif`;
+  const LIME = "#D8F24A", INK = "#F4F6F2", MUTED = "#98A39B", FAINT = "#5E6A62";
+  const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
+
+  // Night field: dark turf, a floodlight glow, faint yard lines
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#111916"); bg.addColorStop(1, "#090C0B");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
+  glow.addColorStop(0, "rgba(216,242,74,0.26)"); glow.addColorStop(1, "rgba(216,242,74,0)");
+  g.fillStyle = glow; g.fillRect(0, 0, W, H);
+  g.strokeStyle = "rgba(255,255,255,0.045)"; g.lineWidth = 2;
+  for (let y = 120; y < H; y += 120) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = 40; x < W; x += 54) { g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, y + 8); g.stroke(); } }
+
+  // Header
+  g.fillStyle = LIME; g.beginPath(); g.arc(X + 9, 92, 9, 0, Math.PI * 2); g.fill();
+  g.fillStyle = INK; g.font = F(600, 34); g.fillText("sources", X + 30, 104);
+  g.fillStyle = LIME; g.font = F(700, 22); const tag = "TRADE OFFER"; let tw = 0; for (const ch of tag) tw += g.measureText(ch).width + 5; track(tag, W - X - tw, 102, 5);
+  g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${LEAGUE_NAME || "Your league"} · Week ${WEEK}`, X, 160);
+  g.fillStyle = INK; g.font = F(700, 78); g.fillText(`${them.manager},`, X, 270, W - X * 2);
+  g.fillStyle = LIME; g.fillText("let's make a deal.", X, 356, W - X * 2);
+
+  // Players
+  const total = t.give.length + t.get.length;
+  const rowH = total <= 3 ? 122 : total <= 4 ? 108 : 94, av = rowH - 30;
+  const imgs = await Promise.all([...t.give, ...t.get].map((id) => (sid(id) ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`) : Promise.resolve(null))));
+  let y = 440, k = 0;
+  const side = (label: string, ids: string[], hot: boolean) => {
+    g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); track(label, X, y, 4); y += 26;
+    ids.forEach((id) => {
+      const p = playerById(id), img = imgs[k++], cy = y + rowH / 2;
+      g.save(); g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.closePath(); g.fillStyle = "#1E2723"; g.fill(); g.clip();
+      if (img) g.drawImage(img, X, cy - av / 2, av, av);
+      else { g.fillStyle = INK; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
+      g.restore();
+      g.strokeStyle = hot ? "rgba(216,242,74,0.55)" : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = INK; g.font = F(700, Math.round(rowH * 0.4)); g.fillText(p.name, X + av + 28, cy + 2, W - X * 2 - av - 28);
+      g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${p.pos} · ${p.nfl}`, X + av + 28, cy + 38);
+      y += rowH;
     });
   };
-  col(64, `${them.manager.toUpperCase()} GETS`, t.give);
-  col(640, "I GET", t.get);
-  g.fillStyle = "#1f242c"; g.fillRect(64, 450, 1072, 92);
-  g.font = "700 34px 'IBM Plex Mono', monospace";
-  g.fillStyle = "#4ade80"; g.fillText(`${them.manager} ${fmt(t.themDelta)} pts/wk`, 92, 508);
-  g.fillStyle = t.youDelta >= 0 ? "#4ade80" : "#f87171"; g.fillText(`Me ${fmt(t.youDelta)} pts/wk`, 660, 508);
-  g.fillStyle = "#9aa3ae"; g.font = "500 22px Figtree, system-ui, sans-serif";
-  g.fillText(`Starting lineup points, weekly projections · ${CARD_LINK}`, 64, 592);
+  side("YOU GET", t.give, true);
+  // Swap divider
+  y += 14; g.strokeStyle = "rgba(255,255,255,0.12)"; g.lineWidth = 2; g.beginPath(); g.moveTo(X, y); g.lineTo(W - X, y); g.stroke();
+  g.fillStyle = "#151D19"; g.beginPath(); g.arc(W / 2, y, 26, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(255,255,255,0.18)"; g.stroke();
+  g.strokeStyle = MUTED; g.lineWidth = 3; g.lineCap = "round";
+  g.beginPath(); g.moveTo(W / 2 - 7, y - 11); g.lineTo(W / 2 - 7, y + 11); g.moveTo(W / 2 - 13, y + 5); g.lineTo(W / 2 - 7, y + 11); g.lineTo(W / 2 - 1, y + 5);
+  g.moveTo(W / 2 + 7, y + 11); g.lineTo(W / 2 + 7, y - 11); g.moveTo(W / 2 + 1, y - 5); g.lineTo(W / 2 + 7, y - 11); g.lineTo(W / 2 + 13, y - 5); g.stroke();
+  y += 44;
+  side("I GET", t.get, false);
+
+  // Impact panel
+  const py = H - 340, ph = 196;
+  g.fillStyle = "rgba(216,242,74,0.09)"; g.strokeStyle = "rgba(216,242,74,0.35)"; g.lineWidth = 2;
+  g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph); g.fill(); g.stroke();
+  g.fillStyle = MUTED; g.font = F(700, 20); track("YOUR STARTERS", X + 32, py + 50, 4);
+  g.fillStyle = t.themDelta >= 0 ? LIME : "#F28B82"; g.font = F(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
+  const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText("pts / week", X + 40 + bw, py + 148);
+  g.fillStyle = MUTED; g.font = F(700, 20); g.textAlign = "right"; track("", 0, 0, 0);
+  g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = F(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);
+  g.textAlign = "left";
+  const need = needsFor(them).need;
+  if (t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Fills your ${need} hole.`, X, py + ph + 50); }
+
+  // Footer
+  g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - 40);
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
 
 export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: () => void; onSent: (msg: string, via?: string) => void }) {
   const them = teamById(trade.partnerId);
-  const need = needsFor(them).need;
   const [tone, setTone] = useState<Tone>("friendly");
   const [method, setMethod] = useState<Method>("text");
+  const [cardUrl, setCardUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let url: string | null = null, alive = true;
+    drawCard(trade).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    return () => { alive = false; if (url) URL.revokeObjectURL(url); };
+  }, [trade]);
   const [app, setApp] = useState<LeagueApp>("Sleeper");
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
@@ -199,15 +253,9 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
           </div>
         )}
 
-        <figure className="pitch-card" aria-label="Shareable trade card">
-          <div className="pc-top"><span className="pc-stamp">Per sources</span><span className="pc-link">{CARD_LINK}</span></div>
-          <div className="pc-title">A trade that works for {them.manager}</div>
-          <div className="pc-cols">
-            <div><span className="pc-k">{them.manager} gets</span>{trade.give.map((id) => <div key={id} className="pc-p"><Avatar p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
-            <div><span className="pc-k">I get</span>{trade.get.map((id) => <div key={id} className="pc-p"><Avatar p={playerById(id)} size={24} />{playerById(id).name}</div>)}</div>
-          </div>
-          <div className="pc-nums"><span>{them.manager} <Delta n={trade.themDelta} />/wk</span><span>Me <Delta n={trade.youDelta} />/wk</span></div>
-          <figcaption className="pc-why">Fills their {need} spot. Starting lineup points from weekly projections.</figcaption>
+        <figure className="tcard" aria-label="Trade card that goes with your message">
+          {cardUrl ? <img src={cardUrl} alt={`Trade offer card: ${them.manager} gets ${trade.give.map((id) => playerById(id).name).join(" and ")}, I get ${trade.get.map((id) => playerById(id).name).join(" and ")}.`} /> : <span className="tcard-skel" aria-hidden="true" />}
+          <figcaption>This card goes with your message.</figcaption>
         </figure>
 
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
@@ -235,10 +283,12 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
         )}
         {method === "app" && app === "Sleeper" && <p className="tiny muted">Sleeper's API is read-only, so Sources can't propose the trade inside Sleeper. It copies the pitch and opens Sleeper for you.</p>}
 
-        <div className="row wrap send-actions">
-          <button className="btn btn-primary" onClick={primary}><Icon name="send" size={16} />{primaryLabel}</button>
-          <button className="btn" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied." : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
-          <button className="btn btn-ghost" onClick={saveCard}><Icon name="share" size={16} />Save image</button>
+        <div className="sa2">
+          <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>
+          <div className="sa2-row">
+            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied." : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy text</button>
+            <button className="btn sa2-sub" onClick={saveCard}><Icon name="share" size={16} />Save card</button>
+          </div>
         </div>
         <p className="tiny muted">Nothing sends until you hit send in your messaging app.</p>
       </div>
