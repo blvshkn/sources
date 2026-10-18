@@ -3,6 +3,8 @@ import { Player } from "../data";
 import { jerseyNumber, teamColors, useJerseys } from "../jersey";
 
 const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
+/** Visible difference between two colors: hue counts, not just brightness (red on royal blue reads fine). */
+const dist = (a: string, b: string) => { const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16); return Math.hypot((x >> 16) - (y >> 16), ((x >> 8) & 255) - ((y >> 8) & 255), (x & 255) - (y & 255)); };
 const mix = (h: string, w: number) => { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * w)); return `rgb(${c.join(",")})`; };
 
 /** A team-colored jersey with the player's real number, in the same flat glyph style as the
@@ -16,9 +18,9 @@ export function Jersey({ p, size = 36, ring, text }: { p: Pick<Player, "id" | "n
   const num = jerseyNumber(p);
   const label = text ?? (num !== undefined ? String(num) : "");
   const fs = label.length > 2 ? 16 : label.length > 1 ? 22 : 25;
-  const apart = (c: string, d: number) => Math.abs(lum(c) - lum(body)) > d;
-  const accent = apart(trim, 0.12) ? trim : apart(ink, 0.12) ? ink : mix(body, 0.4);
-  const numEdge = trim !== ink && apart(trim, 0.12) ? trim : lum(ink) > 0.5 ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.5)";
+  const shows = (c: string) => dist(c, body) > 110;
+  const accent = shows(trim) ? trim : shows(ink) ? ink : mix(body, 0.4);
+  const numEdge = trim !== ink && shows(trim) ? trim : lum(ink) > 0.5 ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.5)";
   const dark = lum(body) < 0.2;
   const bg = { stroke: "var(--surface, #fff)" } as const;
   const clip = `jc${uid}`;
@@ -66,8 +68,8 @@ export function Helmet({ team, size = 36, ring }: { team: string; size?: number;
   const usable = (c: string) => apart(c, 0.22) && lum(c) > 0.14 && lum(c) < 0.86;
   const mask = usable(trim) ? trim : usable(ink) ? ink : "#8E949E";
   // Stripe: ink core with trim borders when the team has both, otherwise a single band
-  const core = apart(ink, 0.15) ? ink : apart(trim, 0.15) ? trim : "#FFFFFF";
-  const edge = apart(trim, 0.15) && trim !== core ? trim : null;
+  const core = dist(ink, shell) > 110 ? ink : dist(trim, shell) > 110 ? trim : "#FFFFFF";
+  const edge = dist(trim, shell) > 110 && trim !== core ? trim : null;
   const dark = lum(shell) < 0.2;
   const bg = { stroke: "var(--surface, #fff)" } as const;
   const clip = `hg${uid}`;
