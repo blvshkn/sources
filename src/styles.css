@@ -1446,9 +1446,9 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
   --qb: #9F2F2D; --rb: #346538; --wr: #1F6C9F; --te: #956400;
   --qb-bg: #FDEBEC; --rb-bg: #EDF3EC; --wr-bg: #E1F3FE; --te-bg: #FBF3DB; --k-bg: #F1EEF8; --k: #5B4B8A;
   --shadow: none; --edge: none;
-  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
-  --font-body: "Geist", "SF Pro Text", "Helvetica Neue", sans-serif;
-  --font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Google Sans", "Google Sans Text", "Product Sans", "SF Pro Display", "Helvetica Neue", sans-serif;
+  --font-body: "Google Sans", "Google Sans Text", "Product Sans", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: "Google Sans Code", "SF Mono", ui-monospace, Menlo, monospace;
   --r: 12px; --r-inner: 8px;
   color-scheme: light;
 }
@@ -1478,12 +1478,12 @@ body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-event
   background: radial-gradient(60vw 40vh at 85% -5%, rgba(214, 190, 150, 0.10), transparent 70%); }
 
 /* Titles: newspaper serif, tight */
-.page-title { font-family: var(--font-display) !important; font-weight: 500 !important; font-optical-sizing: auto; letter-spacing: -0.03em !important; line-height: 1.02 !important; font-size: clamp(2.25rem, 7vw, 3.25rem) !important; }
-.brand-name { font-family: var(--font-display) !important; font-weight: 600 !important; letter-spacing: -0.02em !important; font-size: 1.375rem !important; }
-.section-title, .lu-list-head b, .lu-checks-head b, .roster-head b, .card-title, .act-head b, .vb-move > b, .nudge h3, h3 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.015em; }
+.page-title { font-family: var(--font-display) !important; font-weight: 600 !important; letter-spacing: -0.03em !important; line-height: 1.05 !important; font-size: clamp(2.25rem, 7vw, 3.25rem) !important; }
+.brand-name { font-family: var(--font-display) !important; font-weight: 700 !important; letter-spacing: -0.02em !important; font-size: 1.375rem !important; }
+.section-title, .lu-list-head b, .lu-checks-head b, .roster-head b, .card-title, .act-head b, .vb-move > b, .nudge h3, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.015em; }
 .lu-list-head b { font-size: 1.25rem !important; }
 /* Scores read like a box score in the morning paper */
-.numeral, .lu-score .numeral, .sb-score { font-family: var(--font-display) !important; font-weight: 400 !important; letter-spacing: -0.035em !important; font-variant-numeric: lining-nums tabular-nums; }
+.numeral, .lu-score .numeral, .sb-score { font-family: var(--font-display) !important; font-weight: 500 !important; letter-spacing: -0.04em !important; font-variant-numeric: lining-nums tabular-nums; }
 
 /* Small labels: mono, uppercase, tracked, muted */
 .eyebrow, .lu-kicker, .lu-pts i, .vb-head, .wv-stats i, .act-kind, .deadline, .lu-who-l, .sb-rec, .lu-week-sum i, .nudge-kind, .ai-label {
