@@ -3439,8 +3439,9 @@ html:root:not(#_) .lu-mx-open:focus-visible { outline: 2px solid var(--lime); ou
   /* Toasts: rise in from the bottom edge, drop back out the same way (ease-out in, ease-in out) */
   html:root:not(#_) .toast { animation: toast-in 260ms var(--ease-out) both; }
   html:root:not(#_) .toast.leaving { animation: toast-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards; }
-  @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px) scale(0.97); } to { opacity: 1; transform: translate(-50%, 0); } }
-  @keyframes toast-out { to { opacity: 0; transform: translate(-50%, 12px) scale(0.98); } }
+  /* Animate translate/scale on their own so the toast keeps whatever positioning (centered or edge to edge) it has */
+  @keyframes toast-in { from { opacity: 0; translate: 0 16px; scale: 0.97; } }
+  @keyframes toast-out { to { opacity: 0; translate: 0 12px; scale: 0.98; } }
   /* Live score went up: a short lime tick, then back to normal */
   html:root:not(#_) [data-bump="a"] { animation: live-tick-a 900ms var(--ease-out); }
   html:root:not(#_) [data-bump="b"] { animation: live-tick-b 900ms var(--ease-out); }
