@@ -30,6 +30,10 @@ export interface Player {
   playoff?: Pts;
   /** Market trade value (FantasyCalc, matched to league settings). */
   value?: number;
+  /** Can go in an IR slot under this league's rules. */
+  irEligible?: boolean;
+  /** Raw injury designation from Sleeper (IR, PUP, Out, Sus...). */
+  injury?: string;
 }
 
 export interface Team {
@@ -39,7 +43,12 @@ export interface Team {
   record: string;
   pf: number;
   you?: boolean;
+  /** Active roster only: starters and bench. IR and taxi players live below. */
   roster: string[];
+  /** Players in IR slots. They don't count against the roster limit. */
+  ir?: string[];
+  /** Players on the taxi squad (dynasty). */
+  taxi?: string[];
 }
 
 type Row = [string, Pos, string, number, Status?, string?];
@@ -47,7 +56,7 @@ type Row = [string, Pos, string, number, Status?, string?];
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-const rosters: Record<string, { name: string; manager: string; record: string; pf: number; you?: boolean; rows: Row[] }> = {
+const rosters: Record<string, { name: string; manager: string; record: string; pf: number; you?: boolean; rows: Row[]; ir?: Row[] }> = {
   you: {
     name: "Third & Long",
     manager: "You",
@@ -69,6 +78,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
       ["Rashid Shaheed", "WR", "SEA", 9.0],
       ["Mike Gesicki", "TE", "CIN", 6.3],
     ],
+    ir: [["Brandon Aiyuk", "WR", "SF", 11.0, "O", "IR, Knee"]],
   },
   mike: {
     name: "Mike's Mistakes",
@@ -263,13 +273,14 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
 
 function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
   const players: Record<string, Player> = {};
+  const toId = ([name, pos, nfl, proj, status, note]: Row, onIr = false) => {
+    const pid = slug(name);
+    players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O", irEligible: status === "O", injury: onIr ? "IR" : status === "O" ? "Out" : undefined };
+    return pid;
+  };
   const teams = Object.entries(rosters).map(([id, t]) => {
-    const ids = t.rows.map(([name, pos, nfl, proj, status, note]) => {
-      const pid = slug(name);
-      players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O" };
-      return pid;
-    });
-    return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, roster: ids };
+    const ids = t.rows.map((r) => toId(r));
+    return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, roster: ids, ir: (t.ir ?? []).map((r) => toId(r, true)) };
   });
   return { teams, players };
 }
@@ -385,6 +396,10 @@ export interface LeagueData {
   slots: SlotKey[];
   format: LeagueFormat;
   rosterMax: number;
+  /** IR slots per team from the league settings. */
+  irSlots: number;
+  /** Taxi squad slots (dynasty), 0 if none. */
+  taxiSlots: number;
   updated: string;
   deadlines: { waivers: string; lock: string; trade: string };
   byeTeams: string[];
@@ -464,6 +479,8 @@ export function demoLeague(): LeagueData {
     slots: ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX"],
     format: { scoring: "ppr", superflex: false, tePremium: false },
     rosterMax: 13,
+    irSlots: 2,
+    taxiSlots: 0,
     updated: "Projections updated 14 min ago",
     deadlines: { waivers: "Waivers run Wed 3:00 AM ET", lock: "Lineups lock Sun 1:00 PM ET", trade: "Trade deadline Nov 18" },
     byeTeams: ["PIT", "NE"],

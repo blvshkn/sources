@@ -4,7 +4,9 @@ import { loadLeague } from "./sleeper";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
   counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
+  irReport, irLabel,
 } from "./engine";
+import { loadJerseyNumbers } from "./jersey";
 import { Icon, IconName } from "./components/ui";
 import { Briefing, FollowUp, Nudge, Wire, needCopy } from "./components/Wire";
 import { League } from "./components/League";
@@ -83,6 +85,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
   applyFormat(format);
   const fkey = `${format.scoring}|${format.superflex}|${format.tePremium}`;
 
+  useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [tab]);
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2800); return () => clearTimeout(t); }, [toast]);
   useEffect(() => {
@@ -136,6 +139,21 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
 
   const nudges: Nudge[] = useMemo(() => {
     const list: Nudge[] = [];
+    // Injured reserve comes first: a mistake here blocks every other move
+    const ir = irReport(YOU);
+    ir.mustActivate.forEach((p) => list.push({
+      id: `ir-activate-${p.id}`, kind: "ir", headline: `${p.name} is on IR but no longer qualifies`, emph: "Sleeper will block your adds and trades until he's off it.",
+      why: `His status is now ${p.injury ? p.injury : "healthy"}. Activate him in Sleeper${ir.open === 0 && YOU.roster.length >= LEAGUE.rosterMax ? ", which means dropping someone to make room" : ""}.`,
+      trades: [], time: "Now", go: { label: "Review IR", tab: "roster" },
+    }));
+    if (ir.open > 0 && ir.moveIn.length) {
+      const p = ir.moveIn[0];
+      list.push({
+        id: `ir-move-${p.id}`, kind: "ir", headline: `${p.name} can go on IR`, emph: "and you have an open spot.",
+        why: `He's listed ${irLabel(p).toLowerCase()}. Moving him frees a bench spot for a waiver add without cutting anyone.${ir.moveIn.length > 1 ? ` ${ir.moveIn.slice(1).map((x) => x.name).join(", ")} also qualif${ir.moveIn.length > 2 ? "y" : "ies"}.` : ""}`,
+        trades: [], time: "Now", go: { label: "Review IR", tab: "roster" },
+      });
+    }
     // Lineup day
     if (diff.length) {
       const d = diff[0];
@@ -210,7 +228,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
     });
 
     const learned = list.filter((n) => (dismissed[n.kind] ?? 0) < 2 && !dismissedIds.includes(n.id));
-    if (level === "light") return learned.filter((n) => n.kind === "lineup" || n.kind === "offer" || n.kind === "need").slice(0, 2);
+    if (level === "light") return learned.filter((n) => n.kind === "ir" || n.kind === "lineup" || n.kind === "offer" || n.kind === "need").slice(0, 2);
     if (level === "standard") return learned.filter((n) => n.kind !== "slot").slice(0, 5);
     return learned;
   }, [needs, suggestionsByTeam, active, myTags, prices, recs, diff, level, dismissed, dismissedIds, yourLineup]); // eslint-disable-line react-hooks/exhaustive-deps

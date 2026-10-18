@@ -58,6 +58,25 @@ export const isOut = (p: Player, thisWeek = false) =>
 export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p, thisWeek)));
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
+// ---- Injured reserve -----------------------------------------------------
+export interface IrReport {
+  slots: number;
+  used: Player[];
+  open: number;
+  /** Active players who qualify for IR right now. Moving them frees a roster spot. */
+  moveIn: Player[];
+  /** Players sitting on IR who no longer qualify. Sleeper blocks adds until they're activated. */
+  mustActivate: Player[];
+}
+export function irReport(team: Team): IrReport {
+  const slots = LEAGUE.irSlots ?? 0;
+  const used = (team.ir ?? []).map(playerById);
+  const moveIn = slots ? team.roster.map(playerById).filter((p) => p.irEligible).sort((a, b) => b.proj - a.proj) : [];
+  const mustActivate = used.filter((p) => !p.irEligible);
+  return { slots, used, open: Math.max(0, slots - used.length), moveIn, mustActivate };
+}
+export const irLabel = (p: Player) => p.injury === "IR" ? "Injured reserve" : p.injury === "PUP" ? "PUP list" : p.injury === "Sus" ? "Suspended" : p.injury === "NA" ? "Not with team" : p.injury ?? "Healthy";
+
 // ---- Market value ---------------------------------------------------------
 // Live leagues use FantasyCalc values (real fantasy trades, matched to league
 // settings). The demo league estimates value from projections on a similar scale.

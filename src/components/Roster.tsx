@@ -1,6 +1,7 @@
-import { MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
-import { Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, PosBadge, Seg, Stamp, StatusPill } from "./ui";
+import { LEAGUE, OPPONENT_ID, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, UPDATED, DEADLINES, WEEK, sleeperUrl } from "../data";
+import { irReport, irLabel, lineupFor, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, priceLabel, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { AiLabel, Delta, Icon, IconName, PosBadge, Seg, Stamp, StatusPill } from "./ui";
+import { Jersey } from "./Jersey";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Available",
@@ -8,60 +9,118 @@ const TAG_LABEL: Record<MyTag, string> = {
   untouchable: "Untouchable",
   amazing: "Untouchable unless amazing",
 };
-const initials = (name: string) => name.split(" ").filter((w) => /^[A-Z]/.test(w)).slice(0, 2).map((w) => w[0]).join("");
-const ringColor = (p: Player) => (onBye(p.nfl) || p.status === "O" ? "var(--bad)" : p.status === "Q" ? "var(--warn)" : "transparent");
+const lastName = (name: string) => { const w = name.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, "").split(" "); return w.length > 1 ? `${w[0][0]}. ${w.slice(1).join(" ")}` : name; };
+// Standard normal CDF, for a win chance from two projections
+const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - q : q; };
+const ringOf = (p: Player): "bad" | "warn" | undefined => (onBye(p.nfl) || p.status === "O" ? "bad" : p.status === "Q" ? "warn" : undefined);
+/** "Questionable, Groin" becomes "Groin". */
+export const injuryDetail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
+const statusWord = (p: Player) => (onBye(p.nfl) ? "Bye" : p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : null);
 
 function Token({ p, slot }: { p: Player; slot: string }) {
+  const ring = ringOf(p);
   return (
-    <div className="token">
-      <div className="token-badge">
-        {initials(p.name)}
-        <span className="ring" style={{ borderColor: ringColor(p) }} />
-        <span className="token-flag"><span className={`pos pos-${["FLEX", "SF"].includes(slot) ? "FLEX" : p.pos}`} style={{ minWidth: 0, height: 16, fontSize: 9 }}>{slot}</span></span>
-      </div>
-      <div className="token-name">{p.name}</div>
-      <div className="token-proj">{eff(p, true).toFixed(1)}</div>
+    <div className="ftok">
+      <span className="ftok-shirt">
+        <Jersey p={p} size={50} ring={ring} />
+        {ring && <span className={`ftok-flag ${ring}`}>{onBye(p.nfl) ? "BYE" : p.status}</span>}
+      </span>
+      <span className="ftok-name">{lastName(p.name)}</span>
+      <span className="ftok-meta"><b>{eff(p, true).toFixed(1)}</b><i>{slot}</i></span>
     </div>
   );
 }
 
-/** Your starters lined up in an offensive formation on a football field, broadcast style. */
-function Gridiron({ starters }: { starters: { slot: string; player: Player }[] }) {
-  // 5-column grid. Row 1 is on the line of scrimmage, row 2 is off the ball, row 3 is the backfield.
-  const grid: (({ slot: string; player: Player }) | null)[][] = [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]];
+/** IR and taxi: players who don't count against your roster limit, plus anything that needs a move. */
+function IrBlock() {
+  const ir = irReport(YOU);
+  const taxi = (YOU.taxi ?? []).map(playerById);
+  if (!ir.slots && !ir.used.length && !taxi.length) return null;
+  return (
+    <>
+      <div className="lu-list-head sub"><b>Injured reserve</b><span className="tiny muted">{ir.used.length} of {ir.slots} · off your {LEAGUE.rosterMax}-man limit</span></div>
+      {ir.used.map((p) => {
+        const stuck = !p.irEligible;
+        const detail = injuryDetail(p);
+        return (
+          <div key={p.id} className={`lu-row ir-row${stuck ? " ir-stuck" : ""}`}>
+            <span className="lu-slot">IR</span>
+            <Jersey p={p} size={36} />
+            <span className="lu-who">
+              <span className="lu-name">{p.name}</span>
+              <span className="lu-meta">{p.pos} · {p.nfl}<b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
+            </span>
+            {stuck ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Activate</a> : <span className="lu-pts dim">{(p.proj || 0).toFixed(1)}</span>}
+          </div>
+        );
+      })}
+      {Array.from({ length: ir.open }).map((_, i) => (
+        <div key={`open-${i}`} className="lu-row ir-row ir-open">
+          <span className="lu-slot">IR</span>
+          <span className="ir-empty" aria-hidden="true" />
+          <span className="lu-who">
+            <span className="lu-name muted">Open spot</span>
+            <span className="lu-meta">{ir.moveIn[i] ? `${ir.moveIn[i].name} qualifies. Moving him frees a bench spot.` : "Nobody on your roster qualifies right now."}</span>
+          </span>
+          {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Move</a> : <span />}
+        </div>
+      ))}
+      {taxi.length > 0 && (
+        <>
+          <div className="lu-list-head sub"><b>Taxi squad</b><span className="tiny muted">{taxi.length} of {LEAGUE.taxiSlots}</span></div>
+          {taxi.map((p) => <LineupRow key={p.id} p={p} slot="TX" bench />)}
+        </>
+      )}
+    </>
+  );
+}
+
+/** Your starters in an offensive formation, shot from above like a broadcast all-22 view. */
+function Field({ starters }: { starters: { slot: string; player: Player }[] }) {
+  // Three rows: on the line, off the ball, backfield. Five columns each.
+  const grid: ({ slot: string; player: Player } | null)[][] = [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]];
   const extra: { slot: string; player: Player }[] = [];
   const place = (x: { slot: string; player: Player }, spots: [number, number][]) => {
     const spot = spots.find(([r, c]) => !grid[r][c]);
     if (spot) grid[spot[0]][spot[1]] = x; else extra.push(x);
   };
   const of = (slot: string) => starters.filter((x) => x.slot === slot);
-  const te = of("TE");
   of("WR").forEach((x) => place(x, [[0, 0], [0, 4], [1, 1], [1, 3], [1, 0]]));
+  of("TE").forEach((x) => place(x, [[0, 3], [1, 3], [1, 4]]));
   of("QB").forEach((x) => place(x, [[1, 2], [2, 0]]));
-  of("SF").forEach((x) => place(x, [[1, 3], [1, 4], [2, 4]]));
-  of("RB").forEach((x) => place(x, [[2, 1], [2, 3], [2, 2]]));
-  of("FLEX").forEach((x) => place(x, [[2, 2], [2, 4], [2, 0], [1, 4]]));
-  te.slice(1).forEach((x) => place(x, [[1, 3], [1, 4]]));
-  const cell = (x: { slot: string; player: Player } | null, i: number) => <div key={i} className="g-cell">{x && <Token p={x.player} slot={x.slot} />}</div>;
+  of("SF").forEach((x) => place(x, [[1, 4], [1, 0], [2, 4]]));
+  of("RB").forEach((x) => place(x, [[2, 2], [2, 1], [2, 3]]));
+  of("FLEX").forEach((x) => place(x, [[2, 3], [2, 1], [1, 4], [1, 0], [2, 4], [2, 0]]));
+  const row = (cells: ({ slot: string; player: Player } | null)[], key: string) => (
+    <div key={key} className="f-row">{cells.map((x, i) => <div key={i} className="f-cell">{x && <Token p={x.player} slot={x.slot} />}</div>)}</div>
+  );
   return (
-    <section className="gridiron" aria-label="Optimal starting lineup on a football field">
-      <span className="hash left" aria-hidden="true" /><span className="hash right" aria-hidden="true" />
-      <span className="yard-num l" style={{ top: "6%" }} aria-hidden="true">4 0</span><span className="yard-num r" style={{ top: "6%" }} aria-hidden="true">4 0</span>
-      <span className="yard-num l" style={{ top: "54%" }} aria-hidden="true">3 0</span><span className="yard-num r" style={{ top: "54%" }} aria-hidden="true">3 0</span>
-      <div className="first-down" aria-hidden="true" />
-      <div className="g-row">
-        {cell(grid[0][0], 0)}
-        <div className="g-cell" />
-        <div className="g-cell g-ol"><span className="ol" aria-hidden="true"><i /><i /><i className="c" /><i /><i /></span></div>
-        <div className="g-cell">{te[0] && <Token p={te[0].player} slot="TE" />}</div>
-        {cell(grid[0][4], 4)}
-      </div>
-      <div className="los" aria-hidden="true" />
-      <div className="g-row g-five">{grid[1].map(cell)}</div>
-      <div className="g-row g-five">{grid[2].map(cell)}</div>
-      {extra.length > 0 && <div className="g-row g-five">{extra.map((x, i) => cell(x, i))}</div>}
-      <span className="g-legend" aria-hidden="true"><span className="lg-los" />Line of scrimmage<span className="lg-fd" />First down</span>
-    </section>
+    <div className="field-shell">
+      <section className="field" aria-label="Your best lineup on a football field">
+        <div className="f-turf" aria-hidden="true" />
+        {row(grid[0], "line")}
+        <div className="f-los" aria-hidden="true"><span>Line of scrimmage</span></div>
+        {row(grid[1], "off")}
+        {row(grid[2], "back")}
+        {extra.length > 0 && row([...extra, null, null, null, null, null].slice(0, 5), "extra")}
+      </section>
+    </div>
+  );
+}
+
+/** Box-score style row: slot, jersey, name, projection. */
+function LineupRow({ p, slot, bench }: { p: Player; slot: string; bench?: boolean }) {
+  const st = statusWord(p);
+  return (
+    <div className={`lu-row${bench ? " bench" : ""}`}>
+      <span className="lu-slot">{slot}</span>
+      <Jersey p={p} size={36} ring={ringOf(p)} />
+      <span className="lu-who">
+        <span className="lu-name">{p.name}</span>
+        <span className="lu-meta">{p.pos} · {p.nfl}{st && <b className={`lu-st ${ringOf(p)}`}>{st}{p.status && !onBye(p.nfl) ? `, ${injuryDetail(p)}` : ""}</b>}</span>
+      </span>
+      <span className="lu-pts">{eff(p, true).toFixed(1)}</span>
+    </div>
   );
 }
 
@@ -120,16 +179,32 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const locked = YOU.roster.filter((id) => myTags[id] === "amazing");
   const diff = sleeperDiff(lineup);
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const oppTotal = opp ? lineupFor(opp.roster, true).total : null;
+  const chance = oppTotal !== null ? Math.round(phi((lineup.total - oppTotal) / 34) * 100) : 0;
+  const ir = irReport(YOU);
+  const checks: { key: string; tone: "warn" | "bad" | "info"; icon: IconName; title: string; text: string }[] = [
+    ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, title: `Activate ${p.name} from IR`, text: "He no longer qualifies. Sleeper blocks adds and trades until he's moved." })),
+    ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, title: `Move ${ir.moveIn[0].name} to IR`, text: `Open IR spot. Frees a bench spot without a drop.` }] : []),
+    ...injured.map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, title: `${x.player.name} is ${x.player.status === "O" ? "out" : "questionable"}`, text: `${injuryDetail(x.player)}. ${x.player.status === "O" ? "Swap him before lock." : "Check the inactives 90 minutes before kickoff."}` })),
+    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, title: "Close call at flex", text: `${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Less than a point and a half apart.` }] : []),
+    ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName, title: "Thin bench this week", text: benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(", ") + "." }] : []),
+  ];
 
   return (
     <>
-      <header className="page-head">
-        <div>
-          <div className="eyebrow">{YOU.name} · Week {WEEK} · {UPDATED}</div>
-          <h1 className="page-title">Your Lineup</h1>
-          <p className="page-sub">Your best lineup for this week, based on the latest projections.</p>
+      <header className="lu-hero">
+        <div className="lu-hero-l">
+          <span className="lu-kicker">Week {WEEK} · {UPDATED}</span>
+          <h1 className="page-title">Lineup</h1>
         </div>
-        <span className="chip chip-good num">{lineup.total.toFixed(1)} projected</span>
+        <div className="lu-score" aria-label={`Your best lineup projects ${lineup.total.toFixed(1)} points${opp ? `, ${opp.manager} projects ${oppTotal!.toFixed(1)}` : ""}`}>
+          <div className="lu-side"><span className="lu-who-l"><i className="you" />You</span><span className="numeral">{lineup.total.toFixed(1)}</span></div>
+          {opp && <>
+            <span className="lu-vs">{chance}%<small>win</small></span>
+            <div className="lu-side r"><span className="lu-who-l">{opp.manager}<i className="them" /></span><span className="numeral dim">{oppTotal!.toFixed(1)}</span></div>
+          </>}
+        </div>
       </header>
 
       {diff.length > 0 && (
@@ -140,7 +215,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           <h3>Per sources, your Sleeper lineup is leaving <em>{fmt(diff.reduce((a, d) => a + d.gain, 0))} pts</em> on the bench.</h3>
           {diff.map((d) => (
             <div key={d.start.id} className="swap-row">
-              <span className="small"><b>{d.slot}:</b> {d.benched.name} {isOut(d.benched, true) ? <StatusPill p={d.benched} /> : null} <span className="muted">→</span> {d.start.name}</span>
+              <span className="small"><b>{d.slot}:</b> {d.benched.name} {isOut(d.benched, true) ? <StatusPill p={d.benched} /> : null} <span className="muted">to</span> {d.start.name}</span>
               <Delta n={d.gain} />
             </div>
           ))}
@@ -151,22 +226,33 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         </section>
       )}
 
-      <div className="roster-grid">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
-          <Gridiron starters={s} />
-          {(closeCall || injured.length > 0 || benchOut.length > 0) && (
-            <section className="card nudge">
-              <Stamp>Per sources</Stamp>
-              {closeCall && (
-                <p className="small"><b>Close call at FLEX.</b> {flex.player.name} ({eff(flex.player, true).toFixed(1)}) edges {bestBench.name} ({eff(bestBench, true).toFixed(1)}). Check Sunday morning news before lock.</p>
-              )}
-              {injured.map((x) => <p key={x.player.id} className="small"><b>{x.player.name}</b> is listed {x.player.status === "O" ? "out" : "questionable"}: {x.player.note}.</p>)}
-              {benchOut.length > 0 && <p className="small"><b>Byes and injuries on your bench:</b> {benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(", ")}. Your depth is thin this week if anyone gets hurt.</p>}
-              <AiLabel />
+      <div className="lu-grid">
+        <div className="lu-col">
+          <Field starters={s} />
+          {checks.length > 0 && (
+            <section className="card lu-checks" aria-label="Before kickoff">
+              <div className="lu-checks-head"><b>Before kickoff</b><span className="tiny muted">{DEADLINES.lock}</span></div>
+              {checks.map((c) => (
+                <div key={c.key} className="lu-check">
+                  <span className={`lu-check-ic ${c.tone}`}><Icon name={c.icon} size={16} /></span>
+                  <span className="lu-check-txt"><b>{c.title}</b><span>{c.text}</span></span>
+                </div>
+              ))}
+              <div className="lu-checks-foot"><AiLabel /></div>
             </section>
           )}
         </div>
 
+        <section className="card lu-list" aria-label="Starters and bench">
+          <div className="lu-list-head"><b>Starters</b><span className="tiny muted">Proj</span></div>
+          {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot === "FLEX" ? "FLX" : x.slot} />)}
+          <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length} of {LEAGUE.rosterMax - s.length}</span></div>
+          {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench />)}
+          <IrBlock />
+        </section>
+      </div>
+
+      <div className="roster-grid">
         <section className="card" style={{ overflow: "hidden" }} aria-label="Your roster and tags">
           <div className="roster-head"><b>Roster tags</b><span className="tiny muted">Private to you</span></div>
           {suggestions.length > 0 && (
@@ -185,7 +271,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             const starting = s.find((x) => x.player.id === id);
             return (
               <div key={id} className="prow roster-row">
-                <PosBadge pos={p.pos} />
+                <Jersey p={p} size={36} />
                 <div style={{ minWidth: 0 }}>
                   <div className="pname">{p.name}</div>
                   <div className="pmeta">{starting ? starting.slot : "Bench"} · {p.nfl} · {eff(p, true).toFixed(1)} pts this week <StatusPill p={p} /></div>

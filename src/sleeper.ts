@@ -24,10 +24,12 @@ export interface SLeague {
   league_id: string; name: string; season: string; status: string; total_rosters: number; avatar?: string | null;
   roster_positions: string[];
   scoring_settings: Record<string, number>;
-  settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number };
+  settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number;
+    reserve_allow_out?: number; reserve_allow_doubtful?: number; reserve_allow_sus?: number; reserve_allow_na?: number; reserve_allow_cov?: number; reserve_allow_dnr?: number };
 }
 interface SRoster {
   roster_id: number; owner_id: string | null; co_owners?: string[] | null; players: string[] | null; starters: string[] | null;
+  reserve?: string[] | null; taxi?: string[] | null;
   settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number };
 }
 interface SProj {
@@ -151,6 +153,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const teamsPlaying = new Set(weekProj.filter((p) => (p.stats?.pts_ppr ?? 0) > 0 && p.team).map((p) => p.team!));
   const byeTeams = live && teamsPlaying.size >= 20 ? Array.from(new Set(seasonProj.map((p) => p.team).filter(Boolean) as string[])).filter((t) => !teamsPlaying.has(t)) : [];
 
+  // IR eligibility follows this league's reserve rules. IR and PUP always qualify.
+  const ls = league.settings;
+  const irOk = (s?: string | null) => !!s && (s === "IR" || s === "PUP" || (s === "Out" && !!ls.reserve_allow_out) || (s === "Doubtful" && !!ls.reserve_allow_doubtful)
+    || (s === "Sus" && !!ls.reserve_allow_sus) || (s === "NA" && !!ls.reserve_allow_na) || (s === "COV" && !!ls.reserve_allow_cov) || (s === "DNR" && !!ls.reserve_allow_dnr));
   const players: Record<string, Player> = {};
   const add = (id: string, info: SPlayerLite | undefined, fallbackTeam: string | null) => {
     if (!info) return;
@@ -176,6 +182,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       ...st,
       note: info.injury_status ? [info.injury_status, (w?.player ?? s?.player)?.injury_body_part].filter(Boolean).join(", ") : undefined,
       rookie: info.years_exp === 0,
+      irEligible: irOk(info.injury_status),
+      injury: info.injury_status ?? undefined,
       playoff: playoff ?? undefined,
       value: valueBy.get(id),
     };
@@ -205,7 +213,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       record,
       pf: (st.fpts ?? 0) + (st.fpts_decimal ?? 0) / 100,
       you: r.owner_id === userId || !!r.co_owners?.includes(userId),
-      roster: (r.players ?? []).filter((id) => players[id]),
+      // Sleeper's players list includes IR and taxi. Split them out so they never count as active.
+      roster: (r.players ?? []).filter((id) => players[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
+      ir: (r.reserve ?? []).filter((id) => players[id]),
+      taxi: (r.taxi ?? []).filter((id) => players[id]),
     };
   });
   const you = teams.find((t) => t.you);
@@ -221,7 +232,11 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     superflex: slots.includes("SF"),
     tePremium: (league.scoring_settings.bonus_rec_te ?? 0) > 0,
   };
-  const rosterMax = Math.max(...teams.map((t) => t.roster.length), slots.length + 4);
+  // Active spots = every starter and bench slot. Kickers and defenses aren't modeled, so drop their slots.
+  const activeSpots = league.roster_positions.filter((p) => !["IR", "TAXI", "K", "DEF"].includes(p)).length;
+  const rosterMax = Math.max(activeSpots, ...teams.map((t) => t.roster.length));
+  const irSlots = league.roster_positions.filter((p) => p === "IR").length;
+  const taxiSlots = league.roster_positions.filter((p) => p === "TAXI").length;
 
   // Your lineup as set in Sleeper
   const sleeperSet: Record<string, string[]> = {};
@@ -295,7 +310,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax,
+    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

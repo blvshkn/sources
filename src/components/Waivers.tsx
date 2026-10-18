@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { DEADLINES, FAAB, YOU, sleeperUrl } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fmt } from "../engine";
-import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp } from "./ui";
+import { AiLabel, Delta, Icon, Phase, Stamp } from "./ui";
+import { Jersey } from "./Jersey";
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(recs[0]?.fa.id ?? null);
@@ -40,7 +41,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
           return (
             <div key={r.fa.id} className={`wv${isOpen ? " open" : ""}`}>
               <button className="wv-row" onClick={() => setOpen(isOpen ? null : r.fa.id)} aria-expanded={isOpen}>
-                <PosBadge pos={r.fa.pos} />
+                <Jersey p={r.fa} size={34} />
                 <span className="grow" style={{ minWidth: 0 }}>
                   <span className="pname" style={{ display: "block" }}>{r.fa.name} {r.fa.trend === "up" && <span className="trend">Trending</span>}{r.fa.rookie && <span className="trend">Rookie</span>}</span>
                   <span className="pmeta">{r.fa.nfl} · {r.value.toFixed(1)} a week{r.fa.rostered !== undefined ? ` · ${r.fa.rostered}% rostered` : ""}</span>

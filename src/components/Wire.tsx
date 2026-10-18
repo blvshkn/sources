@@ -2,8 +2,9 @@ import { useState } from "react";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, UPDATED, WEEK, OPPONENT_ID } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, PosBadge, Stamp } from "./ui";
+import { Jersey } from "./Jersey";
 
-export type NudgeKind = "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
+export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
   id: string;
   kind: NudgeKind;
@@ -49,6 +50,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
 }
 
 const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
+  ir: { label: "Injured reserve", icon: "alert" },
   need: { label: "Trade idea", icon: "trade" }, offer: { label: "Offer received", icon: "send" }, news: { label: "News", icon: "alert" },
   stale: { label: "Check in", icon: "clock" }, lineup: { label: "Lineup", icon: "roster" }, waiver: { label: "Waivers", icon: "waivers" }, slot: { label: "Pattern", icon: "spark" },
 };
@@ -149,8 +151,8 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   return (
     <>
       <div className="deal-lists">
-        <div><span className="eyebrow">You send</span><ul>{o.give.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
-        <div><span className="eyebrow">You get</span><ul>{o.get.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
+        <div><span className="eyebrow">You send</span><ul>{o.give.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+        <div><span className="eyebrow">You get</span><ul>{o.get.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
       </div>
       <div className={`verdict ${read.tone}`}><b>{read.label}</b><span className="small">{read.line} {teamById(o.partnerId).manager} gains {fmt(o.themDelta)}.</span></div>
       {n.counter && (

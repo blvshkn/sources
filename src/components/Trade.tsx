@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, UPDATED } from "../data";
 import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt } from "../engine";
-import { AiLabel, Delta, Icon, PosBadge, Stamp, StatusPill } from "./ui";
+import { AiLabel, Delta, Icon, Stamp, StatusPill } from "./ui";
+import { Jersey } from "./Jersey";
 import { TradeIdea } from "./Wire";
 import { TagCapture } from "./TagCapture";
 
@@ -18,7 +19,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     return (
       <button key={id + slot} className={`pick${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
         title={dim || lock || want || undefined}>
-        <PosBadge pos={p.pos} />
+        <Jersey p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="pname" style={{ display: "block" }}>{p.name}</span>
           <span className="pmeta">{p.nfl} · <span className="slot-tag">{slot}</span> <StatusPill p={p} />
@@ -214,8 +215,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           ) : (
             <>
               <div className="deal-lists">
-                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
-                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><PosBadge pos={playerById(id).pos} /><span>{playerById(id).name}</span></li>)}</ul></div>
+                <div><span className="eyebrow">You send</span><ul>{give.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
+                <div><span className="eyebrow">You get</span><ul>{get.map((id) => <li key={id}><Jersey p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
               </div>
               <TradeCompare trade={trade} them={them} />
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
