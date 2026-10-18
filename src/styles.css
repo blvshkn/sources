@@ -3252,3 +3252,8 @@ html:root:not(#_) .faab-row b { font-size: 1.375rem !important; }
 html:root:not(#_) .faab-row .faab-track { height: 4px; border: 0; background: var(--surface-3); }
 html:root:not(#_) .faab-row .faab-track span { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
 html:root:not(#_) .faab-row-top { justify-content: flex-start; gap: 10px; }
+/* Phones: league selector sits close under the top bar. */
+@media (max-width: 860px) {
+  html:root:not(#_) .main { padding-top: 12px !important; }
+  html:root:not(#_) .page-head, html:root:not(#_) .lu-hero { padding-top: 0 !important; }
+}
