@@ -77,3 +77,4 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Toasts: dark floating pill with a lime Undo. Back links: small soft pill.
 - Trade ideas end with "Won't work? Tell Sources why", which opens a sheet of reasons that become tags, untouchables, paused managers or a hidden idea.
 - Page header: section icon in a soft lime circle + title on one line, meta below. The top bar on phones is the league switcher (tap to change leagues). View tabs carry icons.
+- Graphite base (#121413 bg, #191C1B surface) with a faint green tint; decorative tints are neutral so lime, gains and losses carry the color.

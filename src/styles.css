@@ -2872,3 +2872,41 @@ html:root:not(#_) .page-head > .seg button[aria-pressed="true"] .ic { color: var
 html:root:not(#_) .league-pill.lsw-btn { display: flex !important; flex-direction: row !important; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(244, 246, 242, 0.05); }
 html:root:not(#_) .league-pill.lsw-btn .grow { display: grid; }
 @media (hover: hover) { html:root:not(#_) .league-pill.lsw-btn:hover { background: rgba(244, 246, 242, 0.08); } }
+
+/* ==== Graphite =================================================================
+   Background and quiet surfaces move from green-black to a graphite with a hint of the
+   brand green, so lime and real signals carry the color. Things that don't need to pop
+   step back to neutral. */
+html:root:not([data-nf]):not(#_) {
+  --bg: #121413; --surface: #191C1B; --surface-2: #202322; --surface-3: #282B2A;
+  --ink: #F2F4F1; --muted: #9BA09C; --faint: #656B67; --line: rgba(242, 244, 241, 0.07);
+  --stamp-ink: #121413; --action-ink: #121413;
+}
+body { background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%) fixed var(--bg) !important; }
+body::after {
+  background:
+    radial-gradient(70vw 40vh at 92% -10%, rgba(var(--lime-rgb), 0.05), transparent 70%),
+    repeating-linear-gradient(180deg, transparent 0 119px, rgba(255, 255, 255, 0.014) 119px 120px) !important;
+}
+html:root:not(#_) .card { background: var(--surface) !important; }
+html:root:not(#_) .pick.tone-get[aria-pressed="true"] .check, html:root:not(#_) .sb-badge.them { color: #121413 !important; }
+@media (max-width: 860px) { html:root:not(#_) .side-switch { background: rgba(25, 28, 27, 0.88); } }
+html:root:not(#_) .toast { background: rgba(40, 43, 42, 0.95); }
+
+/* Step back: neutral where color was decoration */
+html:root:not(#_) .tx-side, html:root:not(#_) .tx-side.get { background: rgba(242, 244, 241, 0.035) !important; }
+html:root:not(#_) .tx-side.get header span { color: var(--ink); }
+html:root:not(#_) .tx-side header span { color: var(--muted); }
+html:root:not(#_) .page-ic { background: var(--surface-2); color: var(--muted); }
+html:root:not(#_) .lu-mx, html:root:not(#_) .scoreboard, html:root:not(#_) .lu-score { background: var(--surface) !important; }
+html:root:not(#_) .topk.gain, html:root:not(#_) .ti.likely { background: var(--surface) !important; border-color: var(--line) !important; }
+html:root:not(#_) .sx-pick.lead { background: rgba(242, 244, 241, 0.07) !important; }
+html:root:not(#_) .lu-row.has-swap { background: rgba(242, 244, 241, 0.035) !important; }
+html:root:not(#_) .ti-stat.odds.good dt, html:root:not(#_) .ti-stat.odds.warn dt { color: var(--muted); }
+html:root:not(#_) .ti-stat.odds .ti-meter i { background: var(--ink) !important; opacity: 0.55; }
+html:root:not(#_) .ti-stat.odds.good .ti-meter i { background: var(--good) !important; opacity: 1; }
+html:root:not(#_) .note-good, html:root:not(#_) .lock-note { background: var(--surface-2) !important; }
+html:root:not(#_) .lsw-btn, html:root:not(#_) .top-league { background: var(--surface-2) !important; }
+html:root:not(#_) .seg, html:root:not(#_) .chip-btn, html:root:not(#_) .set-ic, html:root:not(#_) .st-back, html:root:not(#_) .wt-count { background: var(--surface-2) !important; }
+html:root:not(#_) .btn:not(.btn-primary), html:root:not(#_) .ps-x, html:root:not(#_) .composer-btn:not(.send) { background: var(--surface-3) !important; }
+html:root:not(#_) .ti .btn-primary, html:root:not(#_) .mu-whatif .btn-primary { background: var(--surface-3) !important; color: var(--lime) !important; }
