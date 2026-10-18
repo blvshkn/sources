@@ -129,7 +129,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
         {step === "untouchables" && (
           <div className="ob-step" key="s4">
             <h1 id="ob-title" className="ob-title">Anyone off the table?</h1>
-            <p className="ob-sub">Optional. Tag your untouchables so trade ideas leave them out. You can set a price for "unless amazing" on your Lineup page.</p>
+            <p className="ob-sub">Optional. Tag your untouchables so trade ideas leave them out. Set an asking price for "overpay only" guys on your Lineup page.</p>
             <div className="ob-teams">
               {starters.map((p) => p && (
                 <div key={p.id} className="ob-option static">
@@ -138,7 +138,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                   <select className="tag-select" aria-label={`Tag for ${p.name}`} value={picked[p.id] ?? ""} onChange={(e) => setPicked((c) => { const n = { ...c }; if (e.target.value) n[p.id] = e.target.value as MyTag; else delete n[p.id]; return n; })}>
                     <option value="">Open to offers</option>
                     <option value="untouchable">Untouchable</option>
-                    <option value="amazing">Unless amazing</option>
+                    <option value="amazing">Overpay only</option>
                   </select>
                 </div>
               ))}

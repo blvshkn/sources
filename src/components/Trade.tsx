@@ -168,7 +168,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const lockYou: Record<string, string> = {};
   Object.entries(myTags).forEach(([id, v]) => {
     if (v === "untouchable") lockYou[id] = "Untouchable";
-    if (v === "amazing") lockYou[id] = "Unless amazing";
+    if (v === "amazing") lockYou[id] = "Overpay only";
   });
   const [received, setReceived] = useState(false);
   const v = trade ? (received ? offerRead(trade) : verdict(trade)) : null;
@@ -217,7 +217,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
       {suggestions.length > 0 && (
         <section className="card nudge">
-          <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Deals that help both teams, built around what {them.manager} wants</span></div>
+          <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>
           {suggestions.map((t) => <TradeIdea key={t.key} t={t} onOpen={onLoad} onPitch={onPitch} />)}
         </section>
       )}

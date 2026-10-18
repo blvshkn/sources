@@ -170,7 +170,7 @@ export interface TeamNeeds {
   need: Pos;
   surplus: Pos | null;
   surplusPlayer: Player | null;
-  mode: "Contender" | "Seller" | "Middle";
+  mode: "Contender" | "Seller" | "Bubble";
   rank: number;
 }
 
@@ -197,7 +197,7 @@ export function needsFor(team: Team, rosterOverride?: string[]): TeamNeeds {
   const [w, l] = team.record.split("-").map(Number);
   const pfRank = [...TEAMS].sort((a, b) => b.pf - a.pf).findIndex((t) => t.id === team.id) + 1;
   const score = (w - l) + (pfRank <= 3 ? 1.5 : pfRank >= 8 ? -1.5 : 0);
-  const mode = score >= 2 ? "Contender" : score <= -2 ? "Seller" : "Middle";
+  const mode = score >= 2 ? "Contender" : score <= -2 ? "Seller" : "Bubble";
   return { team, lineup, groups, need, surplus, surplusPlayer, mode, rank: 0 };
 }
 
@@ -360,7 +360,7 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   p += Math.min(0.1, Math.max(0, (t.themDelta - 1) * 0.03));
   const need = needsFor(them).need;
   if (t.give.some((id) => playerById(id).pos === need)) { p += 0.08; reasons.push(`fills their ${need} need`); }
-  if (t.fillsWant) { p += 0.08; reasons.push("they said they want this position"); }
+  if (t.fillsWant) { p += 0.08; reasons.push("they're shopping for one"); }
   if (t.give.length === 1 && t.get.length === 1) { p += 0.03; reasons.push("clean 1-for-1"); }
   if (theirGap >= -0.03) reasons.push(theirGap >= 0.03 ? "they win on value" : "even on value");
   if (t.themDelta >= 2) reasons.push(`their lineup +${t.themDelta.toFixed(1)}/wk`);
@@ -519,10 +519,10 @@ export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad
 
 /** Plain-English read on an offer someone sent you. */
 export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
-  if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `This one helps you. Your starters gain ${fmt(t.youDelta)} a week and the market value is ${t.marketGap >= 0 ? "in your favor" : "close to even"}.` };
-  if (t.youDelta >= 0.5) return { label: "Helps now, costs value", tone: "warn", line: `Your starters gain ${fmt(t.youDelta)} a week, but you give up ${pct(t.marketGap).slice(1)} more market value.` };
-  if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `It's close to even (${fmt(t.youDelta)} a week). A small add makes it fair.` };
-  return { label: "Light", tone: "bad", line: `This one's light. Your starters lose ${fmt(t.youDelta).replace("−", "")} a week.` };
+  if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Smash accept. Your lineup gains ${fmt(t.youDelta)} pts a week and the value is ${t.marketGap >= 0 ? "in your favor" : "about even"}.` };
+  if (t.youDelta >= 0.5) return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} pts a week, but you give up ${pct(t.marketGap).slice(1)} more trade value.` };
+  if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `About even (${fmt(t.youDelta)} pts a week). Ask for a small sweetener.` };
+  return { label: "Lowball", tone: "bad", line: `Lowball. Your lineup drops ${fmt(t.youDelta).replace("−", "")} pts a week.` };
 }
 
 // ---- Lineup day -----------------------------------------------------------
@@ -561,11 +561,11 @@ export function suggestTags(lineup: Lineup, myTags: Record<string, MyTag>, tags:
     const backup = lineup.bench.filter((b) => fits(s.slot, b.pos)).sort((a, b) => eff(b) - eff(a))[0];
     const gap = eff(p) - (backup ? eff(backup) : 0);
     if (gap >= 6 && !myTags[p.id] && !out.some((o) => o.tag === "untouchable"))
-      out.push({ id: p.id, tag: "untouchable", why: `${gap.toFixed(1)} pts a week better than anyone behind him. Hard to replace.` });
+      out.push({ id: p.id, tag: "untouchable", why: `${gap.toFixed(1)} pts a week better than anyone behind him. Irreplaceable.` });
   });
   lineup.bench.forEach((p) => {
     if (myTags[p.id]) return;
-    if (eff(p) >= avg.FLEX * 0.75) out.push({ id: p.id, tag: "available", why: `Bench player who'd start on a team that's thin at ${p.pos}.` });
+    if (eff(p) >= avg.FLEX * 0.75) out.push({ id: p.id, tag: "available", why: `Rides your bench but would start for a team thin at ${p.pos}.` });
   });
   const wantedPos = new Set(tags.filter((t) => t.kind === "wants" && t.pos).map((t) => t.pos));
   lineup.slots.forEach((s) => {
@@ -638,7 +638,7 @@ export function tendencies(teamId: string): Tendency {
     if (buys.length) parts.push(`Usually buys ${buys.join(" and ")}.`);
     if (rookieShare >= 0.5) parts.push("Chases rookies, so lead with youth.");
     else if (closeRate !== null ? closeRate >= 0.4 : done.length >= 2) parts.push("Says yes more than most. Lead with a clean 1-for-1.");
-    else parts.push("Tough to close. Make the first offer clearly fair.");
+    else parts.push("Tough to close. Don't open with a lowball.");
   }
   return { teamId, trades: done.length, offers, closeRate, buys, rookieShare, summary: parts.join(" ") };
 }

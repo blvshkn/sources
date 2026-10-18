@@ -6,10 +6,10 @@ import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 
 const TAG_LABEL: Record<MyTag, string> = {
-  available: "Available",
+  available: "Trade bait",
   shopping: "Shopping",
   untouchable: "Untouchable",
-  amazing: "Unless amazing",
+  amazing: "Overpay only",
 };
 // Standard normal CDF, for a win chance from two projections
 const phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)); const d = 0.3989423 * Math.exp(-x * x / 2); const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - q : q; };
@@ -47,7 +47,7 @@ function IrBlock() {
           <span className="ir-empty" aria-hidden="true" />
           <span className="lu-who">
             <span className="lu-name muted">Open spot</span>
-            <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} qualifies. Moving him frees a bench spot.` : "Nobody on your roster qualifies right now."}</span>
+            <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} is IR-eligible. Moving him opens a bench spot.` : "No one on your roster is IR-eligible right now."}</span>
           </span>
           {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Move</a> : <span />}
         </div>
@@ -150,7 +150,7 @@ function SlotReport() {
         <span className="tiny muted">Weeks 1 to 6 · you vs league average</span>
       </div>
       {weak.length > 0 && (
-        <p className="small"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} a week). It's flagged as a need and the trade finder leans on it.</p>
+        <p className="small"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} pts a week). Trade ideas target it.</p>
       )}
       <div className="slot-grid">
         {SLOT_HISTORY.map((h) => {
@@ -223,7 +223,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, title: `Activate ${p.name} from IR`, text: "He no longer qualifies. Sleeper blocks adds and trades until he's moved." })),
     ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, title: `Move ${ir.moveIn[0].name} to IR`, text: `Open IR spot. Frees a bench spot without a drop.` }] : []),
     ...injured.map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, title: `${x.player.name} is ${x.player.status === "O" ? "out" : "questionable"}`, text: `${injuryDetail(x.player)}. ${x.player.status === "O" ? "Swap him before lock." : "Check the inactives 90 minutes before kickoff."}` })),
-    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, title: "Close call at flex", text: `${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Less than a point and a half apart.` }] : []),
+    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, title: "Close call at flex", text: `${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Under 1.5 pts apart, basically a coin flip.` }] : []),
     ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName, title: "Thin bench this week", text: benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(", ") + "." }] : []),
   ];
 
@@ -261,7 +261,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <button className="btn btn-icon btn-sm" aria-label="Next week" disabled={week >= lastWeek()} onClick={() => setWeek(week + 1)}><Icon name="chev" size={18} /></button>
               </div>
               {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : wv ? <WeekPanel v={wv} /> : <div className="lu-skel" aria-label={`Loading Week ${week}`}>{Array.from({ length: 6 }).map((_, i) => <span key={i} />)}</div>) : <>
-              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Your best lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">Proj</span></div>
               {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} />)}
               {kdef.slots.map((x, i) => x.player
                 ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} />
@@ -298,7 +298,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
               <div className="row wrap" style={{ justifyContent: "space-between" }}><Stamp>Per sources</Stamp><AiLabel /></div>
               {suggestions.map((sg) => (
                 <div key={sg.id} className="suggest-row">
-                  <span className="small grow" style={{ minWidth: 0 }}>Mark <b>{playerById(sg.id).name}</b> {TAG_LABEL[sg.tag].toLowerCase()}. <span className="muted">{sg.why}</span></span>
+                  <span className="small grow" style={{ minWidth: 0 }}>Tag <b>{playerById(sg.id).name}</b> as {TAG_LABEL[sg.tag].toLowerCase()}. <span className="muted">{sg.why}</span></span>
                   <button className="btn btn-xs" onClick={() => setTag(sg.id, sg.tag)}>Apply</button>
                 </div>
               ))}
@@ -328,9 +328,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       <section className="card wt" aria-labelledby="wt-title">
         <header className="wt-head">
           <h2 className="section-title" id="wt-title">What would it take?</h2>
-          <p>Name your price for players you'd only move for a lot. Sources finds the cheapest offer from each team that pays it.</p>
+          <p>Set an asking price for your overpay-only guys. Sources finds the cheapest offer from each team that meets it.</p>
         </header>
-        {locked.length === 0 && <p className="wt-empty">No players marked "Unless amazing" yet. Tag one in Roster tags above to set a price.</p>}
+        {locked.length === 0 && <p className="wt-empty">No one tagged "Overpay only" yet. Tag a player in Roster tags to set an asking price.</p>}
         {locked.map((pid) => {
           const p = playerById(pid);
           const price = prices[pid] ?? DEFAULT_PRICE;
@@ -382,7 +382,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                     </li>
                   ))}
                 </ul>
-              ) : <p className="wt-empty">No team can pay that yet. Lower your price to see offers.</p>}
+              ) : <p className="wt-empty">No one can meet that price. Lower it to see offers.</p>}
 
               {none.length > 0 && (
                 <details className="wt-none">

@@ -50,13 +50,13 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </div>
             <dl className="topk-stats">
               <div><dt>This week</dt><dd>{top.fa.proj.toFixed(1)}</dd></div>
-              <div><dt>Per week after</dt><dd>{top.value.toFixed(1)}</dd></div>
+              <div><dt>ROS per week</dt><dd>{top.value.toFixed(1)}</dd></div>
               <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid) : "Priority"}</dd></div>
             </dl>
             {!/^Projects /.test(top.fa.why) && <p className="topk-why">{top.fa.why}</p>}
             <ul className="topk-plan">
               <li className={starts ? "good" : ""}><Icon name={starts ? "check" : "eye"} size={16} />
-                {starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench depth for now. Your starters don't change this week.</span>}
+                {starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>}
               </li>
               <li><Icon name="trade" size={16} />
                 {irMove ? <span>Move <b>{irMove.name}</b> to IR first. No drop needed.</span>
@@ -76,7 +76,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         <div className="wv-head">
           <div className="wv-head-t">
             <b>Available</b>
-            <span>{sort === "fit" ? "Ranked by points added to your starters" : sort === "trend" ? "Most added across Sleeper first" : "Ranked by weekly projection"}</span>
+            <span>{sort === "fit" ? "Ranked by points added to your lineup" : sort === "trend" ? "Most added across Sleeper" : "Ranked by weekly projection"}</span>
           </div>
           <label className="wv-sort">
             <span className="sr-only">Sort</span>
@@ -138,7 +138,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
           if (!h.played && !h.bye) return null;
           const n = (k: number) => `${k} ${k === 1 ? "player" : "players"}`;
           const parts = [h.played ? `${n(h.played)} whose game already started` : "", h.bye ? `${n(h.bye)} on bye` : ""].filter(Boolean).join(" and ");
-          return <p className="wv-hidden"><Icon name="lock" size={14} />Hiding {parts}. They can't score for you this week.</p>;
+          return <p className="wv-hidden"><Icon name="lock" size={14} />Hidden: {parts}. They can't score for you this week.</p>;
         })()}
       </section>
     </>

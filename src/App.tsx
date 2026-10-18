@@ -168,7 +168,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
     const offer = demo ? evaluate(YOU, teamById("dan"), ["zay-flowers"], ["ladd-mcconkey"], active, myTags, prices) : null;
     if (offer) list.push({
       id: "offer-dan", kind: "offer", teamId: "dan", headline: "Dan offered Ladd McConkey for your Zay Flowers.",
-      why: `${offerRead(offer).line} Here's the read and a counter that respects their tags.`, trades: [], time: "12 min ago",
+      why: `${offerRead(offer).line} Here's the breakdown and a counter that fits their tags.`, trades: [], time: "12 min ago",
       offer, counter: counterFor(offer, active, myTags, prices), deadline: DEADLINES.trade,
     });
     // Needs: teams with a stated or measured need where you have a win-win
@@ -361,7 +361,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh }: 
           {tab === "roster" && (
             <Roster lineup={yourLineup} myTags={myTags} prices={prices} tags={active} level={level} onPitch={setPitch}
               setPrice={(id, p) => setPrices((c) => ({ ...c, [id]: p }))}
-              setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "untouchable unless amazing" : v}.`); }} />
+              setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={recs} onToast={setToast} />}
           {tab === "ask" && <Ask answer={(q) => ask(q, active, myTags, prices)} onLink={onLink} starters={askStarters} />}

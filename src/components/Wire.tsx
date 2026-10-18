@@ -134,7 +134,7 @@ export function Scoreboard({ you, partner, onPartner }: { you: TeamNeeds; partne
       )}
       <dl className="ti-stats sb2-stats">
         <div className="ti-stat"><dt>Power rank</dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
-        <div className="ti-stat"><dt>Thinnest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
+        <div className="ti-stat"><dt>Weakest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
       </dl>
       {partner && onPartner ? (
         <button className="sb2-partner" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
