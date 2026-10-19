@@ -214,3 +214,17 @@ html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }
   html:root:not(#_):not(#_) .sb2 .sb2-more svg,
   html:root:not(#_):not(#_) .ld2-link:hover svg { transform: none !important; }
 }
+
+/* League trade partners: rows get the same soft rounded pill as other list rows, drawn behind the content with room
+   on every side, instead of a square outline that touched the numbers. Dividers hide next to the hovered row. */
+html:root:not(#_):not(#_) .card .partner-card { position: relative; isolation: isolate; border-radius: 0 !important; box-shadow: none !important; outline: none; }
+html:root:not(#_):not(#_) .card .partner-card::before { content: ""; position: absolute; inset: 4px -12px; z-index: -1; border-radius: 12px; background: transparent; transition: background-color var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23,1,0.32,1)); pointer-events: none; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .card .partner-card:hover { background: none !important; border-color: var(--line) !important; }
+  html:root:not(#_):not(#_) .card .partner-card:hover::before { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+  html:root:not(#_):not(#_) .card .partner-card:hover, html:root:not(#_):not(#_) .card .partner-card:hover + .partner-card { border-top-color: transparent !important; }
+}
+html:root:not(#_):not(#_) .card .partner-card:active { transform: none !important; }
+html:root:not(#_):not(#_) .card .partner-card:active::before { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+html:root:not(#_):not(#_) .card .partner-card:focus-visible::before { box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_) .card .partner-card:is(:hover, :active, :focus-visible) { box-shadow: none !important; background: none !important; }
