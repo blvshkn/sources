@@ -106,6 +106,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
   // Accent color follows the fantasy platform you're connected to. Chalk and graphite stay the same everywhere.
+  // The top bar only gets its glass, edge and shadow once content scrolls under it
+  useEffect(() => {
+    const el = document.documentElement;
+    const on = () => { if (window.scrollY > 4) el.dataset.scrolled = ""; else delete el.dataset.scrolled; };
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   useEffect(() => { document.documentElement.dataset.platform = LEAGUE.platform ?? "sleeper"; }, []);
   // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
   const [toastOut, setToastOut] = useState(false);

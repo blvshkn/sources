@@ -3847,3 +3847,8 @@ html:root:not(#_) .scan-cta { display: flex; align-items: center; gap: 8px; widt
 html:root:not(#_) .scan-cta span { flex: 1; }
 html:root:not(#_) .scan-cta .ic:first-child { color: var(--lime); }
 html:root:not(#_) .scan-new.muted { color: var(--muted); font-weight: 500; }
+
+/* Top bar sits flush with the page until something scrolls under it */
+html:root:not(#_) .topbar { transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+html:root:not(#_):not([data-scrolled]) .topbar { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; border-bottom-color: transparent !important; box-shadow: none !important; }
+html:root:not(#_):not([data-scrolled]) .topbar::after, html:root:not(#_):not([data-scrolled]) .topbar::before { opacity: 0 !important; }
