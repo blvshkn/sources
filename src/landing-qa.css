@@ -79,3 +79,13 @@ html:root:not(#_):not(#_) .ld2-final .ld2-help { margin-inline: auto; }
 }
 /* Top right player drifts slowly so it never climbs into the nav */
 html:root:not(#_):not(#_) .ld2-head.h4 { --d: 0.3; }
+
+/* Hero cards glide in from the right, one after the other. The trade idea is a .nudge card, and a global
+   rule turns .nudge animation off with !important, which left it sitting there while everything else loaded. */
+@keyframes ld3-from-right { from { opacity: 0; transform: translateX(72px); filter: blur(10px); } }
+html:root:not(#_):not(#_) .ld2-stage .ld2-card { animation: ld3-from-right 1000ms cubic-bezier(0.16, 1, 0.3, 1) both !important; }
+html:root:not(#_):not(#_) .ld2-stage .ld2-card.c1 { animation-delay: 360ms !important; }
+html:root:not(#_):not(#_) .ld2-stage .ld2-card.c2 { animation-delay: 560ms !important; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .ld2-stage .ld2-card { animation: rm-fade 240ms ease both !important; }
+}
