@@ -92,3 +92,19 @@ html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="both"] {
    the margin keeps its bottom clear of the tab bar on phones. */
 html:root:not(#_):not(#_) .qs-pick { scroll-margin-bottom: 16px; scroll-margin-top: 16px; }
 @media (max-width: 860px) { html:root:not(#_):not(#_) .qs-pick { scroll-margin-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ---------- Layer order for floating surfaces ----------
+   page menus 60 < inbox slide-over 69/70 < sheets 75 < toast 85. (FirstRun, 80, only opens over the landing.)
+   Sheets (player, Why won't this work, pitch, league switcher) sat at 50/60, under the slide-over inbox and its scrim
+   (69/70), so a sheet opened from the inbox below 1241px opened behind it. The toast (60) hid under the same scrim. */
+html:root:not(#_):not(#_) .ps-wrap,
+html:root:not(#_):not(#_) .scrim-wrap { z-index: 75; }
+html:root:not(#_):not(#_) .toast { z-index: 85; }
+
+/* ---------- Why won't this work (.ps.fb) and the league switcher (.ps.lsw) on desktop ----------
+   desktop-tabs.css lays out the player sheet with a bare .ps selector, so from 861px these two sheets also got the
+   player sheet's 760px width and two-column grid (their children span both columns, so it only read as too wide:
+   short option rows across 760px). Same collision d1d24e1 fixed in sheet.css. They go back to the 520px sheet. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .ps:is(.fb, .lsw) { max-width: 520px; grid-template-columns: minmax(0, 1fr); }
+}

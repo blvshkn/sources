@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ScheduleStrip } from "./Schedule";
 import { LineupCall, OutcomeRange, WeekDepth, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
 import { WeekStepper } from "./WeekStepper";
@@ -55,7 +56,9 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   const max = Math.max(1, ...games.map((g) => g.pts), eff(p, true));
   const playoff = p.playoff ? round1(scored({ ...p, pts: p.playoff, wk: undefined })) : null;
 
-  return (
+  // Portaled to body: rendered in place it inherited the page's stacking (Lineup's sticky side column made it a
+  // z-index 0 layer), so the docked inbox and the desk bell painted over the sheet and its scrim.
+  return createPortal(
     <div className={`ps-wrap${shown ? " in" : ""}`}>
       <div ref={scrim} className="ps-scrim" onClick={close} aria-hidden="true" />
       <section ref={sheet} className="ps ps-player" role="dialog" aria-modal="true" aria-labelledby="ps-name">
@@ -141,6 +144,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
         </ScrollArea>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
