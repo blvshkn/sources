@@ -73,7 +73,7 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   // Layout first, so the canvas is exactly as tall as the deal needs (never shorter than a 4:5 post)
   const TOP = 420;                        // header, league line, greeting, "from" line
   const sectionH = (n: number) => 44 + n * ROW;
-  const PANEL = rs.length ? 150 + rs.length * 64 : 0;
+  const PANEL = rs.length ? 130 + rs.length * 96 : 0;
   const H = Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 150);
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
@@ -88,6 +88,9 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   const track = (txt: string, x: number, y: number, sp2: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp2; } return cx; };
 
   // Night field: dark turf, a floodlight glow, faint yard lines that only start below the players
+  // Cut out with rounded corners: everything outside the card is transparent, so a shared image has no square corners
+  const RAD = 56;
+  g.beginPath(); if (g.roundRect) g.roundRect(0, 0, W, H, RAD); else g.rect(0, 0, W, H); g.clip();
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#181A19"); bg.addColorStop(1, "#0F1110");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
@@ -150,12 +153,13 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
     g.fillStyle = MUTED; g.font = F(700, 20); track("WHY THIS WORKS FOR YOU", X + 32, py + 48, 4);
     // One line per reason: the number big and green, what it means beside it, the before/after under it
     // Text starts on one column, after the widest number
-    const bw = Math.max(...rs.map((r, i) => { g.font = FM(700, i === 0 ? 52 : 40); return g.measureText(r.big).width; }));
+    // Every number at the same large size, text on one column after the widest
+    g.font = FM(700, 64); const bw = Math.max(...rs.map((r) => g.measureText(r.big).width));
     rs.forEach((r, i) => {
-      const ry = py + 106 + i * 64;
-      g.fillStyle = GOOD; g.font = FM(700, i === 0 ? 52 : 40); g.fillText(r.big, X + 30, ry);
-      g.fillStyle = INK; g.font = F(600, 28); g.fillText(r.line, X + 48 + bw, ry - 4, W - X * 2 - bw - 80);
-      if (r.detail) { g.fillStyle = MUTED; g.font = F(500, 22); g.fillText(r.detail, X + 48 + bw, ry + 24, W - X * 2 - bw - 80); }
+      const ry = py + 128 + i * 96;
+      g.fillStyle = GOOD; g.font = FM(700, 64); g.fillText(r.big, X + 30, ry);
+      g.fillStyle = INK; g.font = F(600, 30); g.fillText(r.line, X + 56 + bw, r.detail ? ry - 16 : ry - 6, W - X * 2 - bw - 88);
+      if (r.detail) { g.fillStyle = MUTED; g.font = F(500, 24); g.fillText(r.detail, X + 56 + bw, ry + 16, W - X * 2 - bw - 88); }
     });
   }
 

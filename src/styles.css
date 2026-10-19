@@ -2394,7 +2394,10 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 
 /* ---------- Trade card preview (the shared image) ---------- */
 .tcard { margin: 0; display: grid; gap: 8px; }
-.tcard img, .tcard-skel { display: block; width: 100%; aspect-ratio: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.6); }
+.tcard img, .tcard-skel { display: block; width: 100%; aspect-ratio: auto; border-radius: 0; border: 0; box-shadow: none; }
+/* The card image carries its own rounded cutout; the shadow follows that shape */
+.tcard img { filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.45)); }
+.tcard-skel { border-radius: 24px; }
 .tcard img { height: auto; object-fit: contain; background: #121413; }
 .tcard-skel { aspect-ratio: 4 / 5; }
 .tcard-skel { background: linear-gradient(110deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 200% 100%; animation: tc-shim 1.2s linear infinite; }
