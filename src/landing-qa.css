@@ -1,4 +1,4 @@
-/* Landing QA fixes. Owned by the landing QA pass; loaded last. No url() in this file: it makes Vite run PostCSS. */
+/* Landing QA fixes. Owned by the landing QA pass; loaded last. No CSS image functions in this file: it makes Vite run PostCSS. */
 
 /* The landing is always dark, so the logo keeps its lime mark and chalk word even when the OS is in light mode */
 html:root:not(#_):not(#_) .ld2 { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }

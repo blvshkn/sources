@@ -1,4 +1,4 @@
-/* App field and app QA fixes. Owned by the app QA pass; loaded last. No url() in this file: it makes Vite run PostCSS. */
+/* App field and app QA fixes. Owned by the app QA pass; loaded last. No CSS image functions in this file: it makes Vite run PostCSS. */
 
 /* The landing field, laid along the bottom of the app behind everything.
    A real element inside .shell: body paints an opaque !important gradient, which hid
