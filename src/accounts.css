@@ -85,3 +85,19 @@ html:root:not(#_):not(#_) .acc-list .tiny { margin: 0; }
   html:root:not(#_):not(#_) .acc-conn > .grow { flex: 1 1 calc(100% - 60px); }
   html:root:not(#_):not(#_) .acc-conn > .row { margin-left: 50px; }
 }
+
+/* ---- Signed-in user's Sleeper picture on the league switcher (sidebar pill and the phone/tablet selector) ---- */
+html:root:not(#_):not(#_) .lsw-me { flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-3, rgba(244, 246, 242, 0.08)); color: var(--ink); }
+html:root:not(#_):not(#_) .league-pill.lsw-btn .lsw-me { margin-right: 10px; }
+html:root:not(#_):not(#_) .acc-h .acc-av { flex: none; border-radius: 50%; object-fit: cover; }
+html:root:not(#_):not(#_) .acc-h .acc-av.tp-av-ini { font-size: 8px !important; background: var(--surface-3, rgba(244, 246, 242, 0.08)); color: var(--ink); }
+html:root:not(#_):not(#_) .lsw-av.tp-av-ini { color: inherit; }
+
+/* ---- Team pictures beside the matchup score labels and on the trade roster columns ---- */
+html:root:not(#_):not(#_) .mu-side .mu-who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_) .mu-side.them .mu-who { justify-content: flex-end; }
+html:root:not(#_):not(#_) .mu-side .mu-who .tp-av { flex: none; border-radius: 50%; object-fit: cover; }
+html:root:not(#_):not(#_) .mu-side .mu-who .tp-av-ini { background: var(--surface-3); color: var(--ink); }
+html:root:not(#_):not(#_) .rp-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+html:root:not(#_):not(#_) .rp-id .tp-av { flex: none; border-radius: 50%; object-fit: cover; }
+html:root:not(#_):not(#_) .rp-id .tp-av-ini { background: var(--surface-3); color: var(--ink); }

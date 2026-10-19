@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { SleeperError, findLeagues, findUser } from "../sleeper";
+import { SleeperError, findLeagues, findUser, managerAvatar, teamAvatarIn } from "../sleeper";
 import { LEAGUE, LEAGUE_NAME } from "../data";
 import { Account, accountLabel } from "../accounts";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { PlatformLogo } from "./PlatformLogo";
+import { ManagerAvatar } from "./Avatar";
 
 type Row = { id: string; name: string; teams: number; avatar?: string | null };
 type Group = Row[] | { error: string } | null;
@@ -19,6 +20,13 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
 }) {
   const [shown, setShown] = useState(false);
   const [groups, setGroups] = useState<Record<string, Group>>({});
+  /** Each account's own Sleeper picture, by user id. */
+  const [pics, setPics] = useState<Record<string, string | null>>({});
+  /** Your team picture in each league, by "leagueId:userId". Fetched lazily; the personal picture shows until it lands. */
+  const [teamPics, setTeamPics] = useState<Record<string, string | null>>({});
+  const loadTeamPics = (userId: string, rows: Row[]) => rows.forEach((r) => {
+    teamAvatarIn(r.id, userId).then((url) => setTeamPics((t) => ({ ...t, [`${r.id}:${userId}`]: url }))).catch(() => {});
+  });
   const [formOpen, setFormOpen] = useState(adding && !demo);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,7 +46,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   const load = (userId: string) => {
     setGroups((g) => ({ ...g, [userId]: null }));
     findLeagues(userId)
-      .then(({ leagues }) => setGroups((g) => ({ ...g, [userId]: toRows(leagues) })))
+      .then(({ leagues }) => { const rows = toRows(leagues); setGroups((g) => ({ ...g, [userId]: rows })); loadTeamPics(userId, rows); })
       .catch(() => setGroups((g) => ({ ...g, [userId]: { error: "Couldn't reach Sleeper. Try again in a minute." } })));
   };
 
@@ -48,7 +56,10 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    if (!demo) accounts.forEach((a) => load(a.userId));
+    if (!demo) accounts.forEach((a) => {
+      load(a.userId);
+      findUser(a.username).then((u) => setPics((p) => ({ ...p, [a.userId]: managerAvatar(u) }))).catch(() => {});
+    });
     return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -90,6 +101,8 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
       if (!leagues.length) { setError(`@${handle} isn't in any NFL leagues on Sleeper this season, so there's nothing to add.`); setBusy(false); input.current?.focus(); return; }
       const acct: Account = { username: u.username || handle, userId: u.user_id, name: u.display_name || undefined };
       setGroups((g) => ({ ...g, [acct.userId]: toRows(leagues) }));
+      loadTeamPics(acct.userId, toRows(leagues));
+      setPics((p) => ({ ...p, [acct.userId]: managerAvatar(u) }));
       onAdd(acct);
       setAdded(acct.userId);
       setName(""); setFormOpen(false);
@@ -100,10 +113,13 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
     setBusy(false);
   };
 
-  const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-  const Mark = ({ r }: { r: Row }) => r.avatar
-    ? <img className="lsw-av" src={`https://sleepercdn.com/avatars/thumbs/${r.avatar}`} alt="" />
-    : <span className="lsw-av">{initials(r.name)}</span>;
+  // Your team picture in that league first, then your personal picture, then the league's own picture, then initials.
+  // The active league already knows its team picture, so it never flashes the personal one.
+  const mark = (r: Row, a: Account) => {
+    const key = `${r.id}:${a.userId}`;
+    const team = key in teamPics ? teamPics[key] : r.id === LEAGUE.id && a.userId === activeUserId ? LEAGUE.userAvatar : null;
+    return <ManagerAvatar src={[team, pics[a.userId], r.avatar]} name={r.name} size={40} className="lsw-av" />;
+  };
 
   const multi = accounts.length > 1;
   const addedAcct = accounts.find((a) => a.userId === added);
@@ -130,7 +146,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
               return (
                 <div key={a.userId} className={`acc-group${added === a.userId ? " just-added" : ""}`} data-account={a.userId} role="group" aria-labelledby={`acc-h-${a.userId}`}>
                   <h3 className="acc-h" id={`acc-h-${a.userId}`}>
-                    <PlatformLogo size={14} />
+                    <ManagerAvatar src={pics[a.userId]} name={label.replace(/^@/, "")} size={18} className="tp-av acc-av" />
                     <span className="acc-h-n">{label}</span>
                     {label !== `@${a.username}` && <span className="acc-h-u">@{a.username}</span>}
                     {added === a.userId && <span className="acc-h-tag">Added</span>}
@@ -144,7 +160,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
                         return (
                           <li key={r.id}>
                             <button className={`lsw-row${on ? " on" : ""}`} aria-current={on ? "true" : undefined} onClick={() => { if (!on) onPick(r.id, a.userId); close(); }}>
-                              <Mark r={r} />
+                              {mark(r, a)}
                               <span className="lsw-n"><b>{r.name}</b><small>{on ? `Current league · ${r.teams} teams` : `${r.teams} teams`}</small></span>
                               {on ? <Icon name="check" size={18} /> : <Icon name="chev" size={16} />}
                             </button>

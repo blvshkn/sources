@@ -14,6 +14,7 @@ import { Boot } from "./components/Boot";
 import { Logo, Mark } from "./components/Logo";
 import { LeagueCtx } from "./components/LeagueSwitch";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
+import { ManagerAvatar } from "./components/Avatar";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
 import { Icon, IconName } from "./components/ui";
@@ -95,6 +96,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const demo = isDemo();
   const scope = demo ? "demo" : LEAGUE.id;
   const username = activeAccount(session)?.username ?? "";
+  /** Whose picture sits on the league switcher: initials come from this when Sleeper has no picture (and in the demo). */
+  const meName = activeAccount(session)?.name || username || YOU?.manager || LEAGUE_NAME;
   const accounts = session.mode === "live" ? session.accounts : [];
   const removeAccount = (userId: string) => {
     const gone = accounts.find((a) => a.userId === userId);
@@ -479,6 +482,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <button type="button" className="lockup side-logo" style={{ ["--lh" as string]: "30px" }} aria-label="Sources home" onClick={goHome}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
+          <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" />
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
           <Icon name="switch" size={16} />
         </button>
@@ -514,7 +518,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </header>
 
       <main className="main" id="main" tabIndex={-1}>
-        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching("list") }}>
+        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching("list"), avatar: [LEAGUE.userAvatar, LEAGUE.userPhoto], who: meName }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
         <div className="main-inner">
           {/* Desktop's inbox bell: top right of the page, the same control as the phone top bar's. Outside the keyed

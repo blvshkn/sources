@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { Player } from "../data";
 import { sleeperId, teamColors, useJerseys } from "../jersey";
+import { avatarSrc } from "../sleeper";
 
 // Headshots and team marks come from Sleeper's image CDN, keyed by the same ids as the API.
 const headshot = (id: string) => `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`;
@@ -38,4 +39,18 @@ export function Avatar({ p, size = 40, ring, badge = true }: { p: Pick<Player, "
       )}
     </span>
   );
+}
+
+const nameInitials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+
+/** A manager, account or league picture from Sleeper (a URL or an avatar id, or a list to try in order).
+ *  Initials when there's none, when photos are off, or when every image fails, so a broken URL never leaves an empty circle. */
+export function ManagerAvatar({ src, name, size = 40, className = "tp-av" }: { src?: string | null | (string | null | undefined)[]; name: string; size?: number; className?: string }) {
+  const photos = useContext(AvatarPhotos);
+  const [failed, setFailed] = useState<string[]>([]);
+  const url = photos ? (Array.isArray(src) ? src : [src]).map((v) => avatarSrc(v)).find((u): u is string => !!u && !failed.includes(u)) : undefined;
+  const style = { width: size, height: size };
+  return url
+    ? <img className={className} style={style} src={url} alt="" width={size} height={size} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed((f) => [...f, url])} />
+    : <span className={`${className} tp-av-ini`} style={{ ...style, fontSize: size * 0.36 }} aria-hidden="true">{nameInitials(name)}</span>;
 }

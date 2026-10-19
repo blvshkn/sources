@@ -10,6 +10,7 @@ import { TeamAvatar } from "./TeamPicker";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useLive, onPace, teamOutlook, winChance } from "../live";
+import { avatarSrc } from "../sleeper";
 import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
 
@@ -96,11 +97,12 @@ const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
 const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 // Standard normal CDF (Abramowitz-Stegun), for a win chance from the two projections
 
-/** Manager avatar from Sleeper, or initials when they haven't set one. */
+/** Manager avatar from Sleeper, or initials when they haven't set one or it fails to load. */
 function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "you" | "them" }) {
-  const [bad, setBad] = useState(false);
-  return t.avatar && !bad
-    ? <img className={`sb-badge ${side} sb-img`} src={`https://sleepercdn.com/avatars/thumbs/${t.avatar}`} alt="" onError={() => setBad(true)} />
+  const src = avatarSrc(t.avatar);
+  const [bad, setBad] = useState<string | null>(null);
+  return src && src !== bad
+    ? <img className={`sb-badge ${side} sb-img`} src={src} alt="" referrerPolicy="no-referrer" onError={() => setBad(src)} />
     : <span className={`sb-badge ${side}`}>{initials(t.name)}</span>;
 }
 

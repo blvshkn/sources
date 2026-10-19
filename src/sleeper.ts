@@ -18,7 +18,38 @@ async function get<T>(path: string): Promise<T> {
 
 // ---- Raw shapes (only the fields we read) --------------------------------
 
-interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; metadata?: { team_name?: string } }
+interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; metadata?: { team_name?: string; avatar?: string; [k: string]: unknown } | null }
+
+// ---- Avatars ------------------------------------------------------------------
+// Sleeper keeps a manager's picture in two places. user.avatar is an id on Sleeper's CDN (the account picture).
+// user.metadata.avatar, on a league's users list, is a full URL to the custom team picture set for that league,
+// and Sleeper shows it in place of the account picture. Managers who only set a team picture have avatar: null.
+const AVATAR_CDN = "https://sleepercdn.com/avatars";
+const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+/** An avatar id or URL as an image URL. Ids go through Sleeper's CDN, thumbs by default. */
+export function avatarSrc(v: string | null | undefined, size: "thumb" | "full" = "thumb"): string | null {
+  const s = typeof v === "string" ? v.trim() : "";
+  if (!s) return null;
+  if (isUrl(s)) return s;
+  return size === "thumb" ? `${AVATAR_CDN}/thumbs/${encodeURIComponent(s)}` : `${AVATAR_CDN}/${encodeURIComponent(s)}`;
+}
+
+const customUrl = (m: Record<string, unknown> | null | undefined) =>
+  [m?.avatar, m?.team_avatar].find((v): v is string => typeof v === "string" && isUrl(v.trim()))?.trim() ?? null;
+
+/** The picture Sleeper shows for a manager in a league: the league's custom team avatar first (user.metadata.avatar,
+ *  or the roster's own metadata when it carries one), then the personal account avatar, else null (initials). */
+export function managerAvatar(user: { avatar?: string | null; metadata?: Record<string, unknown> | null } | null | undefined, size: "thumb" | "full" = "thumb", roster?: { metadata?: Record<string, unknown> | null } | null): string | null {
+  return customUrl(roster?.metadata) ?? customUrl(user?.metadata) ?? avatarSrc(user?.avatar, size);
+}
+
+/** A league's members, cached per league, for the switcher's per-league team pictures. */
+export const leagueUsers = (leagueId: string) => cached(`users:${leagueId}`, 10 * 60_000, () => get<SUser[] | null>(`/v1/league/${leagueId}/users`).then((u) => u ?? []));
+
+/** Your team picture in one league (null when you only have a personal avatar there, or none). */
+export const teamAvatarIn = (leagueId: string, userId: string) =>
+  leagueUsers(leagueId).then((us) => customUrl(us.find((u) => u.user_id === userId)?.metadata));
 interface SState { season: string; week: number; display_week?: number; season_type: string }
 export interface SLeague {
   league_id: string; name: string; season: string; previous_league_id?: string | null; status: string; total_rosters: number; avatar?: string | null;
@@ -29,7 +60,7 @@ export interface SLeague {
 }
 interface SRoster {
   roster_id: number; owner_id: string | null; co_owners?: string[] | null; players: string[] | null; starters: string[] | null;
-  reserve?: string[] | null; taxi?: string[] | null;
+  reserve?: string[] | null; taxi?: string[] | null; metadata?: Record<string, unknown> | null;
   settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number; waiver_position?: number };
 }
 interface SProj {
@@ -382,7 +413,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       record,
       pf: (st.fpts ?? 0) + (st.fpts_decimal ?? 0) / 100,
       you: r.owner_id === userId || !!r.co_owners?.includes(userId),
-      avatar: u?.avatar ?? undefined,
+      avatar: managerAvatar(u, "thumb", r) ?? undefined,
+      photo: avatarSrc(u?.avatar) ?? undefined,
       // Sleeper's players list includes IR and taxi. Split them out so they never count as active.
       roster: (r.players ?? []).filter((id) => players[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
       starters: (r.starters ?? []).filter((id) => !!id && id !== "0" && !!players[id]),
@@ -570,6 +602,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position },
     faabHistory, freeAgents, specialFreeAgents, specialBids, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
+    userPhoto: avatarSrc(userBy.get(userId)?.avatar) ?? undefined,
+    userAvatar: managerAvatar(userBy.get(userId), "thumb", rosters.find((r) => r.owner_id === userId || r.co_owners?.includes(userId))) ?? undefined,
     champion: await champP,
     valueSource: valueBy.size ? `Blended value: 55% trade market (FantasyCalc, ${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams), 45% rest-of-season production over replacement, plus up to 3% Sleeper add/drop momentum` : "Rest-of-season production over replacement (market values unavailable)",
     rosWeeks: weekNums.length,

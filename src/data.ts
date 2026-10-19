@@ -53,8 +53,10 @@ export interface Team {
   roster: string[];
   /** Current starters as set in Sleeper (skill players only, in slot order). Live leagues only. */
   starters?: string[];
-  /** Sleeper avatar id for the manager, when they have one. */
+  /** Manager picture URL (or a bare Sleeper avatar id), when they have one. Resolved by managerAvatar in sleeper.ts. */
   avatar?: string;
+  /** The manager's personal Sleeper picture: the fallback when the team picture fails to load. */
+  photo?: string;
   /** Players in IR slots. They don't count against the roster limit. */
   ir?: string[];
   /** Players on the taxi squad (dynasty). */
@@ -552,6 +554,10 @@ export interface LeagueData {
   /** How many weeks the rest-of-season projections cover. */
   rosWeeks?: number;
   username?: string;
+  /** The signed-in user's picture in this league (live leagues). Shown on the league switcher. */
+  userAvatar?: string;
+  /** The signed-in user's personal Sleeper picture, the fallback when the team picture fails to load. */
+  userPhoto?: string;
   type?: "redraft" | "keeper" | "dynasty";
   /** This week's opponent (team id), if the league has head-to-head matchups. */
   opponentId?: string;

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
 import { eff, fits, fmt, lineupFor, round1, SlotName, specialLineup } from "../engine";
 import { Avatar } from "./Avatar";
+import { TeamAvatar } from "./TeamPicker";
 import { Icon, StatusPill, LiveNum } from "./ui";
 import { useLive, expect, outlookOf, winChance, playCount } from "../live";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
@@ -86,10 +87,10 @@ export function Matchup({ onBack }: { onBack: () => void }) {
       <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>
       <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
         <header className="mu-score">
-          <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span>
+          <div className="mu-side you"><span className="mu-who"><TeamAvatar t={YOU} size={22} />{changed ? "Your what-if" : "Your lineup"}</span>
             {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
           <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{Math.round(chance)}%</b></Tooltip><small>to win</small></div>
-          <div className="mu-side them"><span>{opp.manager}<Trophy teamId={opp.id} /></span>
+          <div className="mu-side them"><span className="mu-who">{opp.manager}<Trophy teamId={opp.id} /><TeamAvatar t={opp} size={22} /></span>
             {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>

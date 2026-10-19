@@ -2,16 +2,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Team } from "../data";
 import { Icon } from "./ui";
 import { Trophy } from "./Trophy";
+import { ManagerAvatar } from "./Avatar";
 
-const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-
-/** Manager avatar from Sleeper, or initials when they haven't set one. */
-export function TeamAvatar({ t, size = 40 }: { t: Team; size?: number }) {
-  const [bad, setBad] = useState(false);
-  const style = { width: size, height: size };
-  return t.avatar && !bad
-    ? <img className="tp-av" style={style} src={`https://sleepercdn.com/avatars/thumbs/${t.avatar}`} alt="" onError={() => setBad(true)} />
-    : <span className="tp-av tp-av-ini" style={{ ...style, fontSize: size * 0.36 }}>{initials(t.name)}</span>;
+/** Manager avatar from Sleeper (team picture, then account picture), or initials when they haven't set one or it fails to load. */
+export function TeamAvatar({ t, size = 40 }: { t: Pick<Team, "name" | "avatar" | "photo">; size?: number }) {
+  return <ManagerAvatar src={[t.avatar, t.photo]} name={t.name} size={size} />;
 }
 
 /** Trade partner dropdown: the selected team's avatar, name and record, opening a list of every other team. */

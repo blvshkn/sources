@@ -11,7 +11,7 @@ import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
 import { AddTeam, LegState, MultiDeal, MultiRosters } from "./TradeMulti";
 import { TagCapture } from "./TagCapture";
-import { TeamPicker } from "./TeamPicker";
+import { TeamAvatar, TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { Select } from "./Select";
 import { Tooltip } from "./Tooltip";
@@ -54,7 +54,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
   return (
     <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
       <div className="roster-head">
-        <div className="rp-t"><span>{label}</span><b>{team.name}<Trophy teamId={team.id} /></b></div>
+        <div className="rp-id"><TeamAvatar t={team} size={32} /><div className="rp-t"><span>{label}</span><b>{team.name}<Trophy teamId={team.id} /></b></div></div>
         <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><Tooltip focusable content="Points a week from the starting lineup only. Bench players don't count."><small className="tt-term">starters pts/wk</small></Tooltip></span>
       </div>
       <div className="slot-label">Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</div>
