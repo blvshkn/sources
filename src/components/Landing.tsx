@@ -145,7 +145,7 @@ export function Landing({ onLive, onDemo }: {
     ["Can Sources make moves in my league?", "No. Sources is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
     ["Where do trade values come from?", "Sources blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Sources never shows them to other managers."],
-    ["Does the win chance match Sleeper?", "Yes. Sources uses the lineup you set in Sleeper and the same method Sleeper does, refreshed every 15 seconds while games are on."],
+    ["Does the win chance match Sleeper?", "Closely. Sources uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Sources works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
   const faqLd = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) });
