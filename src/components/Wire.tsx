@@ -33,10 +33,12 @@ export interface Nudge {
   impact?: { label: string; text: string }[];
   tagId?: string;
   go?: { label: string; tab: string };
+  /** The player this nudge suggests adding, so "Not interested" can take him out of every suggestion. */
+  pass?: { id: string; name: string };
 }
 
 export interface FollowUp { id: string; trade: Trade; via: string; when: string }
-export interface Briefing { lineup: string; trade: Trade | null; waiver: string }
+export interface Briefing { lineup: string; trade: Trade | null; waiver: string; /** Who the waiver line suggests, for its Not interested control. */ waiverPass?: { id: string; name: string } }
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
@@ -441,7 +443,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass }: {
   you: TeamNeeds;
   partner: string | null;
   partnerId: string | null;
@@ -459,6 +461,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   onClearTag: (id: string) => void;
   onCapture: () => void;
   level: string;
+  /** "Not interested" on a suggested player: one list shared by every suggestion. */
+  onPass?: (p: { id: string; name: string }) => void;
 }) {
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
@@ -492,9 +496,16 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No trade helps both sides this week."}</span>
           <Icon name="chev" size={16} />
         </button>
-        <button className="brief-row" onClick={() => onGo("waivers")}>
-          <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
-        </button>
+        <div className="ps-brief">
+          <button className="brief-row" onClick={() => onGo("waivers")}>
+            <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
+          </button>
+          {briefing.waiverPass && onPass && (
+            <Tooltip content="Not interested. Sources stops suggesting him">
+              <button className="ps-x" aria-label={`Not interested in ${briefing.waiverPass.name}`} onClick={() => onPass(briefing.waiverPass!)}><Icon name="x" size={16} /></button>
+            </Tooltip>
+          )}
+        </div>
       </section>}
       {view === "matchup" && <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />}
       {view === "matchup" && <Threats onGo={onGo} />}
@@ -542,6 +553,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
             )}
             {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
             {n.kind === "need" && n.teamId && <button className="nudge-link" onClick={() => onGo("league", n.teamId)}><span>See {teamById(n.teamId).manager}'s needs</span><Icon name="chev" size={14} /></button>}
+            {n.pass && onPass && <button className="nudge-link dismiss ps-nudge-pass" onClick={() => onPass(n.pass!)} aria-label={`Not interested in ${n.pass.name}`}>Not interested</button>}
             <button className="nudge-link dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
           </div>
         </article>

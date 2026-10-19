@@ -4,7 +4,7 @@ import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
-  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent,
+  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -616,7 +616,96 @@ export interface KdefRec {
   /** One line for the row and the top pickup card, e.g. "Your DEF is on bye. Seahawks D/ST projects 8.0 vs the Rams." */
   line: string;
 }
-export interface WaiverRec { fa: WaiverFA; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"] | "Stream"; estimated: boolean; kdef?: KdefRec }
+export interface WaiverRec {
+  fa: WaiverFA; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"] | "Stream"; estimated: boolean; kdef?: KdefRec;
+  /** What he adds to your lineup a week the rest of the way (ROS projections). */
+  ros?: number;
+  /** The starting slot he'd take the rest of the way, or this week when he only helps this week. */
+  slot?: string | null;
+  /** This week every one of your players at his position is out or on bye. */
+  hole?: boolean;
+  /** Weakness-first rank: see fitScore. Higher is a better add for you. */
+  score?: number;
+  /** Why he fits, naming the weak spot he fixes (or the hole he fills). Null when he's depth. */
+  fit?: string | null;
+  /** Your roster is full and nobody on your bench is worth cutting for him. */
+  noDrop?: boolean;
+  /** The slot he'd take the rest of the way, null when he doesn't crack your ROS lineup. */
+  rosSlot?: string | null;
+  /** Worth recommending: helps a weak slot, helps the rest of the way, or fills a real hole. A one-week fill at a
+   *  slot that's already fine (a third QB the week your starter faces a tough defense) still lists, but is never
+   *  the top pickup, a nudge or a quick move. */
+  pick?: boolean;
+}
+
+// ---- Weakness first ---------------------------------------------------------
+// Recommendations rank by how much they fix your weakest starting slots. A rest-of-season gain at a slot that's
+// below the league average counts for FIT_WEEKS weeks, scaled up by how far below it is. A one-week fill at a slot
+// that's already fine counts half, once. A real hole (everyone you have at the position is out or on bye) counts
+// in full for that week, so it only outranks rest-of-season help at a weak slot when the hole is bigger.
+export const FIT_WEEKS = 3;
+
+/** Points a week each starting slot is above (+) or below (−) the league average: the Slot report where it has
+ *  weeks, else this week's needs map. */
+export function slotGaps(): Record<string, number> {
+  const n = needsFor(YOU);
+  const out: Record<string, number> = {};
+  groupsFor().forEach((g) => (out[g] = n.groups[g].diff));
+  SLOT_HISTORY.forEach((h) => { if (h.you.length) out[h.slot] = round1(h.you.reduce((s, v, i) => s + (v - (h.avg[i] ?? v)), 0) / h.you.length); });
+  return out;
+}
+/** Slots that count as weak: short most weeks in the Slot report, or 2+ points a week under the average. */
+export function weakSet(gaps = slotGaps()): Set<string> {
+  const s = new Set(weakSlots().map((w) => w.slot));
+  Object.entries(gaps).forEach(([k, v]) => { if (v <= -2) s.add(k); });
+  return s;
+}
+/** How much a gain at this slot is worth: 1 at an average slot, up to 2 at a slot 10+ points under. */
+const slotWeight = (slot: string | null | undefined, gaps: Record<string, number>, weak: Set<string>) =>
+  slot && weak.has(slot) ? 1 + Math.min(1, Math.max(0, -(gaps[slot] ?? 0)) / 10) : 1;
+/** Positions whose depth protects a weak slot: RB when RB is weak, every flex position when FLEX is. */
+const weakPositions = (weak: Set<string>): Set<string> => {
+  const s = new Set<string>();
+  weak.forEach((slot) => { if (slot === "FLEX") FLEX_OK.forEach((p) => s.add(p)); else if (slot === "SF") POS_ORDER.forEach((p) => s.add(p)); else s.add(slot); });
+  return s;
+};
+const last = (name: string) => name.split(" ").slice(-1)[0];
+const listNames = (ns: string[]) => (ns.length <= 1 ? ns.join("") : `${ns.slice(0, -1).join(", ")} and ${ns[ns.length - 1]}`);
+
+export interface FitInput {
+  name: string; pos: string; week: number;
+  /** Lineup gain that week, and a week rest of season. */
+  weekGain: number; ros: number;
+  /** Slot he'd take ROS, and the one he'd take that week. */
+  rosSlot: string | null; weekSlot: string | null;
+  /** Names of your players at his position who are all off that week (empty = no hole). */
+  holeNames: string[];
+}
+/** Score and why-line for one add. Shared by the engine (this week) and the Waivers week view (other weeks). */
+export function fitScore(x: FitInput, gaps = slotGaps(), weak = weakSet(gaps)): { score: number; line: string | null; slot: string | null; pick: boolean } {
+  const hole = x.holeNames.length > 0 && x.weekGain > 0.05;
+  const rosW = slotWeight(x.rosSlot, gaps, weak);
+  const wkW = x.weekSlot && weak.has(x.weekSlot) ? 1 : 0.5;
+  const rosPart = x.ros > 0.05 ? x.ros * FIT_WEEKS * rosW : 0;
+  const weekPart = x.weekGain > 0.05 ? x.weekGain * (hole ? 1 : wkW) : 0;
+  const score = round1(rosPart + weekPart);
+  const gapOf = (slot: string) => gaps[slot] ?? 0;
+  let line: string | null = null;
+  const slot = x.ros > 0.05 ? x.rosSlot : x.weekGain > 0.05 ? x.weekSlot : null;
+  if (hole) {
+    const off = x.holeNames.length === 1 ? `${x.holeNames[0]} is off` : x.holeNames.length === 2 ? `${listNames(x.holeNames)} are both off` : `${listNames(x.holeNames)} are all off`;
+    line = `${off} in week ${x.week}. He'd fill your ${x.weekSlot ?? x.pos} spot for ${x.weekGain.toFixed(1)}.`;
+  } else if (x.ros > 0.05 && x.rosSlot && weak.has(x.rosSlot) && gapOf(x.rosSlot) < 0) {
+    line = `Your ${x.rosSlot} spot is ${Math.abs(gapOf(x.rosSlot)).toFixed(1)} below the league average. He'd start there and add ${x.ros.toFixed(1)} a week.`;
+  } else if (x.ros > 0.05 && x.rosSlot) {
+    line = `He'd start at ${x.rosSlot} and add ${x.ros.toFixed(1)} a week the rest of the way.`;
+  } else if (x.weekGain > 0.05 && x.weekSlot) {
+    const g = gapOf(x.weekSlot);
+    line = `A one-week fill at ${x.weekSlot}${g >= 0.5 ? `, where you're already ${g.toFixed(1)} above the league average` : ""}. Doesn't help after week ${x.week}.`;
+  }
+  const pick = hole || x.ros > 0.05 || (x.weekGain > 0.05 && !!x.weekSlot && weak.has(x.weekSlot));
+  return { score, line, slot, pick };
+}
 /** Who to cut for a rec, and a short note on him, for copy shared by every waiver surface. */
 export const recDrop = (r: WaiverRec): { name: string; note: string } | null =>
   r.kdef?.drop ? { name: r.kdef.drop.name, note: r.kdef.drop.wk === null ? "on bye" : r.kdef.drop.status === "O" ? "out" : `${specialPts(r.kdef.drop).toFixed(1)} projected` }
@@ -645,41 +734,84 @@ export function waiverHidden() {
 }
 
 export function waiverRecs(you: Team): WaiverRec[] {
-  const base = lineupFor(you.roster, true);
-  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, base, fa));
-  const all: WaiverRec[] = [...skill, ...specialRecs(you, base)];
-  // Skill pickups that start, plus K/DEF that fill a slot scoring zero, rank by gain. A K/DEF stream that only
-  // beats what you have comes next, then everything that doesn't change your lineup (skill players first).
-  // Only the best fix per slot jumps the line: you need one defense, not four.
+  const ctx = recCtx(you);
+  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, ctx, fa));
+  const all: WaiverRec[] = [...skill, ...specialRecs(you, ctx.base)];
+  // Only the best K/DEF fix per slot jumps the line: you need one defense, not four. A fix is a hole and counts
+  // in full; a stream that only beats what you have counts half, like any one-week fill at a slot that's fine.
   const bestFix = new Map<string, string>();
   all.filter((r) => r.kdef?.fix).sort((a, b) => b.gain - a.gain).forEach((r) => { if (!bestFix.has(r.fa.pos)) bestFix.set(r.fa.pos, r.fa.id); });
-  all.forEach((r) => { if (r.kdef && bestFix.get(r.fa.pos) === r.fa.id) r.kdef.lead = true; });
-  const group = (r: WaiverRec) => (r.kdef ? (r.kdef.lead ? 0 : r.gain > 0.05 ? 1 : 3) : r.gain > 0.05 ? 0 : 2);
-  return all.sort((a, b) => group(a) - group(b) || b.gain - a.gain || b.value - a.value);
+  all.forEach((r) => {
+    if (!r.kdef) return;
+    if (bestFix.get(r.fa.pos) === r.fa.id) r.kdef.lead = true;
+    r.score = r.gain > 0.05 ? round1(r.gain * (r.kdef.lead ? 1 : 0.5)) : 0;
+    r.pick = r.gain > 0.05;
+  });
+  // Weakness first: anyone who helps ranks by fitScore; then K/DEF streams that don't help, then plain depth
+  const helps = (r: WaiverRec) => (r.score ?? 0) > 0.05;
+  return all.sort((a, b) => Number(helps(b)) - Number(helps(a)) || (b.score ?? 0) - (a.score ?? 0) || Number(!!a.noDrop) - Number(!!b.noDrop) || Number(!!a.kdef) - Number(!!b.kdef) || b.gain - a.gain || b.value - a.value);
 }
 
 /** Claim details for skill players whose game already kicked off this week, so a later week can still show a bid and a drop. */
 export const lockedRecs = (you: Team): WaiverRec[] => {
-  const base = lineupFor(you.roster, true);
-  return FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, base, fa));
+  const ctx = recCtx(you);
+  return FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, ctx, fa));
 };
 
-function skillRec(you: Team, base: Lineup, fa: FreeAgent): WaiverRec {
+interface RecCtx { base: Lineup; baseRos: Lineup; gaps: Record<string, number>; weak: Set<string>; weakPos: Set<string> }
+const recCtx = (you: Team): RecCtx => {
+  const gaps = slotGaps(), weak = weakSet(gaps);
+  return { base: lineupFor(you.roster, true), baseRos: lineupFor(you.roster), gaps, weak, weakPos: weakPositions(weak) };
+};
+
+/** Your players at a position who are all off this week (out or on bye), when that leaves the slot with nobody. */
+function holeAt(base: Lineup, you: Team, pos: Pos): string[] {
+  const exact = base.slots.filter((s) => s.slot === pos);
+  if (!exact.length || exact.some((s) => s.player && eff(s.player, true) > 0)) return [];
+  return you.roster.map(playerById).filter((p) => p.pos === pos).sort((a, b) => eff(b) - eff(a)).map((p) => last(p.name));
+}
+
+/** Who to cut for an add. Never a better same-position player, never depth at a weak spot that's comparable to the
+ *  add (or any of it for an add who doesn't help you the rest of the way), and never a K or DEF. The lowest
+ *  rest-of-season value among what's left. A real hole may cut the cheapest weak-spot depth if that's all there is. */
+function pickDrop(you: Team, ctx: RecCtx, fa: FreeAgent, value: number, ros: number, hole: boolean, starters: Set<string>): Player | null {
+  const bench = you.roster.map(playerById).filter((x) => x && !starters.has(x.id));
+  const sameBetter = (x: Player) => x.pos === fa.pos && eff(x) >= value - 0.5;
+  const guarded = (x: Player) => ctx.weakPos.has(x.pos) && (ros <= 0.05 || eff(x) >= value - 1);
+  const byValue = (a: Player, b: Player) => eff(a) - eff(b);
+  const ok = bench.filter((x) => !sameBetter(x) && !guarded(x)).sort(byValue)[0];
+  if (ok) return ok;
+  if (hole) return bench.filter((x) => !sameBetter(x)).sort(byValue)[0] ?? null;
+  return null;
+}
+
+function skillRec(you: Team, ctx: RecCtx, fa: FreeAgent): WaiverRec {
   // Live free agents are already in PLAYERS; demo ones get a temporary entry.
   const existed = !!PLAYERS[fa.id];
   if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
   const p = PLAYERS[fa.id];
   const withFa = lineupFor([...you.roster, fa.id], true);
-  const gain = round1(withFa.total - base.total);
-  // Drop by rest-of-season value, never by a one-week bye
-  const drop = you.roster.map(playerById).filter((x) => !withFa.slots.some((sl) => sl.player?.id === x.id)).sort((a, b) => eff(a) - eff(b))[0] ?? null;
+  const withRos = lineupFor([...you.roster, fa.id]);
+  const gain = round1(withFa.total - ctx.base.total);
+  const ros = round1(Math.max(0, withRos.total - ctx.baseRos.total));
   const value = eff(p);
-  const tier: BidTier["tier"] = gain >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
+  const weekSlot = gain > 0.05 ? withFa.slots.find((s) => s.player?.id === fa.id)?.slot ?? null : null;
+  const rosSlot = ros > 0.05 ? withRos.slots.find((s) => s.player?.id === fa.id)?.slot ?? null : null;
+  const holeNames = gain > 0.05 ? holeAt(ctx.base, you, fa.pos) : [];
+  const f = fitScore({ name: fa.name, pos: fa.pos, week: WEEK, weekGain: gain, ros, rosSlot, weekSlot, holeNames }, ctx.gaps, ctx.weak);
+  // Drop by rest-of-season value, never by a one-week bye. Anyone who'd start for you either week stays.
+  const starters = new Set([...withFa.slots, ...withRos.slots].map((s) => s.player?.id).filter(Boolean) as string[]);
+  const drop = pickDrop(you, ctx, fa, value, ros, holeNames.length > 0, starters);
+  const full = you.roster.length >= LEAGUE.rosterMax;
+  const noDrop = !drop && full;
+  const tier: BidTier["tier"] = gain >= 2 || ros >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
   const { bids, estimated } = bidsFor(tier);
   const sorted = bids.slice().sort((a, b) => a - b);
   const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
   if (!existed) delete PLAYERS[fa.id];
-  return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated };
+  // No one worth cutting: he still lists, but ranks under anything you can actually claim
+  const score = noDrop ? round1(f.score * 0.25) : f.score;
+  return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated, ros, slot: f.slot, hole: holeNames.length > 0 && gain > 0.05, score, fit: f.line, noDrop, rosSlot, pick: f.pick && !noDrop };
 }
 
 /** Kickers and defenses on the wire against the one you start this week. */
@@ -774,7 +906,7 @@ export function parseTag(text: string, teamId?: string): ParsedTag {
 
 export interface Answer { text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[] }
 
-export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Answer {
+export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
   const s = q.toLowerCase();
   const needs = allNeeds();
   const pos = POS_WORDS.find(([re]) => re.test(q))?.[1];
@@ -821,11 +953,11 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     };
   }
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
-    const r = waiverRecs(YOU)[0];
+    const r = waiverRecs(YOU).find((x) => x.pick && !passed.includes(x.fa.id));
     if (!r) return { text: "Nothing on the wire beats your bench this week.", points: [], links: [{ label: "Open waivers", tab: "waivers" }] };
     return {
       text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
-      points: [r.kdef?.fix ? r.kdef.line : `Adds ${fmt(r.gain)} to your starters this week.`, (() => { const d = recDrop(r); return d ? `Drop ${d.name} (${d.note}).` : "You have an open spot."; })(),
+      points: [r.kdef?.fix ? r.kdef.line : r.fit ?? `Adds ${fmt(r.gain)} to your starters this week.`, (() => { const d = recDrop(r); return d ? `Drop ${d.name} (${d.note}).` : "You have an open spot."; })(),
         r.kdef ? (r.estimated ? "Kickers and defenses usually go for $0 to $1, so bid low." : `Based on ${SPECIAL_BIDS.length} winning K/DEF bids in your league this season.`)
         : r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier as BidTier["tier"]).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
       links: [{ label: "Open waivers", tab: "waivers" }],

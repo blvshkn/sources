@@ -1,7 +1,7 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
-import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport, lockedRecs, recDrop, round1, specialBidRange } from "../engine";
+import { WaiverRec, bidDollars, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
 import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
@@ -49,11 +49,20 @@ const longOut = (fa: WaiverFA) => !isSpecialFA(fa) && !!PLAYERS[fa.id]?.longTerm
 
 /** Which of your starting slots a position can fill, by the slot names a WeekView uses. */
 const FITS: Record<string, string[]> = { FLEX: ["RB", "WR", "TE"], SF: ["QB", "RB", "WR", "TE"] };
-/** What a free agent scoring `pts` would add to your lineup that week: beat the weakest starter he could replace. */
-function gainIn(v: WeekView, pos: string, pts: number) {
+/** What a free agent scoring `pts` would add to your lineup that week (beat the weakest starter he could replace),
+ *  and which of your slots he'd take. */
+function slotGainIn(v: WeekView, pos: string, pts: number): { gain: number; slot: string | null } {
   const slots = v.starters.filter((s) => (FITS[s.slot] ?? [s.slot]).includes(pos));
-  if (!slots.length) return 0;
-  return round1(Math.max(0, pts - Math.min(...slots.map((s) => s.p?.pts ?? 0))));
+  if (!slots.length) return { gain: 0, slot: null };
+  const low = slots.slice().sort((a, b) => (a.p?.pts ?? 0) - (b.p?.pts ?? 0))[0];
+  const gain = round1(Math.max(0, pts - (low.p?.pts ?? 0)));
+  return { gain, slot: gain > 0.05 ? low.slot : null };
+}
+/** Your players at a position who are all off that week (bye, out, nothing projected), so the slot sits empty. */
+function holeIn(v: WeekView, pos: string): string[] {
+  const mine = [...v.starters.map((s) => s.p), ...v.bench].filter((p): p is NonNullable<typeof p> => !!p && p.pos === pos);
+  if (!mine.length || mine.some((p) => (p.pts ?? 0) > 0)) return [];
+  return mine.map((p) => p.name.split(" ").slice(-1)[0]);
 }
 
 /** Default week: next week once most of the list has already played (or is on bye), or on Tuesday while waivers run. */
@@ -101,11 +110,21 @@ interface Row extends Entry {
   pts: number | null | undefined;
   gain: number;
   help: boolean;
+  /** You said you're not interested: he stays findable, but out of "can help" and every pick. */
+  no: boolean;
+  /** Weakness-first rank and the line that says why (see fitScore). */
+  score: number;
+  fit: string | null;
+  pick: boolean;
   tag: { cls: string; label: string; tip?: string } | null;
   l3: (number | null | undefined)[];
 }
 
-export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; onToast: (m: string) => void; watch: Record<string, number>; onWatch: (next: (w: Record<string, number>) => Record<string, number>) => void }) {
+export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpass }: {
+  recs: WaiverRec[]; onToast: (m: string) => void; watch: Record<string, number>; onWatch: (next: (w: Record<string, number>) => Record<string, number>) => void;
+  /** Players you said you're not interested in, shared with every other suggestion. */
+  passed: string[]; onPass: (p: { id: string; name: string }) => void; onUnpass: (p: { id: string; name: string }) => void;
+}) {
   const [open, setOpen] = useState<string | null>(null);
   // K and DEF tabs only when the league starts them
   const tabs = TABS.filter((t) => (t !== "K" && t !== "DEF") || (LEAGUE.specialSlots ?? []).includes(t));
@@ -147,19 +166,33 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
     return () => { on = false; };
   }, [week]);
   const myView = week === WEEK ? null : (mine?.week === week ? mine : peekWeek(week) ?? null);
+  const fitCtx = useMemo(() => { const gaps = slotGaps(); return { gaps, weak: weakSet(gaps) }; }, [recs]);
+  const no = (id: string) => passed.includes(id);
+  // Passed on from this list stays where it was until you leave, so the row you just tapped doesn't jump away
+  const [stay, setStay] = useState<string[]>([]);
 
   const rows = useMemo<Row[]>(() => all.map((e) => {
     const c = sel.cells[week]?.[e.fa.id];
     const lt = l3Weeks.map((w) => { const x = l3.cells[w]?.[e.fa.id]; return x ? x.pts : undefined; });
     // Rows that can't be claimed this week say why in their stats (bye, out, or the score so far), so they skip the tag
-    if (kind === "current") return { ...e, r: e.rec, c, pts: e.value, gain: e.rec?.gain ?? 0, help: !e.avail, tag: e.avail && e.rec ? { cls: `t-${e.avail}`, label: AVAIL_LABEL[e.avail] } : null, l3: lt };
+    const n = no(e.fa.id);
+    if (kind === "current") return { ...e, r: e.rec, c, pts: e.value, gain: e.rec?.gain ?? 0, help: !e.avail && !n, no: n, score: e.rec?.score ?? 0, fit: e.rec ? (e.rec.kdef ? e.rec.kdef.line : e.rec.fit ?? null) : null, pick: !!e.rec?.pick && !e.avail && !n, tag: e.avail && e.rec ? { cls: `t-${e.avail}`, label: AVAIL_LABEL[e.avail] } : null, l3: lt };
     const bye = c?.pts === null;
     const out = kind === "future" && longOut(e.fa);
     const pts = c ? c.pts : undefined;
-    const gain = !myView || myView.empty || bye || out || pts == null ? 0 : gainIn(myView, e.fa.pos, pts);
+    const sg = !myView || myView.empty || bye || out || pts == null ? { gain: 0, slot: null } : slotGainIn(myView, e.fa.pos, pts);
+    const gain = sg.gain;
     const tag = bye ? { cls: "t-bye", label: "Bye", tip: `On bye in week ${week}` } : kind === "future" ? injuryTag(e.fa) : null;
-    return { ...e, r: e.rec ?? e.later, c, pts, gain, help: gain > 0.05, tag, l3: lt };
-  }), [all, sel.cells, l3.cells, kind, week, myView]); // eslint-disable-line react-hooks/exhaustive-deps
+    const r = e.rec ?? e.later;
+    // Weeks ahead rank the same way as this week: rest-of-season help at a weak slot first, a one-week fill at a
+    // slot that's already fine last, a real hole (everyone you have there is off) in between, by its size
+    const kd = !!r?.kdef;
+    const f = kind === "past" || !r || kd ? null
+      : fitScore({ name: e.fa.name, pos: e.fa.pos, week, weekGain: gain, ros: r.ros ?? 0, rosSlot: r.rosSlot ?? null, weekSlot: sg.slot, holeNames: myView && gain > 0.05 ? holeIn(myView, e.fa.pos) : [] }, fitCtx.gaps, fitCtx.weak);
+    const score = f ? (r?.noDrop ? round1(f.score * 0.25) : f.score) : kd ? (gain > 0.05 ? gain * 0.5 : 0) : gain;
+    const pick = kind === "past" ? gain > 0.05 : !!r && !n && (f ? f.pick && !r.noDrop : gain > 0.05);
+    return { ...e, r, c, pts, gain, help: gain > 0.05 && !n, no: n, score, fit: f?.line ?? null, pick, tag, l3: lt };
+  }), [all, sel.cells, l3.cells, kind, week, myView, passed, fitCtx]); // eslint-disable-line react-hooks/exhaustive-deps
   const watched = (id: string) => watch[id] !== undefined;
 
   const shown = useMemo(() => {
@@ -168,12 +201,15 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
     const num = (e: Row) => (typeof e.pts === "number" ? e.pts : -1);
     const sorted = sort === "trend" ? [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0))
       : sort === "proj" ? [...list].sort((a, b) => num(b) - num(a))
-      : kind === "current" ? list : [...list].sort((a, b) => Number(b.help) - Number(a.help) || b.gain - a.gain || num(b) - num(a));
+      : kind === "current" ? list : [...list].sort((a, b) => Number(b.help) - Number(a.help) || b.score - a.score || b.gain - a.gain || num(b) - num(a));
     // This week, anyone who can't play sinks; other weeks, byes sink. Players you're watching float to the top.
+    // Players you passed on go to the very end (unless you just did it here), still there to find.
+    const gone = (e: Row) => e.no && !stay.includes(e.fa.id);
     const sink = (e: Row) => (kind === "current" ? !!e.avail : e.pts === null);
-    const ordered = [...sorted.filter((e) => !sink(e)), ...sorted.filter(sink)];
-    return [...ordered.filter((e) => watched(e.fa.id)), ...ordered.filter((e) => !watched(e.fa.id))];
-  }, [rows, pos, sort, q, onlyWatch, watch, kind]); // eslint-disable-line react-hooks/exhaustive-deps
+    const live = sorted.filter((e) => !gone(e));
+    const ordered = [...live.filter((e) => !sink(e)), ...live.filter(sink)];
+    return [...ordered.filter((e) => watched(e.fa.id)), ...ordered.filter((e) => !watched(e.fa.id)), ...sorted.filter(gone)];
+  }, [rows, pos, sort, q, onlyWatch, watch, kind, stay]); // eslint-disable-line react-hooks/exhaustive-deps
   // Type-ahead: names that start with what you typed rank above names that merely contain it
   const term = q.trim().toLowerCase();
   const hits = useMemo(() => {
@@ -194,6 +230,9 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
   };
   const loading = kind !== "current" && (sel.loading || !myView);
   const ready = shown.filter((e) => e.help).length;
+  const passedHere = shown.filter((e) => e.no).length;
+  const pass = (e: { fa: WaiverFA }, inList = false) => { if (inList) setStay((c) => [...c, e.fa.id]); onPass({ id: e.fa.id, name: e.fa.name }); };
+  const unpass = (e: { fa: WaiverFA }) => onUnpass({ id: e.fa.id, name: e.fa.name });
   const byes = shown.filter((e) => e.pts === null).length;
   // Marking a player: for the week you're looking at when it's ahead, otherwise the week waivers are working on
   const target = kind === "future" ? week : defWeek;
@@ -203,18 +242,21 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
   };
   const watchCount = all.filter((e) => watched(e.fa.id)).length;
 
+  // This week's top pickup: the engine's best pick you haven't passed on
+  const nowTop = recs.find((r) => r.pick && !no(r.fa.id));
   // Top pickup follows the week: this week it's the engine's pick; other weeks, the best claim by what he adds that week
-  const freshTop = kind === "current" || loading ? undefined : rows.filter((x) => x.r && typeof x.pts === "number").sort((a, b) => b.gain - a.gain || (b.pts as number) - (a.pts as number))[0];
+  // Weeks ahead pick by weakness first (score); a past week's "top scorer" is simply who would have added the most.
+  const freshTop = kind === "current" || loading ? undefined : rows.filter((x) => x.r && typeof x.pts === "number" && !x.no && (kind === "past" || x.pick)).sort((a, b) => b.score - a.score || b.gain - a.gain || (b.pts as number) - (a.pts as number))[0];
   // While a week loads, keep the last card up so nothing below it moves
   const lastTop = useRef<{ row: Row; week: number; kind: Kind } | null>(null);
   if (freshTop) lastTop.current = { row: freshTop, week, kind };
-  const held = kind !== "current" && loading ? lastTop.current : null;
+  const held = kind !== "current" && loading && lastTop.current && !no(lastTop.current.row.fa.id) ? lastTop.current : null;
   const topRow = freshTop ?? held?.row;
   const topWeek = freshTop ? week : held?.week ?? week, topKind = freshTop ? kind : held?.kind ?? kind;
   // The docked panel shows the same pick
   const pickKey = topRow && topKind !== "current" ? `${topWeek}|${topRow.fa.id}|${topRow.pts}|${topRow.gain}` : "";
   useEffect(() => {
-    setWeekPick(topRow && topKind !== "current" && topRow.r ? { week: topWeek, kind: topKind, rec: topRow.r, pts: topRow.pts as number, gain: topRow.gain } : null);
+    setWeekPick(topRow && topKind !== "current" && topRow.r ? { week: topWeek, kind: topKind, rec: topRow.r, pts: topRow.pts as number, gain: topRow.gain, fit: topRow.fit } : null);
   }, [pickKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setWeekPick(null), []);
 
@@ -233,24 +275,24 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
         <span className="faab-track"><span style={{ width: `${(FAAB.remaining / FAAB.budget) * 100}%` }} /></span>
       </div>}
 
-      {kind === "current" && recs[0] && (() => {
-        const top = recs[0];
+      {kind === "current" && (nowTop ? (() => {
+        const top = nowTop;
         const starts = top.gain > 0.05;
         const kd = top.kdef;
-        return <TopCard rec={top} irMove={irMove?.name} onToast={onToast} starts={starts} eyebrow="Top pickup"
+        return <TopCard rec={top} irMove={irMove?.name} onToast={onToast} starts={starts} eyebrow="Top pickup" onPass={() => pass(top)}
           stat={{ dt: "This week", dd: (isSpecialFA(top.fa) ? top.fa.wk ?? 0 : top.fa.proj).toFixed(1) }}
-          why={kd ? kd.line : !/^Projects /.test(top.fa.why) ? top.fa.why : null}
+          why={kd ? kd.line : top.fit ?? (!/^Projects /.test(top.fa.why) ? top.fa.why : null)}
           plan={kd?.fix ? <span>Fills your {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "bye-week" : "injured"} {top.fa.pos} slot. <b>{fmt(top.gain)} pts</b> this week.</span>
             : starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>} />;
-      })()}
+      })() : <EmptyTop label="Top pickup" text="Nobody on the wire fixes a weak spot this week." />)}
       {kind !== "current" && (topRow ? (() => {
         const x = topRow, r = x.r!, starts = x.gain > 0.05, past = topKind === "past", week = topWeek;
-        return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ?? ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`}
+        return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ?? ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} onPass={() => pass(x)}
           stat={{ dt: past ? `Scored wk ${week}` : `Week ${week}`, dd: (x.pts as number).toFixed(past ? 2 : 1) }}
-          why={past ? (x.c?.line ?? null) : `${x.fa.name} projects ${(x.pts as number).toFixed(1)}${x.c?.opp ? ` ${x.c.opp}` : ""} in week ${week}.`}
+          why={past ? (x.c?.line ?? null) : x.fit ?? `${x.fa.name} projects ${(x.pts as number).toFixed(1)}${x.c?.opp ? ` ${x.c.opp}` : ""} in week ${week}.`}
           plan={past ? (starts ? <span>Would have added <b>{fmt(x.gain)} pts</b> to your week {week} lineup.</span> : <span>Wouldn't have cracked your week {week} lineup.</span>)
             : starts ? <span>Starts for you in week {week}. <b>{fmt(x.gain)} pts</b>.</span> : <span>Bench depth in week {week}. Doesn't crack your lineup.</span>} />;
-      })() : <section className="card topk wv3-topk-empty" aria-label="Top pickup"><div className="topk-head"><span className="topk-label">{kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`}</span></div><p className="small muted">{loading ? `Loading week ${week}` : sel.err ?? "Nobody on the wire to claim for that week."}</p></section>)}
+      })() : <EmptyTop label={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} text={loading ? `Loading week ${week}` : sel.err ?? (kind === "past" ? "Nobody on the wire to claim for that week." : `Nobody on the wire fixes a weak spot in week ${week}.`)} />)}
       </aside>
 
       <section className="card wv-card" aria-label="Waiver targets">
@@ -258,10 +300,10 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
           <span className="wv3-head-t">
             <b>Available</b>
             <span aria-live="polite">{kind === "current"
-              ? <><em>{ready}</em> can help this week{shown.length > ready ? <> · <em>{shown.length - ready}</em> can't</> : null}</>
+              ? <><em>{ready}</em> can help this week{shown.length - passedHere > ready ? <> · <em>{shown.length - passedHere - ready}</em> can't</> : null}{passedHere ? <> · <em>{passedHere}</em> passed</> : null}</>
               : loading ? <><em>–</em> {kind === "past" ? <>would have helped<span className="wv3-wk"> in week {week}</span></> : <>can help in week {week}</>}</>
               : kind === "past" ? <><em>{ready}</em> would have helped<span className="wv3-wk"> in week {week}</span></>
-              : <><em>{ready}</em> can help in week {week}{byes ? <> · <em>{byes}</em> on bye</> : null}</>}</span>
+              : <><em>{ready}</em> can help in week {week}{byes ? <> · <em>{byes}</em> on bye</> : null}{passedHere ? <> · <em>{passedHere}</em> passed</> : null}</>}</span>
           </span>
           <WeekStepper week={week} onChange={(w) => { setWeek(w); setOpen(null); }} className="wv3-weeknav" />
         </div>
@@ -312,7 +354,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
           const drop = r ? recDrop(r) : null;
           const game = gameOf(e.fa);
           const off = kind === "current" ? !r : e.pts === null;
-          const dim = kind === "current" && !!r && !!e.avail;
+          const dim = (kind === "current" && !!r && !!e.avail) || e.no;
           const st = gameState(e.fa.nfl);
           const isWatched = watched(e.fa.id);
           const num = (n: number | null | undefined) => (n === null ? "Bye" : n === undefined ? "–" : n.toFixed(1));
@@ -330,7 +372,8 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
           const lineup = <span><i>Your lineup</i><b className={e.gain > 0.05 ? "good" : "flat"}>{loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change"}</b></span>;
           const bid = r && <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.kdef ? "Low priority" : r.tier}</b></span>;
           const rostered = e.fa.rostered !== undefined && <span><i>Rostered</i><b>{e.fa.rostered}%</b></span>;
-          const stats: ReactNode = kind === "past" ? <>
+          const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
+            : kind === "past" ? <>
               <span className="wv3-wide"><i>Week {week}</i><b>{e.pts === null ? "On bye" : !e.c ? "–" : e.c.line ?? "Didn't play"}</b></span>
               <LastThree v={e.l3} weeks={l3Weeks} />
               {lineup}
@@ -359,7 +402,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
             <Avatar p={e.fa} size={40} />
             <span className="wv-who">
               <span className="wv-name">{e.fa.name}{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
-                {e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
+                {e.no ? <span className="wv-tag ps-tag">Not interested</span> : e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
                 {kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
               <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
             </span>
@@ -368,20 +411,26 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
           </>;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           return (
-            <div key={e.fa.id} data-id={e.fa.id} className={`wv${isOpen ? " open" : ""}${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}`}>
-              {r ? <button className="wv-row" onClick={() => setOpen(isOpen ? null : e.fa.id)} aria-expanded={isOpen}>{inner}</button> : <div className="wv-row">{inner}</div>}
+            <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${isOpen && !e.no ? " open" : ""}${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${e.no ? " ps-no" : ""}`}>
+              {r && !e.no ? <button className="wv-row" onClick={() => setOpen(isOpen ? null : e.fa.id)} aria-expanded={isOpen}>{inner}</button> : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
                 <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="bookmark" size={16} /></button>
               </Tooltip>
-              {isOpen && r && (
+              {!e.no && <span className="ps-end">
+                <Tooltip content="Not interested. Sources stops suggesting him">
+                  <button className="ps-x" aria-label={`Not interested in ${e.fa.name}`} onClick={() => pass(e, true)}><Icon name="x" size={16} /></button>
+                </Tooltip>
+              </span>}
+              {isOpen && r && !e.no && (
                 <div className="wv-detail">
+                  {e.fit && !kd && <p className="small ps-fit">{e.fit}</p>}
                   <p className="small">{kind === "current" ? (kd ? kd.line : r.fa.why)
                     : kind === "future" ? (e.pts === null ? `${e.fa.name} is on bye in week ${week}. Projects ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.` : `${e.fa.name} projects ${num(e.pts)}${e.c?.opp ? ` ${e.c.opp}` : ""} in week ${week}, and ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.`)
                     : `${e.fa.name} scored ${act(e.pts)} in week ${week}${e.c?.line ? ` (${e.c.line})` : ""}. Projects ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.`}</p>
                   <div className="wv-grid">
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>
-                      : drop ? <><b>{drop.name}</b> ({drop.note}, your lowest bench player)</> : "Open roster spot"}</p></div>
+                      : drop ? <><b>{drop.name}</b> ({drop.note}, your lowest bench player)</> : r.noDrop ? "Nobody on your bench is worth cutting for him" : "Open roster spot"}</p></div>
                     <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
@@ -389,6 +438,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
                     <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(r.bid[1])} on` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
                       <PlatformLogo size={16} />Open Sleeper
                     </a>
+                    <button className="btn btn-sm btn-ghost ps-pass" onClick={() => pass(e, true)}>Not interested</button>
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
                   </div>
                 </div>
@@ -404,8 +454,10 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
 }
 
 /** The Top pickup card. This week it's the engine's pick; other weeks the caller passes that week's numbers. */
-function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, game: weekGame }: {
+function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, game: weekGame, onPass }: {
   rec: WaiverRec; eyebrow: string; stat: { dt: string; dd: string }; why: string | null; plan: ReactNode; starts: boolean; irMove?: string; onToast: (m: string) => void;
+  /** "Not interested": Sources stops suggesting him everywhere and the next best fills in. */
+  onPass: () => void;
   /** That week's opponent, for a week other than this one. */
   game?: string;
 }) {
@@ -413,8 +465,9 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
   const game = weekGame ?? gameOf(top.fa);
   const kd = top.kdef;
   const drop = recDrop(top);
+  const hold = useHoldHeight<HTMLElement>(top.fa.id);
   return (
-    <section className={`card topk${starts ? " gain" : ""}`} aria-label="Top pickup">
+    <section ref={hold} className={`card topk${starts ? " gain" : ""}`} aria-label="Top pickup">
       <div className="topk-head"><span className="topk-label">{eyebrow}</span><AiLabel /></div>
       <div className="topk-who">
         <Avatar p={top.fa} size={52} />
@@ -435,15 +488,37 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
           {kd?.drop ? <span>Drop <b>{kd.drop.name}</b> ({drop!.note}). A straight {top.fa.pos} swap.</span>
             : irMove ? <span>Move <b>{irMove}</b> to IR first. No drop needed.</span>
             : drop ? <span>Drop <b>{drop.name}</b> ({drop.note}).</span>
+            : top.noDrop ? <span>Nobody on your bench is worth cutting for him.</span>
             : <span>You have an open roster spot.</span>}
         </li>
       </ul>
-      <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-        onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
-        <PlatformLogo size={18} />Claim in Sleeper
-      </a>
+      <div className="ps-actions">
+        <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+          onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
+          <PlatformLogo size={18} />Claim in Sleeper
+        </a>
+        <button className="btn ps-pass" onClick={onPass} aria-label={`Not interested in ${top.fa.name}`}>Not interested</button>
+      </div>
     </section>
   );
+}
+
+/** Top pickup with nobody to pick, same frame so the column doesn't jump. */
+function EmptyTop({ label, text }: { label: string; text: string }) {
+  return <section className="card topk wv3-topk-empty" aria-label="Top pickup"><div className="topk-head"><span className="topk-label">{label}</span></div><p className="small muted">{text}</p></section>;
+}
+
+/** Keeps a card at the tallest it's been for the same slot, so swapping in the next pick never pulls the page up. */
+export function useHoldHeight<T extends HTMLElement>(key: string) {
+  const el = useRef<T | null>(null);
+  const max = useRef(0);
+  useLayoutEffect(() => {
+    const n = el.current;
+    if (!n) return;
+    n.style.minHeight = max.current ? `${max.current}px` : "";
+    max.current = Math.max(max.current, n.offsetHeight);
+  }, [key]);
+  return el;
 }
 
 /** K/DEF bids: the league's own winning K/DEF claims when there are a few, else the usual $0-$1. */

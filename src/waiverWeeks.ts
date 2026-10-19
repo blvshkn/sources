@@ -111,7 +111,7 @@ export const lastThreeWeeks = () => [WEEK - 3, WEEK - 2, WEEK - 1].filter((w) =>
 
 // ---- The week's top pickup, shared with the docked panel ----------------------------
 /** The Waivers screen's pick for a week other than this one. null = this week (the panel shows the engine's pick). */
-export interface WeekPick { week: number; kind: "past" | "future"; rec: WaiverRec; pts: number; gain: number }
+export interface WeekPick { week: number; kind: "past" | "future"; rec: WaiverRec; pts: number; gain: number; /** Why he fits, naming the weak spot. */ fit?: string | null }
 let weekPick: WeekPick | null = null;
 const pickSubs = new Set<() => void>();
 export function setWeekPick(p: WeekPick | null) {

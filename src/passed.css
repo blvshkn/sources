@@ -1,0 +1,54 @@
+/* "Not interested" on every suggestion, and the weakness line that says why a pick fits. Scoped to ps-* classes. */
+
+/* Waivers rows: a fixed end slot for the Not interested control, so every row lines up */
+html:root:not(#_) .wv.ps-wv > .wv-row { padding-right: 52px; }
+html:root:not(#_) .ps-end { position: absolute; right: 8px; top: 16px; z-index: 1; display: flex; width: 36px; height: 36px; line-height: 0; }
+html:root:not(#_) .ps-end > * { display: flex; }
+html:root:not(#_):not(#_) .ps-x { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--faint); cursor: pointer; transition: background-color 160ms ease, color 160ms ease; }
+@media (hover: hover) { html:root:not(#_):not(#_) .ps-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
+html:root:not(#_) .ps-x:active { transform: scale(0.92); }
+html:root:not(#_) .ps-x:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
+
+/* Passed rows: still there to find, dimmed, with a way back. The way back stays full strength. */
+html:root:not(#_) .wv.ps-no .wv-row { opacity: 1; cursor: default; }
+html:root:not(#_) .wv.ps-no .wv-row > :not(.wv-stats) { opacity: 0.5; }
+html:root:not(#_) .wv.ps-no .wv3-watch { opacity: 0.5; }
+html:root:not(#_) .wv-tag.ps-tag { background: var(--surface-3); color: var(--muted); }
+html:root:not(#_) .ps-again-line { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_) .ps-again-line > span { opacity: 0.7; }
+html:root:not(#_) .ps-again { min-height: 32px; font-size: 0.8125rem; color: var(--ink); }
+
+/* The why-line that names the weak spot */
+html:root:not(#_) .ps-fit { color: var(--ink); }
+html:root:not(#_) .wv-detail .ps-fit { margin-bottom: 4px; font-weight: 600; }
+
+/* Top pickup card: claim and pass side by side */
+html:root:not(#_) .topk .ps-actions { display: flex; gap: 8px; align-items: stretch; justify-self: stretch; width: 100%; }
+html:root:not(#_) .topk .ps-actions .topk-cta { flex: 1 1 auto; min-width: 0; }
+html:root:not(#_) .topk .ps-actions .ps-pass { flex: none; height: 44px; padding: 0 14px; white-space: nowrap; }
+html:root:not(#_) .wv-detail .ps-pass { white-space: nowrap; }
+
+/* Docked panel */
+html:root:not(#_) .ps-ctx-acts { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+html:root:not(#_) .ps-ctx-pass { min-height: 32px; font-size: 0.8125rem; color: var(--muted); }
+@media (hover: hover) { html:root:not(#_) .ps-ctx-pass:hover { color: var(--ink); } }
+html:root:not(#_) .pctx-pick .ps-fit { margin: 2px 0 6px; }
+
+/* Quick moves: the waiver row gets the same end-slot control */
+html:root:not(#_) .ps-brief { position: relative; }
+html:root:not(#_) .ps-brief > .brief-row > .grow { margin-right: 40px; }
+html:root:not(#_):not(#_) .ps-brief > .ps-x, html:root:not(#_):not(#_) .ps-brief > span > .ps-x { position: absolute; right: 22px; top: 50%; translate: 0 -50%; }
+
+/* Inbox */
+html:root:not(#_) .ps-ibx-pass { min-height: 32px; padding: 0 4px; font-size: 0.8125rem; color: var(--muted); }
+@media (hover: hover) { html:root:not(#_) .ps-ibx-pass:hover { color: var(--ink); } }
+
+/* Settings: Players you passed on */
+html:root:not(#_) .ps-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; }
+html:root:not(#_) .ps-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 4px 0; border-top: 1px solid var(--line); font-size: 0.875rem; }
+html:root:not(#_) .ps-list li:last-child { border-bottom: 1px solid var(--line); }
+
+/* The end-slot button sits in its slot, whatever other row button rules say */
+html:root:not(#_):not(#_) .ps-end .ps-x { position: static; inset: auto; translate: none; margin: 0; }
+/* Passed row's way back reads as one line, not a squeezed stat column */
+html:root:not(#_):not(#_) .wv-row > .wv-stats > .ps-again-line { width: auto; white-space: nowrap; }

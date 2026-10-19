@@ -2,21 +2,23 @@ import { DEADLINES, FAAB, ManagerTag, TEAMS, YOU, sleeperUrl } from "../data";
 import { TeamNeeds, WaiverRec, bidDollars, fmt, groupsFor, irReport, recDrop, tendencies } from "../engine";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { bidText } from "./Waivers";
+import { bidText, useHoldHeight } from "./Waivers";
 import { useWeekPick } from "../waiverWeeks";
 
 /** Waivers, in the docked panel: what you can spend, when claims run, and the one add worth making.
  *  Same numbers and wording as the Waivers screen's top pickup card. */
-export function WaiverContext({ top: thisWeek, onToast }: { top?: WaiverRec; onToast: (m: string) => void }) {
+export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: { top?: WaiverRec; onToast: (m: string) => void; passed?: string[]; onPass?: (p: { id: string; name: string }) => void }) {
   const run = DEADLINES.waivers.replace(/^Waivers run\s*/i, "") || "Weekly";
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
   // Following the week picked on the Waivers screen: that week's pick, its number and what it does for your lineup
-  const wp = useWeekPick();
+  const pick = useWeekPick();
+  const wp = pick && !passed.includes(pick.rec.fa.id) ? pick : null;
   const top = wp ? wp.rec : thisWeek;
   const starts = wp ? wp.gain > 0.05 : !!top && top.gain > 0.05;
   const drop = top ? recDrop(top) : null;
   const kd = top?.kdef;
+  const hold = useHoldHeight<HTMLDivElement>(top?.fa.id ?? "");
   return (
     <section className="ibx-ctx pctx" aria-label="Waivers">
       <div className="ibx-ctx-head"><b>Waivers</b><span className="pctx-sub">Runs {run}</span></div>
@@ -35,7 +37,7 @@ export function WaiverContext({ top: thisWeek, onToast }: { top?: WaiverRec; onT
         <p className="pctx-note">Rolling waiver priority. Claims go in order.</p>
       )}
       {top ? (
-        <div className="pctx-pick">
+        <div className="pctx-pick" ref={hold}>
           <span className="pctx-eyebrow">{wp ? `${wp.kind === "past" ? "Top scorer" : "Top pickup"}, week ${wp.week}` : "Top pickup"}</span>
           <div className="pctx-row">
             <Avatar p={top.fa} size={28} badge={false} />
@@ -51,12 +53,16 @@ export function WaiverContext({ top: thisWeek, onToast }: { top?: WaiverRec; onT
             <li>{kd?.drop ? <>Drop <b>{kd.drop.name}</b>.</> : irMove ? <>Move <b>{irMove.name}</b> to IR first. No drop needed.</>
               : drop ? <>Drop <b>{drop.name}</b>.</> : "You have an open roster spot."}</li>
           </ul>
-          <a className="linkish pctx-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-            onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(top.bid[1])} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
-            Claim in Sleeper
-          </a>
+          {(wp ? wp.fit : !kd && top.fit) && <p className="pctx-note ps-fit">{wp ? wp.fit : top.fit}</p>}
+          <span className="ps-ctx-acts">
+            <a className="linkish pctx-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(top.bid[1])} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
+              Claim in Sleeper
+            </a>
+            {onPass && <button className="linkish ps-ctx-pass" onClick={() => onPass({ id: top.fa.id, name: top.fa.name })} aria-label={`Not interested in ${top.fa.name}`}>Not interested</button>}
+          </span>
         </div>
-      ) : <p className="pctx-note">Nothing on the wire beats your bench this week.</p>}
+      ) : <p className="pctx-note">Nothing on the wire fixes a weak spot this week.</p>}
     </section>
   );
 }

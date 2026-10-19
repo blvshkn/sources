@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
+import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
 import { loadLeague } from "./sleeper";
 import { Matchup } from "./components/Matchup";
 import { HowItWorks, Legal } from "./components/About";
@@ -36,6 +36,10 @@ import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
+
+/** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
+const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
+  ?? id.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup" | "how" | "legal";
 const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean; hidden?: boolean }[] = [
@@ -218,8 +222,22 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     .sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) + (b.t.fillsWant ? 1 : 0) - Math.min(a.t.youDelta, a.t.themDelta) - (a.t.fillsWant ? 1 : 0))
     .slice(0, 3), [needs, suggestionsByTeam, active]);
 
+  // Every free agent, ranked weakness first. Waivers lists them all (passed ones dimmed); every other surface
+  // only sees the ones you haven't passed on, and only recommends a real pick.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const recs = useMemo(() => waiverRecs(YOU), [fkey]);
+  const allRecs = useMemo(() => waiverRecs(YOU), [fkey]);
+  const recs = useMemo(() => allRecs.filter((r) => !passed.includes(r.fa.id)), [allRecs, passed]);
+  const topRec = recs.find((r) => r.pick);
+  /** "Not interested": one list per league, shared by trade ideas and every waiver suggestion. */
+  const passPlayer = useCallback((p: { id: string; name: string }) => {
+    setPassed((c) => [...c.filter((x) => x !== p.id), p.id]);
+    haptic();
+    setToast(`Got it. Sources won't suggest ${p.name} again.`, () => setPassed((c) => c.filter((x) => x !== p.id)));
+  }, [setPassed, setToast]);
+  const unpassPlayer = useCallback((p: { id: string; name: string }) => {
+    setPassed((c) => c.filter((x) => x !== p.id));
+    setToast(`${p.name} is back in suggestions.`, () => setPassed((c) => [...c.filter((x) => x !== p.id), p.id]));
+  }, [setPassed, setToast]);
   const diff = useMemo(() => sleeperDiff(yourLineup), [yourLineup]);
   const coach = useCallback((t: Trade) => counterFor(t, active, myTags, prices), [active, myTags, prices]);
 
@@ -304,14 +322,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         trades: nt ? [nt] : [], time: demo ? "2 hr ago" : "Today", deadline: DEADLINES.trade,
       });
     }
-    // Waivers
-    const w = recs[0];
+    // Waivers: the best pick that fixes a weak spot (or a real hole), never one you passed on
+    const w = topRec;
     const wDrop = w && recDrop(w);
     if (w) list.push({
-      id: "waiver", kind: "waiver", headline: w.kdef?.fix ? w.kdef.line.split(".")[0] + "." : demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`,
+      id: `waiver-${w.fa.id}`, kind: "waiver", headline: w.kdef?.fix ? w.kdef.line.split(".")[0] + "." : w.fit ? `${w.fa.name} is your best add this week.` : demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`,
       emph: w.kdef ? (FAAB.enabled ? `Grab ${w.fa.name} for $${bidDollars(w.bid[1])} or less.` : "Put in a low priority claim.") : FAAB.enabled ? `Bid ${w.bid[0]} to ${w.bid[1]} percent.` : "Put in a claim.",
-      why: `${w.fa.name} adds ${fmt(w.gain)} to your starters${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely cost more than a dollar." : "Based on what wins in your league."}`,
-      trades: [], time: "Today", deadline: DEADLINES.waivers, go: { label: "Open waivers", tab: "waivers" },
+      why: `${w.kdef ? `${w.fa.name} adds ${fmt(w.gain)} to your starters` : w.fit ? w.fit.replace(/\.$/, "") : `${w.fa.name} adds ${fmt(w.gain)} to your starters`}${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely cost more than a dollar." : "Bid based on what wins in your league."}`,
+      trades: [], time: "Today", deadline: DEADLINES.waivers, go: { label: "Open waivers", tab: "waivers" }, pass: { id: w.fa.id, name: w.fa.name },
     });
     // Aging tags
     active.filter((t) => t.weeksOld >= 3).slice(0, 1).forEach((t) => list.push({
@@ -337,7 +355,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const briefing: Briefing = {
     lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
     trade: partners[0]?.t ?? null,
-    waiver: recs[0] ? `${recs[0].fa.name}: bid ${recs[0].bid[0]}-${recs[0].bid[1]}%${recDrop(recs[0]) ? `, drop ${recDrop(recs[0])!.name}` : ""}` : "Nothing worth a claim this week.",
+    waiver: topRec ? `${topRec.fa.name}: bid ${topRec.bid[0]}-${topRec.bid[1]}%${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
+    waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
   };
 
   const askStarters = useMemo(() => {
@@ -425,7 +444,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (r.kind === "refuses") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "refuses", playerId: r.playerId, text: `Won't move ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${playerById(r.playerId).name} is off the table in ideas with ${them.manager}.`; }
     if (r.kind === "notInterested") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "notInterested", playerId: r.playerId, text: `Not interested in ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${them.manager} won't see ${playerById(r.playerId).name} in ideas.`; }
     if (r.kind === "keeping") { setMyTags((c) => ({ ...c, [r.playerId]: "untouchable" })); msg = `${playerById(r.playerId).name} marked untouchable. He's out of every trade idea.`; }
-    if (r.kind === "pass") { const id = r.playerId; setPassed((c) => [...c.filter((x) => x !== id), id]); msg = `Got it. ${playerById(id).name} won't come back to you in any idea. Undo in Settings.`; }
+    if (r.kind === "pass") { const id = r.playerId; setPassed((c) => [...c.filter((x) => x !== id), id]); msg = `Got it. Sources won't suggest ${playerById(id).name} again.`; }
     if (r.kind === "paused") { setPausedTeams((c) => [...c.filter((x) => x !== them.id), them.id]); msg = `No more ideas with ${them.manager} for now. Turn it back on in Settings.`; }
     if (r.kind === "note") { const parsed = parseTag(`${them.manager} ${r.text}`); if (parsed.tag) { setTags((c) => [...c, { ...parsed.tag!, id: `u${Date.now()}` }]); msg = `Saved: ${parsed.tag.text}. Ideas now follow it.`; } }
     haptic();
@@ -447,7 +466,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const newsPlayers = useMemo(() => yourPlayers(), [fkey, YOU.roster.join()]);
   const rosterNews = useRosterNews(newsPlayers);
   const urgent = useMemo(() => urgentNews(newsPlayers, rosterNews.byId), [rosterNews.byId, newsPlayers]);
-  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag, news: urgent })
+  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
   [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
@@ -537,7 +556,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
-              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
+              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onPass={passPlayer}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")}
               onKeepTag={keepTag} onClearTag={clearTag} />
@@ -560,8 +579,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setPrice={(id, p) => setPrices((c) => { const n = { ...c }; if (p) n[id] = p; else delete n[id]; return n; })}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
-          {tab === "waivers" && <Waivers recs={recs} onToast={setToast} watch={watch} onWatch={setWatch} />}
-          {tab === "ask" && <Ask initial={askSeed} answer={(q) => ask(q, active, myTags, prices)} onLink={onLink} starters={askStarters} />}
+          {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q) => ask(q, active, myTags, prices, passed)} onLink={onLink} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
@@ -572,7 +591,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               onDelete={onDeleteAll}
               onGo={(t) => go(t as Tab)}
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
-              hiddenCount={hiddenIdeas.length + passed.length} onUnhide={() => { setHiddenIdeas([]); setPassed([]); setToast("Hidden trade ideas are back."); }}
+              hiddenCount={hiddenIdeas.length} onUnhide={() => { const prev = hiddenIdeas; setHiddenIdeas([]); setToast("Hidden trade ideas are back.", () => setHiddenIdeas(prev)); }}
+              passed={passed.map((id) => ({ id, name: playerName(id) }))} onBringBack={(p) => unpassPlayer(p)}
+              onClearPassed={() => { const prev = passed; setPassed([]); setToast(`Cleared. Sources can suggest ${prev.length === 1 ? "that player" : `those ${prev.length} players`} again.`, () => setPassed(prev)); }}
               onReplay={onReconnect} />
           )}
           </Fragment>
@@ -588,7 +609,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           onDismiss={dismissItem} onClose={closeInbox}
           onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
           context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} />
-            : tab === "waivers" ? <WaiverContext top={recs[0]} onToast={setToast} />
+            : tab === "waivers" ? <WaiverContext top={topRec} onToast={setToast} passed={passed} onPass={passPlayer} />
             : tab === "trade" ? <>{[partnerId, ...extra.map((l) => l.teamId)].map((id) => <PartnerContext key={id} partnerId={id} needs={needs} tags={active} onNotes={() => { if (id !== partnerId) setPartner(id); go("trade:notes"); }} />)}</>
             : null} />
       </aside>

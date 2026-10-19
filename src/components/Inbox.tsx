@@ -20,13 +20,16 @@ export interface InboxItem {
   action: { label: string; run: () => void };
   /** Nudges teach Sources what you don't want; game-day items just leave the list. */
   nudge?: Nudge;
+  /** A suggested player: "Not interested" takes him out of every suggestion. */
+  pass?: () => void;
+  passName?: string;
 }
 
 const lockShort = () => DEADLINES.lock.replace(/^Lineups lock\s*/i, "Locks ");
 
 /** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
  *  Lineup and Wire screens use, so nothing here is invented for the feed. */
-export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTag, news = [] }: {
+export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTag, news = [], pass }: {
   nudges: Nudge[];
   checks: Check[];
   lineup: Lineup;
@@ -36,6 +39,7 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
   keepTag: (id: string) => void;
   /** Your starters with a status story in the last day. */
   news?: { p: Player; n: NewsItem }[];
+  pass?: (p: { id: string; name: string }) => void;
 }): InboxItem[] {
   const out: InboxItem[] = [];
   const lock = DEADLINES.lock ? lockShort() : "Before lock";
@@ -86,7 +90,8 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
       : n.go ? { label: n.go.label, run: () => go(n.go!.tab) }
       : { label: "Open the wire", run: () => go("wire:intel") };
     const icon: IconName = n.kind === "offer" ? "send" : n.kind === "need" ? "trade" : n.kind === "waiver" ? "waivers" : n.kind === "stale" ? "clock" : n.kind === "slot" ? "values" : n.kind === "lineup" ? "helmet" : "alert";
-    out.push({ id: n.id, icon, text, meta, urgent: n.kind === "ir" || n.kind === "lineup", ai: n.kind === "need" || n.kind === "news" || n.kind === "slot", action, nudge: n });
+    out.push({ id: n.id, icon, text, meta, urgent: n.kind === "ir" || n.kind === "lineup", ai: n.kind === "need" || n.kind === "news" || n.kind === "slot" || n.kind === "waiver", action, nudge: n,
+      pass: n.pass && pass ? () => pass(n.pass!) : undefined, passName: n.pass?.name });
   });
 
   // Urgent first; otherwise the order above (live, then newest wire items) holds
@@ -154,6 +159,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                 <p className="ibx-text">{it.text}</p>
                 <span className="ibx-acts">
                   <button className="btn btn-sm ibx-go" onClick={() => { onRead(it.id); it.action.run(); }}>{it.action.label}</button>
+                  {it.pass && <button className="linkish ps-ibx-pass" onClick={() => { onRead(it.id); it.pass!(); }} aria-label={`Not interested in ${it.passName}`}>Not interested</button>}
                   <button className="ibx-x" onClick={() => onDismiss(it)} aria-label={`Dismiss: ${it.text}`}><Icon name="x" size={14} /></button>
                 </span>
               </div>

@@ -25,7 +25,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
@@ -38,6 +38,8 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   onGo: (tab: string) => void;
   paused: { id: string; manager: string }[]; onResume: (id: string) => void;
   hiddenCount: number; onUnhide: () => void;
+  /** Players you said you're not interested in. One list per league, shared by trade ideas and every waiver suggestion. */
+  passed?: { id: string; name: string }[]; onBringBack?: (p: { id: string; name: string }) => void; onClearPassed?: () => void;
   accounts?: Account[]; activeUserId?: string;
   onRemoveAccount?: (userId: string) => void; onAddAccount?: () => void; onSwitchLeague?: () => void;
 }) {
@@ -138,6 +140,17 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <span className="grow"><b>What Sources learned</b><span className="small muted" style={{ display: "block" }}>{muted.length ? `Showing fewer: ${muted.join(", ")} nudges.` : "Tap \"Not useful\" on a nudge and Sources shows fewer like it."}</span></span>
           {muted.length > 0 && <button className="btn btn-sm" onClick={resetDismissed}>Reset</button>}
         </div>
+        <div className="set-row ps-set">
+          <span className="grow"><b>Players you passed on</b><span className="small muted" style={{ display: "block" }}>{passed.length ? "Sources won't suggest them in trade ideas, waiver picks or nudges. They still show on Waivers, dimmed." : "Tap \"Not interested\" on any suggestion and Sources stops suggesting that player."}</span></span>
+          {passed.length > 1 && onClearPassed && <button className="btn btn-sm" onClick={onClearPassed}>Clear all</button>}
+        </div>
+        {passed.length > 0 && (
+          <ul className="ps-list" aria-label="Players you passed on">
+            {passed.map((p) => (
+              <li key={p.id}><span>{p.name}</span>{onBringBack && <button className="btn btn-sm" onClick={() => onBringBack(p)} aria-label={`Bring back ${p.name}`}>Bring back</button>}</li>
+            ))}
+          </ul>
+        )}
         <div className="set-row">
           <span className="grow"><b>Trade ideas you passed on</b><span className="small muted" style={{ display: "block" }}>{hiddenCount ? `${hiddenCount} hidden after you said they won't work.` : "Tap \"Won't work\" on a trade idea to tell Sources why."}</span></span>
           {hiddenCount > 0 && <button className="btn btn-sm" onClick={onUnhide}>Show again</button>}

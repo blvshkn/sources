@@ -30,6 +30,7 @@ import "./picker.css";
 import "./trade-toolbar.css";
 import "./lint-pages-a.css";
 import "./lint-overlays.css";
+import "./passed.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
