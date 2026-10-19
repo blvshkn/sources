@@ -7,20 +7,20 @@
    - rows fade out under the panel's edges (components/edgeFade.ts sets data-fade) instead of being cut in half */
 
 /* ---------- Edge fade: rows run out softly under the top and bottom of a scrolling menu ---------- */
-html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list)[data-fade="end"] {
+html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list, .qs-pick .qs-opts, .onboard .ob-teams)[data-fade="end"] {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
 }
-html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list)[data-fade="top"] {
+html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list, .qs-pick .qs-opts, .onboard .ob-teams)[data-fade="top"] {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px);
   mask-image: linear-gradient(to bottom, transparent, #000 24px);
 }
-html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list)[data-fade="both"] {
+html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list, .qs-pick .qs-opts, .onboard .ob-teams)[data-fade="both"] {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 32px), transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 32px), transparent);
 }
 /* Keyboard moves keep the highlighted row clear of the fade */
-html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list) { scroll-padding-block: 24px 32px; }
+html:root:not(#_):not(#_) :is(.tp-pop > .tp-list, .mt-menu > .mt-list, .sel-menu > .sel-list, .qs-pick .qs-opts, .onboard .ob-teams) { scroll-padding-block: 24px 32px; }
 
 /* ---------- Trade: "Trading with" menu ----------
    Was the list itself: 12px corners under a fully rounded 52px pill, a soft single shadow that disappeared on the
@@ -71,3 +71,24 @@ html:root:not(#_):not(#_) :is(.tp-pop, .mt-menu) .tp-list:focus-visible .tp-opt.
 html:root:not(#_):not(#_) :is(.tp-pop, .mt-menu) .tp-list:focus { outline: none; }
 /* FirstRun takes focus on open (so Tab and Escape work); the dialog itself shows no ring */
 html:root:not(#_):not(#_) .onboard:focus { outline: none; }
+
+/* ---------- Player sheet: the body fades under the fixed header and the bottom edge ----------
+   Its last visible row (Pass TD at 1440x900) was cut straight through. The thumb lives beside the body, so it isn't masked. */
+html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="end"] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
+}
+html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="top"] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20px);
+  mask-image: linear-gradient(to bottom, transparent, #000 20px);
+}
+html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="both"] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 32px), transparent);
+}
+
+/* ---------- Trade: add-player picker ----------
+   At 390 and 1024 it opened below the fold, under the tab bar. Opening scrolls it fully into view (Trade.tsx);
+   the margin keeps its bottom clear of the tab bar on phones. */
+html:root:not(#_):not(#_) .qs-pick { scroll-margin-bottom: 16px; scroll-margin-top: 16px; }
+@media (max-width: 860px) { html:root:not(#_):not(#_) .qs-pick { scroll-margin-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }

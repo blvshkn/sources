@@ -185,6 +185,8 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
   const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-ghost, .qs-add")?.focus()); };
   useEffect(() => {
     if (!adding) return;
+    // The picker drops over the page; bring all of it on screen (clear of the phone tab bar, lint-overlays.css)
+    requestAnimationFrame(() => wrap.current?.querySelector(".qs-pick")?.scrollIntoView({ block: "nearest" }));
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);

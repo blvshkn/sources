@@ -39,6 +39,7 @@ import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
 import { scrollAreas } from "./components/ScrollArea";
+import { edgeFades } from "./components/edgeFade";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -50,3 +51,4 @@ monoNumbers(document.getElementById("root")!);
 chartReveal(document.getElementById("root")!);
 iconMotion();
 scrollAreas();
+edgeFades();

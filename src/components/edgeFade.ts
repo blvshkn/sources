@@ -46,3 +46,25 @@ export function roomBelow(anchor: Element, gap = 8): number {
   const floor = bar && bar.height > 0 && bar.top < window.innerHeight ? bar.top : window.innerHeight;
   return Math.floor(floor - b.bottom - gap - 16);
 }
+
+/** Scrollers in markup this file doesn't own that fade their rows too: the add-player list and FirstRun's team list. */
+export const EDGE_FADES = [".qs-pick .qs-opts", ".onboard .ob-teams"].join(", ");
+
+/** Attach edgeFade to every EDGE_FADES scroller as it mounts, and clean up as it unmounts. */
+export function edgeFades(root: HTMLElement = document.body): () => void {
+  const live = new Map<HTMLElement, () => void>();
+  let raf = 0;
+  const scan = () => {
+    raf = 0;
+    for (const [el, off] of live) if (!el.isConnected) { off(); live.delete(el); }
+    for (const el of Array.from(root.querySelectorAll<HTMLElement>(EDGE_FADES))) if (!live.has(el)) live.set(el, edgeFade(el));
+  };
+  const mo = new MutationObserver((recs) => {
+    // Ignore our own data-fade writes and the scrollbar thumb's moves
+    if (recs.every((r) => r.type === "attributes" || (r.target instanceof Element && r.target.closest(".sa-track")))) return;
+    if (!raf) raf = requestAnimationFrame(scan);
+  });
+  mo.observe(root, { childList: true, subtree: true });
+  scan();
+  return () => { mo.disconnect(); cancelAnimationFrame(raf); for (const off of live.values()) off(); live.clear(); };
+}

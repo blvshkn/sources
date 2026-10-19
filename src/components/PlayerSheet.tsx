@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useEdgeFade } from "./edgeFade";
 import { ScrollArea } from "./ScrollArea";
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
@@ -30,6 +31,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   const sheet = useRef<HTMLElement>(null);
   useFocusTrap(sheet);
   const body = useRef<HTMLDivElement>(null);
+  useEdgeFade(body);
   const scrim = useRef<HTMLDivElement>(null);
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it
   usePullToDismiss(sheet,
