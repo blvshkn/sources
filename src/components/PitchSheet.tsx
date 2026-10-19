@@ -28,26 +28,32 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
  * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
  */
-/** The field from the landing, laid back in perspective across the bottom of the card and fading up into the dark. */
+/**
+ * The landing's field, projected the same way: a turf plane tipped back in perspective. Long lines run away
+ * from you and meet at the horizon, two rows of hash marks cross them, and it all fades out toward the edges.
+ * No grid of horizontal lines, so it reads as a football field rather than graph paper.
+ */
 function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: number) => string) {
   const f = document.createElement("canvas"); f.width = W; f.height = H;
   const h = f.getContext("2d"); if (!h) return;
-  const top = H * 0.38, vx = W / 2, vy = top - H * 0.55;
-  const atY = (x0: number, y: number) => vx + (x0 - vx) * ((y - vy) / (H - vy));
-  // Long lines running away from you, meeting far above the card
-  h.strokeStyle = A(0.22); h.lineWidth = 2;
-  for (let x0 = -W; x0 <= W * 2; x0 += 180) { h.beginPath(); h.moveTo(atY(x0, top), top); h.lineTo(x0, H); h.stroke(); }
-  // Yard lines, closer together the farther away they are, with hash marks between the long lines
-  for (let k = 1; k <= 9; k++) {
-    const y = top + (H - top) * Math.pow(k / 9, 1.8), s = (y - vy) / (H - vy);
-    h.strokeStyle = "rgba(255,255,255,0.07)"; h.lineWidth = 1 + s;
-    h.beginPath(); h.moveTo(0, y); h.lineTo(W, y); h.stroke();
-    h.strokeStyle = "rgba(255,255,255,0.09)";
-    for (let x0 = -W + 90; x0 <= W * 2; x0 += 180) { const x = atY(x0, y); if (x < -20 || x > W + 20) continue; h.beginPath(); h.moveTo(x, y - 7 * s); h.lineTo(x, y + 7 * s); h.stroke(); }
+  const hy = H * 0.44, K = H - hy, vx = W / 2;
+  // Plane point (x across, z away) to screen; z = 1 is the bottom edge of the card
+  const sx = (x: number, z: number) => vx + (x * K) / z, sy = (z: number) => hy + K / z;
+  const zFar = 9;
+  h.lineCap = "round";
+  // Long lines, the same spacing the landing uses
+  h.strokeStyle = A(0.2); h.lineWidth = 2;
+  for (let x = -3.2; x <= 3.2001; x += 0.32) { h.beginPath(); h.moveTo(sx(x, 1), sy(1)); h.lineTo(sx(x, zFar), sy(zFar)); h.stroke(); }
+  // Two rows of hash marks, short ticks running away from you
+  h.strokeStyle = "rgba(242,244,241,0.16)";
+  for (const z of [1.5, 2.4]) {
+    h.lineWidth = 2.2 / z;
+    for (let x = -3.2; x <= 3.2001; x += 0.046) { h.beginPath(); h.moveTo(sx(x, z), sy(z)); h.lineTo(sx(x, z + 0.07 * z), sy(z + 0.07 * z)); h.stroke(); }
   }
-  // Fade it in from the middle of the card down
+  // Fade like the landing: strongest at the bottom middle, gone by the sides and the horizon
   h.globalCompositeOperation = "destination-in";
-  const m = h.createLinearGradient(0, top, 0, H); m.addColorStop(0, "rgba(0,0,0,0)"); m.addColorStop(0.45, "rgba(0,0,0,0.9)"); m.addColorStop(1, "rgba(0,0,0,1)");
+  const m = h.createRadialGradient(W / 2, H, 0, W / 2, H, Math.max(W * 0.72, K * 1.25));
+  m.addColorStop(0, "rgba(0,0,0,1)"); m.addColorStop(0.45, "rgba(0,0,0,0.85)"); m.addColorStop(1, "rgba(0,0,0,0)");
   h.fillStyle = m; h.fillRect(0, 0, W, H);
   g.drawImage(f, 0, 0);
 }
