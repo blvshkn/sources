@@ -39,6 +39,7 @@ function cornerClearance(el: HTMLElement): Rect {
 }
 
 const attached = new WeakMap<HTMLElement, () => void>();
+let seq = 0;
 
 /** Give one scrolling element the custom scrollbar. Returns a cleanup. Safe to call twice. */
 export function attachScrollbar(el: HTMLElement): () => void {
@@ -52,7 +53,9 @@ export function attachScrollbar(el: HTMLElement): () => void {
   thumb.className = "sa-thumb";
   track.appendChild(thumb);
 
-  el.setAttribute("data-sa", "");
+  const id = String(++seq);
+  el.setAttribute("data-sa", id);
+  track.setAttribute("data-sa-for", id);
   const parent = el.parentElement;
   const elPos = getComputedStyle(el).position;
   // Beside the scroller when its parent positions it; inside it otherwise
@@ -90,6 +93,16 @@ export function attachScrollbar(el: HTMLElement): () => void {
     } else {
       track.style.top = `${el.scrollTop + bt + clear.top}px`;
       track.style.left = `${el.scrollLeft + el.clientWidth - LANE}px`;
+    }
+    if (beside) {
+      // The track lives outside the scroller, so it copies the scroller's transform and opacity (a sheet sliding
+      // in, or being pulled down) to stay glued to the rounded box
+      const tf = cs.transform;
+      if (tf && tf !== "none") {
+        track.style.transformOrigin = `${el.offsetLeft + el.offsetWidth / 2 - parseFloat(track.style.left)}px ${el.offsetTop + el.offsetHeight / 2 - parseFloat(track.style.top)}px`;
+        track.style.transform = tf;
+      } else track.style.transform = "";
+      thumb.style.opacity = cs.opacity === "1" ? "" : cs.opacity;
     }
     track.style.height = `${trackH}px`;
     thumb.style.height = `${thumbH}px`;
@@ -167,6 +180,11 @@ export function attachScrollbar(el: HTMLElement): () => void {
     observeKids(); schedule();
   });
   mo.observe(el, { childList: true, subtree: true, characterData: true });
+  // Inline transforms (pull-to-dismiss) and transitions on the scroller move a beside-mounted track with it
+  const so = new MutationObserver(schedule);
+  if (beside) so.observe(el, { attributes: true, attributeFilter: ["style", "class"] });
+  const onTrans = () => schedule();
+  el.addEventListener("transitionend", onTrans);
   schedule();
 
   const destroy = () => {
@@ -177,7 +195,8 @@ export function attachScrollbar(el: HTMLElement): () => void {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerleave", onLeave);
     window.removeEventListener("resize", schedule);
-    ro.disconnect(); mo.disconnect();
+    el.removeEventListener("transitionend", onTrans);
+    ro.disconnect(); mo.disconnect(); so.disconnect();
     track.remove();
     el.removeAttribute("data-sa");
     if (setPos) el.style.position = "";
