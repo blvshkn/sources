@@ -70,7 +70,7 @@ export function PartnerContext({ partnerId, needs, tags, onNotes }: { partnerId:
       <div className="pctx-row pctx-team">
         <TeamAvatar t={t} size={32} />
         <span className="pctx-who"><b>{t.name}</b><small>{t.manager} · {t.record} · #{n.rank} power</small></span>
-        <span className={`pctx-mode ${n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : ""}`}>{n.mode}</span>
+        <span className={`pctx-mode ${n.mode === "Contender" ? "good" : ""}`}>{n.mode}</span>
       </div>
       <div className="pctx-vs" aria-label="Starting lineup points against league average">
         {groupsFor().map((g) => {

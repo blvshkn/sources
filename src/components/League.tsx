@@ -187,7 +187,7 @@ export function League({ needs, tags, fade, focusId, onFocused, partners, onTrad
               <header className="tc-head">
                 <TeamAvatar t={t} size={40} />
                 <span className="tc-who"><b className="team-name">{t.name}<Trophy teamId={t.id} focusable /></b><small>{t.you ? "You" : t.manager} · {t.record}</small></span>
-                <span className={`tc-mode ${n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : ""}`}>{n.mode}</span>
+                <span className={`tc-mode ${n.mode === "Contender" ? "good" : ""}`}>{n.mode}</span>
               </header>
               <dl className="ti-stats tc-stats">
                 <div className="ti-stat"><dt><Tooltip focusable content="Power rank: starting lineup strength against the other teams. 1 is strongest."><span className="tt-term">Power</span></Tooltip></dt><dd>#{n.rank}</dd></div>

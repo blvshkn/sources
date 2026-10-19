@@ -3,7 +3,7 @@ import { usePullToDismiss } from "./sheetDrag";
 import { Trade, fmt, needsFor } from "../engine";
 import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch } from "../pitch";
-import { sleeperId } from "../jersey";
+import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 
 // Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
@@ -61,6 +61,7 @@ function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: num
   g.drawImage(f, 0, 0);
 }
 
+/** The card is shared outside the app, so it defaults to initials in team colors: no player likeness or NFL marks. Pass { photos: true } to opt in to headshots. */
 export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: boolean } = {}): Promise<Blob | null> {
   const them = teamById(t.partnerId);
   const W = 1080, H = 1350, X = 72;
@@ -96,19 +97,19 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   // Players
   const total = t.give.length + t.get.length;
   const rowH = total <= 3 ? 122 : total <= 4 ? 108 : 94, av = rowH - 30;
-  const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = opts.photos === false ? undefined : sleeperId(playerById(id)); return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
+  const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = opts.photos === true ? sleeperId(playerById(id)) : undefined; return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
   let y = 440, k = 0;
   const side = (label: string, ids: string[], hot: boolean) => {
     g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); track(label, X, y, 4); y += 26;
     ids.forEach((id) => {
       const p = playerById(id), img = imgs[k++], cy = y + rowH / 2;
-      g.save(); g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.closePath(); g.fillStyle = "#1E2723"; g.fill(); g.clip();
+      g.save(); g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.closePath(); const [tc1, tc2] = teamColors(p.nfl); g.fillStyle = img ? "#1E2723" : tc1; g.fill(); g.clip();
       if (img) {
         // Sleeper thumbs aren't square: crop to cover the circle instead of squashing the face
         const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, sq = Math.min(iw, ih);
         g.drawImage(img, (iw - sq) / 2, 0, sq, sq, X, cy - av / 2, av, av);
       }
-      else { g.fillStyle = INK; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
+      else { g.fillStyle = tc2; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
       g.restore();
       g.strokeStyle = hot ? A(0.55) : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();
       g.fillStyle = INK; g.font = F(700, Math.round(rowH * 0.4)); g.fillText(p.name, X + av + 28, cy + 2, W - X * 2 - av - 28);

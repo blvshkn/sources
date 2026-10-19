@@ -75,7 +75,7 @@ export function NeedsList({ needs, tags, fade, focusId, topPartnerId, onFocused,
         const isOpen = open.includes(t.id);
         const teamTags = tags.filter((x) => x.teamId === t.id);
         const extra = n.surplus && n.surplus !== n.need ? (n.surplus as Pos) : null;
-        const tone = n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : "";
+        const tone = n.mode === "Contender" ? "good" : ""; // Seller is a trade opportunity, not bad for you: muted like Bubble
         const champ = championLabel(t.id);
         return (
           <div key={t.id} id={`team-${t.id}`} className={`nl-item${t.you ? " you" : ""}${isOpen ? " open" : ""}`}>

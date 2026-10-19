@@ -53,3 +53,7 @@ html:root:not(#_):not(#_) .wv-trend { flex: none; margin-left: 6px; font-size: 0
 html:root:not(#_):not(#_) .wv-trend.up { color: var(--good); }
 html:root:not(#_):not(#_) .wv-stats b.flat { color: var(--muted); }
 html:root:not(#_):not(#_) .bar-fill.flat { display: none; }
+
+/* Not every label is good or bad for you. A Seller is a trade opportunity, so team modes only color Contender.
+   Activity adds and drops are neutral moves: muted ink, the + / − sign carries the meaning. */
+html:root:not(#_):not(#_) .act-tag.add, html:root:not(#_):not(#_) .act-tag.drop { color: var(--muted); }
