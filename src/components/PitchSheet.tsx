@@ -87,7 +87,9 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   g.fillStyle = LIME; g.beginPath(); g.arc(X + 9, 92, 9, 0, Math.PI * 2); g.fill();
   g.fillStyle = INK; g.font = F(600, 34); g.fillText("sources", X + 30, 104);
   g.fillStyle = LIME; g.font = F(700, 22); const tag = "TRADE OFFER"; let tw = 0; for (const ch of tag) tw += g.measureText(ch).width + 5; track(tag, W - X - tw, 102, 5);
-  g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${LEAGUE_NAME || "Your league"} · Week ${WEEK}`, X, 160);
+  // Two runs: the words in Geist, the week number in Geist Mono like every other number
+  g.fillStyle = MUTED; g.font = F(500, 26); const wk = `${LEAGUE_NAME || "Your league"} · Week `; g.fillText(wk, X, 160);
+  const wkX = X + g.measureText(wk).width; g.font = FM(500, 26); g.fillText(`${WEEK}`, wkX, 160);
   g.fillStyle = INK; g.font = F(700, 78); g.fillText(`${them.manager},`, X, 270, W - X * 2);
   g.fillStyle = LIME; g.fillText("let's make a deal.", X, 356, W - X * 2);
 
