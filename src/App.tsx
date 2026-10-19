@@ -339,7 +339,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const loadTrade = (t: Trade) => { setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); go("trade"); };
   const toggle = (side: "give" | "get", id: string) => {
     const set = side === "give" ? setGive : setGet;
-    set((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 3 ? cur : [...cur, id]));
+    // Up to 10 a side, so bigger packages and roster-clearing deals fit
+    set((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 10 ? cur : [...cur, id]));
   };
   const setPartner = (id: string) => { setPartnerId(id); setGet([]); };
   const addTag = (t: Omit<ManagerTag, "id">) => {

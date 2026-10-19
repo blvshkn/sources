@@ -163,9 +163,9 @@ function DealSide({ title, team, ids, pool, onToggle }: { title: string; team: s
   return (
     <div className="qs">
       <span className="eyebrow">{title}</span>
-      {ids.length > 0 && <ul>{ids.map((id) => { const p = playerById(id); return (
-        <li key={id}><Avatar p={p} size={26} /><span className="qs-n">{p.name}<small>{p.pos} · {p.nfl}</small></span>
-          <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={14} /></button></li>
+      {ids.length > 0 && <ul className="qs-pills">{ids.map((id) => { const p = playerById(id); return (
+        <li key={id} className="qs-pill"><Avatar p={p} size={22} badge={false} /><span className="qs-n">{p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+          <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
       ); })}</ul>}
       {adding ? (
         <div className="qs-pick">
