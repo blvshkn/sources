@@ -88,3 +88,19 @@ html:root:not(#_):not(#_) .desk-bell { display: none; }
     html:root:not(#_):not(#_) .shell.wide.dock-off .rail.ibx { visibility: hidden; }
   }
 }
+
+/* ---------- Dismiss X: the same on every item ---------- */
+/* A 32px circle, centred where the old 28px square sat. On touch it's always showing and never fills: a tap leaves no
+   sticky :hover, tap highlight or focus square behind, so the item that slides up under your finger looks like the rest.
+   The tint is for hover-capable pointers only. Urgent items included. */
+html:root:not(#_):not(#_) .ibx-x {
+  top: 7px; right: 6px; width: 32px; height: 32px; border-radius: 50%;
+  background: transparent; -webkit-tap-highlight-color: transparent;
+}
+html:root:not(#_):not(#_) .ibx-meta { padding-right: 32px; }
+@media not all and (hover: hover) {
+  html:root:not(#_):not(#_) :is(.ibx-item, .ibx-item.urgent) .ibx-x,
+  html:root:not(#_):not(#_) :is(.ibx-item, .ibx-item.urgent) .ibx-x:is(:hover, :active, :focus) { opacity: 1; background: transparent !important; color: var(--faint); }
+  html:root:not(#_):not(#_) .ibx-x:focus:not(:focus-visible) { outline: none; }
+  html:root:not(#_):not(#_) .ibx-x:focus-visible { border-radius: 50%; }
+}
