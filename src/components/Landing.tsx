@@ -307,6 +307,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
+        <div className="ld2-endfield" aria-hidden="true"><div className="env-turf" /></div>
         <div className="ld2-final-panel">
           <h2 id="ld-final" className="ld2-h1 ld2-final-h">See your first trade<br />in under a minute.</h2>
           <div className="ld2-final-form">{form("ld-user-2")}</div>

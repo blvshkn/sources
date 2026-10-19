@@ -28,6 +28,30 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
  * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
  */
+/** The field from the landing, laid back in perspective across the bottom of the card and fading up into the dark. */
+function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: number) => string) {
+  const f = document.createElement("canvas"); f.width = W; f.height = H;
+  const h = f.getContext("2d"); if (!h) return;
+  const top = H * 0.38, vx = W / 2, vy = top - H * 0.55;
+  const atY = (x0: number, y: number) => vx + (x0 - vx) * ((y - vy) / (H - vy));
+  // Long lines running away from you, meeting far above the card
+  h.strokeStyle = A(0.22); h.lineWidth = 2;
+  for (let x0 = -W; x0 <= W * 2; x0 += 180) { h.beginPath(); h.moveTo(atY(x0, top), top); h.lineTo(x0, H); h.stroke(); }
+  // Yard lines, closer together the farther away they are, with hash marks between the long lines
+  for (let k = 1; k <= 9; k++) {
+    const y = top + (H - top) * Math.pow(k / 9, 1.8), s = (y - vy) / (H - vy);
+    h.strokeStyle = "rgba(255,255,255,0.07)"; h.lineWidth = 1 + s;
+    h.beginPath(); h.moveTo(0, y); h.lineTo(W, y); h.stroke();
+    h.strokeStyle = "rgba(255,255,255,0.09)";
+    for (let x0 = -W + 90; x0 <= W * 2; x0 += 180) { const x = atY(x0, y); if (x < -20 || x > W + 20) continue; h.beginPath(); h.moveTo(x, y - 7 * s); h.lineTo(x, y + 7 * s); h.stroke(); }
+  }
+  // Fade it in from the middle of the card down
+  h.globalCompositeOperation = "destination-in";
+  const m = h.createLinearGradient(0, top, 0, H); m.addColorStop(0, "rgba(0,0,0,0)"); m.addColorStop(0.45, "rgba(0,0,0,0.9)"); m.addColorStop(1, "rgba(0,0,0,1)");
+  h.fillStyle = m; h.fillRect(0, 0, W, H);
+  g.drawImage(f, 0, 0);
+}
+
 export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | null> {
   const them = teamById(t.partnerId);
   const W = 1080, H = 1350, X = 72;
@@ -46,8 +70,7 @@ export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | nul
   const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
   glow.addColorStop(0, A(0.26)); glow.addColorStop(1, A(0));
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
-  g.strokeStyle = "rgba(255,255,255,0.045)"; g.lineWidth = 2;
-  for (let y = 120; y < H; y += 120) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = 40; x < W; x += 54) { g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, y + 8); g.stroke(); } }
+  drawField(g, W, H, A);
 
   // Header
   g.fillStyle = LIME; g.beginPath(); g.arc(X + 9, 92, 9, 0, Math.PI * 2); g.fill();
