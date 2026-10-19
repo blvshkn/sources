@@ -316,6 +316,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     if (t === "league" && teamId) window.setTimeout(() => document.getElementById(`team-${teamId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
   };
+  // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
+  const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
   const loadTrade = (t: Trade) => { setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); go("trade"); };
   const toggle = (side: "give" | "get", id: string) => {
     const set = side === "give" ? setGive : setGet;
@@ -378,7 +380,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <div className="app-field" aria-hidden="true"><div className="app-turf" /></div>
       <aside className="side">
         <div className="brand">
-          <div className="lockup" style={{ ["--lh" as string]: "30px" }}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></div>
+          <button type="button" className="lockup side-logo" style={{ ["--lh" as string]: "30px" }} aria-label="Sources home" onClick={goHome}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-haspopup="dialog">
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
@@ -409,7 +411,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} onClick={() => go("wire")}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
+        <button type="button" className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} aria-label="Sources home" onClick={goHome}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <span className="top-upd" title={UPDATED}>{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span>}
           <button className="btn btn-icon btn-ghost top-bell" aria-label={`Inbox${unread ? `, ${unread} unread` : ""}`} aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>

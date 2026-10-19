@@ -32,3 +32,28 @@ html:root:not(#_):not(#_) body::before { content: none; }
 
 /* The app is dark-only, so the logo keeps its lime mark and chalk word even when the OS is in light mode */
 html:root:not(#_):not(#_) { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }
+
+/* Sidebar scrolls on its own when it's taller than the viewport (landscape phones, short tablets).
+   dvh tracks the visible area when mobile browser bars show. Children keep their height so the
+   footer gets pushed below instead of the nav squashing. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .side {
+    height: 100vh; height: 100dvh; max-height: 100dvh;
+    overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  html:root:not(#_):not(#_) .side > * { flex-shrink: 0; }
+}
+/* Short screens: tighten the spacing so more of the nav fits before anything scrolls */
+@media (min-width: 861px) and (max-height: 560px) {
+  html:root:not(#_):not(#_) .side { gap: 14px !important; padding-block: 16px !important; }
+}
+
+/* The sidebar logo is a home button. Reset the button so it sits exactly where the old div did. */
+html:root:not(#_):not(#_) .side-logo {
+  margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left;
+  cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent;
+}
+html:root:not(#_):not(#_) .side-logo:focus-visible,
+html:root:not(#_):not(#_) .top-logo:focus-visible { outline: 2px solid #D8F24A; outline-offset: 4px; border-radius: 8px; }
+html:root:not(#_):not(#_) .side-logo:active { transform: scale(0.98); }
