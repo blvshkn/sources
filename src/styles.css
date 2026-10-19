@@ -2398,7 +2398,7 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 /* The card image carries its own rounded cutout; the shadow follows that shape */
 .tcard img { filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.45)); }
 .tcard-skel { border-radius: 24px; }
-.tcard img { height: auto; object-fit: contain; background: #121413; }
+.tcard img { height: auto; object-fit: contain; background: transparent; }
 .tcard-skel { aspect-ratio: 4 / 5; }
 .tcard-skel { background: linear-gradient(110deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 200% 100%; animation: tc-shim 1.2s linear infinite; }
 @keyframes tc-shim { to { background-position: -200% 0; } }

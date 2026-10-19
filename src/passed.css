@@ -52,3 +52,10 @@ html:root:not(#_) .ps-list li:last-child { border-bottom: 1px solid var(--line);
 html:root:not(#_):not(#_) .ps-end .ps-x { position: static; inset: auto; translate: none; margin: 0; }
 /* Passed row's way back reads as one line, not a squeezed stat column */
 html:root:not(#_):not(#_) .wv-row > .wv-stats > .ps-again-line { width: auto; white-space: nowrap; }
+/* The wrapper is a block, so the row button inside it has to be told to span it; otherwise it shrinks to its
+   text and the divider stops halfway */
+html:root:not(#_):not(#_) .ps-brief { display: block; width: 100%; }
+html:root:not(#_):not(#_) .ps-brief > .brief-row { width: 100%; box-sizing: border-box; }
+html:root:not(#_):not(#_) .ps-brief > .brief-row > svg:last-child { margin-right: 44px; }
+html:root:not(#_):not(#_) .ps-brief > .brief-row > .grow { margin-right: 0; }
+html:root:not(#_):not(#_) .ps-brief > .ps-x, html:root:not(#_):not(#_) .ps-brief > span > .ps-x { right: 0; }
