@@ -899,5 +899,8 @@ export function verdictMulti(m: MultiTrade): { label: string; tone: "good" | "wa
     return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(m.youDelta)}), but ${list(losers)} ${losers.length > 1 ? "don't" : "doesn't"} gain enough to say yes. ${odds}` };
   if (m.youDelta > -0.5)
     return { label: "Barely moves you", tone: "warn", line: `Your lineup goes ${fmt(m.youDelta)} a week. A ${n}-team trade is a lot of work for that.` };
-  return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week while your partners gain. Ask for more or walk.` };
+  const gainers = m.legs.filter((l) => l.trade.themDelta >= 0.5).map((l) => l.team.manager);
+  if (!gainers.length)
+    return { label: "Nobody wins", tone: "bad", line: `Every lineup in this trade gets worse, yours by ${fmt(m.youDelta).slice(1)} a week. Start from what each team needs.` };
+  return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week while ${gainers.length === m.legs.length ? "your partners gain" : `${list(gainers)} ${gainers.length > 1 ? "gain" : "gains"}`}. Ask for more or walk.` };
 }

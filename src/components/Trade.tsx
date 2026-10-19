@@ -339,7 +339,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         <div className="tr-bar">
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
           {addPartner && view === "build" && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
-          {onProfile && <button className="btn tr-profile" onClick={onProfile} aria-expanded={profileOpen} aria-controls="inbox" title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{them.manager}'s profile</span></button>}
+          {onProfile && <button className="btn tr-profile" onClick={onProfile} aria-expanded={profileOpen} aria-controls="inbox" title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner profiles" : `${them.manager}'s profile`}</span></button>}
           <button className="btn btn-icon" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={20} /></button>
         </div>
       )}
