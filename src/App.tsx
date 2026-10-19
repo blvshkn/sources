@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { Matchup } from "./components/Matchup";
@@ -61,6 +61,19 @@ const store = {
   set(k: string, v: unknown) { try { localStorage.setItem(`sources.${k}`, JSON.stringify(v)); } catch { /* storage unavailable */ } },
   clear() { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } },
 };
+/** True while a media query matches. Read synchronously on first render so the layout never flashes. */
+const matches = (q: string) => { try { return window.matchMedia(q).matches; } catch { return false; } };
+const useMedia = (q: string) => {
+  const [m, setM] = useState(() => matches(q));
+  useEffect(() => {
+    let l: MediaQueryList; try { l = window.matchMedia(q); } catch { return; }
+    const on = () => setM(l.matches);
+    on(); l.addEventListener("change", on);
+    return () => l.removeEventListener("change", on);
+  }, [q]);
+  return m;
+};
+
 const usePersist = <T,>(k: string, init: T, fix?: (saved: unknown) => T) => {
   const [v, setV] = useState<T>(() => (fix ? fix(store.get<unknown>(k, init)) : store.get(k, init)));
   useEffect(() => store.set(k, v), [k, v]);
@@ -116,8 +129,16 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
-  // The inbox: docked as the right panel on wide screens, a slide-over from the bell or the sidebar elsewhere
+  // The inbox: a slide-over from the bell on phones, tablets and small laptops (inboxOpen). From 1241px it docks as the
+  // right panel, which the bell opens and closes; Trade only docks it from 1600px.
   const [inboxOpen, setInboxOpen] = useState(false);
+  // Docked open or closed is remembered per device, not per league. Until someone picks, it's open from 1441px
+  // and closed below, so a 1440 laptop starts with the full page.
+  const [dockPref, setDockPref] = usePersist<boolean | null>("inboxDock", null);
+  const dockOpen = dockPref ?? matches("(min-width: 1441px)");
+  const dockWide = useMedia("(min-width: 1241px)");
+  const dockTrade = useMedia("(min-width: 1600px)");
+  const [ibxFocus, setIbxFocus] = useState(0);
   const [readIds, setReadIds] = usePersist<string[]>(`${scope}.inboxRead`, []);
   const [askSeed, setAskSeed] = useState("");
   const [navKey, setNavKey] = useState(0);
@@ -388,6 +409,17 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
   [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
+  const docked = dockWide && (tab !== "trade" || dockTrade);
+  const panelOpen = docked ? dockOpen : inboxOpen;
+  const toggleInbox = (e: { currentTarget: HTMLButtonElement }) => {
+    const opening = !panelOpen;
+    // The bell rings on open (icons.tsx rings any inbox control on click); closing stays still
+    if (!opening) { const b = e.currentTarget; b.dataset.quiet = ""; window.setTimeout(() => delete b.dataset.quiet, 700); }
+    if (docked) setDockPref(opening); else setInboxOpen(opening);
+    if (opening) setIbxFocus((n) => n + 1);
+  };
+  const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
+  const bellLabel = `Inbox${unread ? `, ${unread} unread` : ""}`;
   const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
   const dismissItem = (it: InboxItem) => {
     markRead(it.id);
@@ -398,7 +430,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
 
   return (
-    <div className={`shell${tab === "trade" ? " wide" : ""}${inboxOpen ? " inbox-open" : ""}`}>
+    <div className={`shell${tab === "trade" ? " wide" : ""}${inboxOpen ? " inbox-open" : ""}${dockOpen ? "" : " dock-off"}`}>
       <a className="skip-link" href="#main">Skip to content</a>
       <div className="app-field" aria-hidden="true"><div className="app-turf" /></div>
       <aside className="side">
@@ -420,10 +452,6 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             ))}
           </div>
           <div className="nav-sep" />
-          <button className="nav-inbox" aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>
-            <span className="ix-ic"><Icon name="bell" size={20} active={inboxOpen} /></span><span className="ix-w">Inbox</span>
-            {unread > 0 && <span className="ibx-badge" aria-label={`${unread} unread`}>{unread}</span>}
-          </button>
           {TABS.filter((t) => !t.main && !t.hidden).map((t) => (
             <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
               <span className="ix-ic"><Icon name={t.icon} size={20} active={tab === t.id} /></span><span className="ix-w">{t.short}</span>
@@ -437,7 +465,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <button type="button" className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} aria-label="Sources home" onClick={goHome}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
-          <button className="btn btn-icon btn-ghost top-bell" aria-label={`Inbox${unread ? `, ${unread} unread` : ""}`} aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>
+          <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
             <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
           </button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
@@ -447,7 +475,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <main className="main" id="main" tabIndex={-1}>
         <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching("list") }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
-        <div className="main-inner" key={`${tab}:${navKey}`}>
+        <div className="main-inner">
+          {/* Desktop's inbox bell: top right of the page, the same control as the phone top bar's. Outside the keyed
+              screen below, so switching tabs never redraws it (or replays its badge). */}
+          <button type="button" className="btn btn-icon btn-ghost top-bell desk-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
+            <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
+          </button>
+          <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
@@ -487,15 +521,17 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               hiddenCount={hiddenIdeas.length} onUnhide={() => { setHiddenIdeas([]); setToast("Hidden trade ideas are back."); }}
               onReplay={onReconnect} />
           )}
+          </Fragment>
         </div>
         </IdeaFeedbackCtx.Provider>
         </LeagueCtx.Provider>
       </main>
 
       <div className="ibx-scrim" aria-hidden="true" onClick={() => setInboxOpen(false)} />
-      <aside className="rail ibx" id="inbox" aria-label="Inbox">
-        <InboxPanel items={inbox} read={readIds} open={inboxOpen} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
-          onDismiss={dismissItem} onClose={() => setInboxOpen(false)}
+      <aside className="rail ibx" id="inbox" aria-label="Inbox"
+        onKeyDown={(e) => { if (e.key === "Escape" && docked && dockOpen) { e.stopPropagation(); closeInbox(); } }}>
+        <InboxPanel items={inbox} read={readIds} open={panelOpen} focusTick={ibxFocus} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
+          onDismiss={dismissItem} onClose={closeInbox}
           onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
           context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} />
             : tab === "waivers" ? <WaiverContext top={recs[0]} onToast={setToast} />

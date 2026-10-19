@@ -20,6 +20,7 @@ import "./standings.css";
 import "./news.css";
 import "./needs-list.css";
 import "./waivers-kdef.css";
+import "./inbox-toggle.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";

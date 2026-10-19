@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Player, DEADLINES } from "../data";
 import { eff, fmt, Lineup, Trade } from "../engine";
@@ -92,8 +92,8 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
   return [...out.filter((x) => x.urgent), ...out.filter((x) => !x.urgent)];
 }
 
-/** The feed itself. Docked as the right panel on wide screens, a slide-over everywhere else. */
-export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, onClose, context, open }: {
+/** The feed itself. Docked as the right panel on wide screens (open or closed from the bell), a slide-over everywhere else. */
+export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, onClose, context, open, focusTick = 0 }: {
   items: InboxItem[];
   read: string[];
   onRead: (id: string) => void;
@@ -103,6 +103,8 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   onClose: () => void;
   context?: ReactNode;
   open: boolean;
+  /** Goes up each time someone opens the inbox from the bell. A panel that's simply docked open never takes focus. */
+  focusTick?: number;
 }) {
   const unread = items.filter((x) => !read.includes(x.id)).length;
   const [q, setQ] = useState("");
@@ -110,11 +112,20 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   const seen = useRef<Set<string> | null>(null);
   if (!seen.current) seen.current = new Set(items.map((x) => x.id));
   const head = useRef<HTMLHeadingElement>(null);
-  // Opening moves focus into the panel; closing hands it back to whatever opened it
+  // Opening from the bell moves focus into the panel; closing hands it back to whatever opened it, or to the bell
   const back = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    if (open) { back.current = document.activeElement as HTMLElement | null; head.current?.focus({ preventScroll: true }); }
-    else if (back.current && head.current?.closest("aside")?.contains(document.activeElement)) { back.current.focus({ preventScroll: true }); back.current = null; }
+    if (!focusTick) return;
+    back.current = document.activeElement as HTMLElement | null;
+    head.current?.focus({ preventScroll: true });
+  }, [focusTick]);
+  // Before paint, so focus moves while the panel is still visible (reduced motion hides it at once)
+  useLayoutEffect(() => {
+    if (open || !head.current?.closest("aside")?.contains(document.activeElement)) return;
+    const bell = [...document.querySelectorAll<HTMLElement>("button[aria-controls='inbox']")].find((b) => b.offsetParent);
+    const to = back.current?.isConnected && back.current.offsetParent ? back.current : bell;
+    to?.focus({ preventScroll: true });
+    back.current = null;
   }, [open]);
   return (
     <>

@@ -1,0 +1,90 @@
+/* Inbox entry point and the docked panel's open and closed states. Loads last.
+   - Phones and tablets (to 860px): the top bar bell opens the slide-over, as before.
+   - 861px up: the same bell sits top right of the page, on the page header row. On Trade it sits beside search.
+   - 1241px up (Trade from 1600px): the bell opens and closes the docked panel. Closed, the page takes the room.
+     The panel slides in from the right while the page column eases its width, 240ms. Reduced motion is instant. */
+
+/* ---------- The bell: one control everywhere ---------- */
+html:root:not(#_):not(#_) .top-bell {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--surface-3); color: var(--ink);
+}
+html:root:not(#_):not(#_) .top-bell[aria-expanded="true"] svg { color: var(--lime); }
+/* Closing doesn't ring it; only opening and a rising count do */
+html:root:not(#_):not(#_) .top-bell[data-quiet] .ic-bell :is(.m1, .m2) { animation: none !important; }
+
+/* Desktop copy, out of the page flow so nothing in the column moves for it */
+html:root:not(#_):not(#_) .desk-bell { display: none; }
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .main-inner { position: relative; }
+  html:root:not(#_):not(#_) .main-inner > .desk-bell {
+    display: inline-grid; place-items: center; position: absolute; z-index: 5;
+    /* Centred on the "PPR · Week 7" line */
+    top: 10px; right: 0; left: auto;
+    width: 40px !important; height: 40px; max-width: none !important; margin: 0; padding: 0;
+  }
+  html:root:not(#_):not(#_) .main-inner > .desk-bell svg { width: 22px; height: 22px; }
+  /* Lineup has no page head; its format line sits a little higher */
+  html:root:not(#_)[data-tab="roster"]:not(#_) .main-inner > .desk-bell { top: 4px; }
+  /* Screens that open with a back button (Matchup, How it works, Legal) line up with it instead */
+  html:root:not(#_):not(#_) .main-inner:has(> .st-back) > .desk-bell { top: -2px; }
+  /* Trade: beside search, same 48px size and 20px icon, with the row's 8px gap. Above the bar, which stacks at 46 */
+  html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > .desk-bell { top: 74px; z-index: 47; width: 48px !important; height: 48px; }
+  html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > .desk-bell svg { width: 20px; height: 20px; }
+  html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > :is(.tr-bar, .psr) { padding-right: 56px; box-sizing: border-box; }
+}
+
+/* ---------- Docked panel: open or closed ---------- */
+/* The panel is fixed to the right edge and slides; the grid's third track is the room it takes, and eases with it */
+@media (min-width: 1241px) {
+  html:root:not(#_):not(#_) .shell { --dock-w: 300px; --side-w: 220px; }
+  html:root:not(#_):not(#_) .shell:not(.wide).dock-off { grid-template-columns: var(--side-w) minmax(0, 1fr) 0px; }
+  html:root:not(#_):not(#_) .shell:not(.wide) .rail.ibx {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; width: var(--dock-w); height: 100vh;
+  }
+  html:root:not(#_):not(#_) .shell:not(.wide) .ibx-close { display: inline-grid; }
+  html:root:not(#_):not(#_) .shell.dock-off:not(.wide) .rail.ibx { transform: translateX(100%); visibility: hidden; }
+
+  /* Waivers: with the panel closed the page keeps its own budget and top pickup column */
+  html:root:not(#_):not(#_):not(#_) .shell.dock-off:not(.wide) .wv-layout,
+  html:root:not(#_):not(#_):not(#_) .shell.dock-off:not(.wide) .wv-aside { display: contents; }
+}
+@container pg (min-width: 760px) {
+  html:root:not(#_):not(#_):not(#_) .shell.dock-off:not(.wide) .wv-layout { display: grid; }
+  html:root:not(#_):not(#_):not(#_) .shell.dock-off:not(.wide) .wv-aside { display: flex; }
+}
+@media (min-width: 1440px) {
+  html:root:not(#_):not(#_) .shell { --dock-w: 340px; --side-w: 232px; }
+}
+@media (min-width: 1600px) {
+  html:root:not(#_):not(#_) .shell { --dock-w: 380px; --side-w: 248px; }
+  html:root:not(#_):not(#_) .shell.dock-off { grid-template-columns: var(--side-w) minmax(0, 1fr) 0px; }
+  html:root:not(#_):not(#_) .shell.wide .rail.ibx {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; width: var(--dock-w); height: 100vh;
+  }
+  html:root:not(#_):not(#_) .shell.wide .ibx-close { display: inline-grid; }
+  html:root:not(#_):not(#_) .shell.wide.dock-off .rail.ibx { transform: translateX(100%); visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @media (min-width: 1241px) {
+    html:root:not(#_):not(#_) .shell { transition: grid-template-columns 240ms cubic-bezier(0.32, 0.72, 0, 1); }
+    html:root:not(#_):not(#_) .shell:not(.wide) .rail.ibx { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s; }
+    html:root:not(#_):not(#_) .shell.dock-off:not(.wide) .rail.ibx { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 240ms; }
+  }
+  @media (min-width: 1600px) {
+    html:root:not(#_):not(#_) .shell.wide .rail.ibx { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s; }
+    html:root:not(#_):not(#_) .shell.wide.dock-off .rail.ibx { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 240ms; }
+  }
+}
+/* Reduced motion: open and close are instant, no fade */
+@media (prefers-reduced-motion: reduce) {
+  @media (min-width: 1241px) {
+    html:root:not(#_):not(#_) .shell:not(.wide) .rail.ibx { opacity: 1; transform: none; transition: none !important; }
+    html:root:not(#_):not(#_) .shell.dock-off:not(.wide) .rail.ibx { visibility: hidden; }
+  }
+  @media (min-width: 1600px) {
+    html:root:not(#_):not(#_) .shell.wide .rail.ibx { opacity: 1; transform: none; transition: none !important; }
+    html:root:not(#_):not(#_) .shell.wide.dock-off .rail.ibx { visibility: hidden; }
+  }
+}
