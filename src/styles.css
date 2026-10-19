@@ -3898,3 +3898,110 @@ html:root:not(#_) .ld2-again .ic { color: var(--lime); }
 html:root:not(#_) .sb2 .sb2-more { position: static !important; display: flex !important; align-items: center; justify-content: space-between; align-self: stretch; width: 100%; margin: 14px 0 0 !important; padding: 12px 0 0; border-top: 1px solid var(--line); transform: none !important; }
 html:root:not(#_) .sb2 .sb2-chance { margin-bottom: 0 !important; }
 html:root:not(#_) .sb2-row.them .sb2-pts, html:root:not(#_) .sb2-row.them .sb2-pts .live-num, html:root:not(#_) .sb2-row.them .sb2-now > :first-child { color: var(--ink) !important; opacity: 1 !important; }
+
+/* ==== Landing: tablet and desktop ==== */
+/* Phone (under 600px) keeps its own layout. Everything here starts at tablet width. */
+html:root:not(#_) .ld2-final-panel { width: 100%; display: grid; justify-items: center; }
+@media (min-width: 600px) {
+  /* One container for every band: 1200px wide, 32px gutters */
+  html:root:not(#_) .ld2 :is(.ld-nav, .ld-hero, .ld2-tagwrap, .ld-section, .ld-trust, .ld2-final, .ld-foot) { max-width: 1200px; margin-inline: auto; padding-inline: max(32px, env(safe-area-inset-left, 0px)) max(32px, env(safe-area-inset-right, 0px)); }
+  html:root:not(#_) .ld2 .ld-nav { height: 72px; }
+
+  /* Hero: one column on tablet, form stays a single pill */
+  html:root:not(#_) .ld2-hero { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: 48px 64px; }
+  html:root:not(#_) .ld2-copy { max-width: 640px; }
+  html:root:not(#_) .ld2-h1 { font-size: 3.5rem; line-height: 1; }
+  html:root:not(#_) .ld2-sub { max-width: 52ch; margin: 24px 0 32px; }
+  html:root:not(#_) .ld2-form { flex-wrap: nowrap; padding: 4px 4px 4px 16px; border-radius: 999px; }
+  html:root:not(#_) .ld2-form .at { display: inline; }
+  html:root:not(#_) .ld2-form input { flex-basis: auto; padding: 0; }
+  html:root:not(#_) .ld2-form .btn { width: auto; flex: none; }
+  html:root:not(#_) .ld2-preview { max-width: 640px; }
+  html:root:not(#_) .ld2-idea { display: none; }
+
+  /* Tagline: a centered statement band with a readable measure */
+  html:root:not(#_) .ld2-tagwrap { padding-block: 96px; }
+  html:root:not(#_) .ld2-tag { max-width: 20ch; margin-inline: auto; font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.05; text-align: center; }
+
+  /* Section rhythm: 64px above and below every band, 32px from heading to content */
+  html:root:not(#_) .ld2 .ld-section { padding-block: 64px; }
+  html:root:not(#_) .ld2 .ld-h2 { max-width: 20ch; }
+  html:root:not(#_) .ld2-steps ol, html:root:not(#_) .ld2 .ld-bento, html:root:not(#_) .ld2-faq-list { margin-top: 32px; }
+
+  /* Steps */
+  html:root:not(#_) .ld2-steps li { padding: 24px; gap: 8px; }
+  html:root:not(#_) .ld2-steps p { max-width: 36ch; }
+
+  /* Bento: 16px gaps, 24px padding, cells never wider than their content wants */
+  html:root:not(#_) .ld2 .ld-bento { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  html:root:not(#_) .ld2 .ld-cell { padding: 24px; gap: 16px; }
+  html:root:not(#_) .ld2 .ld-cell.tall { grid-row: auto; }
+  html:root:not(#_) .ld2 .ld-cell > p { max-width: 52ch; }
+  html:root:not(#_) .ld2-live-rows { margin: 0 -24px -24px; }
+  html:root:not(#_) .ld2-live-rows .lu-row { padding-left: 24px; padding-right: 24px; }
+  html:root:not(#_) .ld2-live-head > div { max-width: 52ch; }
+  html:root:not(#_) .ld2-live-head p { margin-top: 8px; }
+  /* The share card keeps its own size instead of the app's tall sheet rule */
+  html:root:not(#_) .ld2-pitch .tcard { width: 100%; max-width: 280px; }
+  html:root:not(#_) .ld2-pitch .tcard :is(img, .tcard-skel) { width: 100%; max-height: none; margin: 0; }
+  html:root:not(#_) .ld2-bubble { max-width: 44ch; }
+
+  /* Trust: hairline sits inside the gutters, not across them */
+  html:root:not(#_) .ld2 .ld-trust { border-top: 0; padding-block: 64px; background: linear-gradient(var(--line), var(--line)) center top / calc(100% - 64px) 1px no-repeat; gap: 32px; }
+  html:root:not(#_) .ld2 .ld-trust-list { gap: 24px; }
+  html:root:not(#_) .ld2 .ld-trust-list p { max-width: 48ch; margin-top: 4px; }
+
+  /* FAQ */
+  html:root:not(#_) .ld2-faq-list { max-width: none; }
+  html:root:not(#_) .ld2-faq details p { max-width: 60ch; }
+
+  /* Final call to action: a glass panel with the accent wash */
+  html:root:not(#_) .ld2-final { padding-block: 64px; }
+  html:root:not(#_) .ld2-final-panel { width: 100%; display: grid; justify-items: center; padding: 64px 32px; border-radius: 32px;
+    background: radial-gradient(60% 80% at 50% 0%, rgba(var(--lime-rgb), 0.16), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 200px), var(--surface);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(var(--lime-rgb), 0.08); }
+  html:root:not(#_) .ld2-final-h { font-size: clamp(2.5rem, 5vw, 3.5rem); line-height: 1.05; }
+  html:root:not(#_) .ld2-final .ld2-help, html:root:not(#_) .ld2-final .ld2-error { text-align: center; max-width: none; }
+  html:root:not(#_) .ld2-final .ld2-label { text-align: center; }
+  html:root:not(#_) .ld2 .ld-foot { padding-block: 32px 48px; }
+}
+
+/* Tablet: three steps in a row, pitch message beside its card, trust points in a row */
+@media (min-width: 720px) {
+  html:root:not(#_) .ld2-steps ol { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  html:root:not(#_) .ld2-pitch { grid-template-columns: minmax(0, 1fr) 240px; align-items: start; gap: 16px; }
+  html:root:not(#_) .ld2-pitch .tcard { max-width: 240px; }
+  html:root:not(#_) .ld2 .ld-trust { grid-template-columns: minmax(0, 1fr); }
+  html:root:not(#_) .ld2 .ld-trust-list { flex-direction: row; gap: 32px; }
+  html:root:not(#_) .ld2 .ld-trust-list li { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 12px; }
+}
+
+/* Desktop: copy beside the live preview, a balanced two by two bento, headings beside their lists */
+@media (min-width: 960px) {
+  html:root:not(#_) .ld2 :is(.ld-nav, .ld-hero, .ld2-tagwrap, .ld-section, .ld-trust, .ld2-final, .ld-foot) { padding-inline: max(48px, env(safe-area-inset-left, 0px)) max(48px, env(safe-area-inset-right, 0px)); }
+  html:root:not(#_) .ld2 .ld-trust { background-size: calc(100% - 96px) 1px; }
+  html:root:not(#_) .ld2-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 48px; align-items: center; padding-block: 48px 96px; }
+  html:root:not(#_) .ld2-h1 { font-size: clamp(3rem, 4.6vw, 4.25rem); }
+  html:root:not(#_) .ld2-preview { max-width: none; gap: 16px; }
+  html:root:not(#_) .ld2-preview > :first-child { margin-right: 32px; }
+  html:root:not(#_) .ld2-idea { display: flex; margin: 0 0 0 32px; }
+  html:root:not(#_) .ld2-tagwrap { padding-block: 96px; }
+  html:root:not(#_) .ld2 .ld-section { padding-block: 64px; }
+
+  /* Bento rows: needs beside verdict, pitch beside the finder, Sunday across the bottom */
+  html:root:not(#_) .ld2 .ld-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:root:not(#_) .ld2 .ld-cell.wide:not(.ld2-live) { grid-column: auto; }
+  html:root:not(#_) .ld2 .ld-cell.tall .bars { flex: 1; justify-content: space-between; }
+  html:root:not(#_) .ld2-pitch { grid-template-columns: minmax(0, 1fr); }
+  html:root:not(#_) .ld2-pitch .tcard { max-width: 300px; }
+  html:root:not(#_) .ld2-finder { margin-top: auto; }
+
+  /* Trust and FAQ share one layout: heading on the left, content on the right */
+  html:root:not(#_) .ld2 .ld-trust, html:root:not(#_) .ld2-faq { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px 64px; align-items: start; }
+  html:root:not(#_) .ld2 .ld-trust-list { flex-direction: column; gap: 24px; }
+  html:root:not(#_) .ld2 .ld-trust-list li { flex-direction: row; gap: 16px; }
+  html:root:not(#_) .ld2-faq .ld-h2 { position: sticky; top: 96px; }
+  html:root:not(#_) .ld2-faq-list { margin-top: 0; }
+  html:root:not(#_) .ld2-final-panel { padding: 96px 48px; }
+}
+@media (min-width: 1200px) { html:root:not(#_) .ld2-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 64px; } }

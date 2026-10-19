@@ -127,7 +127,7 @@ export function Landing({ onLive, onDemo }: {
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld-rise d2">
               <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
-              <h3><span className="ps">Per sources, </span>{demo.mike.name} needs <em>a TE.</em></h3>
+              <h3>{demo.mike.name} needs <em>a TE.</em></h3>
               <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
             </article>
           )}
@@ -239,9 +239,11 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
-        <h2 id="ld-final" className="ld2-h1 ld2-final-h">See your first trade<br />in under a minute.</h2>
-        <div className="ld2-final-form">{form("ld-user-2")}</div>
-        <button className="ld2-link" onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
+        <div className="ld2-final-panel">
+          <h2 id="ld-final" className="ld2-h1 ld2-final-h">See your first trade<br />in under a minute.</h2>
+          <div className="ld2-final-form">{form("ld-user-2")}</div>
+          <button className="ld2-link" onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
+        </div>
       </section>
       </main>
 
