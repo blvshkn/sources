@@ -41,3 +41,28 @@ html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-line { flex: 0 1 auto; min-wi
   html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats { grid-template-columns: 88px 92px 104px; margin-top: 0; }
   html:root:not(#_):not(#_) .wv3-list .wv .wv-row > .wv-proj { width: 56px; }
 }
+
+/* ---------- WeekStepper: one full-width bar ----------
+   ‹ pinned left, › pinned right, the label centered between them, 44px circles, the same 52px bar everywhere.
+   Steppers that share a header row with a title (Waivers, Start/Sit) stay a compact 44px cluster on wide screens
+   and become this same bar on their own row at 520px and below. */
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px;
+  box-sizing: border-box; width: auto; max-width: none; height: 52px; padding: 4px;
+  border-radius: 999px; background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav > .btn { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 999px; }
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav > .btn:disabled { opacity: 0.35; pointer-events: none; }
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav .lu-weeknav-lbl { min-width: 0; gap: 2px; }
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav .lu-weeknav-lbl b { font: 500 0.9375rem/1.1 var(--font-mono); letter-spacing: -0.01em; white-space: nowrap; color: var(--ink); }
+html:root:not(#_):not(#_) .lu-weeknav.lu-weeknav .lu-weeknav-lbl span { font-size: 0.6875rem; line-height: 1.2; color: var(--muted); white-space: nowrap; }
+/* Where each bar sits: edges on the card's content edges */
+html:root:not(#_):not(#_) .lu-list > .lu-weeknav { margin: 16px 16px 4px; }
+html:root:not(#_):not(#_) .lu-weeknav.mu-weeks { margin: 0 0 12px; }
+html:root:not(#_):not(#_) .lu-weeknav.pd-weeknav { margin: 8px 0 0; }
+/* In a header row next to a title: compact, no bar */
+html:root:not(#_):not(#_) :is(.wv3-head, .sx-head) > .lu-weeknav.lu-weeknav { flex: none; grid-template-columns: 44px 84px 44px; gap: 0; height: 44px; padding: 0; margin: 0; background: none; }
+@media (max-width: 520px) {
+  html:root:not(#_):not(#_) :is(.wv3-head, .sx-head) { flex-wrap: wrap; }
+  html:root:not(#_):not(#_) :is(.wv3-head, .sx-head) > .lu-weeknav.lu-weeknav { flex: 1 0 100%; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; height: 52px; padding: 4px; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+}
