@@ -7,7 +7,7 @@ import { Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
-import { Avatar } from "./Avatar";
+import { Avatar, AvatarPhotos } from "./Avatar";
 import { drawCard } from "./PitchSheet";
 import { loadJerseyNumbers } from "../jersey";
 import { IdeaScan } from "./IdeaScan";
@@ -63,7 +63,7 @@ export function Landing({ onLive, onDemo }: {
   useEffect(() => {
     if (!demo.trade) return;
     let url: string | null = null, alive = true;
-    drawCard(demo.trade, "216, 242, 74").then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    drawCard(demo.trade, "216, 242, 74", { photos: false }).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [demo.trade]);
 
@@ -151,6 +151,7 @@ export function Landing({ onLive, onDemo }: {
   const faqLd = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) });
 
   return (
+    <AvatarPhotos.Provider value={false}>
     <div className="landing ld2" ref={root}>
       <div className="ld2-env" ref={env} aria-hidden="true">
         <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
@@ -176,7 +177,7 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-heads" aria-hidden="true">
           {cast.map((p, i) => (
             <span key={p.id} className={`ld2-head h${i}`} style={{ ["--i" as string]: i }}>
-              <span className="ld2-head-in"><Avatar p={p} size={56} /><b>{p.name.split(" ").slice(-1)[0]}</b></span>
+              <span className="ld2-head-in"><Avatar p={p} size={64} /><b>{p.name.split(" ").slice(-1)[0]}</b></span>
             </span>
           ))}
         </div>
@@ -326,6 +327,7 @@ export function Landing({ onLive, onDemo }: {
         <span>Not affiliated with Sleeper. The {TEAMS.length} team sample league uses made up data.</span>
       </footer>
     </div>
+    </AvatarPhotos.Provider>
   );
 }
 

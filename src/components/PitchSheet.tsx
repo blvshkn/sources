@@ -61,7 +61,7 @@ function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: num
   g.drawImage(f, 0, 0);
 }
 
-export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | null> {
+export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: boolean } = {}): Promise<Blob | null> {
   const them = teamById(t.partnerId);
   const W = 1080, H = 1350, X = 72;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -92,7 +92,7 @@ export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | nul
   // Players
   const total = t.give.length + t.get.length;
   const rowH = total <= 3 ? 122 : total <= 4 ? 108 : 94, av = rowH - 30;
-  const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = sleeperId(playerById(id)); return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
+  const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = opts.photos === false ? undefined : sleeperId(playerById(id)); return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
   let y = 440, k = 0;
   const side = (label: string, ids: string[], hot: boolean) => {
     g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); track(label, X, y, 4); y += 26;

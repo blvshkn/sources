@@ -89,3 +89,51 @@ html:root:not(#_):not(#_) .ld2-stage .ld2-card.c2 { animation-delay: 560ms !impo
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) .ld2-stage .ld2-card { animation: rm-fade 240ms ease both !important; }
 }
+
+/* ==== Players v2: initials only, mixed sizes, no grow-in, parallax on every screen ==== */
+/* Each player has its own size, so the group reads as depth instead of a row of identical chips */
+html:root:not(#_):not(#_) .ld2-head { --hs: 52px; }
+html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 64px; }
+html:root:not(#_):not(#_) .ld2-head.h1 { --hs: 44px; }
+html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 56px; }
+html:root:not(#_):not(#_) .ld2-head.h3 { --hs: 48px; }
+html:root:not(#_):not(#_) .ld2-head.h4 { --hs: 40px; }
+html:root:not(#_):not(#_) .ld2-head.h5 { --hs: 52px; }
+html:root:not(#_):not(#_) .ld2-head.h6 { --hs: 44px; }
+html:root:not(#_):not(#_) .ld2-head .av { width: var(--hs) !important; height: var(--hs) !important; }
+html:root:not(#_):not(#_) .ld2-head .av-initials { font-size: calc(var(--hs) * 0.36) !important; }
+/* They arrive at their final size: a soft rise and fade, no scaling up */
+@keyframes ld3-arrive { from { opacity: 0; transform: translateY(14px); filter: blur(8px); } }
+html:root:not(#_):not(#_) .ld2-head-in { animation-name: ld3-arrive, ld3-float; }
+html:root:not(#_):not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { transform: none; opacity: 1; }
+
+/* Phone: a loose cluster over the card in three sizes, all inside the screen */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 52px; top: -86px; left: 0; right: auto; }
+  html:root:not(#_):not(#_) .ld2-head.h1 { --hs: 40px; top: -70px; left: 36%; right: auto; }
+  html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 46px; top: -92px; right: 2px; left: auto; }
+  html:root:not(#_):not(#_) .ld2-head.h3 { --hs: 42px; bottom: -78px; right: 10%; left: auto; }
+  html:root:not(#_):not(#_) .ld2-head:is(.h4, .h5, .h6) { display: none; }
+  html:root:not(#_):not(#_) .ld2-head b { font-size: 0.625rem; }
+}
+
+/* Phone and tablet keep parallax, but sideways: players drift across as you scroll, so they never
+   climb into the copy above or sink into the card below. Left players drift right, right players drift left. */
+@media (max-width: 959px) and (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .ld2-head { transform: translate3d(calc(var(--sy) * var(--dx, 0.05) * 1px), 0, 0) !important; }
+  html:root:not(#_):not(#_) .ld2-head.h0 { --dx: 0.07; }
+  html:root:not(#_):not(#_) .ld2-head.h1 { --dx: -0.035; }
+  html:root:not(#_):not(#_) .ld2-head.h2 { --dx: -0.06; }
+  html:root:not(#_):not(#_) .ld2-head.h3 { --dx: -0.05; }
+  html:root:not(#_):not(#_) .ld2-head.h6 { --dx: 0.05; }
+  /* The card itself eases up a touch slower than the page */
+  html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: translate3d(0, calc(var(--sy) * -0.03px), 0) !important; }
+}
+@media (max-width: 959px) {
+  /* The card stays put on phone and tablet; only the players drift, so nothing slides under them */
+  html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: none !important; }
+}
+@media (min-width: 600px) and (max-width: 959px) {
+  html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 52px; }
+  html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 48px; }
+}
