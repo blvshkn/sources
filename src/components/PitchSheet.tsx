@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { usePullToDismiss } from "./sheetDrag";
 import { Trade, fmt, needsFor } from "../engine";
 import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
-import { Audience, Tone, draftPitch } from "../pitch";
+import { Audience, Tone, draftPitch, sellPoint } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 
@@ -127,19 +127,23 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   y += 44;
   side("I GET", t.get, false);
 
-  // Impact panel
-  const py = H - 340, ph = 196;
-  g.fillStyle = A(0.09); g.strokeStyle = A(0.35); g.lineWidth = 2;
-  g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph); g.fill(); g.stroke();
-  g.fillStyle = MUTED; g.font = F(700, 20); track("YOUR STARTERS", X + 32, py + 50, 4);
-  // Their gain in green, a loss in red, even in muted. Lime stays the brand accent, never "good".
-  g.fillStyle = t.themDelta >= 0.05 ? (css.getPropertyValue("--good").trim() || "#7BE08F") : t.themDelta <= -0.05 ? (css.getPropertyValue("--bad").trim() || "#FF8473") : MUTED; g.font = FM(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
-  const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText("pts / week", X + 40 + bw, py + 148);
-  g.fillStyle = MUTED; g.font = F(700, 20); g.textAlign = "right"; track("", 0, 0, 0);
-  g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = FM(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);
-  g.textAlign = "left";
+  // Impact panel: lead with what's good for THEM. A loss for them never goes on the card; if their lineup doesn't
+  // improve, the card shows the market value they pick up, or the need it fills. Our own gain stays off it.
+  const sp = sellPoint(t);
   const need = needsFor(them).need;
-  if (t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Upgrades your starting ${need}.`, X, py + ph + 50); }
+  if (sp.kind !== "none") {
+    const py = H - 340, ph = 196, GOOD = css.getPropertyValue("--good").trim() || "#7BE08F";
+    // Solid base first so the field lines don't run through the numbers
+    g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph);
+    g.fillStyle = "#141716"; g.fill(); g.fillStyle = A(0.09); g.fill(); g.strokeStyle = A(0.35); g.lineWidth = 2; g.stroke();
+    const label = sp.kind === "pts" ? "YOUR STARTERS" : sp.kind === "value" ? "TRADE VALUE" : `YOUR STARTING ${sp.pos}`;
+    g.fillStyle = MUTED; g.font = F(700, 20); track(label, X + 32, py + 50, 4);
+    const big = sp.kind === "pts" ? fmt(sp.delta) : sp.kind === "value" ? `+${Math.round(sp.pct)}%` : "Upgrade";
+    const unit = sp.kind === "pts" ? "pts / week" : sp.kind === "value" ? "more than you send" : "";
+    g.fillStyle = GOOD; g.font = sp.kind === "need" ? F(700, 88) : FM(700, 96); g.fillText(big, X + 28, py + 150);
+    if (unit) { const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText(unit, X + 40 + bw, py + 148); }
+    if (sp.kind !== "need" && t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Upgrades your starting ${need}.`, X, py + ph + 50); }
+  }
 
   // Footer
   g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - 40);

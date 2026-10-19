@@ -1,0 +1,26 @@
+/* Icons in icon-only buttons, optically centred. Loads last.
+   Every circular or square icon-only control: the box centres a fixed-size svg (display: block, so no baseline gap),
+   is exactly square, and a few glyphs get a nudge where their drawing sits off the 24px grid's centre or reads off
+   centre: the bell is drawn 1.4 units low (its clapper), send sits 0.25 units high, chevrons 0.5 units toward their
+   point, search 0.25 units right and down. Nudges use the translate property in the icon's own units, so they scale
+   with the icon, follow its rotation (back and down chevrons) and leave the hover animations' transform alone.
+   Measured with Playwright: painted glyph centre against button centre, within 0.5px of the target everywhere. */
+
+/* ---------- The boxes ---------- */
+html:root:not(#_):not(#_) :is(.btn-icon, .top-bell, .ibx-close, .ibx-x, .ps-x, .psr-clear, .qs-x, .saved-x, .mt-x, .composer-btn, .ibx-send) {
+  align-items: center; justify-content: center; place-items: center; padding: 0;
+}
+html:root:not(#_):not(#_) :is(.btn-icon, .top-bell, .ibx-close, .ibx-x, .ps-x, .psr-clear, .qs-x, .saved-x, .mt-x, .composer-btn, .ibx-send) > svg,
+html:root:not(#_):not(#_) .dt-chip > svg.ic-x { display: block; flex: none; margin: 0; }
+/* Square: .btn's 38px height was beating aspect-ratio, so 40px wide circles came out 40x38 */
+html:root:not(#_):not(#_) .btn.btn-icon { height: auto !important; min-height: 0 !important; aspect-ratio: 1 / 1; }
+
+/* ---------- Glyph nudges, in icon units (24 to the icon) ---------- */
+/* Bell: centre the drawing (up 1.39), then 0.8 back down, about 0.75px at 22px, so the clapper doesn't make it read high */
+html:root:not(#_):not(#_) svg.ic-bell > .m1 { translate: 0 -0.57px; }
+/* Send: the plane points up and right, so it reads high and right: about 1px left and 1px down at 16 to 18px */
+html:root:not(#_):not(#_) svg.ic-send > * { translate: -1.4px 1.6px; }
+/* Search: the handle pulls it right and down */
+html:root:not(#_):not(#_) :is(.btn-icon, .ti-arrow) svg.ic-search > .m1 { translate: -0.25px -0.25px; }
+/* Chevrons in circles: centre the drawing, then about 0.75px away from the point */
+html:root:not(#_):not(#_) :is(.btn-icon, .ti-arrow) svg.ic-chev > .m1 { translate: -1.5px 0; }
