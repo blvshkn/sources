@@ -109,3 +109,72 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ttb-mhead > .ttb-row {
 html:root:not(#_)[data-tab="trade"]:not(#_):not(#_):not(#_) .main-inner > :is(.log-card, .card.nudge, .tr-scout, .empty-deal) {
   width: 100%; max-width: none !important; box-sizing: border-box;
 }
+
+/* =====================================================================================================
+   The deal read: rows, actions and Details fill the card and keep one rhythm.
+   Loaded after trade-deal.css and trade-multi.css; five :not(#_) so these win without !important.
+   ===================================================================================================== */
+
+/* The read spans the card's content width; only the verdict sentence keeps a reading measure */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-main { max-width: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-verdict p { max-width: 70ch; }
+
+/* Rows: the label takes what's left, each team gets a right-aligned numeric column up to 152px */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row { grid-template-columns: minmax(140px, 1fr) repeat(var(--dv-n, 2), minmax(96px, 152px)); }
+/* Column headers get a row of their own, 12px above and below, and truncate long names */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-headrow { padding: 12px 0; align-items: center; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-h {
+  display: block; text-align: right; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-h::before { display: inline-block; margin-right: 6px; vertical-align: 1px; }
+/* Their odds: no underline at rest, the dotted one shows on hover and focus to say there's more */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-acc.tt-term { text-decoration: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-acc.tt-term:is(:hover, :focus-visible) { text-decoration: underline dotted color-mix(in srgb, var(--ink) 40%, transparent); text-underline-offset: 3px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row .dv-c:last-child .dv-v { justify-items: end; text-align: right; }
+
+/* Actions: Write pitch stays primary, Show the math is a quiet text button */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish {
+  text-decoration: none; font-weight: 500; font-size: 0.875rem; color: var(--muted); min-height: 40px; padding: 0 6px; border-radius: 8px;
+  display: inline-flex; align-items: center; transition: color 150ms ease-out;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish:hover { color: var(--ink); text-decoration: none; }
+/* The tip spans the same width as the rows, one even inset */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-main > .tip { width: 100%; box-sizing: border-box; margin: 0; padding: 12px 16px; align-items: center; }
+
+/* ---------- Details ---------- */
+/* A fold only answers to its own open state: the old descendant rules held every nested body open */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold > .fold-body { grid-template-rows: 0fr; transition: grid-template-rows 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold.open > .fold-body { grid-template-rows: 1fr; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold > .fold-head svg { transform: none; transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold.open > .fold-head svg { transform: rotate(90deg); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold > .fold-head .fold-sum { opacity: 1; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold.open > .fold-head .fold-sum { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold > :is(.fold-body, .fold-head svg) { transition: none; }
+}
+/* One rhythm, 12px everywhere: divider to header text, header text to content, content to the next divider */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-details .fold-head { min-height: 0; padding: 12px 0; line-height: 20px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-details .fold > .fold-body > .fold-in { padding: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-details > .fold.open > .fold-body > .fold-in { padding-bottom: 12px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-details > .fold:first-child > .fold-head { padding-top: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-details.open > .fold-body > .fold-in { padding-bottom: 0; }
+
+/* Position breakdown: your number, the position, theirs, and the bar under them, all inside the card */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-bars .tc-rows { gap: 14px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-bars .tc-row { grid-template-columns: minmax(48px, auto) minmax(0, 1fr) minmax(48px, auto); column-gap: 12px; row-gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-bars .tc-row .v { font: 600 0.9375rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-bars .tc-row .lbl { line-height: 1.2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-bars .tc-bar { margin-top: 0; min-width: 0; }
+
+/* Schedules ahead: the week chips wrap inside their column, and each player gets room */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-sch .dsch { padding-top: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-sch .dsch-side { gap: 20px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-sch .dsch-side > .eyebrow { margin-bottom: -8px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .fold-sch .sch-row { flex-wrap: wrap; overflow: visible; row-gap: 4px; }
+
+/* Phone: labels over their row and values left-aligned, as before */
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row { grid-template-columns: repeat(var(--dv-n, 2), minmax(0, 1fr)); }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-h { text-align: left; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row .dv-c:last-child .dv-v { justify-items: start; text-align: left; }
+}
