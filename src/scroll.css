@@ -1,0 +1,82 @@
+/* Scrollbars. One style, defined once; loads last. No CSS url function in this file: it makes Vite run PostCSS.
+   - The page itself keeps the platform scrollbar (overlay on macOS). Only internal scrollers are styled.
+   - Chrome and Safari draw the ::-webkit-scrollbar version: 8px, a rounded thumb inset 2px, no track.
+     Chrome ignores those pseudo-elements on any element that sets scrollbar-width or scrollbar-color,
+     so the standard properties are reset to auto there, and only Firefox gets the standard thin bar.
+   - Side-scrolling pill and tab rows hide their bar and fade at the edge they can scroll toward. */
+
+html:root:not(#_):not(#_) {
+  --sb-thumb: color-mix(in srgb, var(--ink) 18%, transparent);
+  --sb-thumb-hover: color-mix(in srgb, var(--ink) 30%, transparent);
+  /* Sheets and the league switcher lock the page with overflow: hidden, which removes a classic
+     scrollbar and shifts everything 15px, then puts it back on close. Keeping the gutter reserved
+     stops that flash. It is a no-op with macOS overlay scrollbars. */
+  scrollbar-gutter: stable;
+}
+/* The page never scrolls sideways, even for a frame while something slides in. On body, not html,
+   so body's overflow (and the overlays' overflow: hidden lock) still propagates to the viewport. */
+html:root:not(#_):not(#_) body { overflow-x: clip; }
+
+/* ---------- The one scrollbar ---------- */
+@supports selector(::-webkit-scrollbar) {
+  /* Let the pseudo-elements below apply (older rules asked for a thin standard bar) */
+  html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
+    scrollbar-width: auto; scrollbar-color: auto;
+  }
+}
+html:root:not(#_):not(#_) body *::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-track { background: transparent; border: 0; margin: 6px 0; }
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-track:horizontal { margin: 0 6px; }
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb); background-clip: padding-box;
+  border: 2px solid transparent; border-radius: 999px; min-height: 32px;
+}
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb:hover,
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb:active { background-color: var(--sb-thumb-hover); }
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-corner,
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-button { display: none; width: 0; height: 0; background: transparent; }
+
+/* Firefox: the standard thin bar in the same colors. :where() keeps it below every row that hides its bar. */
+@supports not selector(::-webkit-scrollbar) {
+  :where(body *) { scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent; }
+  html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
+    scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent;
+  }
+}
+
+/* ---------- Internal scrollers: stay inside, don't drag the page ---------- */
+html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
+  overscroll-behavior: contain;
+}
+/* Rounded menus and sheets: the track starts and ends clear of the corners so the bar is never cut by them */
+html:root:not(#_):not(#_) :is(.sel-list, .tp-list, .qs-opts, .mu-swap, .psr-list)::-webkit-scrollbar-track { margin: 10px 0; }
+html:root:not(#_):not(#_) :is(.ps, .sheet, .builder .deal)::-webkit-scrollbar-track { margin: 18px 0; }
+/* Inbox feed: the bar sits 4px in from the panel edge, and the bottom fade no longer eats it */
+html:root:not(#_):not(#_) .ibx-list { margin-right: 4px; padding-right: 4px; }
+html:root:not(#_):not(#_) .ibx-list::-webkit-scrollbar-track { margin: 4px 0 16px; }
+/* Sidebar on short screens: the bar sits off the divider line */
+html:root:not(#_):not(#_) .side::-webkit-scrollbar-track { margin: 12px 0; }
+
+/* ---------- Side-scrolling rows: no bar, an edge fade only where there's more ---------- */
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg) {
+  scrollbar-width: none; overscroll-behavior-x: contain;
+}
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+@property --sb-fl { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --sb-fr { syntax: "<length>"; inherits: false; initial-value: 0px; }
+/* A scroll-driven timeline is only active when the row overflows, so a row that fits gets no fade at all */
+@keyframes sb-edge {
+  0% { --sb-fl: 0px; --sb-fr: 28px; }
+  6% { --sb-fl: 28px; }
+  94% { --sb-fr: 28px; }
+  100% { --sb-fl: 28px; --sb-fr: 0px; }
+}
+@supports (animation-timeline: scroll()) {
+  html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg) {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
+    animation: sb-edge linear both;
+    animation-timeline: scroll(self inline);
+  }
+}

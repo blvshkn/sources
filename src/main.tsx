@@ -29,6 +29,7 @@ import "./price.css";
 import "./picker.css";
 import "./frame.css";
 import "./sheet.css";
+import "./scroll.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
