@@ -3,6 +3,7 @@ import { playerById, teamById } from "../data";
 import type { Trade } from "../engine";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
+import { useFocusTrap } from "./focusTrap";
 
 /** Anything that renders a trade idea can offer "Won't work" when this is provided. */
 export const IdeaFeedbackCtx = createContext<((t: Trade) => void) | null>(null);
@@ -23,6 +24,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
   const [shown, setShown] = useState(false);
   const [note, setNote] = useState("");
   const sheet = useRef<HTMLElement>(null);
+  useFocusTrap(sheet);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { usePullToDismiss } from "./sheetDrag";
+import { useFocusTrap } from "./focusTrap";
 import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch, reasonsFor } from "../pitch";
@@ -179,6 +180,7 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const [edited, setEdited] = useState(false);
   const drag = useRef<{ start: number; hist: { y: number; t: number }[] } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  useFocusTrap(sheet);
   const scrim = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   // Presentation state lives in refs so every frame writes straight to the DOM.

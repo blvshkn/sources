@@ -8,6 +8,7 @@ import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
+import { useFocusTrap } from "./focusTrap";
 import { ScrollArea } from "./ScrollArea";
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
@@ -27,6 +28,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   }, []);
   const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setShown(false); window.setTimeout(onClose, 220); };
   const sheet = useRef<HTMLElement>(null);
+  useFocusTrap(sheet);
   const body = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it

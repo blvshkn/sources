@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFocusTrap } from "./focusTrap";
 import { MyTag, TEAMS, YOU, playerById, LEAGUE_NAME, setLeague, teamById } from "../data";
 import { Trade, TeamNeeds, allNeeds, applyFormat, eff, findTrades, fmt, formatLabel, lineupFor } from "../engine";
 import { SLeague, SleeperError, leagueType, loadLeague } from "../sleeper";
@@ -15,6 +16,8 @@ export type FirstRunStart = { kind: "live"; username: string; user: { id: string
 
 export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunStart; onLive: (s: Live, myTags: Record<string, MyTag>) => void; onDemo: (myTags: Record<string, MyTag>) => void; onClose: () => void }) {
   const [step, setStep] = useState<Step>(start.kind === "live" ? "league" : "team");
+  const dialog = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialog);
   const username = start.kind === "live" ? start.username : "";
   const user = start.kind === "live" ? start.user : null;
   const leagues: SLeague[] = start.kind === "live" ? start.leagues : [];
@@ -56,9 +59,16 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
 
   const starters = step === "untouchables" ? lineupFor(YOU.roster).slots.map((s) => s.player).filter(Boolean).sort((a, b) => eff(b!) - eff(a!)).slice(0, 5) : [];
   const idx = STEPS.indexOf(step);
+  // Focus moves into the dialog when it opens; Escape backs out to the landing, as the Back button does
+  useEffect(() => { dialog.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy && !e.defaultPrevented) onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
 
   return (
-    <div className="onboard" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+    <div ref={dialog} tabIndex={-1} className="onboard" role="dialog" aria-modal="true" aria-labelledby="ob-title">
       <div className="onboard-card">
         <div className="ob-progress" aria-label={`Step ${idx + 1} of ${STEPS.length}`}>
           {STEPS.map((s, i) => <span key={s} className={i <= idx ? "on" : ""} />)}

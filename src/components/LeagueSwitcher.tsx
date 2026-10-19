@@ -4,6 +4,7 @@ import { LEAGUE, LEAGUE_NAME } from "../data";
 import { Account, accountLabel } from "../accounts";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
+import { useFocusTrap } from "./focusTrap";
 import { PlatformLogo } from "./PlatformLogo";
 import { ManagerAvatar } from "./Avatar";
 
@@ -33,6 +34,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   const [error, setError] = useState("");
   const [added, setAdded] = useState<string | null>(null);
   const sheet = useRef<HTMLElement>(null);
+  useFocusTrap(sheet);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
