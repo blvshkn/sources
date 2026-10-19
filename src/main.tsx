@@ -4,6 +4,8 @@ import App from "./App";
 import "./styles.css";
 import "./desktop-tabs.css";
 import "./desktop.css";
+import "./landing-qa.css";
+import "./app-qa.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 
