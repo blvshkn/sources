@@ -5,6 +5,7 @@ import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPP
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
+import { PlayerSheet } from "./PlayerSheet";
 import { TeamAvatar } from "./TeamPicker";
 import { useLive, onPace, teamOutlook, winChance } from "../live";
 import { RosterNews } from "./News";
@@ -216,6 +217,8 @@ const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v 
 /** The opponent's three biggest projections, with live points once their games start. */
 export function Threats({ onGo }: { onGo: (t: string) => void }) {
   const live = useLive();
+  // Tapping a threat opens that player, with the reason he made the list, instead of leaving the page
+  const [open, setOpen] = useState<{ p: Player; rank: number } | null>(null);
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   if (!opp) return null;
   const threats = (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
@@ -225,14 +228,29 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
     <section className="card wk" aria-label="Opponent threats">
       <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
       {threats.map((p) => (
-        <button key={p.id} className="wk-row" onClick={() => onGo("matchup")}>
+        <button key={p.id} className="wk-row" onClick={() => setOpen({ p, rank: threats.indexOf(p) })}>
           <Avatar p={p} size={40} />
           <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {vsOf(p)}</small></span>
           <Pts p={p} />
         </button>
       ))}
+      {open && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
+      <button className="wk-more linkish" onClick={() => onGo("matchup")}>See the full matchup</button>
     </section>
   );
+}
+
+/** One or two sentences on why a player is on the threats list: where he ranks in their lineup and how he compares to yours. */
+function threatNote(p: Player, rank: number, manager: string) {
+  const proj = eff(p, true);
+  const place = ["the most", "the second most", "the third most"][rank] ?? "among the most";
+  const mine = (lineupFor(YOU.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).filter((x) => x.pos === p.pos).sort((a, b) => eff(b, true) - eff(a, true))[0];
+  const vs = vsOf(p);
+  const first = `He projects ${proj.toFixed(1)} this week, ${place} in ${manager}'s lineup${vs ? `, playing ${vs.replace(/^v /, "vs ")}` : ""}.`;
+  if (!mine) return first;
+  const gap = proj - eff(mine, true);
+  const second = Math.abs(gap) < 0.5 ? `That's about even with your ${p.pos}, ${mine.name}.` : gap > 0 ? `That's ${gap.toFixed(1)} more than your ${p.pos}, ${mine.name}.` : `Your ${p.pos}, ${mine.name}, still projects ${(-gap).toFixed(1)} more.`;
+  return `${first} ${second}`;
 }
 
 /** More for the This week tab: when your starters play, who's banged up, the opponent's threats, and the dates that matter. */

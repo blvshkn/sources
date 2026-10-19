@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ScheduleStrip } from "./Schedule";
 import { PlayerNews } from "./News";
 
@@ -16,7 +16,7 @@ const weekly = (p: Player) => Object.keys(LEAGUE.history ?? {}).map(Number).filt
   .filter((x): x is { w: number; pts: number; started: boolean } => typeof x.pts === "number");
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
-export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where?: string; onClose: () => void; onCompare?: () => void }) {
+export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void }) {
   const [shown, setShown] = useState(false);
   const closeBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -59,10 +59,11 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
           <span className="ps-who">
             <b id="ps-name">{p.name}</b>
             <small>{p.pos} · {p.nfl}{onBye(p.nfl) ? "" : gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small>
-            {where && <span className={`ps-where${/bench/i.test(where) ? " bench" : ""}`}>{where}</span>}
+            {where && <span className={`ps-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
+        {note && <p className="ps-why">{note}</p>}
         {(p.note || p.injury) && <p className="ps-inj"><Icon name="alert" size={14} />{[p.injury, p.note].filter(Boolean).join(" · ")}</p>}
 
         {(() => {

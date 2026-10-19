@@ -4219,3 +4219,7 @@ html:root:not(#_):not(:has(.ld2)) body::before {
 html:root:not(#_):not(#_) .ld2-h1:not(.ld2-typed) { background-image: linear-gradient(90deg, #FFFFFF, #9B9B9B) !important; }
 /* html already paints the same dark, so body can let the field show through */
 html:root:not(#_):not(:has(.ld2)) body { background: transparent; }
+
+/* Player sheet: a short reason line, e.g. why an opponent's player is a threat */
+html:root:not(#_) .ps-why { margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); color: var(--ink); font-size: 0.9375rem; line-height: 1.45; text-wrap: pretty; }
+html:root:not(#_) .wk-more { display: block; width: 100%; margin-top: 4px; padding: 12px 0 4px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--muted); font-size: 0.875rem; font-weight: 600; text-align: left; cursor: pointer; }
