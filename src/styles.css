@@ -1449,9 +1449,9 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
   --qb: #9F2F2D; --rb: #346538; --wr: #1F6C9F; --te: #956400;
   --qb-bg: #FDEBEC; --rb-bg: #EDF3EC; --wr-bg: #E1F3FE; --te-bg: #FBF3DB; --k-bg: #F1EEF8; --k: #5B4B8A;
   --shadow: none; --edge: none;
-  --font-display: "Google Sans", "Google Sans Text", "Product Sans", "SF Pro Display", "Helvetica Neue", sans-serif;
-  --font-body: "Google Sans", "Google Sans Text", "Product Sans", "SF Pro Text", "Helvetica Neue", sans-serif;
-  --font-mono: "Google Sans Code", "SF Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Geist", "SF Pro Display", "Helvetica Neue", sans-serif;
+  --font-body: "Geist", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, monospace;
   --r: 12px; --r-inner: 8px;
   color-scheme: light;
 }
@@ -2104,7 +2104,7 @@ body::after {
     -webkit-tap-highlight-color: transparent; transition: color 200ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
   }
   :root:not(#_) .tabbar.ix button:active { transform: scale(0.95); }
-  :root:not(#_) .ix-n { font: 500 0.625rem/1 var(--font-mono, "Google Sans Code", monospace); letter-spacing: 0.08em; color: var(--faint); transition: color 200ms ease; }
+  :root:not(#_) .ix-n { font: 500 0.625rem/1 var(--font-mono, "Geist Mono", monospace); letter-spacing: 0.08em; color: var(--faint); transition: color 200ms ease; }
   :root:not(#_) .ix-w { position: relative; padding: 2px 4px; font: 500 0.9375rem/1.1 var(--font-body); letter-spacing: -0.015em; }
   :root:not(#_) .ix-w::before {
     content: ""; position: absolute; z-index: -1; left: -2px; right: -6px; top: 55%; bottom: -1px; border-radius: 2px;
@@ -2745,7 +2745,7 @@ html:root:not(#_) .ti-stat dd .delta, html:root:not(#_) .ti-stat dd > span { lin
   html:root:not(#_) .side-switch b { font-family: var(--font-body); }
   html:root:not(#_) .side-switch button[aria-selected="true"] b { background: var(--lime); color: var(--action-ink); }
 }
-html:root:not([data-nf]):not(#_) { --font-mono: "Google Sans", "Google Sans Text", "SF Pro Text", "Helvetica Neue", sans-serif; }
+html:root:not([data-nf]):not(#_) { --font-mono: "Geist", "SF Pro Text", "Helvetica Neue", sans-serif; }
 
 /* League fine-comb fixes */
 html:root:not(#_) .partners > :last-child { padding-bottom: 0 !important; }
@@ -3007,9 +3007,9 @@ html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { rig
 html:root:not(#_) .page-head, html:root:not(#_) .lu-hero { overflow-x: clip; overflow-clip-margin: 0; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { right: -18px; }
 
-/* ==== Type system: Array for display and team names, Geist Mono for numbers and code, Google Sans for the rest ==== */
+/* ==== Type system (superseded below): Geist for text, Geist Mono for numbers ==== */
 html:root:not([data-nf]):not(#_) {
-  --font-display: "Array", "Google Sans", "Helvetica Neue", sans-serif;
+  --font-display: "Geist", "Helvetica Neue", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 /* Display: page titles, section titles, headlines, player and team names */
@@ -3039,18 +3039,18 @@ html:root:not(#_) .ps-k, html:root:not(#_) .page-meta, html:root:not(#_) .mu-slo
 }
 html:root:not(#_) .page-meta { font-size: 0.6875rem !important; }
 
-/* Array is a dotted display face: only at display sizes. Legacy var(--font-display) uses go back to Google Sans. */
-html:root:not([data-nf]):not(#_) { --font-display: "Google Sans", "Google Sans Text", "Helvetica Neue", sans-serif; --font-array: "Array", "Google Sans", sans-serif; }
-html:root:not(#_) .brand-mark, html:root:not(#_) .sb-badge, html:root:not(#_) .avatar, html:root:not(#_) [class*="-av"] { font-family: "Google Sans", sans-serif !important; }
-/* Array targets */
+/* Display sizes use Geist like everything else */
+html:root:not([data-nf]):not(#_) { --font-display: "Geist", "Helvetica Neue", sans-serif; --font-array: "Geist", sans-serif; }
+html:root:not(#_) .brand-mark, html:root:not(#_) .sb-badge, html:root:not(#_) .avatar, html:root:not(#_) [class*="-av"] { font-family: "Geist", sans-serif !important; }
+/* Display targets */
 html:root:not(#_) .page-title, html:root:not(#_) .topk-name, html:root:not(#_) .ps-who b, html:root:not(#_) .fb-head b, html:root:not(#_) .doc h2 { font-family: var(--font-array) !important; }
 html:root:not(#_) .lu-mx-who, html:root:not(#_) .sb2-who b, html:root:not(#_) .tc-who .team-name, html:root:not(#_) .tp-who b, html:root:not(#_) .st-dhead .st-who b, html:root:not(#_) .top-league-n b, html:root:not(#_) .lsw-btn b, html:root:not(#_) .wt-name b {
   font-family: var(--font-array) !important; font-size: max(1.125rem, 1em) !important; font-weight: 600; letter-spacing: 0;
 }
 html:root:not(#_) .top-league-n b { font-size: 1.0625rem !important; }
-/* Small names and section titles stay in Google Sans for legibility */
+/* Small names and section titles in Geist */
 html:root:not(#_) .section-title, html:root:not(#_) .card h2, html:root:not(#_) .nudge h3, html:root:not(#_) .st-who b, html:root:not(#_) .psr-team, html:root:not(#_) .lsw-n b,
-html:root:not(#_) .partner-card b, html:root:not(#_) .mu-side span, html:root:not(#_) .roster-head b, html:root:not(#_) .sheet h2 { font-family: "Google Sans", sans-serif !important; }
+html:root:not(#_) .partner-card b, html:root:not(#_) .mu-side span, html:root:not(#_) .roster-head b, html:root:not(#_) .sheet h2 { font-family: "Geist", sans-serif !important; }
 /* More numbers in Geist Mono */
 html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#_) .wv-rank, html:root:not(#_) .partner-rank, html:root:not(#_) .topk-stats dd, html:root:not(#_) .faab-num, html:root:not(#_) .faab b, html:root:not(#_) .lu-weeknav-lbl b {
   font-family: var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
@@ -3058,10 +3058,10 @@ html:root:not(#_) .sb2-pts, html:root:not(#_) .sb2-chance-lbl b, html:root:not(#
 html:root:not(#_) .sb2-pts { font-weight: 600 !important; letter-spacing: -0.05em; }
 html:root:not(#_) .lu-mx-who { font-size: 1rem !important; }
 
-/* ==== Type v2: Google Sans for copy and names, Geist Mono for numbers, Array only for page titles ==== */
+/* ==== Type v2: Geist for copy and names, Geist Mono for numbers ==== */
 html:root:not([data-nf]):not(#_) {
-  --font-body: "Google Sans", "Google Sans Text", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Google Sans", "Google Sans Text", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Geist", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 html:root:not(#_) body, html:root:not(#_) button, html:root:not(#_) input, html:root:not(#_) select, html:root:not(#_) textarea { font-family: var(--font-body); }
@@ -3173,7 +3173,7 @@ html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { background: #FF4D
 /* Live hero: scored is the headline, projection a mono footnote, Live tag sits over the odds */
 html:root:not(#_) .lu-mx-proj { font: 500 0.75rem/1.2 var(--font-mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; }
 html:root:not(#_) .lu-mx-mid .lu-live { margin-bottom: 6px; }
-/* Page titles: Array Regular, the narrower cut */
+/* Page titles */
 html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !important; }
 
 /* ---- Logo: lime mark, chalk wordmark (brand kit). Light theme falls back to ink so it stays legible. ---- */
@@ -3877,3 +3877,6 @@ html:root:not(#_) .ld2-live-head > div { max-width: 520px; }
 html:root:not(#_) .ld2-live-rows { margin: 4px -22px -22px; background: transparent; box-shadow: none; border: 0; }
 html:root:not(#_) .ld2-live-rows .lu-row { padding-left: 22px; padding-right: 22px; }
 html:root:not(#_) .pitch-card .pc-p { white-space: normal; overflow: visible; }
+
+/* One text face: Geist. Numbers: Geist Mono. */
+html:root:not(#_):not(#_) { --font-display: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --font-body: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --font-array: "Geist", sans-serif; --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
