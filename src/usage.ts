@@ -4,7 +4,7 @@
 import { LEAGUE, PLAYERS, Player, Pos, WEEK, isDemo } from "./data";
 import { currentFormat } from "./engine";
 import { seasonFor } from "./schedule";
-import { fetchStatRows } from "./sleeper";
+import { fetchStatRows, scoreStats } from "./sleeper";
 
 type Stats = Record<string, number | undefined>;
 interface Row { id: string; team: string | null; opp: string | null; stats: Stats }
@@ -16,8 +16,10 @@ const pastWeeks = () => Array.from({ length: Math.max(0, WEEK - 1) }, (_, i) => 
 /** "vs TB", "@ TB", "@TB", "vTB" or "TB" to "TB". */
 export const oppTeam = (opp?: string | null) => (opp ?? "").replace(/^(vs\s*|@\s*|v(?=[A-Z]{2,3}$))/, "").trim() || null;
 
-/** Fantasy points for a stat line in this league's format. */
+/** Fantasy points for a stat line, scored with the league's own scoring_settings like Sleeper (the same scorer the
+ *  week browsers use), or the format's precomputed totals when the league has no settings loaded. */
 export function ptsOf(pos: string, s: Stats): number | undefined {
+  if (LEAGUE.scoring && !isDemo()) return scoreStats(s, LEAGUE.scoring, pos);
   const f = currentFormat();
   const base = f.scoring === "ppr" ? s.pts_ppr : f.scoring === "half" ? s.pts_half_ppr : s.pts_std;
   if (base === undefined) return undefined;
