@@ -16,6 +16,7 @@ import { PlatformName } from "./PlatformLogo";
 import { Select } from "./Select";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
+import { useHFade } from "./hFade";
 
 export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone, noteIds }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -634,14 +635,14 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               return (
                 <div key={k} className={`dt-side ${k}`}>
                   <button className="dt-label" onClick={() => setSide(k)}>{k === "give" ? "Send" : "Get"}</button>
-                  <div className="dt-chips">
+                  <DtChips count={ids.length}>
                     {ids.map((id) => { const p = playerById(id); return (
                       <button key={id} className="dt-chip" onClick={() => toggle(k, id)} aria-label={`Remove ${p.name}`}>
                         <Avatar p={p} size={22} badge={false} /><span>{p.name.split(" ").slice(-1)[0]}</span><Icon name="x" size={12} />
                       </button>
                     ); })}
                     {ids.length === 0 && <button className="dt-empty" onClick={() => setSide(k)}>{k === "give" ? "Pick from your roster" : isMulti ? "Pick from their rosters" : `Pick from ${them.manager}`}</button>}
-                  </div>
+                  </DtChips>
                 </div>
               );
             })}
@@ -686,4 +687,11 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       </section>}
     </>
   );
+}
+
+/** One side of the deal tray: its pills scroll sideways, fade at the edge with more, and the newest scrolls into view. */
+function DtChips({ count, children }: { count: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useHFade(ref, count);
+  return <div ref={ref} className="dt-chips">{children}</div>;
 }

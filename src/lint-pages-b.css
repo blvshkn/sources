@@ -103,3 +103,29 @@ html:root:not(#_):not(#_) :is(.wv3-head, .sx-head) > .lu-weeknav.lu-weeknav { fl
   html:root:not(#_):not(#_) .wv3-list .wv-detail .wv-grid > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 12px; align-items: baseline; }
   html:root:not(#_):not(#_) .wv3-list .wv-detail .wv-grid > div > p { margin: 0; }
 }
+
+/* ---------- Trade: deal tray pill rows (phones and tablets) ----------
+   Send and Get labels stay put on the left, See the read on the right; only the pills scroll. Each row is a fixed
+   44px tall scroller (8px above and below the 28px pills, so the whole pill is a 44px target inside the scroll box),
+   snaps to pills, and fades at whichever edge has more pills past it (data-hfade, set by hFade.ts). */
+html:root:not(#_):not(#_) .deal-tray .dt-side { height: 44px; }
+html:root:not(#_):not(#_) .deal-tray .dt-chips.dt-chips {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; height: 44px; padding: 0; margin: 0;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+  scrollbar-width: none; animation: none;
+  --hf-l: 0px; --hf-r: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--hf-l), #000 calc(100% - var(--hf-r)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--hf-l), #000 calc(100% - var(--hf-r)), transparent);
+}
+html:root:not(#_):not(#_) .deal-tray .dt-chips.dt-chips::-webkit-scrollbar { display: none; }
+html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="end"] { --hf-r: 28px; }
+html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="start"] { --hf-l: 28px; }
+html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="both"] { --hf-l: 28px; --hf-r: 28px; }
+html:root:not(#_):not(#_) .deal-tray .dt-chips > * { flex: none; scroll-snap-align: start; }
+/* The pill fills the row's height as its tap target; the visible pill stays 28px */
+html:root:not(#_):not(#_) .deal-tray .dt-chip { position: relative; }
+html:root:not(#_):not(#_) .deal-tray .dt-chip::after { content: ""; position: absolute; inset: auto 0; top: 50%; height: 44px; translate: 0 -50%; }
+html:root:not(#_):not(#_) .deal-tray .dt-chip > span { white-space: nowrap; }
+/* The page already pads its bottom by the tray and tab bar; the spacer, at zero height, only adds the column gap: 20px clear above the tray
+   (it was 128px, a dead gap) */
+@media (max-width: 860px) { html:root:not(#_):not(#_) .dt-spacer { height: 0; } }
