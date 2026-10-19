@@ -1,0 +1,135 @@
+/* ---------- Player news: story cards, the player sheet list and the Wire's news card ---------- */
+/* Lime marks only our own read ("What it means for you"). Sources get neutral lettermarks, never logos. */
+
+html:root:not(#_):not(#_) .nx-list { display: grid; gap: 10px; }
+
+/* Story card */
+html:root:not(#_):not(#_) .nx {
+  display: grid; gap: 8px; padding: 14px; min-width: 0;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-inner, 12px);
+  box-shadow: var(--shadow-sm, none);
+}
+html:root:not(#_):not(#_) .nx-src {
+  display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap;
+  font: 500 0.75rem/1.2 var(--font-body); color: var(--muted);
+}
+html:root:not(#_):not(#_) .nx-src b { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .nx-src time::before { content: "·"; margin-right: 6px; color: var(--faint); }
+html:root:not(#_):not(#_) .nx-src time { font-family: var(--font-mono); font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .nx-via { color: var(--faint); }
+html:root:not(#_):not(#_) .nx-mark {
+  flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px;
+  background: var(--surface-3); color: var(--ink); border: 1px solid var(--line);
+  font: 700 0.5625rem/1 var(--font-mono); letter-spacing: 0.02em;
+}
+html:root:not(#_):not(#_) .nx-kind {
+  margin-left: auto; padding: 3px 7px; border-radius: 999px;
+  background: var(--surface-3); color: var(--muted);
+  font: 600 0.625rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase;
+}
+html:root:not(#_):not(#_) .nx-kind.k-status { background: var(--warn-soft); color: var(--warn); }
+html:root:not(#_):not(#_) .nx-h {
+  margin: 0; font: 600 0.9375rem/1.35 var(--font-body); color: var(--ink); letter-spacing: -0.005em; text-wrap: pretty;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+html:root:not(#_):not(#_) .nx-ex {
+  margin: 0; max-width: 78ch; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); text-wrap: pretty;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+html:root:not(#_):not(#_) .nx-ex.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+html:root:not(#_):not(#_) .nx-exp {
+  justify-self: start; margin-top: -4px; padding: 2px 0; background: none; border: 0; cursor: pointer;
+  font: 500 0.75rem/1.2 var(--font-body); color: var(--ink); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px;
+}
+
+/* Our read */
+html:root:not(#_):not(#_) .nx-imp {
+  display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(var(--lime-rgb, 216, 242, 74), 0.06); border: 1px solid rgba(var(--lime-rgb, 216, 242, 74), 0.14);
+}
+html:root:not(#_):not(#_) .nx-imp-k {
+  display: flex; align-items: center; gap: 7px;
+  font: 600 0.6875rem/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+}
+html:root:not(#_):not(#_) .nx-imp-k > i { flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--lime, #D8F24A); }
+html:root:not(#_):not(#_) .nx-imp-k .tip, html:root:not(#_):not(#_) .nx-imp-k > span:last-child { margin-left: auto; }
+html:root:not(#_):not(#_) .nx-imp-by {
+  display: inline-flex; align-items: center; gap: 4px; text-transform: none; letter-spacing: 0;
+  font: 500 0.6875rem/1 var(--font-body); color: var(--faint);
+}
+html:root:not(#_):not(#_) .nx-imp-by svg { color: var(--lime, #D8F24A); }
+html:root:not(#_):not(#_) .nx-imp p { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--ink); text-wrap: pretty; }
+
+html:root:not(#_):not(#_) .nx-read {
+  justify-self: start; display: inline-flex; align-items: center; min-height: 24px;
+  font: 500 0.75rem/1.2 var(--font-body); color: var(--muted); text-decoration: none;
+}
+html:root:not(#_):not(#_) .nx-read:hover { color: var(--ink); }
+html:root:not(#_):not(#_) .nx-read:focus-visible, html:root:not(#_):not(#_) .nx-exp:focus-visible,
+html:root:not(#_):not(#_) .nx-more:focus-visible, html:root:not(#_):not(#_) .nxr-more:focus-visible, html:root:not(#_):not(#_) .nxr-who:focus-visible {
+  outline: 2px solid var(--lime, #D8F24A); outline-offset: 2px; border-radius: 8px;
+}
+
+/* Show more / empty */
+html:root:not(#_):not(#_) .nx-more {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 40px;
+  background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+  font: 500 0.8125rem/1 var(--font-body); color: var(--ink);
+}
+html:root:not(#_):not(#_) .nx-more svg { transform: rotate(90deg); color: var(--muted); transition: transform 160ms var(--ease); }
+html:root:not(#_):not(#_) .nx-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
+html:root:not(#_):not(#_) .nx-more:hover { background: var(--surface-2); }
+html:root:not(#_):not(#_) .nx-empty { margin: 0; padding: 14px; border-radius: var(--r-inner, 12px); background: var(--surface-2); font-size: 0.8125rem; line-height: 1.5; color: var(--muted); }
+
+/* Loading: same footprint as a card so nothing jumps when stories land */
+html:root:not(#_):not(#_) .nx-skel { display: grid; gap: 10px; }
+html:root:not(#_):not(#_) .nx-sk-card { display: grid; gap: 8px; padding: 14px; min-height: 148px; box-sizing: border-box; border-radius: var(--r-inner, 12px); background: var(--surface-2); border: 1px solid var(--line); }
+html:root:not(#_):not(#_) .nx-sk-card b, html:root:not(#_):not(#_) .nx-sk-who i, html:root:not(#_):not(#_) .nx-sk-who b {
+  display: block; height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, var(--surface-3), var(--surface-2), var(--surface-3)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite;
+}
+html:root:not(#_):not(#_) .nx-sk-card b.s { width: 38%; }
+html:root:not(#_):not(#_) .nx-sk-card b.h { height: 14px; width: 82%; margin-bottom: 2px; }
+html:root:not(#_):not(#_) .nx-sk-card b.m { width: 56%; }
+html:root:not(#_):not(#_) .nx-sk-who { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+html:root:not(#_):not(#_) .nx-sk-who i { width: 36px; height: 36px; border-radius: 50%; }
+html:root:not(#_):not(#_) .nx-sk-who span { display: grid; gap: 6px; flex: 1; }
+html:root:not(#_):not(#_) .nx-sk-who b:first-child { width: 40%; height: 12px; }
+html:root:not(#_):not(#_) .nx-sk-who b:last-child { width: 24%; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .nx-sk-card b, html:root:not(#_):not(#_) .nx-sk-who i, html:root:not(#_):not(#_) .nx-sk-who b { animation: none; }
+}
+
+/* Player sheet */
+html:root:not(#_):not(#_) .ps-news { margin-top: 4px; }
+
+/* Wire: News on your players */
+html:root:not(#_):not(#_) .nxr { display: grid; gap: 4px; }
+html:root:not(#_):not(#_) .nxr .wk-head { flex-wrap: wrap; row-gap: 4px; }
+html:root:not(#_):not(#_) .nxr-src { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.02em; }
+html:root:not(#_):not(#_) .nxr-list { display: grid; }
+html:root:not(#_):not(#_) .nxr-g { display: grid; gap: 10px; padding: 14px 0 16px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .nxr-list > .nxr-g:first-child { border-top: 0; padding-top: 6px; }
+html:root:not(#_):not(#_) .nxr-who {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 2px 4px 2px 0; margin: 0;
+  background: none; border: 0; text-align: left; color: inherit; cursor: pointer; border-radius: 10px;
+}
+html:root:not(#_):not(#_) .nxr-who > svg { flex: none; color: var(--faint); transition: transform 160ms var(--ease); }
+html:root:not(#_):not(#_) .nxr-who:hover > svg { transform: translateX(2px); color: var(--muted); }
+html:root:not(#_):not(#_) .nxr-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
+html:root:not(#_):not(#_) .nxr-name b { font: 600 0.9375rem/1.25 var(--font-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .nxr-name small { font: 500 0.75rem/1.2 var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_) .nxr-name small .on { color: var(--ink); }
+html:root:not(#_):not(#_) .nxr-more {
+  justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 2px;
+  background: none; border: 0; cursor: pointer; font: 500 0.8125rem/1 var(--font-body); color: var(--ink);
+}
+html:root:not(#_):not(#_) .nxr-more svg { color: var(--muted); transition: transform 160ms var(--ease); }
+html:root:not(#_):not(#_) .nxr-more:hover svg { transform: translateX(2px); }
+html:root:not(#_):not(#_) .nxr-all { margin-top: 2px; }
+
+/* Desktop: two stories for one player sit side by side */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .nxr-g > .nx-list { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+  html:root:not(#_):not(#_) .nx { padding: 16px; }
+}

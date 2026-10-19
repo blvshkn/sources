@@ -3,10 +3,11 @@
 import { useSyncExternalStore } from "react";
 import type { Player } from "./data";
 
-type Row = [number, string, string, string];
+type Row = [number, string, string, string, string?];
 let byId: Record<string, Row> = {};
 let byName = new Map<string, number>();
 let idByName = new Map<string, string>();
+let espnByName = new Map<string, string>();
 let version = 0;
 const listeners = new Set<() => void>();
 const norm = (s: string) => s.toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, "").replace(/[^a-z]/g, "");
@@ -15,7 +16,9 @@ function ingest(players: Record<string, Row>) {
   byId = players;
   byName = new Map();
   idByName = new Map();
-  for (const [id, [num, name, team]] of Object.entries(players)) {
+  espnByName = new Map();
+  for (const [id, [num, name, team, , espn]] of Object.entries(players)) {
+    if (espn) espnByName.set(`${norm(name)}|${team}`, espn);
     byName.set(`${norm(name)}|${team}`, num);
     if (!byName.has(norm(name))) byName.set(norm(name), num);
     idByName.set(`${norm(name)}|${team}`, id);
@@ -25,7 +28,7 @@ function ingest(players: Record<string, Row>) {
   listeners.forEach((l) => l());
 }
 
-const KEY = "sources.jerseys.v1";
+const KEY = "sources.jerseys.v2";
 let started = false;
 export function loadJerseyNumbers() {
   if (started) return;
@@ -49,6 +52,13 @@ export function loadJerseyNumbers() {
 export function sleeperId(p: Pick<Player, "id" | "name" | "nfl">): string | undefined {
   if (/^\d+$/.test(p.id)) return p.id;
   return idByName.get(`${norm(p.name)}|${p.nfl}`) ?? idByName.get(norm(p.name));
+}
+
+/** ESPN's id for this player, when Sleeper has one. Lets the news route ask ESPN for his own feed. */
+export function espnId(p: Pick<Player, "id" | "name" | "nfl">): string | undefined {
+  const row = byId[p.id];
+  if (row) return row[4];
+  return espnByName.get(`${norm(p.name)}|${p.nfl}`);
 }
 
 export function jerseyNumber(p: Pick<Player, "id" | "name" | "nfl">): number | undefined {

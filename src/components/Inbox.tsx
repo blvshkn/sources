@@ -6,6 +6,7 @@ import type { Live } from "../live";
 import { Icon, IconName } from "./ui";
 import type { Nudge } from "./Wire";
 import type { Check } from "./Roster";
+import { NewsItem, ago, requestPlayer } from "../news";
 
 /** One thing Sources wants you to see: what happened, when, and the one move to make about it. */
 export interface InboxItem {
@@ -24,7 +25,7 @@ const lockShort = () => DEADLINES.lock.replace(/^Lineups lock\s*/i, "Locks ");
 
 /** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
  *  Lineup and Wire screens use, so nothing here is invented for the feed. */
-export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTag }: {
+export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTag, news = [] }: {
   nudges: Nudge[];
   checks: Check[];
   lineup: Lineup;
@@ -32,6 +33,8 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
   go: (dest: string) => void;
   loadTrade: (t: Trade) => void;
   keepTag: (id: string) => void;
+  /** Your starters with a status story in the last day. */
+  news?: { p: Player; n: NewsItem }[];
 }): InboxItem[] {
   const out: InboxItem[] = [];
   const lock = DEADLINES.lock ? lockShort() : "Before lock";
@@ -63,6 +66,12 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
       text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final with ${got.toFixed(1)} pts, ${fmt(got - want)} against their projections.`,
       action: { label: "Open matchup", run: () => go("matchup") } });
   }
+
+  // News: a starter's status changed. Opens his sheet on the Wire's news card.
+  news.forEach(({ p, n }) => {
+    out.push({ id: `pnews-${n.id}`, icon: "alert", text: n.title.toLowerCase().includes(p.name.split(" ").slice(-1)[0].toLowerCase()) ? n.title : `${p.name}: ${n.title}`, meta: `${n.source}${n.at ? ` · ${ago(n.at)}` : ""}`,
+      action: { label: "Open player", run: () => { requestPlayer(p.id); go("wire:intel"); } } });
+  });
 
   // The wire: offers, trade ideas, news, waivers, stale tags, patterns
   nudges.forEach((n) => {

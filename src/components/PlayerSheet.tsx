@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ScheduleStrip } from "./Schedule";
 import { PlayerNews } from "./News";
-
-/** Latest news, shown only when there is some. */
-const PlayerNewsBlock = ({ p }: { p: Player }) => <PlayerNews p={p} wrap={(list) => <div className="ps-games ps-news"><div className="ps-sub"><b>Latest news</b></div>{list}</div>} />;
 import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
 import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
@@ -16,12 +13,17 @@ const weekly = (p: Player) => Object.keys(LEAGUE.history ?? {}).map(Number).filt
   .filter((x): x is { w: number; pts: number; started: boolean } => typeof x.pts === "number");
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
-export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void }) {
+export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
   const [shown, setShown] = useState(false);
   const closeBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus();
+    // Opened from "More on ...": land on the news, once the sheet has slid up
+    if (focus === "news") window.setTimeout(() => {
+      const el = sheet.current, news = el?.querySelector<HTMLElement>("#ps-news");
+      if (el && news) el.scrollTo({ top: news.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 12, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }, 260);
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
@@ -122,7 +124,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
           <div className="ps-sub"><b>Season schedule</b><span className="sch-key"><i className="t-good" />Good<i className="t-tough" />Tough</span></div>
           <ScheduleStrip p={p} />
         </div>
-        <PlayerNewsBlock p={p} />
+        <PlayerNews p={p} />
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
       </section>

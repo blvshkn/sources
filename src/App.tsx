@@ -20,6 +20,9 @@ import { Icon, IconName } from "./components/ui";
 import { Briefing, FollowUp, Nudge, Threats, Wire, needCopy } from "./components/Wire";
 import { InboxItem, InboxPanel, buildInbox } from "./components/Inbox";
 import { useLive } from "./live";
+import { useRosterNews } from "./news";
+import { yourPlayers } from "./impact";
+import { urgentNews } from "./components/News";
 import { League, MiniStandings } from "./components/League";
 import { PartnerContext, WaiverContext } from "./components/PanelContext";
 import { TradeBuilder } from "./components/Trade";
@@ -374,9 +377,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const onLink = (l: Answer["links"][number]) => { if (l.trade) loadTrade(l.trade); else go(l.tab, l.teamId); };
 
   const checks = useMemo(() => gameDayChecks(yourLineup), [yourLineup]);
-  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag })
+  // Your roster's news feeds the Wire card and, for starters with a fresh status change, the inbox
+  const newsPlayers = useMemo(() => yourPlayers(), [fkey, YOU.roster.join()]);
+  const rosterNews = useRosterNews(newsPlayers);
+  const urgent = useMemo(() => urgentNews(newsPlayers, rosterNews.byId), [rosterNews.byId, newsPlayers]);
+  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag, news: urgent })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, tab]);
+  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
   const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
   const dismissItem = (it: InboxItem) => {
