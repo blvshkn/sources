@@ -3866,3 +3866,6 @@ html:root:not(#_) .page-league .plat-logo { flex: none; border-radius: 6px; }
 
 /* Matchup scores read in chalk on both sides */
 html:root:not(#_) .mu-side :is(.mu-big, b) { color: var(--ink) !important; opacity: 1 !important; }
+
+/* Numbers are mono everywhere: see src/monoNumbers.ts */
+html:root:not(#_):not(#_) [data-n][data-n] { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace !important; font-variant-numeric: tabular-nums; }
