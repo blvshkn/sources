@@ -226,8 +226,8 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
 /** A team name with its trophy kept on the last word, so a two-line name never leaves the trophy alone on a line. */
 function NameWithTrophy({ name, teamId }: { name: string; teamId: string }) {
   const cut = name.lastIndexOf(" ");
-  if (cut < 0) return <span className="nw">{name}<Trophy teamId={teamId} /></span>;
-  return <>{name.slice(0, cut + 1)}<span className="nw">{name.slice(cut + 1)}<Trophy teamId={teamId} /></span></>;
+  if (cut < 0) return <span className="sb2-nw">{name}<Trophy teamId={teamId} /></span>;
+  return <>{name.slice(0, cut + 1)}<span className="sb2-nw">{name.slice(cut + 1)}<Trophy teamId={teamId} /></span></>;
 }
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);

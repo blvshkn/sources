@@ -135,7 +135,7 @@ html:root:not(#_):not(#_) .chat-input > .btn-icon { width: 44px; height: 44px; m
 
 /* ---- Matchup card (Wire, and the landing's preview) ----------------------- */
 /* The champion's trophy stays on the team name's last word. */
-html:root:not(#_):not(#_) .sb2-who .nw { white-space: nowrap; }
+html:root:not(#_):not(#_) .sb2-who .sb2-nw { white-space: nowrap; }
 
 /* ---- Sidebar footer ---------------------------------------------------------- */
 /* "Demo league with sample / data. Connect Sleeper" broke mid-sentence at 1280 and 1024. The action
