@@ -6,6 +6,8 @@ import { TeamAvatar } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
+import { roomBelow, useEdgeFade } from "./edgeFade";
+import { Tooltip } from "./Tooltip";
 import { AcceptCell, DealRows, DealSide, DealVerdict, FlagLine, PtsCell, RosterPicker, lockMap, multiWhy, pillFlags, positionSummary, tagMaps } from "./Trade";
 
 export const MAX_PARTNERS = 3;
@@ -20,33 +22,47 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   const [hi, setHi] = useState(0);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
+  const [room, setRoom] = useState<number>();
   useEffect(() => {
     if (!open) return;
     setHi(0);
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("pointerdown", away);
-    requestAnimationFrame(() => list.current?.focus());
-    return () => document.removeEventListener("pointerdown", away);
+    // The menu stops above the viewport bottom (and the phone tab bar); the team list scrolls inside it
+    const fit = () => { const b = wrap.current?.querySelector(".mt-add"); if (b) setRoom(Math.max(160, roomBelow(b) - 12 - 52)); };
+    fit();
+    window.addEventListener("resize", fit);
+    requestAnimationFrame(() => list.current?.focus({ preventScroll: true }));
+    return () => { document.removeEventListener("pointerdown", away); window.removeEventListener("resize", fit); };
   }, [open]);
+  useEdgeFade(list, open);
+  useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: "nearest" }); }, [hi, open]);
+  const refocus = () => wrap.current?.querySelector<HTMLButtonElement>(".mt-add")?.focus({ preventScroll: true });
   const pick = (t: Team) => { onAdd(t.id); setOpen(false); };
-  const onKey = (e: { key: string; preventDefault(): void }) => {
-    if (e.key === "Escape") setOpen(false);
+  const onKey = (e: { key: string; preventDefault(): void; stopPropagation(): void }) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setOpen(false); refocus(); return; }
+    if (e.key === "Tab") { setOpen(false); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(teams.length - 1, h + 1)); }
     if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }
     if ((e.key === "Enter" || e.key === " ") && teams[hi]) { e.preventDefault(); pick(teams[hi]); }
   };
+  const addBtn = (
+    <button className="btn mt-add" aria-label="Add a team" aria-haspopup="listbox" aria-expanded={open} aria-disabled={full || undefined}
+      onClick={() => { if (!full) setOpen((o) => !o); }}>
+      <Icon name="plus" size={16} /><span className="ttb-long">Add a team</span><span className="ttb-short" aria-hidden="true">Team</span>
+    </button>
+  );
   return (
     <div className="mt-addteam" ref={wrap}>
-      <button className="btn mt-add" aria-label="Add a team" aria-haspopup="listbox" aria-expanded={open} disabled={full}
-        title={full ? "Sleeper trades top out at 4 teams" : undefined} onClick={() => setOpen((o) => !o)}>
-        <Icon name="plus" size={16} /><span className="ttb-long">Add a team</span><span className="ttb-short" aria-hidden="true">Team</span>
-      </button>
+      {/* Full: aria-disabled, not disabled, so the button still takes hover and focus and the tooltip can say why */}
+      {full ? <Tooltip content="Sleeper trades top out at 4 teams">{addBtn}</Tooltip> : addBtn}
       {open && (
         <div className="mt-menu">
           <p className="mt-menu-note">Make it a {count + 1}-team trade. <PlatformName size={12} /> takes up to {MAX_PARTNERS + 1} teams in one proposal.</p>
-          <ul className="tp-list mt-list" role="listbox" ref={list} tabIndex={-1} aria-label="Add a team to this trade" onKeyDown={onKey}>
+          <ul className="tp-list mt-list" role="listbox" ref={list} tabIndex={-1} aria-label="Add a team to this trade" onKeyDown={onKey}
+            aria-activedescendant={teams[hi] ? `mt-o-${teams[hi].id}` : undefined} style={room ? { maxHeight: Math.min(400, room) } : undefined}>
             {teams.map((t, i) => (
-              <li key={t.id} role="option" aria-selected={false} className={`tp-opt${i === hi ? " hi" : ""}`} onPointerEnter={() => setHi(i)} onClick={() => pick(t)}>
+              <li key={t.id} id={`mt-o-${t.id}`} role="option" aria-selected={false} className={`tp-opt${i === hi ? " hi" : ""}`} onPointerEnter={() => setHi(i)} onClick={() => pick(t)}>
                 <TeamAvatar t={t} size={32} />
                 <span className="tp-who"><b>{t.name}</b><small>{t.manager} · {t.record}</small></span>
                 <Icon name="plus" size={16} />

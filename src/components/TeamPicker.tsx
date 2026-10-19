@@ -3,6 +3,7 @@ import { Team } from "../data";
 import { Icon } from "./ui";
 import { Trophy } from "./Trophy";
 import { ManagerAvatar } from "./Avatar";
+import { roomBelow, useEdgeFade } from "./edgeFade";
 
 /** Manager avatar from Sleeper (team picture, then account picture), or initials when they haven't set one or it fails to load. */
 export function TeamAvatar({ t, size = 40 }: { t: Pick<Team, "name" | "avatar" | "photo">; size?: number }) {
@@ -15,6 +16,7 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
   const [hi, setHi] = useState(0);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
+  const [room, setRoom] = useState<number>();
   const id = useId();
   const cur = teams.find((t) => t.id === value) ?? teams[0];
 
@@ -23,15 +25,22 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
     setHi(Math.max(0, teams.findIndex((t) => t.id === value)));
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("pointerdown", away);
-    requestAnimationFrame(() => list.current?.focus());
-    return () => document.removeEventListener("pointerdown", away);
+    // The list never runs past the viewport or under the phone tab bar: it scrolls inside its own panel
+    const fit = () => { const b = wrap.current?.querySelector(".tp-btn"); if (b) setRoom(Math.max(180, roomBelow(b) - 12)); };
+    fit();
+    window.addEventListener("resize", fit);
+    requestAnimationFrame(() => list.current?.focus({ preventScroll: true }));
+    return () => { document.removeEventListener("pointerdown", away); window.removeEventListener("resize", fit); };
   }, [open, teams, value]);
+  useEdgeFade(list, open);
 
   useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: "nearest" }); }, [hi, open]);
 
-  const pick = (t: Team) => { onChange(t.id); setOpen(false); };
-  const onKey = (e: { key: string; preventDefault(): void }) => {
-    if (e.key === "Escape") { setOpen(false); return; }
+  const refocus = () => wrap.current?.querySelector<HTMLButtonElement>(".tp-btn")?.focus({ preventScroll: true });
+  const pick = (t: Team) => { onChange(t.id); setOpen(false); refocus(); };
+  const onKey = (e: { key: string; preventDefault(): void; stopPropagation(): void }) => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setOpen(false); refocus(); return; }
+    if (e.key === "Tab") { setOpen(false); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(teams.length - 1, h + 1)); }
     if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(teams[hi]); }
@@ -49,8 +58,9 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
         <Icon name="chev" size={20} />
       </button>
       {open && (
+        <div className="tp-pop">
         <ul className="tp-list" role="listbox" ref={list} tabIndex={-1} aria-labelledby={`${id}-l`}
-          aria-activedescendant={`${id}-o${hi}`} onKeyDown={onKey}>
+          aria-activedescendant={`${id}-o${hi}`} onKeyDown={onKey} style={room ? { maxHeight: Math.min(440, room) } : undefined}>
           {teams.map((t, i) => (
             <li key={t.id} id={`${id}-o${i}`} role="option" aria-selected={t.id === value}
               className={`tp-opt${i === hi ? " hi" : ""}`} onPointerEnter={() => setHi(i)} onClick={() => pick(t)}>
@@ -60,6 +70,7 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
             </li>
           ))}
         </ul>
+        </div>
       )}
     </div>
   );

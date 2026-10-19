@@ -358,7 +358,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
             <span className="wv-rank" aria-hidden="true" />
             <Avatar p={e.fa} size={40} />
             <span className="wv-who">
-              <span className="wv-name">{e.fa.name}{e.fa.trend === "up" && kind === "current" && r && <span className="wv-trend up" title="Trending up: adds are rising across Sleeper" aria-label="Trending up">▲</span>}
+              <span className="wv-name">{e.fa.name}{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
                 {e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
                 {kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
               <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}</span>

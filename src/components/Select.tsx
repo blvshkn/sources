@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./icons";
+import { useEdgeFade } from "./edgeFade";
 
 export type SelectOption<T extends string = string> = {
   value: T;
@@ -110,6 +111,7 @@ export function Select<T extends string>({
   }, []);
 
   useLayoutEffect(() => { if (mounted) position(); }, [mounted, position]);
+  useEdgeFade(list, mounted);
 
   // Once placed: center the selected row, move focus into the list, then animate in.
   const placed = place !== null;
@@ -149,8 +151,8 @@ export function Select<T extends string>({
     if (!mounted || active < 0) return;
     const l = list.current, el = document.getElementById(optId(active));
     if (!l || !el) return;
-    if (el.offsetTop < l.scrollTop) l.scrollTop = el.offsetTop - 4;
-    else if (el.offsetTop + el.offsetHeight > l.scrollTop + l.clientHeight) l.scrollTop = el.offsetTop + el.offsetHeight - l.clientHeight + 4;
+    if (el.offsetTop < l.scrollTop + 20) l.scrollTop = el.offsetTop - 20; // clear of the edge fade
+    else if (el.offsetTop + el.offsetHeight > l.scrollTop + l.clientHeight - 24) l.scrollTop = el.offsetTop + el.offsetHeight - l.clientHeight + 24;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, mounted]);
 

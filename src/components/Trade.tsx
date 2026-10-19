@@ -195,7 +195,7 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
       <div className="qs-row" ref={wrap}>
         <ul className="qs-pills" ref={list}>
           {ids.map((id) => { const p = playerById(id); const f = flags[id]; return (
-            <li key={id} className={`qs-pill${f ? " flagged" : ""}`}><Avatar p={p} size={22} badge={false} /><span className="qs-n" title={p.name}>{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+            <li key={id} className={`qs-pill${f ? " flagged" : ""}`}><Avatar p={p} size={22} badge={false} /><Tooltip content={p.name}><span className="qs-n">{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span></Tooltip><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
               {f && <Tooltip focusable content={f.text}><span className="qs-flag" aria-label={f.text}><Icon name={f.icon} size={12} /></span></Tooltip>}
               <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
           ); })}
