@@ -1,1 +1,24 @@
-/* Trade idea card layout fixes across app screens. Owned by the trade-idea QA pass; loaded last. No url() in this file. */
+/* Trade idea card layout fixes across app screens. Owned by the trade-idea QA pass; loaded last. No CSS url functions in this file. */
+
+/* Every rule keys off the card's own width (container "ti"), never the page column.
+   The card is capped well below the page column on desktop, and the docked inbox
+   changes the column too, so the card is the only width that tells the truth.
+
+   Narrow card: one column, everything stacked.
+   600px and up: send and get sit side by side (styles.css, unnamed query on .ti).
+   640px and up: odds and gains on the left, the two actions stacked on the right,
+   the reason and "Won't work?" on the row below.
+   A container can't query its own width, so spacing between the two columns
+   comes from margins on the right-hand items, not column-gap on .ti.
+   Scoped to the app shell (.main-inner) so the landing preview cards keep their own layout. */
+html:root:not(#_):not(#_) .main-inner .ti { container: ti / inline-size; grid-template-columns: minmax(0, 1fr) auto !important; column-gap: 0 !important; }
+html:root:not(#_):not(#_) .main-inner .ti > * { grid-column: 1 / -1; min-width: 0; }
+html:root:not(#_):not(#_) .main-inner .ti-stats dd { font-variant-numeric: tabular-nums; }
+
+@container ti (min-width: 640px) {
+  html:root:not(#_):not(#_) .main-inner .ti > .tx { grid-column: 1 / -1; grid-row: 1; }
+  html:root:not(#_):not(#_) .main-inner .ti > .ti-stats { grid-column: 1; grid-row: 2; align-self: center; margin: 0 !important; }
+  html:root:not(#_):not(#_) .main-inner .ti > .ti-actions { grid-column: 2; grid-row: 2; align-self: center; justify-self: end; width: 184px; grid-template-columns: minmax(0, 1fr) !important; margin: 0 0 0 24px !important; padding-top: 0 !important; }
+  html:root:not(#_):not(#_) .main-inner .ti > .ti-why { grid-column: 1; grid-row: 3; align-self: center; margin: 0 !important; max-width: 72ch; }
+  html:root:not(#_):not(#_) .main-inner .ti > .ti-nope { grid-column: 2; grid-row: 3; justify-self: end; align-self: center; margin: 0 0 0 24px; white-space: nowrap; }
+}

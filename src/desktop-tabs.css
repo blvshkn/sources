@@ -60,20 +60,8 @@ html:root:not(#_) .main-inner:has(> .builder, > .wv-layout, > .mu, > .log-card, 
 }
 
 /* ---------- Trade: Ideas ---------- */
-/* A tidy list: the swap on the left, odds and both gains in fixed columns, actions on the right */
-@container pg (min-width: 980px) {
-  html:root:not(#_) .card.nudge .ti {
-    grid-template-columns: minmax(0, 1fr) 320px 168px !important;
-    grid-template-areas: "tx stats act" "why nope nope";
-    column-gap: 24px !important; row-gap: 8px !important; align-items: center;
-  }
-  html:root:not(#_) .card.nudge .ti > .tx { grid-area: tx; }
-  html:root:not(#_) .card.nudge .ti > .ti-stats { grid-area: stats; align-self: center; border-top: 0 !important; margin: 0 !important; padding-top: 0 !important; }
-  html:root:not(#_) .card.nudge .ti > .ti-why { grid-area: why; margin: 0; max-width: 72ch; }
-  html:root:not(#_) .card.nudge .ti > .ti-actions { grid-area: act; grid-template-columns: minmax(0, 1fr) !important; margin-top: 0 !important; padding-top: 0; }
-  html:root:not(#_) .card.nudge .ti > .ti-nope { grid-area: nope; justify-self: end; margin: 0; white-space: nowrap; }
-  html:root:not(#_) .card.nudge .ti-stats dd { font-variant-numeric: tabular-nums; }
-}
+/* Trade idea card layout lives in ideas-qa.css. It keys off the card's own width,
+   since the card is capped well below the page column. */
 /* How this manager trades: keep the line readable */
 html:root:not(#_) .tr-scout p { max-width: 72ch; }
 
