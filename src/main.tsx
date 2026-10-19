@@ -6,6 +6,7 @@ import "./desktop-tabs.css";
 import "./desktop.css";
 import "./landing-qa.css";
 import "./app-qa.css";
+import "./ideas-qa.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 
