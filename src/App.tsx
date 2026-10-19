@@ -473,10 +473,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;
   const panelOpen = docked ? dockOpen : inboxOpen;
-  const toggleInbox = (e: { currentTarget: HTMLButtonElement }) => {
+  const toggleInbox = () => {
     const opening = !panelOpen;
-    // The bell rings on open (icons.tsx rings any inbox control on click); closing stays still
-    if (!opening) { const b = e.currentTarget; b.dataset.quiet = ""; window.setTimeout(() => delete b.dataset.quiet, 700); }
+    // The bell rings on open and on close (icons.tsx rings any inbox control on click)
     if (docked) setDockPref(opening); else setInboxOpen(opening);
     if (opening) setIbxFocus((n) => n + 1);
   };

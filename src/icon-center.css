@@ -69,3 +69,54 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
   display: grid; place-items: center; font: 700 0.625rem/16px var(--font-mono); padding-top: 2px; /* digits have no descenders: their ink sat 1px high */ font-variant-numeric: tabular-nums; letter-spacing: 0;
   box-shadow: 0 0 0 2px var(--bg); pointer-events: none;
 }
+
+/* ---------- Bell: rings on hover and on click ---------- */
+/* Two parts (icons.tsx): the dome (m1) swings from its hanger at (12, 3.6); the clapper (m2) rides inside it, hangs from
+   the lip at (12, 17.1) and swings the other way, 40ms behind and wider, so it reads as a clapper lagging. Hover rings
+   once per entry (icons.tsx sets data-play for a beat and never loops); a click rings 1.3x harder (data-strong) as the
+   inbox opens or closes. Rotation on parts inside the svg only, after the centring nudge, so at rest the glyph is where
+   it was measured and the button box never changes. */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 3.6px; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17.1px; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m1 { animation: bell-dome 600ms both; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m2 { animation: bell-clapper 600ms 40ms both; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m1 { animation: bell-dome-strong 680ms both; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m2 { animation: bell-clapper-strong 680ms 40ms both; }
+  /* Each swing eases in and out like a pendulum; the swings shorten, so the ring as a whole eases out */
+  @keyframes bell-dome {
+    0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1); }
+    14%  { transform: rotate(14deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    36%  { transform: rotate(-12deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    57%  { transform: rotate(8deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    78%  { transform: rotate(-4deg); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes bell-clapper {
+    0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1); }
+    14%  { transform: rotate(-20deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    36%  { transform: rotate(17deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    57%  { transform: rotate(-11deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    78%  { transform: rotate(5deg); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes bell-dome-strong {
+    0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1); }
+    14%  { transform: rotate(18deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    36%  { transform: rotate(-15.5deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    57%  { transform: rotate(10.5deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    78%  { transform: rotate(-5deg); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes bell-clapper-strong {
+    0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1); }
+    14%  { transform: rotate(-26deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    36%  { transform: rotate(22deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    57%  { transform: rotate(-14deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+    78%  { transform: rotate(6.5deg); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
+    100% { transform: rotate(0); }
+  }
+  /* Press: the button dips to 0.94 for 100ms, then springs back as the click rings it */
+  html:root:not(#_):not(#_):not(#_) .top-bell { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease; }
+  html:root:not(#_):not(#_):not(#_) .top-bell:active:not(:disabled) { transform: scale(0.94) !important; transition-duration: 100ms; }
+}

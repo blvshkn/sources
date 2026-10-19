@@ -10,8 +10,6 @@ html:root:not(#_):not(#_) .top-bell {
   background: var(--surface-3); color: var(--ink);
 }
 html:root:not(#_):not(#_) .top-bell[aria-expanded="true"] svg { color: var(--lime); }
-/* Closing doesn't ring it; only opening and a rising count do */
-html:root:not(#_):not(#_) .top-bell[data-quiet] .ic-bell :is(.m1, .m2) { animation: none !important; }
 
 /* Desktop copy, out of the page flow so nothing in the column moves for it */
 html:root:not(#_):not(#_) .desk-bell { display: none; }

@@ -15,8 +15,9 @@ const ICONS: Record<IconName, string> = {
   spark: "<path class=\"m1\" d=\"M11 4c.7 4.2 3.3 6.8 7.5 7.5-4.2.7-6.8 3.3-7.5 7.5-.7-4.2-3.3-6.8-7.5-7.5 4.2-.7 6.8-3.3 7.5-7.5z\"/><path class=\"m2\" d=\"M18.5 2.5v4M16.5 4.5h4\"/>",
   app: "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"3.5\"/><path d=\"M3 9.5h18M7 13.5h6\"/>",
   clock: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
-  // Bell, centred in the 24 box: dome top 3.6 to clapper bottom 20.4 (it was drawn 1.4 low). icon-center.css adds the optical nudge.
-  bell: "<g class=\"m1\"><path d=\"M6 15.1V9.6a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path class=\"m2\" d=\"M10 19.1a2.2 2.2 0 0 0 4 0\"/></g>",
+  // Bell: the dome (m1) swings from its hanger at (12, 3.6); the clapper (m2) hangs from the lip at (12, 17.1) and swings
+  // against it. Drawn centred in the 24 box: dome top 3.6 to clapper bottom 20.4.
+  bell: "<g class=\"m1\"><path d=\"M6 15.1V9.6a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><g class=\"m2\"><path d=\"M10 19.1a2.2 2.2 0 0 0 4 0\"/></g></g>",
   search: "<g class=\"m1\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5\"/></g>",
   gear: "<g class=\"m1\"><path d=\"M10.2 3.5h3.6l.6 2.4 1.8 1 2.3-.8 1.8 3.1-1.8 1.6v2.4l1.8 1.6-1.8 3.1-2.3-.8-1.8 1-.6 2.4h-3.6l-.6-2.4-1.8-1-2.3.8-1.8-3.1 1.8-1.6v-2.4L3.7 9.2l1.8-3.1 2.3.8 1.8-1z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/></g>",
   helmet: "<g class=\"m1\"><path d=\"M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73\"/><g class=\"m2\"><path d=\"M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
@@ -71,6 +72,17 @@ function play(svg: Element) {
   svg.setAttribute("data-play", "");
   window.setTimeout(() => svg.removeAttribute("data-play"), PLAY_MS);
 }
+/** The bell's ring on a click: restarts even mid hover-ring, and swings harder (data-strong). */
+const ringTimers = new WeakMap<Element, number>();
+function ring(svg: Element) {
+  window.clearTimeout(ringTimers.get(svg));
+  svg.removeAttribute("data-play"); svg.removeAttribute("data-strong");
+  void (svg as SVGElement).getBoundingClientRect();
+  svg.setAttribute("data-play", ""); svg.setAttribute("data-strong", "");
+  ringTimers.set(svg, window.setTimeout(() => { svg.removeAttribute("data-play"); svg.removeAttribute("data-strong"); }, PLAY_MS));
+}
+/** Reduced motion: a small opacity tick instead of any movement. */
+const tick = (el: Element) => (el as HTMLElement).animate?.([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 220, easing: "ease-out" });
 
 /**
  * Hover plays (mouse only, never touch), the inbox bell and the badge bump. Route-change plays are pure CSS on aria-current.
@@ -82,20 +94,27 @@ export function iconMotion() {
   const hover = window.matchMedia("(hover: hover) and (pointer: fine)");
 
   document.addEventListener("pointerover", (e) => {
-    if (reduced.matches || !hover.matches || e.pointerType !== "mouse") return;
+    if (!hover.matches || e.pointerType !== "mouse") return;
     const control = (e.target as Element | null)?.closest?.("button, a, summary, label, [role='button'], [role='tab']");
     if (!control || control.getAttribute("aria-current") === "page") return;
     if (e.relatedTarget instanceof Node && control.contains(e.relatedTarget)) return;
-    const inNav = !!control.closest(".side, .tabbar, .topbar");
+    if (reduced.matches) { if (control.matches(".top-bell")) control.querySelectorAll("svg.ic-bell").forEach(tick); return; }
+    // The inbox bell rings on hover wherever it sits (the desktop one lives on the page, not in the nav)
+    const inNav = !!control.closest(".side, .tabbar, .topbar, .top-bell");
     control.querySelectorAll("svg.ic[data-m]").forEach((svg) => {
       if (inNav || svg.getAttribute("data-m") === "any") play(svg);
     });
   }, { passive: true });
 
-  // Opening the inbox rings its bell (a click, so a panel that starts open on desktop stays still on load).
+  // Opening or closing the inbox rings its bell harder than a hover, and the unread badge pulses once. A click, so a
+  // panel that starts open on desktop stays still on load.
   document.addEventListener("click", (e) => {
-    if (reduced.matches) return;
-    (e.target as Element | null)?.closest?.("[aria-controls='inbox']")?.querySelectorAll("svg.ic-bell").forEach(play);
+    const control = (e.target as Element | null)?.closest?.("[aria-controls='inbox']");
+    if (!control) return;
+    const badge = control.querySelector(".ibx-badge");
+    if (reduced.matches) { control.querySelectorAll("svg.ic-bell").forEach(tick); if (badge) tick(badge); return; }
+    control.querySelectorAll("svg.ic-bell").forEach(ring);
+    badge?.animate?.([{ scale: "1" }, { scale: "1.28", offset: 0.4 }, { scale: "1" }], { duration: 360, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
   }, { passive: true });
 
   // Badge bump when the unread count rises. Until the person first interacts, counts are only recorded, so the
