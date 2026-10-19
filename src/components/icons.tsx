@@ -5,7 +5,7 @@
 export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
-  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search";
+  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell";
 
 const ICONS: Record<IconName, string> = {
   wire: "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3.5\"/><path d=\"M8 8.5h8M8 12h8M8 15.5h4.5\"/>",
@@ -15,6 +15,7 @@ const ICONS: Record<IconName, string> = {
   spark: "<path d=\"M11 4c.7 4.2 3.3 6.8 7.5 7.5-4.2.7-6.8 3.3-7.5 7.5-.7-4.2-3.3-6.8-7.5-7.5 4.2-.7 6.8-3.3 7.5-7.5z\"/><path d=\"M18.5 2.5v4M16.5 4.5h4\"/>",
   app: "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"3.5\"/><path d=\"M3 9.5h18M7 13.5h6\"/>",
   clock: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
+  bell: "<path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path d=\"M10 20.5a2.2 2.2 0 0 0 4 0\"/>",
   search: "<circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5\"/>",
   gear: "<path d=\"M10.2 3.5h3.6l.6 2.4 1.8 1 2.3-.8 1.8 3.1-1.8 1.6v2.4l1.8 1.6-1.8 3.1-2.3-.8-1.8 1-.6 2.4h-3.6l-.6-2.4-1.8-1-2.3.8-1.8-3.1 1.8-1.6v-2.4L3.7 9.2l1.8-3.1 2.3.8 1.8-1z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/>",
   helmet: "<path d=\"M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73\"/><path d=\"M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2\"/>",

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
 import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
@@ -241,6 +242,24 @@ function WeekPanel({ v }: { v: WeekView }) {
   );
 }
 
+/** Slot report in brief, beside the lineup: where you come up short and how often. */
+function SlotGlance({ onOpen }: { onOpen: () => void }) {
+  const weak = weakSlots().slice(0, 3);
+  return (
+    <section className="card wk lu-glance" aria-label="Slot report in brief">
+      <div className="wk-head"><h2 className="section-title">Slot report</h2><span className="tiny muted">You vs league average</span></div>
+      {weak.length ? weak.map((w) => (
+        <div key={w.slot} className="wk-row lu-glance-row">
+          <b className="lu-glance-slot">{w.slot}</b>
+          <span className="wk-name">Short {w.misses} of {w.weeks} weeks<small>Trade ideas lean toward fixing it</small></span>
+          <span className="lu-glance-gap down">{fmt(w.gap)}</span>
+        </div>
+      )) : <p className="small muted">Every slot is at or above the league average.</p>}
+      <button className="btn btn-sm lu-glance-btn" onClick={onOpen}>Open slot report<Icon name="chev" size={14} /></button>
+    </section>
+  );
+}
+
 function SlotReport({ lineup }: { lineup: Lineup }) {
   const max = Math.max(...SLOT_HISTORY.flatMap((h) => [...h.you, ...h.avg]));
   const weak = weakSlots();
@@ -405,7 +424,32 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
   return onOpen ? <button className="lu-mx-open" onClick={onOpen} aria-label="Open this week's matchup">{body}</button> : body;
 }
 
-export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, onPitch }: {
+export interface Check { key: string; tone: "warn" | "bad" | "info"; icon: IconName; text: string; player?: Player }
+
+/** What needs a look before lock: IR moves, hurt starters, a coin flip at flex, an empty or thin bench, an empty K or DEF.
+ *  The inbox shows these; nothing else draws them. */
+export function gameDayChecks(lineup: Lineup): Check[] {
+  const s = lineup.slots.filter((x) => x.player) as { slot: string; player: Player }[];
+  const flex = s.find((x) => x.slot === "FLEX");
+  const bestBench = lineup.bench.filter((p) => p.pos !== "QB" && !isOut(p, true))[0];
+  const closeCall = flex && bestBench && eff(flex.player, true) - eff(bestBench, true) < 1.5;
+  const benchOut = lineup.bench.filter((p) => isOut(p, true));
+  const ir = irReport(YOU);
+  const emptySpecial = specialLineup(YOU).slots.filter((x) => !x.player);
+  return [
+    ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, text: `Activate ${p.name} from IR. Sleeper blocks adds and trades until he's moved.`, player: p })),
+    ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, text: `Move ${ir.moveIn[0].name} to IR. It frees a bench spot without a drop.` }] : []),
+    ...s.filter((x) => x.player.status).map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, player: x.player,
+      text: x.player.status === "O" ? `${x.player.name} is out (${injuryDetail(x.player)}). Swap him before lock.` : `${x.player.name} is questionable (${injuryDetail(x.player)}). Check the inactives 90 minutes before kickoff.` })),
+    ...emptySpecial.map((x) => ({ key: `empty-${x.slot}`, tone: "bad" as const, icon: "helmet" as IconName, text: `Your ${x.slot} slot is empty. Pick up a ${x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.` })),
+    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Basically a coin flip.` }] : []),
+    ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName,
+      text: `Thin bench this week. ${benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(" and ")} can't cover a starter.` }] : []),
+  ];
+}
+
+export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, onPitch, side }: {
+  side?: ReactNode;
   lineup: Lineup;
   myTags: Record<string, MyTag>;
   setTag: (id: string, t: MyTag | "") => void;
@@ -419,9 +463,6 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const by = (slot: string) => s.filter((x) => x.slot === slot);
   const flex = by("FLEX")[0];
   const bestBench = lineup.bench.filter((p) => p.pos !== "QB" && !isOut(p, true))[0];
-  const closeCall = flex && bestBench && eff(flex.player, true) - eff(bestBench, true) < 1.5;
-  const injured = s.filter((x) => x.player.status);
-  const benchOut = lineup.bench.filter((p) => isOut(p, true));
   const locked = YOU.roster.filter((id) => myTags[id] === "amazing");
   const diff = sleeperDiff(lineup);
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
@@ -450,14 +491,6 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     return from && specialPts(p) - specialPts(from) >= 0.5 ? from : undefined;
   };
   const swapFor = (id: string) => { const d = diff.find((x) => x.start.id === id); return d ? { from: d.benched, gain: d.gain } : undefined; };
-  const ir = irReport(YOU);
-  const checks: { key: string; tone: "warn" | "bad" | "info"; icon: IconName; title: string; text: string }[] = [
-    ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, title: `Activate ${p.name} from IR`, text: "He no longer qualifies. Sleeper blocks adds and trades until he's moved." })),
-    ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, title: `Move ${ir.moveIn[0].name} to IR`, text: `Open IR spot. Frees a bench spot without a drop.` }] : []),
-    ...injured.map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, title: `${x.player.name} is ${x.player.status === "O" ? "out" : "questionable"}`, text: `${injuryDetail(x.player)}. ${x.player.status === "O" ? "Swap him before lock." : "Check the inactives 90 minutes before kickoff."}` })),
-    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, title: "Close call at flex", text: `${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Under 1.5 pts apart, basically a coin flip.` }] : []),
-    ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName, title: "Thin bench this week", text: benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(", ") + "." }] : []),
-  ];
 
   return (
     <>
@@ -511,20 +544,10 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
             </section>
           )}
         </div>
-        {checks.length > 0 && (
-          <div className="lu-col">
-            <section className="card lu-checks" aria-label="Before kickoff">
-              <div className="lu-checks-head"><b>Before kickoff</b><span className="tiny muted">{DEADLINES.lock}</span></div>
-              {checks.map((c) => (
-                <div key={c.key} className="lu-check">
-                  <span className={`lu-check-ic ${c.tone}`}><Icon name={c.icon} size={16} /></span>
-                  <span className="lu-check-txt"><b>{c.title}</b><span>{c.text}</span></span>
-                </div>
-              ))}
-              <div className="lu-checks-foot"><AiLabel /></div>
-            </section>
-          </div>
-        )}
+        {side && <div className="lu-col lu-side">
+          {side}
+          <SlotGlance onOpen={() => setView("slots")} />
+        </div>}
       </div>}
 
       {view === "compare" && <StartSit key={cmp ?? "default"} a={cmp ?? diff[0]?.start.id ?? flex?.player.id} b={cmp ? (cmp === (diff[0]?.start.id ?? flex?.player.id) ? (diff[0]?.benched.id ?? bestBench?.id) : (diff[0]?.start.id ?? flex?.player.id)) : (diff[0]?.benched.id ?? bestBench?.id)} />}

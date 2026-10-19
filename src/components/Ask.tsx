@@ -7,8 +7,9 @@ import { Mark } from "./Logo";
 type Msg = { id: number; from: "you" | "sources"; q?: string; a?: Answer };
 
 
-export function Ask({ answer, onLink, starters }: { answer: (q: string) => Answer; onLink: (l: Answer["links"][number]) => void; starters: string[] }) {
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+export function Ask({ answer, onLink, starters, initial }: { answer: (q: string) => Answer; onLink: (l: Answer["links"][number]) => void; starters: string[]; initial?: string }) {
+  // A question sent from the inbox composer arrives already answered
+  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, from: "you", q: initial.trim() }, { id: 2, from: "sources", a: answer(initial.trim()) }] : []));
   const [q, setQ] = useState("");
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs]);

@@ -16,10 +16,12 @@ import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
 import { Icon, IconName } from "./components/ui";
-import { Briefing, FollowUp, Nudge, Wire, needCopy } from "./components/Wire";
-import { League } from "./components/League";
+import { Briefing, FollowUp, Nudge, Threats, Wire, needCopy } from "./components/Wire";
+import { InboxItem, InboxPanel, buildInbox } from "./components/Inbox";
+import { useLive } from "./live";
+import { League, MiniStandings } from "./components/League";
 import { TradeBuilder } from "./components/Trade";
-import { Roster } from "./components/Roster";
+import { Roster, gameDayChecks } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
@@ -98,6 +100,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
+  // The inbox: docked as the right panel on wide screens, a slide-over from the bell or the sidebar elsewhere
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [readIds, setReadIds] = usePersist<string[]>(`${scope}.inboxRead`, []);
+  const [askSeed, setAskSeed] = useState("");
+  const [navKey, setNavKey] = useState(0);
+  const live = useLive();
 
   // Every engine call below reads the league format set here.
   applyFormat(format);
@@ -114,6 +122,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
+  useEffect(() => {
+    if (!inboxOpen) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setInboxOpen(false); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [inboxOpen]);
   useEffect(() => { document.documentElement.dataset.platform = LEAGUE.platform ?? "sleeper"; }, []);
   // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
   const [toastOut, setToastOut] = useState(false);
@@ -294,6 +308,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
     if (t !== tab) { const m = document.getElementById("main"); if (m) m.style.minHeight = ""; }
     if (section) { try { localStorage.setItem(`sources.ui.${t}.view`, section); } catch { /* ignore */ } }
+    // Same screen, new section (say, Slot report from the inbox while on Lineup): redraw it on that section
+    if (section && t === tab) setNavKey((k) => k + 1);
+    setInboxOpen(false);
+    if (t !== "ask") setAskSeed("");
     setTab(t as Tab);
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     if (t === "league" && teamId) window.setTimeout(() => document.getElementById(`team-${teamId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
@@ -340,23 +358,22 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
   const onLink = (l: Answer["links"][number]) => { if (l.trade) loadTrade(l.trade); else go(l.tab, l.teamId); };
 
-  const rail = (
-    <>
-      <div className="row" style={{ justifyContent: "space-between" }}><h2 className="section-title">Live wire</h2><span className="sample-note">{demo ? "Demo" : `Week ${WEEK}`}</span></div>
-      {nudges.map((n) => (
-        <div key={n.id} className="rail-item">
-          <span className="rail-time">{n.time}{n.deadline ? ` · ${n.deadline}` : ""}</span>
-          <p>{n.headline.charAt(0).toUpperCase() + n.headline.slice(1)} {n.emph}</p>
-          {n.trades[0] && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => loadTrade(n.trades[0])}>Open in builder</button>}
-          {!n.trades[0] && n.go && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => go(n.go!.tab)}>{n.go.label}</button>}
-        </div>
-      ))}
-      <button className="rail-ask" onClick={() => go("ask")}><Icon name="spark" size={18} /><span>Ask your league anything</span></button>
-    </>
-  );
+  const checks = useMemo(() => gameDayChecks(yourLineup), [yourLineup]);
+  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag })
+    .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
+  [nudges, checks, yourLineup, live, dismissedIds, tab]);
+  const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
+  const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
+  const dismissItem = (it: InboxItem) => {
+    markRead(it.id);
+    if (it.nudge) { dismiss(it.nudge); return; }
+    const prev = dismissedIds;
+    setDismissedIds((c) => [...c, it.id]);
+    setToast("Dismissed.", () => setDismissedIds(prev));
+  };
 
   return (
-    <div className={`shell${tab === "trade" ? " wide" : ""}`}>
+    <div className={`shell${tab === "trade" ? " wide" : ""}${inboxOpen ? " inbox-open" : ""}`}>
       <a className="skip-link" href="#main">Skip to content</a>
       <aside className="side">
         <div className="brand">
@@ -377,6 +394,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             ))}
           </div>
           <div className="nav-sep" />
+          <button className="nav-inbox" aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>
+            <span className="ix-ic"><Icon name="bell" size={20} active={inboxOpen} /></span><span className="ix-w">Inbox</span>
+            {unread > 0 && <span className="ibx-badge" aria-label={`${unread} unread`}>{unread}</span>}
+          </button>
           {TABS.filter((t) => !t.main && !t.hidden).map((t) => (
             <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
               <span className="ix-ic"><Icon name={t.icon} size={20} active={tab === t.id} /></span><span className="ix-w">{t.short}</span>
@@ -390,7 +411,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <button className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} onClick={() => go("wire")}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <span className="top-upd" title={UPDATED}>{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span>}
-          <button className="btn btn-icon btn-ghost" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}><Icon name="spark" size={20} /></button>
+          <button className="btn btn-icon btn-ghost top-bell" aria-label={`Inbox${unread ? `, ${unread} unread` : ""}`} aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>
+            <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
+          </button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
         </div>
       </header>
@@ -398,7 +421,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <main className="main" id="main" tabIndex={-1}>
         <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching(true) }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
-        <div className="main-inner" key={tab}>
+        <div className="main-inner" key={`${tab}:${navKey}`}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag}
@@ -419,12 +442,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               tags={active} myTags={myTags} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (
-            <Roster lineup={yourLineup} myTags={myTags} prices={prices} tags={active} level={level} onPitch={setPitch}
+            <Roster side={<Threats onGo={go} />} lineup={yourLineup} myTags={myTags} prices={prices} tags={active} level={level} onPitch={setPitch}
               setPrice={(id, p) => setPrices((c) => ({ ...c, [id]: p }))}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={recs} onToast={setToast} />}
-          {tab === "ask" && <Ask answer={(q) => ask(q, active, myTags, prices)} onLink={onLink} starters={askStarters} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q) => ask(q, active, myTags, prices)} onLink={onLink} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
@@ -436,13 +459,18 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               hiddenCount={hiddenIdeas.length} onUnhide={() => { setHiddenIdeas([]); setToast("Hidden trade ideas are back."); }}
               onReplay={onReconnect} />
           )}
-          {["wire", "league", "roster", "waivers"].includes(tab) && <section className="card card-pad rail-inline">{rail}</section>}
         </div>
         </IdeaFeedbackCtx.Provider>
         </LeagueCtx.Provider>
       </main>
 
-      <aside className="rail" aria-label="Live wire">{rail}</aside>
+      <div className="ibx-scrim" aria-hidden="true" onClick={() => setInboxOpen(false)} />
+      <aside className="rail ibx" id="inbox" aria-label="Inbox">
+        <InboxPanel items={inbox} read={readIds} open={inboxOpen} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
+          onDismiss={dismissItem} onClose={() => setInboxOpen(false)}
+          onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
+          context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} /> : null} />
+      </aside>
 
       <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
         data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>

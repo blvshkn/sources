@@ -214,7 +214,7 @@ function WkPts({ p, live }: { p: Player; live: ReturnType<typeof useLive> }) {
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
 
 /** The opponent's three biggest projections, with live points once their games start. */
-function Threats({ onGo }: { onGo: (t: string) => void }) {
+export function Threats({ onGo }: { onGo: (t: string) => void }) {
   const live = useLive();
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   if (!opp) return null;

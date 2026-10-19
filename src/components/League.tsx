@@ -1,4 +1,4 @@
-import { ManagerTag, playerById, Pos, POS_ORDER, YOU } from "../data";
+import { ManagerTag, playerById, Pos, POS_ORDER, TEAMS, YOU } from "../data";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { FadeWeeks, Group, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength, tendencies } from "../engine";
 import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp, useSticky, PageTabs } from "./ui";
@@ -69,6 +69,29 @@ function ActivityFeed() {
 }
 
 
+/** Standings at a glance for the side panel: record order, points for as the tiebreak, your row marked. */
+export function MiniStandings({ onOpen }: { onOpen: () => void }) {
+  const wins = (r: string) => Number(r.split("-")[0]) || 0;
+  // Top five plus your row, so the feed below keeps its room
+  const rows = [...TEAMS].sort((a, b) => wins(b.record) - wins(a.record) || b.pf - a.pf).map((t, i) => ({ t, i })).filter(({ t, i }) => i < 5 || t.you);
+  return (
+    <section className="ibx-ctx" aria-label="Standings">
+      <div className="ibx-ctx-head"><b>Standings</b><button className="linkish" onClick={onOpen}>Full table</button></div>
+      <ol className="mst">
+        {rows.map(({ t, i }) => (
+          <li key={t.id} className={t.you ? "you" : undefined}>
+            <span className="mst-rk">{i + 1}</span>
+            <TeamAvatar t={t} size={22} />
+            <span className="mst-nm">{t.name}</span>
+            <span className="mst-rec">{t.record}</span>
+            <span className="mst-pf">{t.pf.toFixed(0)}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function Bar({ label, diff, pct }: { label: string; diff: number; pct: number }) {
   const w = Math.min(Math.abs(pct) * 100 * 1.4, 50); // half track = 36% off league avg
   const dir = diff >= 0 ? "up" : "down";
@@ -120,6 +143,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
 
       <PageTabs value={view} onChange={setView} options={[{ v: "needs", label: "Needs", icon: "target" }, { v: "standings", label: "Standings", icon: "trophy" }, { v: "values", label: "Values", icon: "values" }, { v: "activity", label: "Activity", icon: "activity" }, { v: "tendencies", label: "Tendencies", icon: "tendencies" }]} />
 
+      <div className="lg-top">
       {view === "needs" && partners.length > 0 && (
         <section className="card nudge" aria-label="Best trade partners">
           <div className="row wrap" style={{ justifyContent: "space-between" }}>
@@ -132,13 +156,9 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
             {partners.map(({ n, t, why }, i) => (
               <button key={n.team.id} className="partner-card" onClick={() => onOpen(t)}>
                 <span className="partner-rank">{i + 1}</span>
-                <span className="grow" style={{ minWidth: 0 }}>
-                  <b>{n.team.name}</b>
-                  <span className="small muted" style={{ display: "block" }}>{why}</span>
-                </span>
-                <span className="idea-nums" style={{ flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                  <span>You <Delta n={t.youDelta} /></span><span>Them <Delta n={t.themDelta} /></span>
-                </span>
+                <TeamAvatar t={n.team} size={32} />
+                <span className="ptn-who"><b>{n.team.name}</b><span className="ptn-why">{why}</span></span>
+                <span className="ptn-nums"><span><small>You</small><Delta n={t.youDelta} /></span><span><small>Them</small><Delta n={t.themDelta} /></span></span>
               </button>
             ))}
           </div>
@@ -151,16 +171,17 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
           <span className="tiny muted">Type or dictate. Tags stay private.</span>
         </div>
         <TagCapture onSave={onAddTag} />
+        {view === "needs" && (
+          <div className="legend lg2" aria-label="Tag key">
+            <span><i className="tag-dot tag-wants" />Wants</span>
+            <span><i className="tag-dot tag-refuses" />Won't move</span>
+            <span><i className="tag-dot tag-notInterested" />Not interested</span>
+            <small>Tags fade after {fade} weeks</small>
+          </div>
+        )}
       </section>}
+      </div>
 
-      {view === "needs" && (
-        <div className="legend lg2" aria-label="Tag key">
-          <span><i className="tag-dot tag-wants" />Wants</span>
-          <span><i className="tag-dot tag-refuses" />Won't move</span>
-          <span><i className="tag-dot tag-notInterested" />Not interested</span>
-          <small>Tags fade after {fade} weeks</small>
-        </div>
-      )}
       {view === "tendencies" && <p className="small muted">Built from completed trades and offers in this league over the last year. <Phase v="v1" /></p>}
 
       {view === "standings" ? <Standings needs={needs} /> : view === "activity" ? <ActivityFeed /> : view === "values" ? <Values onTarget={(_, ownerId) => onTrade(ownerId)} /> : <div className="needs-grid">
