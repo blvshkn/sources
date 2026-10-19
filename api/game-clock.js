@@ -24,8 +24,9 @@ const SOURCES = [
   ["sleeper", async (season, week) => {
     const q = `query s { scores(sport: "nfl", season_type: "regular", season: "${season}", week: ${week}) { status metadata } }`;
     const d = await get("https://sleeper.com/graphql", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: q }) });
+    if (!Array.isArray(d?.data?.scores)) throw new Error(`sleeper: ${JSON.stringify(d?.errors ?? d).slice(0, 100)}`);
     const teams = {};
-    for (const g of d?.data?.scores ?? []) {
+    for (const g of d.data.scores) {
       const m = g.metadata ?? {};
       if (!/in_?progress|in_game/i.test(String(g.status ?? m.status ?? ""))) continue;
       const qn = Number(m.quarter_num ?? m.quarter ?? m.period);
@@ -43,6 +44,16 @@ const SOURCES = [
 export default async function handler(req, res) {
   const season = String(req.query?.season ?? new Date().getFullYear()).replace(/\D/g, "");
   const week = Number(req.query?.week ?? 1) || 1;
+  // ?debug=1 reports what each source returned, live or not, so a broken feed shows up before game day
+  if (req.query?.debug) {
+    const report = {};
+    for (const [source, run] of SOURCES) {
+      try { const t = await run(season, week); report[source] = { ok: true, live: Object.keys(t ?? {}).length }; }
+      catch (e) { report[source] = { ok: false, error: String(e?.message ?? e).slice(0, 120) }; }
+    }
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(200).json({ debug: report });
+  }
   for (const [source, run] of SOURCES) {
     try {
       const teams = await run(season, week);
