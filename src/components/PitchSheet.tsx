@@ -67,7 +67,11 @@ export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | nul
     ids.forEach((id) => {
       const p = playerById(id), img = imgs[k++], cy = y + rowH / 2;
       g.save(); g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.closePath(); g.fillStyle = "#1E2723"; g.fill(); g.clip();
-      if (img) g.drawImage(img, X, cy - av / 2, av, av);
+      if (img) {
+        // Sleeper thumbs aren't square: crop to cover the circle instead of squashing the face
+        const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, sq = Math.min(iw, ih);
+        g.drawImage(img, (iw - sq) / 2, 0, sq, sq, X, cy - av / 2, av, av);
+      }
       else { g.fillStyle = INK; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
       g.restore();
       g.strokeStyle = hot ? A(0.55) : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();

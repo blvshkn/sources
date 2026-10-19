@@ -241,11 +241,18 @@ export function Landing({ onLive, onDemo }: {
             <article className="card ld-cell ld2-reveal">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
-              <div className="ld2-pitch ld2-thread">
-                <div className="thr-head"><span className="thr-av" aria-hidden="true">{demo.mike.manager.slice(0, 1)}</span><b>{demo.mike.manager}</b><span>Text message</span></div>
-                <figure className="tcard thr-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
-                <p className="ld2-bubble">{draftPitch(demo.trade, "friendly")}</p>
-                <span className="thr-meta">Delivered</span>
+              <div className="ld2-sms">
+                <div className="sms-top">
+                  <span className="sms-av" aria-hidden="true">{demo.mike.manager.slice(0, 1)}</span>
+                  <span className="sms-who"><b>{demo.mike.manager}</b><span>{demo.mike.name}</span></span>
+                </div>
+                <div className="sms-feed">
+                  <span className="sms-day">Today</span>
+                  <figure className="sms-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
+                  <p className="sms-out">{draftPitch(demo.trade, "friendly")}</p>
+                  <span className="sms-meta">Delivered</span>
+                  <span className="sms-typing" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
+                </div>
               </div>
             </article>
           )}
@@ -335,36 +342,31 @@ const HEADLINES = [
  */
 function TypedHeadline({ lines }: { lines: string[] }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [state, setState] = useState({ i: 0, n: 0, sel: false, typing: true });
+  const [state, setState] = useState({ i: 0, n: 0, typing: true });
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setState({ i: 0, n: lines[0].length, sel: false, typing: false }); return; }
-    let i = 0, n = 0, timer = 0, visible = true, phase: "type" | "hold" | "select" = "type";
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !timer) timer = window.setTimeout(step, 200); });
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setState({ i: 0, n: lines[0].length, typing: false }); return; }
+    // Driven off the frame clock, so keystrokes land at an even pace instead of drifting with timers
+    const TYPE = 56, ERASE = 24, HOLD_FIRST = 4200, HOLD = 3000, GAP = 320;
+    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } });
     if (ref.current) io.observe(ref.current);
-    // Steady keystrokes, a hold, then the line is selected and replaced in one beat, like retyping a text
-    function step() {
-      timer = 0;
+    function tick(now: number) {
+      raf = 0;
       if (!visible || document.hidden) return;
-      const full = lines[i];
-      let wait = 52;
-      if (phase === "type") {
-        n++;
-        if (n >= full.length) { phase = "hold"; wait = i === 0 ? 4200 : 3000; }
-        else if (full[n - 1] === "\n") wait = 140;
-        setState({ i, n, sel: false, typing: phase === "type" });
-      } else if (phase === "hold") {
-        phase = "select"; wait = 420;
-        setState({ i, n, sel: true, typing: false });
-      } else {
-        i = (i + 1) % lines.length; n = 0; phase = "type"; wait = 260;
-        setState({ i, n, sel: false, typing: true });
-      }
-      timer = window.setTimeout(step, wait);
+      if (!t0) t0 = now - (phase === "type" ? Math.max(last, 0) * TYPE : 0);
+      const el = now - t0, len = lines[i].length;
+      let n = last, typing = false;
+      if (phase === "type") { n = Math.min(len, Math.floor(el / TYPE)); typing = true; if (n >= len) { phase = "hold"; t0 = now; } }
+      else if (phase === "hold") { n = len; if (el > (i === 0 ? HOLD_FIRST : HOLD)) { phase = "erase"; t0 = now; } }
+      else if (phase === "erase") { n = Math.max(0, len - Math.floor(el / ERASE)); typing = true; if (n <= 0) { phase = "gap"; t0 = now; } }
+      else { n = 0; if (el > GAP) { i = (i + 1) % lines.length; phase = "type"; t0 = now; last = 0; } }
+      if (n !== last || phase === "hold") { last = n; setState((s) => (s.i === i && s.n === n && s.typing === typing ? s : { i, n, typing })); }
+      raf = requestAnimationFrame(tick);
     }
-    const vis = () => { if (!document.hidden && !timer) step(); };
+    const vis = () => { if (!document.hidden && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } };
     document.addEventListener("visibilitychange", vis);
-    timer = window.setTimeout(step, 420);
-    return () => { clearTimeout(timer); io.disconnect(); document.removeEventListener("visibilitychange", vis); };
+    const start = window.setTimeout(() => { raf = requestAnimationFrame(tick); }, 420);
+    return () => { clearTimeout(start); cancelAnimationFrame(raf); io.disconnect(); document.removeEventListener("visibilitychange", vis); };
   }, [lines]);
   const full = lines[state.i];
   return (
@@ -374,8 +376,8 @@ function TypedHeadline({ lines }: { lines: string[] }) {
         {lines.map((l) => <span key={l} className="ld2-typed-size">{l}</span>)}
         {/* The whole line is laid out from the first keystroke; untyped letters are just invisible, so nothing rewraps */}
         <span className="ld2-typed-live">
-          <span className={`ld2-typed-text${state.sel ? " sel" : ""}`}>{full.slice(0, state.n)}</span>
-          <i className={`ld2-caret${state.typing ? " on" : ""}${state.sel ? " off" : ""}`} />
+          <span className="ld2-typed-text">{full.slice(0, state.n)}</span>
+          <i className={`ld2-caret${state.typing ? " on" : ""}`} />
           <span className="ld2-typed-rest">{full.slice(state.n)}</span>
         </span>
       </span>
