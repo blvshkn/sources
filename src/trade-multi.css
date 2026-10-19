@@ -1,0 +1,82 @@
+/* Trade Build: deal pills, folding read blocks, multi-team deals. Loaded last. No url references in this file.
+   Three :not(#_) so these beat the older deal-panel rules in styles.css, desktop-tabs.css and trade-qa.css. */
+
+/* ---------- Deal players as pills ---------- */
+/* The old .deal-lists ul rule stacked these as a column; the row wraps instead, with + Add as the last pill */
+html:root:not(#_):not(#_):not(#_) .qs .qs-row { position: relative; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .qs ul.qs-pills {
+  display: flex !important; flex-direction: row !important; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 0 !important; padding: 0; list-style: none; min-width: 0;
+}
+html:root:not(#_):not(#_):not(#_) .qs ul.qs-pills > li { flex: 0 1 auto; min-width: 0; min-height: 0 !important; }
+html:root:not(#_):not(#_):not(#_) .qs .qs-pill {
+  display: inline-flex !important; align-items: center; gap: 6px; height: 34px; max-width: 100%;
+  padding: 0 4px 0 6px !important; border: 0 !important; border-radius: 999px;
+  background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+html:root:not(#_):not(#_):not(#_) .qs .qs-pill .qs-n {
+  flex: 0 1 auto !important; display: block !important; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; font-weight: 600;
+}
+html:root:not(#_):not(#_):not(#_) .qs .qs-pill .lu-pos { flex: none; font: 600 0.6875rem/1 var(--font-mono); }
+html:root:not(#_):not(#_):not(#_) .qs .qs-pill .qs-x { flex: none; width: 26px; height: 26px; margin: 0 !important; }
+html:root:not(#_):not(#_):not(#_) .qs .qs-addli { display: block !important; padding: 0 !important; background: none !important; flex: none; }
+html:root:not(#_):not(#_):not(#_) .qs .qs-add {
+  display: inline-flex; align-items: center; gap: 6px; width: auto !important; height: 34px; min-height: 0;
+  padding: 0 14px 0 10px; border: 1px dashed var(--line); border-radius: 999px; background: none;
+  color: var(--ink); font: 600 0.8125rem/1 var(--font-body); white-space: nowrap;
+}
+html:root:not(#_):not(#_):not(#_) .qs .qs-add[aria-expanded="true"] { border-style: solid; border-color: var(--lime); }
+html:root:not(#_):not(#_):not(#_) .qs .qs-add:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_) .qs .qs-pill, html:root:not(#_):not(#_):not(#_) .qs .qs-add { height: 40px; }
+  html:root:not(#_):not(#_):not(#_) .qs .qs-pill .qs-x { width: 32px; height: 32px; }
+}
+/* The search drops under the pill row, over the read below; nothing moves */
+html:root:not(#_):not(#_):not(#_) .qs .qs-pick { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50; box-shadow: var(--shadow-md); }
+
+/* ---------- Folding read blocks ---------- */
+html:root:not(#_):not(#_):not(#_) .fold { display: block; border-top: 1px solid var(--line); min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .fold-head {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; margin: 0;
+  border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; border-radius: 8px;
+}
+html:root:not(#_):not(#_):not(#_) .fold-head:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_) .fold-head svg { flex: none; color: var(--muted); transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_) .fold.open .fold-head svg { transform: rotate(90deg); }
+html:root:not(#_):not(#_):not(#_) .fold-head b { flex: none; font-size: 0.9375rem; font-weight: 600; }
+html:root:not(#_):not(#_):not(#_) .fold-sum {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-size: 0.8125rem; transition: opacity 160ms ease-out;
+}
+html:root:not(#_):not(#_):not(#_) .fold-sum::before { content: "·"; margin-right: 8px; }
+html:root:not(#_):not(#_):not(#_) .fold.open .fold-sum { opacity: 0; }
+html:root:not(#_):not(#_):not(#_) .fold-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_) .fold.open .fold-body { grid-template-rows: 1fr; }
+html:root:not(#_):not(#_):not(#_) .fold-in { min-height: 0; overflow: hidden; }
+html:root:not(#_):not(#_):not(#_) .fold.open .fold-in { padding-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) :is(.fold-body, .fold-head svg, .fold-sum) { transition: none; }
+}
+/* Schedules inside the fold: no second title or rule */
+html:root:not(#_):not(#_):not(#_) .fold .dsch { margin-top: 0; padding-top: 4px; border-top: 0; }
+
+@container pg (min-width: 700px) {
+  /* Schedules span the deal under both halves, as the block did before it folded */
+  html:root:not(#_):not(#_):not(#_) .builder .deal .deal-read > .fold-sch {
+    grid-column: 1 / -1; grid-row: 2; padding-inline: calc(14px + var(--tr-bw, 0px));
+  }
+  html:root:not(#_):not(#_):not(#_) .builder .deal .fold-sch .dsch {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 44px; align-items: start; padding-inline: 0;
+  }
+  html:root:not(#_):not(#_):not(#_) .builder .deal .fold-sch .dsch > .dsch-head { grid-column: 1 / -1; justify-content: flex-end; }
+  html:root:not(#_):not(#_):not(#_) .builder .deal .fold-sch .dsch > .dsch-side { min-width: 0; position: relative; }
+  html:root:not(#_):not(#_):not(#_) .builder .deal .fold-sch .dsch > .dsch-side + .dsch-side::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -22.5px; width: 1px; background: var(--line);
+  }
+}
+
+/* Phone: last names only, so two or three pills share a row */
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_) .qs .qs-pill .qs-f { display: none; }
+}

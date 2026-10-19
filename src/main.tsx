@@ -21,6 +21,7 @@ import "./news.css";
 import "./needs-list.css";
 import "./waivers-kdef.css";
 import "./inbox-toggle.css";
+import "./trade-multi.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";

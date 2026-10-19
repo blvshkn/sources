@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
@@ -7,7 +7,8 @@ import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, li
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
-import { DealSchedule } from "./Schedule";
+import { DealSchedule, scheduleLean } from "./Schedule";
+import { Fold } from "./Fold";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
@@ -75,9 +76,38 @@ export function AcceptRead({ a, who }: { a: Acceptance; who: string }) {
   );
 }
 
-export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
+/** Each slot group after the deal, you on the left and them on the right, with a two-color bar. */
+export function PositionBars({ trade, them }: { trade: TradeT; them: Team }) {
   const youAfter = groupPoints(lineupFor(rosterAfter(YOU, trade, "you")));
   const themAfter = groupPoints(lineupFor(rosterAfter(them, trade, "them")));
+  return (
+    <div className="tc-rows">
+      {groupsFor().map((g) => {
+        const a = youAfter[g], b = themAfter[g];
+        return (
+          <div key={g} className="tc-row">
+            <span className="v">{a.toFixed(1)}</span>
+            <span className="lbl">{groupName(g)}</span>
+            <span className="v r">{b.toFixed(1)}</span>
+            <span className="tc-bar" aria-hidden="true"><span style={{ flex: Math.max(a, 0.1) }} /><span style={{ flex: Math.max(b, 0.1) }} /></span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+const groupName = (g: string) => (g === "SF" ? "Superflex" : g === "FLEX" ? "Flex" : g);
+
+/** One line for a folded position breakdown: where your lineup moves most, up and down. */
+export function positionSummary(roster: string[], after: string[]): string {
+  const b = groupPoints(lineupFor(roster)), a = groupPoints(lineupFor(after));
+  const d = groupsFor().map((g) => ({ g, n: Math.round((a[g] - b[g]) * 10) / 10 })).filter((x) => Math.abs(x.n) >= 0.1);
+  if (!d.length) return "Your lineup holds at every spot";
+  const up = d.filter((x) => x.n > 0).sort((x, y) => y.n - x.n)[0], down = d.filter((x) => x.n < 0).sort((x, y) => x.n - y.n)[0];
+  return ["Your", [up && `${groupName(up.g)} ${fmt(up.n)}`, down && `${groupName(down.g)} ${fmt(down.n)}`].filter(Boolean).join(", ")].join(" ");
+}
+
+export function TradeCompare({ trade, them, bars = true }: { trade: TradeT; them: Team; bars?: boolean }) {
   const cls = (n: number) => (n >= 0.05 ? "up" : n <= -0.05 ? "down" : "flat");
   return (
     <div className="tc" aria-label={`You ${fmt(trade.youDelta)} a week, ${them.manager} ${fmt(trade.themDelta)} a week`}>
@@ -95,19 +125,7 @@ export function TradeCompare({ trade, them }: { trade: TradeT; them: Team }) {
         </div>
       </div>
       <MarketRow trade={trade} them={them} />
-      <div className="tc-rows">
-        {groupsFor().map((g) => {
-          const a = youAfter[g], b = themAfter[g];
-          return (
-            <div key={g} className="tc-row">
-              <span className="v">{a.toFixed(1)}</span>
-              <span className="lbl">{g === "SF" ? "Superflex" : g === "FLEX" ? "Flex" : g}</span>
-              <span className="v r">{b.toFixed(1)}</span>
-              <span className="tc-bar" aria-hidden="true"><span style={{ flex: Math.max(a, 0.1) }} /><span style={{ flex: Math.max(b, 0.1) }} /></span>
-            </div>
-          );
-        })}
-      </div>
+      {bars && <PositionBars trade={trade} them={them} />}
     </div>
   );
 }
@@ -152,35 +170,54 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
-/** One side of the deal, editable in place: remove with the x, add from a searchable list of that roster. */
-function DealSide({ title, team, ids, pool, onToggle }: { title: string; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void }) {
+/** One side of the deal, editable in place: players as pills with an x, and a matching + Add pill at the end of
+ *  the row that drops a searchable list of that roster over the panel below. */
+export function DealSide({ title, team, ids, pool, onToggle, className }: { title: ReactNode; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void; className?: string }) {
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
+  const wrap = useRef<HTMLDivElement>(null);
+  const addBtn = useRef<HTMLButtonElement>(null);
   const term = q.trim().toLowerCase();
   const options = pool.filter((id) => !ids.includes(id)).map(playerById)
     .filter((p) => !term || p.name.toLowerCase().includes(term) || p.pos.toLowerCase() === term || p.nfl.toLowerCase() === term)
     .sort((a, b) => eff(b) - eff(a)).slice(0, 8);
+  const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => addBtn.current?.focus()); };
+  useEffect(() => {
+    if (!adding) return;
+    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [adding]);
   return (
-    <div className="qs">
+    <div className={`qs${className ? ` ${className}` : ""}`}>
       <span className="eyebrow">{title}</span>
-      {ids.length > 0 && <ul className="qs-pills">{ids.map((id) => { const p = playerById(id); return (
-        <li key={id} className="qs-pill"><Avatar p={p} size={22} badge={false} /><span className="qs-n">{p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-          <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
-      ); })}</ul>}
-      {adding ? (
-        <div className="qs-pick">
-          <label className="qs-search"><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
-            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
-              onKeyDown={(e) => { if (e.key === "Escape") { setAdding(false); setQ(""); } if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
-          <ul className="qs-opts">
-            {options.map((p) => (
-              <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }}><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><small>{eff(p).toFixed(1)}</small><Icon name="plus" size={14} /></button></li>
-            ))}
-            {options.length === 0 && <li className="qs-none">No one matches. Try a position like WR.</li>}
-          </ul>
-          <button className="qs-done" onClick={() => { setAdding(false); setQ(""); }}>Done</button>
-        </div>
-      ) : <button className="qs-add" onClick={() => setAdding(true)}><Icon name="plus" size={14} />Add player</button>}
+      <div className="qs-row" ref={wrap}>
+        <ul className="qs-pills">
+          {ids.map((id) => { const p = playerById(id); return (
+            <li key={id} className="qs-pill"><Avatar p={p} size={22} badge={false} /><span className="qs-n" title={p.name}>{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+              <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
+          ); })}
+          <li className="qs-addli">
+            <button ref={addBtn} className="qs-add" aria-expanded={adding} aria-haspopup="listbox" onClick={() => (adding ? close() : setAdding(true))}>
+              <Icon name="plus" size={14} />{ids.length ? "Add" : "Add player"}
+            </button>
+          </li>
+        </ul>
+        {adding && (
+          <div className="qs-pick">
+            <label className="qs-search"><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
+              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
+                onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
+            <ul className="qs-opts">
+              {options.map((p) => (
+                <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }}><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><small>{eff(p).toFixed(1)}</small><Icon name="plus" size={14} /></button></li>
+              ))}
+              {options.length === 0 && <li className="qs-none">No one matches. Try a position like WR.</li>}
+            </ul>
+            <button className="qs-done" onClick={() => close(true)}>Done</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -219,6 +256,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     if (v === "amazing") lockYou[id] = "Overpay only";
   });
   const [received, setReceived] = useState(false);
+  // Big deals fold the secondary blocks so the read stays short
+  const big = give.length > 2 || get.length > 2;
   const v = trade ? (received ? offerRead(trade) : verdict(trade)) : null;
   const acc = trade && !received ? acceptance(trade, YOU, them) : null;
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
@@ -332,9 +371,16 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           ) : (
             <div className="deal-read">
               <div className="dr-main">
-              <TradeCompare trade={trade} them={them} />
+              <TradeCompare trade={trade} them={them} bars={false} />
+              <Fold id="trade.bars" title="Position breakdown" auto={!big} className="fold-bars"
+                summary={positionSummary(YOU.roster, rosterAfter(YOU, trade, "you"))}>
+                <PositionBars trade={trade} them={them} />
+              </Fold>
               </div>
-              <DealSchedule give={give.map(playerById)} get={get.map(playerById)} />
+              <Fold id="trade.sched" title="Schedules ahead" auto={!big} className="fold-sch"
+                summary={`You send ${scheduleLean(give.map(playerById))} · You get ${scheduleLean(get.map(playerById))}`}>
+                <DealSchedule bare give={give.map(playerById)} get={get.map(playerById)} />
+              </Fold>
               <div className="dr-side">
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
               {acc && <AcceptRead a={acc} who={them.manager} />}

@@ -25,7 +25,7 @@ export function ScheduleStrip({ p, compact = false }: { p: Player; compact?: boo
 }
 
 /** Every player in a deal, each with their remaining schedule, so you can see who has the easier road. */
-export function DealSchedule({ give, get }: { give: Player[]; get: Player[] }) {
+export function DealSchedule({ give, get, bare = false, sendLabel = "You send", getLabel = "You get" }: { give: Player[]; get: Player[]; bare?: boolean; sendLabel?: string; getLabel?: string }) {
   if (!give.length && !get.length) return null;
   const block = (title: string, ps: Player[]) => ps.length > 0 && (
     <div className="dsch-side">
@@ -40,9 +40,22 @@ export function DealSchedule({ give, get }: { give: Player[]; get: Player[] }) {
   );
   return (
     <section className="dsch" aria-label="Schedules ahead">
-      <div className="dsch-head"><b>Schedules ahead</b><span className="sch-key"><i className="t-good" />Good<i className="t-ok" />Even<i className="t-tough" />Tough<i className="po" />Playoffs</span></div>
-      {block("You send", give)}
-      {block("You get", get)}
+      <div className="dsch-head">{!bare && <b>Schedules ahead</b>}<span className="sch-key"><i className="t-good" />Good<i className="t-ok" />Even<i className="t-tough" />Tough<i className="po" />Playoffs</span></div>
+      {block(sendLabel, give)}
+      {block(getLabel, get)}
     </section>
   );
+}
+
+/** One player's next four weeks in a word: good if good matchups outnumber tough ones, tough if the reverse. */
+function lean(p: Player): "good" | "tough" | "even" {
+  const next = seasonFor(p).filter((c) => !c.past).slice(0, 4);
+  const g = next.filter((c) => c.tone === "good").length, t = next.filter((c) => c.tone === "tough").length;
+  return g > t ? "good" : t > g ? "tough" : "even";
+}
+/** "2 good, 3 tough" for a group of players, counting each player once by how his next four weeks lean. */
+export function scheduleLean(ps: Player[]): string {
+  const l = ps.map(lean);
+  const g = l.filter((x) => x === "good").length, t = l.filter((x) => x === "tough").length;
+  return [g && `${g} good`, t && `${t} tough`].filter(Boolean).join(", ") || "all even";
 }
