@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "wire", label: "The Wire", short: "Wire", icon: "wire", main: true },
   { id: "league", label: "League Needs", short: "League", icon: "league", main: true },
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
-  { id: "roster", label: "Lineup", short: "Lineup", icon: "lineup", main: true },
+  { id: "roster", label: "Lineup", short: "Lineup", icon: "helmet", main: true },
   { id: "waivers", label: "Waivers", short: "Waivers", icon: "waivers", main: true },
   { id: "ask", label: "Ask Sources", short: "Ask", icon: "spark", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
