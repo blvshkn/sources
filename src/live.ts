@@ -192,34 +192,32 @@ export const startersOf = (t: Team): string[] => {
 
 export interface Outlook { expected: number; scored: number; variance: number }
 /** One player's outcome spread: about 0.8 of his projection, shrinking with the share of his game left. */
-const SPREAD = 0.75;
-function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number) {
+/** How much each starter's score can swing, as a share of his projection, by position. Fitted to 32 of Sleeper's
+ *  pregame matchups (full lineups, weeks 7 to 14) plus a live one; it reproduces them within about half a point.
+ *  A live player's swing shrinks with the share of his game left. */
+const SWING: Record<string, number> = { QB: 0.472, RB: 0.85, WR: 0.978, TE: 0.603, K: 0, DEF: 2.126 };
+function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number, pos: string) {
   const st = live.games[nfl], pts = live.points[id], known = pts !== undefined;
   const frac = st === "complete" ? 0 : st === "in_game" ? live.left?.[nfl] ?? 0.5 : 1;
   o.expected += !known ? pr : st === "complete" ? pts : st === "in_game" ? pts + pr * frac : pr;
   o.scored += known ? pts : 0;
-  o.variance += (SPREAD * pr) ** 2 * frac;
+  o.variance += ((SWING[pos] ?? 0.85) * pr * frac) ** 2;
 }
 /** Expected finish, points so far and outcome variance for a list of starters plus K/DEF. */
 export function outlookOf(live: Live, ids: (string | null)[], specials: (SpecialPlayer | null)[]): Outlook {
   const o: Outlook = { expected: 0, scored: 0, variance: 0 };
   // Unrounded, like Sleeper adds them up
-  for (const id of ids) if (id && PLAYERS[id]) { const p = playerById(id); addPlayer(o, live, id, p.nfl, isOut(p, true) ? 0 : scored(p, true)); }
-  for (const sp of specials) if (sp) addPlayer(o, live, sp.id, sp.nfl, specialPts(sp));
+  for (const id of ids) if (id && PLAYERS[id]) { const p = playerById(id); addPlayer(o, live, id, p.nfl, isOut(p, true) ? 0 : scored(p, true), p.pos); }
+  for (const sp of specials) if (sp) addPlayer(o, live, sp.id, sp.nfl, specialPts(sp), sp.pos);
   return o;
 }
 export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), t.setSpecial ? t.setSpecial.map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[] : specialLineup(t).slots.map((x) => x.player));
-/** Chance team A beats team B, from expected finishes and how much is still to be played. Matches Sleeper's style of read. */
-/** Each team's spread grows with the points it still has to play: sd = 2.25 x remaining^0.59, the two teams
- *  combined. Fitted to five of Sleeper's own readings, from pregame (111.64 vs 143.75 = 28%) through the last
- *  players of the week (2 left = 40%); it reproduces every one within about a point. */
-const TEAM_SD_K = 2.25, TEAM_SD_EXP = 0.59;
-const teamSd = (o: Outlook) => TEAM_SD_K * Math.pow(Math.max(0, o.expected - o.scored), TEAM_SD_EXP);
-
+/** Chance team A beats team B: the gap in expected finishes over the combined swing still to be played,
+ *  rounded the way Sleeper shows it (never below 1% or above 99% until it's decided). */
 export function winChance(a: Outlook, b: Outlook): number {
-  const sd = Math.hypot(teamSd(a), teamSd(b)), d = a.expected - b.expected;
-  if (sd < 0.01) return d > 0 ? 100 : d < 0 ? 0 : 50;
+  const sd = Math.sqrt(a.variance + b.variance), d = a.expected - b.expected;
+  if (sd < 0.01) return d > 0 ? 99 : d < 0 ? 1 : 50;
   const x = d / sd, t = 1 / (1 + 0.2316419 * Math.abs(x)), n = 0.3989423 * Math.exp(-x * x / 2);
   const tail = n * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return Math.min(99.5, Math.max(0.5, (x > 0 ? 1 - tail : tail) * 100));
+  return Math.min(99, Math.max(1, (x > 0 ? 1 - tail : tail) * 100));
 }
