@@ -133,3 +133,12 @@ html:root:not(#_):not(#_) .nxr-all { margin-top: 2px; }
   html:root:not(#_):not(#_) .nxr-g > .nx-list { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
   html:root:not(#_):not(#_) .nx { padding: 16px; }
 }
+
+/* Intel fills the column: the news card and intel cards use the full width instead of a 760px reading measure,
+   and a player's stories lay out in as many columns as fit (2 at laptop widths, 3 on wide screens) */
+html:root:not(#_):not(#_) .main-inner:has(> .nudge, > .followup, > .nxr) > :not(.page-head):not(.page-tabs) { max-width: none !important; }
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .nxr-g > .nx-list { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; align-items: stretch; }
+  html:root:not(#_):not(#_) .nxr-g > .nx-list > .nx { height: 100%; display: flex; flex-direction: column; }
+  html:root:not(#_):not(#_) .nxr-g > .nx-list > .nx > :last-child { margin-top: auto; }
+}
