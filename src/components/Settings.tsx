@@ -4,6 +4,7 @@ import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
 import { PlatformLogo } from "./PlatformLogo";
+import { Account, accountLabel } from "../accounts";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -24,7 +25,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
@@ -37,6 +38,8 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   onGo: (tab: string) => void;
   paused: { id: string; manager: string }[]; onResume: (id: string) => void;
   hiddenCount: number; onUnhide: () => void;
+  accounts?: Account[]; activeUserId?: string;
+  onRemoveAccount?: (userId: string) => void; onAddAccount?: () => void; onSwitchLeague?: () => void;
 }) {
   const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league", ["league", "nudges", "privacy", "about"]);
   const [confirm, setConfirm] = useState<"none" | "disconnect" | "delete">("none");
@@ -54,21 +57,49 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
       {view === "league" && <>
       <section className="card settings-group">
         <h2 className="section-title">League connection</h2>
-        <div className="set-row">
+        <div className="set-row acc-conn">
           <span className="set-ic"><PlatformLogo size={20} /></span>
-          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
+          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
           {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}><PlatformLogo size={16} />Connect Sleeper</button> : (
             <span className="row wrap">
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
               {confirm === "disconnect" ? (
-                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}><PlatformLogo size={16} />Disconnect Sleeper</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
+                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}><PlatformLogo size={16} />{accounts.length > 1 ? "Disconnect all" : "Disconnect Sleeper"}</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
               ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
             </span>
           )}
         </div>
+        {!demo && accounts.length > 0 && (
+          <div className="acc-list">
+            <h3 className="acc-list-h">Sleeper accounts</h3>
+            <ul>
+              {accounts.map((a) => {
+                const label = accountLabel(a);
+                const owns = a.userId === activeUserId;
+                return (
+                  <li key={a.userId} className="acc-item">
+                    <span className="acc-av" aria-hidden="true">{a.username.slice(0, 1).toUpperCase()}</span>
+                    <span className="acc-who">
+                      <b>{label}</b>
+                      <small>{owns ? `Owns ${LEAGUE_NAME}` : label !== `@${a.username}` ? `@${a.username}` : "In the league switcher"}</small>
+                    </span>
+                    {owns
+                      ? <span className="acc-inuse">In use</span>
+                      : <button className="btn btn-sm btn-ghost acc-remove" onClick={() => onRemoveAccount?.(a.userId)} aria-label={`Remove @${a.username}`}>Remove</button>}
+                  </li>
+                );
+              })}
+            </ul>
+            <button className="acc-addrow" onClick={onAddAccount}>
+              <span className="acc-plus"><Icon name="plus" size={18} /></span>
+              <span className="lsw-n"><b>Add another Sleeper account</b><small>Username only. Your current league stays open.</small></span>
+            </button>
+            {accounts.length > 1 && <p className="tiny muted">To remove @{username}, switch to a league on another account first.</p>}
+          </div>
+        )}
         <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Sources connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
         <p className="tiny muted">Next up: {PLATFORMS.filter((p) => p.when === "v1").map((p) => p.name).join(" and ")}. Later: {PLATFORMS.filter((p) => p.when !== "v1" && p.when !== "MVP" && p.when !== "n/a").map((p) => p.name).join(" and ")}.</p>
-        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={onReplay}>{demo ? "Run setup again" : "Switch league or account"}</button>
+        <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={demo || !onSwitchLeague ? onReplay : onSwitchLeague}>{demo ? "Run setup again" : "Switch league"}</button>
       </section>
 
       <section className="card settings-group">

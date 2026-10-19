@@ -1,23 +1,33 @@
 import { useEffect, useRef, useState } from "react";
-import { findLeagues } from "../sleeper";
+import { SleeperError, findLeagues, findUser } from "../sleeper";
 import { LEAGUE, LEAGUE_NAME } from "../data";
+import { Account, accountLabel } from "../accounts";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { PlatformLogo } from "./PlatformLogo";
 
 type Row = { id: string; name: string; teams: number; avatar?: string | null };
+type Group = Row[] | { error: string } | null;
 
-/** Switch between your Sleeper leagues without leaving the app. */
-export function LeagueSwitcher({ userId, username, demo, onPick, onConnect, onClose }: {
-  userId?: string; username?: string; demo: boolean;
-  onPick: (leagueId: string) => void; onConnect: () => void; onClose: () => void;
+const toRows = (leagues: { league_id: string; name: string; total_rosters: number; avatar?: string | null }[]): Row[] =>
+  leagues.map((l) => ({ id: l.league_id, name: l.name, teams: l.total_rosters, avatar: l.avatar }));
+
+/** Switch between leagues on every connected Sleeper account, or connect another one, without leaving the app. */
+export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, onPick, onAdd, onConnect, onClose }: {
+  accounts: Account[]; activeUserId?: string; adding?: boolean; demo: boolean;
+  onPick: (leagueId: string, userId: string) => void; onAdd: (a: Account) => void; onConnect: () => void; onClose: () => void;
 }) {
   const [shown, setShown] = useState(false);
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [err, setErr] = useState("");
+  const [groups, setGroups] = useState<Record<string, Group>>({});
+  const [formOpen, setFormOpen] = useState(adding && !demo);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [added, setAdded] = useState<string | null>(null);
   const sheet = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const input = useRef<HTMLInputElement>(null);
 
   const close = () => {
     if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
@@ -25,19 +35,29 @@ export function LeagueSwitcher({ userId, username, demo, onPick, onConnect, onCl
     setShown(false); window.setTimeout(onClose, 220);
   };
 
+  const load = (userId: string) => {
+    setGroups((g) => ({ ...g, [userId]: null }));
+    findLeagues(userId)
+      .then(({ leagues }) => setGroups((g) => ({ ...g, [userId]: toRows(leagues) })))
+      .catch(() => setGroups((g) => ({ ...g, [userId]: { error: "Couldn't reach Sleeper. Try again in a minute." } })));
+  };
+
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
-    closeBtn.current?.focus();
+    if (formOpen) input.current?.focus(); else closeBtn.current?.focus();
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    if (!demo && userId) {
-      findLeagues(userId)
-        .then(({ leagues }) => setRows(leagues.map((l) => ({ id: l.league_id, name: l.name, teams: l.total_rosters, avatar: l.avatar }))))
-        .catch(() => setErr("Couldn't reach Sleeper. Try again in a minute."));
-    } else setRows([]);
+    if (!demo) accounts.forEach((a) => load(a.userId));
     return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Bring a just-added account's leagues into view so the next step is obvious.
+  useEffect(() => {
+    if (!added) return;
+    const el = sheet.current?.querySelector(`[data-account="${added}"]`);
+    el?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+  }, [added, accounts.length]);
 
   usePullToDismiss(sheet,
     (y) => {
@@ -52,10 +72,41 @@ export function LeagueSwitcher({ userId, username, demo, onPick, onConnect, onCl
       }
     });
 
+  const submit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    if (busy) return;
+    const handle = name.trim().replace(/^@/, "");
+    if (!handle) { setError("Enter a Sleeper username to find its leagues."); input.current?.focus(); return; }
+    const already = (a?: Account) => { setError(`@${a?.username ?? handle} is already connected.`); input.current?.focus(); };
+    const same = accounts.find((a) => a.username.toLowerCase() === handle.toLowerCase());
+    if (same) { already(same); return; }
+    setBusy(true); setError("");
+    try {
+      const u = await findUser(handle);
+      if (!u) { setError(`No Sleeper account named @${handle}. It's your Sleeper username, not your email.`); setBusy(false); input.current?.focus(); return; }
+      const dup = accounts.find((a) => a.userId === u.user_id);
+      if (dup) { already(dup); setBusy(false); return; }
+      const { leagues } = await findLeagues(u.user_id);
+      if (!leagues.length) { setError(`@${handle} isn't in any NFL leagues on Sleeper this season, so there's nothing to add.`); setBusy(false); input.current?.focus(); return; }
+      const acct: Account = { username: u.username || handle, userId: u.user_id, name: u.display_name || undefined };
+      setGroups((g) => ({ ...g, [acct.userId]: toRows(leagues) }));
+      onAdd(acct);
+      setAdded(acct.userId);
+      setName(""); setFormOpen(false);
+    } catch (err) {
+      setError(err instanceof SleeperError ? err.message : "We couldn't reach Sleeper. Check your connection and try again.");
+      input.current?.focus();
+    }
+    setBusy(false);
+  };
+
   const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
   const Mark = ({ r }: { r: Row }) => r.avatar
     ? <img className="lsw-av" src={`https://sleepercdn.com/avatars/thumbs/${r.avatar}`} alt="" />
     : <span className="lsw-av">{initials(r.name)}</span>;
+
+  const multi = accounts.length > 1;
+  const addedAcct = accounts.find((a) => a.userId === added);
 
   return (
     <div className={`ps-wrap${shown ? " in" : ""}`}>
@@ -63,32 +114,76 @@ export function LeagueSwitcher({ userId, username, demo, onPick, onConnect, onCl
       <section ref={sheet} className="ps lsw" role="dialog" aria-modal="true" aria-labelledby="lsw-title">
         <span className="ps-handle" aria-hidden="true" />
         <header className="fb-head">
-          <span><b id="lsw-title">Your leagues</b><small>{demo ? "You're exploring the demo league." : `Sleeper leagues for @${username}`}</small></span>
+          <span><b id="lsw-title">Your leagues</b><small>{demo ? "You're exploring the demo league." : multi ? `From ${accounts.length} Sleeper accounts` : `Sleeper leagues for @${accounts[0]?.username ?? ""}`}</small></span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
-        <ul className="fb-list">
-          {demo && (
+
+        {demo ? (
+          <ul className="fb-list">
             <li><span className="lsw-row on"><span className="lsw-av">DL</span><span className="lsw-n"><b>{LEAGUE_NAME}</b><small>Sample data</small></span><Icon name="check" size={18} /></span></li>
-          )}
-          {!demo && rows === null && !err && <li className="lsw-load">Loading your leagues…</li>}
-          {err && <li className="lsw-load">{err}</li>}
-          {rows?.map((r) => {
-            const on = r.id === LEAGUE.id;
-            return (
-              <li key={r.id}>
-                <button className={`lsw-row${on ? " on" : ""}`} aria-current={on ? "true" : undefined} onClick={() => { if (!on) onPick(r.id); close(); }}>
-                  <Mark r={r} />
-                  <span className="lsw-n"><b>{r.name}</b><small>{r.teams} teams</small></span>
-                  {on ? <Icon name="check" size={18} /> : <Icon name="chev" size={16} />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+          </ul>
+        ) : (
+          <div className="acc-groups">
+            {accounts.map((a) => {
+              const g = groups[a.userId];
+              const label = accountLabel(a);
+              return (
+                <div key={a.userId} className={`acc-group${added === a.userId ? " just-added" : ""}`} data-account={a.userId} role="group" aria-labelledby={`acc-h-${a.userId}`}>
+                  <h3 className="acc-h" id={`acc-h-${a.userId}`}>
+                    <PlatformLogo size={14} />
+                    <span className="acc-h-n">{label}</span>
+                    {label !== `@${a.username}` && <span className="acc-h-u">@{a.username}</span>}
+                    {added === a.userId && <span className="acc-h-tag">Added</span>}
+                  </h3>
+                  <ul className="fb-list">
+                    {g === null || g === undefined ? <li className="lsw-load">Loading leagues…</li>
+                      : "error" in g ? <li className="lsw-load acc-retry">{g.error} <button className="linkish" onClick={() => load(a.userId)}>Try again</button></li>
+                      : !g.length ? <li className="lsw-load">No NFL leagues on this account this season.</li>
+                      : g.map((r) => {
+                        const on = r.id === LEAGUE.id && a.userId === activeUserId;
+                        return (
+                          <li key={r.id}>
+                            <button className={`lsw-row${on ? " on" : ""}`} aria-current={on ? "true" : undefined} onClick={() => { if (!on) onPick(r.id, a.userId); close(); }}>
+                              <Mark r={r} />
+                              <span className="lsw-n"><b>{r.name}</b><small>{on ? `Current league · ${r.teams} teams` : `${r.teams} teams`}</small></span>
+                              {on ? <Icon name="check" size={18} /> : <Icon name="chev" size={16} />}
+                            </button>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="sr-only" role="status">{addedAcct ? `Added @${addedAcct.username}. Pick one of its leagues, or stay in ${LEAGUE_NAME}.` : ""}</p>
+        {addedAcct && <p className="acc-note">@{addedAcct.username} is connected. Pick one of its leagues above, or stay in {LEAGUE_NAME}.</p>}
+
         <div className="lsw-foot">
           {demo
             ? <button className="btn btn-primary" onClick={() => { close(); onConnect(); }}><PlatformLogo size={16} />Connect Sleeper</button>
-            : <button className="btn" onClick={() => { close(); onConnect(); }}><PlatformLogo size={16} />Use another Sleeper account</button>}
+            : formOpen ? (
+              <div className="acc-add">
+                <label htmlFor="acc-user" className="acc-label">Another <b>Sleeper</b> username</label>
+                <form className="acc-form" onSubmit={submit} noValidate>
+                  <span className="at" aria-hidden="true">@</span>
+                  <input id="acc-user" ref={input} value={name} onChange={(e) => { setName(e.target.value); setError(""); }} name="username"
+                    aria-invalid={!!error} aria-describedby="acc-user-help" placeholder="theirname…" autoComplete="off" autoCapitalize="none" spellCheck={false} enterKeyHint="search" />
+                  <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Finding leagues…" : "Find leagues"}</button>
+                </form>
+                <p id="acc-user-help" className={error ? "acc-error" : "acc-help"} role={error ? "alert" : undefined}>
+                  {error || "No password. Read only. Your current league stays open."}
+                </p>
+                <button className="btn btn-sm btn-ghost acc-cancel" onClick={() => { setFormOpen(false); setError(""); setName(""); }} disabled={busy}>Cancel</button>
+              </div>
+            ) : (
+              <button className="acc-addrow" onClick={() => { setFormOpen(true); setAdded(null); window.setTimeout(() => input.current?.focus(), 0); }}>
+                <span className="acc-plus"><Icon name="plus" size={18} /></span>
+                <span className="lsw-n"><b>Add another Sleeper account</b><small>Username only. Your current league stays open.</small></span>
+              </button>
+            )}
         </div>
       </section>
     </div>

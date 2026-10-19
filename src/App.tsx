@@ -29,6 +29,7 @@ import { PlatformName } from "./components/PlatformLogo";
 import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
+import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 
 type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup" | "how" | "legal";
 const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean; hidden?: boolean }[] = [
@@ -55,17 +56,19 @@ const store = {
   set(k: string, v: unknown) { try { localStorage.setItem(`sources.${k}`, JSON.stringify(v)); } catch { /* storage unavailable */ } },
   clear() { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } },
 };
-const usePersist = <T,>(k: string, init: T) => {
-  const [v, setV] = useState<T>(() => store.get(k, init));
+const usePersist = <T,>(k: string, init: T, fix?: (saved: unknown) => T) => {
+  const [v, setV] = useState<T>(() => (fix ? fix(store.get<unknown>(k, init)) : store.get(k, init)));
   useEffect(() => store.set(k, v), [k, v]);
   return [v, setV] as const;
 };
 
-export type Session = { mode: "none" } | { mode: "demo" } | { mode: "live"; username: string; userId: string; leagueId: string };
+export type { Session };
 
-function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, onSwitchLeague }: {
+function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, onSwitchLeague, onAccounts, onDisconnect }: {
   session: Session;
-  onSwitchLeague: (leagueId: string) => void;
+  onSwitchLeague: (leagueId: string, userId: string) => void;
+  onAccounts: (accounts: Account[]) => void;
+  onDisconnect: () => void;
   initialMyTags?: Record<string, MyTag>;
   onReconnect: () => void;
   onDeleteAll: () => void;
@@ -73,7 +76,15 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 }) {
   const demo = isDemo();
   const scope = demo ? "demo" : LEAGUE.id;
-  const username = session.mode === "live" ? session.username : "";
+  const username = activeAccount(session)?.username ?? "";
+  const accounts = session.mode === "live" ? session.accounts : [];
+  const removeAccount = (userId: string) => {
+    const gone = accounts.find((a) => a.userId === userId);
+    if (!gone || session.mode !== "live" || userId === session.userId) return;
+    const prev = accounts;
+    onAccounts(accounts.filter((a) => a.userId !== userId));
+    setToast(`Removed @${gone.username}. Its leagues are out of the switcher.`, () => onAccounts(prev));
+  };
   const [tab, setTab] = useState<Tab>(() => {
     const h = typeof location !== "undefined" ? location.hash.slice(1) : "";
     return (TAB_IDS as string[]).includes(h) ? (h as Tab) : "wire";
@@ -92,7 +103,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [hiddenIdeas, setHiddenIdeas] = usePersist<string[]>(`${scope}.hiddenIdeas`, []);
   const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
-  const [switching, setSwitching] = useState(false);
+  const [switching, setSwitching] = useState<false | "list" | "add">(false);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
   const [give, setGive] = useState<string[]>([]);
   const [get, setGet] = useState<string[]>([]);
@@ -382,7 +393,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <div className="brand">
           <button type="button" className="lockup side-logo" style={{ ["--lh" as string]: "30px" }} aria-label="Sources home" onClick={goHome}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></button>
         </div>
-        <button className="league-pill lsw-btn" onClick={() => setSwitching(true)} aria-haspopup="dialog">
+        <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
           <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
           <Icon name="switch" size={16} />
         </button>
@@ -422,7 +433,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </header>
 
       <main className="main" id="main" tabIndex={-1}>
-        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching(true) }}>
+        <LeagueCtx.Provider value={{ name: LEAGUE_NAME, line: `${formatLabel(format)} · Week ${WEEK}`, open: () => setSwitching("list") }}>
         <IdeaFeedbackCtx.Provider value={setFeedbackFor}>
         <div className="main-inner" key={`${tab}:${navKey}`}>
           {tab === "wire" && (
@@ -455,7 +466,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
               dismissed={dismissed} resetDismissed={() => { setDismissed({}); setDismissedIds([]); setToast("Nudges reset. You'll see everything again."); }}
-              onDisconnect={onReconnect}
+              onDisconnect={onDisconnect}
+              accounts={accounts} activeUserId={session.mode === "live" ? session.userId : ""} onRemoveAccount={removeAccount}
+              onAddAccount={() => setSwitching("add")} onSwitchLeague={() => setSwitching("list")}
               onDelete={onDeleteAll}
               onGo={(t) => go(t as Tab)}
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
@@ -486,8 +499,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         ))}
       </nav>
 
-      {switching && <LeagueSwitcher demo={demo} userId={session.mode === "live" ? session.userId : undefined} username={username}
-        onPick={onSwitchLeague} onConnect={onReconnect} onClose={() => setSwitching(false)} />}
+      {switching && <LeagueSwitcher demo={demo} accounts={accounts} activeUserId={session.mode === "live" ? session.userId : undefined} adding={switching === "add"}
+        onPick={onSwitchLeague} onAdd={(a) => onAccounts(mergeAccounts(accounts, a))} onConnect={onReconnect} onClose={() => setSwitching(false)} />}
       {feedbackFor && <IdeaFeedback trade={feedbackFor} onPick={(r) => ideaFeedback(feedbackFor, r)} onClose={() => setFeedbackFor(null)} />}
       {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onSent={(m, via) => {
         setToast(m);
@@ -508,7 +521,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 /** Session wrapper: picks demo or live Sleeper, loads the league, runs first-run setup. */
 export default function App() {
   useEffect(() => installIconTooltips(), []);
-  const [session, setSession] = usePersist<Session>("session", { mode: "none" });
+  // Older single-account sessions are rewritten into the accounts list on first read, so nobody is signed out.
+  const [session, setSession] = usePersist<Session>("session", { mode: "none" }, normalizeSession);
+  const [reloadTick, setReloadTick] = useState(0);
+  const liveKey = session.mode === "live" ? `${session.userId}:${session.leagueId}` : session.mode;
   const [status, setStatus] = useState<"loading" | "ready" | "error">(session.mode === "live" ? "loading" : "ready");
   const [step, setStep] = useState("Loading your league");
   const [error, setError] = useState("");
@@ -533,13 +549,16 @@ export default function App() {
     }
     let cancelled = false;
     setStatus("loading");
-    loadLeague(session.leagueId, session.userId, session.username, setStep)
+    loadLeague(session.leagueId, session.userId, activeAccount(session)?.username ?? "", setStep)
       .then((d) => { if (cancelled) return; setLeague(d); setVersion((v) => v + 1); setStatus("ready"); })
       .catch((e: unknown) => { if (cancelled) return; setError(e instanceof Error ? e.message : "We couldn't load your league from Sleeper. Try again in a minute."); setStatus("error"); });
     return () => { cancelled = true; };
-  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Adding or removing an account leaves the league on screen alone, so it doesn't reload it.
+  }, [liveKey, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reload = () => setSession((s) => ({ ...s }));
+  const reload = () => setReloadTick((t) => t + 1);
+  /** Back to the landing. Connected accounts are remembered and merged with the next one. */
+  const toLanding = () => setSession((s) => { const accounts = accountsOf(s); return accounts.length ? { mode: "none", accounts } : { mode: "none" }; });
 
   // Loader holds long enough for the mark to form and the light to make a pass, then lifts off over the app.
   const [boot, setBoot] = useState<"off" | "on" | "leaving">("off");
@@ -561,8 +580,8 @@ export default function App() {
         <p className="boot-step">{error}</p>
         <div className="row wrap" style={{ justifyContent: "center" }}>
           <button className="btn btn-primary" onClick={reload}>Try again</button>
-          <button className="btn" onClick={() => setSession({ mode: "demo" })}>Use the demo league</button>
-          <button className="btn btn-ghost" onClick={() => setSession({ mode: "none" })}>Switch account</button>
+          <button className="btn" onClick={() => setSession((s) => ({ mode: "demo", accounts: accountsOf(s) }))}>Use the demo league</button>
+          <button className="btn btn-ghost" onClick={toLanding}>Switch account</button>
         </div>
       </div>
     );
@@ -575,14 +594,21 @@ export default function App() {
       {boot !== "off" && <Boot step={step} leaving={boot === "leaving"} />}
       {session.mode !== "none" ? (
         <Shell key={`${leagueKey()}:${version}`} session={session} initialMyTags={initialMyTags}
-          onReconnect={() => setSession({ mode: "none" })}
+          onReconnect={toLanding}
+          onDisconnect={() => setSession({ mode: "none" })}
           onDeleteAll={() => { store.clear(); setSession({ mode: "none" }); }}
           onRefresh={reload}
-          onSwitchLeague={(id) => { if (session.mode === "live") setSession({ ...session, leagueId: id }); }} />
+          onAccounts={(accounts) => setSession((s) => (s.mode === "live" && accounts.some((a) => a.userId === s.userId) ? { ...s, accounts } : s))}
+          onSwitchLeague={(leagueId, userId) => setSession((s) => (s.mode === "live" && s.accounts.some((a) => a.userId === userId) ? { ...s, leagueId, userId } : s))} />
       ) : <Landing onLive={(st) => setStart({ kind: "live", ...st })} onDemo={() => { setLeague(demoLeague()); setStart({ kind: "demo" }); }} />}
       {session.mode === "none" && start && (
         <FirstRun start={start} onClose={() => { setStart(null); setLeague(demoLeague()); }}
-          onLive={(s, myTags) => { setInitialMyTags(myTags); justLoaded.current = true; setStart(null); setSession({ mode: "live", ...s }); }}
+          onLive={(s, myTags) => {
+            setInitialMyTags(myTags); justLoaded.current = true;
+            const added: Account = { username: s.username, userId: s.userId, name: start.kind === "live" ? start.user.name : undefined };
+            setStart(null);
+            setSession((prev) => ({ mode: "live", accounts: mergeAccounts(accountsOf(prev), added), userId: s.userId, leagueId: s.leagueId }));
+          }}
           onDemo={(myTags) => { setInitialMyTags(myTags); setLeague(demoLeague()); setStart(null); setSession({ mode: "demo" }); }} />
       )}
     </>

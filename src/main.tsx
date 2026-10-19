@@ -9,6 +9,7 @@ import "./app-qa.css";
 import "./ideas-qa.css";
 import "./trade-qa.css";
 import "./states-qa.css";
+import "./accounts.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 

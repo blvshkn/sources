@@ -55,14 +55,28 @@ interface SPlayerLite { first_name?: string; last_name?: string; position?: stri
 
 // ---- Public calls --------------------------------------------------------
 
+// Lookups the league switcher repeats for every connected account. Kept in memory for a few minutes;
+// a failed call is dropped right away so the next try goes back to Sleeper.
+const memo = new Map<string, { at: number; p: Promise<unknown> }>();
+function cached<T>(key: string, ttl: number, run: () => Promise<T>): Promise<T> {
+  const hit = memo.get(key);
+  if (hit && Date.now() - hit.at < ttl) return hit.p as Promise<T>;
+  const p = run();
+  memo.set(key, { at: Date.now(), p });
+  p.catch(() => { if (memo.get(key)?.p === p) memo.delete(key); });
+  return p;
+}
+
 export async function findUser(username: string): Promise<SUser | null> {
-  const u = await get<SUser | null>(`/v1/user/${encodeURIComponent(username.trim().replace(/^@/, ""))}`);
+  const name = username.trim().replace(/^@/, "");
+  const u = await cached(`user:${name.toLowerCase()}`, 10 * 60_000, () => get<SUser | null>(`/v1/user/${encodeURIComponent(name)}`));
   return u && u.user_id ? u : null;
 }
 
-export const getState = () => get<SState>("/v1/state/nfl");
+export const getState = () => cached("state", 5 * 60_000, () => get<SState>("/v1/state/nfl"));
 
-export async function findLeagues(userId: string): Promise<{ season: string; leagues: SLeague[] }> {
+export const findLeagues = (userId: string) => cached(`leagues:${userId}`, 5 * 60_000, () => fetchLeagues(userId));
+async function fetchLeagues(userId: string): Promise<{ season: string; leagues: SLeague[] }> {
   const state = await getState();
   let leagues = await get<SLeague[] | null>(`/v1/user/${userId}/leagues/nfl/${state.season}`);
   let season = state.season;

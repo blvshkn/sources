@@ -1,0 +1,87 @@
+/* Multiple Sleeper accounts: grouped league switcher, inline add-account form, account list in Settings. */
+
+/* ---- Switcher: one group per account ---- */
+html:root:not(#_):not(#_) .acc-groups { display: grid; gap: 18px; }
+html:root:not(#_):not(#_) .acc-group { display: grid; gap: 2px; scroll-margin: 16px; }
+html:root:not(#_):not(#_) .acc-h {
+  display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 0 2px 6px;
+  font: 600 0.75rem/1.2 var(--font-body, inherit); letter-spacing: 0.02em; color: var(--muted); text-transform: none;
+}
+html:root:not(#_):not(#_) .acc-h .plat-logo { flex: none; border-radius: 4px; }
+html:root:not(#_):not(#_) .acc-h-n { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .acc-h-u { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .acc-h-tag {
+  flex: none; margin-left: auto; padding: 2px 8px; border-radius: 999px;
+  background: var(--lime); color: #121413; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0;
+}
+html:root:not(#_):not(#_) .acc-group .fb-list { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .acc-group.just-added .fb-list { border-top-color: rgba(216, 242, 74, 0.35); }
+html:root:not(#_):not(#_) .acc-retry .linkish { margin-left: 4px; }
+html:root:not(#_):not(#_) .acc-note { margin: -4px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+
+/* ---- "Add another Sleeper account" row, shared by the switcher and Settings ---- */
+html:root:not(#_):not(#_) .acc-addrow {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px 8px 8px;
+  border: 1px dashed rgba(244, 246, 242, 0.16); border-radius: 16px; background: none;
+  color: var(--ink); text-align: left; font: inherit; cursor: pointer;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out, transform 120ms ease-out;
+}
+@media (hover: hover) { html:root:not(#_):not(#_) .acc-addrow:hover { background: rgba(244, 246, 242, 0.04); border-color: rgba(216, 242, 74, 0.45); } }
+html:root:not(#_):not(#_) .acc-addrow:active { transform: scale(0.99); }
+html:root:not(#_):not(#_) .acc-addrow:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_) .acc-plus {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(216, 242, 74, 0.12); color: var(--lime);
+}
+html:root:not(#_):not(#_) .acc-addrow .lsw-n small { font-size: 0.8125rem; color: var(--muted); }
+
+/* ---- Inline username form (matches the landing form, sized for a sheet) ---- */
+html:root:not(#_):not(#_) .acc-add { display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: rgba(244, 246, 242, 0.035); border: 1px solid var(--line); }
+html:root:not(#_):not(#_) .acc-label { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+html:root:not(#_):not(#_) .acc-label b { font-weight: 600; }
+html:root:not(#_):not(#_) .acc-form {
+  display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; border-radius: 999px;
+  background: var(--surface-2); transition: box-shadow 200ms ease;
+}
+html:root:not(#_):not(#_) .acc-form:focus-within { box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_) .acc-form .at { color: var(--muted); font-weight: 600; }
+html:root:not(#_):not(#_) .acc-form input { flex: 1; min-width: 0; height: 44px; border: 0; background: none; color: var(--ink); font-size: 1rem; outline: none; }
+html:root:not(#_):not(#_) .acc-form input[aria-invalid="true"] { color: #FF7A66; }
+html:root:not(#_):not(#_) .acc-form .btn { flex: none; width: auto; height: 44px; min-height: 44px; padding: 0 18px; font-size: 0.9375rem; font-weight: 600; border-radius: 999px; }
+html:root:not(#_):not(#_) .acc-help, html:root:not(#_):not(#_) .acc-error { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.35; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .acc-error { color: #FF7A66; }
+html:root:not(#_):not(#_) .lsw-foot .acc-cancel { width: auto; justify-self: start; }
+
+@media (max-width: 420px) {
+  html:root:not(#_):not(#_) .acc-form { flex-wrap: wrap; padding: 6px; border-radius: 20px; }
+  html:root:not(#_):not(#_) .acc-form .at { display: none; }
+  html:root:not(#_):not(#_) .acc-form input { flex-basis: 100%; padding: 0 10px; }
+  html:root:not(#_):not(#_) .acc-form .btn { width: 100%; }
+}
+
+/* ---- Settings: connected accounts ---- */
+html:root:not(#_):not(#_) .acc-list { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .acc-list-h { margin: 0; font-size: 0.8125rem; font-weight: 600; color: var(--muted); letter-spacing: 0.01em; }
+html:root:not(#_):not(#_) .acc-list ul { list-style: none; margin: 0; padding: 0; display: grid; }
+html:root:not(#_):not(#_) .acc-item { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 0; }
+html:root:not(#_):not(#_) .acc-item + .acc-item { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .acc-av {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(244, 246, 242, 0.08); font-size: 0.8125rem; font-weight: 600; color: var(--ink);
+}
+html:root:not(#_):not(#_) .acc-who { display: grid; gap: 2px; flex: 1; min-width: 0; }
+html:root:not(#_):not(#_) .acc-who b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .acc-who small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .acc-inuse {
+  flex: none; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+  color: var(--lime); background: rgba(216, 242, 74, 0.10);
+}
+html:root:not(#_):not(#_) .acc-remove { flex: none; }
+html:root:not(#_):not(#_) .acc-list .acc-addrow { min-height: 56px; }
+html:root:not(#_):not(#_) .acc-list .tiny { margin: 0; }
+
+/* Phones: the connection line gets the full width and its buttons drop below it */
+@media (max-width: 560px) {
+  html:root:not(#_):not(#_) .acc-conn > .grow { flex: 1 1 calc(100% - 60px); }
+  html:root:not(#_):not(#_) .acc-conn > .row { margin-left: 50px; }
+}
