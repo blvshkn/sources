@@ -168,3 +168,31 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
 
 /* Rows that already nudge their chevron on hover (states-qa) don't also run the icon nudge, so it moves once, 3px */
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .sb2) [data-play] { animation: none !important; }
+
+/* Lineup (the original helmet): leans back, charges forward with speed lines behind it, the facemask snaps on contact,
+   then it rocks back and settles. 760ms, plays once on select and on hover. */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m1 { transform-origin: 6px 20px; animation: hm-charge 760ms both; }
+  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m2 { transform-origin: 14px 11px; animation: hm-mask 760ms both; }
+  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m3 { transform-origin: -1px 12px; animation: hm-speed 760ms both; }
+  @keyframes hm-charge {
+    0%   { transform: translateX(0) rotate(0); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+    18%  { transform: translateX(-1.6px) rotate(-7deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.4); }
+    40%  { transform: translateX(2.2px) rotate(5deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    58%  { transform: translateX(-0.6px) rotate(-2deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    78%  { transform: translateX(0.2px) rotate(0.6deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100% { transform: translateX(0) rotate(0); }
+  }
+  @keyframes hm-mask {
+    0%, 36% { transform: rotate(0); }
+    44%  { transform: rotate(-6deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    62%  { transform: rotate(2deg); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes hm-speed {
+    0%, 20% { opacity: 0; transform: translateX(1.5px) scaleX(0.4); }
+    32%  { opacity: 0.9; transform: translateX(0) scaleX(1); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+    56%  { opacity: 0; transform: translateX(-2px) scaleX(1.3); }
+    100% { opacity: 0; }
+  }
+}

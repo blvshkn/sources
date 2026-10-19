@@ -18,7 +18,7 @@ const ICONS: Record<IconName, string> = {
   bell: "<g class=\"m1\"><path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path class=\"m2\" d=\"M10 20.5a2.2 2.2 0 0 0 4 0\"/></g>",
   search: "<g class=\"m1\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5\"/></g>",
   gear: "<g class=\"m1\"><path d=\"M10.2 3.5h3.6l.6 2.4 1.8 1 2.3-.8 1.8 3.1-1.8 1.6v2.4l1.8 1.6-1.8 3.1-2.3-.8-1.8 1-.6 2.4h-3.6l-.6-2.4-1.8-1-2.3.8-1.8-3.1 1.8-1.6v-2.4L3.7 9.2l1.8-3.1 2.3.8 1.8-1z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/></g>",
-  helmet: "<path d=\"M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73\"/><path d=\"M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2\"/>",
+  helmet: "<g class=\"m1\"><path d=\"M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73\"/><g class=\"m2\"><path d=\"M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
   group: "<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6\"/><path d=\"M15.5 4.8a3.5 3.5 0 0 1 0 6.4M17.5 14.4c2.4.6 4 2.6 4 5.6\"/>",
   values: "<path d=\"M3 17l6-6 4 4 7.5-7.5\"/><path d=\"M15 7.5h5.5V13\"/>",
   lock: "<rect x=\"4\" y=\"10.5\" width=\"16\" height=\"10.5\" rx=\"3.5\"/><path d=\"M8 10.5V7.5a4 4 0 0 1 8 0v3\"/>",
@@ -50,7 +50,7 @@ const ICONS: Record<IconName, string> = {
 // Icons with a micro-animation (src/icon-motion.css). "nav" ones play when their tab becomes active and on hover inside
 // the sidebar, tab bar or top bar. "any" ones are affordances that play on hover of whatever control holds them.
 const MOTION: Partial<Record<IconName, "nav" | "any">> = {
-  lineup: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", spark: "nav", gear: "nav",
+  helmet: "nav", lineup: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", spark: "nav", gear: "nav",
   search: "any", pen: "any", chev: "any",
 };
 
