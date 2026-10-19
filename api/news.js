@@ -145,9 +145,14 @@ export function rank(items, now = Date.now()) {
 
 // ---- Fetching --------------------------------------------------------------
 
+// Last error per host, reported with ?debug=1 so a silent source failure is visible on the live site
+export const lastErr = {};
 async function get(url, as = "text") {
-  const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(5000) });
-  if (!r.ok) throw new Error(String(r.status));
+  const host = new URL(url).host;
+  let r;
+  try { r = await fetch(url, { headers: { ...UA, accept: as === "json" ? "application/json" : "application/rss+xml, application/xml, text/xml, */*" }, signal: AbortSignal.timeout(6000) }); }
+  catch (e) { lastErr[host] = String(e?.name || e).slice(0, 80); throw e; }
+  if (!r.ok) { lastErr[host] = `HTTP ${r.status}`; throw new Error(String(r.status)); }
   return as === "json" ? r.json() : r.text();
 }
 
@@ -235,7 +240,7 @@ export default async function handler(req, res) {
   try {
     const out = name ? { player: name, ...(await playerNews({ name, team: q.team, espn: String(q.espn ?? "") })) } : await leagueNews();
     res.setHeader("Cache-Control", "public, s-maxage=600, stale-while-revalidate=1800");
-    res.status(200).json({ at: Date.now(), ...out });
+    res.status(200).json({ at: Date.now(), ...out, ...(q.debug ? { errors: lastErr } : {}) });
   } catch {
     res.setHeader("Cache-Control", "public, s-maxage=60");
     res.status(200).json({ at: Date.now(), items: [], sources: [] });
