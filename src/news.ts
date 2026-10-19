@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Player } from "./data";
-import { espnId, rotowireId } from "./jersey";
+import { espnId, jerseysReady, rotowireId } from "./jersey";
 // @ts-ignore: plain JS module shared with the server route
 import { espnPlayerNews, mergeNews } from "../api/news.js";
 
@@ -52,23 +52,26 @@ export function loadPlayerNews(p: Pick<Player, "id" | "name" | "nfl" | "pos">) {
   const have = read(key);
   if ((have && Date.now() - have.at < TTL) || inflight.has(key)) return;
   inflight.add(key);
-  const q = new URLSearchParams({ name: p.name, team: p.nfl, pos: p.pos });
-  const espn = espnId(p);
-  if (espn) q.set("espn", espn);
-  // Our route covers RotoWire and RotoBaller; ESPN only answers browsers, so it's fetched here and merged in
-  queue.push(() => Promise.all([
-    fetch(`/api/news?${q}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<{ items?: NewsItem[] } | null>,
-    (espnPlayerNews({ name: p.name, team: p.nfl, espn: espn ?? "", rotowire: rotowireId(p) ?? "" }) as Promise<NewsItem[]>).catch(() => null),
-  ])
-    .then(([d, e2]) => {
-      // A failed request keeps whatever we had; only a real answer replaces it
-      if (!d && !e2) { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); return; }
-      const e = { at: Date.now(), items: mergeNews([e2 ?? [], Array.isArray(d?.items) ? d!.items! : []]) as NewsItem[] };
-      mem.set(key, e);
-      try { sessionStorage.setItem(SKEY + key, JSON.stringify(e)); } catch { /* full or blocked */ }
-    })
-    .catch(() => { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); })
-    .finally(() => { inflight.delete(key); bump(); }));
+  // Our route covers RotoWire and RotoBaller; ESPN only answers browsers, so it's fetched here and merged in.
+  // Ids come from /api/player-numbers: wait for them on a first visit, or RotoWire blurbs lose their link to his page.
+  queue.push(() => jerseysReady().then(() => {
+    const q = new URLSearchParams({ name: p.name, team: p.nfl, pos: p.pos });
+    const espn = espnId(p);
+    if (espn) q.set("espn", espn);
+    return Promise.all([
+      fetch(`/api/news?${q}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<{ items?: NewsItem[] } | null>,
+      (espnPlayerNews({ name: p.name, team: p.nfl, espn: espn ?? "", rotowire: rotowireId(p) ?? "" }) as Promise<NewsItem[]>).catch(() => null),
+    ])
+      .then(([d, e2]) => {
+        // A failed request keeps whatever we had; only a real answer replaces it
+        if (!d && !e2) { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); return; }
+        const e = { at: Date.now(), items: mergeNews([e2 ?? [], Array.isArray(d?.items) ? d!.items! : []]) as NewsItem[] };
+        mem.set(key, e);
+        try { sessionStorage.setItem(SKEY + key, JSON.stringify(e)); } catch { /* full or blocked */ }
+      })
+      .catch(() => { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); })
+      .finally(() => { inflight.delete(key); bump(); });
+  }));
   pump();
 }
 

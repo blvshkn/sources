@@ -44,7 +44,9 @@ function When({ d, at }: { d: Date; at: number | null }) {
 // RotoWire blurbs that reach us through ESPN have no per-article link; they point at his RotoWire page instead
 const RW_PAGE = "https://www.rotowire.com/football/player.php";
 function ReadLink({ n }: { n: NewsItem }) {
-  const a = <a className="nx-read" href={n.url} target="_blank" rel="noopener noreferrer">Read on {n.source}<span aria-hidden="true"> ↗</span><span className="sr-only"> (opens in a new tab)</span></a>;
+  // A RotoWire blurb carried by ESPN, with no RotoWire id to build his page from, still links to ESPN: say so
+  const where = n.via && !/rotowire\.com/.test(n.url) && /rotowire/i.test(n.source) ? n.via : n.source;
+  const a = <a className="nx-read" href={n.url} target="_blank" rel="noopener noreferrer">Read on {where}<span aria-hidden="true"> ↗</span><span className="sr-only"> (opens in a new tab)</span></a>;
   return n.url.startsWith(RW_PAGE) ? <Tooltip content="Opens his RotoWire page, where this update is listed">{a}</Tooltip> : a;
 }
 

@@ -30,12 +30,20 @@ function ingest(players: Record<string, Row>) {
 
 const KEY = "sources.jerseys.v3";
 let started = false;
+let ready: Promise<void> | null = null;
+let markReady = () => {};
+/** Resolves once ids are in (cache or network), or after a short wait, so news can ask with ESPN and RotoWire ids. */
+export function jerseysReady(): Promise<void> {
+  loadJerseyNumbers();
+  return Promise.race([ready ?? Promise.resolve(), new Promise<void>((r) => setTimeout(r, 2500))]);
+}
 export function loadJerseyNumbers() {
   if (started) return;
   started = true;
+  ready = new Promise<void>((r) => { markReady = r; });
   try {
     const cached = JSON.parse(localStorage.getItem(KEY) || "null") as { at: number; players: Record<string, Row> } | null;
-    if (cached?.players) ingest(cached.players);
+    if (cached?.players) { ingest(cached.players); markReady(); }
     if (cached && Date.now() - cached.at < 12 * 3600e3) return;
   } catch { /* storage unavailable */ }
   fetch("/api/player-numbers")
@@ -43,9 +51,11 @@ export function loadJerseyNumbers() {
     .then((d: { players?: Record<string, Row> } | null) => {
       if (!d?.players) return;
       ingest(d.players);
+      markReady();
       try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), players: d.players })); } catch { /* full or blocked */ }
     })
-    .catch(() => { /* jerseys show without a number */ });
+    .catch(() => { /* jerseys show without a number */ })
+    .finally(() => markReady());
 }
 
 /** Sleeper player id: live players already carry one; demo players are matched by name and team. */
