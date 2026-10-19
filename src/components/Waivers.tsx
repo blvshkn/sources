@@ -83,6 +83,8 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         </div>
       </header>
 
+      <div className="wv-layout">
+      <aside className="wv-aside" aria-label="Your budget and top pickup">
       {FAAB.enabled && <div className="faab faab-row" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
         <span className="faab-row-top"><b className="num">${FAAB.remaining}<span className="muted">/{FAAB.budget}</span></b><span className="muted">FAAB left</span></span>
         <span className="faab-track"><span style={{ width: `${(FAAB.remaining / FAAB.budget) * 100}%` }} /></span>
@@ -125,6 +127,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
           </section>
         );
       })()}
+      </aside>
 
       <section className="card wv-card" aria-label="Waiver targets">
         <div className="wv-head wv2-head">
@@ -226,6 +229,7 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
         })}
         </div>
       </section>
+      </div>
     </>
   );
 }

@@ -1,0 +1,167 @@
+/* Tablet and desktop layout for Trade, Waivers, Matchup and the player sheet.
+   Loads last. Phone (under 700px of content) keeps its own layout untouched:
+   every rule here sits behind a container or viewport query, except the two
+   hidden Matchup header labels. Layout keys off the content column width
+   (container "pg"), so it holds whatever the shell does with the sidebar and
+   right panel. Spacing on the 4pt scale: 8, 12, 16, 24, 32. */
+
+/* The page column becomes the container for the three tab screens. Fixed and
+   sticky children (deal tray, sheets) are unaffected by inline-size containment. */
+html:root:not(#_) .main-inner:has(> .builder, > .wv-layout, > .mu, > .log-card, > .card.nudge) { container: pg / inline-size; }
+/* Waivers and Matchup get room to breathe when the shell allows it; Trade already has 1240 */
+@media (min-width: 861px) {
+  html:root:not(#_) .main-inner:has(> .wv-layout, > .mu) { max-width: 1160px !important; }
+}
+
+/* ---------- Trade: Build ---------- */
+/* Two rosters side by side as soon as there is room for both (tablet up) */
+@container pg (min-width: 700px) {
+  html:root:not(#_) .builder .rosters { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px !important; align-items: start; }
+  html:root:not(#_) .builder .side-switch, html:root:not(#_) .builder .side-hint { display: none !important; }
+  html:root:not(#_) .builder .rosters .side-pane { display: block !important; min-width: 0; }
+  html:root:not(#_) .builder .rosters .side-pane > .card { height: auto; }
+}
+/* Below the three column layout the deal sits on top and the tray keeps the summary in view */
+@container pg (max-width: 979px) {
+  html:root:not(#_) .builder { display: flex !important; flex-direction: column; gap: 16px; }
+  html:root:not(#_) .builder .deal { position: static !important; max-height: none !important; overflow: visible !important; order: 0 !important; }
+}
+@media (min-width: 861px) {
+  @container pg (max-width: 979px) {
+    html:root:not(#_) .deal-tray {
+      position: sticky; bottom: 16px; z-index: 29; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+      padding: 12px 12px 12px 16px; border-radius: 20px; border: 1px solid rgba(var(--lime-rgb), 0.16);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
+    }
+    html:root:not(#_) .deal-tray .dt-sides { display: grid; gap: 8px; min-width: 0; }
+    html:root:not(#_) .deal-tray .dt-side { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+    html:root:not(#_) .deal-tray .dt-label { border: 0; background: none; padding: 0; text-align: left; font: 600 0.75rem/1 var(--font-body); color: var(--muted); cursor: default; }
+    html:root:not(#_) .deal-tray .dt-chips { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+    html:root:not(#_) .deal-tray .dt-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px 0 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 500 0.8125rem/1 var(--font-body); cursor: pointer; }
+    html:root:not(#_) .deal-tray .dt-chip svg { color: var(--muted); }
+    html:root:not(#_) .deal-tray .dt-empty { border: 1px dashed var(--line); background: none; height: 28px; padding: 0 12px; border-radius: 999px; color: var(--muted); font: 500 0.75rem/1 var(--font-body); white-space: nowrap; cursor: default; pointer-events: none; }
+    html:root:not(#_) .deal-tray .dt-go { height: 40px !important; padding: 0 16px; white-space: nowrap; }
+    html:root:not(#_) .deal-tray .dt-go:disabled { opacity: 0.45; }
+  }
+}
+/* Desktop: rosters on the left, the deal and its read in a sticky column on the right */
+@container pg (min-width: 980px) {
+  html:root:not(#_) .builder { display: grid !important; grid-template-columns: minmax(0, 1fr) clamp(360px, 34%, 420px) !important; gap: 24px 16px !important; align-items: start; }
+  html:root:not(#_) .builder .rosters { order: 1; grid-column: 1; grid-row: 1; }
+  html:root:not(#_) .builder .deal { order: 2; grid-column: 2; grid-row: 1; position: sticky !important; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  html:root:not(#_) .deal-tray, html:root:not(#_) .dt-spacer { display: none !important; }
+  /* Deal chips: one line each, names never wrap mid word */
+  html:root:not(#_) .builder .deal .qs-n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  html:root:not(#_) .builder .deal .qs li { min-width: 0; }
+}
+/* Roster rows keep their tags on the meta line and the numbers in one column */
+@container pg (min-width: 700px) {
+  html:root:not(#_) .builder .pick .pproj { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }
+}
+
+/* ---------- Trade: Ideas ---------- */
+/* A tidy list: the swap on the left, odds and both gains in fixed columns, actions on the right */
+@container pg (min-width: 980px) {
+  html:root:not(#_) .card.nudge .ti {
+    grid-template-columns: minmax(0, 1fr) 320px 168px !important;
+    grid-template-areas: "tx stats act" "why nope nope";
+    column-gap: 24px !important; row-gap: 8px !important; align-items: center;
+  }
+  html:root:not(#_) .card.nudge .ti > .tx { grid-area: tx; }
+  html:root:not(#_) .card.nudge .ti > .ti-stats { grid-area: stats; align-self: center; border-top: 0 !important; margin: 0 !important; padding-top: 0 !important; }
+  html:root:not(#_) .card.nudge .ti > .ti-why { grid-area: why; margin: 0; max-width: 72ch; }
+  html:root:not(#_) .card.nudge .ti > .ti-actions { grid-area: act; grid-template-columns: minmax(0, 1fr) !important; margin-top: 0 !important; padding-top: 0; }
+  html:root:not(#_) .card.nudge .ti > .ti-nope { grid-area: nope; justify-self: end; margin: 0; white-space: nowrap; }
+  html:root:not(#_) .card.nudge .ti-stats dd { font-variant-numeric: tabular-nums; }
+}
+/* How this manager trades: keep the line readable */
+html:root:not(#_) .tr-scout p { max-width: 72ch; }
+
+/* ---------- Trade: Notes ---------- */
+@container pg (min-width: 700px) {
+  html:root:not(#_) .main-inner > .log-card { max-width: 720px !important; width: 100%; }
+}
+
+/* ---------- Waivers ---------- */
+/* Phone: the wrappers vanish, so the page reads exactly as before */
+.wv-layout, .wv-aside { display: contents; }
+@container pg (min-width: 760px) {
+  html:root:not(#_) .wv-layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(336px, 34%, 380px); gap: 24px; align-items: start; }
+  html:root:not(#_) .wv-aside { display: flex; flex-direction: column; gap: 16px; grid-column: 2; grid-row: 1; position: sticky; top: 24px; min-width: 0; }
+  html:root:not(#_) .wv-layout > .wv-card { grid-column: 1; grid-row: 1; min-width: 0; }
+  html:root:not(#_) .wv-aside .faab-row { margin: 0; }
+  html:root:not(#_) .wv-aside .topk { margin: 0; }
+  html:root:not(#_) .wv-aside .topk-cta { justify-self: stretch; }
+  html:root:not(#_) .wv-aside .topk-why { max-width: none; }
+  html:root:not(#_) .wv-aside .topk-stats > div { padding-inline: 8px; }
+  html:root:not(#_) .wv-aside .topk-stats > div:first-child { padding-left: 0; }
+  /* Toolbar: search, sort and positions share one edge and one height */
+  html:root:not(#_) .wv-card .wv2-bar { align-items: center; }
+}
+/* Phone shell at tablet width: clear the sticky top bar */
+@media (max-width: 860px) {
+  @container pg (min-width: 760px) { html:root:not(#_) .wv-aside { top: 80px; } }
+}
+/* Wide list: the stats move up into the row as aligned columns */
+.wv-card { container: wvl / inline-size; }
+@container wvl (min-width: 640px) {
+  html:root:not(#_) .wv .wv-row { grid-template-columns: 22px 44px minmax(0, 1fr) auto auto !important; grid-template-areas: "rank shirt who stats proj" !important; column-gap: 16px !important; }
+  html:root:not(#_) .wv-row > .wv-stats { margin-top: 0; flex-wrap: nowrap; gap: 0 12px; }
+  html:root:not(#_) .wv-row > .wv-stats > span { width: 84px; }
+  html:root:not(#_) .wv-row > .wv-stats i { white-space: nowrap; }
+  html:root:not(#_) .wv-off .wv-row > .wv-stats > span:first-child { width: 180px; }
+  html:root:not(#_) .wv-row > .wv-proj { min-width: 52px; }
+}
+@container wvl (min-width: 640px) and (max-width: 759px) {
+  html:root:not(#_) .wv-row > .wv-stats > span:nth-child(4) { display: none; }
+}
+
+/* ---------- Matchup ---------- */
+.mu-th-you, .mu-th-them { display: none; }
+html:root:not(#_) .card.mu { container: mu / inline-size; }
+@container mu (min-width: 680px) {
+  /* Score header: both totals anchored to the edges, the odds in the middle */
+  html:root:not(#_) .mu-score { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; }
+  html:root:not(#_) .mu-side .mu-big, html:root:not(#_) .mu-side > b { font-size: 3.5rem !important; }
+  html:root:not(#_) .mu-mid b { font-size: 1.5rem; }
+  /* Rows: you | slot and edge | them, points meeting in the middle */
+  html:root:not(#_) .mu-th { grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr); gap: 16px; }
+  html:root:not(#_) .mu-th > span:nth-child(-n+2) { display: none; }
+  html:root:not(#_) .mu-th-you, html:root:not(#_) .mu-th-them { display: block; }
+  html:root:not(#_) .mu-th-them { grid-column: 3; text-align: right; }
+  html:root:not(#_) .mu-th-you { grid-column: 1; }
+  html:root:not(#_) .mu-row { grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr) !important; grid-template-rows: auto auto !important; column-gap: 16px !important; row-gap: 0 !important; align-items: center; }
+  html:root:not(#_) .mu-row > .mu-mine { grid-column: 1; grid-row: 1 / span 2; align-self: stretch; }
+  html:root:not(#_) .mu-row > .mu-slot { grid-column: 2; grid-row: 1; justify-self: center; align-self: end; margin-bottom: 4px; }
+  html:root:not(#_) .mu-row > .mu-edge { grid-column: 2; grid-row: 2; justify-self: center; align-self: start; }
+  html:root:not(#_) .mu-row > .mu-theirs { grid-column: 3; grid-row: 1 / span 2; padding: 6px 0; grid-template-columns: auto minmax(0, 1fr); }
+  /* Their side mirrors yours: points on the inside edge, name toward the outside */
+  html:root:not(#_) .mu-theirs > .mu-p { grid-column: 2; grid-row: 1; grid-template-columns: minmax(0, 1fr) auto; text-align: right; }
+  html:root:not(#_) .mu-theirs > .mu-p > .av, html:root:not(#_) .mu-theirs > .mu-p > .jersey { order: 2; }
+  html:root:not(#_) .mu-theirs > .mu-p .mu-n small { justify-content: flex-end; }
+  html:root:not(#_) .mu-theirs > :not(.mu-p) { grid-column: 1; grid-row: 1; text-align: left; }
+  html:root:not(#_) .mu-theirs > :not(.mu-p) :is(b, span, small) { justify-content: flex-start; text-align: left; }
+  html:root:not(#_) .mu-row > .mu-swap { grid-column: 1; grid-row: 3; }
+  html:root:not(#_) :is(.mu-mine, .mu-theirs) .mu-pts { min-width: 5ch; font-variant-numeric: tabular-nums; }
+}
+
+/* ---------- Player sheet ---------- */
+/* Desktop: a centered panel wide enough for the log and the numbers to sit side by side */
+@media (min-width: 861px) {
+  html:root:not(#_) .ps-wrap { padding: 32px; }
+  html:root:not(#_) .ps {
+    max-width: 760px; max-height: min(88vh, 860px); padding: 16px 24px 24px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; row-gap: 16px; align-items: start;
+  }
+  html:root:not(#_) .ps > * { grid-column: 1 / -1; }
+  html:root:not(#_) .ps > .ps-handle { display: none; }
+  html:root:not(#_) .ps > .ps-hero { grid-column: 1; align-self: stretch; }
+  html:root:not(#_) .ps > .ps-games:not(.ps-sched):not(.ps-news) { grid-column: 2; align-self: stretch; }
+  html:root:not(#_) .ps > .ps-cta { justify-self: end; width: auto; padding-inline: 24px; }
+}
+@media (min-width: 861px) {
+  /* The whole season fits on one line, no sideways scroll */
+  html:root:not(#_) .ps .sch-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); overflow: visible; }
+  html:root:not(#_) .ps .sch-c { min-width: 0; width: auto; }
+  html:root:not(#_) .ps .ps-none { padding-block: 24px; }
+}

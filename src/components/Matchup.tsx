@@ -107,7 +107,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        <div className="mu-th"><span>Slot</span><span>You, then {opp.manager}</span></div>
+        <div className="mu-th"><span>Slot</span><span>You, then {opp.manager}</span><span className="mu-th-you">You</span><span className="mu-th-them">{opp.manager}</span></div>
         {mine.map((s, i) => {
           const me = s.id ? playerById(s.id) : null;
           const them = theirs[i]?.id ? playerById(theirs[i].id!) : null;
