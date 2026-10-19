@@ -87,7 +87,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
     rows: [
       ["Josh Allen", "QB", "BUF", 23.4],
       ["James Cook", "RB", "BUF", 16.8],
-      ["Chuba Hubbard", "RB", "CAR", 13.9],
+      ["Chuba Hubbard", "RB", "CAR", 13.9, "Q", "Ankle, limited practice"],
       ["Zay Flowers", "WR", "BAL", 15.6],
       ["Jalen Coker", "WR", "CAR", 12.8],
       ["Deebo Samuel", "WR", "WAS", 12.1],

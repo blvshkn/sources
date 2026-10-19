@@ -103,6 +103,11 @@ export function fetchWeekRows(season: string, week: number, kind: "stats" | "pro
     return new Map(rows.map((r) => [r.player_id, r]));
   });
 }
+/** One week of league-wide stats for one position, with each player's opponent. The player sheet reads usage
+ *  (snaps, carries, targets, red-zone looks) and points allowed by each defense from these. Cached for 30 minutes. */
+export type StatRow = { player_id: string; team: string | null; opponent?: string | null; stats: Record<string, number | undefined> };
+export const fetchStatRows = (season: string, week: number, pos: string) =>
+  cached(`stats:${season}:${week}:${pos}`, 30 * 60_000, () => get<StatRow[]>(`/stats/nfl/${season}/${week}?season_type=regular&position[]=${pos}`));
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
 // ---- Public calls --------------------------------------------------------

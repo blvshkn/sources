@@ -1,0 +1,116 @@
+/* Player sheet depth: outcome range, lineup call, usage, matchup and the trimmed news row.
+   Loaded last so it can set the sheet's desktop grid. Numbers use Geist Mono; lime marks the projection. */
+
+/* ---------- Status line ---------- */
+html:root:not(#_):not(#_) .ps-inj.out { background: var(--bad-soft); color: var(--bad); }
+
+/* ---------- Shared block chrome ---------- */
+.pd-blk { display: grid; gap: 10px; min-width: 0; }
+html:root:not(#_):not(#_) .pd-blk .ps-sub { align-items: center; }
+.pd-k { font-size: 0.75rem; color: var(--muted); }
+.pd-fine { margin: 0; font-size: 0.75rem; line-height: 1.45; color: var(--faint); text-wrap: pretty; }
+.pd-fine .tt-term { color: var(--muted); }
+.pd-skel { display: grid; gap: 8px; }
+.pd-skel span { height: 14px; border-radius: 6px; background: var(--surface-2); animation: pd-pulse 1.2s ease-in-out infinite alternate; }
+.pd-skel span:nth-child(odd) { width: 86%; }
+@keyframes pd-pulse { from { opacity: 0.55; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pd-skel span { animation: none; } }
+
+/* ---------- Outcome range (inside the This week card) ---------- */
+.pd-range { grid-column: 1 / -1; display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.pd-range-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pd-range-nums > span { display: grid; gap: 2px; font-size: 0.75rem; color: var(--muted); }
+.pd-range-nums > span:nth-child(2) { text-align: center; justify-items: center; }
+.pd-range-nums > span:nth-child(3) { text-align: right; justify-items: end; }
+.pd-range-nums b { font: 600 1.0625rem/1.2 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.pd-range-nums .mid b { color: var(--lime); }
+.pd-range-bar { position: relative; height: 10px; margin: 2px 0 14px; border-radius: 999px; background: var(--surface-3); }
+.pd-range-bar i { position: absolute; top: 0; bottom: 0; display: block; }
+.pd-range-bar .band { border-radius: 999px; background: rgba(var(--lime-rgb), 0.32); }
+.pd-range-bar .med { width: 3px; top: -4px; bottom: -4px; margin-left: -1.5px; border-radius: 2px; background: var(--lime); box-shadow: 0 0 0 2px var(--surface-2); }
+.pd-range-bar .tick { width: 1px; top: 12px; bottom: auto; height: 5px; background: var(--faint); }
+.pd-range-bar .tick::after { content: attr(data-t); position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font: 500 0.625rem/1 var(--font-mono); color: var(--faint); }
+.pd-odds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pd-odds .pd-k { margin-right: 2px; }
+.pd-odds .pd-odd { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 8px; border-radius: 999px; background: rgba(244, 246, 242, 0.06); font-size: 0.75rem; color: var(--muted); }
+.pd-odds .pd-odd b { font: 600 0.75rem/1 var(--font-mono); color: var(--ink); }
+.pd-odds .pd-odd.lead { background: rgba(var(--lime-rgb), 0.12); color: var(--ink); }
+.pd-odds .pd-odd.lead b { color: var(--lime); }
+
+/* ---------- Lineup call ---------- */
+.pd-call { padding: 16px; border-radius: 20px; background: var(--surface-2); box-shadow: var(--shadow-sm, none); }
+.pd-slot { padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink) !important; font: 600 0.6875rem/1.4 var(--font-mono) !important; letter-spacing: 0.02em; }
+.pd-verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
+.pd-verdict > i { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-3); color: var(--muted); }
+.pd-call.t-good .pd-verdict > i { background: var(--good-soft); color: var(--good); }
+.pd-call.t-bad .pd-verdict > i { background: var(--bad-soft); color: var(--bad); }
+.pd-call.t-warn .pd-verdict > i { background: var(--warn-soft); color: var(--warn); }
+.pd-call.t-bad { box-shadow: inset 0 0 0 1px rgba(239, 93, 82, 0.35), var(--shadow-sm, none); }
+.pd-verdict > span { display: grid; gap: 3px; min-width: 0; }
+.pd-verdict b { font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.pd-verdict > span > span { font-size: 0.8125rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+.pd-alts, .pd-changes { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pd-alts ol, .pd-changes ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.pd-alts li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 8px; margin-inline: -8px; border-radius: 10px; }
+.pd-alts li.me { background: rgba(var(--lime-rgb), 0.08); }
+.pd-rank { font: 500 0.6875rem/1 var(--font-mono); color: var(--faint); text-align: center; }
+.pd-alt-n { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 0.8125rem; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pd-alt-n small { font-size: 0.75rem; font-weight: 400; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.pd-alts li > b { font: 600 0.8125rem/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.pd-alts li.me > b { color: var(--lime); }
+.pd-changes li { position: relative; padding-left: 14px; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+.pd-changes li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 5px; height: 5px; border-radius: 2px; background: var(--lime); }
+
+/* ---------- Usage table ---------- */
+.pd-tbl { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.pd-tbl th, .pd-tbl td { padding: 7px 0; border-bottom: 1px solid var(--line); text-align: right; font-weight: 400; }
+.pd-tbl tr:last-child th, .pd-tbl tr:last-child td { border-bottom: 0; }
+.pd-tbl thead th { padding-top: 0; font-size: 0.6875rem; color: var(--faint); font-weight: 500; letter-spacing: 0.02em; }
+.pd-tbl tbody th { text-align: left; color: var(--muted); }
+.pd-tbl td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); width: 64px; }
+.pd-tbl td.l3 { font-weight: 600; }
+.pd-tbl td.l3.up { color: var(--good); }
+.pd-tbl td.l3.down { color: var(--bad); }
+.pd-tbl td.rk { color: var(--muted); width: 56px; }
+
+/* ---------- Matchup ---------- */
+.pd-opp { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pd-opp-t { display: grid; gap: 1px; }
+.pd-opp-t b { font: 600 1.125rem/1.2 var(--font-mono); letter-spacing: -0.02em; color: var(--ink); }
+.pd-opp-t small { font-size: 0.75rem; color: var(--muted); }
+.pd-tone { padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: var(--surface-3); color: var(--muted); white-space: nowrap; }
+.pd-tone.t-good { background: var(--good-soft); color: var(--good); }
+.pd-tone.t-tough { background: var(--bad-soft); color: var(--bad); }
+.pd-mx { margin: 0; display: grid; gap: 0; }
+.pd-mx > div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.pd-mx dt { font-size: 0.8125rem; color: var(--muted); }
+.pd-mx dd { margin: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.pd-mx dd b { font: 600 0.9375rem/1 var(--font-mono); color: var(--ink); }
+.pd-rk { font-family: var(--font-mono); }
+.pd-rk.t-good { color: var(--good); }
+.pd-rk.t-tough { color: var(--bad); }
+
+/* ---------- News, folded into one row ---------- */
+.pd-news { gap: 12px; }
+.pd-news-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 10px 14px; border: 0; border-radius: 16px; background: var(--surface-2); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+.pd-news-row:disabled { cursor: default; }
+.pd-news-row:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (hover: hover) { .pd-news-row:not(:disabled):hover { background: var(--surface-3); } }
+.pd-news-k { display: grid; gap: 2px; min-width: 0; }
+.pd-news-k b { font-size: 0.875rem; font-weight: 600; }
+.pd-news-k small { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pd-news-row svg { flex: none; color: var(--muted); transform: rotate(90deg); transition: transform 160ms var(--ease); }
+.pd-news-row[aria-expanded="true"] svg { transform: rotate(-90deg); }
+
+/* ---------- Order and layout ---------- */
+/* Phone: one column in reading order. Desktop: a wider centered panel, decision blocks paired up top. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .ps { max-width: 880px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  html:root:not(#_):not(#_) .ps > .ps-hero { grid-column: 1; align-self: stretch; }
+  html:root:not(#_):not(#_) .ps > .pd-call { grid-column: 2; align-self: stretch; }
+  html:root:not(#_):not(#_) .ps > .pd-usage { grid-column: 1; grid-row: span 2; align-self: start; }
+  html:root:not(#_):not(#_) .ps > .pd-match { grid-column: 2; }
+  html:root:not(#_):not(#_) .ps > .ps-games:not(.ps-sched):not(.ps-news) { grid-column: 2; align-self: start; }
+  html:root:not(#_):not(#_) .ps > .ps-sched, html:root:not(#_):not(#_) .ps > .pd-news { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_) .ps .ps-hero { align-content: start; }
+}

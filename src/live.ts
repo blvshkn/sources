@@ -195,7 +195,7 @@ export interface Outlook { expected: number; scored: number; variance: number }
 /** How much each starter's score can swing, as a share of his projection, by position. Fitted to 32 of Sleeper's
  *  pregame matchups (full lineups, weeks 7 to 14) plus a live one; it reproduces them within about half a point.
  *  A live player's swing shrinks with the share of his game left. */
-const SWING: Record<string, number> = { QB: 0.472, RB: 0.85, WR: 0.978, TE: 0.603, K: 0, DEF: 2.126 };
+export const SWING: Record<string, number> = { QB: 0.472, RB: 0.85, WR: 0.978, TE: 0.603, K: 0, DEF: 2.126 };
 function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number, pos: string) {
   const st = live.games[nfl], pts = live.points[id], known = pts !== undefined;
   const frac = st === "complete" ? 0 : st === "in_game" ? live.left?.[nfl] ?? 0.5 : 1;

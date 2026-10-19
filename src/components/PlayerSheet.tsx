@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ScheduleStrip } from "./Schedule";
-import { PlayerNews } from "./News";
-import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
+import { LineupCall, OutcomeRange, SheetNews, UsageAndMatchup, gameLog, outcomeFor, statusLine } from "./PlayerDepth";
+import { Player, WEEK, gameLine, onBye } from "../data";
 import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
-
-/** Your past weekly points for this player, from the matchups Sleeper has on record. */
-const weekly = (p: Player) => Object.keys(LEAGUE.history ?? {}).map(Number).filter((w) => w < WEEK).sort((a, b) => a - b)
-  .map((w) => ({ w, pts: LEAGUE.history![w].points[p.id], started: LEAGUE.history![w].starters.includes(p.id) }))
-  .filter((x): x is { w: number; pts: number; started: boolean } => typeof x.pts === "number");
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
 export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
@@ -46,7 +41,9 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
       }
     });
 
-  const games = weekly(p);
+  const { games } = gameLog(p);
+  const range = outcomeFor(p, games.map((g) => g.pts));
+  const status = statusLine(p);
   const avg = games.length ? round1(games.reduce((a, g) => a + g.pts, 0) / games.length) : null;
   const max = Math.max(1, ...games.map((g) => g.pts), eff(p, true));
   const playoff = p.playoff ? round1(scored({ ...p, pts: p.playoff, wk: undefined })) : null;
@@ -66,7 +63,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
         {note && <p className="ps-why">{note}</p>}
-        {(p.note || p.injury) && <p className="ps-inj"><Icon name="alert" size={14} />{p.note && p.injury && p.note.startsWith(p.injury) ? p.note : [p.injury, p.note].filter(Boolean).join(" · ")}</p>}
+        {status && <p className={`ps-inj${p.status === "O" ? " out" : ""}`}><Icon name="alert" size={14} />{status}</p>}
 
         {(() => {
           const bye = onBye(p.nfl);
@@ -85,9 +82,13 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
                 <div><dt>Playoffs / wk</dt><dd>{playoff !== null ? playoff.toFixed(1) : "n/a"}</dd></div>
                 {p.value !== undefined && <div><dt>Trade value</dt><dd>{Math.round(p.value).toLocaleString()}</dd></div>}
               </dl>
+              {range && <OutcomeRange p={p} o={range} />}
             </div>
           );
         })()}
+
+        <LineupCall p={p} />
+        <UsageAndMatchup p={p} />
 
         <div className="ps-games">
           <div className="ps-sub"><b>Game log</b>{avg !== null && <span><i className="ps-avg-key" />{avg.toFixed(1)} avg</span>}</div>
@@ -110,7 +111,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
                 <small>W{WEEK}</small>
               </div>
             </div>
-          ) : <p className="ps-none">No games on record with your team yet.</p>}
+          ) : <p className="ps-none">No games on record yet.</p>}
           {games.length > 0 && (
             <p className="ps-legend">
               <span><i className="hi" />Beat his average</span>
@@ -124,7 +125,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
           <div className="ps-sub"><b>Season schedule</b><span className="sch-key"><i className="t-good" />Good<i className="t-tough" />Tough</span></div>
           <ScheduleStrip p={p} />
         </div>
-        <PlayerNews p={p} />
+        <SheetNews p={p} open={focus === "news"} />
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
       </section>

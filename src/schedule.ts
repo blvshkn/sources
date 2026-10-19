@@ -7,15 +7,25 @@ export interface WeekCell { week: number; opp: string | null; past: boolean; pts
 const TEAMS = ["ARI","ATL","BAL","BUF","CAR","CHI","CIN","CLE","DAL","DEN","DET","GB","HOU","IND","JAX","KC","LAC","LAR","LV","MIA","MIN","NE","NO","NYG","NYJ","PHI","PIT","SEA","SF","TB","TEN","WAS"];
 const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
 
+/** FNV alone barely moves when only the last character changes ("chuba-hubbard1", "...2"), which made every demo
+ *  week score the same. A murmur-style finish spreads those out. */
+const mix = (s: string) => { let h = Math.floor(hash(s) * 4294967295) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return (h >>> 0) / 4294967295; };
+
 /** Demo leagues have no real slate, so build a stable made up one from the player's team. */
 function demoCell(p: Player, w: number): { opp: string | null; pts?: number; proj?: number } {
   const bye = w === WEEK ? onBye(p.nfl) : demoBye(p.nfl) === w;
   if (bye) return { opp: null };
   const others = TEAMS.filter((t) => t !== p.nfl), ti = TEAMS.indexOf(p.nfl);
+  // This week's opponent comes from the demo slate, so the strip agrees with the header's game line
+  const real = w === WEEK && p.opp ? /^(vs|@)\s*([A-Z]{2,3})$/.exec(p.opp) : null;
+  if (real) {
+    const f = 0.72 + hash(real[2] + p.pos) * 0.56;
+    return { opp: (real[1] === "@" ? "@" : "v") + real[2], proj: Math.round((p.proj || 8) * f * 10) / 10 };
+  }
   const opp = others[((ti >= 0 ? ti : 0) * 7 + w * 11) % others.length];
   const base = p.proj || 8;
   const f = 0.72 + hash(opp + p.pos) * 0.56;
-  return w < WEEK ? { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, pts: Math.round(base * (0.45 + hash(p.id + w) * 1.1) * 10) / 10 }
+  return w < WEEK ? { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, pts: Math.round(base * (0.45 + mix(p.id + w) * 1.1) * 10) / 10 }
     : { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, proj: Math.round(base * f * 10) / 10 };
 }
 
