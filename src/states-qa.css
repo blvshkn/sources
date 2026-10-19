@@ -452,3 +452,8 @@ html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:is(:active, :focus
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_) .fb-opt:active, html:root:not(#_):not(#_):not(#_) .fb-opt:hover svg { transform: none; }
 }
+
+/* Buttons never underline, even when they're links: the pill already says "press me" */
+html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]),
+html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]):is(:hover, :focus, :focus-visible, :active, :visited),
+html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]) * { text-decoration: none; }
