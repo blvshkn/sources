@@ -80,7 +80,17 @@ export function impactFor(p: Player, n: NewsItem, c: PlayerContext = contextFor(
       s.push(p.status === "O"
         ? `He's ${status} and starts ${where}. ${fill ? `${fill} is your best option there.` : "Nobody on your bench fits that slot, so check waivers."}`
         : `He's questionable and starts ${where}. ${fill ? `If he can't go, ${fill} is your best option there.` : "If he can't go, nobody on your bench fits that slot, so check waivers now."}`);
-    } else if (kind === "status") s.push(`No injury designation yet, so he stays your starter ${where}: ${n1(c.proj)} projected${matchupBit(c)}.`);
+    } else if (kind === "status") {
+      // The story is newer than his Sleeper status, so read it instead of contradicting it
+      const t = `${n.title} ${n.summary}`.toLowerCase();
+      const fill = c.fill ? `${c.fill.name} (${n1(eff(c.fill, true))} projected)` : null;
+      if (/\b(inactive|ruled out|won't play|will not play|out for|placed on ir|out (for )?(sunday|monday|thursday|the game)|season-ending)\b/.test(t))
+        s.push(`This report has him out, and his Sleeper status hasn't caught up yet. ${fill ? `If he sits, ${fill} is your best option ${where}.` : `If he sits, nobody on your bench fits ${where}, so check waivers.`}`);
+      else if (/\b(cleared|will play|expected to play|full practice|off the injury report|returns?)\b/.test(t))
+        s.push(`He's cleared, so he stays your starter ${where}: ${n1(c.proj)} projected${matchupBit(c)}.`);
+      else
+        s.push(`He's banged up but has no designation yet. ${fill ? `Keep ${fill} ready ${where} in case it changes before lock.` : `Watch it before lock; nobody on your bench fits ${where}.`}`);
+    }
     else s.push(`He starts ${where} and projects ${n1(c.proj)} this week${matchupBit(c)}.`);
     if (c.byeNext && !c.bye) s.push(`Bye next week, so line up a fill-in now.`);
     else if (s.length < 2 && (kind === "role" || kind === "move")) { const t = trendBit(c); if (t) s.push(t); }
@@ -88,7 +98,10 @@ export function impactFor(p: Player, n: NewsItem, c: PlayerContext = contextFor(
     if (p.status === "O" && kind === "status") s.push(`He's ${status}, but he's on your bench, so your lineup doesn't change.`);
     else if (c.weakest && !c.bye && c.proj > 0) {
       const gap = round1(c.proj - eff(c.weakest.p, true));
-      if (gap >= 0.5) s.push(`He projects ${n1(c.proj)}, ${n1(gap)} more than ${c.weakest.p.name} ${atSlot(c.weakest.slot)}. Worth a look before lock.`);
+      const theirs = eff(c.weakest.p, true);
+      if (gap >= 0.5) s.push(theirs <= 0
+        ? `He projects ${n1(c.proj)}, and ${c.weakest.p.name} ${atSlot(c.weakest.slot)} can't score this week. Start him there before lock.`
+        : `He projects ${n1(c.proj)}, ${n1(gap)} more than ${c.weakest.p.name} ${atSlot(c.weakest.slot)}. Worth a look before lock.`);
       else if (kind === "role" || kind === "recap") s.push(`He projects ${n1(c.proj)} this week, still behind ${last(c.weakest.p)} (${n1(eff(c.weakest.p, true))}) ${atSlot(c.weakest.slot)}.`);
     }
     if (kind === "role" || kind === "move") { const t = trendBit(c); if (t) s.push(t); }
