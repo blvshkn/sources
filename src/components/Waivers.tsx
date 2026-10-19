@@ -30,7 +30,7 @@ function Hit({ name, term }: { name: string; term: string }) {
 }
 
 /** "$40-$90", or "Up to $150" when the low end is zero. */
-const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
+export const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);

@@ -30,7 +30,7 @@ export interface SLeague {
 interface SRoster {
   roster_id: number; owner_id: string | null; co_owners?: string[] | null; players: string[] | null; starters: string[] | null;
   reserve?: string[] | null; taxi?: string[] | null;
-  settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number };
+  settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number; waiver_position?: number };
 }
 interface SProj {
   player_id: string; team: string | null; opponent?: string | null; date?: string | null;
@@ -501,7 +501,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       trade: td && td < 99 ? `Trade deadline Week ${td}` : "No trade deadline",
     },
     byeTeams, teams, players, sleeperSet, slotHistory,
-    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)) },
+    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position },
     faabHistory, freeAgents, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     valueSource: valueBy.size ? `Blended value: 55% trade market (FantasyCalc, ${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams), 45% rest-of-season production over replacement, plus up to 3% Sleeper add/drop momentum` : "Rest-of-season production over replacement (market values unavailable)",

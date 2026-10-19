@@ -1,0 +1,77 @@
+/* The docked panel's per-tab context: Waivers (budget, run time, top pickup) and Trade (the partner).
+   Loads last. Same card as the League standings block (.ibx-ctx); 4pt spacing. */
+
+/* ---------- Shared bits ---------- */
+.pctx { display: grid; gap: 10px; }
+.pctx .ibx-ctx-head { margin-bottom: 0; }
+.pctx-sub { font-size: 0.75rem; color: var(--muted); }
+.pctx-note { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+.pctx-eyebrow { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.pctx-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.pctx-who { display: grid; gap: 2px; min-width: 0; }
+.pctx-who > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; font-weight: 600; }
+.pctx-who > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
+.pctx-who .lu-pos { font-size: 0.6875rem; }
+
+/* ---------- Waivers ---------- */
+.pctx-faab { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 6px 8px; }
+.pctx-faab-n { font: 600 1.125rem/1 var(--font-mono); color: var(--ink); }
+.pctx-faab-n > span { color: var(--faint); font-weight: 500; }
+.pctx-faab-l { font-size: 0.8125rem; color: var(--muted); }
+.pctx-track { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
+.pctx-track > span { display: block; height: 100%; border-radius: inherit; background: var(--lime); }
+
+.pctx-pick { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pctx-bid { display: grid; justify-items: end; gap: 2px; }
+.pctx-bid small { font-size: 0.6875rem; color: var(--faint); }
+.pctx-bid b { font: 600 0.8125rem/1 var(--font-mono); white-space: nowrap; }
+.pctx-plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+.pctx-plan li { position: relative; padding-left: 14px; }
+.pctx-plan li::before { content: ""; position: absolute; left: 2px; top: 0.55em; width: 4px; height: 4px; border-radius: 50%; background: var(--faint); }
+.pctx-plan li.good::before { background: var(--good); }
+.pctx-plan b { color: var(--ink); font-weight: 600; }
+.pctx-plan li.good b { color: var(--good); }
+html:root:not(#_) .pctx-cta { min-height: 32px; font-size: 0.8125rem; }
+
+/* ---------- Trade: the partner ---------- */
+.pctx-mode { font-size: 0.6875rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: var(--surface-3); color: var(--muted); white-space: nowrap; }
+.pctx-mode.good { background: var(--good-soft); color: var(--good); }
+.pctx-mode.bad { background: var(--bad-soft); color: var(--bad); }
+/* Starting lineup by position against the league average, one cell per group */
+.pctx-vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 4px; }
+.pctx-vs > span { display: grid; justify-items: center; gap: 3px; padding: 6px 2px; border-radius: 8px; background: var(--surface-3); }
+.pctx-vs small { font-size: 0.6875rem; color: var(--faint); }
+.pctx-vs b { font: 600 0.75rem/1 var(--font-mono); color: var(--muted); }
+.pctx-vs .up b { color: var(--good); }
+.pctx-vs .down b { color: var(--bad); }
+.pctx-vs .need { box-shadow: inset 0 0 0 1px var(--bad-soft); }
+.pctx-line { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+.pctx-line b { color: var(--ink); font-weight: 600; }
+.pctx-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.pctx-tags li { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: var(--surface-3); font-size: 0.75rem; color: var(--ink); }
+.pctx-tags li.more { background: none; color: var(--muted); }
+
+/* ---------- Waivers page while the panel is docked ---------- */
+/* Budget and top pickup now live in the panel, so the page drops its copy and the list takes the column */
+@media (min-width: 1241px) {
+  html:root:not(#_):not(#_) .shell:not(.wide) .wv-layout { display: block; }
+  html:root:not(#_):not(#_) .shell:not(.wide) .wv-aside { display: none; }
+}
+
+/* ---------- Trade docks the panel from 1600px ---------- */
+/* Below 1600 the two rosters would drop under ~420px each with a panel beside them (394px at 1440,
+   340px at 1280), so Trade keeps the full width there. From 1600 each roster still gets 440px or more. */
+@media (min-width: 1600px) {
+  html:root:not(#_) .shell.wide { grid-template-columns: 248px minmax(0, 1fr) 380px; }
+  html:root:not(#_) .shell.wide .rail.ibx {
+    position: sticky; top: 0; height: 100vh; width: auto; z-index: auto;
+    transform: none; visibility: visible; transition: none; box-shadow: none;
+    background: var(--bg); border-left: 1px solid var(--line);
+  }
+  html:root:not(#_) .shell.wide .ibx-scrim, html:root:not(#_) .shell.wide .ibx-close { display: none; }
+  /* Same column as Waivers, so moving between the two leaves the page edge where it was */
+  html:root:not(#_) .shell.wide .main-inner { max-width: 1160px; }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 1600px) {
+  html:root:not(#_) .shell.wide .rail.ibx { opacity: 1; }
+}

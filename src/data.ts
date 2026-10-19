@@ -461,7 +461,7 @@ const DEMO_OFFERS: Record<string, number> = { mike: 7, dan: 9, jake: 11, chris: 
 
 export type SlotKey = "QB" | "RB" | "WR" | "TE" | "FLEX" | "SF";
 export interface SlotHistory { slot: SlotKey; you: number[]; avg: number[] }
-export interface Faab { enabled: boolean; budget: number; remaining: number }
+export interface Faab { enabled: boolean; budget: number; remaining: number; /** Rolling waiver order, 1 is first. Priority leagues only. */ priority?: number }
 export interface BidTier { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids: number[]; estimated?: boolean }
 export interface Slate { opp: Record<string, Record<number, string>>; proj: Record<string, Record<number, number>>; pts: Record<string, Record<number, number>> }
 export interface LeagueFormat { scoring: "ppr" | "half" | "std"; superflex: boolean; tePremium: boolean }

@@ -20,6 +20,7 @@ import { Briefing, FollowUp, Nudge, Threats, Wire, needCopy } from "./components
 import { InboxItem, InboxPanel, buildInbox } from "./components/Inbox";
 import { useLive } from "./live";
 import { League, MiniStandings } from "./components/League";
+import { PartnerContext, WaiverContext } from "./components/PanelContext";
 import { TradeBuilder } from "./components/Trade";
 import { Roster, gameDayChecks } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
@@ -485,7 +486,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <InboxPanel items={inbox} read={readIds} open={inboxOpen} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
           onDismiss={dismissItem} onClose={() => setInboxOpen(false)}
           onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
-          context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} /> : null} />
+          context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} />
+            : tab === "waivers" ? <WaiverContext top={recs[0]} onToast={setToast} />
+            : tab === "trade" ? <PartnerContext partnerId={partnerId} needs={needs} tags={active} onNotes={() => go("trade:notes")} />
+            : null} />
       </aside>
 
       <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
