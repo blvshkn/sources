@@ -4080,7 +4080,7 @@ html:root:not(#_) .ld2-head.h0 { top: -44px; left: -40px; --d: 1.3; }
 html:root:not(#_) .ld2-head.h1 { top: 14%; right: -56px; --d: 0.6; z-index: 0; }
 html:root:not(#_) .ld2-head.h2 { top: 48%; left: -52px; --d: 1.1; }
 html:root:not(#_) .ld2-head.h3 { bottom: -64px; right: 30%; --d: 0.7; z-index: 0; }
-html:root:not(#_) .ld2-head.h4 { top: -64px; right: 20%; --d: 0.45; z-index: 0; }
+html:root:not(#_) .ld2-head.h4 { top: -100px; right: 30%; --d: 0.45; z-index: 0; }
 html:root:not(#_) .ld2-head.h5 { bottom: 16%; right: -64px; --d: 1.2; }
 html:root:not(#_) .ld2-head.h6 { bottom: -40px; left: 6%; --d: 0.55; z-index: 0; }
 html:root:not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { opacity: 0.75; transform: scale(0.82); }
@@ -4154,3 +4154,21 @@ html:root:not(#_):not(#_) .ld2-thread .thr-img { align-self: flex-start; width: 
 html:root:not(#_):not(#_) .ld2-thread .thr-img :is(img, .tcard-skel) { width: 100%; max-height: none; margin: 0; border-radius: 18px 18px 18px 6px; }
 html:root:not(#_):not(#_) .ld2-thread .ld2-bubble { align-self: flex-end; max-width: 82%; border-radius: 20px 20px 6px 20px; }
 html:root:not(#_):not(#_) .thr-meta { align-self: flex-end; padding-right: 4px; font-size: 0.6875rem; color: var(--muted); }
+
+/* Typing v2: solid ink (a gradient restretched on every keystroke), untyped letters hold their place, an inline caret */
+html:root:not(#_):not(#_) .ld2-typed-text { background: none; color: var(--ink); -webkit-background-clip: border-box; background-clip: border-box; border-radius: 4px; transition: background-color 160ms ease; }
+html:root:not(#_):not(#_) .ld2-typed-text.sel { background: rgba(var(--lime-rgb), 0.32); }
+html:root:not(#_):not(#_) .ld2-typed-rest { color: transparent; }
+html:root:not(#_):not(#_) .ld2-caret { display: inline; position: relative; width: auto; height: auto; margin: 0; background: none; animation: none; }
+html:root:not(#_):not(#_) .ld2-caret::after { content: ""; position: absolute; left: 0.02em; bottom: -0.06em; width: 0.07em; height: 0.86em; border-radius: 2px; background: var(--lime); animation: ld3-blink 1s steps(1) infinite; }
+html:root:not(#_):not(#_) .ld2-caret.on::after { animation: none; }
+html:root:not(#_):not(#_) .ld2-caret.off::after { opacity: 0; }
+
+/* Every floating player shows a last name */
+html:root:not(#_):not(#_) .ld2-head b { display: block; }
+
+/* Trade idea on the landing: no dark slab inside the card, and no 3D tilt that makes it read as a picture */
+html:root:not(#_):not(#_) .ld2-idea .ti { background: transparent; }
+html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: translate3d(0, calc(var(--sy) * -0.06px), 0); transform-style: flat; will-change: auto; }
+html:root:not(#_):not(#_) .ld2-card { animation-name: ld3-card2; }
+@keyframes ld3-card2 { from { opacity: 0; transform: translateY(40px); } }
