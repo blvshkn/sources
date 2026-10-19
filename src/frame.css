@@ -1,0 +1,31 @@
+/* One page frame. Loads last.
+   Every page and section tab shares the same column, status line, tab row and inbox bell at a given width, so moving
+   around the app moves nothing but the content. Checked to the pixel at 390, 1024, 1280, 1440 (inbox open and closed)
+   and 1920. Page specific rows (Trade's partner picker, Lineup's score strip) sit below the tab row. */
+
+/* ---------- Scrollbar: the column keeps its width whether or not the page scrolls ---------- */
+html:root:not(#_):not(#_) { scrollbar-gutter: stable; }
+
+/* ---------- Column: the same width and edges on every page ---------- */
+/* Trade, Waivers and Matchup used to get 1160px while the rest stopped at 880 (1120 from 1600), and Trade dropped the
+   docked inbox below 1600. Now every page gets the same column, up to 1160px, centred in the room left by the sidebar
+   and the docked panel. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .main-inner,
+  html:root:not(#_):not(#_) .shell .main-inner,
+  html:root:not(#_):not(#_) .main-inner:has(> .wv-layout, > .mu) { max-width: 1160px !important; }
+}
+
+/* ---------- Trade: the partner picker sits under the tab row, not between the header and it ---------- */
+html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > .page-head { order: -2; }
+html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > .page-tabs { order: -1; }
+
+/* ---------- Inbox bell: one spot on every page ---------- */
+/* Centred on the status line, 40px, everywhere: no Trade size or offset, no Lineup or back button offsets */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):not(#_) .main-inner > .desk-bell,
+  html:root:not(#_)[data-tab]:not(#_):not(#_) .main-inner > .desk-bell,
+  html:root:not(#_):not(#_):not(#_) .main-inner:has(> .st-back) > .desk-bell { top: 10px; width: 40px !important; height: 40px; z-index: 5; }
+  html:root:not(#_)[data-tab]:not(#_):not(#_) .main-inner > .desk-bell svg { width: 22px; height: 22px; }
+  html:root:not(#_)[data-tab="trade"]:not(#_):not(#_) .main-inner > :is(.tr-bar, .psr) { padding-right: 0; }
+}

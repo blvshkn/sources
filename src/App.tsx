@@ -134,14 +134,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
   // The inbox: a slide-over from the bell on phones, tablets and small laptops (inboxOpen). From 1241px it docks as the
-  // right panel, which the bell opens and closes; Trade only docks it from 1600px.
+  // right panel, which the bell opens and closes, on every page.
   const [inboxOpen, setInboxOpen] = useState(false);
   // Docked open or closed is remembered per device, not per league. Until someone picks, it's open from 1441px
   // and closed below, so a 1440 laptop starts with the full page.
   const [dockPref, setDockPref] = usePersist<boolean | null>("inboxDock", null);
   const dockOpen = dockPref ?? matches("(min-width: 1441px)");
   const dockWide = useMedia("(min-width: 1241px)");
-  const dockTrade = useMedia("(min-width: 1600px)");
   const [ibxFocus, setIbxFocus] = useState(0);
   const [readIds, setReadIds] = usePersist<string[]>(`${scope}.inboxRead`, []);
   const [askSeed, setAskSeed] = useState("");
@@ -441,7 +440,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
   [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
-  const docked = dockWide && (tab !== "trade" || dockTrade);
+  // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
+  const docked = dockWide;
   const panelOpen = docked ? dockOpen : inboxOpen;
   const toggleInbox = (e: { currentTarget: HTMLButtonElement }) => {
     const opening = !panelOpen;
@@ -451,7 +451,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (opening) setIbxFocus((n) => n + 1);
   };
   const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
-  // Trade's Partner profile button: one click opens the panel (docked from 1600, a slide-over below) on the partner card
+  // Trade's Partner profile button: one click opens the panel (docked from 1241px like every page, a slide-over below) on the partner card
   const openProfile = () => {
     if (docked) setDockPref(true); else setInboxOpen(true);
     setIbxFocus((n) => n + 1);
@@ -471,7 +471,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
 
   return (
-    <div className={`shell${tab === "trade" ? " wide" : ""}${inboxOpen ? " inbox-open" : ""}${dockOpen ? "" : " dock-off"}`}>
+    <div className={`shell${inboxOpen ? " inbox-open" : ""}${dockOpen ? "" : " dock-off"}`}>
       <a className="skip-link" href="#main">Skip to content</a>
       <div className="app-field" aria-hidden="true"><div className="app-turf" /></div>
       <aside className="side">

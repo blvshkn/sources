@@ -505,14 +505,16 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
 
   return (
     <>
-      <header className="lu-hero">
-        <div className="lu-hero-l">
+      <header className="page-head">
+        <div>
           <LeagueSwitch title="Lineup" />
         </div>
-        <MatchupStrip mineOnly />
       </header>
 
       <PageTabs value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
+
+      {/* Below the tabs, like every page's own content, so the header and tab row sit where they do everywhere else */}
+      <MatchupStrip mineOnly />
 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
