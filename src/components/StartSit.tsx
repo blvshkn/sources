@@ -7,6 +7,7 @@ import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
 import { Select } from "./Select";
 import { WeekStepper } from "./WeekStepper";
+import { Tooltip } from "./Tooltip";
 
 type Metric = { label: string; get: (p: Player) => number | null; fmt?: (n: number) => string };
 
@@ -144,7 +145,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
         <Avatar p={p} size={44} />
         <b className="sx-name">{p.name}</b>
         <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` · ${s.game}` : ""}</small>
-        <span className="sx-status">{loading ? null : s.avail ? <span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`} title={s.avail.kind === "bye" ? `On bye in week ${week}` : p.note}>{s.avail.pill}</span> : null}</span>
+        <span className="sx-status">{loading ? null : s.avail ? <Tooltip content={s.avail.kind === "bye" ? <>On bye in week <span className="num">{week}</span></> : p.note || (s.avail.kind === "ir" ? "On injured reserve" : s.avail.pill)}><span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`}>{s.avail.pill}</span></Tooltip> : null}</span>
         <span className="sx-change">Change<Icon name="chev" size={12} /></span>
       </Select>
     );
