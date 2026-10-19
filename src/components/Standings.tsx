@@ -12,6 +12,11 @@ const ord = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th",
 const pctText = (p: number) => (p >= 0.995 ? ">99%" : p > 0 && p < 0.01 ? "<1%" : `${Math.round(p * 100)}%`);
 const tone = (p: number) => (p >= 0.7 ? "good" : p >= 0.4 ? "warn" : "bad");
 
+/** Wins from a "W-L" or "W-L-T" record. */
+export const winsOf = (record: string) => Number(record.split("-")[0]) || 0;
+/** Standings order: wins, then points for. Shared by the table, the side panel and League Needs. */
+export const byStandings = (a: { record: string; pf: number }, b: { record: string; pf: number }) => winsOf(b.record) - winsOf(a.record) || b.pf - a.pf;
+
 /** Small seeded RNG so the odds don't jump around between renders. */
 function rng(seed: number) {
   return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -53,7 +58,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
   const rows = needs.map((x, i) => {
     const [w = 0, l = 0] = x.team.record.split("-").map(Number);
     return { x, w, l, ...odds[i], proj: x.team.pf + x.lineup.total * weeksLeft };
-  }).sort((a, b) => b.w - a.w || b.x.team.pf - a.x.team.pf);
+  }).sort((a, b) => byStandings(a.x.team, b.x.team));
 
   // Strongest and weakest starting position for each team, ranked against the league
   const rankOf = (pos: typeof POS[number], id: string) =>

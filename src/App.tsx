@@ -319,7 +319,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // "settings:nudges" opens a screen on a specific section tab
     const [t, section] = dest.split(":");
     if (!(TAB_IDS as string[]).includes(t)) return;
-    if (teamId) { setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
+    if (teamId) { if (t === "league") setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
     // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
     if (t !== tab) { const m = document.getElementById("main"); if (m) m.style.minHeight = ""; }
@@ -330,7 +330,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (t !== "ask") setAskSeed("");
     setTab(t as Tab);
     try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
-    if (t === "league" && teamId) window.setTimeout(() => document.getElementById(`team-${teamId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+    // A team deep link (League) is opened and scrolled to by the Needs list itself
   };
   // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
@@ -456,7 +456,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "how" && <HowItWorks onBack={() => go("settings:about")} />}
           {tab === "legal" && <Legal onBack={() => go("settings:about")} />}
           {tab === "league" && (
-            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} partners={partners} onAddTag={addTag}
+            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} onFocused={() => setFocusTeam(undefined)} partners={partners} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />
           )}
           {tab === "trade" && (

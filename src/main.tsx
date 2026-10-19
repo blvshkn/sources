@@ -18,6 +18,7 @@ import "./icon-motion.css";
 import "./tooltip.css";
 import "./standings.css";
 import "./news.css";
+import "./needs-list.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
