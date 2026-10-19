@@ -194,3 +194,6 @@ html:root:not(#_):not(#_) .wk-more { display: flex !important; align-items: cent
 html:root:not(#_):not(#_) .wk-more svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .wk-more:hover svg { transform: translateX(3px); } }
 html:root:not(#_):not(#_) .wk-more:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }
+
+/* One player per row at every width: groups stack instead of sitting two across */
+html:root:not(#_):not(#_) .nxr-list { grid-template-columns: minmax(0, 1fr) !important; column-gap: 0 !important; }
