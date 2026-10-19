@@ -3893,3 +3893,8 @@ html:root:not(#_) .ld2-finder .scan { box-shadow: none; }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_) .ld2-found { animation: fade-up 480ms cubic-bezier(0.23, 1, 0.32, 1) both; } }
 html:root:not(#_) .ld2-again { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font: 500 0.875rem/1 var(--font-body); cursor: pointer; }
 html:root:not(#_) .ld2-again .ic { color: var(--lime); }
+
+/* Wire card: "See the full matchup" is its own footer row under a hairline, never on top of the chance label */
+html:root:not(#_) .sb2 .sb2-more { position: static !important; display: flex !important; align-items: center; justify-content: space-between; align-self: stretch; width: 100%; margin: 14px 0 0 !important; padding: 12px 0 0; border-top: 1px solid var(--line); transform: none !important; }
+html:root:not(#_) .sb2 .sb2-chance { margin-bottom: 0 !important; }
+html:root:not(#_) .sb2-row.them .sb2-pts, html:root:not(#_) .sb2-row.them .sb2-pts .live-num, html:root:not(#_) .sb2-row.them .sb2-now > :first-child { color: var(--ink) !important; opacity: 1 !important; }
