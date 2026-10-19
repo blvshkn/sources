@@ -15,6 +15,28 @@ html:root:not(#_):not(#_) .vb-list .vb-rank { text-align: left; }
   html:root:not(#_):not(#_) .vb-list .vb-head { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 10px; }
 }
 
+/* ---- Page tabs (Wire, League, Settings) -------------------------------- */
+/* The tab row keeps 3px of padding so focus rings aren't clipped by its scroller, which put the
+   first pill 3px right of the page edge on desktop. A matching negative margin puts it back on the edge. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):is([data-tab="wire"], [data-tab="league"], [data-tab="settings"]) .page-tabs > .seg { margin-inline: -3px !important; }
+}
+
+/* ---- League > Standings ------------------------------------------------ */
+/* "Team" headers sat over the avatars. They start over the team names, like Player on Values. */
+html:root:not(#_):not(#_) .st-row.st-po.st-th > span:nth-child(2),
+html:root:not(#_):not(#_) .st-row.st-pos.st-th > span:nth-child(1) { padding-left: 40px; }
+@media (max-width: 560px) {
+  html:root:not(#_):not(#_) .st-row.st-po.st-th > span:nth-child(2) { padding-left: 38px; }
+}
+/* The row under the dashed playoff cut drew its own 1px divider right below it. It keeps the
+   pixel (nothing moves) but hides the line. */
+html:root:not(#_):not(#_) .st-row.cut + .st-row { border-top-color: transparent !important; }
+/* Ranks were right-aligned, so "1" and "10" started on different edges and neither on the heading's.
+   They start on the heading's edge, like the ranks on Values (row padding is the card's 18px at every width). */
+html:root:not(#_):not(#_) .st-row.st-po > .st-pl-n { justify-self: start; text-align: left; }
+html:root:not(#_):not(#_) .st-row.st-po { padding-left: 18px; }
+
 /* ---- League > Needs ---------------------------------------------------- */
 /* The open panel started 12px left of the team names (84px vs 18 + 22 + 12 + 32 + 12 = 96px). */
 @container nl (min-width: 561px) {
@@ -24,6 +46,16 @@ html:root:not(#_):not(#_) .vb-list .vb-rank { text-align: left; }
 html:root:not(#_):not(#_) .nl .tag-line > .btn:last-child { grid-column: 4; }
 /* A fading tag dims its words, not its buttons (dimmed buttons read as disabled). */
 html:root:not(#_):not(#_) .nl .tag-line > :not(.btn) { opacity: var(--tag-o, 1); }
+
+/* ---- Card padding: 18px, like every other card on these pages ------------- */
+/* Needs' partner nudge and Wire's intel cards were 20px, the league-chat card 16px and the Values
+   movers 14px, so stacked cards started their text 2 to 4px apart. */
+html:root:not(#_):not(#_):is([data-tab="wire"], [data-tab="league"]) .main-inner .nudge { padding: 18px; }
+html:root:not(#_):not(#_)[data-tab="league"] .capture-card { padding: 18px; }
+html:root:not(#_):not(#_) .vb .vb-move { padding: 16px 18px 8px; }
+html:root:not(#_):not(#_) .vb-list .wv-head { padding-left: 18px; padding-right: 18px; }
+html:root:not(#_):not(#_) .vb-list .wv-pos { padding: 0 18px !important; scroll-padding-inline: 18px; }
+html:root:not(#_):not(#_) .vb-list :is(.vb-head, .vb-row) { padding-left: 18px; padding-right: 18px; }
 
 /* ---- Wire > Intel: offer card ------------------------------------------ */
 /* "You send" was the you-lime and "You get" good-green: one is identity, the other a verdict.
@@ -64,6 +96,13 @@ html:root:not(#_):not(#_) .nl-cut > span {
   html:root:not(#_):not(#_) .nl-cut > span { right: 14px; }
 }
 
+/* ---- League > Tendencies ----------------------------------------------- */
+/* Two or three "buys" pills ran past their quarter of the row into "rookies" on two-column
+   layouts (1024). Columns stay equal unless the pills need more, then that column takes it. */
+html:root:not(#_):not(#_) .team-card .tend-stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(min-content, 1fr) minmax(0, 1fr); }
+/* Alone on Tendencies, the league-chat card ran 640px wide over full-width cards; it spans the row. */
+html:root:not(#_):not(#_)[data-tab="league"] :is(.main-inner > .capture-card, .lg-top > .capture-card:only-child) { max-width: none; }
+
 /* ---- Wire > Intel: news card ------------------------------------------- */
 /* "Show all players" was a 10px-corner box under "Show 3 more", a full pill, in the same card.
    Both are pills (like "More intel"), same 40px height and gap. */
@@ -72,3 +111,17 @@ html:root:not(#_):not(#_) .nxr .nx-more.nxr-all { border-radius: 999px; gap: 8px
 /* ---- Matchup card (Wire, and the landing's preview) ----------------------- */
 /* The champion's trophy stays on the team name's last word. */
 html:root:not(#_):not(#_) .sb2-who .nw { white-space: nowrap; }
+
+/* ---- League > Activity ------------------------------------------------------ */
+/* A row with a waiver bid squeezed its Drop column 23px left of the rows without one. When the feed
+   has any bids, every row keeps the same bid slot, so Add and Drop line up down the list. */
+html:root:not(#_):not(#_) .act-feed:has(.act-bid) .act-bid { min-width: 56px; }
+html:root:not(#_):not(#_) .act-feed:has(.act-bid) .act-body:not(:has(.act-bid))::after { content: ""; flex: none; width: 56px; }
+html:root:not(#_):not(#_) .act-feed:has(.act-bid) .act-row > .act-trade { margin-right: 68px; }
+/* Another manager's add isn't good for you and his drop isn't bad: neutral, the + and − carry it. */
+html:root:not(#_):not(#_) .act-feed .act-tag:is(.add, .drop) { color: var(--muted); }
+html:root:not(#_):not(#_) .act-feed .act-row { padding-left: 18px; padding-right: 18px; }
+
+/* ---- League > Needs: best partner card ---------------------------------------- */
+/* The rank was centred in its column, 5px right of the heading above it. */
+html:root:not(#_):not(#_) .partner-card .partner-rank { text-align: left; }

@@ -197,7 +197,7 @@ export function League({ needs, tags, fade, focusId, onFocused, partners, onTrad
 
                 <div className="tend">
                   <div className="tend-stats">
-                    <div><b className="num">{td.trades}</b><span>trades</span></div>
+                    <div><b className="num">{td.trades}</b><span>{td.trades === 1 ? "trade" : "trades"}</span></div>
                     <div><b className="num">{td.closeRate !== null ? `${Math.round(td.closeRate * 100)}%` : "n/a"}</b><span>close rate</span></div>
                     <div><b className="row" style={{ gap: 4 }}>{td.buys.length ? td.buys.map((p) => <PosBadge key={p} pos={p} />) : "None"}</b><span>buys</span></div>
                     <div><b className="num">{Math.round(td.rookieShare * 100)}%</b><span>rookies</span></div>
