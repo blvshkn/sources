@@ -211,6 +211,13 @@ export function outlookOf(live: Live, ids: (string | null)[], specials: (Special
   for (const sp of specials) if (sp) addPlayer(o, live, sp.id, sp.nfl, specialPts(sp), sp.pos);
   return o;
 }
+/** Outlook for a week that hasn't started: each starter's projection and his position's swing, no live points.
+ *  Feeds winChance for future weeks so their win % uses the same model as this week's. */
+export function projOutlook(starters: { pos: string; pts: number | null }[]): Outlook {
+  const o: Outlook = { expected: 0, scored: 0, variance: 0 };
+  for (const s of starters) { const pr = s.pts ?? 0; o.expected += pr; o.variance += ((SWING[s.pos] ?? 0.85) * pr) ** 2; }
+  return o;
+}
 export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), t.setSpecial ? t.setSpecial.map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[] : specialLineup(t).slots.map((x) => x.player));
 /** Chance team A beats team B: the gap in expected finishes over the combined swing still to be played,
  *  rounded the way Sleeper shows it (never below 1% or above 99% until it's decided). */

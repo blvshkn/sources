@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { WeekView, loadWeek } from "../weeks";
+import { WeekView, loadWeek, peekWeek, order } from "../weeks";
+import { LineupWeek, useWeekMatch } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
@@ -126,7 +127,7 @@ export function FinalPts({ id, pts, proj, cls }: { id: string; pts: number; proj
   if (stamp.current) stamped.add(id);
   return (
     <span className={`${cls} final cemented${stamp.current ? " stamp" : ""}`} aria-label={`Final, ${pts.toFixed(1)} points, projected ${proj.toFixed(1)}`}>
-      <b>{pts.toFixed(1)}</b><small>{proj.toFixed(1)}</small>
+      <b>{pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
     </span>
   );
 }
@@ -140,7 +141,7 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false }: { id: str
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
         <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
-        {pace !== null ? <small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>{pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
+        {pace !== null ? <small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
   }
@@ -232,7 +233,7 @@ function WeekPanel({ v }: { v: WeekView }) {
       <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>{p.pos === "DEF" ? "Team defense" : p.nfl}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.pos === "DEF" ? "Team defense" : p.nfl}</span></span>
         {p.line && p.pts !== null && <span className="lu-line">{p.line}</span>}
       </span>
       {p.pts === null ? <span className="lu-pts bye">BYE</span> : <span className={`lu-pts${v.kind === "past" ? " actual" : ""}`}>{p.pts.toFixed(1)}</span>}
@@ -250,6 +251,21 @@ function WeekPanel({ v }: { v: WeekView }) {
       <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{v.bench.length} players</span></div>
       {v.bench.map((p) => row(p, "BN", true))}
     </>
+  );
+}
+
+/** Loading a week: the same rows WeekPanel draws (summary, starters, bench), so the list doesn't jump when it lands. */
+function WeekSkel({ week }: { week: number }) {
+  const starters = order().length, bench = Math.max(0, YOU.roster.length + (YOU.special?.length ?? 0) - starters);
+  const row = (k: string, bench?: boolean) => <div key={k} className={`lu-row lu-row-skel${bench ? " bench" : ""}`} aria-hidden="true"><span className="lu-slot" /><span className="ir-empty" /><span className="lu-who"><span className="lu-name">&nbsp;</span><span className="lu-meta">&nbsp;</span></span><span className="lu-pts" /></div>;
+  return (
+    <div className="lu-wskel" aria-busy="true" aria-label={`Loading Week ${week}`}>
+      <div className="lu-week-sum" aria-hidden="true"><span><i>&nbsp;</i><b>&nbsp;</b></span></div>
+      <div className="lu-list-head" aria-hidden="true"><b>&nbsp;</b></div>
+      {Array.from({ length: starters }, (_, i) => row(`s${i}`))}
+      <div className="lu-list-head sub" aria-hidden="true"><b>&nbsp;</b></div>
+      {Array.from({ length: bench }, (_, i) => row(`b${i}`, true))}
+    </div>
   );
 }
 
@@ -362,8 +378,75 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
   );
 }
 
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"}`;
+/** Your avatar, name, record, standing and points-for rank, the left side of the team strip. */
+function MyId() {
+  const wins = (t: Team) => Number(t.record.split("-")[0]) || 0;
+  const rank = [...TEAMS].sort((x, y) => wins(y) - wins(x) || y.pf - x.pf).findIndex((t) => t.id === YOU.id) + 1;
+  const pfRank = [...TEAMS].sort((x, y) => y.pf - x.pf).findIndex((t) => t.id === YOU.id) + 1;
+  return <>
+    <TeamAvatar t={YOU} size={44} />
+    <span className="mw-id"><b>{YOU.name}</b><small>{YOU.record} · {ordinal(rank)} · PF {ordinal(pfRank)}</small></span>
+  </>;
+}
+
+/** "Week 7 vs <team>" with their total on the right. Same height with or without an opponent. */
+function VsRow({ week, opp, pts, note, title }: { week: number; opp: Team | null; pts: number | null; note?: string; title?: string }) {
+  return (
+    <div className="mw-vs">
+      <span className="mw-wk">Week {week}</span>
+      {opp ? <span className="mw-vs-who"><span className="mw-vs-word">vs</span><TeamAvatar t={opp} size={22} /><b>{opp.name}</b><Trophy teamId={opp.id} /></span>
+        : <span className="mw-vs-who"><b className="muted">{title ?? "No matchup"}</b></span>}
+      {pts !== null && <span className="mw-vs-pts">{pts.toFixed(1)}{note && <small>{note}</small>}</span>}
+    </div>
+  );
+}
+
+/** The team strip for any week but this one: a past week's final and the result, or a future week's projected
+ *  totals and win chance. Loading and empty weeks keep the same rows so nothing below moves. */
+function WeekStrip({ week }: { week: number }) {
+  const { m, err } = useWeekMatch(week);
+  const myTotal = m?.me.total ?? peekWeek(week)?.total;
+  if (!m) return (
+    <section className={`mw${err ? "" : " is-skel"}`} aria-label={err ?? `Loading Week ${week}`} aria-busy={!err}>
+      <div className="mw-top"><MyId /><span className="mw-score"><span className="mw-pts">{(myTotal ?? 0).toFixed(1)}</span><small>{week < WEEK ? "final" : "projected"}</small></span></div>
+      <VsRow week={week} opp={null} pts={err ? null : 0} title={err ? "Matchup unavailable" : "Loading"} note={err ? undefined : "projected"} />
+      <div className="mw-win"><span className="mw-lbl">{err ?? "Loading the matchup"}</span></div>
+    </section>
+  );
+  const past = m.kind === "past", opp = m.opp;
+  const diff = opp ? Math.round((m.me.total - opp.total) * 10) / 10 : 0;
+  const won = diff > 0, tie = diff === 0;
+  const chance = m.chance ?? 50;
+  const label = `${YOU.name}, ${YOU.record}. Week ${week}${opp ? ` vs ${opp.team.name}` : `, ${m.empty?.title ?? "no matchup"}`}. `
+    + (past ? `Final ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${tie ? "tie" : won ? "win" : "loss"}` : ""}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
+  return (
+    <section className="mw" aria-label={label}>
+      <div className="mw-top">
+        <MyId />
+        <span className="mw-score"><span className="mw-pts">{m.me.total.toFixed(1)}</span><small>{past ? "final" : "projected"}</small></span>
+      </div>
+      <VsRow week={week} opp={opp?.team ?? null} pts={opp ? opp.total : null} note={opp ? (past ? "final" : "projected") : undefined} title={m.empty?.title} />
+      {!opp ? <div className="mw-win"><span className="mw-lbl">{m.empty?.body}</span></div>
+        : past ? (
+          <div className={`mw-win ${tie ? "even" : won ? "up" : "down"}`} aria-hidden="true">
+            <span className="mw-tag">Final</span>
+            <b className="mw-result">{tie ? "T" : won ? "W" : "L"}</b>
+            <span className="mw-lbl">{tie ? "Tied" : `${won ? "Won" : "Lost"} by ${Math.abs(diff).toFixed(1)}`}</span>
+          </div>
+        ) : (
+          <div className={`mw-win ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true">
+            <span className="mw-tag">Projected</span>
+            <Tooltip content="Win chance from both projected lineups for that week, the same model as this week's."><b>{chance}%</b></Tooltip><span className="mw-lbl">to win</span>
+            <span className="mw-bar"><i style={{ width: `${chance}%` }} /></span>
+          </div>
+        )}
+    </section>
+  );
+}
+
 /** You vs this week's opponent: points scored once games start (projection as a footnote), win chance, Live tag. */
-export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void; mineOnly?: boolean }) {
+export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen?: () => void; mineOnly?: boolean; week?: number }) {
   const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
   const nowLive = Object.values(live.games).some((x) => x === "in_game");
@@ -374,29 +457,26 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
   const myO = teamOutlook(live, YOU), oppO = opp ? teamOutlook(live, opp) : null;
   const myTotal = myO.expected, oppTotal = oppO ? oppO.expected : null;
   const chance = oppO ? Math.round(winChance(myO, oppO)) : 0;
+  if (mineOnly && week !== WEEK) return <WeekStrip week={week} />;
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: who you are, where you stand, score and where it's headed
-    const wins = (t: Team) => Number(t.record.split("-")[0]) || 0;
-    const ord = (n: number) => `${n}${n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"}`;
-    const rank = [...TEAMS].sort((x, y) => wins(y) - wins(x) || y.pf - x.pf).findIndex((t) => t.id === YOU.id) + 1;
-    const pfRank = [...TEAMS].sort((x, y) => y.pf - x.pf).findIndex((t) => t.id === YOU.id) + 1;
     return (
-      <section className="mw" aria-label={`${YOU.name}, ${YOU.record}. ${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}>
+      <section className="mw" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}>
         <div className="mw-top">
-          <TeamAvatar t={YOU} size={44} />
-          <span className="mw-id"><b>{YOU.name}</b><small>{YOU.record} · {ord(rank)} · PF {ord(pfRank)}</small></span>
+          <MyId />
           <span className="mw-score">
             {inPlay ? <LiveNum className="mw-pts" v={myNow!} /> : <span className="mw-pts">{myTotal.toFixed(1)}</span>}
             <small>{inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"}</small>
           </span>
         </div>
-        {opp && (
+        <VsRow week={WEEK} opp={opp} pts={opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null} note={opp ? (inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected") : undefined} />
+        {opp ? (
           <div className={`mw-win ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true">
             {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
             <Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><span className="mw-lbl">to win</span>
             <span className="mw-bar"><i style={{ width: `${chance}%` }} /></span>
           </div>
-        )}
+        ) : <div className="mw-win"><span className="mw-lbl">You don't play anyone in Week {WEEK}.</span></div>}
       </section>
     );
   }
@@ -489,6 +569,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const [wErr, setWErr] = useState<string | null>(null);
   useEffect(() => {
     if (week === WEEK) { setWv(null); return; }
+    // Ready already (cached, or the demo league): draw it right away, no skeleton frame
+    const hit = peekWeek(week);
+    if (hit) { setWv(hit); setWErr(null); return; }
     let live = true;
     setWv(null); setWErr(null);
     loadWeek(week).then((v) => live && setWv(v)).catch(() => live && setWErr("Couldn't load that week from Sleeper. Try again in a minute."));
@@ -514,14 +597,14 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       <PageTabs value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
 
       {/* Below the tabs, like every page's own content, so the header and tab row sit where they do everywhere else */}
-      <MatchupStrip mineOnly />
+      <MatchupStrip mineOnly week={view === "lineup" ? week : WEEK} />
 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
             <section className="card lu-list" aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
-              {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : wv ? <WeekPanel v={wv} /> : <div className="lu-skel" aria-label={`Loading Week ${week}`}>{Array.from({ length: 6 }).map((_, i) => <span key={i} />)}</div>) : <>
+              {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : (wv?.week === week ? wv : peekWeek(week)) ? <WeekPanel v={(wv?.week === week ? wv : peekWeek(week))!} /> : <WeekSkel week={week} />) : <>
               <div className={`ss${diff.length ? "" : " ok"}`} aria-label="Start and sit">
                 <div className="ss-head">
                   <b>Start / Sit</b>
@@ -554,7 +637,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           )}
         </div>
         {side && <div className="lu-col lu-side">
-          {side}
+          <LineupWeek.Provider value={week}>{side}</LineupWeek.Provider>
           <SlotGlance onOpen={() => setView("slots")} />
         </div>}
       </div>}

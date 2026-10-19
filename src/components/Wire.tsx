@@ -1,7 +1,8 @@
-import { useContext, useState } from "react";
+import { Fragment, useContext, useState } from "react";
+import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
-import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, onBye } from "../data";
+import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
@@ -11,6 +12,8 @@ import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useLive, onPace, teamOutlook, winChance } from "../live";
 import { avatarSrc } from "../sleeper";
+import { WeekPlayer } from "../weeks";
+import { gameIn, openMatchupWeek, useLineupWeek, useWeekMatch } from "../weekMatch";
 import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
 
@@ -211,7 +214,7 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
-    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? pace.toFixed(1) : `proj ${proj.toFixed(1)}`}</small></span>;
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? `pace ${pace.toFixed(1)}` : `proj ${proj.toFixed(1)}`}</small></span>;
   }
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
   return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
@@ -219,28 +222,80 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
 
-/** The opponent's three biggest projections, with live points once their games start. */
+/** Injury pill after a threat's name, the same one the lineup shows. Only for players with a status. */
+const InjTag = ({ id }: { id: string }) => {
+  const p = PLAYERS[id];
+  if (!p?.status) return null;
+  return <b className={`lu-tag ${p.status === "Q" ? "warn" : "bad"}`}>{injuryTag(p)}</b>;
+};
+
+/** Three threat rows, a skeleton, or a message over three hidden rows, so the card is one height in every state. */
+function ThreatBody({ rows, msg }: { rows: ReactNode[] | null; msg?: { title: string; body: string } }) {
+  const ghost = (i: number) => (
+    <span key={`g${i}`} className="wk-row thr-ghost" aria-hidden="true">
+      <span className="thr-av" /><span className="wk-name"><span className="thr-n"><span className="thr-bar" />{"\u00a0"}</span><small><span className="thr-bar short" />{"\u00a0"}</small></span><span className="wk-pts"><span className="thr-bar num" /></span>
+    </span>
+  );
+  return (
+    <div className={`thr-body${msg ? " has-msg" : ""}${!rows && !msg ? " is-skel" : ""}`} aria-busy={!rows && !msg}>
+      {[0, 1, 2].map((i) => (rows && rows[i]) ? <Fragment key={i}>{rows[i]}</Fragment> : ghost(i))}
+      {msg && <div className="thr-msg" role="status"><b>{msg.title}</b><span>{msg.body}</span></div>}
+    </div>
+  );
+}
+
+/** The opponent's three biggest projections, with live points once their games start. On the Lineup page it follows
+ *  the week stepper: past weeks show who hurt you most, future weeks that week's opponent and projections. */
 export function Threats({ onGo }: { onGo: (t: string) => void }) {
   const live = useLive();
+  const week = useLineupWeek();
   // Tapping a threat opens that player, with the reason he made the list, instead of leaving the page
   const [open, setOpen] = useState<{ p: Player; rank: number } | null>(null);
+  if (week !== WEEK) return <WeekThreats week={week} onGo={onGo} />;
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  if (!opp) return null;
-  const threats = (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
-  if (!threats.length) return null;
+  const go = () => { openMatchupWeek(WEEK); onGo("matchup"); };
+  const threats = opp ? (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3) : [];
   const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} them />;
   return (
-    <section className="card wk" aria-label="Opponent threats">
-      <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>
-      {threats.map((p) => (
+    <section className="card wk thr" aria-label="Opponent threats">
+      <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted thr-sub">{opp ? `${opp.manager}'s top projections` : `Week ${WEEK}`}</span></div>
+      <ThreatBody msg={opp ? undefined : { title: "Bye week", body: `You don't play anyone in Week ${WEEK}.` }} rows={threats.map((p) => (
         <button key={p.id} className="wk-row" onClick={() => setOpen({ p, rank: threats.indexOf(p) })}>
           <Avatar p={p} size={40} />
-          <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {vsOf(p)}</small></span>
+          <span className="wk-name"><span className="thr-n">{p.name}<InjTag id={p.id} /></span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {onBye(p.nfl) ? "Bye" : vsOf(p)}</small></span>
           <Pts p={p} />
         </button>
-      ))}
-      {open && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
-      <button type="button" className="wk-more" onClick={() => onGo("matchup")}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+      ))} />
+      {open && opp && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
+      <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+    </section>
+  );
+}
+
+/** Their threats for a week other than this one: that week's opponent, ranked by that week's projection (Sleeper's,
+ *  the same numbers as your starters) or, for a week already played, by what they scored. */
+function WeekThreats({ week, onGo }: { week: number; onGo: (t: string) => void }) {
+  const { m, err } = useWeekMatch(week);
+  const [open, setOpen] = useState<Player | null>(null);
+  const past = week < WEEK, opp = m?.opp ?? null;
+  const top = opp ? (opp.starters.map((x) => x.p).filter((p) => p && p.pts !== null) as WeekPlayer[]).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0)).slice(0, 3) : [];
+  const go = () => { openMatchupWeek(week); onGo("matchup"); };
+  const sub = opp ? `${opp.team.manager}'s ${past ? "top scorers" : "top projections"}` : `Week ${week}`;
+  const msg = err ? { title: "Couldn't load", body: err } : m && !opp ? m.empty : undefined;
+  return (
+    <section className="card wk thr" aria-label={`Opponent threats, Week ${week}`}>
+      <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted thr-sub">{sub}</span></div>
+      <ThreatBody msg={msg} rows={m ? top.map((p) => {
+        const game = gameIn(p, week), full = PLAYERS[p.id];
+        const inner = <>
+          <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
+          <span className="wk-name"><span className="thr-n">{p.name}{!past && <InjTag id={p.id} />}</span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {game ?? "Bye"}</small></span>
+          <span className={`wk-pts${past ? "" : " muted"}`}>{(p.pts ?? 0).toFixed(1)}</span>
+        </>;
+        return full ? <button key={p.id} className="wk-row" onClick={() => setOpen(full)}>{inner}</button> : <span key={p.id} className="wk-row">{inner}</span>;
+      }) : null} />
+      {open && opp && <PlayerSheet p={open} where={`${opp.team.manager}'s ${open.pos}, Week ${week}`} onClose={() => setOpen(null)} />}
+      <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }

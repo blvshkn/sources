@@ -1,9 +1,10 @@
 // Week browser: any past week (who you started, what they scored, their stat line)
 // or any future week (projections, with byes shown as byes). Live leagues read Sleeper;
 // the demo league builds a believable season from its projections.
-import { LEAGUE, PLAYERS, WEEK, YOU, isDemo, defName } from "./data";
+import { LEAGUE, PLAYERS, WEEK, YOU, OPPONENT_ID, TEAMS as LEAGUE_TEAMS, Team, isDemo, defName } from "./data";
 import { currentFormat } from "./engine";
-import { fetchWeekRows, scoreStats, WeekRow } from "./sleeper";
+import { scoreStats, WeekRow } from "./sleeper";
+import { weekFeed } from "./weekFeed";
 
 export interface WeekPlayer {
   id: string; name: string; pos: string; nfl: string;
@@ -63,8 +64,8 @@ const FITS: Record<string, string[]> = {
   QB: ["QB"], RB: ["RB"], WR: ["WR"], TE: ["TE"], K: ["K"], DEF: ["DEF"],
   FLEX: ["RB", "WR", "TE"], WRRB_FLEX: ["RB", "WR"], REC_FLEX: ["WR", "TE"], SUPER_FLEX: ["QB", "RB", "WR", "TE"],
 };
-const SLOT_NAME: Record<string, string> = { WRRB_FLEX: "FLEX", REC_FLEX: "FLEX", SUPER_FLEX: "SF" };
-function bestLineup(pool: WeekPlayer[], order: string[]) {
+export const SLOT_NAME: Record<string, string> = { WRRB_FLEX: "FLEX", REC_FLEX: "FLEX", SUPER_FLEX: "SF" };
+export function bestLineup(pool: WeekPlayer[], order: string[]) {
   const sorted = [...pool].sort((a, b) => (b.pts ?? -1) - (a.pts ?? -1));
   const used = new Set<string>();
   // Fixed positions first, flex slots after, so flex gets the best leftover
@@ -78,9 +79,11 @@ function bestLineup(pool: WeekPlayer[], order: string[]) {
   return { starters: out, bench: sorted.filter((p) => !used.has(p.id)) };
 }
 
-const order = () => LEAGUE.lineupOrder ?? [...LEAGUE.slots.map((s) => (s === "SF" ? "SUPER_FLEX" : s)), ...(LEAGUE.specialSlots ?? [])];
+export const order = () => LEAGUE.lineupOrder ?? [...LEAGUE.slots.map((s) => (s === "SF" ? "SUPER_FLEX" : s)), ...(LEAGUE.specialSlots ?? [])];
 const myIds = () => [...YOU.roster, ...(YOU.special ?? [])];
-function info(id: string, row?: WeekRow): Omit<WeekPlayer, "pts"> {
+/** Everyone a team can start: skill players plus kickers and defenses. */
+export const teamIds = (t: Team) => [...t.roster, ...(t.special ?? [])];
+export function info(id: string, row?: WeekRow): Omit<WeekPlayer, "pts"> {
   const p = PLAYERS[id];
   if (p) return { id, name: p.name, pos: p.pos, nfl: p.nfl };
   const s = LEAGUE.specials?.[id];
@@ -105,9 +108,19 @@ export function demoStats(pos: string, pts: number, seed: number): Record<string
   const pa = r(10, 31), bucket = pa === 0 ? "pts_allow_0" : pa <= 6 ? "pts_allow_1_6" : pa <= 13 ? "pts_allow_7_13" : pa <= 20 ? "pts_allow_14_20" : pa <= 27 ? "pts_allow_21_27" : pa <= 34 ? "pts_allow_28_34" : "pts_allow_35p";
   return { pts_allow: pa, [bucket]: 1, sack: r(1, 5), int: r(0, 2) };
 }
-function demoWeek(week: number): WeekView {
+/** Demo schedule: one opponent per regular-season week, rotating through the league so this week's opponent is the
+ *  one the rest of the app shows. No matchup once the fantasy playoffs start (the bracket isn't set). */
+export function demoOppId(week: number): string | undefined {
+  if (week >= (LEAGUE.playoffStart ?? 15)) return undefined;
+  const others = LEAGUE_TEAMS.filter((t) => !t.you).map((t) => t.id), n = others.length;
+  if (!n) return undefined;
+  const at = Math.max(0, others.indexOf(OPPONENT_ID ?? ""));
+  return others[(((at + week - WEEK) % n) + n) % n];
+}
+/** Demo numbers for any team in any week: made up points for weeks played, projections for weeks ahead. */
+function demoPool(ids: string[], week: number): WeekPlayer[] {
   const past = week < WEEK;
-  const pool: WeekPlayer[] = myIds().map((id) => {
+  return ids.map((id) => {
     const i = info(id);
     const base = PLAYERS[id]?.proj ?? LEAGUE.specials?.[id]?.proj ?? 0;
     if (demoBye(i.nfl) === week) return { ...i, pts: null };
@@ -115,15 +128,21 @@ function demoWeek(week: number): WeekView {
     const pts = Math.round(base * swing * 10) / 10;
     return { ...i, pts, line: past ? statLine(i.pos, demoStats(i.pos, pts, week * 97 + id.length)) : undefined };
   });
-  const { starters, bench } = bestLineup(pool, order());
-  const total = Math.round(starters.reduce((s, x) => s + (x.p?.pts ?? 0), 0) * 10) / 10;
-  return { week, kind: past ? "past" : "future", starters, bench, total, oppTotal: past ? Math.round((total * (0.8 + hash(`opp${week}`) * 0.4)) * 10) / 10 : undefined, oppName: past ? ["Mike", "Chris", "Dan", "Kev", "Taylor", "Sam"][week % 6] : undefined };
+}
+const sumStarters = (st: { p: WeekPlayer | null }[]) => Math.round(st.reduce((s, x) => s + (x.p?.pts ?? 0), 0) * 10) / 10;
+function demoWeek(week: number): WeekView {
+  const past = week < WEEK;
+  const { starters, bench } = bestLineup(demoPool(myIds(), week), order());
+  const total = sumStarters(starters);
+  const oppId = demoOppId(week), opp = oppId ? LEAGUE_TEAMS.find((t) => t.id === oppId) : undefined;
+  const oppTotal = past && opp ? sumStarters(bestLineup(demoPool(teamIds(opp), week), order()).starters) : undefined;
+  return { week, kind: past ? "past" : "future", starters, bench, total, oppTotal, oppName: past && opp ? opp.manager : undefined };
 }
 
 // ---- Live ---------------------------------------------------------------------
 async function liveWeek(week: number): Promise<WeekView> {
   const past = week < WEEK;
-  const rows = await fetchWeekRows(LEAGUE.season, week, past ? "stats" : "projections");
+  const rows = await weekFeed(week, past ? "stats" : "projections");
   const playing = new Set([...rows.values()].filter((r) => r.team && Object.keys(r.stats ?? {}).length).map((r) => r.team!));
   const make = (id: string, scored?: number): WeekPlayer => {
     const row = rows.get(id);
@@ -163,4 +182,27 @@ export async function loadWeek(week: number): Promise<WeekView> {
   const v = isDemo() ? demoWeek(week) : await liveWeek(week);
   cache.set(key, v);
   return v;
+}
+
+/** Any team's best lineup for a week other than this one, from the same numbers the Lineup week browser uses:
+ *  Sleeper's projections for that week (live) or the demo season. Past live weeks come from Sleeper's matchups instead. */
+export async function teamWeek(ids: string[], week: number): Promise<{ starters: { slot: string; p: WeekPlayer | null }[]; bench: WeekPlayer[]; total: number }> {
+  if (isDemo()) return demoTeamWeek(ids, week);
+  let pool: WeekPlayer[];
+  {
+    const rows = await weekFeed(week, "projections");
+    const playing = new Set([...rows.values()].filter((r) => r.team && Object.keys(r.stats ?? {}).length).map((r) => r.team!));
+    pool = ids.map((id) => {
+      const row = rows.get(id), i = info(id, row);
+      if (i.nfl && playing.size >= 20 && !playing.has(i.nfl)) return { ...i, pts: null };
+      return { ...i, pts: row ? weekPoints(i.pos, row.stats) : 0 };
+    });
+  }
+  const { starters, bench } = bestLineup(pool, order());
+  return { starters, bench, total: sumStarters(starters) };
+}
+/** The demo version of teamWeek, ready right away (no loading state). */
+export function demoTeamWeek(ids: string[], week: number) {
+  const { starters, bench } = bestLineup(demoPool(ids, week), order());
+  return { starters, bench, total: sumStarters(starters) };
 }

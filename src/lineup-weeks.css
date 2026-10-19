@@ -1,0 +1,66 @@
+/* Lineup week stepper drives the opponent: team strip "Week N vs <team>", Their threats per week, and the
+   matchup page's week stepper. Every state keeps the same rows so switching weeks never moves the layout. */
+
+/* Team strip: the "Week 7 vs <team>" row with their total on the right */
+html:root:not(#_) .mw-vs { display: flex; align-items: center; gap: 10px; min-height: 24px; min-width: 0; }
+html:root:not(#_) .mw-wk { flex: none; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .mw-vs-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 0.875rem; }
+html:root:not(#_) .mw-vs-who b { min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .mw-vs-who b.muted { color: var(--muted); font-weight: 500; }
+html:root:not(#_) .mw-vs-who > :not(b) { flex: none; }
+html:root:not(#_) .mw-vs-word { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_) .mw-vs-pts { flex: none; display: inline-flex; align-items: baseline; gap: 6px; font: 600 0.9375rem/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_) .mw-vs-pts small { font: 500 0.625rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* Win row: one height whether it holds the live tag, the projected tag, a final result or a message */
+html:root:not(#_) .mw-win { min-height: 22px; min-width: 0; }
+html:root:not(#_) .mw-win > .mw-lbl:only-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .mw-tag { flex: none; padding: 3px 7px; border-radius: 999px; background: var(--surface-3); font: 600 0.625rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_) .mw-win b.mw-result { min-width: 1.4em; text-align: center; }
+
+/* Loading: the same rows, text hidden behind soft bars */
+html:root:not(#_) .mw.is-skel :is(.mw-pts, .mw-score small, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
+html:root:not(#_) .mw.is-skel .mw-vs-pts small { visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .mw.is-skel :is(.mw-pts, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl) { animation: lw-pulse 1.2s ease-in-out infinite; } }
+@keyframes lw-pulse { 50% { opacity: 0.55; } }
+
+/* Their threats: always three rows tall. Loading shows ghost rows; an empty week lays its message over hidden ones */
+html:root:not(#_) .thr-sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_) .thr-body { position: relative; }
+html:root:not(#_) .thr-body > .wk-row:first-child { border-top: 0; }
+html:root:not(#_) .thr-n { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+html:root:not(#_) .thr-n .lu-tag { flex: none; }
+html:root:not(#_) span.wk-row { cursor: default; }
+html:root:not(#_) .thr-ghost { cursor: default; }
+html:root:not(#_) .thr-av { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-3); }
+html:root:not(#_) .thr-bar { display: inline-block; width: 128px; max-width: 100%; height: 0.8em; border-radius: 6px; background: var(--surface-3); vertical-align: middle; }
+html:root:not(#_) .thr-bar.short { width: 92px; }
+html:root:not(#_) .thr-bar.num { width: 34px; }
+html:root:not(#_) .thr-body.has-msg .thr-ghost { visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .thr-body.is-skel :is(.thr-av, .thr-bar) { animation: lw-pulse 1.2s ease-in-out infinite; } }
+html:root:not(#_) .thr-msg { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 6px; padding: 0 16px; text-align: center; }
+html:root:not(#_) .thr-msg b { font-size: 0.9375rem; font-weight: 600; }
+html:root:not(#_) .thr-msg span { max-width: 32ch; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .wk-more:disabled { cursor: default; opacity: 0.45; }
+
+/* Lineup list while a week loads: the same rows WeekPanel draws, as quiet bars */
+html:root:not(#_) .lu-wskel .lu-row-skel { pointer-events: none; }
+html:root:not(#_) .lu-wskel :is(.lu-slot, .ir-empty, .lu-name, .lu-meta, .lu-pts, .lu-week-sum b, .lu-week-sum i, .lu-list-head b) { color: transparent; border-radius: 6px; background: var(--surface-2); }
+html:root:not(#_) .lu-wskel .lu-name { width: 9em; }
+html:root:not(#_) .lu-wskel .lu-meta { width: 5em; }
+html:root:not(#_) .lu-wskel .lu-pts { width: 3em; height: 1.1em; }
+html:root:not(#_) .lu-wskel .lu-list-head b { width: 5em; }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .lu-wskel .lu-row-skel { animation: lw-pulse 1.2s ease-in-out infinite; } }
+
+/* Matchup page: week stepper between the back link and the card */
+html:root:not(#_) .lu-weeknav.mu-weeks { max-width: 360px; margin: 0 auto 12px; padding: 0; }
+html:root:not(#_) .mu-week-msg { min-height: 160px; display: grid; align-content: center; }
+html:root:not(#_) .mu .mu-mid b.up { color: var(--good); } html:root:not(#_) .mu .mu-mid b.down { color: var(--bad); }
+html:root:not(#_) span.mu-mine { cursor: default; }
+@media (max-width: 480px) { html:root:not(#_) .mw-vs-pts small { display: none; } }
+/* Win bars on the matchup page: green when you're favored or won, red when behind or lost, never brand lime */
+html:root:not(#_):not(#_) .mu-bar.up span { background: linear-gradient(90deg, rgba(var(--good-rgb), 0.5), var(--good)); }
+html:root:not(#_):not(#_) .mu-bar.down span { background: linear-gradient(90deg, rgba(255, 132, 115, 0.5), var(--bad)); }
+html:root:not(#_):not(#_) .mu-bar.even span { background: var(--muted); }
+/* Other weeks are read-only, so your side isn't drawn as a tappable box */
+html:root:not(#_):not(#_) span.mu-mine { border-color: transparent !important; background: none !important; box-shadow: none !important; }
