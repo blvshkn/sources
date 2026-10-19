@@ -4,6 +4,7 @@ import { Player, DEADLINES } from "../data";
 import { eff, fmt, Lineup, Trade } from "../engine";
 import type { Live } from "../live";
 import { Icon, IconName } from "./ui";
+import { Tooltip } from "./Tooltip";
 import type { Nudge } from "./Wire";
 import type { Check } from "./Roster";
 import { NewsItem, ago, requestPlayer } from "../news";
@@ -148,7 +149,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                   {!isRead && <span className="sr-only">Unread.</span>}
                   {it.urgent && <b className="ibx-flag">Before lock</b>}
                   <span>{it.meta}</span>
-                  {it.ai && <span className="ibx-ai"><Icon name="spark" size={11} />AI</span>}
+                  {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><Icon name="spark" size={11} />AI</span></Tooltip>}
                 </span>
                 <p className="ibx-text">{it.text}</p>
                 <span className="ibx-acts">
