@@ -14,10 +14,9 @@ const RSS = [
   ["RotoWire", ["https://www.rotowire.com/rss/news.php?sport=NFL"]],
   ["ESPN", ["https://www.espn.com/espn/rss/nfl/news"]],
   // These addresses aren't documented; try the likely ones and skip any that don't answer
-  ["FantasyPros", ["https://www.fantasypros.com/nfl/rss/player-news.php", "https://www.fantasypros.com/rss/nfl-news.xml"]],
   ["RotoBaller", ["https://www.rotoballer.com/player-news/feed?sport=nfl", "https://www.rotoballer.com/category/nfl/feed", "https://www.rotoballer.com/feed"]],
 ];
-const SOURCES = ["RotoWire", "RotoBaller", "ESPN", "FantasyPros"];
+const SOURCES = ["RotoWire", "RotoBaller", "ESPN"];
 const DAY = 864e5;
 
 // ---- Parsing ---------------------------------------------------------------
@@ -179,10 +178,10 @@ function leagueFeeds() {
 
 const ESPN_TEAM = { WAS: "WSH" };
 /** Find a player's ESPN id from ESPN's public team roster when Sleeper didn't give us one. */
-async function espnIdFor(name, team) {
+async function espnIdFor(name, team, getJson = (u) => get(u, "json")) {
   if (!team || team === "FA") return null;
   try {
-    const d = await get(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${ESPN_TEAM[team] ?? team}/roster`, "json");
+    const d = await getJson(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${ESPN_TEAM[team] ?? team}/roster`);
     const want = norm(name).replace(SUFFIX, " ").replace(/\s+/g, " ");
     for (const g of d?.athletes ?? []) for (const a of g?.items ?? []) {
       if (norm(a?.fullName ?? a?.displayName).replace(SUFFIX, " ").replace(/\s+/g, " ") === want) return String(a.id);
@@ -191,17 +190,17 @@ async function espnIdFor(name, team) {
   return null;
 }
 
-async function espnFor(id) {
+async function espnFor(id, getJson = (u) => get(u, "json")) {
   if (!id || !/^\d+$/.test(id)) return [[], []];
-  const fantasy = get(`https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players?playerId=${id}&limit=50`, "json").then((j) => parseEspn(j, id)).catch(() => []);
-  const site = get(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?athletes=${id}&limit=25`, "json").then((j) => parseEspn(j, id)).catch(() => []);
+  const fantasy = getJson(`https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players?playerId=${id}&limit=50`).then((j) => parseEspn(j, id)).catch(() => []);
+  const site = getJson(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?athletes=${id}&limit=25`).then((j) => parseEspn(j, id)).catch(() => []);
   return Promise.all([fantasy, site]);
 }
 
 /** RotoBaller is WordPress: its search feed reaches back further than the main feed for one player. */
 const rotoballerFor = (name) => loadRss("RotoBaller", [`https://www.rotoballer.com/?s=${encodeURIComponent(name)}&feed=rss2`]).catch(() => []);
 
-const dedupe = (items) => {
+export const dedupe = (items) => {
   const seen = new Set();
   return items.filter((i) => {
     // "Bills' Josh Allen: Throws two TDs" and "Josh Allen: Throws two TDs" are the same blurb
@@ -226,6 +225,25 @@ export async function playerNews({ name, team, espn }, now = Date.now()) {
   tally(all);
   const items = rank(all, now).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 25);
   return { espn: id, items, sources: SOURCES.map((s) => ({ source: s, count: counts[s] ?? 0 })) };
+}
+
+/**
+ * ESPN for one player, run in the browser. ESPN refuses requests from our server (403) but serves its public JSON
+ * to browsers with CORS, so the app calls this directly and merges it with the server's answer.
+ */
+export async function espnPlayerNews({ name, team, espn }, now = Date.now()) {
+  const who = { ...nameForms(name), team: String(team ?? "").toUpperCase() };
+  const getJson = (u) => fetch(u, { signal: AbortSignal.timeout(6000) }).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); });
+  const id = espn && /^\d+$/.test(espn) ? espn : await espnIdFor(name, who.team, getJson);
+  const [fantasy, site] = await espnFor(id, getJson);
+  return [...fantasy, ...site].filter((i) => i.athlete !== false || matches({ ...i, athlete: undefined }, who))
+    .filter((i) => !i.at || now - i.at < 30 * DAY);
+}
+
+/** Merge story lists, drop repeats, rank and sort newest first. */
+export function mergeNews(lists, now = Date.now()) {
+  const all = dedupe(lists.flat()).map(({ athlete, page, ...i }) => i);
+  return rank(all, now).sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 25);
 }
 
 export async function leagueNews(now = Date.now()) {

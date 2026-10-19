@@ -8,7 +8,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon, StatusPill } from "./ui";
 
 // Lettermarks stand in for source logos (we don't use third-party marks)
-const MARK: Record<string, string> = { RotoWire: "RW", RotoBaller: "RB", ESPN: "E", FantasyPros: "FP" };
+const MARK: Record<string, string> = { RotoWire: "RW", RotoBaller: "RB", ESPN: "E" };
 const mark = (s: string) => MARK[s] ?? (s.replace(/[^A-Z]/g, "").slice(0, 2) || s.slice(0, 2).toUpperCase());
 
 /** Excerpt clamped to three lines, with a toggle only when it actually overflows. */

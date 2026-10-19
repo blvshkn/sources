@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Player } from "./data";
 import { espnId } from "./jersey";
+// @ts-ignore: plain JS module shared with the server route
+import { espnPlayerNews, mergeNews } from "../api/news.js";
 
 export type NewsKind = "status" | "move" | "role" | "recap" | "outlook" | "feature";
 export interface NewsItem { id: string; source: string; via?: string; title: string; summary: string; url: string; at: number | null; kind?: NewsKind; score?: number }
 
 /** Every source /api/news reads, in the order we credit them. */
-export const NEWS_SOURCES = ["RotoWire", "RotoBaller", "ESPN", "FantasyPros"];
+export const NEWS_SOURCES = ["RotoWire", "RotoBaller", "ESPN"];
 export const sourcesLine = (sep = ", ", last = " and ") => NEWS_SOURCES.slice(0, -1).join(sep) + last + NEWS_SOURCES[NEWS_SOURCES.length - 1];
 
 // ---- Per-player store ------------------------------------------------------
@@ -53,12 +55,15 @@ export function loadPlayerNews(p: Pick<Player, "id" | "name" | "nfl" | "pos">) {
   const q = new URLSearchParams({ name: p.name, team: p.nfl, pos: p.pos });
   const espn = espnId(p);
   if (espn) q.set("espn", espn);
-  queue.push(() => fetch(`/api/news?${q}`)
-    .then((r) => (r.ok ? r.json() : null))
-    .then((d: { items?: NewsItem[] } | null) => {
+  // Our route covers RotoWire and RotoBaller; ESPN only answers browsers, so it's fetched here and merged in
+  queue.push(() => Promise.all([
+    fetch(`/api/news?${q}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<{ items?: NewsItem[] } | null>,
+    (espnPlayerNews({ name: p.name, team: p.nfl, espn: espn ?? "" }) as Promise<NewsItem[]>).catch(() => null),
+  ])
+    .then(([d, e2]) => {
       // A failed request keeps whatever we had; only a real answer replaces it
-      if (!d) { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); return; }
-      const e = { at: Date.now(), items: Array.isArray(d.items) ? d.items : [] };
+      if (!d && !e2) { if (!have) mem.set(key, { at: Date.now() - TTL + 60e3, items: [] }); return; }
+      const e = { at: Date.now(), items: mergeNews([e2 ?? [], Array.isArray(d?.items) ? d!.items! : []]) as NewsItem[] };
       mem.set(key, e);
       try { sessionStorage.setItem(SKEY + key, JSON.stringify(e)); } catch { /* full or blocked */ }
     })
