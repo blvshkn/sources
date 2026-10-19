@@ -3726,7 +3726,7 @@ html:root:not(#_) body { background-color: #121413; }
 html:root:not(#_) .main, html:root:not(#_) .shell { background: transparent !important; }
 
 /* Hero cards: a translucent accent wash from the top left, a hairline light edge on top */
-html:root:not(#_) :is(.sb2, .mw, .lu-mx, .mu, .topk, .wk-strip .lu-mx) {
+html:root:not(#_) :is(.sb2, .mw, .lu-mx, .mu, .topk, .wk-strip .lu-mx, .ld2-idea) {
   background:
     linear-gradient(155deg, rgba(var(--lime-rgb), 0.14) 0, rgba(var(--lime-rgb), 0.04) 150px, transparent 280px),
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 160px),
@@ -3869,3 +3869,11 @@ html:root:not(#_) .mu-side :is(.mu-big, b) { color: var(--ink) !important; opaci
 
 /* Numbers are mono everywhere: see src/monoNumbers.ts */
 html:root:not(#_):not(#_) [data-n][data-n] { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace !important; font-variant-numeric: tabular-nums; }
+
+/* Landing: the live lineup cell spans the bento */
+html:root:not(#_) .ld-cell.wide { grid-column: 1 / -1; }
+html:root:not(#_) .ld2-live-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+html:root:not(#_) .ld2-live-head > div { max-width: 520px; }
+html:root:not(#_) .ld2-live-rows { margin: 4px -22px -22px; background: transparent; box-shadow: none; border: 0; }
+html:root:not(#_) .ld2-live-rows .lu-row { padding-left: 22px; padding-right: 22px; }
+html:root:not(#_) .pitch-card .pc-p { white-space: normal; overflow: visible; }

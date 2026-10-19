@@ -7,6 +7,10 @@ import { Delta, Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
+import { Avatar } from "./Avatar";
+import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
+import { useLive, startersOf, playCount } from "../live";
+import { eff } from "../engine";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -22,6 +26,12 @@ export function Landing({ onLive, onDemo }: {
   const [errFor, setErrFor] = useState("ld-user");
 
   applyFormat(DEFAULT_FORMAT);
+  // The landing is for Sleeper leagues, so it wears Sleeper's accent like the app does
+  useEffect(() => { document.documentElement.dataset.platform = "sleeper"; }, []);
+  const live = useLive();
+  const starters = startersOf(YOU).map(playerById);
+  const order = { in_game: 0, complete: 1, pre_game: 2 } as Record<string, number>;
+  const liveRows = [...starters].sort((a, b) => (order[gameNow(live, a.id, a.nfl).state ?? "pre_game"] ?? 3) - (order[gameNow(live, b.id, b.nfl).state ?? "pre_game"] ?? 3)).slice(0, 5);
   const demo = useMemo(() => {
     const tags = activeTags(INITIAL_MANAGER_TAGS, 4);
     const needs = allNeeds();
@@ -79,6 +89,7 @@ export function Landing({ onLive, onDemo }: {
     ["Can Sources make moves in my league?", "No. It's read only. It drafts offers, lineup changes and waiver bids, and you make the move in Sleeper yourself."],
     ["Where do trade values come from?", "Public market values for your league's format, blended with a projection model for the rest of the season and each team's actual starting needs."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device and are never shown to them."],
+    ["Does the win chance match Sleeper?", "Yes. Sources uses the lineup you set in Sleeper and the same method Sleeper does, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
 
@@ -170,6 +181,25 @@ export function Landing({ onLive, onDemo }: {
               </figure>
             </article>
           )}
+          <article className="card ld-cell ld2-reveal wide ld2-live">
+            <div className="ld2-live-head">
+              <div><h3>Sunday, live</h3><p>Points so far, where each player is on pace to finish, and a win chance that tracks Sleeper's. Players heat up when they're beating their projection, cool off when they're not, and finals are set in stone.</p></div>
+              <PlayCount c={playCount(live, starters.map((p) => p.nfl))} />
+            </div>
+            <div className="lu-list ld2-live-rows">
+              {liveRows.map((p) => {
+                const g = gameNow(live, p.id, p.nfl);
+                return (
+                  <div key={p.id} className={`lu-row${playCls(g)}`}>
+                    <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
+                    <Avatar p={p} size={40} />
+                    <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{g.state === "in_game" ? <span className="lu-live"><i aria-hidden="true" />Live</span> : g.state === "complete" ? <span className="lu-final">Final</span> : null}</span></span>
+                    <PtsCell id={p.id} g={g} proj={eff(p, true)} />
+                  </div>
+                );
+              })}
+            </div>
+          </article>
         </div>
       </section>
 
