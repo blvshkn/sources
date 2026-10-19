@@ -6,7 +6,7 @@ import { TeamAvatar } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
-import { DealSide, RosterPicker, lockMap, positionSummary, tagMaps } from "./Trade";
+import { AcceptCell, DealRows, DealSide, DealVerdict, FlagLine, PtsCell, RosterPicker, lockMap, multiWhy, pillFlags, positionSummary, tagMaps } from "./Trade";
 
 export const MAX_PARTNERS = 3;
 export interface LegState { team: Team; give: string[]; get: string[] }
@@ -66,17 +66,19 @@ function valueLine(sends: number, gets: number) {
 }
 
 /** The deal panel for 3 and 4 team trades: one column per partner, then a row per team with its lineup change and odds. */
-export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch }: {
+export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = [], myTags = {} }: {
   legs: LegState[]; m: MultiTrade | null; toggle: Toggle; onRemove: (id: string) => void; clear: () => void; onPitch: (t: TradeT) => void;
+  tags?: ManagerTag[]; myTags?: Record<string, MyTag>;
 }) {
   const n = legs.length + 1;
   const any = legs.some((l) => l.give.length || l.get.length);
   const allGive = legs.flatMap((l) => l.give), allGet = legs.flatMap((l) => l.get);
-  const big = legs.some((l) => l.give.length > 2 || l.get.length > 2) || allGive.length > 3 || allGet.length > 3;
   const empty = legs.find((l) => !l.give.length && !l.get.length);
   const v = m ? verdictMulti(m) : null;
   const youAfterRoster = m ? YOU.roster.filter((id) => !m.give.includes(id)).concat(m.get).filter((id) => !m.youDrop.includes(id)) : YOU.roster;
   const you = m ? valueLine(m.marketGive, m.marketGet) : null;
+  const flagsFor = (l: LegState) => pillFlags(l.team, tags, myTags, m ? m.warnings : null);
+  const allFlags = Object.assign({}, ...legs.map((l) => { const f = flagsFor(l); return { ...f.you, ...f.theirs }; }));
   return (
     <section className={`card deal mt-deal${any ? "" : " empty"}`} aria-live="polite">
       <div className="row" style={{ justifyContent: "space-between" }}>
@@ -94,47 +96,32 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch }: {
                 <span className="mt-who"><b>{l.team.name}</b><small>{l.team.manager}</small></span>
                 <button className="mt-x" onClick={() => onRemove(l.team.id)} aria-label={`Take ${l.team.manager} out of the trade`}><Icon name="x" size={14} /></button>
               </div>
-              <DealSide title={`You send ${l.team.manager}`} team="your roster" ids={l.give} pool={YOU.roster.filter((id) => !others.includes(id))} onToggle={(id) => toggle("give", id, l.team.id)} className="qs-give" />
-              <DealSide title={`${l.team.manager} sends you`} team={`${l.team.manager}'s roster`} ids={l.get} pool={l.team.roster} onToggle={(id) => toggle("get", id, l.team.id)} className="qs-get" />
+              <DealSide title={`You send ${l.team.manager}`} team="your roster" ids={l.give} pool={YOU.roster.filter((id) => !others.includes(id))} onToggle={(id) => toggle("give", id, l.team.id)} className="qs-give" flags={flagsFor(l).you} />
+              <DealSide title={`${l.team.manager} sends you`} team={`${l.team.manager}'s roster`} ids={l.get} pool={l.team.roster} onToggle={(id) => toggle("get", id, l.team.id)} className="qs-get" flags={flagsFor(l).theirs} />
             </div>
           );
         })}
       </div>
+      <FlagLine ids={[...allGive, ...allGet]} flags={allFlags} />
       {!m || !v ? (
         <p className="empty-deal">{!any ? "Add players to each team's column, or tap them on the rosters below." : empty ? `Add a player to or from ${empty.team.manager}, or take them out of the trade.` : !allGive.length ? "Now pick who you'd send." : "Now pick who you'd get back."}</p>
       ) : (
-        <div className="mt-read">
-          <div className="mt-main">
-          <ul className="mt-teams" aria-label="How each team does">
-            <li className="mt-team you">
-              <span className="mt-av you-dot" aria-hidden="true">You</span>
-              <span className="mt-tw"><b>You</b><small>{m.youBefore.toFixed(1)} to {m.youAfter.toFixed(1)} pts/wk</small></span>
-              <span className={`mt-d numeral ${cls(m.youDelta)}`}>{fmt(m.youDelta)}</span>
-              <span className="mt-side">
-                <b className={`tc-fair ${you!.gap >= -FAIR_GAP ? "good" : "bad"}`}>{you!.text.replace("Wins", "You win").replace("Loses", "You lose").replace("Fair on value", "Fair")}</b>
-                <small>{m.marketGive.toLocaleString()} out, {m.marketGet.toLocaleString()} in</small>
-              </span>
-            </li>
-            {m.legs.map((r) => {
-              const val = valueLine(r.trade.marketGet, r.trade.marketGive);
-              const tone = r.accept.label === "Likely yes" ? "good" : r.accept.label === "Worth a shot" ? "warn" : "bad";
-              return (
-                <li key={r.team.id} className="mt-team">
-                  <TeamAvatar t={r.team} size={32} />
-                  <span className="mt-tw"><b>{r.team.manager}</b><small>{r.trade.themBefore.toFixed(1)} to {r.trade.themAfter.toFixed(1)} pts/wk{r.accept.theirBlockers.length ? "" : ` · ${val.text.toLowerCase()}`}</small></span>
-                  <span className={`mt-d numeral ${cls(r.trade.themDelta)}`}>{fmt(r.trade.themDelta)}</span>
-                  <span className="mt-side">
-                    <b className={`mt-acc ${tone}`}>{r.accept.label}</b>
-                    <small>{Math.round(r.accept.p * 100)}% accepts</small>
-                  </span>
-                  {r.accept.theirBlockers.length > 0 && <span className="mt-why">{r.accept.theirBlockers.map((b) => b.charAt(0).toUpperCase() + b.slice(1)).join(" · ")}</span>}
-                </li>
-              );
-            })}
-          </ul>
-          </div>
-          <div className="mt-aside">
-          <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}</span></div>
+        <div className="dv">
+          <div className="dv-main">
+          <DealVerdict label={v.label} tone={v.tone} line={multiWhy(m, v.label)} />
+          <DealRows
+            cols={[{ id: "you", head: "You", you: true }, ...m.legs.map((r) => ({ id: r.team.id, head: r.team.manager }))]}
+            rows={[
+              { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
+                <PtsCell key="you" you d={m.youDelta} before={m.youBefore} after={m.youAfter} />,
+                ...m.legs.map((r) => <PtsCell key={r.team.id} d={r.trade.themDelta} before={r.trade.themBefore} after={r.trade.themAfter} />)] },
+              { label: "Trade value", tip: "Market value each team gets back against what it sends. The best player counts in full and each extra piece for less.", cells: [
+                <span key="you" className="dv-v"><b className={`dv-n ${Math.abs(you!.gap) <= FAIR_GAP ? "flat" : you!.gap > 0 ? "up" : "down"}`}>{Math.abs(you!.gap) <= FAIR_GAP ? "Even" : pct(you!.gap)}</b><small className="dv-s">{m.marketGive.toLocaleString()} out, {m.marketGet.toLocaleString()} in</small></span>,
+                ...m.legs.map((r) => { const val = valueLine(r.trade.marketGet, r.trade.marketGive); return (
+                  <span key={r.team.id} className="dv-v"><b className="dv-n">{Math.abs(val.gap) <= FAIR_GAP ? "Even" : pct(val.gap)}</b><small className="dv-s">{r.trade.marketGet.toLocaleString()} out, {r.trade.marketGive.toLocaleString()} in</small></span>
+                ); })] },
+              { label: "Will they accept", cells: [<span key="you" className="dv-v dv-none" />, ...m.legs.map((r) => <AcceptCell key={r.team.id} a={r.accept} />)] },
+            ]} />
           {(m.youDrop.length > 0 || m.legs.some((r) => r.trade.themDrop.length)) && (
             <p className="small drop-note">
               {m.youDrop.length > 0 && <>You'd drop {m.youDrop.map((id) => playerById(id).name).join(", ")} to make room. </>}
@@ -142,22 +129,24 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch }: {
               Counted in the numbers above.
             </p>
           )}
-          {m.warnings.map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
-          <div className="mt-pitch">
-            <p className="tiny muted">Propose the whole trade in <PlatformName size={12} />, then send each manager a pitch about their part of it.</p>
-            <div className="mt-pitch-btns">
-              {m.legs.map((r, i) => (
-                <button key={r.team.id} className={`btn${i === 0 ? " btn-primary" : ""}`} onClick={() => onPitch(r.trade)}><Icon name="pen" size={16} />Pitch {r.team.manager}</button>
-              ))}
+          {m.warnings.filter((w) => ![...allGive, ...allGet].some((id) => w.includes(playerById(id).name))).map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
+          <div className="dv-actions">
+            {m.legs.map((r, i) => (
+              <button key={r.team.id} className={`btn${i === 0 ? " btn-primary" : ""}`} onClick={() => onPitch(r.trade)}><Icon name="pen" size={16} />Pitch {r.team.manager}</button>
+            ))}
+          </div>
+          <p className="tiny muted dv-foot">Propose the whole trade in <PlatformName size={12} />, then send each manager a pitch about their part of it.</p>
+          </div>
+          <Fold id="trade.details" title="Details" auto={false} className="fold-details" summary="Position breakdown and schedules ahead">
+            <div className="dv-details">
+              <Fold id="trade.bars" title="Position breakdown" auto={false} className="fold-bars" summary={positionSummary(YOU.roster, youAfterRoster)}>
+                <PositionDeltas m={m} youAfter={youAfterRoster} />
+              </Fold>
+              <Fold id="trade.sched" title="Schedules ahead" auto={false} className="fold-sch"
+                summary={`You send ${scheduleLean(m.give.map(playerById))} · You get ${scheduleLean(m.get.map(playerById))}`}>
+                <DealSchedule bare give={m.give.map(playerById)} get={m.get.map(playerById)} />
+              </Fold>
             </div>
-          </div>
-          </div>
-          <Fold id="trade.bars" title="Position breakdown" auto={!big} className="fold-bars" summary={positionSummary(YOU.roster, youAfterRoster)}>
-            <PositionDeltas m={m} youAfter={youAfterRoster} />
-          </Fold>
-          <Fold id="trade.sched" title="Schedules ahead" auto={!big} className="fold-sch"
-            summary={`You send ${scheduleLean(m.give.map(playerById))} · You get ${scheduleLean(m.get.map(playerById))}`}>
-            <DealSchedule bare give={m.give.map(playerById)} get={m.get.map(playerById)} />
           </Fold>
         </div>
       )}

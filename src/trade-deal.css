@@ -1,0 +1,191 @@
+/* Trade Build: the deal read in one column. Pills with ghost slots and flags, one verdict, three comparison rows,
+   the actions, then Details folded. Loaded after trade-multi.css. Four :not(#_) so these beat the older deal rules.
+   No url references in this file. */
+
+/* ---------- Empty deal ---------- */
+/* Ghost pills give an empty deal a starting point, so it shows on phones too */
+html:root:not(#_):not(#_):not(#_):not(#_) .builder .deal.empty { display: block !important; }
+
+/* ---------- Pills: three slots per side ---------- */
+/* Every slot, real or ghost, takes the same share of the row, so a pill lands where its ghost was and nothing moves */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills { align-items: stretch; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > :is(.qs-pill, .qs-ghostli) { flex: 1 1 140px; min-width: 0; max-width: 100%; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > .qs-addli { flex: 0 0 auto; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill { container-type: inline-size; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-n { flex: 1 1 auto !important; }
+/* A narrow slot keeps the last name */
+@container (max-width: 188px) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-f { display: none; } }
+
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghostli { display: flex; padding: 0 !important; background: none !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost {
+  display: flex; align-items: center; gap: 6px; width: 100%; height: 34px; min-width: 0; padding: 0 12px 0 6px; margin: 0;
+  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 999px; background: none;
+  color: var(--muted); font: 500 0.8125rem/1 var(--font-body); white-space: nowrap; cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1), border-color 140ms cubic-bezier(0.23, 1, 0.32, 1), transform 100ms ease-out;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gav {
+  display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--muted);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gl { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink); border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:hover .qs-gav { color: var(--ink); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:active { transform: scale(0.98); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost[aria-expanded="true"] { border-style: solid; border-color: var(--lime); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost[aria-expanded="true"] .qs-gav { color: var(--lime); }
+@media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { height: 40px; } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { transition: none; } html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:active { transform: none; } }
+/* Phone: just the + */
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { justify-content: center; padding: 0; }
+}
+
+/* Flagged players: a red ring on the pill and a small lock or alert, the reason in a tooltip */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill.flagged { box-shadow: inset 0 0 0 1.5px var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: 50%; color: var(--bad); cursor: default; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-flags { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0 0; font-size: 0.8125rem; line-height: 1.4; color: var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-flags > svg { flex: none; margin-top: 2px; }
+
+/* ---------- The read: one column ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .dv { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 20px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; width: 100%; max-width: 760px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-main > * { margin: 0; }
+
+/* Verdict: the headline carries the color, the sentence stays plain */
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-verdict { display: grid; gap: 6px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-verdict b { font: 650 1.375rem/1.15 var(--font-body); letter-spacing: -0.015em; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-verdict.good b { color: var(--good); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-verdict.bad b { color: var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-verdict p { margin: 0; font: 400 0.9375rem/1.5 var(--font-body); color: var(--ink); text-wrap: pretty; }
+
+/* Rows: label, then a right-aligned column per team, on one shared template */
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-rows { display: grid; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-row {
+  display: grid; grid-template-columns: minmax(120px, 1fr) repeat(var(--dv-n, 2), minmax(84px, 168px));
+  column-gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); min-width: 0;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-row.dv-headrow { padding: 0 0 8px; border-top: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-l { font: 500 0.875rem/1.3 var(--font-body); color: var(--ink); min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-h {
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0;
+  font: 600 0.75rem/1.2 var(--font-body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-h::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-h.you { color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-h.you::before { background: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-c { min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-v { display: grid; justify-items: end; gap: 3px; text-align: right; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-n { font: 600 1.125rem/1.1 var(--font-mono); letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-n.up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-n.down { color: var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-s { font: 400 0.6875rem/1.25 var(--font-mono); color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-acc { font: 600 0.9375rem/1.2 var(--font-body); color: var(--ink); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-pct { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+/* One thin bar under trade value: what you give in lime, what you get in chalk */
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar { grid-column: 2 / -1; display: flex; gap: 2px; height: 4px; margin-top: 10px; border-radius: 4px; overflow: hidden; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i { display: block; min-width: 4px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:first-child { background: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:last-child { background: color-mix(in srgb, var(--ink) 38%, transparent); }
+
+/* Actions: Write pitch first, Show the math as a quiet link beside it */
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .btn { flex: 0 0 auto; justify-content: center; padding-inline: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish { margin: 0; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-foot { margin-top: -8px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-main .why { grid-template-columns: minmax(0, 1fr); }
+
+/* Details: closed by default; open, its two blocks stack across the whole card */
+html:root:not(#_):not(#_):not(#_):not(#_) .fold-details > .fold-head b { font-size: 0.9375rem; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-details { display: grid; grid-template-columns: minmax(0, 1fr); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-details > .fold:first-child { border-top: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-details > .fold { padding-left: 24px; }
+
+/* Phone: labels sit over their row, values share the width in aligned columns */
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-row { grid-template-columns: repeat(var(--dv-n, 2), minmax(0, 1fr)); row-gap: 6px; column-gap: 12px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-row > .dv-l { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-headrow > .dv-l { display: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-h { justify-content: flex-start; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-v { justify-items: start; text-align: left; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-s, html:root:not(#_):not(#_):not(#_):not(#_) .dv-acc { white-space: normal; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar { grid-column: 1 / -1; margin-top: 4px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .btn-primary { flex: 1 1 100%; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .btn { flex: 1 1 140px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .dv-details > .fold { padding-left: 0; }
+}
+
+/* ---------- Their odds read in neutral ink everywhere: it's their call, not good or bad for you ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .accept.good b, html:root:not(#_):not(#_):not(#_):not(#_) .mt-acc.good { color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ti-stat.odds.neutral dt { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ti-stat.odds.neutral .ti-meter i { background: color-mix(in srgb, var(--ink) 55%, transparent); }
+/* Position sits right after the name; the x keeps the far end */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-n { flex: 0 1 auto !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-x { margin-left: auto !important; }
+/* The flag rides on the avatar as a small badge, so a flagged name keeps its room */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill.flagged { position: relative; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-flag {
+  position: absolute; left: 18px; top: 50%; margin-top: 1px; width: 15px; height: 15px;
+  background: var(--bad); color: var(--surface); box-shadow: 0 0 0 2px var(--surface-2);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-flag svg { width: 9px; height: 9px; stroke-width: 2.4; }
+/* A slot that wraps alone keeps half the row instead of stretching across it */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > :is(.qs-pill, .qs-ghostli) { max-width: calc(50% - 3px); }
+/* With no offer switch above them, the sides still get room under the title */
+html:root:not(#_):not(#_):not(#_):not(#_) .builder .deal > .row + .deal-lists { margin-top: 12px; }
+
+/* ---------- Add player picker: one solid panel with the search, a column header and its own scroll ---------- */
+/* Search and list share the panel's padding, so their edges line up, and nothing shows through between them */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60; isolation: isolate;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; height: auto; min-width: 0; padding: 6px;
+  border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-md); transform-origin: top center;
+}
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick { animation: st-pop 180ms cubic-bezier(0.23, 1, 0.32, 1); } }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-search { height: 44px; padding: 0 76px 0 12px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-search:focus-within { box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-done { position: absolute; top: 12px; right: 12px; height: 32px; min-height: 32px; padding: 0 12px; background: var(--surface-3); }
+
+/* One template for the header and every row: avatar, position, name, Proj, Value, + */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs :is(.qs-head, .qs-opts button) {
+  display: grid; grid-template-columns: 22px 26px minmax(0, 1fr) 44px 60px 14px; column-gap: 10px; align-items: center;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-head { height: 32px; padding: 0 16px 0 8px; font: 600 0.6875rem/1 var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-col { text-align: right; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-col.on { color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort { grid-column: 1 / 4; justify-self: start; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button {
+  height: 22px; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--muted);
+  font: 600 0.6875rem/1 var(--font-body); cursor: pointer; transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button[aria-checked="true"] { background: var(--surface-3); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button:hover { color: var(--ink); } }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button:active { transform: scale(0.96); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
+
+/* The list scrolls inside the panel; the scrollbar sits inside the rounded corner */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-opts {
+  position: static; display: grid; gap: 0; margin: 0; padding: 0 2px 2px 0; max-height: min(320px, 48vh);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+  background: none; box-shadow: none; border-radius: 10px; animation: none; list-style: none;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-opts button {
+  width: 100%; height: 40px; min-height: 40px; padding: 0 8px; border: 0; border-radius: 10px; white-space: nowrap; text-align: left; font-size: 0.875rem;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-opts button span { flex: initial; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-opts .lu-pos { width: auto; font: 600 0.6875rem/1 var(--font-mono); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-on { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-nm { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-tm { flex: none; font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-on .status { flex: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-num { text-align: right; font: 500 0.8125rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-opts button > svg { justify-self: end; color: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-none { padding: 10px 8px; }
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs :is(.qs-head, .qs-opts button) { grid-template-columns: 22px 22px minmax(0, 1fr) 34px 46px 14px; column-gap: 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-tm { display: none; }
+}

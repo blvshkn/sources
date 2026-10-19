@@ -2,8 +2,8 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
-import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
-import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
+import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
+import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
@@ -68,17 +68,6 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
 }
 
 /** Apple Sports "team stats" layout: big net change per side, then each slot group with a two-color bar. */
-/** Would they say yes? A plain read with the reasons, or what's standing in the way. */
-export function AcceptRead({ a, who }: { a: Acceptance; who: string }) {
-  const tone = a.label === "Likely yes" ? "good" : a.label === "Worth a shot" ? "warn" : "bad";
-  return (
-    <div className={`accept ${tone}`}>
-      <div className="accept-top"><Tooltip focusable content={a.label === "Likely yes" ? "Likely yes is 65% and up, from their needs, notes and trade history." : a.label === "Worth a shot" ? "Worth a shot is 50 to 64%. Close enough to send." : "Long shot is under 50%. Expect a counter or a no."}><b>{a.label}</b></Tooltip><span className="tiny muted">{Math.round(a.p * 100)}% chance {who} accepts</span></div>
-      {a.theirBlockers.length ? <ul>{a.theirBlockers.map((b) => <li key={b}>{b.charAt(0).toUpperCase() + b.slice(1)}</li>)}</ul>
-        : a.reasons.length ? <p className="tiny muted">{a.reasons.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" · ")}</p> : null}
-    </div>
-  );
-}
 
 /** Each slot group after the deal, you on the left and them on the right, with a two-color bar. */
 export function PositionBars({ trade, them }: { trade: TradeT; them: Team }) {
@@ -176,16 +165,24 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
 
 /** One side of the deal, editable in place: players as pills with an x, and a matching + Add pill at the end of
  *  the row that drops a searchable list of that roster over the panel below. */
-export function DealSide({ title, team, ids, pool, onToggle, className }: { title: ReactNode; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void; className?: string }) {
+/** Slots a side shows before it needs + Add: empty ones are ghost pills, so real pills land in place and nothing moves. */
+const SLOTS = 3;
+export function DealSide({ title, team, ids, pool, onToggle, className, flags = {} }: { title: ReactNode; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void; className?: string;
+  /** Players with a problem: a red ring on the pill and the reason in a tooltip. */
+  flags?: Record<string, { text: string; icon: "lock" | "alert" }> }) {
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
   const wrap = useRef<HTMLDivElement>(null);
-  const addBtn = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const term = q.trim().toLowerCase();
+  const [sort, setSort] = useState<"value" | "proj">("value");
+  const val = (p: Player) => packageValue([p.id]);
   const options = pool.filter((id) => !ids.includes(id)).map(playerById)
     .filter((p) => !term || p.name.toLowerCase().includes(term) || p.pos.toLowerCase() === term || p.nfl.toLowerCase() === term)
-    .sort((a, b) => eff(b) - eff(a)).slice(0, 8);
-  const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => addBtn.current?.focus()); };
+    .sort((a, b) => (sort === "value" ? val(b) - val(a) || eff(b, true) - eff(a, true) : eff(b, true) - eff(a, true) || val(b) - val(a)));
+  const ghosts = Math.max(0, SLOTS - ids.length);
+  // Focus goes back to whatever opens the picker now: the next ghost, or + Add once the slots are full
+  const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-ghost, .qs-add")?.focus()); };
   useEffect(() => {
     if (!adding) return;
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
@@ -196,34 +193,173 @@ export function DealSide({ title, team, ids, pool, onToggle, className }: { titl
     <div className={`qs${className ? ` ${className}` : ""}`}>
       <span className="eyebrow">{title}</span>
       <div className="qs-row" ref={wrap}>
-        <ul className="qs-pills">
-          {ids.map((id) => { const p = playerById(id); return (
-            <li key={id} className="qs-pill"><Avatar p={p} size={22} badge={false} /><span className="qs-n" title={p.name}>{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+        <ul className="qs-pills" ref={list}>
+          {ids.map((id) => { const p = playerById(id); const f = flags[id]; return (
+            <li key={id} className={`qs-pill${f ? " flagged" : ""}`}><Avatar p={p} size={22} badge={false} /><span className="qs-n" title={p.name}>{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+              {f && <Tooltip focusable content={f.text}><span className="qs-flag" aria-label={f.text}><Icon name={f.icon} size={12} /></span></Tooltip>}
               <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
           ); })}
-          <li className="qs-addli">
-            <button ref={addBtn} className="qs-add" aria-expanded={adding} aria-haspopup="listbox" onClick={() => (adding ? close() : setAdding(true))}>
-              <Icon name="plus" size={14} />{ids.length ? "Add" : "Add player"}
-            </button>
-          </li>
+          {Array.from({ length: ghosts }, (_, i) => (
+            <li key={`g${i}`} className="qs-ghostli">
+              <button className="qs-ghost" aria-expanded={adding && i === 0} aria-haspopup="listbox" aria-label={`Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
+                <span className="qs-gav" aria-hidden="true"><Icon name="plus" size={12} /></span><span className="qs-gl">Add player</span>
+              </button>
+            </li>
+          ))}
+          {ghosts === 0 && (
+            <li className="qs-addli">
+              <button className="qs-add" aria-expanded={adding} aria-haspopup="listbox" aria-label={`Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
+                <Icon name="plus" size={14} />Add
+              </button>
+            </li>
+          )}
         </ul>
         {adding && (
           <div className="qs-pick">
             <label className="qs-search"><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
                 onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
-            <ul className="qs-opts">
+            <button className="qs-done" onClick={() => close(true)}>Done</button>
+            <div className="qs-head">
+              <span className="qs-sort" role="radiogroup" aria-label="Sort players by">
+                {(["value", "proj"] as const).map((k) => (
+                  <button key={k} role="radio" aria-checked={sort === k} onClick={() => setSort(k)}>{k === "value" ? "Value" : "Proj"}</button>
+                ))}
+              </span>
+              <Tooltip focusable content="This week's projected points."><span className={`qs-col${sort === "proj" ? " on" : ""}`}>Proj</span></Tooltip>
+              <Tooltip focusable content="Market value. The same number the deal's trade value adds up."><span className={`qs-col${sort === "value" ? " on" : ""}`}>Value</span></Tooltip>
+              <span aria-hidden="true" />
+            </div>
+            <ul className="qs-opts qs-scroll">
               {options.map((p) => (
-                <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }}><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><small>{eff(p).toFixed(1)}</small><Icon name="plus" size={14} /></button></li>
+                <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }} aria-label={`Add ${p.name}, ${p.pos}, ${p.nfl}. Projects ${eff(p, true).toFixed(1)}, value ${val(p).toLocaleString()}`}>
+                  <Avatar p={p} size={22} badge={false} />
+                  <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
+                  <span className="qs-on"><span className="qs-nm">{p.name}</span><span className="qs-tm">{p.nfl}</span><StatusPill p={p} /></span>
+                  <span className="qs-num">{eff(p, true).toFixed(1)}</span>
+                  <span className="qs-num">{val(p).toLocaleString()}</span>
+                  <Icon name="plus" size={14} />
+                </button></li>
               ))}
               {options.length === 0 && <li className="qs-none">No one matches. Try a position like WR.</li>}
             </ul>
-            <button className="qs-done" onClick={() => close(true)}>Done</button>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+// ---------- The read: one verdict, three rows, then the actions ----------
+
+export type PillFlags = Record<string, { text: string; icon: "lock" | "alert" }>;
+/** Red rings for the pills: your untouchables and priced players, and anything the other manager said no to. */
+export function pillFlags(them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, warnings: string[] | null) {
+  const { dimThem, dimYou } = tagMaps(them, tags);
+  const you: PillFlags = {}, theirs: PillFlags = {};
+  Object.entries(myTags).forEach(([id, v]) => {
+    if (v === "untouchable") you[id] = { text: "Marked untouchable", icon: "lock" };
+    if (v === "amazing") {
+      const w = warnings?.find((x) => x.startsWith(playerById(id).name + " only moves"));
+      // Once a deal is on the table the price is checked; if it clears, the ring goes away
+      if (!warnings || w) you[id] = { text: w ? w.replace(/\.$/, "") : "Only moves if you overpay", icon: "lock" };
+    }
+  });
+  Object.keys(dimYou).forEach((id) => { you[id] ??= { text: `${them.manager} isn't interested in him`, icon: "alert" }; });
+  Object.keys(dimThem).forEach((id) => { theirs[id] = { text: `${them.manager} said he won't move him`, icon: "alert" }; });
+  return { you, theirs };
+}
+
+/** One short line under the pills when more than one player is flagged. */
+export function FlagLine({ ids, flags }: { ids: string[]; flags: PillFlags }) {
+  const hit = ids.filter((id) => flags[id]);
+  if (hit.length < 2) return null;
+  return <p className="dv-flags"><Icon name="alert" size={14} /><span>{hit.length} flagged: {hit.map((id) => playerById(id).name).join(", ")}</span></p>;
+}
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** The why, in one plain sentence: your points, then your value, then what to do. */
+function pointsClause(d: number) {
+  return d <= -0.05 ? `You lose ${Math.abs(d).toFixed(1)} points a week` : d >= 0.05 ? `You gain ${d.toFixed(1)} points a week` : "Your lineup barely moves";
+}
+function valueClause(give: number, get: number) {
+  const gap = Math.max(give, get) > 0 ? (get - give) / Math.max(give, get) : 0;
+  if (Math.abs(gap) <= FAIR_GAP) return "the value is about even";
+  const r = Math.max(give, get) / Math.max(1, Math.min(give, get));
+  const size = r >= 2.6 ? `about ${Math.round(r)} times the value` : r >= 1.75 ? "about twice the value" : `${pct(gap).slice(1)} more value`;
+  return give > get ? `give up ${size}` : `get ${size} back`;
+}
+const NEXT: Record<string, (them: string) => string> = {
+  "Win-win": () => "Both sides have a reason to say yes.",
+  "Helps both, tilted your way": (t) => `${t} may want a little more first.`,
+  "Helps both, you overpay": () => "Only worth it if you need the fit.",
+  "Tough sell": (t) => `${t} gets nothing out of it, so add something.`,
+  "You're overpaying": () => "Ask for more or walk.",
+  "Lateral": () => "Not worth the hassle.",
+  "Take it": () => "Accept it.",
+  "Win-now move": () => "Worth it if you're chasing a title this year.",
+  "Close": () => "Ask for a small sweetener.",
+  "Lowball": () => "Counter or decline.",
+};
+export function dealWhy(label: string, youDelta: number, give: number, get: number, them: string) {
+  return `${pointsClause(youDelta)} and ${valueClause(give, get)}. ${NEXT[label]?.(them) ?? ""}`.trim();
+}
+const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+export function multiWhy(m: MultiTrade, label: string) {
+  const holdouts = m.legs.filter((l) => l.accept.label === "Long shot").map((l) => l.team.manager);
+  const n = m.legs.length + 1;
+  const end = label === "Nobody wins" ? "Start from what each team needs."
+    : label === "You're overpaying" ? "Ask for more or walk."
+    : label === "Barely moves you" ? `A ${n}-team trade is a lot of work for that.`
+    : label.startsWith("All") ? (holdouts.length ? "" : "Everyone gets better, so it has a real shot.") : "";
+  const hold = holdouts.length ? `${list(holdouts)} won't say yes as it stands.` : "";
+  return [`${pointsClause(m.youDelta)} and ${valueClause(m.marketGive, m.marketGet)}.`, hold, end].filter(Boolean).join(" ");
+}
+
+/** Verdict colors only mean good or bad for you. Anything in between reads in plain chalk. */
+const vTone = (t: "good" | "warn" | "bad") => (t === "warn" ? "neutral" : t);
+export function DealVerdict({ label, tone, line }: { label: string; tone: "good" | "warn" | "bad"; line: string }) {
+  return <div className={`dv-verdict ${vTone(tone)}`}><b>{label}</b><p>{line}</p></div>;
+}
+
+/** Their odds in neutral ink: it's their call, not good or bad for you. The why sits in a tooltip. */
+export function AcceptCell({ a }: { a: Acceptance }) {
+  const word = a.label === "Likely yes" ? "Likely" : a.label;
+  const why = a.theirBlockers.length ? a.theirBlockers : a.reasons;
+  const range = a.label === "Likely yes" ? "Likely is 65% and up" : a.label === "Worth a shot" ? "Worth a shot is 50 to 64%" : "Long shot is under 50%";
+  return (
+    <span className="dv-v">
+      <Tooltip focusable content={<>{why.length ? `${why.map(cap).join(". ")}. ` : ""}{range}, from their needs, notes and trade history.</>}>
+        <b className="dv-acc tt-term">{word}, <span className="dv-pct">{Math.round(a.p * 100)}%</span></b>
+      </Tooltip>
+    </span>
+  );
+}
+
+export interface DvCol { id: string; head: ReactNode; you?: boolean }
+export interface DvRow { label: string; tip?: string; cells: ReactNode[]; extra?: ReactNode }
+/** Comparison rows: label on the left, a right-aligned column per team, every row on the same grid. */
+export function DealRows({ cols, rows }: { cols: DvCol[]; rows: DvRow[] }) {
+  return (
+    <div className="dv-rows" style={{ ["--dv-n" as string]: cols.length }} role="table" aria-label="How the deal compares">
+      <div className="dv-row dv-headrow" role="row">
+        <span className="dv-l" role="columnheader"><span className="sr-only">Measure</span></span>
+        {cols.map((c) => <span key={c.id} className={`dv-h${c.you ? " you" : ""}`} role="columnheader">{c.head}</span>)}
+      </div>
+      {rows.map((r) => (
+        <div key={r.label} className="dv-row" role="row">
+          <span className="dv-l" role="rowheader">{r.tip ? <Tooltip focusable content={r.tip}><span className="tt-term">{r.label}</span></Tooltip> : r.label}</span>
+          {r.cells.map((c, i) => <span key={i} className="dv-c" role="cell">{c}</span>)}
+          {r.extra}
+        </div>
+      ))}
+    </div>
+  );
+}
+const tone = (n: number) => (n >= 0.05 ? "up" : n <= -0.05 ? "down" : "flat");
+/** A points cell: the change, big, then before → after in small mono. Only your column gets green or red. */
+export function PtsCell({ d, before, after, you }: { d: number; before: number; after: number; you?: boolean }) {
+  return <span className="dv-v"><b className={`dv-n${you ? ` ${tone(d)}` : ""}`}>{fmt(d)}</b><small className="dv-s">{before.toFixed(1)} → {after.toFixed(1)}</small></span>;
 }
 
 /** What your notes on a manager mean for both rosters: their players who won't move, yours they passed on or want. */
@@ -269,8 +405,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const { dimThem, dimYou, wantYou } = tagMaps(them, tags);
   const lockYou = lockMap(myTags);
   const [received, setReceived] = useState(false);
-  // Big deals fold the secondary blocks so the read stays short
-  const big = give.length > 2 || get.length > 2;
+  // An offer comes from one manager: switching partners starts a fresh read, so the header can't name the last one
+  useEffect(() => { setReceived(false); }, [partnerId]);
+  const flags = pillFlags(them, tags, myTags, trade ? trade.warnings : null);
   const v = trade ? (received ? offerRead(trade) : verdict(trade)) : null;
   const acc = trade && !received ? acceptance(trade, YOU, them) : null;
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
@@ -367,7 +504,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
 
       {view === "build" && isMulti && <div className="builder mt-builder">
-        <MultiDeal legs={legs} m={multi} toggle={toggle} onRemove={(id) => removePartner?.(id)} clear={clear} onPitch={onPitch} />
+        <MultiDeal legs={legs} m={multi} toggle={toggle} onRemove={(id) => removePartner?.(id)} clear={clear} onPitch={onPitch} tags={tags} myTags={myTags} />
         <MultiRosters key={legs.map((l) => l.team.id).join(",")} legs={legs} toggle={toggle} tags={tags} myTags={myTags} />
       </div>}
 
@@ -384,27 +521,28 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             </label>
           )}
           <div className="deal-lists qs-wrap">
-            <DealSide title="You send" team="your roster" ids={give} pool={YOU.roster} onToggle={(id) => toggle("give", id)} />
-            <DealSide title="You get" team={`${them.manager}'s roster`} ids={get} pool={them.roster} onToggle={(id) => toggle("get", id)} />
+            <DealSide title="You send" team="your roster" ids={give} pool={YOU.roster} onToggle={(id) => toggle("give", id)} flags={flags.you} />
+            <DealSide title="You get" team={`${them.manager}'s roster`} ids={get} pool={them.roster} onToggle={(id) => toggle("get", id)} flags={flags.theirs} />
           </div>
+          <FlagLine ids={[...give, ...get]} flags={{ ...flags.you, ...flags.theirs }} />
           {!trade ? (
-            <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Tap players on either roster to start a deal." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
+            <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Add players to both sides, or tap them on the rosters below." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
           ) : (
-            <div className="deal-read">
-              <div className="dr-main">
-              <TradeCompare trade={trade} them={them} bars={false} />
-              <Fold id="trade.bars" title="Position breakdown" auto={!big} className="fold-bars"
-                summary={positionSummary(YOU.roster, rosterAfter(YOU, trade, "you"))}>
-                <PositionBars trade={trade} them={them} />
-              </Fold>
-              </div>
-              <Fold id="trade.sched" title="Schedules ahead" auto={!big} className="fold-sch"
-                summary={`You send ${scheduleLean(give.map(playerById))} · You get ${scheduleLean(get.map(playerById))}`}>
-                <DealSchedule bare give={give.map(playerById)} get={get.map(playerById)} />
-              </Fold>
-              <div className="dr-side">
-              {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
-              {acc && <AcceptRead a={acc} who={them.manager} />}
+            <div className="dv">
+              <div className="dv-main">
+              {v && <DealVerdict label={v.label} tone={v.tone} line={dealWhy(v.label, trade.youDelta, trade.marketGive, trade.marketGet, them.manager)} />}
+              <DealRows
+                cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
+                rows={[
+                  { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
+                    <PtsCell key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
+                    <PtsCell key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
+                  { label: "Trade value", tip: "Market value. The best player counts in full and each extra piece for less, so three bench players can't add up to one star.", cells: [
+                    <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
+                    <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
+                    extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
+                  ...(acc ? [{ label: "Will they accept", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />] }] : []),
+                ]} />
               {received && counter && (
                 <div className="coach">
                   <p className="small"><b>Ready counter:</b> {counter.line}. You {fmt(counter.trade.youDelta)}, {them.manager} {fmt(counter.trade.themDelta)} a week.</p>
@@ -421,14 +559,12 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                   Counted in the numbers above.
                 </p>
               )}
-              {trade.warnings.map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
-              {tip && (
-                <div className="tip">
-                  <Stamp>Tip</Stamp>
-                  <span className="small">{tip}</span>
-                </div>
-              )}
-              <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math"}</button>
+              {/* Warnings about a player live on his pill; anything else still reads here */}
+              {trade.warnings.filter((w) => ![...give, ...get].some((id) => w.includes(playerById(id).name))).map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
+              <div className="dv-actions">
+                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
+                <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math"}</button>
+              </div>
               {why && (
                 <div className="why">
                   <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
@@ -436,11 +572,27 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                   <p className="tiny muted">Two lenses. Points per week counts starting lineups only. Market value weighs the best player in full and each extra piece for less, so three bench players can't add up to one star. Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
                 </div>
               )}
-              <div className="row wrap">
-                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
-                {tip && <AiLabel />}
+              {tip && (
+                <div className="tip">
+                  <Stamp>Tip</Stamp>
+                  <span className="small">{tip}</span>
+                  <AiLabel />
+                </div>
+              )}
               </div>
-              </div>
+              <Fold id="trade.details" title="Details" auto={false} className="fold-details"
+                summary="Position breakdown and schedules ahead">
+                <div className="dv-details">
+                  <Fold id="trade.bars" title="Position breakdown" auto={false} className="fold-bars"
+                    summary={positionSummary(YOU.roster, rosterAfter(YOU, trade, "you"))}>
+                    <PositionBars trade={trade} them={them} />
+                  </Fold>
+                  <Fold id="trade.sched" title="Schedules ahead" auto={false} className="fold-sch"
+                    summary={`You send ${scheduleLean(give.map(playerById))} · You get ${scheduleLean(get.map(playerById))}`}>
+                    <DealSchedule bare give={give.map(playerById)} get={get.map(playerById)} />
+                  </Fold>
+                </div>
+              </Fold>
             </div>
           )}
         </section>

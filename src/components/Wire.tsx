@@ -59,10 +59,11 @@ function IdeaSide({ label, ids, tone }: { label: string; ids: string[]; tone: "s
 export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade) => void; onPitch: (t: Trade) => void }) {
   // "Their lineup +x/wk" repeats the number shown above, so it's left out
   const reasons = (t.accept?.reasons ?? []).filter((r) => !/lineup/i.test(r)).map((r) => r.charAt(0).toUpperCase() + r.slice(1));
-  const tone = t.accept?.label === "Likely yes" ? "good" : "warn";
+  // Their odds are their call, not good or bad for you, so they read in neutral ink
+  const tone = "neutral";
   const feedback = useContext(IdeaFeedbackCtx);
   return (
-    <article className={`ti${t.accept?.label === "Likely yes" ? " likely" : ""}`}>
+    <article className="ti">
       <div className="tx">
         <IdeaSide label="You send" ids={t.give} tone="send" />
         <span className="tx-swap" aria-hidden="true"><Icon name="trade" size={16} /></span>
