@@ -1,4 +1,5 @@
 import { LEAGUE, WEEK, Player, onBye } from "./data";
+import { demoBye } from "./weeks";
 
 /** One week of a player's season: points if it's played, projection and matchup tone if it's ahead. */
 export interface WeekCell { week: number; opp: string | null; past: boolean; pts?: number; proj?: number; tone?: "good" | "ok" | "tough"; playoff: boolean }
@@ -8,7 +9,7 @@ const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; 
 
 /** Demo leagues have no real slate, so build a stable made up one from the player's team. */
 function demoCell(p: Player, w: number): { opp: string | null; pts?: number; proj?: number } {
-  const bye = w === WEEK ? onBye(p.nfl) : w === 5 + Math.floor(hash(p.nfl + "bye") * 7) && w !== WEEK;
+  const bye = w === WEEK ? onBye(p.nfl) : demoBye(p.nfl) === w;
   if (bye) return { opp: null };
   const others = TEAMS.filter((t) => t !== p.nfl), ti = TEAMS.indexOf(p.nfl);
   const opp = others[((ti >= 0 ? ti : 0) * 7 + w * 11) % others.length];

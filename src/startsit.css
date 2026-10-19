@@ -1,0 +1,30 @@
+/* Start / Sit compare: week stepper in the card header, per-week status pills, steady heights while a week loads. */
+.sx-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sx-head-text { display: grid; gap: 4px; min-width: 0; }
+.sx-head .sx-weeknav { flex: none; padding: 0; margin: -6px -6px 0 0; grid-template-columns: 36px 84px 36px; gap: 2px; }
+.sx-weeknav .lu-weeknav-lbl { min-width: 0; }
+.sx-weeknav .lu-weeknav-lbl b { font-size: 0.9375rem; white-space: nowrap; }
+.sx-weeknav .lu-weeknav-lbl .tiny { white-space: nowrap; }
+
+/* Status pill row is always there, so a pill appearing never pushes the card taller */
+.sx-status { display: flex; align-items: center; justify-content: center; min-height: 20px; }
+.sx-status .status { margin: 0; }
+.sx-game { min-height: 1.25em; }
+
+/* Verdict always holds two lines so week changes don't shift the bars below */
+html:root:not(#_) .sx-verdict { min-height: 2.8em; display: flex; align-items: center; }
+
+/* Loading a week: dim, never collapse */
+.sx-loading { animation: sx-dim 160ms ease-out 120ms both; }
+@keyframes sx-dim { from { opacity: 1; } to { opacity: 0.55; } }
+.sx-row.sx-loading .sx-bar { background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sx-row.sx-loading .sx-bar { animation: none; } }
+
+/* The week row's bars slide to the new week instead of snapping */
+@media (prefers-reduced-motion: no-preference) {
+  .sx-wk .sx-bar i { transition: width 320ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
+
+@media (max-width: 420px) {
+  .sx-head .sx-weeknav { grid-template-columns: 32px 76px 32px; }
+}

@@ -89,7 +89,8 @@ function info(id: string, row?: WeekRow): Omit<WeekPlayer, "pts"> {
 // ---- Demo season ------------------------------------------------------------
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
 const TEAMS = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LV", "LAC", "LAR", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SF", "SEA", "TB", "TEN", "WAS"];
-const demoBye = (team: string) => (team === "PIT" || team === "NE" ? 7 : 5 + (TEAMS.indexOf(team) % 10) + (TEAMS.indexOf(team) % 10 >= 2 ? 1 : 0));
+/** Demo bye week per NFL team. The Lineup, the Start / Sit compare and the player sheet all read it, so they agree. */
+export const demoBye = (team: string) => (team === "PIT" || team === "NE" ? 7 : 5 + (TEAMS.indexOf(team) % 10) + (TEAMS.indexOf(team) % 10 >= 2 ? 1 : 0));
 function demoStats(pos: string, pts: number, seed: number): Record<string, number> {
   const r = (a: number, b: number) => Math.round(a + (b - a) * hash(`${seed}${a}${b}`));
   if (pos === "QB") { const td = Math.max(0, Math.round(pts / 8)); return { pass_cmp: r(16, 27), pass_att: r(28, 40), pass_yd: Math.round(pts * 11 + 40), pass_td: td, pass_int: r(0, 1), rush_att: r(1, 7), rush_yd: r(2, 38) }; }
@@ -139,8 +140,18 @@ async function liveWeek(week: number): Promise<WeekView> {
   return { week, kind: "future", starters, bench, total };
 }
 
+const keyFor = (week: number) => `${LEAGUE.id}|${week}|${currentFormat().scoring}|${currentFormat().tePremium}`;
+/** A week that's ready right now: already cached, or a demo week (built on the spot). Lets a view skip its loading state. */
+export function peekWeek(week: number): WeekView | undefined {
+  const hit = cache.get(keyFor(week));
+  if (hit || !isDemo()) return hit;
+  const v = demoWeek(week);
+  cache.set(keyFor(week), v);
+  return v;
+}
+
 export async function loadWeek(week: number): Promise<WeekView> {
-  const key = `${LEAGUE.id}|${week}|${currentFormat().scoring}|${currentFormat().tePremium}`;
+  const key = keyFor(week);
   const hit = cache.get(key);
   if (hit) return hit;
   const v = isDemo() ? demoWeek(week) : await liveWeek(week);

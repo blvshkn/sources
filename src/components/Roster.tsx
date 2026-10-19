@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { WeekView, loadWeek, lastWeek } from "../weeks";
+import { WeekView, loadWeek } from "../weeks";
+import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
@@ -507,11 +508,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
         <div className="lu-col">
           {(
             <section className="card lu-list" aria-label="Starters and bench">
-              <div className="lu-weeknav">
-                <button className="btn btn-icon btn-sm" aria-label="Previous week" disabled={week <= 1} onClick={() => setWeek(week - 1)}><Icon name="chev" size={18} /></button>
-                <span className="lu-weeknav-lbl"><b>Week {week}</b><span className="tiny muted">{week === WEEK ? "This week" : week < WEEK ? "Final" : "Projected"}</span></span>
-                <button className="btn btn-icon btn-sm" aria-label="Next week" disabled={week >= lastWeek()} onClick={() => setWeek(week + 1)}><Icon name="chev" size={18} /></button>
-              </div>
+              <WeekStepper week={week} onChange={setWeek} />
               {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : wv ? <WeekPanel v={wv} /> : <div className="lu-skel" aria-label={`Loading Week ${week}`}>{Array.from({ length: 6 }).map((_, i) => <span key={i} />)}</div>) : <>
               <div className={`ss${diff.length ? "" : " ok"}`} aria-label="Start and sit">
                 <div className="ss-head">
