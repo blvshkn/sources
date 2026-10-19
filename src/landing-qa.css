@@ -137,3 +137,9 @@ html:root:not(#_):not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { transform: 
   html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 52px; }
   html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 48px; }
 }
+
+/* Hero top: the nav, then 48px (24px on phones, from the hero's own padding), then the eyebrow. The eyebrow sits at
+   the top of its line instead of on the baseline, which added 2px, and the desktop copy loses its extra 72px so it
+   starts level with the first stage card. */
+html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
+@media (min-width: 1100px) { html:root:not(#_):not(#_) .ld2-copy { padding-top: 0; } }
