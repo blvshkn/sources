@@ -194,12 +194,12 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                 <span className="wv-rank">{e.avail ? <Icon name="lock" size={14} /> : i + 1}</span>
                 <Avatar p={r.fa} size={40} />
                 <span className="wv-who">
-                  <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <Icon name="spark" size={14} />}{e.avail && <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span>}</span>
+                  <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <span className="wv-trend up" title="Trending up: adds are rising across Sleeper" aria-label="Trending up">▲</span>}{e.avail && <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span>}</span>
                   <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{gameLine(PLAYERS[r.fa.id] ?? {}) && <span className="lu-game">· {gameLine(PLAYERS[r.fa.id] ?? {})}</span>}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
                 </span>
                 <span className="wv-proj"><span>Proj</span><b>{r.value.toFixed(1)}</b></span>
                 <span className="wv-stats">
-                  <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : ""}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
+                  <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : "flat"}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
                   <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.tier}</b></span>
                   {r.fa.rostered !== undefined && <span><i>Rostered</i><b>{r.fa.rostered}%</b></span>}
                   {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(r.fa.adds)}</b></span>}

@@ -94,7 +94,7 @@ export function MiniStandings({ onOpen }: { onOpen: () => void }) {
 
 function Bar({ label, diff, pct }: { label: string; diff: number; pct: number }) {
   const w = Math.min(Math.abs(pct) * 100 * 1.4, 50); // half track = 36% off league avg
-  const dir = diff >= 0 ? "up" : "down";
+  const dir = diff >= 0.05 ? "up" : diff <= -0.05 ? "down" : "flat";
   return (
     <div className="bar-row">
       <span className="bar-label">{label}</span>
@@ -102,7 +102,7 @@ function Bar({ label, diff, pct }: { label: string; diff: number; pct: number })
         <span className="bar-mid" />
         <span className={`bar-fill ${dir}`} style={{ width: `${w}%` }} />
       </span>
-      <span className="bar-val" style={{ color: diff >= 0 ? "var(--good)" : "var(--bad)" }}>{fmt(diff)}</span>
+      <span className="bar-val" style={{ color: dir === "up" ? "var(--good)" : dir === "down" ? "var(--bad)" : "var(--muted)" }}>{fmt(diff)}</span>
     </div>
   );
 }

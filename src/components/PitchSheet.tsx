@@ -129,7 +129,8 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   g.fillStyle = A(0.09); g.strokeStyle = A(0.35); g.lineWidth = 2;
   g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph); g.fill(); g.stroke();
   g.fillStyle = MUTED; g.font = F(700, 20); track("YOUR STARTERS", X + 32, py + 50, 4);
-  g.fillStyle = t.themDelta >= 0 ? LIME : "#F28B82"; g.font = FM(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
+  // Their gain in green, a loss in red, even in muted. Lime stays the brand accent, never "good".
+  g.fillStyle = t.themDelta >= 0.05 ? (css.getPropertyValue("--good").trim() || "#7BE08F") : t.themDelta <= -0.05 ? (css.getPropertyValue("--bad").trim() || "#FF8473") : MUTED; g.font = FM(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
   const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText("pts / week", X + 40 + bw, py + 148);
   g.fillStyle = MUTED; g.font = F(700, 20); g.textAlign = "right"; track("", 0, 0, 0);
   g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = FM(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);

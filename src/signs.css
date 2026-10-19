@@ -1,0 +1,55 @@
+/* Signs: one meaning per color across the app.
+   Green (--good) is a gain, above average, or beating a projection. Red (--bad) is a loss or falling short.
+   Muted is even. Lime stays the accent for you, primary actions and the active state, never "good". */
+html:root:not(#_):not(#_) { --up: var(--good); --down: var(--bad); }
+
+/* Start / Sit: the swap gain is a gain, not an action */
+html:root:not(#_):not(#_) .ss .ss-gain { color: var(--good); }
+
+/* Lineup header: margin over your opponent, win chance */
+html:root:not(#_):not(#_) .margin-pill.up { color: var(--good); background: var(--good-soft); }
+html:root:not(#_):not(#_) .margin-pill.down { color: var(--bad); background: var(--bad-soft); }
+html:root:not(#_):not(#_) .margin-pill.flat { color: var(--muted); background: var(--surface-3); }
+html:root:not(#_):not(#_) .mw-win.up b { color: var(--good); }
+html:root:not(#_):not(#_) .mw-win.down b { color: var(--bad); }
+html:root:not(#_):not(#_) .mw-win.even b { color: var(--ink); }
+html:root:not(#_):not(#_) .mw-win.up .mw-bar i { background: linear-gradient(90deg, rgba(var(--good-rgb), 0.5), var(--good)); }
+html:root:not(#_):not(#_) .mw-win.down .mw-bar i { background: linear-gradient(90deg, rgba(255, 132, 115, 0.5), var(--bad)); }
+html:root:not(#_):not(#_) .mw-win.even .mw-bar i { background: var(--muted); }
+html:root:not(#_):not(#_) .sb2-odds-t b.good { color: var(--good); }
+
+/* Wire scoreboard: Favored reads green, Behind red, Toss-up stays muted */
+html:root:not(#_):not(#_) .sb2-chance-lbl .up { color: var(--good); }
+html:root:not(#_):not(#_) .sb2-chance-lbl .down { color: var(--bad); }
+
+/* Live pace, slot report and "Where to improve": the app's red, not a one-off coral */
+html:root:not(#_):not(#_) :is(.lu-pts, .wk-pts) small.lu-pace.up { color: var(--good); }
+html:root:not(#_):not(#_) :is(.lu-pts, .wk-pts) small.lu-pace.down { color: var(--bad); }
+html:root:not(#_):not(#_) .slot-report .up, html:root:not(#_):not(#_) .imp em.up { color: var(--good); }
+html:root:not(#_):not(#_) .slot-report .down, html:root:not(#_):not(#_) .imp em.down { color: var(--bad); }
+html:root:not(#_):not(#_) .sr-weeks > span.up b { color: var(--good) !important; }
+html:root:not(#_):not(#_) .sr-weeks > span.down b { color: var(--bad) !important; }
+
+/* Slot report chart: weeks at or above the league average are green, below are red */
+html:root:not(#_):not(#_) .sb-you { background: var(--good); }
+html:root:not(#_):not(#_) .sb-you.under { background: var(--bad); }
+html:root:not(#_):not(#_) .lg-sw { background: var(--good); }
+html:root:not(#_):not(#_) .lg-sw.under { background: var(--bad); }
+
+/* Schedules ahead: a good matchup is green, a tough one red */
+html:root:not(#_):not(#_) .sch-c.t-good { background: var(--good-soft); }
+html:root:not(#_):not(#_) .sch-c.t-good::after, html:root:not(#_):not(#_) .sch-key i.t-good { background: var(--good); }
+html:root:not(#_):not(#_) .sch-c.t-tough { background: var(--bad-soft); }
+html:root:not(#_):not(#_) .sch-c.t-tough::after, html:root:not(#_):not(#_) .sch-key i.t-tough { background: var(--bad); }
+
+/* Trade: market value chip says who comes out ahead */
+html:root:not(#_):not(#_) .tc-fair.bad { color: var(--bad); background: var(--bad-soft); }
+html:root:not(#_):not(#_) .pitch-card .delta.up { color: var(--good); }
+html:root:not(#_):not(#_) .pitch-card .delta.down { color: var(--bad); }
+
+/* Values and Waivers: even is muted, trending up gets a green arrow */
+html:root:not(#_):not(#_) .vb-trend.flat { color: var(--muted); font-weight: 500; }
+html:root:not(#_):not(#_) .wv-trend { flex: none; margin-left: 6px; font-size: 0.625rem; line-height: 1; vertical-align: 2px; }
+html:root:not(#_):not(#_) .wv-trend.up { color: var(--good); }
+html:root:not(#_):not(#_) .wv-stats b.flat { color: var(--muted); }
+html:root:not(#_):not(#_) .bar-fill.flat { display: none; }

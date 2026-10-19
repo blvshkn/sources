@@ -338,8 +338,8 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   if (theirGap < -0.08) theirs(`${them.manager} gives up ${pct(theirGap).slice(1)} more value`);
   if (t.marketGap < -0.15) blockers.push(`you overpay by ${pct(t.marketGap).slice(1)}`);
   // 2. Their lineup has to get meaningfully better.
-  if (t.themDelta < 1) theirs(`${them.manager}'s lineup barely moves (${fmt(t.themDelta)}/wk)`);
-  if (t.youDelta < 1) blockers.push(`your lineup barely moves (${fmt(t.youDelta)}/wk)`);
+  if (t.themDelta < 1) theirs(`${them.manager}'s lineup ${t.themDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.themDelta)}/wk)`);
+  if (t.youDelta < 1) blockers.push(`your lineup ${t.youDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.youDelta)}/wk)`);
   // 3. Both sides must get at least one player who starts.
   if (!starts(t.give, themRosterAfter).length) theirs(`nothing ${them.manager} gets would start`);
   if (!starts(t.get, youRosterAfter).length) blockers.push("nothing you get would start");
@@ -511,7 +511,7 @@ export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad
   if (isWinWin(t))
     return { label: "Helps both, you overpay", tone: "warn", line: `${market}. Both lineups improve, so it can still be worth it if you need the fit.` };
   if (t.youDelta >= 0.5)
-    return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup drops ${fmt(t.themDelta)}. ${market}. Expect a no unless you add something.` };
+    return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup ${t.themDelta <= -0.05 ? `drops ${Math.abs(t.themDelta).toFixed(1)}` : `barely moves (${fmt(t.themDelta)})`}. ${market}. Expect a no unless you add something.` };
   if (t.themDelta >= 0.5)
     return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. ${market}. Ask for more or walk.` };
   return { label: "Lateral", tone: "warn", line: `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)}). ${market}.` };

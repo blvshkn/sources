@@ -223,8 +223,8 @@ export function Landing({ onLive, onDemo }: {
                     return (
                       <div key={g} className="bar-row">
                         <span className="bar-label">{g}</span>
-                        <span className="bar-track"><span className="bar-mid" /><span className={`bar-fill ${d.diff >= 0 ? "up" : "down"}`} style={{ width: `${w}%` }} /></span>
-                        <span className="bar-val" style={{ color: d.diff >= 0 ? "var(--good)" : "var(--bad)" }}>{fmt(d.diff)}</span>
+                        <span className="bar-track"><span className="bar-mid" /><span className={`bar-fill ${d.diff >= 0.05 ? "up" : d.diff <= -0.05 ? "down" : "flat"}`} style={{ width: `${w}%` }} /></span>
+                        <span className="bar-val" style={{ color: d.diff >= 0.05 ? "var(--good)" : d.diff <= -0.05 ? "var(--bad)" : "var(--muted)" }}>{fmt(d.diff)}</span>
                       </div>
                     );
                   })}

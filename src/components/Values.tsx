@@ -57,7 +57,7 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
               <div key={r.id} className="vb-move-row">
                 <Avatar p={r} size={28} badge={false} />
                 <span className="vb-move-name">{r.name}<i>{ownerName(r.ownerId)}</i></span>
-                <span className={`vb-trend ${r.trend >= 0 ? "up" : "down"}`}>{r.trend >= 0 ? "▲" : "▼"} {Math.abs(r.trend).toLocaleString()}</span>
+                <span className={`vb-trend ${r.trend > 0 ? "up" : r.trend < 0 ? "down" : "flat"}`}>{r.trend === 0 ? "even" : `${r.trend > 0 ? "▲" : "▼"} ${Math.abs(r.trend).toLocaleString()}`}</span>
               </div>
             ))}
           </div>

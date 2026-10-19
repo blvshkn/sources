@@ -145,7 +145,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
             <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
             <span className="sb2-chance-lbl">
               <span><b>{chance}%</b> to win</span>
-              <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span>
+              <span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span>
             </span>
           </span>
         )}
@@ -201,12 +201,12 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
 
 /** A player's points in a card row: projection before kickoff, then live and final points colored against it,
  *  with the flame once he's past his projection. */
-function WkPts({ p, live }: { p: Player; live: ReturnType<typeof useLive> }) {
+function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof useLive>; them?: boolean }) {
   const known = live.points[p.id] !== undefined, g = known ? live.games[p.nfl] ?? null : null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
-    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${pace >= proj ? "up" : "down"}` : undefined}>{pace !== null ? pace.toFixed(1) : `proj ${proj.toFixed(1)}`}</small></span>;
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? pace.toFixed(1) : `proj ${proj.toFixed(1)}`}</small></span>;
   }
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
   return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
@@ -223,7 +223,7 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
   if (!opp) return null;
   const threats = (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3);
   if (!threats.length) return null;
-  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
+  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} them />;
   return (
     <section className="card wk" aria-label="Opponent threats">
       <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted">{opp.manager}'s top projections</span></div>

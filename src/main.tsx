@@ -13,6 +13,7 @@ import "./accounts.css";
 import "./panel.css";
 import "./startsit.css";
 import "./select.css";
+import "./signs.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 

@@ -121,7 +121,7 @@ function MarketRow({ trade, them }: { trade: TradeT; them: Team }) {
     <div className="tc-market" aria-label={`Market value. You give ${trade.marketGive}, you get ${trade.marketGet}. ${label}.`}>
       <div className="tc-market-top">
         <span className="tiny muted">Market value</span>
-        <span className={`tc-fair ${fair ? "good" : "warn"}`}>{label}</span>
+        <span className={`tc-fair ${fair || g > 0 ? "good" : "bad"}`}>{label}</span>
       </div>
       <div className="tc-market-bar" aria-hidden="true">
         <span className="give" style={{ flex: trade.marketGive / total }} />

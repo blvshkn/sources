@@ -122,7 +122,8 @@ export function FinalPts({ id, pts, proj, cls }: { id: string; pts: number; proj
   );
 }
 
-export function PtsCell({ id, g, proj, cls = "lu-pts" }: { id: string; g: GameNow; proj: number; cls?: string }) {
+/** `them`: an opponent's player, where beating his projection is bad for you, so the pace color flips. */
+export function PtsCell({ id, g, proj, cls = "lu-pts", them = false }: { id: string; g: GameNow; proj: number; cls?: string; them?: boolean }) {
   if (g.state === "in_game") {
     markLive(id);
     const pace = onPace(g.pts, proj, g.left), heat = heatOf(g.pts, proj, pace);
@@ -130,7 +131,7 @@ export function PtsCell({ id, g, proj, cls = "lu-pts" }: { id: string; g: GameNo
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
         <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
-        {pace !== null ? <small className={`lu-pace ${pace >= proj ? "up" : "down"}`}>{pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
+        {pace !== null ? <small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>{pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
   }
@@ -303,7 +304,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
           );
         })}
       </div>
-      <div className="legend"><span className="row"><span className="lg-sw you" />You</span><span className="row"><span className="lg-sw under" />Below avg</span><span className="row"><span className="lg-line" />League avg</span></div>
+      <div className="legend"><span className="row"><span className="lg-sw you" />At or above avg</span><span className="row"><span className="lg-sw under" />Below avg</span><span className="row"><span className="lg-line" />League avg</span></div>
 
       {rows.length > 0 && <dl className="sr-sum">
         <div><dt>Vs league</dt><dd className={total >= 0 ? "up" : "down"}>{fmt(Math.round(total * 10) / 10)}</dd></div>
@@ -381,7 +382,7 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
           </span>
         </div>
         {opp && (
-          <div className={`mw-win ${chance >= 50 ? "up" : "down"}`} aria-hidden="true">
+          <div className={`mw-win ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true">
             {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
             <b>{chance}%</b><span className="mw-lbl">to win</span>
             <span className="mw-bar"><i style={{ width: `${chance}%` }} /></span>
@@ -399,7 +400,7 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
           <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
         </> : <>
           <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
-          {oppTotal !== null && !mineOnly && <span className={`margin-pill ${myTotal - oppTotal >= 0 ? "up" : "down"}`}>{myTotal - oppTotal >= 0 ? "+" : "−"}{Math.abs(myTotal - oppTotal).toFixed(1)}</span>}
+          {oppTotal !== null && !mineOnly && <span className={`margin-pill ${myTotal - oppTotal >= 0.05 ? "up" : myTotal - oppTotal <= -0.05 ? "down" : "flat"}`}>{Math.abs(myTotal - oppTotal) < 0.05 ? "even" : fmt(myTotal - oppTotal)}</span>}
           <small>Your best lineup</small>
         </>}
       </div>
@@ -636,8 +637,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                         ); })}
                       </ul>
                       <dl className="ti-stats wt-stats">
-                        <div className="ti-stat"><dt>You gain</dt><dd><Delta n={o!.youDelta} /><small>/wk</small></dd></div>
-                        <div className="ti-stat"><dt>They gain</dt><dd><Delta n={o!.themDelta} /><small>/wk</small></dd></div>
+                        <div className="ti-stat"><dt>Your lineup</dt><dd><Delta n={o!.youDelta} /><small>/wk</small></dd></div>
+                        <div className="ti-stat"><dt>Their lineup</dt><dd><Delta n={o!.themDelta} /><small>/wk</small></dd></div>
                       </dl>
                       <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(o!)}><Icon name="pen" size={15} />Write pitch to {t.manager}</button>
                     </li>

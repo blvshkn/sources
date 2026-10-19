@@ -5,7 +5,7 @@ import { PlayerNews } from "./News";
 /** Latest news, shown only when there is some. */
 const PlayerNewsBlock = ({ p }: { p: Player }) => <PlayerNews p={p} wrap={(list) => <div className="ps-games ps-news"><div className="ps-sub"><b>Latest news</b></div>{list}</div>} />;
 import { LEAGUE, Player, WEEK, gameLine, onBye } from "../data";
-import { eff, round1, scored } from "../engine";
+import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
@@ -75,7 +75,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
               <div className="ps-hero-main">
                 <span className="ps-k">This week</span>
                 <b className={bye ? "bye" : ""}>{bye ? "Bye" : wk.toFixed(1)}</b>
-                {trend !== null && Math.abs(trend) >= 0.5 && <span className={`ps-trend ${trend > 0 ? "up" : "down"}`}>{trend > 0 ? "+" : ""}{trend.toFixed(1)} vs his ROS avg</span>}
+                {trend !== null && Math.abs(trend) >= 0.5 && <span className={`ps-trend ${trend > 0 ? "up" : "down"}`}>{fmt(trend)} vs his ROS avg</span>}
                 {bye && <span className="ps-trend">No game this week</span>}
               </div>
               <dl className="ps-hero-side">
