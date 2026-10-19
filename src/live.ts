@@ -116,8 +116,8 @@ let timer: number | undefined;
 function schedule() {
   window.clearTimeout(timer);
   if (!current || LEAGUE.mode !== "live" || !anyLeft(current.games)) return;
-  // Every minute while a game is on, every 5 minutes otherwise (to catch kickoffs)
-  const wait = anyLive(current.games) ? 60_000 : 300_000;
+  // Every 15 seconds while a game is on, so scores and win chance move with Sleeper; every 2 minutes otherwise to catch kickoffs
+  const wait = anyLive(current.games) ? 15_000 : 120_000;
   timer = window.setTimeout(async () => {
     if (document.visibilityState === "visible") {
       const next = await poll();
