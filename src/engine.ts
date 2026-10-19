@@ -2,8 +2,9 @@
 // AI-written lines elsewhere only explain these numbers; they never invent one.
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
-  FREE_AGENTS, FAAB_HISTORY, FAAB, FreeAgent, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
+  FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
+  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -586,7 +587,41 @@ export const bidsFor = (tier: BidTier["tier"]): { bids: number[]; estimated: boo
   return t && t.bids.length >= 2 ? { bids: t.bids, estimated: !!t.estimated } : { bids: DEFAULT_BIDS[tier], estimated: true };
 };
 
-export interface WaiverRec { fa: FreeAgent; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"]; estimated: boolean }
+/** What a kicker or defense pickup does for you. Only set on K/DEF recs. */
+export interface KdefRec {
+  /** The K/DEF you start now: the one set in Sleeper, else the best you roster. Null when the slot is empty. */
+  current: SpecialPlayer | null;
+  /** Your best K/DEF projection this week, what the free agent has to beat. */
+  baseline: number;
+  /** Set when your slot scores zero this week: a must-fix. */
+  fix: "bye" | "out" | "empty" | null;
+  /** True for the single best fix at his position, the one that ranks with the top pickups. */
+  lead?: boolean;
+  /** Streaming: the K/DEF to cut for him. Null when you'd drop a bench player or have room. */
+  drop: SpecialPlayer | null;
+  /** One line for the row and the top pickup card, e.g. "Your DEF is on bye. Seahawks D/ST projects 8.0 vs the Rams." */
+  line: string;
+}
+export interface WaiverRec { fa: WaiverFA; value: number; gain: number; drop: Player | null; bid: [number, number]; tier: BidTier["tier"] | "Stream"; estimated: boolean; kdef?: KdefRec }
+/** Who to cut for a rec, and a short note on him, for copy shared by every waiver surface. */
+export const recDrop = (r: WaiverRec): { name: string; note: string } | null =>
+  r.kdef?.drop ? { name: r.kdef.drop.name, note: r.kdef.drop.wk === null ? "on bye" : r.kdef.drop.status === "O" ? "out" : `${specialPts(r.kdef.drop).toFixed(1)} projected` }
+    : r.drop ? { name: r.drop.name, note: `${eff(r.drop).toFixed(1)} projected` } : null;
+/** "vs the Rams" / "at the 49ers", from "vs LAR", "@ SF" or a bare "LAR". */
+export const oppPhrase = (opp?: string) => {
+  if (!opp) return "";
+  const m = /^(vs|@)\s*(.+)$/.exec(opp);
+  return m ? `${m[1] === "@" ? "at" : "vs"} ${teamNick(m[2])}` : `against ${teamNick(opp)}`;
+};
+/** Bid range for a K/DEF: the league's own winning K/DEF bids when there are a few, else $0 to 1% of budget. */
+export const specialBidRange = (): { bid: [number, number]; estimated: boolean; bids: number[] } => {
+  if (SPECIAL_BIDS.length >= 2) {
+    const sorted = SPECIAL_BIDS.slice().sort((a, b) => a - b);
+    const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
+    return { bid: [q(0.25), Math.max(1, q(0.85))], estimated: false, bids: SPECIAL_BIDS };
+  }
+  return { bid: [0, 1], estimated: true, bids: [] };
+};
 
 /** Free agents Sleeper won't let you add for this week: their game kicked off already, or they're on bye. */
 export function waiverHidden() {
@@ -597,7 +632,7 @@ export function waiverHidden() {
 
 export function waiverRecs(you: Team): WaiverRec[] {
   const base = lineupFor(you.roster, true);
-  return FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => {
+  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => {
     // Live free agents are already in PLAYERS; demo ones get a temporary entry.
     const existed = !!PLAYERS[fa.id];
     if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
@@ -613,7 +648,44 @@ export function waiverRecs(you: Team): WaiverRec[] {
     const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
     if (!existed) delete PLAYERS[fa.id];
     return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated };
-  }).sort((a, b) => b.gain - a.gain || b.value - a.value);
+  });
+  const all: WaiverRec[] = [...skill, ...specialRecs(you, base)];
+  // Skill pickups that start, plus K/DEF that fill a slot scoring zero, rank by gain. A K/DEF stream that only
+  // beats what you have comes next, then everything that doesn't change your lineup (skill players first).
+  // Only the best fix per slot jumps the line: you need one defense, not four.
+  const bestFix = new Map<string, string>();
+  all.filter((r) => r.kdef?.fix).sort((a, b) => b.gain - a.gain).forEach((r) => { if (!bestFix.has(r.fa.pos)) bestFix.set(r.fa.pos, r.fa.id); });
+  all.forEach((r) => { if (r.kdef && bestFix.get(r.fa.pos) === r.fa.id) r.kdef.lead = true; });
+  const group = (r: WaiverRec) => (r.kdef ? (r.kdef.lead ? 0 : r.gain > 0.05 ? 1 : 3) : r.gain > 0.05 ? 0 : 2);
+  return all.sort((a, b) => group(a) - group(b) || b.gain - a.gain || b.value - a.value);
+}
+
+/** Kickers and defenses on the wire against the one you start this week. */
+function specialRecs(you: Team, base: Lineup): WaiverRec[] {
+  const slots = LEAGUE.specialSlots ?? [];
+  const mine = (you.special ?? []).map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[];
+  const setIds = you.setSpecial ?? (you.id === YOU.id ? LEAGUE.sleeperSpecial : undefined) ?? [];
+  const { bid, estimated } = specialBidRange();
+  // Room on the full Sleeper roster (skill spots plus K/DEF spots) means no one has to go
+  const room = you.roster.length + mine.length < LEAGUE.rosterMax + slots.length;
+  const benchDrop = room ? null : base.bench.slice().sort((a, b) => eff(a) - eff(b))[0] ?? null;
+  return SPECIAL_FREE_AGENTS.filter((fa) => slots.includes(fa.pos) && !lockedThisWeek(fa.nfl) && fa.status !== "O").map((fa) => {
+    const pos = fa.pos;
+    const have = mine.filter((p) => p.pos === pos);
+    const current = have.find((p) => setIds.includes(p.id)) ?? have.slice().sort((a, b) => specialPts(b) - specialPts(a) || b.proj - a.proj)[0] ?? null;
+    const baseline = Math.max(0, ...have.map(specialPts));
+    const fix: KdefRec["fix"] = baseline > 0 ? null : !current ? "empty" : current.status === "O" ? "out" : "bye";
+    const wk = fa.wk ?? 0;
+    const gain = round1(wk - baseline);
+    // Streaming: cut the K/DEF you'd stop using (the weakest this week), never a skill player
+    const drop = have.slice().sort((a, b) => specialPts(a) - specialPts(b) || a.proj - b.proj)[0] ?? null;
+    const opp = oppPhrase(fa.opp);
+    const proj = `${fa.name} projects ${wk.toFixed(1)}${opp ? ` ${opp}` : ""}.`;
+    const line = fix === "empty" ? `You have no ${pos} this week. ${proj}`
+      : fix ? `Your ${pos} is ${fix === "bye" ? "on bye" : "out"}. ${proj}`
+      : `${proj} Your ${current!.name} projects ${specialPts(current!).toFixed(1)}.`;
+    return { fa, value: wk, gain, drop: drop ? null : benchDrop, bid, tier: "Stream" as const, estimated, kdef: { current, baseline, fix, drop, line } };
+  });
 }
 export const bidDollars = (pct: number) => Math.round((pct / 100) * FAAB.budget);
 
@@ -728,9 +800,12 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   }
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
     const r = waiverRecs(YOU)[0];
+    if (!r) return { text: "Nothing on the wire beats your bench this week.", points: [], links: [{ label: "Open waivers", tab: "waivers" }] };
     return {
       text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
-      points: [`Adds ${fmt(r.gain)} to your starters this week.`, r.drop ? `Drop ${r.drop.name} (${eff(r.drop).toFixed(1)} projected).` : "You have an open spot.", r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
+      points: [r.kdef?.fix ? r.kdef.line : `Adds ${fmt(r.gain)} to your starters this week.`, (() => { const d = recDrop(r); return d ? `Drop ${d.name} (${d.note}).` : "You have an open spot."; })(),
+        r.kdef ? (r.estimated ? "Kickers and defenses usually go for $0 to $1, so bid low." : `Based on ${SPECIAL_BIDS.length} winning K/DEF bids in your league this season.`)
+        : r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier as BidTier["tier"]).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
       links: [{ label: "Open waivers", tab: "waivers" }],
     };
   }

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, FreeAgent, gameState, lockedThisWeek } from "../data";
-import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
+import { DEADLINES, FAAB, YOU, LEAGUE, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
+import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport, recDrop, specialBidRange } from "../engine";
 import { AiLabel, Icon, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
@@ -11,16 +11,23 @@ import { Select } from "./Select";
 /** Why a free agent can't help this week, or null when he can. */
 type Avail = null | "played" | "bye" | "out" | "ir";
 const AVAIL_LABEL: Record<Exclude<Avail, null>, string> = { played: "Played", bye: "Bye", out: "Out", ir: "IR" };
-const availOf = (fa: FreeAgent): Avail => {
+const availOf = (fa: WaiverFA): Avail => {
   const s = gameState(fa.nfl);
   if (s === "bye") return "bye";
   if (s === "in_game" || s === "complete") return "played";
+  if (isSpecialFA(fa)) return fa.status === "O" ? "out" : fa.wk === null ? "bye" : null;
   const p = PLAYERS[fa.id];
   if (p?.injury === "IR") return "ir";
   if (p?.status === "O") return "out";
   return null;
 };
-type Entry = { fa: FreeAgent; value: number; avail: Avail; rec?: WaiverRec };
+type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec };
+type Tab = "ALL" | WaiverPos;
+const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"];
+/** The game line for any free agent: skill players carry it in PLAYERS, kickers and defenses on the entry itself. */
+const gameOf = (fa: WaiverFA) => gameLine(isSpecialFA(fa) ? fa : PLAYERS[fa.id] ?? {});
+/** "Sun vs LAR" for a defense's matchup row, without the weekday when it's tight. */
+const oppShort = (fa: WaiverFA) => (isSpecialFA(fa) && fa.opp ? (/^(vs|@)\s/.test(fa.opp) ? fa.opp : `vs ${fa.opp}`) : "");
 
 /** Highlights the typed part of a name in type-ahead results. */
 function Hit({ name, term }: { name: string; term: string }) {
@@ -36,7 +43,9 @@ export const bidText = (b: [number, number] | number[]) => { const lo = bidDolla
 
 export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
-  const [pos, setPos] = useSticky<"ALL" | "QB" | "RB" | "WR" | "TE">("waivers.pos", "ALL", ["ALL", "QB", "RB", "WR", "TE"]);
+  // K and DEF tabs only when the league starts them
+  const tabs = TABS.filter((t) => (t !== "K" && t !== "DEF") || (LEAGUE.specialSlots ?? []).includes(t));
+  const [pos, setPos] = useSticky<Tab>("waivers.pos", "ALL", tabs);
   const [sort, setSort] = useSticky<"fit" | "trend" | "proj">("waivers.sort", "fit", ["fit", "trend", "proj"]);
   const [q, setQ] = useState("");
   const [suggest, setSuggest] = useState(false);
@@ -49,7 +58,9 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
   const all = useMemo<Entry[]>(() => {
     const ok: Entry[] = recs.map((r) => ({ fa: r.fa, value: r.value, avail: availOf(r.fa), rec: r }));
     const locked: Entry[] = FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => ({ fa, value: PLAYERS[fa.id] ? eff(PLAYERS[fa.id]) : fa.proj, avail: availOf(fa) }));
-    return [...ok, ...locked];
+    const slots = LEAGUE.specialSlots ?? [];
+    const lockedSpecial: Entry[] = SPECIAL_FREE_AGENTS.filter((fa) => slots.includes(fa.pos) && !ok.some((e) => e.fa.id === fa.id)).map((fa) => ({ fa, value: fa.proj, avail: availOf(fa) }));
+    return [...ok, ...locked, ...lockedSpecial];
   }, [recs]);
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -95,7 +106,9 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
       {top && (() => {
         const hi = bidDollars(top.bid[1]);
         const starts = top.gain > 0.05;
-        const game = gameLine(PLAYERS[top.fa.id] ?? {});
+        const game = gameOf(top.fa);
+        const kd = top.kdef;
+        const drop = recDrop(top);
         return (
           <section className={`card topk${starts ? " gain" : ""}`} aria-label="Top pickup">
             <div className="topk-head"><span className="topk-label">Top pickup</span><AiLabel /></div>
@@ -107,23 +120,25 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
               </div>
             </div>
             <dl className="topk-stats">
-              <div><dt>This week</dt><dd>{top.fa.proj.toFixed(1)}</dd></div>
-              <div><dt>ROS per week</dt><dd>{top.value.toFixed(1)}</dd></div>
+              <div><dt>This week</dt><dd>{(isSpecialFA(top.fa) ? top.fa.wk ?? 0 : top.fa.proj).toFixed(1)}</dd></div>
+              <div><dt>{kd ? "Season per week" : "ROS per week"}</dt><dd>{(kd ? top.fa.proj : top.value).toFixed(1)}</dd></div>
               <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid) : "Priority"}</dd></div>
             </dl>
-            {!/^Projects /.test(top.fa.why) && <p className="topk-why">{top.fa.why}</p>}
+            {kd ? <p className="topk-why">{kd.line}</p> : !/^Projects /.test(top.fa.why) && <p className="topk-why">{top.fa.why}</p>}
             <ul className="topk-plan">
               <li className={starts ? "good" : ""}><Icon name={starts ? "check" : "eye"} size={16} />
-                {starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>}
+                {kd?.fix ? <span>Fills your {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "bye-week" : "injured"} {top.fa.pos} slot. <b>{fmt(top.gain)} pts</b> this week.</span>
+                  : starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>}
               </li>
               <li><Icon name="trade" size={16} />
-                {irMove ? <span>Move <b>{irMove.name}</b> to IR first. No drop needed.</span>
-                  : top.drop ? <span>Drop <b>{top.drop.name}</b> ({eff(top.drop).toFixed(1)} projected).</span>
+                {kd?.drop ? <span>Drop <b>{kd.drop.name}</b> ({drop!.note}). A straight {top.fa.pos} swap.</span>
+                  : irMove ? <span>Move <b>{irMove.name}</b> to IR first. No drop needed.</span>
+                  : drop ? <span>Drop <b>{drop.name}</b> ({drop.note}).</span>
                   : <span>You have an open roster spot.</span>}
               </li>
             </ul>
             <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${top.drop && !irMove ? `, drop ${top.drop.name}` : ""}.`)}>
+              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
               <PlatformLogo size={18} />Claim in Sleeper
             </a>
           </section>
@@ -164,8 +179,8 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
             </ul>
           )}
         </div>
-        <div className="wv2-pos" role="group" aria-label="Position">
-          {(["ALL", "QB", "RB", "WR", "TE"] as const).map((p) => {
+        <div className={`wv2-pos wv2-pos-${tabs.length}`} role="group" aria-label="Position">
+          {tabs.map((p) => {
             const n = all.filter((e) => p === "ALL" || e.fa.pos === p).length;
             return <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}><span>{p === "ALL" ? "All" : p}</span><small>{n}</small></button>;
           })}
@@ -180,43 +195,48 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
                 <Avatar p={e.fa} size={40} />
                 <span className="wv-who">
                   <span className="wv-name">{e.fa.name}<span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail!]}</span></span>
-                  <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{e.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
+                  <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{oppShort(e.fa) && <span className="lu-game">· {oppShort(e.fa)}</span>}{e.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
                 </span>
                 <span className="wv-proj"><span>Proj</span><b>{e.value.toFixed(1)}</b></span>
-                <span className="wv-stats"><span><i>This week</i><b>{e.avail === "bye" ? "On bye, can't score" : "Game started, can't score"}</b></span>{e.fa.rostered !== undefined && <span><i>Rostered</i><b>{e.fa.rostered}%</b></span>}</span>
+                <span className="wv-stats"><span><i>This week</i><b>{e.avail === "bye" ? "On bye, can't score" : e.avail === "out" ? "Out, can't score" : "Game started, can't score"}</b></span>{e.fa.rostered !== undefined && <span><i>Rostered</i><b>{e.fa.rostered}%</b></span>}</span>
               </div>
             </div>
           );
           const r = e.rec;
           const isOpen = open === r.fa.id;
+          const kd = r.kdef;
+          const drop = recDrop(r);
+          const game = gameOf(r.fa);
           return (
             <div key={r.fa.id} data-id={r.fa.id} className={`wv${isOpen ? " open" : ""}${e.avail ? " wv-dim" : ""}`}>
               <button className="wv-row" onClick={() => setOpen(isOpen ? null : r.fa.id)} aria-expanded={isOpen}>
                 <span className="wv-rank">{e.avail ? <Icon name="lock" size={14} /> : i + 1}</span>
                 <Avatar p={r.fa} size={40} />
                 <span className="wv-who">
-                  <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <span className="wv-trend up" title="Trending up: adds are rising across Sleeper" aria-label="Trending up">▲</span>}{e.avail && <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span>}</span>
-                  <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{gameLine(PLAYERS[r.fa.id] ?? {}) && <span className="lu-game">· {gameLine(PLAYERS[r.fa.id] ?? {})}</span>}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
+                  <span className="wv-name">{r.fa.name}{r.fa.trend === "up" && <span className="wv-trend up" title="Trending up: adds are rising across Sleeper" aria-label="Trending up">▲</span>}{e.avail && <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span>}{kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
+                  <span className="wv-meta"><b className={`lu-pos p-${r.fa.pos}`}>{r.fa.pos}</b>{r.fa.nfl}{game && r.fa.pos !== "DEF" && <span className="lu-game">· {game}</span>}{r.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
                 </span>
                 <span className="wv-proj"><span>Proj</span><b>{r.value.toFixed(1)}</b></span>
                 <span className="wv-stats">
                   <span><i>Your lineup</i><b className={r.gain > 0.05 ? "good" : "flat"}>{r.gain > 0.05 ? fmt(r.gain) : "No change"}</b></span>
-                  <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.tier}</b></span>
+                  {r.fa.pos === "DEF" && oppShort(r.fa) && <span><i>Matchup</i><b>{oppShort(r.fa)}</b></span>}
+                  <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : kd ? "Low priority" : r.tier}</b></span>
                   {r.fa.rostered !== undefined && <span><i>Rostered</i><b>{r.fa.rostered}%</b></span>}
                   {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(r.fa.adds)}</b></span>}
                 </span>
               </button>
               {isOpen && (
                 <div className="wv-detail">
-                  <p className="small">{r.fa.why}</p>
+                  <p className="small">{kd ? kd.line : r.fa.why}</p>
                   <div className="wv-grid">
-                    <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {r.tier.toLowerCase()} tier</p></div>
-                    <div><span className="eyebrow">Drop</span><p className="small">{r.drop ? <><b>{r.drop.name}</b> ({eff(r.drop).toFixed(1)} proj, your lowest bench player)</> : "Open roster spot"}</p></div>
-                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : <>Rolling waiver priority in your league</>}</p></div>
+                    <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
+                    <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>
+                      : drop ? <><b>{drop.name}</b> ({drop.note}, your lowest bench player)</> : "Open roster spot"}</p></div>
+                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : kd ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
-                  {FAAB.enabled && <BidHistory tier={r.tier} range={r.bid} />}
+                  {FAAB.enabled && (kd ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
                   <div className="row wrap">
-                    <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. Bid ${r.bid[1]}% on ${r.fa.name}, drop ${r.drop?.name ?? "nobody"}.`)}>
+                    <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(r.bid[1])} on` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
                       <PlatformLogo size={16} />Open Sleeper
                     </a>
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
@@ -231,6 +251,14 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
       </div>
     </>
   );
+}
+
+/** K/DEF bids: the league's own winning K/DEF claims when there are a few, else the usual $0-$1. */
+function SpecialBidNote() {
+  const { bids, estimated } = specialBidRange();
+  return <p className="tiny muted wv-kdef-bid">{estimated
+    ? `Your league doesn't have enough K/DEF claims yet. Kickers and defenses usually go for $0 to $${Math.max(1, bidDollars(1))}, so bid low.`
+    : `Winning K/DEF bids in your league this season: ${bids.slice().sort((a, b) => a - b).map((b) => `$${bidDollars(b)}`).join(", ")}.`}</p>;
 }
 
 function BidHistory({ tier, range }: { tier: string; range: [number, number] }) {

@@ -292,7 +292,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
 
 // Demo kickers and defenses, one of each per team: [K name, K team, K proj, DEF team, DEF proj]
 const DEMO_SPECIAL: Record<string, [string, string, number, string, number]> = {
-  you: ["Brandon Aubrey", "DAL", 9.4, "SEA", 7.6], mike: ["Cameron Dicker", "LAC", 8.9, "PIT", 7.9], jake: ["Jake Bates", "DET", 8.6, "HOU", 8.4],
+  you: ["Brandon Aubrey", "DAL", 9.4, "NE", 7.6], mike: ["Cameron Dicker", "LAC", 8.9, "PIT", 7.9], jake: ["Jake Bates", "DET", 8.6, "HOU", 8.4],
   chris: ["Chris Boswell", "PIT", 8.8, "DEN", 8.1], dan: ["Ka'imi Fairbairn", "HOU", 8.5, "BAL", 7.2], kev: ["Tyler Bass", "BUF", 8.1, "MIN", 7.4],
   taylor: ["Harrison Butker", "KC", 8.3, "PHI", 7.8], sam: ["Jason Myers", "SEA", 7.8, "NYJ", 6.6], pat: ["Wil Lutz", "DEN", 7.9, "GB", 7.1],
   alex: ["Jake Elliott", "PHI", 7.5, "LAR", 6.9],
@@ -304,6 +304,8 @@ const DEF_NAMES: Record<string, string> = {
   TEN: "Titans", WAS: "Commanders",
 };
 export const defName = (team: string) => `${DEF_NAMES[team] ?? team} D/ST`;
+/** "the Rams" for LAR, or the abbreviation when we don't know the team. */
+export const teamNick = (team: string) => (DEF_NAMES[team] ? `the ${DEF_NAMES[team]}` : team);
 const DEMO_BYES = ["PIT", "NE"];
 // Demo Week 7 slate: [away, home, date]. Thursday and Monday games plus a Sunday full of them.
 const DEMO_SLATE: [string, string, string][] = [
@@ -408,6 +410,13 @@ const DEMO_SLOT_HISTORY: SlotHistory[] = [
 
 // ---- Waivers and FAAB ----------------------------------------------------
 export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean; /** Sleeper-wide adds in the last 24 hours. */ adds?: number }
+/** Positions the Waivers screen lists. K and DEF stay out of `Pos` so trades and lineups never see them. */
+export type WaiverPos = Pos | "K" | "DEF";
+/** A kicker or defense on the wire. `proj` is the season per-week average; `wk` is this week (null = bye or not projected). */
+export interface SpecialFreeAgent extends Omit<FreeAgent, "pos" | "rookie"> { pos: "K" | "DEF"; wk: number | null; opp?: string; gameDate?: string; status?: Status; rookie?: undefined }
+/** Anything the Waivers screen can list. */
+export type WaiverFA = FreeAgent | SpecialFreeAgent;
+export const isSpecialFA = (fa: WaiverFA): fa is SpecialFreeAgent => fa.pos === "K" || fa.pos === "DEF";
 const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64 };
 const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
@@ -417,6 +426,23 @@ const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "dont-e-thornton", name: "Dont'e Thornton", pos: "WR", nfl: "LV", proj: 8.1, rostered: 9, trend: "up", rookie: true, why: "Rookie deep threat whose snaps jumped to 81 percent. A stash with upside." },
   { id: "mason-rudolph", name: "Mason Rudolph", pos: "QB", nfl: "PIT", proj: 0, rostered: 4, trend: "flat", why: "On bye this week. Only matters in Superflex." },
 ];
+/** Demo kickers and defenses on the wire: [name or DEF team, team, this week, season per week, rostered %]. */
+const DEMO_SPECIAL_FA: [string, string, number, number, number][] = [
+  ["SEA", "SEA", 8.0, 7.3, 44], ["TB", "TB", 7.4, 6.6, 31], ["IND", "IND", 7.0, 6.4, 22], ["CLE", "CLE", 6.6, 6.9, 38],
+  ["Chase McLaughlin", "TB", 8.2, 8.0, 41], ["Evan McPherson", "CIN", 7.6, 7.7, 35], ["Cairo Santos", "CHI", 7.1, 7.4, 18],
+];
+function demoSpecialFreeAgents(): SpecialFreeAgent[] {
+  return DEMO_SPECIAL_FA.map(([who, nfl, wk, proj, rostered]) => {
+    const def = /^[A-Z]{2,3}$/.test(who);
+    const g = demoGame(nfl);
+    const bye = DEMO_BYES.includes(nfl);
+    return {
+      id: def ? who : slug(who), name: def ? defName(who) : who, pos: def ? "DEF" : "K", nfl, proj, wk: bye ? null : wk, rostered, trend: "flat",
+      opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date,
+      why: bye ? `On bye this week. Projects ${proj.toFixed(1)} a week going forward.` : `Projects ${wk.toFixed(1)} this week${g ? ` ${g.home ? "vs" : "at"} ${g.opp}` : ""} and ${proj.toFixed(1)} a week going forward.`,
+    };
+  });
+}
 /** Winning bids in this league this season, as a percent of the $100 budget. */
 const DEMO_FAAB_HISTORY: BidTier[] = [
   { tier: "Starter", bids: [14, 18, 21, 12, 16, 27] },
@@ -510,6 +536,10 @@ export interface LeagueData {
   faab: Faab;
   faabHistory: BidTier[];
   freeAgents: FreeAgent[];
+  /** Best available kickers and defenses this week. Kept apart from freeAgents so trade and value code never sees them. */
+  specialFreeAgents?: SpecialFreeAgent[];
+  /** Winning K/DEF waiver bids this season, as a percent of budget. */
+  specialBids?: number[];
   trades: PastTrade[];
   /** Recent league transactions, newest first. */
   activity?: Activity[];
@@ -551,6 +581,8 @@ export let SLOT_HISTORY: SlotHistory[] = [];
 export let FAAB: Faab = { enabled: true, budget: 100, remaining: 100 };
 export let FAAB_HISTORY: BidTier[] = [];
 export let FREE_AGENTS: FreeAgent[] = [];
+export let SPECIAL_FREE_AGENTS: SpecialFreeAgent[] = [];
+export let SPECIAL_BIDS: number[] = [];
 export let COMPLETED_TRADES: PastTrade[] = [];
 export let OFFERS_RECEIVED: Record<string, number> | null = null;
 export let OPPONENT_ID: string | undefined;
@@ -580,6 +612,8 @@ export function setLeague(d: LeagueData) {
   FAAB = d.faab;
   FAAB_HISTORY = d.faabHistory;
   FREE_AGENTS = d.freeAgents;
+  SPECIAL_FREE_AGENTS = d.specialFreeAgents ?? [];
+  SPECIAL_BIDS = d.specialBids ?? [];
   COMPLETED_TRADES = d.trades;
   OFFERS_RECEIVED = d.offers;
   OPPONENT_ID = d.opponentId;
@@ -614,7 +648,7 @@ export function demoLeague(): LeagueData {
     byeTeams: DEMO_BYES,
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
-    faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
+    faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), specialBids: [0, 1, 0, 0, 2, 1],
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     champion: { teamId: "jake", season: "2025" },
     valueSource: "Demo estimate from projections",

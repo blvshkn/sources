@@ -5,7 +5,7 @@ import { Matchup } from "./components/Matchup";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
-  counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots,
+  counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidDollars,
   irReport, irLabel, parseTag,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
@@ -272,9 +272,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     }
     // Waivers
     const w = recs[0];
+    const wDrop = w && recDrop(w);
     if (w) list.push({
-      id: "waiver", kind: "waiver", headline: demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`, emph: FAAB.enabled ? `Bid ${w.bid[0]} to ${w.bid[1]} percent.` : "Put in a claim.",
-      why: `${w.fa.name} adds ${fmt(w.gain)} to your starters${w.drop ? `. Drop ${w.drop.name}` : ""}. Based on what wins in your league.`,
+      id: "waiver", kind: "waiver", headline: w.kdef?.fix ? w.kdef.line.split(".")[0] + "." : demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`,
+      emph: w.kdef ? (FAAB.enabled ? `Grab ${w.fa.name} for $${bidDollars(w.bid[1])} or less.` : "Put in a low priority claim.") : FAAB.enabled ? `Bid ${w.bid[0]} to ${w.bid[1]} percent.` : "Put in a claim.",
+      why: `${w.fa.name} adds ${fmt(w.gain)} to your starters${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely cost more than a dollar." : "Based on what wins in your league."}`,
       trades: [], time: "Today", deadline: DEADLINES.waivers, go: { label: "Open waivers", tab: "waivers" },
     });
     // Aging tags
@@ -301,7 +303,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const briefing: Briefing = {
     lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
     trade: partners[0]?.t ?? null,
-    waiver: recs[0] ? `${recs[0].fa.name}: bid ${recs[0].bid[0]}-${recs[0].bid[1]}%${recs[0].drop ? `, drop ${recs[0].drop.name}` : ""}` : "Nothing worth a claim this week.",
+    waiver: recs[0] ? `${recs[0].fa.name}: bid ${recs[0].bid[0]}-${recs[0].bid[1]}%${recDrop(recs[0]) ? `, drop ${recDrop(recs[0])!.name}` : ""}` : "Nothing worth a claim this week.",
   };
 
   const askStarters = useMemo(() => {

@@ -1,5 +1,5 @@
 import { DEADLINES, FAAB, ManagerTag, TEAMS, YOU, sleeperUrl } from "../data";
-import { TeamNeeds, WaiverRec, bidDollars, fmt, groupsFor, irReport, tendencies } from "../engine";
+import { TeamNeeds, WaiverRec, bidDollars, fmt, groupsFor, irReport, recDrop, tendencies } from "../engine";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { bidText } from "./Waivers";
@@ -11,6 +11,8 @@ export function WaiverContext({ top, onToast }: { top?: WaiverRec; onToast: (m: 
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
   const starts = !!top && top.gain > 0.05;
+  const drop = top ? recDrop(top) : null;
+  const kd = top?.kdef;
   return (
     <section className="ibx-ctx pctx" aria-label="Waivers">
       <div className="ibx-ctx-head"><b>Waivers</b><span className="pctx-sub">Runs {run}</span></div>
@@ -35,17 +37,17 @@ export function WaiverContext({ top, onToast }: { top?: WaiverRec; onToast: (m: 
             <Avatar p={top.fa} size={28} badge={false} />
             <span className="pctx-who">
               <b>{top.fa.name}</b>
-              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {top.fa.proj.toFixed(1)} proj</small>
+              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {(kd ? top.value : top.fa.proj).toFixed(1)} proj</small>
             </span>
             <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid) : "Priority"}</b></span>
           </div>
           <ul className="pctx-plan">
-            <li className={starts ? "good" : undefined}>{starts ? <>Starts for you, <b>{fmt(top.gain)} pts</b> this week.</> : "Bench stash for now."}</li>
-            <li>{irMove ? <>Move <b>{irMove.name}</b> to IR first. No drop needed.</>
-              : top.drop ? <>Drop <b>{top.drop.name}</b>.</> : "You have an open roster spot."}</li>
+            <li className={starts ? "good" : undefined}>{kd?.fix ? <>Your {top.fa.pos} is {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "on bye" : "out"}. <b>{fmt(top.gain)} pts</b> this week.</> : starts ? <>Starts for you, <b>{fmt(top.gain)} pts</b> this week.</> : "Bench stash for now."}</li>
+            <li>{kd?.drop ? <>Drop <b>{kd.drop.name}</b>.</> : irMove ? <>Move <b>{irMove.name}</b> to IR first. No drop needed.</>
+              : drop ? <>Drop <b>{drop.name}</b>.</> : "You have an open roster spot."}</li>
           </ul>
           <a className="linkish pctx-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-            onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(top.bid[1])} on` : "Claim"} ${top.fa.name}${top.drop && !irMove ? `, drop ${top.drop.name}` : ""}.`)}>
+            onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(top.bid[1])} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
             Claim in Sleeper
           </a>
         </div>

@@ -1,6 +1,6 @@
 // Sleeper's public, read-only API. No password or token: a username is enough.
 // Everything here runs in the user's browser; nothing is stored on a server.
-import { BoardRow, SpecialPlayer, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
+import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
 const SKILL: Pos[] = ["QB", "RB", "WR", "TE"];
@@ -451,8 +451,14 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return v >= 12 ? "Starter" : v >= 9.5 ? "Flex" : p?.rookie ? "Stash" : "Depth";
   };
   const tiers: Record<BidTier["tier"], number[]> = { Starter: [], Flex: [], Depth: [], Stash: [] };
+  // Kicker and defense claims get their own bucket so a $0 streamer doesn't drag down the Depth range
+  const isSpecialId = (id: string) => !players[id] && (/^[A-Z]{2,3}$/.test(id) || !!specials[id] || (kWeek.get(id) ?? kSeason.get(id))?.player?.position === "K");
+  const specialBids: number[] = [];
   txns.filter((t) => t.type === "waiver" && t.status === "complete" && t.adds && t.settings?.waiver_bid !== undefined)
-    .forEach((t) => Object.keys(t.adds!).forEach((id) => tiers[tierOf(id)].push(Math.round(((t.settings!.waiver_bid ?? 0) / budget) * 100))));
+    .forEach((t) => Object.keys(t.adds!).forEach((id) => {
+      const pct = Math.round(((t.settings!.waiver_bid ?? 0) / budget) * 100);
+      if (isSpecialId(id)) specialBids.push(pct); else tiers[tierOf(id)].push(pct);
+    }));
   const faabHistory: BidTier[] = (Object.keys(tiers) as BidTier["tier"][]).map((tier) => ({ tier, bids: tiers[tier] }));
 
   // Free agents worth a look
@@ -472,6 +478,27 @@ export async function loadLeague(leagueId: string, userId: string, username: str
         : `Projects ${wk.toFixed(1)} this week and ${p.proj.toFixed(1)} a week going forward.`,
     };
   });
+
+  // Kickers and defenses worth streaming: the top 8 of each by this week's projection, from the same K/DEF feed the lineup uses
+  const specialFreeAgents: SpecialFreeAgent[] = (["K", "DEF"] as const).flatMap((pos) => kdefWeek
+    .filter((p) => !rosteredAll.has(p.player_id) && (pos === "DEF" ? /^[A-Z]{2,3}$/.test(p.player_id) : p.player?.position === "K" && !/^[A-Z]{2,3}$/.test(p.player_id)))
+    .filter((p) => (p.stats?.pts_ppr ?? 0) > 0 && (p.team || pos === "DEF") && statusOf(p.player?.injury_status).status !== "O")
+    .sort((a, b) => (b.stats.pts_ppr ?? 0) - (a.stats.pts_ppr ?? 0)).slice(0, 8)
+    .map((p): SpecialFreeAgent => {
+      const id = p.player_id, isDef = pos === "DEF";
+      const s = kSeason.get(id);
+      const gp = Math.max(1, s?.stats?.gp ?? 17);
+      const wk = Math.round((p.stats.pts_ppr ?? 0) * 10) / 10;
+      const per = Math.round(((s?.stats?.pts_ppr ?? 0) / gp) * 10) / 10 || wk;
+      const t = trend.get(id);
+      return {
+        id, pos, nfl: isDef ? id : p.team ?? p.player?.team ?? "FA",
+        name: isDef ? defName(id) : [p.player?.first_name, p.player?.last_name].filter(Boolean).join(" ") || `Kicker ${id}`,
+        wk, proj: per, opp: p.opponent ?? undefined, gameDate: p.date ?? undefined, trend: t ? "up" : "flat", adds: t,
+        status: statusOf(p.player?.injury_status).status,
+        why: `Projects ${wk.toFixed(1)} this week${p.opponent ? ` against ${p.opponent}` : ""} and ${per.toFixed(1)} a week on the season.`,
+      };
+    }));
 
   // Completed trades
   const nameOf = (id: string) => players[id] ? { name: players[id].name, pos: players[id].pos, rookie: players[id].rookie } : null;
@@ -541,7 +568,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     },
     byeTeams, teams, players, sleeperSet, slotHistory,
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position },
-    faabHistory, freeAgents, trades, activity, offers: null, username, type: leagueType(league),
+    faabHistory, freeAgents, specialFreeAgents, specialBids, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     champion: await champP,
     valueSource: valueBy.size ? `Blended value: 55% trade market (FantasyCalc, ${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams), 45% rest-of-season production over replacement, plus up to 3% Sleeper add/drop momentum` : "Rest-of-season production over replacement (market values unavailable)",

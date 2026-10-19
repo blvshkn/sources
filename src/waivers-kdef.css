@@ -1,0 +1,22 @@
+/* Waivers: kicker and defense tabs, chips and must-fix tag. */
+
+/* DEF gets its own tone next to K so the two chips read apart. K keeps the app's --k. */
+:root { --def: #4F6B7A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --def: #9FB6C3; } }
+:root[data-theme="dark"] { --def: #9FB6C3; }
+html:root:not(#_) .lu-pos.p-DEF { color: var(--def) !important; }
+
+/* Seven position tabs: one even row while it fits, then a clean horizontal scroll inside the card */
+html:root:not(#_) .wv2-pos.wv2-pos-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+html:root:not(#_) .wv2-pos.wv2-pos-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+html:root:not(#_) .wv2-pos.wv2-pos-7 button,
+html:root:not(#_) .wv2-pos.wv2-pos-6 button { min-width: 0; white-space: nowrap; gap: 4px; padding: 0 2px !important; }
+@media (max-width: 359px) {
+  html:root:not(#_) .wv2-pos.wv2-pos-7 { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(46px, 1fr); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  html:root:not(#_) .wv2-pos.wv2-pos-7::-webkit-scrollbar { display: none; }
+}
+
+/* Must fix: a K or DEF that fills a slot scoring zero this week. Good news, so green. */
+html:root:not(#_) .wv-tag.t-fix { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+
+html:root:not(#_) .wv-kdef-bid { margin: 2px 0 12px; }
