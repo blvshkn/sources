@@ -1,0 +1,43 @@
+/* Pages lint B: Trade, Lineup, Waivers and Matchup. Scoped to page classes, loaded just before frame.css. */
+
+/* ---------- Waivers rows: one fixed grid, every row ----------
+   Each row renders the same cells (Your lineup, Bid, Last 3), then Proj, then a reserved end slot.
+   Column widths are explicit, so a cell's x is the same on every row, tab and week. */
+html:root:not(#_):not(#_) .wv3-list .wv .wv-row {
+  grid-template-columns: 22px 40px minmax(0, 1fr) 52px 36px !important;
+  grid-template-areas: "rank shirt who proj end" "stats stats stats stats stats" !important;
+  column-gap: 8px !important;
+}
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-end { grid-area: end; width: 36px; height: 36px; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-proj { grid-area: proj; min-width: 0; width: 100%; justify-self: end; align-items: flex-end; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats {
+  display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 140px) 104px; gap: 0 12px; margin-top: 6px; flex-wrap: nowrap;
+}
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > span { width: auto !important; min-width: 0; display: flex !important; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats i,
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats b { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.01em; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats .wv-l3 > b { color: var(--faint); }
+
+/* Not interested (.ps-end) sits exactly over the reserved end column, so the row needs no extra right padding */
+html:root:not(#_):not(#_) .wv3-list .wv.ps-wv > .wv-row { padding-right: 16px !important; }
+html:root:not(#_):not(#_) .wv3-list .wv > .ps-end { right: 16px; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > .ps-again-line { grid-column: 1 / -1; }
+
+/* Long names cut with an ellipsis; the trend arrow and tags stay whole */
+html:root:not(#_):not(#_) .wv3-list .wv-name > * { flex: none; }
+html:root:not(#_):not(#_) .wv3-list .wv-name > .wv-nm { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Statline under the name (past weeks, and anyone who already played this week): one line, cut short */
+html:root:not(#_):not(#_) .wv3-list .wv-meta > * { flex: none; }
+html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-line { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@container wvl (min-width: 720px) {
+  html:root:not(#_):not(#_) .wv3-list .wv .wv-row {
+    grid-template-columns: 22px 44px minmax(0, 1fr) 308px 56px 36px !important;
+    grid-template-areas: "rank shirt who stats proj end" !important;
+    column-gap: 16px !important;
+  }
+  html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats { grid-template-columns: 88px 92px 104px; margin-top: 0; }
+  html:root:not(#_):not(#_) .wv3-list .wv .wv-row > .wv-proj { width: 56px; }
+}

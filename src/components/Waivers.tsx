@@ -83,12 +83,14 @@ function Hit({ name, term }: { name: string; term: string }) {
   return <>{name.slice(0, i)}<mark>{name.slice(i, i + term.length)}</mark>{name.slice(i + term.length)}</>;
 }
 
-/** "$40-$90", or "Up to $150" when the low end is zero. */
-export const bidText = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
+/** "$40-$90", or "Up to $150" when the low end is zero. Kickers and defenses go for any amount, so they never get a range. */
+export const bidText = (b: [number, number] | number[], fa?: WaiverFA) => { if (fa && isSpecialFA(fa)) return "Any amount"; const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
+/** The Bid cell for any row, with or without claim details. */
+const bidCell = (fa: WaiverFA, r?: WaiverRec) => FAAB.enabled ? (isSpecialFA(fa) ? "Any amount" : r ? bidText(r.bid) : "–") : (isSpecialFA(fa) ? "Low priority" : r ? r.tier : "–");
 
 /** Actual scores over the last three completed weeks, oldest first, best one brightest. A dash is a bye, a dot is still loading. */
 function LastThree({ v, weeks }: { v: (number | null | undefined)[]; weeks: number[] }) {
-  if (!weeks.length) return null;
+  if (!weeks.length) return <span className="wv-l3"><i>Last 3</i><b>–</b></span>;
   const max = Math.max(1, ...v.map((x) => x ?? 0));
   return (
     <span className="wv-l3"><i>Last {weeks.length}</i>
@@ -369,45 +371,28 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
           const meta = kind === "current"
             ? <>{e.fa.pos === "DEF" ? oppShort(e.fa) && <span className="lu-game">· {oppShort(e.fa)}</span> : game && r && <span className="lu-game">· {game}</span>}</>
             : e.c?.opp ? <span className="lu-game">· {e.c.opp}</span> : null;
-          const lineup = <span><i>Your lineup</i><b className={e.gain > 0.05 ? "good" : "flat"}>{loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change"}</b></span>;
-          const bid = r && <span><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{FAAB.enabled ? bidText(r.bid) : r.kdef ? "Low priority" : r.tier}</b></span>;
-          const rostered = e.fa.rostered !== undefined && <span><i>Rostered</i><b>{e.fa.rostered}%</b></span>;
-          const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
-            : kind === "past" ? <>
-              <span className="wv3-wide"><i>Week {week}</i><b>{e.pts === null ? "On bye" : !e.c ? "–" : e.c.line ?? "Didn't play"}</b></span>
-              <LastThree v={e.l3} weeks={l3Weeks} />
-              {lineup}
-            </>
-            : kind === "future" ? <>
-              {lineup}
-              {bid}
-              <LastThree v={e.l3} weeks={l3Weeks} />
-              {rostered}
-            </>
-            : !r ? <>
-              <span className="wv3-wide"><i>{e.c?.played ? (st === "in_game" ? "Live, this week" : "Final, this week") : "This week"}</i><b>{e.avail === "bye" ? "On bye, can't score" : e.avail === "out" ? "Out, can't score" : e.c?.played ? e.c.line : sel.loading ? "Game started" : st === "in_game" ? "Live, no stats yet" : "Final, didn't score"}</b></span>
-              <LastThree v={e.l3} weeks={l3Weeks} />
-              {rostered}
-            </>
-            : <>
-              {lineup}
-              {r.fa.pos === "DEF" && oppShort(r.fa) && <span><i>Matchup</i><b>{oppShort(r.fa)}</b></span>}
-              {bid}
-              <LastThree v={e.l3} weeks={l3Weeks} />
-              {rostered}
-              {r.fa.adds !== undefined && <span><i>Adds 24h</i><b>{new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(r.fa.adds)}</b></span>}
-            </>;
+          // What he did that week, or so far this week: one line under the name, cut short rather than wrapping
+          const line = kind === "past" ? (e.pts === null ? null : !e.c ? null : e.c.line ?? "Didn't play") : kind === "current" && !r && e.c?.played ? e.c.line : null;
+          // Every row carries the same cells in the same order, so the columns never shift between rows, tabs or weeks
+          const cant = kind === "current" && !r ? (e.avail === "bye" ? "Bye" : e.avail === "out" ? "Out" : e.avail === "ir" ? "IR" : st === "in_game" ? "Playing" : "Played") : null;
+          const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span> : <>
+            <span className="wv-c-lu"><i>Your lineup</i><b className={!cant && e.gain > 0.05 ? "good" : "flat"}>{cant ?? (loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change")}</b></span>
+            <span className="wv-c-bid"><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{bidCell(e.fa, r)}</b></span>
+            <LastThree v={e.l3} weeks={l3Weeks} />
+          </>;
           const inner = <>
             <span className="wv-rank" aria-hidden="true" />
             <Avatar p={e.fa} size={40} />
             <span className="wv-who">
-              <span className="wv-name">{e.fa.name}{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
+              <span className="wv-name"><span className="wv-nm">{e.fa.name}</span>{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
                 {e.no ? <span className="wv-tag ps-tag">Not interested</span> : e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
                 {kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
-              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}</span>
+              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}{line && <span className="wv-line">· {line}</span>}</span>
             </span>
             <span className={`wv-proj${box.k !== "Proj" ? " wv3-scored" : ""}`}><span>{box.k}</span><b>{box.v}</b></span>
             <span className="wv-stats">{stats}</span>
+            {/* Reserved end column, kept the same width on every row */}
+            <span className="wv-end" aria-hidden="true" />
           </>;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           return (
@@ -431,7 +416,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>
                       : drop ? <><b>{drop.name}</b> ({drop.note}, the least you'd lose)</> : r.noDrop ? "Nobody on your bench is worth cutting for him" : "Open roster spot"}</p></div>
-                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
+                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b>Any amount</b>. Kickers and defenses rarely draw real bids</> : <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
                   <div className="row wrap">
@@ -479,7 +464,7 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
       <dl className="topk-stats">
         <div><dt>{stat.dt}</dt><dd>{stat.dd}</dd></div>
         <div><dt>{kd ? "Season per week" : "ROS per week"}</dt><dd>{(kd ? top.fa.proj : top.value).toFixed(1)}</dd></div>
-        <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid) : "Priority"}</dd></div>
+        <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</dd></div>
       </dl>
       <p className="topk-why">{why}</p>
       <ul className="topk-plan">

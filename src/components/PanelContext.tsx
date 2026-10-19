@@ -45,7 +45,7 @@ export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: {
               <b>{top.fa.name}</b>
               <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {wp ? `${wp.pts.toFixed(wp.kind === "past" ? 2 : 1)} ${wp.kind === "past" ? "scored" : "proj"}` : `${(kd ? top.value : top.fa.proj).toFixed(1)} proj`}</small>
             </span>
-            <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid) : "Priority"}</b></span>
+            <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</b></span>
           </div>
           <ul className="pctx-plan">
             <li className={starts ? "good" : undefined}>{wp ? (wp.kind === "past" ? (starts ? <>Would have added <b>{fmt(wp.gain)} pts</b> in week {wp.week}.</> : <>Wouldn't have cracked your week {wp.week} lineup.</>)
