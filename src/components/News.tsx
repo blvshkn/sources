@@ -46,7 +46,7 @@ const RW_PAGE = "https://www.rotowire.com/football/player.php";
 function ReadLink({ n }: { n: NewsItem }) {
   // A RotoWire blurb carried by ESPN, with no RotoWire id to build his page from, still links to ESPN: say so
   const where = n.via && !/rotowire\.com/.test(n.url) && /rotowire/i.test(n.source) ? n.via : n.source;
-  const a = <a className="nx-read" href={n.url} target="_blank" rel="noopener noreferrer">Read on {where}<span aria-hidden="true"> ↗</span><span className="sr-only"> (opens in a new tab)</span></a>;
+  const a = <a className="nx-read" href={n.url} target="_blank" rel="noopener noreferrer">Read on {where}<span className="nx-arr" aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a>;
   return n.url.startsWith(RW_PAGE) ? <Tooltip content="Opens his RotoWire page, where this update is listed">{a}</Tooltip> : a;
 }
 
@@ -127,8 +127,8 @@ export function PlayerNews({ p }: { p: Player }) {
 
 const whereFor = (c: PlayerContext) => c.role === "starter" ? `Starting${c.slot ? ` at ${c.slot === "SF" ? "superflex" : c.slot === "FLEX" ? "flex" : c.slot}` : ""}` : c.role === "bench" ? "On your bench" : c.role === "ir" ? "On your IR" : "On your taxi squad";
 
-/** One story as a compact row in a divided list: meta line, headline, excerpt, our read (top story only), link out. */
-function StoryRow({ n, impact }: { n: NewsItem; impact?: string | null }) {
+/** One story as a row in a divided list. The whole row opens the article: the link on the right stretches over it. */
+function StoryRow({ n }: { n: NewsItem }) {
   const when = n.at ? new Date(n.at) : null;
   return (
     <article className="nxs">
@@ -137,41 +137,60 @@ function StoryRow({ n, impact }: { n: NewsItem; impact?: string | null }) {
         <b>{n.source}</b>
         {n.via && <span className="nx-via">via {n.via}</span>}
         {when && <When d={when} at={n.at} />}
-        {n.kind && n.kind !== "feature" && <span className={`nx-kind k-${n.kind}`}>{KIND_LABEL[n.kind]}</span>}
       </div>
+      {n.kind && n.kind !== "feature" && <span className={`nx-kind k-${n.kind}`}>{KIND_LABEL[n.kind]}</span>}
       <h4 className="nx-h">{n.title}</h4>
       {n.summary && <p className="nxs-ex">{n.summary}</p>}
-      {impact && (
-        <div className="nx-imp">
-          <div className="nx-imp-k">
-            <i aria-hidden="true" />What it means for you
-            <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
-              <span className="nx-imp-by"><Icon name="spark" size={11} />Sources</span>
-            </Tooltip>
-          </div>
-          <p>{impact}</p>
-        </div>
-      )}
+      <a className="nxs-hit" href={n.url} target="_blank" rel="noopener noreferrer" tabIndex={-1} aria-hidden="true" />
       <ReadLink n={n} />
     </article>
   );
 }
 
-// How many stories each player shows, kept for the session so a re-render or a tab switch doesn't fold them back up
+/** Our read on a player, from his top story. */
+function Intel({ text }: { text: string }) {
+  return (
+    <div className="nx-imp nxr-intel">
+      <div className="nx-imp-k">
+        <i aria-hidden="true" />What it means for you
+        <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
+          <span className="nx-imp-by"><Icon name="spark" size={11} />Sources</span>
+        </Tooltip>
+      </div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+// Bar chart mark for the Stats button, drawn on the icon family's grid and line
+const StatsIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 20.5h16M6.5 20.5v-6M12 20.5V5.5M17.5 20.5v-10" />
+  </svg>
+);
+
+// How many stories each player shows, and which players are open, kept for the session so a re-render or a tab
+// switch doesn't fold them back up
 const STEP = 3;
 const OPEN_KEY = "sources.news.open";
-const openCounts: Record<string, number> = (() => {
-  try { const v = JSON.parse(sessionStorage.getItem(OPEN_KEY) ?? "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; }
-})();
+const EXP_KEY = "sources.news.exp";
+const load = (k: string): Record<string, any> => {
+  try { const v = JSON.parse(sessionStorage.getItem(k) ?? "{}"); return v && typeof v === "object" ? v : {}; } catch { return {}; }
+};
+const save = (k: string, v: object) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch { /* blocked */ } };
+const openCounts: Record<string, number> = load(OPEN_KEY);
+const expanded: Record<string, boolean> = load(EXP_KEY);
 function rememberOpen(id: string, count: number) {
   if (count <= STEP) delete openCounts[id]; else openCounts[id] = count;
-  try { sessionStorage.setItem(OPEN_KEY, JSON.stringify(openCounts)); } catch { /* blocked */ }
+  save(OPEN_KEY, openCounts);
 }
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
 
-/** One player: header (opens his sheet), up to three stories, then more inline, three at a time. */
-function PlayerGroup({ p, c, items, onOpen }: { p: Player; c: PlayerContext; items: NewsItem[]; onOpen: () => void }) {
+/** One player, collapsible. Closed: who he is, his newest headline and a story count. Open: our read, then his
+ *  stories three at a time. "Stats" opens his sheet. */
+function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerContext; items: NewsItem[]; first: boolean; onOpen: () => void }) {
+  const [open, setOpen] = useState(() => expanded[p.id] ?? first);
   const [count, setCount] = useState(() => Math.min(items.length, Math.max(STEP, openCounts[p.id] ?? STEP)));
   const listRef = useRef<HTMLDivElement>(null);
   const from = useRef<number | null>(null);
@@ -180,8 +199,12 @@ function PlayerGroup({ p, c, items, onOpen }: { p: Player; c: PlayerContext; ite
   const shown = items.slice(0, count);
   const left = Math.max(0, items.length - count);
   const impact = useMemo(() => (items[0] ? impactFor(p, items[0], c) : null), [p.id, items[0]?.id, items[0]?.kind]);
+  const newest = useMemo(() => items.reduce((a, b) => ((b.at ?? 0) > (a.at ?? 0) ? b : a), items[0]), [items]);
   const label = roleLabel(c);
+  const bodyId = `nxr-b-${p.id}`;
   const listId = `nxs-${p.id}`;
+
+  const toggle = () => setOpen((o) => { expanded[p.id] = !o; save(EXP_KEY, expanded); return !o; });
 
   // Grow from the old height to the new one after the extra rows render
   useLayoutEffect(() => {
@@ -227,22 +250,37 @@ function PlayerGroup({ p, c, items, onOpen }: { p: Player; c: PlayerContext; ite
   };
 
   return (
-    <div className="nxr-g">
-      <button type="button" className="nxr-who" onClick={onOpen} aria-label={`${p.name}, player details`}>
-        <Avatar p={p} size={36} />
-        <span className="nxr-name"><b>{p.name}</b><small>{p.pos} · {p.nfl}{label && <> · <span className={c.role === "starter" ? "on" : ""}>{label}</span></>}</small></span>
-        <StatusPill p={p} />
-        <Icon name="chev" size={16} />
-      </button>
-      <div className="nxs-list" id={listId} ref={listRef}>
-        {shown.map((n, i) => <StoryRow key={n.id ?? n.url} n={n} impact={i === 0 ? impact : null} />)}
-      </div>
-      {items.length > STEP && (
-        <button type="button" className="nxs-more" aria-controls={listId} aria-expanded={left === 0} onClick={left > 0 ? more : fewer}>
-          {left > 0 ? <>Show {Math.min(STEP, left)} more{left > STEP && <span className="nxs-left"> ({left} left)</span>}</> : "Show fewer"}
-          <Icon name="chev" size={14} />
+    <div className={`nxr-g${open ? " open" : ""}`}>
+      <div className="nxr-head">
+        <button type="button" className="nxr-tog" aria-expanded={open} aria-controls={bodyId} onClick={toggle}>
+          <Avatar p={p} size={36} />
+          <span className="nxr-name">
+            <span className="nxr-line"><b>{p.name}</b><span className="nxr-pill nxr-pill-n"><StatusPill p={p} /></span></span>
+            <small>{p.pos} · {p.nfl}{label && <> · <span className={c.role === "starter" ? "on" : ""}>{label}</span></>}</small>
+            {newest && <span className="nxr-peek">{newest.title}</span>}
+          </span>
+          <span className="nxr-pill nxr-pill-w"><StatusPill p={p} /></span>
+          <span className="nxr-count"><b>{items.length}</b> {items.length === 1 ? "story" : "stories"}</span>
         </button>
-      )}
+        <button type="button" className="nxr-stats" onClick={onOpen} aria-label={`${p.name} stats`}><StatsIcon />Stats</button>
+        <span className="nxr-chev" aria-hidden="true"><Icon name="chev" size={16} /></span>
+      </div>
+      <div className="nxr-body" id={bodyId} role="region" aria-label={`News on ${p.name}`}>
+        <div className="nxr-inner">
+          {impact && <Intel text={impact} />}
+          <div className="nxs-list" id={listId} ref={listRef}>
+            {shown.map((n) => <StoryRow key={n.id ?? n.url} n={n} />)}
+          </div>
+          {items.length > STEP && (
+            <button type="button" className="nxs-more" aria-controls={listId} aria-expanded={left === 0} onClick={left > 0 ? more : fewer}>
+              {left > 0
+                ? <span>Show <b>{Math.min(STEP, left)}</b> more{left > STEP && <span className="nxs-left"> · <b>{left}</b> left</span>}</span>
+                : <span>Show less</span>}
+              <Icon name="chev" size={14} />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -253,7 +291,7 @@ function RosterSkeleton() {
       {[0, 1].map((g) => (
         <div key={g} className="nxr-g nxs-skel">
           <span className="nx-sk-who"><i /><span><b /><b /></span></span>
-          <div className="nxs-list">{[0, 1].map((r) => <span key={r} className="nxs nxs-sk"><b className="s" /><b className="h" /><b /><b className="m" /></span>)}</div>
+          <div className="nxs-list">{[0, 1].map((r) => <span key={r} className="nxs-sk"><b className="s" /><b className="h" /><b /><b className="m" /></span>)}</div>
         </div>
       ))}
     </div>
@@ -292,7 +330,7 @@ export function RosterNews() {
       {loading && !groups.length ? <RosterSkeleton />
         : groups.length ? (
           <div className="nxr-list">
-            {shown.map(({ p, c, items }) => <PlayerGroup key={p.id} p={p} c={c} items={items} onOpen={() => setSheet({ p, c })} />)}
+            {shown.map(({ p, c, items }, i) => <PlayerGroup key={p.id} p={p} c={c} items={items} first={i === 0} onOpen={() => setSheet({ p, c })} />)}
           </div>
         ) : <p className="nx-empty">No recent news on your players. We check {sourcesLine()} every 10 minutes.</p>}
       {groups.length > 5 && <button type="button" className="nx-more nxr-all" aria-expanded={all} onClick={() => setAll((a) => !a)}>{all ? "Show top 5 players" : `Show all players (${groups.length})`}<Icon name="chev" size={14} /></button>}

@@ -103,71 +103,155 @@ html:root:not(#_):not(#_) .nx-sk-who b:last-child { width: 24%; }
 /* Player sheet */
 html:root:not(#_):not(#_) .ps-news { margin-top: 4px; }
 
-/* Wire: News on your players */
-html:root:not(#_):not(#_) .nxr { display: grid; gap: 4px; }
+/* Wire: News on your players. One player per row, each collapsible: closed shows who he is, his newest headline
+   and a story count; open shows our read and his stories. Rows are divided lists that follow the states-qa rule:
+   even padding, a hover pill 4px inside the dividers, dividers stepping aside around the active row. */
+html:root:not(#_):not(#_) .nxr { display: grid; gap: 4px; container: nxr / inline-size; }
 html:root:not(#_):not(#_) .nxr .wk-head { flex-wrap: wrap; row-gap: 4px; }
 html:root:not(#_):not(#_) .nxr-src { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.02em; }
-html:root:not(#_):not(#_) .nxr-list { display: grid; }
-html:root:not(#_):not(#_) .nxr-g { display: grid; gap: 10px; padding: 14px 0 16px; border-top: 1px solid var(--line); }
-html:root:not(#_):not(#_) .nxr-list > .nxr-g:first-child { border-top: 0; padding-top: 6px; }
-html:root:not(#_):not(#_) .nxr-who {
-  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 2px 4px 2px 0; margin: 0;
-  background: none; border: 0; text-align: left; color: inherit; cursor: pointer; border-radius: 10px;
-}
-html:root:not(#_):not(#_) .nxr-who > svg { flex: none; color: var(--faint); transition: transform 160ms var(--ease); }
-html:root:not(#_):not(#_) .nxr-who:hover > svg { transform: translateX(2px); color: var(--muted); }
-html:root:not(#_):not(#_) .nxr-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
-html:root:not(#_):not(#_) .nxr-name b { font: 600 0.9375rem/1.25 var(--font-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html:root:not(#_):not(#_) .nxr-name small { font: 500 0.75rem/1.2 var(--font-body); color: var(--muted); }
-html:root:not(#_):not(#_) .nxr-name small .on { color: var(--ink); }
-html:root:not(#_):not(#_) .nxr-more {
-  justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 2px;
-  background: none; border: 0; cursor: pointer; font: 500 0.8125rem/1 var(--font-body); color: var(--ink);
-}
-html:root:not(#_):not(#_) .nxr-more svg { color: var(--muted); transition: transform 160ms var(--ease); }
-html:root:not(#_):not(#_) .nxr-more:hover svg { transform: translateX(2px); }
-html:root:not(#_):not(#_) .nxr-all { margin-top: 2px; }
+html:root:not(#_):not(#_) .nxr-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+html:root:not(#_):not(#_) .nxr-all { margin-top: 10px; }
 
 /* Intel fills the column: the news card and intel cards use the full width instead of a 760px reading measure */
 html:root:not(#_):not(#_) .main-inner:has(> .nudge, > .followup, > .nxr) > :not(.page-head):not(.page-tabs) { max-width: none !important; }
 
-/* A player's stories: one divided list, a row per story. Rows carry equal padding above and below, so each hairline
-   sits centered between two rows. Rows aren't clickable (the link is), so there is no hover pill to inset. */
-html:root:not(#_):not(#_) .nxr { container: nxr / inline-size; }
-html:root:not(#_):not(#_) .nxr-g { gap: 2px; }
+/* Player */
+html:root:not(#_):not(#_) .nxr-g { display: grid; border-top: 1px solid var(--line); transition: border-color var(--st-dur, 160ms) var(--st-ease, ease-out); }
+html:root:not(#_):not(#_) .nxr-list > .nxr-g:first-child { border-top-color: transparent; }
+
+/* Header: the toggle stretches over the whole row; Stats sits above it, the chevron is drawn on top and lets clicks through */
+html:root:not(#_):not(#_) .nxr-head { position: relative; isolation: isolate; display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 12px 0; }
+html:root:not(#_):not(#_) .nxr-tog {
+  position: static; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0; margin: 0;
+  background: none; border: 0; text-align: left; color: inherit; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent;
+}
+html:root:not(#_):not(#_) .nxr-tog::before {
+  content: ""; position: absolute; z-index: -1; inset: var(--dl-y, 4px) -12px; border-radius: 10px;
+  background: var(--st-tint, rgba(127, 127, 127, 0.05)); opacity: 0;
+  transition: opacity var(--st-dur, 160ms) var(--st-ease, ease-out), background-color var(--st-dur, 160ms) var(--st-ease, ease-out), box-shadow var(--st-dur, 160ms) var(--st-ease, ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .nxr-tog:hover::before { opacity: 1; }
+  html:root:not(#_):not(#_) .nxr-g:has(> .nxr-head .nxr-tog:hover), html:root:not(#_):not(#_) .nxr-g:has(> .nxr-head .nxr-tog:hover) + .nxr-g { border-top-color: transparent; }
+}
+html:root:not(#_):not(#_) .nxr-tog:active::before { opacity: 1; background: var(--st-tint-2, rgba(127, 127, 127, 0.1)); transition-duration: 80ms; }
+html:root:not(#_):not(#_) .nxr-tog:focus-visible { outline: none; }
+html:root:not(#_):not(#_) .nxr-tog:focus-visible::before { opacity: 1; box-shadow: 0 0 0 2px var(--lime, #D8F24A); }
+html:root:not(#_):not(#_) .nxr-g:has(> .nxr-head .nxr-tog:is(:active, :focus-visible)), html:root:not(#_):not(#_) .nxr-g:has(> .nxr-head .nxr-tog:is(:active, :focus-visible)) + .nxr-g { border-top-color: transparent; }
+
+html:root:not(#_):not(#_) .nxr-name { flex: 1; min-width: 0; display: grid; gap: 2px; }
+html:root:not(#_):not(#_) .nxr-name b { font: 600 0.9375rem/1.25 var(--font-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .nxr-name small { font: 500 0.75rem/1.2 var(--font-body); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .nxr-name small .on { color: var(--ink); }
+/* Closed: his newest headline on one line, so you can scan without opening */
+html:root:not(#_):not(#_) .nxr-peek { margin-top: 3px; font: 500 0.8125rem/1.3 var(--font-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 78ch; }
+html:root:not(#_):not(#_) .nxr-g.open .nxr-peek { display: none; }
+html:root:not(#_):not(#_) .nxr-pill { flex: none; display: inline-flex; }
+html:root:not(#_):not(#_) .nxr-pill:empty { display: none; }
+html:root:not(#_):not(#_) .nxr-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+html:root:not(#_):not(#_) .nxr-pill-n { display: none; }
+html:root:not(#_):not(#_) .nxr-line b { min-width: 0; }
+html:root:not(#_):not(#_) .nxr-count { flex: none; font: 500 0.75rem/1 var(--font-body); color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .nxr-count b { font: 500 0.75rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Stats: a quiet text button, distinct from the expand chevron */
+html:root:not(#_):not(#_) .nxr-stats {
+  position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px 0 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
+  font: 500 0.75rem/1 var(--font-body); color: var(--ink); -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, border-color, transform; transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, ease-out);
+}
+html:root:not(#_):not(#_) .nxr-stats svg { color: var(--muted); transition: color var(--st-dur, 160ms) var(--st-ease, ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .nxr-stats:hover { background-color: var(--st-tint-2, var(--surface-2)); border-color: var(--st-ring, var(--line)); }
+  html:root:not(#_):not(#_) .nxr-stats:hover svg { color: var(--ink); }
+}
+html:root:not(#_):not(#_) .nxr-stats:active { transform: scale(0.96); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .nxr-stats:focus-visible { outline: 2px solid var(--lime, #D8F24A); outline-offset: 2px; }
+
+html:root:not(#_):not(#_) .nxr-chev { position: relative; z-index: 1; pointer-events: none; flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--muted); }
+html:root:not(#_):not(#_) .nxr-chev svg { transform: rotate(90deg); transition: transform 220ms var(--st-ease, ease-out); }
+html:root:not(#_):not(#_) .nxr-g.open .nxr-chev svg { transform: rotate(-90deg); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .nxr-head:has(.nxr-tog:hover) .nxr-chev { color: var(--ink); } }
+
+/* Body: grows from 0fr to 1fr, so opening only pushes what's below. Hidden content leaves the tab order once closed. */
+html:root:not(#_):not(#_) .nxr-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms var(--st-ease, ease-out); }
+html:root:not(#_):not(#_) .nxr-g.open > .nxr-body { grid-template-rows: 1fr; }
+html:root:not(#_):not(#_) .nxr-inner { min-height: 0; overflow: hidden; visibility: hidden; transition: visibility 0s linear 220ms; }
+html:root:not(#_):not(#_) .nxr-g.open .nxr-inner { visibility: visible; transition-delay: 0s; }
+/* Room for the hover pills and focus rings, which reach past the column */
+html:root:not(#_):not(#_) .nxr-inner { margin: 0 -14px; padding: 0 14px; }
+html:root:not(#_):not(#_) .nxr-g.open .nxr-inner { padding-bottom: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .nxr-body, html:root:not(#_):not(#_) .nxr-inner, html:root:not(#_):not(#_) .nxr-chev svg { transition: none; }
+  html:root:not(#_):not(#_) .nxr-stats:active, html:root:not(#_):not(#_) .nxs-more:active { transform: none; }
+}
+
+html:root:not(#_):not(#_) .nxr-intel { margin: 0 0 4px; max-width: 78ch; }
+
+/* Stories: a divided list. Each row is a hover target that opens the article (the "Read on" link stretches over it).
+   Source line muted, headline strongest, tag and link in a right-hand column near the cursor. */
 html:root:not(#_):not(#_) .nxs-list { display: grid; min-width: 0; }
-html:root:not(#_):not(#_) .nxs { display: grid; gap: 6px; min-width: 0; padding: 12px 0; }
-html:root:not(#_):not(#_) .nxs + .nxs { border-top: 1px solid var(--line); }
-html:root:not(#_):not(#_) .nxs-list > .nxs:first-child { padding-top: 8px; }
-html:root:not(#_):not(#_) .nxs .nx-h { font-size: 0.875rem; }
+html:root:not(#_):not(#_) .nxs {
+  position: relative; isolation: isolate; min-width: 0; padding: 12px 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; row-gap: 6px;
+  grid-template-areas: "src kind" "h read" "ex read";
+  border-top: 1px solid var(--line);
+  transition: border-color var(--st-dur, 160ms) var(--st-ease, ease-out), transform var(--st-dur, 160ms) var(--st-ease, ease-out);
+}
+html:root:not(#_):not(#_) .nxs-list > .nxs:first-child { border-top-color: transparent; }
+html:root:not(#_):not(#_) .nxs::after {
+  content: ""; position: absolute; z-index: -1; inset: var(--dl-y, 4px) -12px; border-radius: 10px; pointer-events: none;
+  background: var(--st-tint, rgba(127, 127, 127, 0.05)); opacity: 0;
+  transition: opacity var(--st-dur, 160ms) var(--st-ease, ease-out), background-color var(--st-dur, 160ms) var(--st-ease, ease-out), box-shadow var(--st-dur, 160ms) var(--st-ease, ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .nxs:hover::after { opacity: 1; }
+  html:root:not(#_):not(#_) .nxs:hover, html:root:not(#_):not(#_) .nxs:hover + .nxs { border-top-color: transparent; }
+  html:root:not(#_):not(#_) .nxs:hover .nx-read { color: var(--ink); }
+  html:root:not(#_):not(#_) .nxs:hover .nx-read .nx-arr { transform: translate(2px, -2px); }
+}
+html:root:not(#_):not(#_) .nxs:has(.nxs-hit:active, .nx-read:active)::after { opacity: 1; background: var(--st-tint-2, rgba(127, 127, 127, 0.1)); transition-duration: 80ms; }
+html:root:not(#_):not(#_) .nxs:has(.nxs-hit:active, .nx-read:active) { transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .nxs:has(.nx-read:focus-visible)::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime, #D8F24A); }
+html:root:not(#_):not(#_) .nxs:has(.nx-read:is(:active, :focus-visible)), html:root:not(#_):not(#_) .nxs:has(.nx-read:is(:active, :focus-visible)) + .nxs { border-top-color: transparent; }
+html:root:not(#_):not(#_) .nxs .nx-src { grid-area: src; color: var(--faint); }
+html:root:not(#_):not(#_) .nxs .nx-src b { color: var(--muted); font-weight: 500; }
+html:root:not(#_):not(#_) .nxs .nx-src time { position: relative; z-index: 1; color: var(--faint); }
+html:root:not(#_):not(#_) .nxs .nx-kind { grid-area: kind; justify-self: end; align-self: center; margin: 0; }
+html:root:not(#_):not(#_) .nxs .nx-h { grid-area: h; max-width: 78ch; font-size: 0.875rem; font-weight: 600; }
 html:root:not(#_):not(#_) .nxs-ex {
-  margin: 0; max-width: 78ch; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); text-wrap: pretty;
+  grid-area: ex; margin: 0; max-width: 78ch; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); text-wrap: pretty;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-html:root:not(#_):not(#_) .nxs .nx-imp { margin: 4px 0 2px; max-width: 78ch; }
-html:root:not(#_):not(#_) .nxs .nx-read { min-height: 24px; margin-top: -2px; }
+html:root:not(#_):not(#_) .nxs .nx-read { grid-area: read; justify-self: end; align-self: end; position: relative; z-index: 1; min-height: 24px; white-space: nowrap; color: var(--muted); }
+/* The row's hit area: a second link to the same article, hidden from the tab order and screen readers */
+html:root:not(#_):not(#_) .nxs-hit { position: absolute; inset: var(--dl-y, 4px) -12px; z-index: 0; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
+html:root:not(#_):not(#_) .nxs .nx-read:focus-visible { outline: none; }
+html:root:not(#_):not(#_) .nx-arr { display: inline-block; margin-left: 4px; transition: transform var(--st-dur, 160ms) var(--st-ease, ease-out); }
 
-/* Show more for one player: a quiet text button under his list */
+/* Show more for one player: a full-width, low-emphasis pill row under his stories */
 html:root:not(#_):not(#_) .nxs-more {
-  justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin: 0 0 0 -8px; padding: 0 8px;
-  background: none; border: 0; border-radius: 8px; cursor: pointer;
-  font: 500 0.8125rem/1 var(--font-body); color: var(--ink);
-  transition-property: background-color, transform, color; transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, ease-out);
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; margin: 6px 0 0; padding: 0 16px;
+  background: none; border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
+  font: 500 0.8125rem/1 var(--font-body); color: var(--ink); -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, border-color, transform; transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, ease-out);
 }
-html:root:not(#_):not(#_) .nxs-left { color: var(--muted); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .nxs-more b { font: 500 0.8125rem/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .nxs-left { color: var(--muted); }
+html:root:not(#_):not(#_) .nxs-left b { color: var(--muted); }
 html:root:not(#_):not(#_) .nxs-more svg { color: var(--muted); transform: rotate(90deg); transition: transform 220ms var(--st-ease, ease-out); }
 html:root:not(#_):not(#_) .nxs-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
 @media (hover: hover) and (pointer: fine) {
-  html:root:not(#_):not(#_) .nxs-more:hover { background-color: var(--st-tint-2, rgba(127, 127, 127, 0.08)); }
+  html:root:not(#_):not(#_) .nxs-more:hover { background-color: var(--st-tint, rgba(127, 127, 127, 0.05)); border-color: var(--st-ring, var(--line)); }
+  html:root:not(#_):not(#_) .nxs-more:hover svg { color: var(--ink); }
 }
-html:root:not(#_):not(#_) .nxs-more:active { transform: scale(0.97); transition-duration: 100ms; }
-@media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .nxs-more:active { transform: none; }
-  html:root:not(#_):not(#_) .nxs-more svg { transition: none; }
-}
+html:root:not(#_):not(#_) .nxs-more:active { transform: scale(0.98); background-color: var(--st-tint-2, rgba(127, 127, 127, 0.1)); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .nxs-more:focus-visible { outline: 2px solid var(--lime, #D8F24A); outline-offset: 2px; }
 
-/* Loading rows: same footprint as a story row */
-html:root:not(#_):not(#_) .nxs-sk { gap: 8px; }
+/* Loading rows: same footprint as a player row with two stories */
+html:root:not(#_):not(#_) .nxs-skel { padding: 12px 0; }
+html:root:not(#_):not(#_) .nxs-sk { display: grid; gap: 8px; padding: 12px 0; }
 html:root:not(#_):not(#_) .nxs-sk b {
   display: block; height: 10px; border-radius: 5px;
   background: linear-gradient(90deg, var(--surface-3), var(--surface-2), var(--surface-3)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite;
@@ -177,16 +261,21 @@ html:root:not(#_):not(#_) .nxs-sk b.h { height: 13px; width: 78%; }
 html:root:not(#_):not(#_) .nxs-sk b.m { width: 52%; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .nxs-sk b { animation: none; } }
 
-/* Wider card: stories indent under the player's name so each list reads as his */
-@container nxr (min-width: 560px) {
-  html:root:not(#_):not(#_) .nxs-list, html:root:not(#_):not(#_) .nxs-more { margin-left: 48px; }
-  html:root:not(#_):not(#_) .nxs-more { margin-left: 40px; }
+/* Narrow card: the count folds away (the peek line carries the news), the tag stays top right, the link drops to the
+   bottom right of the story */
+@container nxr (max-width: 559px) {
+  html:root:not(#_):not(#_) .nxr-count { display: none; }
+  html:root:not(#_):not(#_) .nxr-pill-w { display: none; }
+  html:root:not(#_):not(#_) .nxr-pill-n { display: inline-flex; }
+  html:root:not(#_):not(#_) .nxr-pill-n:empty { display: none; }
+  html:root:not(#_):not(#_) .nxr-head { gap: 8px; }
+  html:root:not(#_):not(#_) .nxr-tog { gap: 10px; }
+  html:root:not(#_):not(#_) .nxr-stats { padding: 0 10px 0 8px; }
+  html:root:not(#_):not(#_) .nxs { grid-template-areas: "src kind" "h h" "ex ex" "read read"; column-gap: 12px; }
 }
-/* Wide card (about 1100px and up; the query reads the content box, inside 18px padding): player groups sit two across,
-   in rank order left to right, so the width fills */
-@container nxr (min-width: 1060px) {
-  html:root:not(#_):not(#_) .nxr-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
-  html:root:not(#_):not(#_) .nxr-list > .nxr-g:nth-child(2) { border-top: 0; padding-top: 6px; }
+/* Wider card: the body indents under the player's name so it reads as his */
+@container nxr (min-width: 560px) {
+  html:root:not(#_):not(#_) .nxr-inner { margin-left: 34px; }
 }
 
 /* "See the full matchup" under Their threats matches the scoreboard's: full-width row, ink label, muted chevron */
@@ -195,5 +284,3 @@ html:root:not(#_):not(#_) .wk-more svg { color: var(--muted); transition: transf
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .wk-more:hover svg { transform: translateX(3px); } }
 html:root:not(#_):not(#_) .wk-more:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }
 
-/* One player per row at every width: groups stack instead of sitting two across */
-html:root:not(#_):not(#_) .nxr-list { grid-template-columns: minmax(0, 1fr) !important; column-gap: 0 !important; }
