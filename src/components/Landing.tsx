@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Logo } from "./Logo";
-import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById } from "../data";
+import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
 import { activeTags, allNeeds, applyFormat, DEFAULT_FORMAT, findTrades, fmt, groupsFor } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Icon, PosBadge } from "./ui";
@@ -29,8 +29,6 @@ export function Landing({ onLive, onDemo }: {
   const [errFor, setErrFor] = useState("ld-user");
 
   applyFormat(DEFAULT_FORMAT);
-  // The landing is for Sleeper leagues, so it wears Sleeper's accent like the app does
-  useEffect(() => { document.documentElement.dataset.platform = "sleeper"; }, []);
   useEffect(() => {
     const prev = document.title;
     document.title = "Sources: fantasy football trades for Sleeper leagues";
@@ -49,12 +47,19 @@ export function Landing({ onLive, onDemo }: {
     return { needs, trade, mike, thin, you: needs.find((n) => n.team.you)! };
   }, []);
 
+  // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
+  const cast = useMemo(() => {
+    const seen = new Set<string>();
+    return TEAMS.flatMap((t) => t.roster).map(playerById).filter((p): p is Player => !!p && !/^[A-Z]{2,3}$/.test(p.id))
+      .sort((a, b) => b.proj - a.proj).filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, 7);
+  }, []);
+
   // The same trade card and message the app's pitch sheet makes
   const [cardUrl, setCardUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!demo.trade) return;
     let url: string | null = null, alive = true;
-    drawCard(demo.trade).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    drawCard(demo.trade, "216, 242, 74").then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [demo.trade]);
 
@@ -87,6 +92,34 @@ export function Landing({ onLive, onDemo }: {
     return () => { io.disconnect(); words.disconnect(); };
   }, []);
 
+  // Parallax: one rAF-throttled scroll and pointer read, written as CSS variables on the two layers that use them
+  const env = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+    let raf = 0, mx = 0, my = 0, tx = 0, ty = 0;
+    const tick = () => {
+      raf = 0;
+      // Ease the pointer toward its target so the layers drift instead of snapping
+      tx += (mx - tx) * 0.12; ty += (my - ty) * 0.12;
+      const y = Math.min(window.scrollY, 2400);
+      for (const el of [env.current, stage.current]) {
+        if (!el) continue;
+        el.style.setProperty("--sy", String(y));
+        el.style.setProperty("--mx", tx.toFixed(3));
+        el.style.setProperty("--my", ty.toFixed(3));
+      }
+      if (Math.abs(mx - tx) > 0.002 || Math.abs(my - ty) > 0.002) raf = requestAnimationFrame(tick);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const move = (e: PointerEvent) => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); };
+    addEventListener("scroll", kick, { passive: true });
+    if (fine) addEventListener("pointermove", move, { passive: true });
+    kick();
+    return () => { removeEventListener("scroll", kick); removeEventListener("pointermove", move); cancelAnimationFrame(raf); };
+  }, []);
+
   const form = (id: string) => (
     <>
       <label htmlFor={id} className="ld2-label">Your <PlatformName /> username</label>
@@ -115,7 +148,12 @@ export function Landing({ onLive, onDemo }: {
 
   return (
     <div className="landing ld2" ref={root}>
-      <nav className="ld-nav" aria-label="Sources">
+      <div className="ld2-env" ref={env} aria-hidden="true">
+        <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
+        <div className="env-field"><div className="env-turf" /></div>
+        <i className="env-grain" />
+      </div>
+      <nav className="ld-nav ld2-nav" aria-label="Sources">
         <div className="brand" style={{ padding: 0 }}><Logo height={28} /></div>
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
       </nav>
@@ -123,22 +161,31 @@ export function Landing({ onLive, onDemo }: {
       <main>
       <header className="ld-hero ld2-hero">
         <div className="ld2-copy">
-          <span className="ld2-eyebrow ld-rise"><PlatformLogo size={14} />For Sleeper leagues</span>
-          <h1 className="ld2-h1 ld-rise">Trades your league<br />will actually accept.</h1>
-          <p className="ld2-sub ld-rise d1">Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
-          <div className="ld-rise d2">{form("ld-user")}</div>
-          <button className="ld2-link ld-rise d3" onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
+          <span className="ld2-eyebrow ld2-in"><PlatformLogo size={14} />For Sleeper leagues</span>
+          <h1 className="ld2-h1 ld2-typed"><TypedHeadline lines={HEADLINES} /></h1>
+          <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
+          <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
+          <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
         </div>
 
+        <div className="ld2-stage" ref={stage}>
+        <div className="ld2-heads" aria-hidden="true">
+          {cast.map((p, i) => (
+            <span key={p.id} className={`ld2-head h${i}`} style={{ ["--i" as string]: i }}>
+              <span className="ld2-head-in"><Avatar p={p} size={56} /><b>{p.name.split(" ").slice(-1)[0]}</b></span>
+            </span>
+          ))}
+        </div>
         <div className="ld-preview ld2-preview" aria-hidden="true" {...{ inert: "" }}>
-          <div className="ld-rise d1"><Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} /></div>
+          <div className="ld2-card c1"><Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} /></div>
           {demo.trade && (
-            <article className="card nudge ld-preview-2 ld2-idea ld-rise d2">
+            <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
               <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
               <h3>{demo.mike.name} needs <em>a TE.</em></h3>
               <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
             </article>
           )}
+        </div>
         </div>
       </header>
 
@@ -149,9 +196,9 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld-section ld2-steps" aria-labelledby="ld-steps">
         <h2 id="ld-steps" className="ld-h2 ld2-reveal">Up and running in a minute.</h2>
         <ol>
-          <li className="ld2-reveal"><b>1</b><h3>Enter your username</h3><p>Your Sleeper username, nothing else. No password, no sign up form.</p></li>
-          <li className="ld2-reveal"><b>2</b><h3>Pick your league</h3><p>Sources loads rosters, projections, trades and waivers for the league you choose.</p></li>
-          <li className="ld2-reveal"><b>3</b><h3>Get your moves</h3><p>Trade ideas that help both sides, lineup fixes and waiver bids, refreshed through the week.</p></li>
+          <li className="ld2-reveal" style={{ ["--i" as string]: 0 }}><b>1</b><h3>Enter your username</h3><p>Your Sleeper username, nothing else. No password, no sign up form.</p></li>
+          <li className="ld2-reveal" style={{ ["--i" as string]: 1 }}><b>2</b><h3>Pick your league</h3><p>Sources loads rosters, projections, trades and waivers for the league you choose.</p></li>
+          <li className="ld2-reveal" style={{ ["--i" as string]: 2 }}><b>3</b><h3>Get your moves</h3><p>Trade ideas that help both sides, lineup fixes and waiver bids, refreshed through the week.</p></li>
         </ol>
       </section>
 
@@ -261,6 +308,57 @@ export function Landing({ onLive, onDemo }: {
         <span>Not affiliated with Sleeper. The {TEAMS.length} team sample league uses made up data.</span>
       </footer>
     </div>
+  );
+}
+
+/** Everything Sources does, one headline at a time. The first is the promise; the rest rotate in behind it. */
+const HEADLINES = [
+  "Trades your league\nwill actually accept.",
+  "Lineups set\nbefore kickoff.",
+  "Waiver bids\nsized to win.",
+  "Pitches written\naround their needs.",
+  "Win chances that\nmatch Sleeper live.",
+];
+
+/**
+ * Types the headline out, holds it, backs it out and types the next. Every phrase sits invisibly
+ * in the same grid cell so the hero never changes height. Screen readers get the first line as plain text.
+ * Pauses when the hero is off screen or the tab is hidden.
+ */
+function TypedHeadline({ lines }: { lines: string[] }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [text, setText] = useState("");
+  const [typing, setTyping] = useState(true);
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setText(lines[0]); setTyping(false); return; }
+    let i = 0, n = 0, dir = 1, timer = 0, visible = true;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !timer) step(); });
+    if (ref.current) io.observe(ref.current);
+    const step = () => {
+      timer = 0;
+      if (!visible || document.hidden) return;
+      const full = lines[i];
+      n += dir;
+      setText(full.slice(0, n));
+      let wait: number;
+      if (dir > 0 && n >= full.length) { dir = -1; setTyping(false); wait = i === 0 ? 4200 : 3000; }
+      else if (dir < 0 && n <= 0) { dir = 1; i = (i + 1) % lines.length; setTyping(true); wait = 380; }
+      else { setTyping(true); wait = dir > 0 ? (full[n - 1] === "\n" ? 160 : 38 + Math.random() * 46) : 18; }
+      timer = window.setTimeout(step, wait);
+    };
+    const vis = () => { if (!document.hidden && !timer) step(); };
+    document.addEventListener("visibilitychange", vis);
+    timer = window.setTimeout(step, 420);
+    return () => { clearTimeout(timer); io.disconnect(); document.removeEventListener("visibilitychange", vis); };
+  }, [lines]);
+  return (
+    <>
+      <span className="sr-only">{lines[0].replace("\n", " ")}</span>
+      <span className="ld2-typed-box" ref={ref} aria-hidden="true">
+        {lines.map((l) => <span key={l} className="ld2-typed-size">{l}</span>)}
+        <span className="ld2-typed-live"><span className="ld2-typed-text">{text}</span><i className={`ld2-caret${typing ? " on" : ""}`} /></span>
+      </span>
+    </>
   );
 }
 

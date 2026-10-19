@@ -28,7 +28,7 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
  * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
  */
-export async function drawCard(t: Trade): Promise<Blob | null> {
+export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | null> {
   const them = teamById(t.partnerId);
   const W = 1080, H = 1350, X = 72;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -36,7 +36,7 @@ export async function drawCard(t: Trade): Promise<Blob | null> {
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Geist', system-ui, sans-serif`;
-  const css = getComputedStyle(document.documentElement), RGB = css.getPropertyValue("--lime-rgb").trim() || "45, 212, 191", A = (o: number) => `rgba(${RGB},${o})`;
+  const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "45, 212, 191", A = (o: number) => `rgba(${RGB},${o})`;
   const LIME = css.getPropertyValue("--lime").trim() || "#2DD4BF", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
 
