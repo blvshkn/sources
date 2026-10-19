@@ -31,6 +31,7 @@ import "./trade-toolbar.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
+import "./icon-center.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
