@@ -309,8 +309,52 @@ html:root:not(#_):not(#_):not(#_) .mu-row { padding-top: 11.5px; padding-bottom:
 html:root:not(#_):not(#_):not(#_) .pick { min-height: 62px; }
 /* A lineup row with a pending swap keeps its divider like every other row */
 html:root:not(#_):not(#_):not(#_) .lu-row + .lu-row.has-swap { box-shadow: inset 0 1px 0 var(--line) !important; }
-/* Waiver rows: the divider is an inset line on the row's wrapper, inside the row, so the pill starts a pixel lower */
+/* Waiver rows: the divider is a border on the row's wrapper, so the row's own box starts below it */
 html:root:not(#_):not(#_):not(#_) .wv-row::after { inset: var(--dl-y) 6px; }
-html:root:not(#_):not(#_):not(#_) .wv + .wv > .wv-row::after { top: calc(var(--dl-y) + 1px); }
 /* Positions tables: a long team name plus the champion's trophy wrapped to a second line and made that one row taller */
 html:root:not(#_):not(#_):not(#_) .st-row.st-pos .st-who b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* A pending-swap row's divider hides with the rest when it or the row above is active */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .lu-row + .lu-row.has-swap.tap:hover,
+  html:root:not(#_):not(#_):not(#_) .lu-row.tap:hover + .lu-row.has-swap { box-shadow: none !important; }
+}
+html:root:not(#_):not(#_):not(#_) .lu-row + .lu-row.has-swap.tap:is(:active, :focus-visible),
+html:root:not(#_):not(#_):not(#_) .lu-row.tap:is(:active, :focus-visible) + .lu-row.has-swap { box-shadow: none !important; }
+/* Inbox items: even space above the text and below the action button */
+html:root:not(#_):not(#_):not(#_) .ibx-item { padding-top: 11px; padding-bottom: 15px; }
+
+/* ---------- Sidebar and tab bar nav: a soft rounded tint, never a slab or a texture ---------- */
+html:root:not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar button) {
+  background-image: none !important;
+  transition-property: background-color, transform, opacity, color; transition-duration: var(--st-dur); transition-timing-function: var(--st-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .nav-ix button:hover { background-color: color-mix(in srgb, var(--ink) 5%, transparent) !important; color: var(--ink) !important; }
+}
+html:root:not(#_):not(#_):not(#_) .nav-ix button:active { background-color: color-mix(in srgb, var(--ink) 8%, transparent) !important; transform: scale(0.98); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar button):focus-visible { outline: 2px solid var(--lime) !important; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .nav-ix button:active { transform: none; } }
+
+/* ---------- Leftovers the sweep caught ---------- */
+/* The trade partner row on League: its pill carries the focus ring, the square outline goes */
+html:root:not(#_):not(#_):not(#_) .card .partner-card:focus-visible { outline: none !important; }
+/* Tag actions (Clear, Still true) inside a tag line: a soft tint like every quiet button */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) :is(.nl, .team-card) .tag-line .btn:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; }
+}
+html:root:not(#_):not(#_):not(#_) :is(.nl, .team-card) .tag-line .btn:not(:disabled):active { background-color: color-mix(in srgb, var(--ink) 10%, transparent) !important; }
+/* Pitch sheet send methods: a one-step surface lift on hover; the chosen one keeps its ring */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .method:hover { background-color: var(--surface-3); }
+}
+html:root:not(#_):not(#_):not(#_) .method { transition-property: background-color, box-shadow, transform; transition-duration: var(--st-dur); transition-timing-function: var(--st-ease); }
+html:root:not(#_):not(#_):not(#_) .method:active { transform: scale(0.99); transition-duration: 100ms; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .method:active { transform: none; } }
+/* Tag composer: the field's ring is for typing. Pressing the chip, mic or send button with a mouse no longer
+   lights the whole composer; keyboard focus on those buttons draws their own ring. */
+html:root:not(#_):not(#_):not(#_) .composer:focus-within:not(:has(:is(input, textarea):focus)) { border-color: var(--line); box-shadow: none; }
+html:root:not(#_):not(#_):not(#_) .composer-who:focus-within:not(:has(:focus-visible)) { outline: none; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who:hover { background-color: rgba(var(--lime-rgb), 0.22) !important; }
+}
+html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who:active { background-color: rgba(var(--lime-rgb), 0.26) !important; transform: scale(0.97); }
