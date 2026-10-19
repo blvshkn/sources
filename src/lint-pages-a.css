@@ -103,14 +103,44 @@ html:root:not(#_):not(#_) .team-card .tend-stats { grid-template-columns: minmax
 /* Alone on Tendencies, the league-chat card ran 640px wide over full-width cards; it spans the row. */
 html:root:not(#_):not(#_)[data-tab="league"] :is(.main-inner > .capture-card, .lg-top > .capture-card:only-child) { max-width: none; }
 
+/* ---- Sidebar league card ------------------------------------------------ */
+/* The avatar had a 10px margin on top of the 10px gap, so at 1024 "Demo League" wrapped onto two
+   lines. One gap, and the name and its line stay on one line with an ellipsis for long names. */
+html:root:not(#_):not(#_) .side .league-pill.lsw-btn .lsw-me { margin-right: 0; }
+html:root:not(#_):not(#_) .side .league-pill.lsw-btn .grow > :is(b, span) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---- Wire > Intel: news card ------------------------------------------- */
 /* "Show all players" was a 10px-corner box under "Show 3 more", a full pill, in the same card.
    Both are pills (like "More intel"), same 40px height and gap. */
 html:root:not(#_):not(#_) .nxr .nx-more.nxr-all { border-radius: 999px; gap: 8px; }
 
+/* ---- Settings > About ---------------------------------------------------- */
+/* The first link drew a divider right under the heading (no other Settings card has one), and the
+   links' 13.5px hover-pill padding stacked on the card's 18px, so the text sat 28px under the
+   heading and 32px above the card's end. Same 14px and 18px as the Nudges card; the pill keeps
+   its room inside the negative margin. */
+html:root:not(#_):not(#_) .settings-group > .section-title + .set-link { border-top-color: transparent !important; margin-top: -13.5px; }
+html:root:not(#_):not(#_) .settings-group > .set-link:last-child { margin-bottom: -13.5px; }
+
+/* ---- How it works, Legal --------------------------------------------------- */
+/* The document card was the only card at 22px; 18px like Settings, so its text lines up with theirs. */
+html:root:not(#_):not(#_):is([data-tab="how"], [data-tab="legal"]) .card.doc { padding-left: 18px; padding-right: 18px; }
+
+/* ---- Ask ------------------------------------------------------------------- */
+/* Empty state: the mark and "Try one of these" are centred, so the starter chips under them are too
+   (after a reply they follow the conversation's left edge as before). */
+html:root:not(#_):not(#_) .chat > .chat-empty ~ .chips-row { justify-content: center; }
+/* The send button was 40 wide and 44 tall next to a 44px field: a 44px circle. */
+html:root:not(#_):not(#_) .chat-input > .btn-icon { width: 44px; height: 44px; min-width: 44px; padding: 0; border-radius: 999px; flex: none; }
+
 /* ---- Matchup card (Wire, and the landing's preview) ----------------------- */
 /* The champion's trophy stays on the team name's last word. */
 html:root:not(#_):not(#_) .sb2-who .nw { white-space: nowrap; }
+
+/* ---- Sidebar footer ---------------------------------------------------------- */
+/* "Demo league with sample / data. Connect Sleeper" broke mid-sentence at 1280 and 1024. The action
+   takes its own line, so the note never splits. */
+html:root:not(#_):not(#_) .side-foot > .linkish { display: block; margin-top: 2px; text-align: left; }
 
 /* ---- League > Activity ------------------------------------------------------ */
 /* A row with a waiver bid squeezed its Drop column 23px left of the rows without one. When the feed
