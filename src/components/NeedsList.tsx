@@ -49,6 +49,8 @@ export function NeedsList({ needs, tags, fade, focusId, topPartnerId, onFocused,
   onKeepTag: (id: string) => void;
 }) {
   const rows = [...needs].sort((a, b) => byStandings(a.team, b.team));
+  // The playoff cut, drawn between the last team in and the first team out (same count as Standings)
+  const spots = LEAGUE.playoffTeams ?? 6;
   const [open, setOpenRaw] = useState<string[]>(() => readOpen(topPartnerId ? [topPartnerId] : []));
   const setOpen = (next: string[]) => { setOpenRaw(next); try { sessionStorage.setItem(storeKey(), JSON.stringify(next)); } catch { /* ignore */ } };
   const toggle = (id: string) => setOpen(open.includes(id) ? open.filter((x) => x !== id) : [...open, id]);
@@ -75,24 +77,23 @@ export function NeedsList({ needs, tags, fade, focusId, topPartnerId, onFocused,
         const isOpen = open.includes(t.id);
         const teamTags = tags.filter((x) => x.teamId === t.id);
         const extra = n.surplus && n.surplus !== n.need ? (n.surplus as Pos) : null;
-        const tone = n.mode === "Contender" ? "good" : ""; // Seller is a trade opportunity, not bad for you: muted like Bubble
         const champ = championLabel(t.id);
         return (
-          <div key={t.id} id={`team-${t.id}`} className={`nl-item${t.you ? " you" : ""}${isOpen ? " open" : ""}`}>
+          <div key={t.id} id={`team-${t.id}`} className={`nl-item${t.you ? " you" : ""}${isOpen ? " open" : ""}${i === spots && spots < rows.length ? " after-cut" : ""}`}>
+            {i === spots && spots < rows.length && <span className="nl-cut" aria-hidden="true"><span>Playoff line</span></span>}
             <button
               type="button"
               className="nl-row"
               id={`nl-row-${t.id}`}
               aria-expanded={isOpen}
               aria-controls={`nl-panel-${t.id}`}
-              aria-label={`${i + 1}. ${t.name}${champ ? `, ${champ}` : ""}, ${t.you ? "you" : t.manager}, ${t.record}, ${n.mode}, needs ${n.need}${extra ? `, has extra ${extra}` : ""}, projected ${n.lineup.total.toFixed(1)} a week`}
+              aria-label={`${i + 1}. ${t.name}${champ ? `, ${champ}` : ""}, ${t.you ? "you" : t.manager}, ${t.record}${i >= spots ? ", outside the playoff line" : ""}, needs ${n.need}${extra ? `, has extra ${extra}` : ""}, projected ${n.lineup.total.toFixed(1)} a week`}
               onClick={() => toggle(t.id)}
             >
               <span className="nl-rk">{i + 1}</span>
               <TeamAvatar t={t} size={32} />
               <b className="nl-name">{t.name}<Trophy teamId={t.id} size={13} /></b>
               <small className="nl-sub">{t.you ? "You" : t.manager} · {t.record}</small>
-              <span className={`nl-mode tc-mode ${tone}`}>{n.mode}</span>
               <span className="nl-fit">
                 <span className="nl-chip"><small>Needs</small><PosBadge pos={n.need} /></span>
                 {extra && <span className="nl-chip nl-extra"><small>Has extra</small><PosBadge pos={extra} /></span>}
@@ -110,6 +111,7 @@ export function NeedsList({ needs, tags, fade, focusId, topPartnerId, onFocused,
                       <div className="ti-stat"><dt>Projected</dt><dd>{n.lineup.total.toFixed(1)}<small>/wk</small></dd></div>
                     </dl>
                     <div className="tc-fit">
+                      <span><small>Outlook</small><b className="nl-outlook">{n.mode}</b></span>
                       <span><small>Needs</small><PosBadge pos={n.need} /></span>
                       {extra && <span><small>Has extra</small><PosBadge pos={extra} /></span>}
                     </div>
@@ -123,7 +125,7 @@ export function NeedsList({ needs, tags, fade, focusId, topPartnerId, onFocused,
                       {teamTags.map((tag) => {
                         const faded = isFaded(tag, fade);
                         return (
-                          <div key={tag.id} className="tag-line" style={{ opacity: tagStrength(tag, fade) }}>
+                          <div key={tag.id} className="tag-line" style={{ ["--tag-o" as string]: tagStrength(tag, fade) }}>
                             <span className={`tag-dot tag-${tag.kind}`} />
                             <span className="grow" style={{ minWidth: 0 }}><b>{tag.text}</b>{tag.playerId && !tag.text.includes(playerById(tag.playerId).name) ? ` (${playerById(tag.playerId).name})` : ""} · {tag.weeksOld === 0 ? "this week" : `${tag.weeksOld} wk ago`}{faded ? " · faded" : ""}</span>
                             {tag.weeksOld >= 2 && <button className="btn btn-ghost btn-xs" onClick={() => onKeepTag(tag.id)} aria-label={`Still true: ${tag.text}`}>Still true</button>}

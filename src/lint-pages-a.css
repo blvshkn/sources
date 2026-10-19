@@ -14,3 +14,47 @@ html:root:not(#_):not(#_) .vb-list .vb-rank { text-align: left; }
 @media (max-width: 560px) {
   html:root:not(#_):not(#_) .vb-list .vb-head { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 10px; }
 }
+
+/* ---- League > Needs ---------------------------------------------------- */
+/* The open panel started 12px left of the team names (84px vs 18 + 22 + 12 + 32 + 12 = 96px). */
+@container nl (min-width: 561px) {
+  html:root:not(#_):not(#_) .nl-body { padding-left: 96px; }
+}
+/* Clear is always the last column, so it lines up whether or not "Still true" is there. */
+html:root:not(#_):not(#_) .nl .tag-line > .btn:last-child { grid-column: 4; }
+/* A fading tag dims its words, not its buttons (dimmed buttons read as disabled). */
+html:root:not(#_):not(#_) .nl .tag-line > :not(.btn) { opacity: var(--tag-o, 1); }
+
+/* Collapsed rows drop the Contender/Bubble/Seller badge (it's plain text in the open detail now),
+   so the name gets the room; Needs and the projection stay right and vertically centred. */
+html:root:not(#_):not(#_) .nl-row {
+  grid-template-columns: 22px 32px minmax(0, 1fr) auto 64px 16px;
+  grid-template-areas: "rk av name fit proj chev" "rk av sub fit proj chev";
+}
+html:root:not(#_):not(#_) .nl-fit { align-self: center; }
+html:root:not(#_):not(#_) .nl-outlook { font-size: 0.8125rem; font-weight: 600; color: var(--ink); }
+@container nl (max-width: 560px) {
+  html:root:not(#_):not(#_) .nl-row {
+    grid-template-columns: 16px 32px minmax(0, 1fr) auto 42px 14px;
+    grid-template-areas: "rk av name fit proj chev" "rk av sub fit proj chev";
+  }
+  html:root:not(#_):not(#_) .nl-fit { width: auto; justify-self: end; align-self: center; }
+  /* On the Needs tab the pill says it; the word comes back in the open detail and the row's label */
+  html:root:not(#_):not(#_) .nl-row .nl-chip small { display: none; }
+}
+
+/* Playoff line: the dashed lime cut Standings draws, laid over the 1px divider above the first team
+   out (centred on it, so no row moves). Labelled on the line, small and muted. */
+html:root:not(#_):not(#_) .nl-item.after-cut { border-top-color: transparent !important; }
+html:root:not(#_):not(#_) .nl-cut {
+  position: absolute; z-index: 2; left: 0; right: 0; top: -1.5px; height: 0;
+  border-top: 2px dashed rgba(var(--tab-rgb), 0.55); pointer-events: none;
+}
+html:root:not(#_):not(#_) .nl-cut > span {
+  position: absolute; right: 18px; top: -1px; transform: translateY(-50%);
+  padding: 0 6px; background: var(--surface); border-radius: 4px;
+  font: 500 0.625rem/12px var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
+}
+@container nl (max-width: 560px) {
+  html:root:not(#_):not(#_) .nl-cut > span { right: 14px; }
+}
