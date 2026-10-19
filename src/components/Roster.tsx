@@ -234,18 +234,17 @@ function WeekPanel({ v }: { v: WeekView }) {
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.pos === "DEF" ? "Team defense" : p.nfl}</span></span>
-        {p.line && p.pts !== null && <span className="lu-line">{p.line}</span>}
+        {v.kind === "past" && (p.line && p.pts !== null ? <span className="lu-line">{p.line}</span> : <span className="lu-line" aria-hidden="true">&nbsp;</span>)}
       </span>
       {p.pts === null ? <span className="lu-pts bye">BYE</span> : <span className={`lu-pts${v.kind === "past" ? " actual" : ""}`}>{p.pts.toFixed(1)}</span>}
     </div>
   );
   return (
     <>
-      <div className="lu-week-sum">
-        <span><i>{v.kind === "past" ? "You scored" : "Best lineup projects"}</i><b>{v.total.toFixed(1)}</b></span>
-        {v.oppTotal !== undefined && <span className="r"><i>{v.oppName ?? "Opponent"}</i><b className="dim">{v.oppTotal.toFixed(1)}</b></span>}
-        {v.oppTotal !== undefined && <span className={`lu-result ${v.total >= v.oppTotal ? "w" : "l"}`}>{v.total >= v.oppTotal ? "W" : "L"}</span>}
-      </div>
+      {/* Past weeks: the team strip above already shows the final score and W/L, so only future weeks get a summary */}
+      {v.kind === "future" && <div className="lu-week-sum">
+        <span><i>Best lineup projects</i><b>{v.total.toFixed(1)}</b></span>
+      </div>}
       <div className="lu-list-head"><b>{v.kind === "past" ? "Started" : "Starters"}</b><span className="tiny muted">{v.kind === "past" ? "Pts" : "Proj"}</span></div>
       {v.starters.map((x, i) => x.p ? row(x.p, x.slot) : <div key={`e${i}`} className="lu-row"><span className={`lu-slot s-${x.slot}`}>{SLOT_LABEL[x.slot] ?? x.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /></div>)}
       <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{v.bench.length} players</span></div>
@@ -254,13 +253,13 @@ function WeekPanel({ v }: { v: WeekView }) {
   );
 }
 
-/** Loading a week: the same rows WeekPanel draws (summary, starters, bench), so the list doesn't jump when it lands. */
+/** Loading a week: the same rows WeekPanel draws (future summary, starters, bench), so the list doesn't jump when it lands. */
 function WeekSkel({ week }: { week: number }) {
   const starters = order().length, bench = Math.max(0, YOU.roster.length + (YOU.special?.length ?? 0) - starters);
-  const row = (k: string, bench?: boolean) => <div key={k} className={`lu-row lu-row-skel${bench ? " bench" : ""}`} aria-hidden="true"><span className="lu-slot" /><span className="ir-empty" /><span className="lu-who"><span className="lu-name">&nbsp;</span><span className="lu-meta">&nbsp;</span></span><span className="lu-pts" /></div>;
+  const row = (k: string, bench?: boolean) => <div key={k} className={`lu-row lu-row-skel${bench ? " bench" : ""}`} aria-hidden="true"><span className="lu-slot" /><span className="ir-empty" /><span className="lu-who"><span className="lu-name">&nbsp;</span><span className="lu-meta">&nbsp;</span>{week < WEEK && <span className="lu-line">&nbsp;</span>}</span><span className="lu-pts" /></div>;
   return (
     <div className="lu-wskel" aria-busy="true" aria-label={`Loading Week ${week}`}>
-      <div className="lu-week-sum" aria-hidden="true"><span><i>&nbsp;</i><b>&nbsp;</b></span></div>
+      {week > WEEK && <div className="lu-week-sum" aria-hidden="true"><span><i>&nbsp;</i><b>&nbsp;</b></span></div>}
       <div className="lu-list-head" aria-hidden="true"><b>&nbsp;</b></div>
       {Array.from({ length: starters }, (_, i) => row(`s${i}`))}
       <div className="lu-list-head sub" aria-hidden="true"><b>&nbsp;</b></div>
