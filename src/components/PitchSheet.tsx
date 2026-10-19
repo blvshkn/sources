@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { usePullToDismiss } from "./sheetDrag";
 import { Trade, fmt, needsFor } from "../engine";
-import { LEAGUE_NAME, WEEK, playerById, teamById, sleeperUrl } from "../data";
+import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch, sellPoint } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
@@ -33,7 +33,7 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
  * from you and meet at the horizon, two rows of hash marks cross them, and it all fades out toward the edges.
  * No grid of horizontal lines, so it reads as a football field rather than graph paper.
  */
-function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: number) => string) {
+function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: number) => string, fadeFrom = H * 0.64) {
   const f = document.createElement("canvas"); f.width = W; f.height = H;
   const h = f.getContext("2d"); if (!h) return;
   const hy = H * 0.44, K = H - hy, vx = W / 2;
@@ -56,15 +56,25 @@ function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: num
   m.addColorStop(0, "rgba(0,0,0,1)"); m.addColorStop(0.45, "rgba(0,0,0,0.85)"); m.addColorStop(1, "rgba(0,0,0,0)");
   h.fillStyle = m; h.fillRect(0, 0, W, H);
   // And nothing behind the players: the lines only start once the roster rows are done
-  const v = h.createLinearGradient(0, H * 0.64, 0, H * 0.8); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,1)");
+  const v = h.createLinearGradient(0, fadeFrom, 0, Math.min(H, fadeFrom + H * 0.16)); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,1)");
   h.fillStyle = v; h.fillRect(0, 0, W, H);
   g.drawImage(f, 0, 0);
 }
 
 /** The card is shared outside the app, so it defaults to initials in team colors: no player likeness or NFL marks. Pass { photos: true } to opt in to headshots. */
+/** The card is shared outside the app, so it defaults to initials in team colors: no player likeness or NFL marks. Pass { photos: true } to opt in to headshots.
+ *  It reads from the receiver's side: what they get, what they send, and one plain line on what it does for them.
+ *  The card grows with the deal: every player keeps a full-size row, and the image gets taller instead of cramming. */
 export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: boolean } = {}): Promise<Blob | null> {
   const them = teamById(t.partnerId);
-  const W = 1080, H = 1350, X = 72;
+  const sp = sellPoint(t);
+  const need = needsFor(them).need;
+  const W = 1080, X = 72, ROW = 112, AV = 80;
+  // Layout first, so the canvas is exactly as tall as the deal needs (never shorter than a 4:5 post)
+  const TOP = 420;                        // header, league line, greeting, "from" line
+  const sectionH = (n: number) => 44 + n * ROW;
+  const PANEL = sp.kind === "none" ? 0 : 236;
+  const H = Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 110);
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
@@ -74,15 +84,15 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   const FM = (w: number, px: number) => `${w} ${px}px 'Geist Mono', ui-monospace, monospace`;
   const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "216, 242, 74", A = (o: number) => `rgba(${RGB},${o})`;
   const LIME = css.getPropertyValue("--lime").trim() || "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
-  const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
+  const GOOD = css.getPropertyValue("--good").trim() || "#7BE08F";
+  const track = (txt: string, x: number, y: number, sp2: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp2; } return cx; };
 
-  // Night field: dark turf, a floodlight glow, faint yard lines
+  // Night field: dark turf, a floodlight glow, faint yard lines that only start below the players
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#181A19"); bg.addColorStop(1, "#0F1110");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
   glow.addColorStop(0, A(0.26)); glow.addColorStop(1, A(0));
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
-  drawField(g, W, H, A);
 
   // Header
   g.fillStyle = LIME; g.beginPath(); g.arc(X + 9, 92, 9, 0, Math.PI * 2); g.fill();
@@ -91,58 +101,61 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   // Two runs: the words in Geist, the week number in Geist Mono like every other number
   g.fillStyle = MUTED; g.font = F(500, 26); const wk = `${LEAGUE_NAME || "Your league"} · Week `; g.fillText(wk, X, 160);
   const wkX = X + g.measureText(wk).width; g.font = FM(500, 26); g.fillText(`${WEEK}`, wkX, 160);
-  g.fillStyle = INK; g.font = F(700, 78); g.fillText(`${them.manager},`, X, 270, W - X * 2);
-  g.fillStyle = LIME; g.fillText("let's make a deal.", X, 356, W - X * 2);
+  g.fillStyle = INK; g.font = F(700, 78); g.fillText(`${them.manager},`, X, 266, W - X * 2);
+  g.fillStyle = LIME; g.fillText("let's make a deal.", X, 350, W - X * 2);
+  // Who it's from, so a screenshot in a group chat still makes sense
+  g.fillStyle = MUTED; g.font = F(500, 26); const from = YOU && YOU.manager && YOU.manager !== "You" ? `${YOU.name} (${YOU.manager})` : YOU?.name ?? "a league mate"; g.fillText(`An offer from ${from}`, X, 398, W - X * 2);
 
   // Players
-  const total = t.give.length + t.get.length;
-  const rowH = total <= 3 ? 122 : total <= 4 ? 108 : 94, av = rowH - 30;
   const imgs = await Promise.all([...t.give, ...t.get].map((id) => { const s = opts.photos === true ? sleeperId(playerById(id)) : undefined; return s ? loadImg(`https://sleepercdn.com/content/nfl/players/thumb/${s}.jpg`) : Promise.resolve(null); }));
-  let y = 440, k = 0;
-  const side = (label: string, ids: string[], hot: boolean) => {
-    g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); track(label, X, y, 4); y += 26;
+  let y = TOP + 50, k = 0;
+  const side = (label: string, hint: string, ids: string[], hot: boolean) => {
+    g.fillStyle = hot ? LIME : MUTED; g.font = F(700, 22); const ex = track(label, X, y, 4);
+    g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(hint, ex + 14, y);
+    y += 22;
     ids.forEach((id) => {
-      const p = playerById(id), img = imgs[k++], cy = y + rowH / 2;
-      g.save(); g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.closePath(); const [tc1, tc2] = teamColors(p.nfl); g.fillStyle = img ? "#1E2723" : tc1; g.fill(); g.clip();
+      const p = playerById(id), img = imgs[k++], cy = y + ROW / 2;
+      g.save(); g.beginPath(); g.arc(X + AV / 2, cy, AV / 2, 0, Math.PI * 2); g.closePath(); const [tc1, tc2] = teamColors(p.nfl); g.fillStyle = img ? "#1E2723" : tc1; g.fill(); g.clip();
       if (img) {
         // Sleeper thumbs aren't square: crop to cover the circle instead of squashing the face
         const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, sq = Math.min(iw, ih);
-        g.drawImage(img, (iw - sq) / 2, 0, sq, sq, X, cy - av / 2, av, av);
+        g.drawImage(img, (iw - sq) / 2, 0, sq, sq, X, cy - AV / 2, AV, AV);
       }
-      else { g.fillStyle = tc2; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
+      else { g.fillStyle = tc2; g.font = F(700, AV * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + AV / 2, cy + AV * 0.13); g.textAlign = "left"; }
       g.restore();
-      g.strokeStyle = hot ? A(0.55) : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();
-      g.fillStyle = INK; g.font = F(700, Math.round(rowH * 0.4)); g.fillText(p.name, X + av + 28, cy + 2, W - X * 2 - av - 28);
-      g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${p.pos} · ${p.nfl}`, X + av + 28, cy + 38);
-      y += rowH;
+      g.strokeStyle = hot ? A(0.55) : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + AV / 2, cy, AV / 2, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = INK; g.font = F(700, 44); g.fillText(p.name, X + AV + 28, cy + 2, W - X * 2 - AV - 28);
+      g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${p.pos} · ${p.nfl}`, X + AV + 28, cy + 38);
+      y += ROW;
     });
   };
-  side("YOU GET", t.give, true);
+  side("YOU GET", "", t.give, true);
   // Swap divider
-  y += 14; g.strokeStyle = "rgba(255,255,255,0.12)"; g.lineWidth = 2; g.beginPath(); g.moveTo(X, y); g.lineTo(W - X, y); g.stroke();
+  y += 30; g.strokeStyle = "rgba(255,255,255,0.12)"; g.lineWidth = 2; g.beginPath(); g.moveTo(X, y); g.lineTo(W - X, y); g.stroke();
   g.fillStyle = "#151D19"; g.beginPath(); g.arc(W / 2, y, 26, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(255,255,255,0.18)"; g.stroke();
   g.strokeStyle = MUTED; g.lineWidth = 3; g.lineCap = "round";
   g.beginPath(); g.moveTo(W / 2 - 7, y - 11); g.lineTo(W / 2 - 7, y + 11); g.moveTo(W / 2 - 13, y + 5); g.lineTo(W / 2 - 7, y + 11); g.lineTo(W / 2 - 1, y + 5);
   g.moveTo(W / 2 + 7, y + 11); g.lineTo(W / 2 + 7, y - 11); g.moveTo(W / 2 + 1, y - 5); g.lineTo(W / 2 + 7, y - 11); g.lineTo(W / 2 + 13, y - 5); g.stroke();
-  y += 44;
-  side("I GET", t.get, false);
+  y += 60;
+  side("YOU SEND", "", t.get, false);
 
-  // Impact panel: lead with what's good for THEM. A loss for them never goes on the card; if their lineup doesn't
-  // improve, the card shows the market value they pick up, or the need it fills. Our own gain stays off it.
-  const sp = sellPoint(t);
-  const need = needsFor(them).need;
+  // The field sits under the bottom of the card, starting just below the last player
+  drawField(g, W, H, A, Math.min(H * 0.9, y + 20));
+
+  // What it does for them, in one plain line. A loss for them never goes on the card, and neither does our gain.
   if (sp.kind !== "none") {
-    const py = H - 340, ph = 196, GOOD = css.getPropertyValue("--good").trim() || "#7BE08F";
-    // Solid base first so the field lines don't run through the numbers
+    const py = y + 40, ph = 196;
     g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph);
     g.fillStyle = "#141716"; g.fill(); g.fillStyle = A(0.09); g.fill(); g.strokeStyle = A(0.35); g.lineWidth = 2; g.stroke();
-    const label = sp.kind === "pts" ? "YOUR STARTERS" : sp.kind === "value" ? "TRADE VALUE" : `YOUR STARTING ${sp.pos}`;
-    g.fillStyle = MUTED; g.font = F(700, 20); track(label, X + 32, py + 50, 4);
-    const big = sp.kind === "pts" ? fmt(sp.delta) : sp.kind === "value" ? `+${Math.round(sp.pct)}%` : "Upgrade";
-    const unit = sp.kind === "pts" ? "pts / week" : sp.kind === "value" ? "more than you send" : "";
-    g.fillStyle = GOOD; g.font = sp.kind === "need" ? F(700, 88) : FM(700, 96); g.fillText(big, X + 28, py + 150);
-    if (unit) { const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText(unit, X + 40 + bw, py + 148); }
-    if (sp.kind !== "need" && t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Upgrades your starting ${need}.`, X, py + ph + 50); }
+    g.fillStyle = MUTED; g.font = F(700, 20); track("WHAT THIS DOES FOR YOU", X + 32, py + 48, 4);
+    const big = sp.kind === "pts" ? fmt(sp.delta) : sp.kind === "value" ? `+${Math.round(sp.pct)}%` : `Starting ${sp.pos}`;
+    const line = sp.kind === "pts" ? "points a week for your starting lineup"
+      : sp.kind === "value" ? "more trade value than you send"
+      : "filled with a real starter";
+    g.fillStyle = GOOD; g.font = sp.kind === "need" ? F(700, 64) : FM(700, 84); g.fillText(big, X + 30, py + 136);
+    const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 30); g.fillText(line, X + 48 + bw, py + 132, W - X * 2 - bw - 80);
+    // A second, smaller reason when it also fills their weakest spot
+    if (sp.kind !== "need" && t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 24); g.fillText(`Also fills your weakest spot, ${need}.`, X + 32, py + 174); }
   }
 
   // Footer
