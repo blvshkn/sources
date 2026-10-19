@@ -61,6 +61,8 @@ export interface Team {
   taxi?: string[];
   /** Kickers and defenses. Shown in the lineup; the trade engine leaves them out. */
   special?: string[];
+  /** K/DEF set in the Sleeper lineup this week. Undefined when we only have a roster (demo). */
+  setSpecial?: string[];
 }
 
 /** A kicker or team defense. Kept apart from skill players so trades and waivers ignore them. */

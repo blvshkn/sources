@@ -336,6 +336,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       ir: (r.reserve ?? []).filter((id) => players[id]),
       taxi: (r.taxi ?? []).filter((id) => players[id]),
       special: (r.players ?? []).filter((id) => specials[id] && !r.reserve?.includes(id) && !r.taxi?.includes(id)),
+      // The kicker and defense actually set in Sleeper (an empty slot stays empty), so projected totals match Sleeper's
+      setSpecial: r.starters?.length ? r.starters.filter((id) => !!specials[id]) : undefined,
     };
   });
   const you = teams.find((t) => t.you);
