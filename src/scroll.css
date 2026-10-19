@@ -47,8 +47,8 @@ html:root:not(#_):not(#_) body *::-webkit-scrollbar-button { display: none; widt
 /* ---------- Contained scrollers: our own scrollbar (components/ScrollArea.tsx) ---------- */
 /* Every scroller inside a rounded box hides its native bar and gets a drawn thumb instead, so nothing the
    OS draws (classic bars with "Show scroll bars: Always") can run past the corners. */
-html:root:not(#_):not(#_) [data-sa] { scrollbar-width: none; overscroll-behavior: contain; }
-html:root:not(#_):not(#_) [data-sa]::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html:root:not(#_):not(#_) [data-sa] { scrollbar-width: none !important; overscroll-behavior: contain; }
+html:root:not(#_):not(#_) [data-sa]::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
 
 html:root:not(#_):not(#_) .sa-track {
   position: absolute; z-index: 2; width: 14px; margin: 0; padding: 0; box-sizing: border-box;

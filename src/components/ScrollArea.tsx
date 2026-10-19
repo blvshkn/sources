@@ -67,19 +67,18 @@ export function attachScrollbar(el: HTMLElement): () => void {
     if (!Number.isNaN(z)) track.style.zIndex = String(z + 1);
   }
   const host = beside ? parent! : el;
+  // Mounted only while there's overflow, so a list that empties out still matches :empty and :last-child rules
   const mount = () => { if (track.parentElement !== host) host.appendChild(track); };
-  mount();
 
   let raf = 0, idle = 0, hot = false, drag: { y: number; top: number; ratio: number; id: number } | null = null;
   let geo = { trackH: 0, thumbH: 0, max: 0 };
 
   const update = () => {
     raf = 0;
-    mount();
     const sh = el.scrollHeight, ch = el.clientHeight;
     const max = sh - ch;
-    if (max <= 1 || ch <= 0 || !el.isConnected) { track.style.display = "none"; geo.max = 0; return; }
-    track.style.display = "";
+    if (max <= 1 || ch <= 0 || !el.isConnected) { if (track.parentElement) track.remove(); geo.max = 0; return; }
+    mount();
     const cs = getComputedStyle(el);
     const bt = parseFloat(cs.borderTopWidth) || 0, br = parseFloat(cs.borderRightWidth) || 0;
     const clear = cornerClearance(el);
@@ -176,7 +175,8 @@ export function attachScrollbar(el: HTMLElement): () => void {
   const observeKids = () => { ro.observe(el); for (const c of Array.from(el.children)) if (c !== track) ro.observe(c); };
   observeKids();
   const mo = new MutationObserver((recs) => {
-    if (recs.every((r) => r.target === track || track.contains(r.target as Node))) return;
+    const ours = (n: Node) => n === track || track.contains(n);
+    if (recs.every((r) => ours(r.target) || (r.type === "childList" && [...Array.from(r.addedNodes), ...Array.from(r.removedNodes)].every(ours)))) return;
     observeKids(); schedule();
   });
   mo.observe(el, { childList: true, subtree: true, characterData: true });
