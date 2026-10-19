@@ -26,6 +26,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   }, []);
   const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setShown(false); window.setTimeout(onClose, 220); };
   const sheet = useRef<HTMLElement>(null);
+  const body = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it
   usePullToDismiss(sheet,
@@ -64,8 +65,10 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
-        <WeekStepper week={week} onChange={(w) => { setWeek(w); sheet.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />
+        <WeekStepper week={week} onChange={(w) => { setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />
         </div>
+        {/* Only this scrolls; the shell clips it to the rounded corners and the header above stays put */}
+        <div ref={body} className="ps-body" data-sheet-scroll>
         {note && cur && <p className="ps-why">{note}</p>}
         {status && week >= WEEK && <p className={`ps-inj${p.status === "O" ? " out" : ""}`}><Icon name="alert" size={14} />{status}</p>}
 
@@ -131,6 +134,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
         </div>
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
+        </div>
       </section>
     </div>
   );

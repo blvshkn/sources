@@ -14,11 +14,14 @@ export function usePullToDismiss(
     const el = sheet.current;
     if (!el) return;
     let startY = 0, startX = 0, dragging = false, decided = false, hist: { y: number; t: number }[] = [];
+    // A sheet with a fixed header scrolls an inner body (marked data-sheet-scroll); read that one
+    let scroller: Element = el;
     const skip = (t: EventTarget | null) => t instanceof Element && !!t.closest("textarea, input, select, [contenteditable], .no-pull");
 
     const start = (e: TouchEvent) => {
       if (e.touches.length !== 1 || skip(e.target)) { decided = true; dragging = false; return; }
       startY = e.touches[0].clientY; startX = e.touches[0].clientX;
+      scroller = el.querySelector("[data-sheet-scroll]") ?? el;
       dragging = false; decided = false; hist = [{ y: startY, t: performance.now() }];
     };
     const move = (e: TouchEvent) => {
@@ -27,7 +30,7 @@ export function usePullToDismiss(
       if (!decided) {
         if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;
         decided = true;
-        dragging = dy > 0 && Math.abs(dy) > Math.abs(dx) && el.scrollTop <= 0;
+        dragging = dy > 0 && Math.abs(dy) > Math.abs(dx) && scroller.scrollTop <= 0;
         if (!dragging) return;
         startY = y; // start tracking from here so the sheet doesn't jump
       }
