@@ -457,3 +457,13 @@ html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:is(:active, :focus
 html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]),
 html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]):is(:hover, :focus, :focus-visible, :active, :visited),
 html:root:not(#_):not(#_) :is(.btn, .chip-btn, .ti-btn, .topk-cta, a[class*="btn"]) * { text-decoration: none; }
+
+/* Text buttons and link-style controls don't underline either: weight and color mark them, and they
+   brighten on hover. Only links inside running prose keep an underline. */
+html:root:not(#_):not(#_) :is(.linkish, .ti-link, button, [role="button"], .brief-row .grow, .nx-more, .ps-why button),
+html:root:not(#_):not(#_) :is(.linkish, .ti-link, button, [role="button"], .brief-row .grow, .nx-more, .ps-why button):is(:hover, :focus-visible, :active) { text-decoration: none; }
+html:root:not(#_):not(#_) :is(.linkish, .ti-link) { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) :is(.linkish, .ti-link):hover { color: rgb(var(--tab-rgb)); }
+html:root:not(#_):not(#_) a:is([class*="btn"], [class*="cta"], [class*="claim"]) { text-decoration: none; }
+/* Start/Sit compare: the better option is good-for-you green, not brand lime */
+html:root:not(#_):not(#_) .sx-bar.win i, html:root:not(#_):not(#_) .sx-bar.a.win i { background: var(--good); }

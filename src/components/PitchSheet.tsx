@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
 import { usePullToDismiss } from "./sheetDrag";
-import { Trade, fmt, needsFor } from "../engine";
+import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
-import { Audience, Tone, draftPitch, sellPoint } from "../pitch";
+import { Audience, Tone, draftPitch, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 
@@ -67,14 +67,13 @@ function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: num
  *  The card grows with the deal: every player keeps a full-size row, and the image gets taller instead of cramming. */
 export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: boolean } = {}): Promise<Blob | null> {
   const them = teamById(t.partnerId);
-  const sp = sellPoint(t);
-  const need = needsFor(them).need;
+  const rs = reasonsFor(t).slice(0, 3);
   const W = 1080, X = 72, ROW = 112, AV = 80;
   // Layout first, so the canvas is exactly as tall as the deal needs (never shorter than a 4:5 post)
   const TOP = 420;                        // header, league line, greeting, "from" line
   const sectionH = (n: number) => 44 + n * ROW;
-  const PANEL = sp.kind === "none" ? 0 : 236;
-  const H = Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 110);
+  const PANEL = rs.length ? 150 + rs.length * 64 : 0;
+  const H = Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 150);
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
@@ -143,23 +142,24 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   drawField(g, W, H, A, Math.min(H * 0.9, y + 20));
 
   // What it does for them, in one plain line. A loss for them never goes on the card, and neither does our gain.
-  if (sp.kind !== "none") {
-    const py = y + 40, ph = 196;
+  if (rs.length) {
+    const py = y + 40, ph = PANEL - 40;
     g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph);
     g.fillStyle = "#141716"; g.fill(); g.fillStyle = A(0.09); g.fill(); g.strokeStyle = A(0.35); g.lineWidth = 2; g.stroke();
-    g.fillStyle = MUTED; g.font = F(700, 20); track("WHAT THIS DOES FOR YOU", X + 32, py + 48, 4);
-    const big = sp.kind === "pts" ? fmt(sp.delta) : sp.kind === "value" ? `+${Math.round(sp.pct)}%` : `Starting ${sp.pos}`;
-    const line = sp.kind === "pts" ? "points a week for your starting lineup"
-      : sp.kind === "value" ? "more trade value than you send"
-      : "filled with a real starter";
-    g.fillStyle = GOOD; g.font = sp.kind === "need" ? F(700, 64) : FM(700, 84); g.fillText(big, X + 30, py + 136);
-    const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 30); g.fillText(line, X + 48 + bw, py + 132, W - X * 2 - bw - 80);
-    // A second, smaller reason when it also fills their weakest spot
-    if (sp.kind !== "need" && t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 24); g.fillText(`Also fills your weakest spot, ${need}.`, X + 32, py + 174); }
+    g.fillStyle = MUTED; g.font = F(700, 20); track("WHY THIS WORKS FOR YOU", X + 32, py + 48, 4);
+    // One line per reason: the number big and green, what it means beside it, the before/after under it
+    // Text starts on one column, after the widest number
+    const bw = Math.max(...rs.map((r, i) => { g.font = FM(700, i === 0 ? 52 : 40); return g.measureText(r.big).width; }));
+    rs.forEach((r, i) => {
+      const ry = py + 106 + i * 64;
+      g.fillStyle = GOOD; g.font = FM(700, i === 0 ? 52 : 40); g.fillText(r.big, X + 30, ry);
+      g.fillStyle = INK; g.font = F(600, 28); g.fillText(r.line, X + 48 + bw, ry - 4, W - X * 2 - bw - 80);
+      if (r.detail) { g.fillStyle = MUTED; g.font = F(500, 22); g.fillText(r.detail, X + 48 + bw, ry + 24, W - X * 2 - bw - 80); }
+    });
   }
 
   // Footer
-  g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - 40);
+  g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - X - 4);
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
 

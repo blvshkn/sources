@@ -2394,14 +2394,15 @@ button.sb2-open:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-
 
 /* ---------- Trade card preview (the shared image) ---------- */
 .tcard { margin: 0; display: grid; gap: 8px; }
-.tcard img, .tcard-skel { display: block; width: 100%; aspect-ratio: 4 / 5; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.6); }
-.tcard img { object-fit: cover; background: #121413; }
+.tcard img, .tcard-skel { display: block; width: 100%; aspect-ratio: auto; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.6); }
+.tcard img { height: auto; object-fit: contain; background: #121413; }
+.tcard-skel { aspect-ratio: 4 / 5; }
 .tcard-skel { background: linear-gradient(110deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 200% 100%; animation: tc-shim 1.2s linear infinite; }
 @keyframes tc-shim { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .tcard-skel { animation: none; } }
 .tcard figcaption { font-size: 0.8125rem; color: var(--muted); }
 .tcard figcaption a { color: rgb(var(--tab-rgb)); font-weight: 600; }
-@media (min-width: 861px) { .tcard img, .tcard-skel { max-height: 520px; width: auto; margin: 0 auto; } }
+@media (min-width: 861px) { .tcard img, .tcard-skel { max-height: 640px; width: auto; max-width: 100%; margin: 0 auto; } }
 
 /* ---------- Pitch sheet actions ---------- */
 .sa2 { display: grid; gap: 8px; }
