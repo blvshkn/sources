@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, teamNick } from "../data";
 import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
 import { SWING, useLive, type Live } from "../live";
-import { NewsItem, byNewest, sourcesLine, usePlayerNews } from "../news";
 import { seasonFor } from "../schedule";
-import { Defense, Usage, defenseVs, loadPosWeeks, oppTeam, usageFor } from "../usage";
-import { StoryCard } from "./News";
+import { PosWeeks, Usage, defenseVs, loadPosWeeks, oppTeam, ptsOf, usageFor } from "../usage";
+import { statLine } from "../weeks";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./ui";
 
@@ -59,10 +58,9 @@ export function statusLine(p: Player): string | null {
 export function statusDetail(p: Player): string | null {
   const line = statusLine(p);
   if (!line || onBye(p.nfl) || !p.status) return line;
-  const word = p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : null;
-  const m = word ? new RegExp(`^${word}(?: \\(([^)]+)\\))?(?:,\\s*|\\s+|$)(.*)$`).exec(line) : null;
+  const m = /^(Questionable|Doubtful|Out)(?: \(([^)]+)\))?(?:,\s*|\s+|$)(.*)$/.exec(line);
   if (!m) return line;
-  const text = [m[1] ? `${m[1]} injury` : "", m[2]].filter(Boolean).join(", ");
+  const text = [m[2] ? `${m[2]} injury` : "", m[3]].filter(Boolean).join(", ");
   return text ? text[0].toUpperCase() + text.slice(1) : null;
 }
 
@@ -297,40 +295,38 @@ export function LineupCall({ p }: { p: Player }) {
   );
 }
 
-// ---- Usage and matchup (share one stats load) ------------------------------------------
+// ---- Usage, matchup and the week card (share one stats load) ------------------------------
 type Load<T> = { state: "loading" } | { state: "ready"; v: T } | { state: "none"; why: string };
-function useDepth(p: Player): { usage: Load<Usage>; def: Load<Defense> } {
-  const [s, setS] = useState<{ usage: Load<Usage>; def: Load<Defense> }>({ usage: { state: "loading" }, def: { state: "loading" } });
+/** Every past week of stats at his position: feeds the usage trend, a past week's stat line and points allowed. */
+function usePosWeeks(p: Player): Load<PosWeeks> {
+  const [s, setS] = useState<Load<PosWeeks>>({ state: "loading" });
   useEffect(() => {
     let live = true;
-    const opp = oppTeam(p.opp);
-    loadPosWeeks(p.pos).then((d) => {
-      if (!live) return;
-      const u = usageFor(p, d), df = opp ? defenseVs(p.pos, opp, d) : null;
-      setS({
-        usage: u ? { state: "ready", v: u } : { state: "none", why: WEEK <= 1 ? "No games played yet this season." : `No stat lines from Sleeper for ${p.name} yet.` },
-        def: df ? { state: "ready", v: df } : { state: "none", why: "" },
-      });
-    }).catch(() => live && setS({ usage: { state: "none", why: "Couldn't load stats from Sleeper. Try again in a minute." }, def: { state: "none", why: "" } }));
+    loadPosWeeks(p.pos).then((v) => live && setS({ state: "ready", v }))
+      .catch(() => live && setS({ state: "none", why: "Couldn't load stats from Sleeper. Try again in a minute." }));
     return () => { live = false; };
-  }, [p.id, p.pos, p.opp]);
+  }, [p.pos]);
   return s;
 }
 
 const show = (v: number, pct?: boolean, dec?: number) => (pct ? `${Math.round(v * 100)}%` : v.toFixed(dec ?? 1));
 
-export function UsageBlock({ p, usage }: { p: Player; usage: Load<Usage> }) {
+export function UsageBlock({ p, data }: { p: Player; data: Load<PosWeeks> }) {
+  const u: Load<Usage> = data.state !== "ready" ? data : (() => {
+    const v = usageFor(p, data.v);
+    return v ? { state: "ready" as const, v } : { state: "none" as const, why: WEEK <= 1 ? "No games played yet this season." : `No stat lines from Sleeper for ${p.name} yet.` };
+  })();
   return (
-    <section className="pd-blk pd-usage" aria-label="Usage and role" aria-busy={usage.state === "loading"}>
-      <div className="ps-sub"><b>Usage</b><span>{usage.state === "ready" ? `${usage.v.games} ${usage.v.games === 1 ? "game" : "games"}` : ""}</span></div>
-      {usage.state === "loading" ? <div className="pd-skel" aria-hidden="true">{Array.from({ length: 5 }, (_, i) => <span key={i} />)}</div>
-        : usage.state === "none" ? <p className="ps-none">{usage.why}</p>
+    <section className="pd-blk pd-usage" aria-label="Usage and role" aria-busy={u.state === "loading"}>
+      <div className="ps-sub"><b>Season usage</b><span>{u.state === "ready" ? `${u.v.games} ${u.v.games === 1 ? "game" : "games"}` : ""}</span></div>
+      {u.state === "loading" ? <div className="pd-skel" aria-hidden="true">{Array.from({ length: 5 }, (_, i) => <span key={i} />)}</div>
+        : u.state === "none" ? <p className="ps-none">{u.why}</p>
         : (
           <>
             <table className="pd-tbl">
-              <thead><tr><th scope="col"><span className="sr-only">Stat</span></th><th scope="col">Last 3</th><th scope="col">Season</th><th scope="col"><Term t="Rank" tip={`Where his season average ranks among ${POS_PLURAL[p.pos]} with a real role${usage.v.demo ? " in the demo league" : ""}. 1 is the most.`} /></th></tr></thead>
+              <thead><tr><th scope="col"><span className="sr-only">Stat</span></th><th scope="col">Last 3</th><th scope="col">Season</th><th scope="col"><Term t="Rank" tip={`Where his season average ranks among ${POS_PLURAL[p.pos]} with a real role${u.v.demo ? " in the demo league" : ""}. 1 is the most.`} /></th></tr></thead>
               <tbody>
-                {usage.v.rows.map((r) => {
+                {u.v.rows.map((r) => {
                   const d = r.season ? (r.last3 - r.season) / r.season : 0;
                   const dir = Math.abs(d) < 0.1 ? "" : d > 0 ? " up" : " down";
                   return (
@@ -344,79 +340,119 @@ export function UsageBlock({ p, usage }: { p: Player; usage: Load<Usage> }) {
                 })}
               </tbody>
             </table>
-            <p className="pd-fine">{usage.v.demo ? "Demo stats, built to look like a real season." : `From Sleeper's weekly stats, Weeks ${usage.v.first} to ${usage.v.last}.`} Last 3 is green when it's 10% or more above his season, red when it's 10% below.</p>
+            <p className="pd-fine">{u.v.demo ? "Demo stats, built to look like a real season." : `From Sleeper's weekly stats, Weeks ${u.v.first} to ${u.v.last}.`} Last 3 is green when it's 10% or more above his season, red when it's 10% below.</p>
           </>
         )}
     </section>
   );
 }
 
-export function MatchupBlock({ p, def }: { p: Player; def: Load<Defense> }) {
-  const opp = oppTeam(p.opp);
-  const cell = seasonFor(p).find((c) => c.week === WEEK);
-  if (onBye(p.nfl) || !opp) return (
-    <section className="pd-blk pd-match" aria-label="Matchup"><div className="ps-sub"><b>Matchup</b></div><p className="ps-none">{onBye(p.nfl) ? "On bye this week." : "No game found for this week."}</p></section>
+/** The week's opponent from the season slate ("@MIA", "vMIA"), or this week's game line. */
+const oppOf = (p: Player, week: number) => {
+  const cell = seasonFor(p).find((c) => c.week === week);
+  const raw = week === WEEK && p.opp ? p.opp : cell?.opp ?? null;
+  return { cell, raw, team: oppTeam(raw), away: /^@/.test(raw ?? "") };
+};
+
+export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks>; week: number }) {
+  const { cell, team: opp, away, raw } = oppOf(p, week);
+  const bye = week === WEEK ? onBye(p.nfl) : !!cell && !cell.opp;
+  if (bye || !opp) return (
+    <section className="pd-blk pd-match" aria-label="Matchup"><div className="ps-sub"><b>Matchup</b></div><p className="ps-none">{bye ? `On bye in Week ${week}.` : `No game found for Week ${week}.`}</p></section>
   );
-  const home = /^vs\b/.test(p.opp ?? "") ? "Home" : /^@/.test(p.opp ?? "") ? "Away" : "";
   const ahead = seasonFor(p).filter((c) => !c.past && c.proj !== undefined && c.proj > 0).map((c) => c.proj!);
   const avg = ahead.length ? ahead.reduce((a, b) => a + b, 0) / ahead.length : 0;
-  const d = def.state === "ready" ? def.v : null;
+  const d = data.state === "ready" ? defenseVs(p.pos, opp, data.v) : null;
   const third = d ? Math.ceil(d.of / 3) : 0;
   const dTone = d ? (d.rank <= third ? "good" : d.rank > d.of - third ? "tough" : "ok") : null;
-  const tone = cell?.tone;
+  const tone = cell?.tone, past = week < WEEK;
   return (
     <section className="pd-blk pd-match" aria-label="Matchup">
-      <div className="ps-sub"><b>Matchup</b><span>{[dayOf(p.gameDate), home].filter(Boolean).join(" · ")}</span></div>
+      <div className="ps-sub"><b>Matchup</b><span>{[week === WEEK ? dayOf(p.gameDate) : "", raw ? (away ? "Away" : "Home") : ""].filter(Boolean).join(" · ")}</span></div>
       <div className="pd-opp">
-        <span className="pd-opp-t"><b>{/^@/.test(p.opp ?? "") ? "at" : "vs"} {opp}</b><small>{teamNick(opp).replace(/^the /, "")} defense</small></span>
+        <span className="pd-opp-t"><b>{away ? "at" : "vs"} {opp}</b><small>{teamNick(opp).replace(/^the /, "")} defense</small></span>
         {d && dTone ? <span className={`pd-tone t-${dTone}`}>{dTone === "good" ? `Soft on ${POS_PLURAL[p.pos]}` : dTone === "tough" ? `Tough on ${POS_PLURAL[p.pos]}` : `Average on ${POS_PLURAL[p.pos]}`}</span>
           : tone ? <span className={`pd-tone t-${tone}`}>{tone === "good" ? "Good matchup" : tone === "tough" ? "Tough matchup" : "Even matchup"}</span> : null}
       </div>
       <dl className="pd-mx">
-        {def.state === "loading" ? <div className="pd-skel" aria-hidden="true"><span /><span /></div> : d ? (
+        {data.state === "loading" ? <div className="pd-skel" aria-hidden="true"><span /><span /></div> : d ? (
           <div>
-            <dt><Term t={`Allows to ${POS_PLURAL[p.pos]}`} tip={`Fantasy points per game ${opp} has given up to every ${p.pos} it has faced${d.demo ? " (demo estimate)" : `, from Sleeper's weekly stats over ${d.games} ${d.games === 1 ? "game" : "games"}`}. League average is ${f1(d.leagueAvg)}.`} /></dt>
+            <dt><Term t={`Allows to ${POS_PLURAL[p.pos]}`} tip={`Fantasy points per game ${opp} has given up to every ${p.pos} it has faced this season${d.demo ? " (demo estimate)" : `, from Sleeper's weekly stats over ${d.games} ${d.games === 1 ? "game" : "games"}`}. League average is ${f1(d.leagueAvg)}.`} /></dt>
             <dd><b>{f1(d.perGame)}</b><span className={`pd-rk${dTone ? ` t-${dTone}` : ""}`}>{d.rank <= d.of / 2 ? `${ord(d.rank)} most` : `${ord(d.of + 1 - d.rank)} fewest`}</span></dd>
           </div>
         ) : null}
-        {cell?.proj !== undefined && avg > 0 && (
+        {!past && cell?.proj !== undefined && avg > 0 && (
           <div>
             <dt><Term t="Schedule mark" tip="The good, even or tough mark on his season schedule: his projection for this game against his average projection for the rest of the season. 10% above is good, 10% below is tough." /></dt>
             <dd><b>{f1(cell.proj)}</b><span>vs {f1(avg)} avg ahead</span>{tone && <span className={`pd-rk t-${tone}`}>{tone === "good" ? "Good" : tone === "tough" ? "Tough" : "Even"}</span>}</dd>
           </div>
         )}
       </dl>
-      {!d && def.state !== "loading" && <p className="pd-fine">Points allowed by position aren't available, so the mark comes from his projection for this game against his average ahead.</p>}
+      {!d && data.state !== "loading" && !past && <p className="pd-fine">Points allowed by position aren't available, so the mark comes from his projection for this game against his average ahead.</p>}
     </section>
   );
 }
 
-/** Usage and matchup together, so they share one stats request. */
-export function UsageAndMatchup({ p }: { p: Player }) {
-  const { usage, def } = useDepth(p);
-  return <><UsageBlock p={p} usage={usage} /><MatchupBlock p={p} def={def} /></>;
-}
-
-// ---- News, de-emphasized ---------------------------------------------------------------
-export function SheetNews({ p, open: startOpen }: { p: Player; open?: boolean }) {
-  const { items, loading } = usePlayerNews(p);
-  const list: NewsItem[] = byNewest(items);
-  const [open, setOpen] = useState(!!startOpen);
-  const [all, setAll] = useState(false);
-  const shown = all ? list : list.slice(0, 2);
-  const newest = list[0];
+// ---- A week other than this one --------------------------------------------------------
+/** Past week: what he scored, his stat line and snaps. Upcoming week: projection, opponent, bye and status. */
+export function WeekCard({ p, week, data, avg }: { p: Player; week: number; data: Load<PosWeeks>; avg: number | null }) {
+  const { cell, team: opp, away } = oppOf(p, week);
+  const bye = !!cell && !cell.opp;
+  const head = (k: string, big: string, cls = "") => (
+    <div className="ps-hero-main"><span className="ps-k">{k}</span><b className={cls}>{big}</b></div>
+  );
+  if (week < WEEK) {
+    const h = LEAGUE.history?.[week];
+    const row = data.state === "ready" ? data.v.rows.get(week)?.find((r) => r.id === p.id) : undefined;
+    const pts = typeof h?.points[p.id] === "number" ? h.points[p.id] : cell?.pts ?? (row ? ptsOf(p.pos, row.stats) : undefined);
+    const snap = row?.stats.off_snp !== undefined && row.stats.tm_off_snp ? row.stats.off_snp / row.stats.tm_off_snp : undefined;
+    const vs = row?.opp ?? opp;
+    const role = h ? (h.starters.includes(p.id) ? "Started for you" : h.players.includes(p.id) ? "On your bench" : null) : null;
+    const diff = pts !== undefined && avg !== null ? round1(pts - avg) : null;
+    return (
+      <div className="ps-hero pd-wk" aria-label={`Week ${week} result`}>
+        {head(`Week ${week} · Final`, bye ? "Bye" : pts !== undefined ? f1(pts) : "n/a", bye ? "bye" : "")}
+        <dl className="ps-hero-side">
+          <div><dt>Opponent</dt><dd>{bye ? "None" : vs ? `${away ? "@" : "v"}${vs}` : "n/a"}</dd></div>
+          {snap !== undefined && <div><dt>Snap share</dt><dd>{Math.round(snap * 100)}%</dd></div>}
+        </dl>
+        {!bye && (
+          <div className="pd-wk-body">
+            {diff !== null && Math.abs(diff) >= 0.5 && <span className={`ps-trend ${diff > 0 ? "up" : "down"}`}>{diff > 0 ? "+" : ""}{f1(diff)} vs his {f1(avg!)} avg</span>}
+            <p className="pd-line">
+              <span className="pd-k">Stat line</span>
+              {data.state === "loading" ? <span className="pd-skel" aria-hidden="true"><span /></span>
+                : row ? <b>{statLine(p.pos, row.stats) || "No counting stats"}</b>
+                : <span className="muted">{pts ? "Stat line not available for this week." : "Did not play."}</span>}
+            </p>
+            {role && <p className="pd-fine">{role} in Week {week}.</p>}
+          </div>
+        )}
+      </div>
+    );
+  }
+  // Upcoming
+  const status = statusLine(p);
   return (
-    <section className="pd-blk pd-news" id="ps-news" aria-label={`News on ${p.name}`} aria-busy={loading}>
-      <button type="button" className="pd-news-row" aria-expanded={open} onClick={() => setOpen((o) => !o)} disabled={!loading && !list.length}>
-        <span className="pd-news-k"><b>Latest news</b><small>{loading ? "Checking sources" : list.length ? (open ? `${list.length} ${list.length === 1 ? "story" : "stories"}` : newest?.title) : `Nothing recent. We check ${sourcesLine()}.`}</small></span>
-        {list.length > 0 && <Icon name="chev" size={16} />}
-      </button>
-      {open && list.length > 0 && (
-        <>
-          <div className="nx-list">{shown.map((n) => <StoryCard key={n.id ?? n.url} n={n} />)}</div>
-          {list.length > 2 && <button type="button" className="nx-more" aria-expanded={all} onClick={() => setAll((a) => !a)}>{all ? "Show newest 2" : `Show all (${list.length})`}<Icon name="chev" size={14} /></button>}
-        </>
-      )}
-    </section>
+    <div className="ps-hero pd-wk" aria-label={`Week ${week} outlook`}>
+      {head(`Week ${week} · Projected`, bye ? "Bye" : cell?.proj !== undefined ? f1(cell.proj) : "n/a", bye ? "bye" : "")}
+      <dl className="ps-hero-side">
+        <div><dt>Opponent</dt><dd>{bye ? "None" : opp ? `${away ? "@" : "v"}${opp}` : "n/a"}</dd></div>
+      </dl>
+      <div className="pd-wk-body">
+        {bye ? <p className="pd-fine">No game in Week {week}. Plan a fill-in if he's in your lineup.</p>
+          : <p className="pd-fine">{cell?.playoff ? "Fantasy playoff week. " : ""}Projection from {isDemoLeague() ? "the demo slate" : "Sleeper"}, and it moves as the week gets closer.</p>}
+        {status && <p className="pd-fine pd-wk-inj"><Icon name="alert" size={12} />Status today: {status}</p>}
+      </div>
+    </div>
   );
+}
+const isDemoLeague = () => LEAGUE.mode === "demo";
+
+/** Usage, matchup and (for other weeks) the week card, sharing one stats load. This week the matchup follows usage;
+ *  other weeks the card and its matchup pair up at the top. */
+export function WeekDepth({ p, week, avg }: { p: Player; week: number; avg: number | null }) {
+  const data = usePosWeeks(p);
+  if (week === WEEK) return <><UsageBlock p={p} data={data} /><MatchupBlock p={p} data={data} week={week} /></>;
+  return <><WeekCard p={p} week={week} data={data} avg={avg} /><MatchupBlock p={p} data={data} week={week} /><UsageBlock p={p} data={data} /></>;
 }

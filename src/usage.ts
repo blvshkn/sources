@@ -37,7 +37,8 @@ function demoLine(p: Player, w: number, pts: number): Stats {
   if (p.pos === "QB") {
     const rushYd = Math.round(r("ry") * 30 * (0.5 + role)), rushTd = pts > 26 && r("rt") > 0.6 ? 1 : 0, passTd = Math.max(0, Math.round((pts - rushYd / 10 - rushTd * 6) / 9));
     const passYd = Math.max(90, Math.round((pts - passTd * 4 - rushYd / 10 - rushTd * 6 + (r("i") > 0.6 ? 2 : 0)) * 25));
-    Object.assign(out, { off_snp: snaps - Math.round(r("s") * 3), pass_att: 26 + Math.round(r("pa") * 14), pass_yd: passYd, pass_td: passTd, pass_int: r("i") > 0.6 ? 1 : 0,
+    const att = 26 + Math.round(r("pa") * 14);
+    Object.assign(out, { off_snp: snaps - Math.round(r("s") * 3), pass_att: att, pass_cmp: Math.round(att * (0.58 + r("pc") * 0.14)), pass_yd: passYd, pass_td: passTd, pass_int: r("i") > 0.6 ? 1 : 0,
       rush_att: 2 + Math.round(r("ra") * 6 * (0.5 + role)), rush_yd: rushYd, rush_td: rushTd, pass_rz_att: 2 + Math.round(r("pz") * 5), rush_rz_att: Math.round(r("rz") * 2) });
   } else if (p.pos === "RB") {
     const share = Math.min(0.84, Math.max(0.32, 0.3 + role * 0.55 + (r("sh") - 0.5) * 0.12));
