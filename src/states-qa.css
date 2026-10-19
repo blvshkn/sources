@@ -30,7 +30,8 @@ html:root:not(#_):not(#_) :is(
   .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .nav button, .nav-ix button, .league-pill, .lsw-btn, .top-league, .page-league,
   .linkish, .ibx-allread, .ibx-x, .ps-x, .st-back, .composer-btn, .qs-add, .qs-x, .qs-done, .qs-opts button, .wv-ta-list button, .tp-list button,
   .partner-card, .tp-btn, .mu-mine, .mu-opt, .sb2, .sb2-open, .sb2-partner, .sb-stat-link, .lu-mx-open, .sr-main, .ld2-link, .ld2-again, .ld2-faq summary,
-  .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .ibx-item, .saved-x, .nudge-link, .ti-nope, .fb-opt, .set-link
+  .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .ibx-item, .saved-x, .nudge-link, .ti-nope, .fb-opt, .set-link,
+  .side-logo, .switch
 ) {
   transition-property: background-color, box-shadow, transform, opacity, color;
   transition-duration: var(--st-dur);
@@ -120,6 +121,13 @@ html:root:not(#_):not(#_) :is(.btn, .chip-btn):disabled:active { transform: none
   html:root:not(#_):not(#_) .ld2-faq summary:hover, html:root:not(#_):not(#_) .ld2-faq summary:hover * { color: var(--ink); }
 }
 
+/* Logo link and switches */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .side-logo:hover { opacity: 0.82; }
+  html:root:not(#_):not(#_) .switch:not(.on):hover { background-color: color-mix(in srgb, var(--ink) 14%, transparent); }
+}
+html:root:not(#_):not(#_) .side-logo:active { transform: scale(0.98); transition-duration: 100ms; }
+
 /* ---------- Tabs and pills: hover tints, the active one stays distinct ---------- */
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) :is(.seg button, .wv2-pos button, .wv-pos button):not([aria-pressed="true"]):hover { background-color: var(--st-tint) !important; color: var(--ink) !important; }
@@ -198,7 +206,7 @@ html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }
 /* ---------- Reduced motion: state changes stay, movement goes ---------- */
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) :is(
-    .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link,
+    .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link, .side-logo,
     .partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main, .sb2,
     .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt
   ):is(:active, :has(> .sb2-open:active)) { transform: none !important; }
