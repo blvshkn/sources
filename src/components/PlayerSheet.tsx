@@ -53,7 +53,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   return (
     <div className={`ps-wrap${shown ? " in" : ""}`}>
       <div ref={scrim} className="ps-scrim" onClick={close} aria-hidden="true" />
-      <section ref={sheet} className="ps" role="dialog" aria-modal="true" aria-labelledby="ps-name">
+      <section ref={sheet} className="ps ps-player" role="dialog" aria-modal="true" aria-labelledby="ps-name">
         <div className="pd-top">
         <span className="ps-handle" aria-hidden="true" />
         <header className="ps-head">
