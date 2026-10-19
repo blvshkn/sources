@@ -45,7 +45,7 @@ export function HowItWorks({ onBack }: { onBack: () => void }) {
           <h2>Lineups, matchups and waivers</h2>
           <ul>
             <li><b>Best lineup</b> fills your league's slots with the highest projected players who can play there.</li>
-            <li><b>Win chance</b> compares the two projected totals and allows for normal week-to-week swings.</li>
+            <li><b>Win chance</b> follows your platform: the two projected totals, with less room for surprises as fewer points are left to play.</li>
             <li><b>Playoff odds</b> come from thousands of simulated rest-of-season schedules using each team's current best lineup.</li>
             <li><b>Waiver bids</b> are a suggested range of your remaining budget based on how much a player adds to your starters and how your league has bid before.</li>
           </ul>

@@ -178,13 +178,6 @@ export function playCount(live: Live, nfls: (string | null | undefined)[]): Play
   return c;
 }
 
-/** True while either team has a starter playing now or still to play: the window when the win chance swings. */
-export const stillPlaying = (live: Live, teams: (Team | null | undefined)[]) => teams.some((t) => {
-  if (!t) return false;
-  const c = playCount(live, [...startersOf(t).map((id) => playerById(id).nfl), ...specialLineup(t).slots.map((x) => x.player?.nfl)]);
-  return c.live + c.left > 0;
-});
-
 export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a, id) => {
   if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
   return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);
