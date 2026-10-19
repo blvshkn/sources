@@ -4,6 +4,7 @@ import { Trade, TeamNeeds, allNeeds, applyFormat, eff, findTrades, fmt, formatLa
 import { SLeague, SleeperError, leagueType, loadLeague } from "../sleeper";
 import { AiLabel, Delta, Icon, PosBadge, Stamp } from "./ui";
 import { needCopy } from "./Wire";
+import { Select } from "./Select";
 
 type Live = { username: string; userId: string; leagueId: string };
 type Step = "connect" | "league" | "team" | "intel" | "untouchables";
@@ -135,11 +136,13 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 <div key={p.id} className="ob-option static">
                   <PosBadge pos={p.pos} />
                   <span className="grow" style={{ minWidth: 0 }}><b>{p.name}</b><span className="small muted" style={{ display: "block" }}>{eff(p).toFixed(1)} a week</span></span>
-                  <select className="tag-select" aria-label={`Tag for ${p.name}`} value={picked[p.id] ?? ""} onChange={(e) => setPicked((c) => { const n = { ...c }; if (e.target.value) n[p.id] = e.target.value as MyTag; else delete n[p.id]; return n; })}>
-                    <option value="">Open to offers</option>
-                    <option value="untouchable">Untouchable</option>
-                    <option value="amazing">Overpay only</option>
-                  </select>
+                  <Select className="tag-select" aria-label={`Tag for ${p.name}`} value={picked[p.id] ?? ""}
+                    onChange={(v) => setPicked((c) => { const n = { ...c }; if (v) n[p.id] = v as MyTag; else delete n[p.id]; return n; })}
+                    options={[
+                      { value: "", label: "Open to offers" },
+                      { value: "untouchable", label: "Untouchable" },
+                      { value: "amazing", label: "Overpay only" },
+                    ]} />
                 </div>
               ))}
             </div>

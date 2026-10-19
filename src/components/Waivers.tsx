@@ -5,6 +5,7 @@ import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
 import { AiLabel, Icon, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
 import { PlatformLogo } from "./PlatformLogo";
+import { Select } from "./Select";
 
 /** Why a free agent can't help this week, or null when he can. */
 type Avail = null | "played" | "bye" | "out" | "ir";
@@ -142,15 +143,12 @@ export function Waivers({ recs, onToast }: { recs: WaiverRec[]; onToast: (m: str
               placeholder="Search players…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
             {q && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
           </label>
-          <label className="wv2-sort">
-            <span className="sr-only">Sort</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
-              <option value="fit">Best fit</option>
-              <option value="trend">Trending</option>
-              <option value="proj">Projected</option>
-            </select>
-            <Icon name="switch" size={14} />
-          </label>
+          <Select className="wv2-sort" size="pill" chevron="switch" aria-label="Sort" header="Sort by" value={sort} onChange={setSort}
+            options={[
+              { value: "fit" as typeof sort, label: "Best fit" },
+              { value: "trend" as typeof sort, label: "Trending" },
+              { value: "proj" as typeof sort, label: "Projected" },
+            ]} />
           {suggest && hits.length > 0 && (
             <ul className="wv-ta-list" id="wv-ta-list" role="listbox">
               {hits.map((e, i) => (

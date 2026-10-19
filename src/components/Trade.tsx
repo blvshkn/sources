@@ -11,6 +11,7 @@ import { DealSchedule } from "./Schedule";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
+import { Select } from "./Select";
 
 function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -429,23 +430,18 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <span className="tb-or">Or build it</span>
           <div className="tb-sentence">
             <b>{them.manager}</b>
-            <label className="wv-sort tb-pick">
-              <span className="sr-only">What kind</span>
-              <select id="tag-kind" value={kind} onChange={(e) => { const k = e.target.value as ManagerTagKind; setKind(k); setTarget(k === "wants" ? "pos:RB" : k === "notInterested" ? YOU.roster[0] : them.roster[0]); }}>
-                <option value="wants">wants</option>
-                <option value="refuses">won't move</option>
-                <option value="notInterested">isn't interested in</option>
-              </select>
-              <Icon name="chev" size={14} />
-            </label>
-            <label className="wv-sort tb-pick">
-              <span className="sr-only">Player or position</span>
-              <select id="tag-target" value={target} onChange={(e) => setTarget(e.target.value)}>
-                {POS_ORDER.map((p) => <option key={p} value={`pos:${p}`}>{kind === "wants" ? `${p} help` : kind === "refuses" ? `his ${p}` : `your ${p}`}</option>)}
-                {targetOptions.map((id) => <option key={id} value={id}>{playerById(id).name}</option>)}
-              </select>
-              <Icon name="chev" size={14} />
-            </label>
+            <Select id="tag-kind" className="tb-sel" aria-label="What kind" value={kind}
+              onChange={(k) => { setKind(k); setTarget(k === "wants" ? "pos:RB" : k === "notInterested" ? YOU.roster[0] : them.roster[0]); }}
+              options={[
+                { value: "wants" as ManagerTagKind, label: "wants" },
+                { value: "refuses" as ManagerTagKind, label: "won't move" },
+                { value: "notInterested" as ManagerTagKind, label: "isn't interested in" },
+              ]} />
+            <Select id="tag-target" className="tb-sel" aria-label="Player or position" value={target} onChange={setTarget}
+              options={[
+                ...POS_ORDER.map((p) => ({ value: `pos:${p}`, label: kind === "wants" ? `${p} help` : kind === "refuses" ? `his ${p}` : `your ${p}`, group: "Position" })),
+                ...targetOptions.map((id) => { const pl = playerById(id); return { value: id, label: pl.name, hint: pl.pos, group: kind === "refuses" ? `${them.manager}'s players` : "Your players" }; }),
+              ]} />
             <button className="btn btn-sm tb-add" onClick={addTag}>Add</button>
           </div>
         </div>

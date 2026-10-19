@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ManagerTag, TEAMS, playerById, teamById } from "../data";
 import { parseTag } from "../engine";
 import { Icon } from "./ui";
+import { Select } from "./Select";
 
 type SR = { start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null; lang: string; interimResults: boolean };
 
@@ -48,14 +49,8 @@ export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { o
     <div className={`capture${compact ? " compact" : ""}`}>
       <div className={`composer has-who${listening ? " live" : ""}`}>
         {whoTeam && (
-          <label className="composer-who">
-            <span className="sr-only">Who said it</span>
-            <span aria-hidden="true">{whoTeam.manager}</span>
-            <Icon name="chev" size={12} />
-            <select value={who} onChange={(e) => pickWho(e.target.value)}>
-              {others.map((t) => <option key={t.id} value={t.id}>{t.manager}</option>)}
-            </select>
-          </label>
+          <Select className="composer-who" size="chip" aria-label="Who said it" header="Who said it" value={who} onChange={pickWho}
+            options={others.map((t) => ({ value: t.id, label: t.manager, hint: t.name !== t.manager ? t.name : undefined }))} />
         )}
         <label htmlFor="capture" className="sr-only">{`What did ${whoTeam?.manager ?? "they"} say?`}</label>
         <input id="capture" className="composer-input" value={text} onChange={(e) => setText(e.target.value)}

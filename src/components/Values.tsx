@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
 import { marketValue } from "../engine";
 import { Avatar } from "./Avatar";
-import { Icon, useSticky } from "./ui";
+import { useSticky } from "./ui";
+import { Select } from "./Select";
 
 // Demo leagues have no market feed, so build the board from projection-based values.
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
@@ -66,15 +67,12 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
       <section className="card vb-list wv-card" aria-label="Player values">
         <div className="wv-head">
           <div className="wv-head-t"><b>Player values</b><span>Top 150 by trade value</span></div>
-          <label className="wv-sort">
-            <span className="sr-only">Show</span>
-            <select value={own} onChange={(e) => setOwn(e.target.value as typeof own)}>
-              <option value="all">Everyone</option>
-              <option value="mine">My team</option>
-              <option value="fa">Free agents</option>
-            </select>
-            <Icon name="chev" size={14} />
-          </label>
+          <Select className="wv-sort" size="pill" aria-label="Show" value={own} onChange={setOwn}
+            options={[
+              { value: "all" as typeof own, label: "Everyone" },
+              { value: "mine" as typeof own, label: "My team" },
+              { value: "fa" as typeof own, label: "Free agents" },
+            ]} />
         </div>
         <div className="wv-pos" role="group" aria-label="Position">
           {POS.map((p) => <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}>{p === "ALL" ? "All" : p}</button>)}
