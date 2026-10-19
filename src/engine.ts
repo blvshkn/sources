@@ -652,10 +652,10 @@ const POS_WORDS: [RegExp, Pos][] = [
 
 export interface ParsedTag { tag: Omit<ManagerTag, "id"> | null; reason?: string }
 
-export function parseTag(text: string): ParsedTag {
+export function parseTag(text: string, teamId?: string): ParsedTag {
   const s = text.trim();
   if (!s) return { tag: null, reason: "Type what they said." };
-  const team = TEAMS.filter((t) => !t.you).find((t) => new RegExp(`\\b${t.manager}\\b`, "i").test(s) || s.toLowerCase().includes(t.name.toLowerCase()));
+  const team = teamId ? TEAMS.find((t) => t.id === teamId && !t.you) : TEAMS.filter((t) => !t.you).find((t) => new RegExp(`\\b${t.manager}\\b`, "i").test(s) || s.toLowerCase().includes(t.name.toLowerCase()));
   if (!team) return { tag: null, reason: `Couldn't tell who said it. Start with their name, like "${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said…".` };
   const lower = s.toLowerCase();
   let kind: ManagerTag["kind"] | null = null;

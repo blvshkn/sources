@@ -6,11 +6,17 @@ import { Icon } from "./ui";
 type SR = { start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null; lang: string; interimResults: boolean };
 
 /** "Tags from what people say": type or dictate a line, Sources turns it into an intent tag. */
-export function TagCapture({ onSave, placeholder, compact }: { onSave: (t: Omit<ManagerTag, "id">) => void; placeholder?: string; compact?: boolean }) {
+export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { onSave: (t: Omit<ManagerTag, "id">) => void; placeholder?: string; compact?: boolean; teamId?: string; onTeam?: (id: string) => void }) {
+  const others = TEAMS.filter((t) => !t.you);
+  // Who said it stays put, so you only type what they said. Tap the name to switch managers.
+  const [who, setWho] = useState(teamId ?? others[0]?.id ?? "");
+  useEffect(() => { if (teamId) setWho(teamId); }, [teamId]);
+  const pickWho = (id: string) => { setWho(id); onTeam?.(id); };
+  const whoTeam = others.find((t) => t.id === who);
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const rec = useRef<SR | null>(null);
-  const parsed = text.trim().length > 6 ? parseTag(text) : null;
+  const parsed = text.trim().length > 3 ? parseTag(text, who || undefined) : null;
   const w = typeof window !== "undefined" ? (window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR }) : null;
   const Speech = w?.SpeechRecognition ?? w?.webkitSpeechRecognition;
 
@@ -40,11 +46,21 @@ export function TagCapture({ onSave, placeholder, compact }: { onSave: (t: Omit<
 
   return (
     <div className={`capture${compact ? " compact" : ""}`}>
-      <div className={`composer${listening ? " live" : ""}`}>
-        <label htmlFor="capture" className="sr-only">What did they say?</label>
+      <div className={`composer has-who${listening ? " live" : ""}`}>
+        {whoTeam && (
+          <label className="composer-who">
+            <span className="sr-only">Who said it</span>
+            <span aria-hidden="true">{whoTeam.manager}</span>
+            <Icon name="chev" size={12} />
+            <select value={who} onChange={(e) => pickWho(e.target.value)}>
+              {others.map((t) => <option key={t.id} value={t.id}>{t.manager}</option>)}
+            </select>
+          </label>
+        )}
+        <label htmlFor="capture" className="sr-only">{`What did ${whoTeam?.manager ?? "they"} say?`}</label>
         <input id="capture" className="composer-input" value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder={placeholder ?? `${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said he won't move his RB`} autoComplete="off" enterKeyHint="send" />
+          placeholder={placeholder ?? "won't move his RB"} autoComplete="off" enterKeyHint="send" />
         {Speech && (
           <button className="composer-btn" onClick={dictate} aria-label={listening ? "Stop dictation" : "Dictate"} aria-pressed={listening}>
             <Icon name="mic" size={18} />

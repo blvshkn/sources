@@ -392,7 +392,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <h2 className="section-title">What did {them.manager} say?</h2>
           <p>Private to you. Trade ideas use it.</p>
         </div>
-        <TagCapture onSave={onAddTag} placeholder={`${them.manager} said he wants a TE`} compact />
+        <TagCapture onSave={onAddTag} placeholder="wants a TE" compact teamId={partnerId} onTeam={setPartner} />
         <div className="tag-builder">
           <span className="tb-or">Or build it</span>
           <div className="tb-sentence">
