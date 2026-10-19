@@ -328,9 +328,12 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {!trade ? (
             <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Tap players on either roster to start a deal." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
           ) : (
-            <>
+            <div className="deal-read">
+              <div className="dr-main">
               <TradeCompare trade={trade} them={them} />
+              </div>
               <DealSchedule give={give.map(playerById)} get={get.map(playerById)} />
+              <div className="dr-side">
               {v && <div className={`verdict ${v.tone}`}><b>{v.label}</b><span className="small">{v.line}{received ? ` ${them.manager} gains ${fmt(trade.themDelta)}.` : ""}</span></div>}
               {acc && <AcceptRead a={acc} who={them.manager} />}
               {received && counter && (
@@ -368,7 +371,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
                 {tip && <AiLabel />}
               </div>
-            </>
+              </div>
+            </div>
           )}
         </section>
 

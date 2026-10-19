@@ -1,5 +1,8 @@
 /* Trade Build layout fixes. Owned by the trade-build QA pass; loaded last. No url references in this file.
-   Phone (pg under 980) keeps its own layout; everything layout related sits behind a pg container query. */
+   Phone keeps its own layout; everything layout related sits behind a pg container query. */
+
+/* Summary wrappers only shape the desktop deal; everywhere else they vanish */
+.deal-read, .dr-main, .dr-side { display: contents; }
 
 /* The partner bar and search keep their full width on every section tab, so switching tabs moves nothing */
 html:root:not(#_):not(#_) .main-inner > :is(.tr-bar, .psr) { width: 100%; max-width: none !important; }
@@ -14,51 +17,94 @@ html:root:not(#_):not(#_) .main-inner > :is(.tr-bar, .psr) { width: 100%; max-wi
   }
 }
 
-/* Partner list always paints above the deal panel and the roster cards */
-@container pg (min-width: 980px) {
-  html:root:not(#_):not(#_) .main-inner > .tr-bar { position: relative; z-index: 46; }
-}
-
-/* Add player: the picker stays inside its own column and never paints under the other side */
+/* Add player: the picker stays inside its own half and never paints under the other side */
 html:root:not(#_):not(#_) .qs-pick { min-width: 0; }
 html:root:not(#_):not(#_) .qs-search input { width: 100%; }
 
-/* ---------- Desktop Build: three equal columns, the deal starts level with the section tabs ---------- */
-@container pg (min-width: 980px) {
-  /* Tabs sit over the two roster columns only, at a fixed height the deal can line up with */
-  html:root:not(#_):not(#_) .main-inner:has(> .builder) > .page-tabs { height: 42px; box-sizing: border-box; }
-
-  html:root:not(#_):not(#_) .builder {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 16px !important;
-    align-items: start;
-  }
-  html:root:not(#_):not(#_) .builder .rosters { grid-column: 1 / 3 !important; grid-row: 1 !important; min-width: 0; }
+/* ---------- Desktop Build: the deal spans the page above the rosters ---------- */
+/* Its You send half sits over the You send roster, its You get half over the You get roster:
+   same two columns, same 16px gutter, same 14px inset, so the edges line up exactly. */
+@container pg (min-width: 700px) {
+  html:root:not(#_):not(#_) .builder { display: flex !important; flex-direction: column; align-items: stretch !important; gap: 16px !important; }
+  html:root:not(#_):not(#_) .builder .rosters { order: 1 !important; grid-column: auto !important; grid-row: auto !important; min-width: 0; }
   html:root:not(#_):not(#_) .builder .deal {
-    grid-column: 3 !important; grid-row: 1 !important; min-width: 0;
-    /* Pull the panel up past the tab row and the page gap so its top meets the top of the tabs */
-    margin-top: -66px !important; /* 42px tab row + the 24px page gap */
-    position: sticky !important; top: 24px !important; z-index: 2;
-    max-height: calc(100vh - 48px) !important; overflow-y: auto !important; overscroll-behavior: contain;
-    container: deal / inline-size;
+    order: 0 !important; grid-column: auto !important; grid-row: auto !important;
+    /* Too tall with a read to stay pinned, so it scrolls with the page and the tray below keeps the deal in view */
+    position: relative !important; top: auto !important; max-height: none !important; overflow: visible !important;
+    padding-inline: 14px !important; min-width: 0;
   }
-}
+  /* Both halves and the read use the roster grid: full card width, two columns, 16px gutter */
+  html:root:not(#_):not(#_) .builder .deal :is(.deal-lists, .deal-read) {
+    display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; column-gap: 16px !important; row-gap: 16px;
+    margin-inline: calc(-14px - var(--tr-bw, 0px)) !important; align-items: start;
+  }
+  html:root:not(#_):not(#_) .builder .deal :is(.deal-lists > .qs, .dr-main, .dr-side) {
+    padding-inline: calc(14px + var(--tr-bw, 0px)); min-width: 0;
+  }
+  /* A hairline in the gutter, the same place the two roster cards split */
+  html:root:not(#_):not(#_) .builder .deal .deal-lists > .qs + .qs,
+  html:root:not(#_):not(#_) .builder .deal .dr-side { position: relative; }
+  html:root:not(#_):not(#_) .builder .deal .deal-lists > .qs + .qs::before,
+  html:root:not(#_):not(#_) .builder .deal .dr-side::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -8.5px; width: 1px; background: var(--line);
+  }
+  html:root:not(#_):not(#_) .builder .deal .dr-main,
+  html:root:not(#_):not(#_) .builder .deal .dr-side { display: flex !important; flex-direction: column; gap: 16px; }
+  /* Row one: the numbers under You send, the verdict and actions under You get */
+  html:root:not(#_):not(#_) .builder .deal .dr-main { grid-column: 1; grid-row: 1; }
+  html:root:not(#_):not(#_) .builder .deal .dr-side { grid-column: 2; grid-row: 1; }
+  /* Row two: schedules across the full width, each side over its own roster.
+     A 44px gap is the 16px gutter plus both 14px insets, so the columns land on the halves above. */
+  html:root:not(#_):not(#_) .builder .deal .deal-read > .dsch {
+    grid-column: 1 / -1; grid-row: 2; margin-top: 0; padding-inline: calc(14px + var(--tr-bw, 0px));
+    grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 44px; align-items: start; position: relative;
+  }
+  html:root:not(#_):not(#_) .builder .deal .deal-read > .dsch > .dsch-head { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_) .builder .deal .deal-read > .dsch > .dsch-side { min-width: 0; position: relative; }
+  html:root:not(#_):not(#_) .builder .deal .deal-read > .dsch > .dsch-side + .dsch-side::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -22.5px; width: 1px; background: var(--line);
+  }
 
-/* Deal panel internals fit whatever width the panel gets */
-@container deal (max-width: 479px) {
-  /* Send and get stack, so names read in full and the pickers get the whole panel width */
-  html:root:not(#_):not(#_) .builder .deal .qs-wrap { grid-template-columns: minmax(0, 1fr) !important; gap: 16px; }
-  html:root:not(#_):not(#_) .builder .deal .qs > ul li { min-width: 0; }
+  /* Chips read in full; names only cut when a half is truly out of room */
+  html:root:not(#_):not(#_) .builder .deal .qs-n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   html:root:not(#_):not(#_) .builder .deal .qs-add { width: 100%; }
-}
-@container deal (min-width: 0px) {
-  /* Net change numbers scale with the panel, not the window */
-  html:root:not(#_):not(#_) .builder .deal .tc-side .numeral { font-size: clamp(2rem, 11cqi, 3rem) !important; white-space: nowrap; }
-  html:root:not(#_):not(#_) .builder .deal .tc-head { gap: 8px; }
-  html:root:not(#_):not(#_) .builder .deal .tc-side { min-width: 0; }
+  /* Net change: sized for a half, never wrapping */
+  html:root:not(#_):not(#_) .builder .deal .tc-side .numeral { font-size: clamp(2.25rem, calc((100cqi - 16px) * 0.06), 3rem) !important; white-space: nowrap; }
   html:root:not(#_):not(#_) .builder .deal .tc-mid { white-space: nowrap; }
-  html:root:not(#_):not(#_) .builder .deal .accept-top { flex-wrap: wrap; row-gap: 2px; }
   html:root:not(#_):not(#_) .builder .deal .row.wrap > .btn-primary { flex: 1 1 auto; justify-content: center; }
   html:root:not(#_):not(#_) .builder .deal .why { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Lets the deal tray watch the deal panel scroll by */
+html:root:not(#_):not(#_) .main-inner:has(> .builder) { timeline-scope: --tr-deal; }
+@keyframes tr-tray-show { from { opacity: 0; visibility: hidden; transform: translateY(8px); } to { opacity: 1; visibility: visible; transform: none; } }
+
+/* Desktop: the partner list paints over the deal, and the tray tablets use keeps the deal in reach */
+@container pg (min-width: 980px) {
+  /* The tray stays out of the way while the deal itself is on screen, then rises once it scrolls off.
+     Without scroll timelines the animation just finishes at once and the tray shows, as on tablet. */
+  html:root:not(#_):not(#_) .builder .deal { view-timeline: --tr-deal block; }
+  html:root:not(#_):not(#_) .main-inner > .deal-tray {
+    animation: tr-tray-show linear both;
+    animation-timeline: --tr-deal;
+    animation-range: exit 55% exit 75%;
+  }
+  html:root:not(#_):not(#_) .main-inner > .tr-bar { position: relative; z-index: 46; }
+
+  /* Deal tray: the same pinned summary tablets get, so the deal stays in reach while you scroll the rosters */
+  html:root:not(#_):not(#_) .deal-tray {
+    position: sticky; bottom: 16px; z-index: 29; display: grid !important; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    padding: 12px 12px 12px 16px; border-radius: 20px; border: 1px solid rgba(var(--lime-rgb), 0.16);
+    background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
+  }
+  html:root:not(#_):not(#_) .deal-tray .dt-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
+  html:root:not(#_):not(#_) .deal-tray .dt-side { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+  html:root:not(#_):not(#_) .deal-tray .dt-label { border: 0; background: none; padding: 0; text-align: left; font: 600 0.75rem/1 var(--font-body); color: var(--muted); cursor: default; }
+  html:root:not(#_):not(#_) .deal-tray .dt-chips { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+  html:root:not(#_):not(#_) .deal-tray .dt-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px 0 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 500 0.8125rem/1 var(--font-body); cursor: pointer; }
+  html:root:not(#_):not(#_) .deal-tray .dt-chip svg { color: var(--muted); }
+  html:root:not(#_):not(#_) .deal-tray .dt-empty { border: 1px dashed var(--line); background: none; height: 28px; padding: 0 12px; border-radius: 999px; color: var(--muted); font: 500 0.75rem/1 var(--font-body); white-space: nowrap; cursor: default; pointer-events: none; }
+  html:root:not(#_):not(#_) .deal-tray .dt-go { height: 40px !important; padding: 0 16px; white-space: nowrap; }
+  html:root:not(#_):not(#_) .deal-tray .dt-go:disabled { opacity: 0.45; }
 }
