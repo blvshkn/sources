@@ -251,7 +251,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
     const you = mean(h.you), lg = mean(h.avg), n = h.you.length, half = Math.max(1, Math.floor(n / 2));
     const now = lineup.slots.filter((x) => x.slot === h.slot && x.player).map((x) => x.player!) as Player[];
     return { h, you, lg, gap: you - lg, above: h.you.filter((v, i) => v >= h.avg[i]).length, n,
-      best: Math.max(...h.you), worst: Math.min(...h.you), trend: mean(h.you.slice(-half)) - mean(h.you.slice(0, half)),
+      best: Math.max(...h.you), worst: Math.min(...h.you), trend: (() => { const g = h.you.map((v, i) => v - h.avg[i]); return mean(g.slice(-half)) - mean(g.slice(0, half)); })(),
       now, nowProj: now.reduce((a, p) => a + eff(p, true), 0) };
   });
   const total = rows.reduce((a, r) => a + r.gap, 0);
@@ -302,7 +302,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
                 <span className={`sr-slot${r.gap < 0 ? " down" : ""}`}>{r.h.slot}<small className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</small></span>
                 <span className="sr-num">{r.you.toFixed(1)}</span>
                 <span className="sr-num muted">{r.lg.toFixed(1)}</span>
-                <span className="sr-beat">{r.above}/{r.n}<i className={r.trend >= 0.5 ? "up" : r.trend <= -0.5 ? "down" : ""} aria-label={r.trend >= 0.5 ? "trending up" : r.trend <= -0.5 ? "trending down" : "steady"}>{r.trend >= 0.5 ? "↑" : r.trend <= -0.5 ? "↓" : "→"}</i></span>
+                <span className={`sr-beat ${r.above * 2 >= r.n ? "up" : "down"}`}>{r.above}/{r.n}</span>
                 <Icon name="chev" size={14} />
               </button>
               {isOpen && (
@@ -312,7 +312,12 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
                       <span key={i} className={v >= r.h.avg[i] ? "up" : "down"}><i>W{i + 1}</i><b>{v.toFixed(1)}</b><small>avg {r.h.avg[i].toFixed(1)}</small></span>
                     ))}
                   </div>
-                  <p className="small muted">Best week {r.best.toFixed(1)}, worst {r.worst.toFixed(1)}. {r.trend >= 0.5 ? `Up ${r.trend.toFixed(1)} a week lately.` : r.trend <= -0.5 ? `Down ${Math.abs(r.trend).toFixed(1)} a week lately.` : "Holding steady."}</p>
+                  <p className="small muted">Best week {r.best.toFixed(1)}, worst {r.worst.toFixed(1)}.{" "}
+                    {Math.abs(r.trend) < 0.5
+                      ? "Holding steady against the league."
+                      : <span className={r.trend > 0 ? "up" : "down"}>{r.trend > 0 ? "↑" : "↓"} {r.gap < 0
+                          ? (r.trend > 0 ? `Closing the gap by ${r.trend.toFixed(1)} a week lately.` : `Falling ${Math.abs(r.trend).toFixed(1)} further behind a week lately.`)
+                          : (r.trend > 0 ? `Lead growing by ${r.trend.toFixed(1)} a week lately.` : `Lead shrinking by ${Math.abs(r.trend).toFixed(1)} a week lately.`)}</span>}</p>
                   {r.now.length > 0 && <div className="sr-now">
                     <span className="eyebrow">Starting this week</span>
                     {r.now.map((p) => <span key={p.id} className="sr-now-p"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.name}</span><span className="sr-num">{eff(p, true).toFixed(1)}</span></span>)}

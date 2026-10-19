@@ -3808,3 +3808,12 @@ html:root:not(#_) .swing small { flex: none; font-family: "Geist Mono", ui-monos
 html:root:not(#_) .swing.up small { color: var(--up, #7BE08F); }
 html:root:not(#_) .swing.down small { color: var(--down, #FF7A66); }
 html:root:not(#_) .mu-swing { padding: 0 2px; }
+html:root:not(#_) .sr-beat.up { color: var(--up, #7BE08F); }
+html:root:not(#_) .sr-beat.down { color: var(--down, #FF7A66); }
+html:root:not(#_) .sr-detail p .up { color: var(--up, #7BE08F); }
+html:root:not(#_) .sr-detail p .down { color: var(--down, #FF7A66); }
+/* Room under the trade builder so the deal tray never covers the last rows or the Done button */
+html:root:not(#_) .dt-spacer { display: none; }
+@media (max-width: 860px) { html:root:not(#_) .dt-spacer { display: block; height: 128px; } }
+html:root:not(#_) .sr-weeks .up b { color: var(--up, #7BE08F) !important; }
+html:root:not(#_) .sr-weeks .down b { color: var(--down, #FF7A66) !important; }

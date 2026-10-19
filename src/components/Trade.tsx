@@ -361,6 +361,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       </div>}
 
       {view === "build" && (give.length > 0 || get.length > 0) && (
+        <>
+        <div className="dt-spacer" aria-hidden="true" />
         <div className="deal-tray" role="region" aria-label="Your deal so far">
           <div className="dt-sides">
             {(["give", "get"] as const).map((k) => {
@@ -382,6 +384,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           </div>
           <button className="btn btn-primary dt-go" disabled={!trade} onClick={() => document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the read</button>
         </div>
+        </>
       )}
 
       {view === "notes" && <section className="card log-card" aria-label={`What ${them.manager} said`}>
