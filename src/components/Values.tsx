@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
-import { marketValue } from "../engine";
+import { marketValue, specialValue } from "../engine";
 import { Avatar } from "./Avatar";
 import { useSticky } from "./ui";
 import { Select } from "./Select";
@@ -20,7 +20,20 @@ function demoBoard(): BoardRow[] {
   return rows.map((r) => ({ ...r, value: Math.round(r.value * k), trend: Math.round(r.trend * k) }));
 }
 
-const POS = ["ALL", "QB", "RB", "WR", "TE"] as const;
+/** Kickers and defenses, rostered and on the wire, valued from projections. They never enter trades, so their rows don't open the builder. */
+function specialBoard(): BoardRow[] {
+  const owner = new Map<string, string>();
+  TEAMS.forEach((t) => (t.special ?? []).forEach((id) => owner.set(id, t.id)));
+  const seen = new Map<string, BoardRow>();
+  for (const p of [...Object.values(LEAGUE.specials ?? {}), ...(LEAGUE.specialFreeAgents ?? [])]) {
+    if (seen.has(p.id)) continue;
+    seen.set(p.id, { id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, value: specialValue(p.proj), trend: 0, ownerId: owner.get(p.id) });
+  }
+  return [...seen.values()].filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
+}
+const isSpecial = (pos: string) => pos === "K" || pos === "DEF";
+
+const POS = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"] as const;
 
 /** Where the production model and the trade market disagree by a lot, there's an edge. */
 function split(r: BoardRow) {
@@ -37,16 +50,17 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
   const [pos, setPos] = useSticky<(typeof POS)[number]>("values.pos", "ALL", POS);
   const [own, setOwn] = useSticky<"all" | "fa" | "mine">("values.own", "all", ["all", "fa", "mine"]);
   const board = useMemo(() => LEAGUE.board?.length ? LEAGUE.board : demoBoard(), []);
+  const specials = useMemo(specialBoard, []);
   const max = board[0]?.value || 1;
   const mine = TEAMS.find((t) => t.you)?.id;
-  const rows = board.filter((r) => (pos === "ALL" || r.pos === pos) && (own === "all" || (own === "fa" ? !r.ownerId : r.ownerId === mine)));
+  const rows = (isSpecial(pos) ? specials : board).filter((r) => (pos === "ALL" || r.pos === pos) && (own === "all" || (own === "fa" ? !r.ownerId : r.ownerId === mine)));
   const owned = board.filter((r) => r.ownerId);
   const risers = [...owned].sort((a, b) => b.trend - a.trend).slice(0, 5);
   const fallers = [...owned].sort((a, b) => a.trend - b.trend).slice(0, 5);
   const ownerName = (id?: string) => { if (!id) return null; const t = TEAMS.find((x) => x.id === id); return t?.you ? "You" : t?.manager ?? null; };
   const posRank = new Map<string, number>();
   const counts: Record<string, number> = {};
-  board.forEach((r) => { counts[r.pos] = (counts[r.pos] ?? 0) + 1; posRank.set(r.id, counts[r.pos]); });
+  [...board, ...specials].forEach((r) => { counts[r.pos] = (counts[r.pos] ?? 0) + 1; posRank.set(r.id, counts[r.pos]); });
 
   return (
     <div className="vb">
@@ -67,7 +81,7 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
 
       <section className="card vb-list wv-card" aria-label="Player values">
         <div className="wv-head">
-          <div className="wv-head-t"><b>Player values</b><span>Top 150 by trade value</span></div>
+          <div className="wv-head-t"><b>Player values</b><span>{pos === "K" ? "Kickers, valued from projections" : pos === "DEF" ? "Defenses, valued from projections" : "Top 150 by trade value"}</span></div>
           <Select className="wv-sort" size="pill" aria-label="Show" value={own} onChange={setOwn}
             options={[
               { value: "all" as typeof own, label: "Everyone" },
@@ -81,8 +95,9 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
         <div className="vb-head"><span>#</span><span>Player</span><span>Value</span></div>
         {rows.slice(0, 150).map((r, i) => {
           const o = ownerName(r.ownerId);
+          const sp = isSpecial(r.pos);
           return (
-            <button key={r.id} className="vb-row" onClick={() => r.ownerId && r.ownerId !== mine && onTarget?.(r.id, r.ownerId)} disabled={!r.ownerId || r.ownerId === mine}>
+            <button key={r.id} className="vb-row" onClick={() => !sp && r.ownerId && r.ownerId !== mine && onTarget?.(r.id, r.ownerId)} disabled={sp || !r.ownerId || r.ownerId === mine}>
               <span className="vb-rank">{pos === "ALL" ? i + 1 : posRank.get(r.id)}</span>
               <Avatar p={r} size={40} />
               <span className="vb-who">
@@ -92,7 +107,7 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
               </span>
               <span className="vb-val">
                 <b>{r.value.toLocaleString()}</b>
-                <Tooltip content={<>Market value <b>{r.value.toLocaleString()}</b>, {tier(r.value)}. The bar is scaled to the top player here.</>}><span className="vb-bar"><span style={{ width: `${(r.value / max) * 100}%` }} /></span></Tooltip>
+                <Tooltip content={sp ? <>Projection value <b>{r.value.toLocaleString()}</b>, on the same scale as every player. The bar is scaled to the top player overall.</> : <>Market value <b>{r.value.toLocaleString()}</b>, {tier(r.value)}. The bar is scaled to the top player here.</>}><span className="vb-bar"><span style={{ width: `${(r.value / max) * 100}%` }} /></span></Tooltip>
                 {r.trend !== 0 && <i className={r.trend > 0 ? "up" : "down"}>{r.trend > 0 ? "▲" : "▼"}{Math.abs(r.trend).toLocaleString()}</i>}
               </span>
             </button>

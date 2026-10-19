@@ -108,6 +108,12 @@ export const marketValue = (p: Player): number => {
   return Math.round(9 * Math.pow(Math.max(0, p.proj), 2.2) * posFactor);
 };
 /**
+ * Kickers and defenses have no trade-market feed (FantasyCalc skips them). Price them on the same
+ * curve as marketValue, from rest-of-season points per week, normalized so 22 a week is 10,000 like
+ * the top of the board, then cut to 30%: real markets treat them as near replacement level.
+ */
+export const specialValue = (proj: number): number => Math.round(10000 * 0.3 * Math.pow(Math.max(0, proj) / 22, 2.2));
+/**
  * Consolidation adjustment: the best player in a package counts in full, each
  * extra piece counts for less, so three bench players can't add up to one star.
  */

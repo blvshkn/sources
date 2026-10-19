@@ -1,0 +1,16 @@
+/* Pages lint A: Wire, League, Ask, Settings, the sidebar and the landing.
+   Scoped to page classes, specificity html:root:not(#_):not(#_). */
+
+/* ---- League > Player values ------------------------------------------ */
+/* One left edge: heading, subtitle, first pill's outer edge, "#" and the divider.
+   The pill row runs full bleed with 16px inline padding, so scrolled pills slide under the card edge.
+   The edge fade and hidden bar come from scroll.css. */
+html:root:not(#_):not(#_) .vb-list .wv-pos { margin: 0 0 12px !important; padding: 0 16px !important; scroll-padding-inline: 16px; }
+/* The header shares the row grid: "#" over the ranks, Player over the names, Value over the values. */
+html:root:not(#_):not(#_) .vb-list .vb-head { grid-template-columns: 26px 40px minmax(0, 1fr) 96px; }
+html:root:not(#_):not(#_) .vb-list .vb-head > span:nth-child(2) { grid-column: 3; }
+html:root:not(#_):not(#_) .vb-list .vb-head > span:nth-child(3) { text-align: right; }
+html:root:not(#_):not(#_) .vb-list .vb-rank { text-align: left; }
+@media (max-width: 560px) {
+  html:root:not(#_):not(#_) .vb-list .vb-head { grid-template-columns: 22px 40px minmax(0, 1fr) 80px; gap: 10px; }
+}
