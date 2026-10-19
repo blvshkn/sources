@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
@@ -222,6 +223,28 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
   const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build", ["build", "ideas", "notes"]);
+  // Re-run the finder visibly whenever what it reads has changed: a new or removed note, or a new partner
+  const sig = `${partnerId}|${theirTags.map((t) => t.id).join(",")}`;
+  const seen = useRef<Record<string, { sig: string; keys: string[] }>>({});
+  const last = seen.current[partnerId];
+  const stale = !last || last.sig !== sig;
+  const [scanned, setScanned] = useState<string | null>(null);
+  const scanning = view === "ideas" && stale && scanned !== sig;
+  const [fresh, setFresh] = useState<string[]>([]);
+  const [rescanned, setRescanned] = useState(false);
+  const finishScan = () => {
+    const before = last?.keys ?? null;
+    setFresh(before ? suggestions.map((t) => t.key).filter((k) => !before.includes(k)) : []);
+    setRescanned(!!before);
+    seen.current[partnerId] = { sig, keys: suggestions.map((t) => t.key) };
+    setScanned(sig);
+  };
+  const scanSteps = [
+    theirTags.length ? `Reading ${theirTags.length} note${theirTags.length > 1 ? "s" : ""} on ${them.manager}` : `No notes on ${them.manager} yet, using league needs`,
+    "Checking what both lineups need",
+    "Testing deals across both rosters",
+    "Keeping trades where both sides gain points",
+  ];
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
   const [searching, setSearching] = useState(false);
   // How this manager trades: short facts plus one piece of advice
@@ -273,11 +296,15 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {scoutTip && <p className="tr-tip"><Icon name="spark" size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
-      {view === "ideas" && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
-      {view === "ideas" && suggestions.length > 0 && (
+      {scanning && <IdeaScan key={sig} steps={scanSteps} onDone={finishScan} />}
+      {view === "ideas" && !scanning && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
+      {view === "ideas" && !scanning && suggestions.length > 0 && (
         <section className="card nudge">
           <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>
-          {suggestions.map((t) => <TradeIdea key={t.key} t={t} onOpen={loadIdea} onPitch={onPitch} />)}
+          {fresh.length > 0
+            ? <p className="scan-new"><Icon name="spark" size={14} />{fresh.length} new {fresh.length > 1 ? "ideas" : "idea"} from your notes</p>
+            : rescanned && <p className="scan-new muted"><Icon name="check" size={14} />Checked your latest notes. {suggestions.length > 1 ? `These ${suggestions.length} still fit.` : "This one still fits."}</p>}
+          {suggestions.map((t) => <div key={t.key} className={fresh.includes(t.key) ? "idea-new" : undefined}><TradeIdea t={t} onOpen={loadIdea} onPitch={onPitch} /></div>)}
         </section>
       )}
 
@@ -393,6 +420,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <p>Private to you. Trade ideas use it.</p>
         </div>
         <TagCapture onSave={onAddTag} placeholder="wants a TE" compact teamId={partnerId} onTeam={setPartner} />
+        {last && stale && <button className="scan-cta" onClick={() => setView("ideas")}><Icon name="spark" size={14} /><span>Notes changed. Find new trade ideas with {them.manager}</span><Icon name="chev" size={14} /></button>}
         <div className="tag-builder">
           <span className="tb-or">Or build it</span>
           <div className="tb-sentence">
