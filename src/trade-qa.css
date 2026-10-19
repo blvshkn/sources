@@ -1,4 +1,4 @@
-/* Trade Build layout fixes. Owned by the trade-build QA pass; loaded last. No url() in this file.
+/* Trade Build layout fixes. Owned by the trade-build QA pass; loaded last. No url references in this file.
    Phone (pg under 980) keeps its own layout; everything layout related sits behind a pg container query. */
 
 /* The partner bar and search keep their full width on every section tab, so switching tabs moves nothing */
