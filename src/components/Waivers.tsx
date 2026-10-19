@@ -83,7 +83,7 @@ function LastThree({ v, weeks }: { v: (number | null | undefined)[]; weeks: numb
   const max = Math.max(1, ...v.map((x) => x ?? 0));
   return (
     <span className="wv-l3"><i>Last {weeks.length}</i>
-      <Tooltip content={<>Actual points, weeks <span className="num">{weeks.join(", ")}</span></>}>
+      <Tooltip content={<>Actual points, weeks <span className="num">{weeks.join(", ")}</span>: <span className="num">{v.map((x) => (typeof x === "number" ? x.toFixed(2) : "–")).join(", ")}</span></>}>
         <b className="wv-l3-row" aria-label={`Last ${weeks.length} weeks: ${v.map((x, k) => `week ${weeks[k]} ${x === null ? "bye" : x === undefined ? "loading" : x.toFixed(1)}`).join(", ")}`}>
           {v.map((x, k) => <em key={k} className={x === null || x === undefined ? "nil" : x === max ? "hi" : ""}>{x === null ? "–" : x === undefined ? "·" : x.toFixed(1)}</em>)}
         </b>
@@ -246,7 +246,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
       {kind !== "current" && (topRow ? (() => {
         const x = topRow, r = x.r!, starts = x.gain > 0.05, past = topKind === "past", week = topWeek;
         return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ?? ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`}
-          stat={{ dt: past ? `Scored wk ${week}` : `Week ${week}`, dd: (x.pts as number).toFixed(1) }}
+          stat={{ dt: past ? `Scored wk ${week}` : `Week ${week}`, dd: (x.pts as number).toFixed(past ? 2 : 1) }}
           why={past ? (x.c?.line ?? null) : `${x.fa.name} projects ${(x.pts as number).toFixed(1)}${x.c?.opp ? ` ${x.c.opp}` : ""} in week ${week}.`}
           plan={past ? (starts ? <span>Would have added <b>{fmt(x.gain)} pts</b> to your week {week} lineup.</span> : <span>Wouldn't have cracked your week {week} lineup.</span>)
             : starts ? <span>Starts for you in week {week}. <b>{fmt(x.gain)} pts</b>.</span> : <span>Bench depth in week {week}. Doesn't crack your lineup.</span>} />;
@@ -316,11 +316,13 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
           const st = gameState(e.fa.nfl);
           const isWatched = watched(e.fa.id);
           const num = (n: number | null | undefined) => (n === null ? "Bye" : n === undefined ? "–" : n.toFixed(1));
+          // Actual points keep Sleeper's two decimals, so they match the Sleeper app exactly
+          const act = (n: number | null | undefined) => (n === null ? "Bye" : n === undefined ? "–" : n.toFixed(2));
           const played = kind === "current" && e.avail === "played";
           // The box on the right: this week's projection, points so far for anyone who already played, or the selected week's number
-          const box = kind === "past" ? { k: "Scored", v: num(e.pts) }
+          const box = kind === "past" ? { k: "Scored", v: act(e.pts) }
             : kind === "future" ? { k: "Proj", v: num(e.pts) }
-            : played ? { k: st === "in_game" ? "So far" : "Scored", v: e.c ? num(e.c.pts) : sel.loading ? "–" : "0.0" }
+            : played ? { k: st === "in_game" ? "So far" : "Scored", v: e.c ? act(e.c.pts) : sel.loading ? "–" : "0.00" }
             : { k: "Proj", v: e.value.toFixed(1) };
           const meta = kind === "current"
             ? <>{e.fa.pos === "DEF" ? oppShort(e.fa) && <span className="lu-game">· {oppShort(e.fa)}</span> : game && r && <span className="lu-game">· {game}</span>}</>
@@ -375,7 +377,7 @@ export function Waivers({ recs, onToast, watch, onWatch }: { recs: WaiverRec[]; 
                 <div className="wv-detail">
                   <p className="small">{kind === "current" ? (kd ? kd.line : r.fa.why)
                     : kind === "future" ? (e.pts === null ? `${e.fa.name} is on bye in week ${week}. Projects ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.` : `${e.fa.name} projects ${num(e.pts)}${e.c?.opp ? ` ${e.c.opp}` : ""} in week ${week}, and ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.`)
-                    : `${e.fa.name} scored ${num(e.pts)} in week ${week}${e.c?.line ? ` (${e.c.line})` : ""}. Projects ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.`}</p>
+                    : `${e.fa.name} scored ${act(e.pts)} in week ${week}${e.c?.line ? ` (${e.c.line})` : ""}. Projects ${(r.kdef ? r.fa.proj : r.value).toFixed(1)} a week the rest of the way.`}</p>
                   <div className="wv-grid">
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>

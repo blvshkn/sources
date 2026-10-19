@@ -41,7 +41,7 @@ export function WaiverContext({ top: thisWeek, onToast }: { top?: WaiverRec; onT
             <Avatar p={top.fa} size={28} badge={false} />
             <span className="pctx-who">
               <b>{top.fa.name}</b>
-              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {wp ? `${wp.pts.toFixed(1)} ${wp.kind === "past" ? "scored" : "proj"}` : `${(kd ? top.value : top.fa.proj).toFixed(1)} proj`}</small>
+              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {wp ? `${wp.pts.toFixed(wp.kind === "past" ? 2 : 1)} ${wp.kind === "past" ? "scored" : "proj"}` : `${(kd ? top.value : top.fa.proj).toFixed(1)} proj`}</small>
             </span>
             <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid) : "Priority"}</b></span>
           </div>

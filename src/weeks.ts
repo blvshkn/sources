@@ -3,7 +3,7 @@
 // the demo league builds a believable season from its projections.
 import { LEAGUE, PLAYERS, WEEK, YOU, isDemo, defName } from "./data";
 import { currentFormat } from "./engine";
-import { fetchWeekRows, WeekRow } from "./sleeper";
+import { fetchWeekRows, scoreStats, WeekRow } from "./sleeper";
 
 export interface WeekPlayer {
   id: string; name: string; pos: string; nfl: string;
@@ -54,6 +54,10 @@ export const ptsFrom = (pos: string, s: Record<string, number | undefined>) => {
   return Math.round(((base ?? 0) + (f.tePremium && pos === "TE" ? (s.rec ?? 0) * 0.5 : 0)) * 10) / 10;
 };
 
+/** Points for one week's stat line (or projection), scored with the league's own scoring_settings like Sleeper does.
+ *  Falls back to Sleeper's precomputed PPR / half / standard totals only when the league has no settings loaded. */
+export const weekPoints = (pos: string, s: Record<string, number | undefined>) => (LEAGUE.scoring ? scoreStats(s, LEAGUE.scoring, pos) : ptsFrom(pos, s));
+
 // ---- Best lineup for a set of weekly numbers --------------------------------
 const FITS: Record<string, string[]> = {
   QB: ["QB"], RB: ["RB"], WR: ["WR"], TE: ["TE"], K: ["K"], DEF: ["DEF"],
@@ -96,8 +100,10 @@ export function demoStats(pos: string, pts: number, seed: number): Record<string
   if (pos === "QB") { const td = Math.max(0, Math.round(pts / 8)); return { pass_cmp: r(16, 27), pass_att: r(28, 40), pass_yd: Math.round(pts * 11 + 40), pass_td: td, pass_int: r(0, 1), rush_att: r(1, 7), rush_yd: r(2, 38) }; }
   if (pos === "RB") return { rush_att: r(9, 21), rush_yd: Math.round(pts * 4.2), rush_td: pts > 15 ? 1 : 0, rec: r(1, 5), rec_tgt: r(2, 6), rec_yd: r(4, 35) };
   if (pos === "WR" || pos === "TE") { const rec = Math.max(1, Math.round(pts / 3)); return { rec, rec_tgt: rec + r(1, 4), rec_yd: Math.round(pts * 6.5), rec_td: pts > 16 ? 1 : 0 }; }
-  if (pos === "K") return { fgm: r(1, 3), fga: r(2, 4), xpm: r(1, 4), xpa: r(2, 4) };
-  return { pts_allow: r(10, 31), sack: r(1, 5), int: r(0, 2) };
+  if (pos === "K") { const fgm = r(1, 3), long = r(0, 1), fga = fgm + r(0, 1), xpa = r(2, 4); return { fgm, fga, fgmiss: fga - fgm, fgm_30_39: fgm - long, fgm_40_49: long, xpm: Math.max(0, xpa - r(0, 1)), xpa }; }
+  // Defenses carry Sleeper's points-allowed bucket flag, which is what scoring_settings scores
+  const pa = r(10, 31), bucket = pa === 0 ? "pts_allow_0" : pa <= 6 ? "pts_allow_1_6" : pa <= 13 ? "pts_allow_7_13" : pa <= 20 ? "pts_allow_14_20" : pa <= 27 ? "pts_allow_21_27" : pa <= 34 ? "pts_allow_28_34" : "pts_allow_35p";
+  return { pts_allow: pa, [bucket]: 1, sack: r(1, 5), int: r(0, 2) };
 }
 function demoWeek(week: number): WeekView {
   const past = week < WEEK;
@@ -124,8 +130,8 @@ async function liveWeek(week: number): Promise<WeekView> {
     const i = info(id, row);
     const teamOff = i.nfl && playing.size >= 20 && !playing.has(i.nfl);
     if (teamOff) return { ...i, pts: null };
-    if (past) return { ...i, pts: scored ?? (row ? ptsFrom(i.pos, row.stats) : 0), line: row ? statLine(i.pos, row.stats) : "Did not play" };
-    return { ...i, pts: row ? ptsFrom(i.pos, row.stats) : 0 };
+    if (past) return { ...i, pts: scored ?? (row ? weekPoints(i.pos, row.stats) : 0), line: row ? statLine(i.pos, row.stats) : "Did not play" };
+    return { ...i, pts: row ? weekPoints(i.pos, row.stats) : 0 };
   };
   if (past) {
     const h = LEAGUE.history?.[week];

@@ -75,6 +75,24 @@ interface STxn {
 }
 interface SMatchup { roster_id: number; matchup_id?: number | null; starters: string[] | null; starters_points: number[] | null; players?: string[] | null; players_points?: Record<string, number> | null; points?: number | null }
 
+/** A player's fantasy points from a Sleeper stat line, scored exactly the way Sleeper scores it: each stat key in the line
+ *  times the league's scoring_settings value for that key (pass_yd 0.04, rec 1, fum_lost -2, pts_allow_7_13, fgm_40_49...),
+ *  summed and rounded to 2 decimals. The only keys a stat line doesn't carry are the per-position catch bonuses
+ *  (bonus_rec_te / _rb / _wr), which Sleeper applies to `rec` by position, so they're added here the same way.
+ *  Shared by the Lineup week browser, the Waivers week view and anything else that scores a week. */
+export function scoreStats(stats: Record<string, number | undefined> | null | undefined, settings: Record<string, number>, pos?: string): number {
+  if (!stats) return 0;
+  let t = 0;
+  for (const [k, v] of Object.entries(stats)) {
+    const m = settings[k];
+    if (typeof v === "number" && typeof m === "number") t += v * m;
+  }
+  const bonusKey = pos === "TE" ? "bonus_rec_te" : pos === "RB" ? "bonus_rec_rb" : pos === "WR" ? "bonus_rec_wr" : "";
+  // Only when the line doesn't already carry the bonus key itself, so it's never counted twice
+  if (bonusKey && settings[bonusKey] && typeof stats.rec === "number" && typeof stats[bonusKey] !== "number") t += stats.rec * settings[bonusKey];
+  return Math.round((t + Number.EPSILON) * 100) / 100;
+}
+
 /** Weekly stats or projections for every player, keyed by Sleeper id. Used by the week browser. */
 export type WeekRow = { team: string | null; stats: Record<string, number | undefined>; player?: SProj["player"] };
 // Shared for a minute, so the Lineup week browser and the Waivers week view asking for the same week make one request
@@ -594,7 +612,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, slate: { opp: slateOpp, proj: slateProj, pts: slatePts }, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
+    mode: "live", id: league.league_id, name: league.name, season, week, scoring: league.scoring_settings, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, slate: { opp: slateOpp, proj: slateProj, pts: slatePts }, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

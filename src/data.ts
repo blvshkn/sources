@@ -503,6 +503,8 @@ export interface LeagueData {
   /** Starting slots from the league settings (skill positions only). */
   slots: SlotKey[];
   format: LeagueFormat;
+  /** The league's scoring_settings from Sleeper (stat key to points). Weekly points are scored with it; see scoreStats. */
+  scoring?: Record<string, number>;
   rosterMax: number;
   /** IR slots per team from the league settings. */
   irSlots: number;
@@ -638,6 +640,13 @@ const DEMO_ACTIVITY: Activity[] = [
   { id: "a6", kind: "waiver", teamIds: ["dan"], adds: [ap("Sean Tucker", "RB", "TB", "dan")], drops: [ap("Kalif Raymond", "WR", "CHI", "dan")], bid: 31, at: hoursAgo(62) },
 ];
 
+/** Demo scoring: Sleeper's default full PPR settings, so the demo scores weeks the same way a live league does. */
+const DEMO_SCORING: Record<string, number> = {
+  pass_yd: 0.04, pass_td: 4, pass_int: -1, pass_2pt: 2, rush_yd: 0.1, rush_td: 6, rush_2pt: 2, rec: 1, rec_yd: 0.1, rec_td: 6, rec_2pt: 2,
+  fum_lost: -2, fum_rec_td: 6, fgm_0_19: 3, fgm_20_29: 3, fgm_30_39: 3, fgm_40_49: 4, fgm_50p: 5, fgmiss: -1, xpm: 1, xpmiss: -1,
+  sack: 1, int: 2, fum_rec: 2, def_td: 6, safe: 2, blk_kick: 2, def_st_td: 6, st_td: 6,
+  pts_allow_0: 10, pts_allow_1_6: 7, pts_allow_7_13: 4, pts_allow_14_20: 1, pts_allow_21_27: 0, pts_allow_28_34: -1, pts_allow_35p: -4,
+};
 export function demoLeague(): LeagueData {
   const { teams, players } = demoTeams();
   const specials = demoSpecials(teams);
@@ -658,6 +667,7 @@ export function demoLeague(): LeagueData {
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     champion: { teamId: "jake", season: "2025" },
     valueSource: "Demo estimate from projections",
+    scoring: DEMO_SCORING,
   };
 }
 

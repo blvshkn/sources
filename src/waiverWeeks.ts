@@ -1,11 +1,11 @@
 // Waivers week view: any free agent's numbers for any week. Past weeks are what he actually scored (with a short
 // stat line), the current week is what he has so far, future weeks are Sleeper's projection. Live leagues read
 // Sleeper's weekly stats and projections feeds through fetchWeekRows (the same feed the Lineup week browser uses)
-// and score them with the league format (ptsFrom); the demo league builds stable sample numbers.
+// and score them with the league's own scoring_settings (weekPoints / scoreStats); the demo league builds stable sample numbers.
 import { useEffect, useMemo, useState } from "react";
 import { LEAGUE, WEEK, Player, isDemo, gameState } from "./data";
 import { fetchWeekRows, WeekRow } from "./sleeper";
-import { demoStats, ptsFrom } from "./weeks";
+import { demoStats, weekPoints } from "./weeks";
 import { seasonFor } from "./schedule";
 import type { WaiverRec } from "./engine";
 
@@ -59,8 +59,10 @@ function demoCells(week: number, fas: FaLite[]): WkCells {
     const st = week === WEEK ? gameState(fa.nfl) : null;
     if (week < WEEK || st === "in_game" || st === "complete") {
       // Week first in the seed, so neighbouring weeks don't land on near identical numbers. A game in progress is about half done.
-      const pts = Math.round(Math.max(0, fa.proj || 6) * (0.35 + mix(`${week}:${fa.id}`) * 1.3) * (st === "in_game" ? 0.5 : 1) * 10) / 10;
-      out[fa.id] = { pts, opp, played: true, line: shortLine(fa.pos, demoStats(fa.pos, pts, week * 97 + fa.id.length)) };
+      // The stat line is built from a target score, then scored with the demo scoring_settings, so line and points agree.
+      const target = Math.round(Math.max(0, fa.proj || 6) * (0.35 + mix(`${week}:${fa.id}`) * 1.3) * (st === "in_game" ? 0.5 : 1) * 10) / 10;
+      const stats = demoStats(fa.pos, target, week * 97 + Math.floor(mix(fa.id) * 1e6));
+      out[fa.id] = { pts: weekPoints(fa.pos, stats), opp, played: true, line: shortLine(fa.pos, stats) };
     } else out[fa.id] = { pts: c.proj ?? fa.proj, opp, played: false };
   }
   return out;
@@ -76,8 +78,8 @@ async function liveCells(week: number, fas: FaLite[]): Promise<WkCells> {
     if (hasSchedule && !o) { out[fa.id] = { pts: null, played: false }; continue; }
     const row = rows.get(fa.id);
     const has = !!row && Object.values(row.stats ?? {}).some((v) => typeof v === "number" && v !== 0);
-    if (week > WEEK) { out[fa.id] = { pts: row ? ptsFrom(fa.pos, row.stats) : 0, opp: oppLabel(o), played: false }; continue; }
-    out[fa.id] = { pts: has ? ptsFrom(fa.pos, row!.stats) : 0, opp: oppLabel(o), played: has, line: has ? shortLine(fa.pos, row!.stats) : undefined };
+    if (week > WEEK) { out[fa.id] = { pts: row ? weekPoints(fa.pos, row.stats) : 0, opp: oppLabel(o), played: false }; continue; }
+    out[fa.id] = { pts: has ? weekPoints(fa.pos, row!.stats) : 0, opp: oppLabel(o), played: has, line: has ? shortLine(fa.pos, row!.stats) : undefined };
   }
   return out;
 }
