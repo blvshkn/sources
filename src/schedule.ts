@@ -18,10 +18,8 @@ function demoCell(p: Player, w: number): { opp: string | null; pts?: number; pro
   const others = TEAMS.filter((t) => t !== p.nfl), ti = TEAMS.indexOf(p.nfl);
   // This week's opponent comes from the demo slate, so the strip agrees with the header's game line
   const real = w === WEEK && p.opp ? /^(vs|@)\s*([A-Z]{2,3})$/.exec(p.opp) : null;
-  if (real) {
-    const f = 0.72 + hash(real[2] + p.pos) * 0.56;
-    return { opp: (real[1] === "@" ? "@" : "v") + real[2], proj: Math.round((p.proj || 8) * f * 10) / 10 };
-  }
+  // and its projection is his real one, so the strip, game log and outcome range show the same number
+  if (real) return { opp: (real[1] === "@" ? "@" : "v") + real[2], proj: p.proj || undefined };
   const opp = others[((ti >= 0 ? ti : 0) * 7 + w * 11) % others.length];
   const base = p.proj || 8;
   const f = 0.72 + hash(opp + p.pos) * 0.56;

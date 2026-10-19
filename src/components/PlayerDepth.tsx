@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, teamNick } from "../data";
 import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
-import { SWING } from "../live";
+import { SWING, useLive, type Live } from "../live";
 import { NewsItem, byNewest, sourcesLine, usePlayerNews } from "../news";
 import { seasonFor } from "../schedule";
 import { Defense, Usage, defenseVs, loadPosWeeks, oppTeam, usageFor } from "../usage";
@@ -24,7 +24,15 @@ const Term = ({ t, tip }: { t: string; tip: string }) => <Tooltip focusable cont
 const POS_PLURAL: Record<string, string> = { QB: "QBs", RB: "RBs", WR: "WRs", TE: "TEs" };
 const dayOf = (d?: string) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" }) : "");
 const dateOf = (d?: string) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "");
-const kicked = (nfl: string) => { const g = gameState(nfl); return g === "in_game" || g === "complete"; };
+/** His game right now. Live leagues and the demo both report through useLive; the saved slate is the fallback. */
+export interface Now { state: "pre" | "in_game" | "complete"; pts: number; frac: number }
+export function nowFor(l: Live | null, p: Player): Now {
+  const st = l?.games[p.nfl] ?? gameState(p.nfl);
+  const pts = l?.points[p.id] ?? 0;
+  if (st === "complete") return { state: "complete", pts, frac: 0 };
+  if (st === "in_game") return { state: "in_game", pts, frac: Math.min(1, Math.max(0, l?.left?.[p.nfl] ?? 0.5)) };
+  return { state: "pre", pts: 0, frac: 1 };
+}
 
 // ---- Status line ---------------------------------------------------------------
 const STATUS_WORDS = /^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i;
@@ -46,6 +54,18 @@ export function statusLine(p: Player): string | null {
   return lead.test(extra) ? `${head} ${extra.replace(lead, "")}` : `${head}, ${extra}`;
 }
 
+/** The status line under a header that already shows the Questionable or Out pill: just the detail, so the word
+ *  isn't said twice. "Questionable (ankle), limited practice" becomes "Ankle, limited practice". */
+export function statusDetail(p: Player): string | null {
+  const line = statusLine(p);
+  if (!line || onBye(p.nfl) || !p.status) return line;
+  const word = p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : null;
+  const m = word ? new RegExp(`^${word}(?: \\(([^)]+)\\))?(?:,\\s*|\\s+|$)(.*)$`).exec(line) : null;
+  if (!m) return line;
+  const text = [m[1] ? `${m[1]} injury` : "", m[2]].filter(Boolean).join(", ");
+  return text ? text[0].toUpperCase() + text.slice(1) : null;
+}
+
 // ---- Game log ------------------------------------------------------------------
 export interface LogGame { w: number; pts: number; started: boolean }
 /** His weekly points: your matchups when he was on your team, otherwise every league matchup Sleeper has on record
@@ -61,12 +81,13 @@ export function gameLog(p: Player): { games: LogGame[]; yours: boolean } {
 }
 
 // ---- Outcome range ---------------------------------------------------------------
-export interface Outcome { proj: number; floor: number; ceiling: number; sigma: number; widened: boolean; chance: (x: number) => number }
+export interface Outcome { proj: number; floor: number; ceiling: number; sigma: number; widened: boolean; chance: (x: number) => number; now: Now; pre: { floor: number; proj: number; ceiling: number } }
 /** This week's spread. The app's swing model (SWING in live.ts: how much a score moves, as a share of the projection,
  *  by position) sets the width; a player whose own weeks have swung harder gets a wider range. Scores skew right, so
  *  the spread is log-normal around the projection: the projection is the median, floor and ceiling are the 20th and
- *  80th percentiles. */
-export function outcomeFor(p: Player, log: number[]): Outcome | null {
+ *  80th percentiles. Once his game kicks off the range is points so far plus the same spread over what's left, the
+ *  way live.ts shrinks a starter's swing; when it's final the range collapses to what he scored. */
+export function outcomeFor(p: Player, log: number[], now: Now = { state: "pre", pts: 0, frac: 1 }): Outcome | null {
   const proj = eff(p, true);
   if (!proj) return null;
   let cv = SWING[p.pos] ?? 0.85, widened = false;
@@ -77,7 +98,12 @@ export function outcomeFor(p: Player, log: number[]): Outcome | null {
   }
   const sigma = Math.sqrt(Math.log(1 + cv * cv));
   const q = (z: number) => round1(proj * Math.exp(z * sigma));
-  return { proj, floor: q(-0.8416), ceiling: q(0.8416), sigma, widened, chance: (x: number) => 1 - phi(Math.log(x / proj) / sigma) };
+  const pre = { floor: q(-0.8416), proj, ceiling: q(0.8416) };
+  if (now.state === "pre") return { ...pre, sigma, widened, now, pre, chance: (x: number) => 1 - phi(Math.log(x / proj) / sigma) };
+  // What's left of his game: the same spread, scaled to the share still to play
+  const rest = proj * now.frac, at = (v: number) => round1(now.pts + v * now.frac);
+  return { proj: round1(now.pts + rest), floor: at(pre.floor), ceiling: at(pre.ceiling), sigma, widened, now, pre,
+    chance: (x: number) => (x <= now.pts ? 1 : rest <= 0 ? 0 : 1 - phi(Math.log((x - now.pts) / rest) / sigma)) };
 }
 /** Chance A outscores B, treating each as his own spread (differences of log-normals, approximated as normal). */
 function beats(a: Player, b: Player) {
@@ -89,29 +115,43 @@ function beats(a: Player, b: Player) {
 const THRESH: Record<Pos, number[]> = { QB: [15, 20, 25], RB: [10, 15, 20], WR: [10, 15, 20], TE: [8, 12, 16] };
 
 export function OutcomeRange({ p, o }: { p: Player; o: Outcome }) {
-  const max = Math.max(o.ceiling * 1.18, THRESH[p.pos][2] * 1.05);
+  const n = o.now, b = n.state === "complete" ? o.pre : o;
+  // Mid-game, lines he has already cleared tell you nothing, so step them up past his points so far
+  let lines = THRESH[p.pos];
+  while (n.state === "in_game" && lines[0] <= n.pts) lines = lines.map((t) => t + 5);
+  const max = Math.max(b.ceiling * 1.18, lines[2] * 1.05, n.pts * 1.08);
   const at = (v: number) => `${Math.min(100, (v / max) * 100).toFixed(2)}%`;
-  const odds = THRESH[p.pos].map((t) => ({ t, c: Math.round(o.chance(t) * 100) }));
+  const odds = lines.map((t) => ({ t, c: Math.round(o.chance(t) * 100) }));
   // Lead with the line closest to a coin flip; that's the one that tells you something
   const lead = [...odds].sort((a, b) => Math.abs(a.c - 50) - Math.abs(b.c - 50))[0];
+  const done = n.state === "complete", live = n.state === "in_game";
+  const landed = n.pts < b.floor ? "below his floor" : n.pts < b.proj ? "between his floor and median" : n.pts <= b.ceiling ? "between his median and ceiling" : "above his ceiling";
   return (
-    <div className="pd-range" aria-label={`Projection range: floor ${f1(o.floor)}, median ${f1(o.proj)}, ceiling ${f1(o.ceiling)}`}>
+    <div className="pd-range" aria-label={done ? `Final: ${f1(n.pts)} points, ${landed}` : `${live ? "Live range" : "Projection range"}: floor ${f1(o.floor)}, median ${f1(o.proj)}, ceiling ${f1(o.ceiling)}`}>
+      {(live || done) && (
+        <p className="pd-live">
+          <span className={`pd-live-k${live ? " on" : ""}`}>{live ? "Live" : "Final"}</span>
+          {live ? <span><b>{f1(n.pts)}</b> so far, about {Math.round(n.frac * 100)}% of his game left. The range is what he's on pace to finish with.</span>
+            : <span>Scored <b>{f1(n.pts)}</b>, {landed}. His pregame range is below.</span>}
+        </p>
+      )}
       <div className="pd-range-nums">
-        <span><Term t="Floor" tip="His 20th percentile. About 1 week in 5 he scores less than this." /><b>{f1(o.floor)}</b></span>
-        <span className="mid"><Term t="Median" tip="His projection this week. Half the time he beats it, half the time he doesn't." /><b>{f1(o.proj)}</b></span>
-        <span><Term t="Ceiling" tip="His 80th percentile. About 1 week in 5 he scores more than this." /><b>{f1(o.ceiling)}</b></span>
+        <span><Term t="Floor" tip={live ? "Points so far plus a bad finish: his 20th percentile for the rest of the game." : "His 20th percentile. About 1 week in 5 he scores less than this."} /><b>{f1(b.floor)}</b></span>
+        <span className="mid"><Term t="Median" tip={live ? "Points so far plus his projection for the share of the game that's left." : "His projection this week. Half the time he beats it, half the time he doesn't."} /><b>{f1(b.proj)}</b></span>
+        <span><Term t="Ceiling" tip={live ? "Points so far plus a big finish: his 80th percentile for the rest of the game." : "His 80th percentile. About 1 week in 5 he scores more than this."} /><b>{f1(b.ceiling)}</b></span>
       </div>
       <div className="pd-range-bar" aria-hidden="true">
-        <i className="band" style={{ left: at(o.floor), width: `calc(${at(o.ceiling)} - ${at(o.floor)})` }} />
-        <i className="med" style={{ left: at(o.proj) }} />
+        <i className="band" style={{ left: at(b.floor), width: `calc(${at(b.ceiling)} - ${at(b.floor)})` }} />
+        <i className="med" style={{ left: at(b.proj) }} />
+        {(live || done) && <i className="now" style={{ left: at(n.pts) }} />}
         {odds.map((x) => <i key={x.t} className="tick" style={{ left: at(x.t) }} data-t={x.t} />)}
       </div>
-      <div className="pd-odds">
+      {!done && <div className="pd-odds">
         <span className="pd-k">Chance of scoring</span>
         {odds.map((x) => <span key={x.t} className={`pd-odd${x.t === lead.t ? " lead" : ""}`} aria-label={`${x.c}% chance of ${x.t} or more points`}>{x.t}+ <b>{x.c}%</b></span>)}
-      </div>
+      </div>}
       <p className="pd-fine">
-        Projection range, not a guarantee. <Tooltip focusable content={`Width comes from how much ${POS_PLURAL[p.pos]} swing week to week in Sleeper's matchups${o.widened ? ", widened because his own weeks have swung more than that" : ""}. Scores skew high, so the ceiling sits further from the median than the floor.`}><span className="tt-term">How it's built</span></Tooltip>
+        {done ? "Pregame range, for reference." : "Projection range, not a guarantee."} <Tooltip focusable content={`Width comes from how much ${POS_PLURAL[p.pos]} swing week to week in Sleeper's matchups${o.widened ? ", widened because his own weeks have swung more than that" : ""}. Scores skew high, so the ceiling sits further from the median than the floor.`}><span className="tt-term">How it's built</span></Tooltip>
       </p>
     </div>
   );
@@ -127,7 +167,7 @@ const slotNames = (lu: Lineup) => {
 type Tone = "good" | "bad" | "warn" | "info";
 interface Call { tone: Tone; head: string; line: string; slot?: string; alts: { p: Player; tag?: string }[]; changes: string[]; owner: "you" | "them" | "fa" | "ir" }
 
-export function lineupCall(p: Player): Call {
+export function lineupCall(p: Player, now: Now = nowFor(null, p)): Call {
   const owner = TEAMS.find((t) => allOf(t).includes(p.id));
   const yours = owner?.id === YOU.id;
   const onIr = !!owner && ((owner.ir ?? []).includes(p.id) || (owner.taxi ?? []).includes(p.id));
@@ -191,7 +231,7 @@ export function lineupCall(p: Player): Call {
       call = { tone: over && gap < 1.5 ? "warn" : "good", head: `Starts at ${slotLabel}`, slot: slotLabel,
         line: over ? `Over ${over.name}, ${f1(me)} to ${f1(eff(over, true))}${gap < 1.5 ? ". A close call" : ""}. He outscores ${over.name.split(" ").slice(-1)[0]} about ${Math.round(beats(p, over) * 100)}% of the time.` : `No one on your bench can fill ${slotLabel} this week.` };
     } else call = { tone: "info", head: "Stays on the bench", slot: slotLabel,
-      line: weakest ? `${weakest.player.name} holds ${slotLabel} at ${f1(eff(weakest.player, true))}. He projects ${f1(me)}, ${f1(eff(weakest.player, true) - me)} short. He'd outscore him about ${Math.round(beats(p, weakest.player) * 100)}% of the time.` : `No starting slot fits a ${p.pos}.` };
+      line: weakest ? `${weakest.player.name} holds ${slotLabel} at ${f1(eff(weakest.player, true))}. He projects ${f1(me)}, ${f1(eff(weakest.player, true) - me)} short. He outscores ${weakest.player.name.split(" ").slice(-1)[0]} about ${Math.round(beats(p, weakest.player) * 100)}% of the time.` : `No starting slot fits a ${p.pos}.` };
   } else {
     // Someone else's player: read their lineup the same way
     const over = nextUp;
@@ -206,17 +246,18 @@ export function lineupCall(p: Player): Call {
     const without = idx >= 0 ? lineupFor(pool.filter((id) => id !== p.id), true) : null;
     const startIds = new Set(lu.slots.map((x) => x.player?.id));
     const fill = without?.slots.map((x) => x.player).find((x): x is Player => !!x && !startIds.has(x.id) && eff(x, true) > 0);
-    if (p.status === "Q" && without) {
-      const slid = fill && !fits(lu.slots[idx].slot, fill.pos) ? without.slots.find((x, i) => i === idx)?.player : undefined;
+    const kicked = now.state !== "pre";
+    if (p.status === "Q" && without && !kicked) {
+      const slid = fill && !fits(lu.slots[idx].slot, fill.pos) ? without.slots[idx]?.player : undefined;
       changes.push(fill
         ? `He's questionable. If he's ruled out, ${fill.name} comes into ${who === "you" ? "your" : "their"} lineup${slid && slid.id !== fill.id ? ` and ${slid.name} slides to ${slotLabel}` : ""}. That's ${f1(lu.total - without.total)} fewer projected points.`
         : `He's questionable, and ${who === "you" ? "you have" : "they have"} no healthy fill-in.`);
     }
-    if (p.gameDate && !kicked(p.nfl)) {
+    if (p.gameDate && !kicked) {
       const early = fill?.gameDate && fill.gameDate < p.gameDate;
       changes.push(`Plays ${dateOf(p.gameDate)}. Sleeper locks him at kickoff${p.status === "Q" ? "; inactives come out 90 minutes before" : ""}.`);
       if (p.status === "Q" && fill && early) changes.push(`${fill.name} plays first (${dayOf(fill.gameDate)}). If you wait on his status, ${fill.name} will already be locked. Pick a fallback who plays ${dayOf(p.gameDate)} or later.`);
-    } else if (kicked(p.nfl)) changes.push("His game has kicked off. Sleeper has locked him in.");
+    } else if (kicked) changes.push(now.state === "complete" ? `His game is final (${f1(now.pts)} points). Sleeper has locked him in.` : `His game is on (${f1(now.pts)} so far). Sleeper has locked him in.`);
     const nextBye = seasonFor(p).find((c) => !c.past && c.week > WEEK && !c.opp);
     if (nextBye && nextBye.week - WEEK <= 2) changes.push(`Bye in Week ${nextBye.week}.${nextUp ? ` ${nextUp.name} is next up at ${slotLabel}.` : ` ${who === "you" ? "You have" : "They have"} no one else at ${slotLabel}; plan a pickup.`}`);
   }
@@ -224,7 +265,7 @@ export function lineupCall(p: Player): Call {
 }
 
 export function LineupCall({ p }: { p: Player }) {
-  const c = lineupCall(p);
+  const c = lineupCall(p, nowFor(useLive(), p));
   return (
     <section className={`pd-blk pd-call t-${c.tone}`} aria-label="Lineup call">
       <div className="ps-sub"><b>Lineup call</b>{c.slot && <span className="pd-slot">{c.slot}</span>}</div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ScheduleStrip } from "./Schedule";
-import { LineupCall, OutcomeRange, SheetNews, UsageAndMatchup, gameLog, outcomeFor, statusLine } from "./PlayerDepth";
+import { LineupCall, OutcomeRange, SheetNews, UsageAndMatchup, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
+import { useLive } from "../live";
 import { Player, WEEK, gameLine, onBye } from "../data";
 import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
@@ -42,8 +43,9 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
     });
 
   const { games } = gameLog(p);
-  const range = outcomeFor(p, games.map((g) => g.pts));
-  const status = statusLine(p);
+  const live = useLive();
+  const range = outcomeFor(p, games.map((g) => g.pts), nowFor(live, p));
+  const status = statusDetail(p);
   const avg = games.length ? round1(games.reduce((a, g) => a + g.pts, 0) / games.length) : null;
   const max = Math.max(1, ...games.map((g) => g.pts), eff(p, true));
   const playoff = p.playoff ? round1(scored({ ...p, pts: p.playoff, wk: undefined })) : null;

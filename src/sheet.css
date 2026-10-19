@@ -30,6 +30,11 @@ html:root:not(#_):not(#_) .pd-blk .ps-sub { align-items: center; }
 .pd-range-bar .med { width: 3px; top: -4px; bottom: -4px; margin-left: -1.5px; border-radius: 2px; background: var(--lime); box-shadow: 0 0 0 2px var(--surface-2); }
 .pd-range-bar .tick { width: 1px; top: 12px; bottom: auto; height: 5px; background: var(--faint); }
 .pd-range-bar .tick::after { content: attr(data-t); position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font: 500 0.625rem/1 var(--font-mono); color: var(--faint); }
+.pd-range-bar .now { width: 12px; height: 12px; top: -1px; bottom: auto; margin-left: -6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--surface-2); }
+.pd-live { margin: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+.pd-live b { font: 600 0.875rem/1 var(--font-mono); color: var(--ink); }
+.pd-live-k { flex: none; padding: 2px 7px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font: 600 0.625rem/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.pd-live-k.on::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--bad); vertical-align: 1px; }
 .pd-odds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .pd-odds .pd-k { margin-right: 2px; }
 .pd-odds .pd-odd { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 8px; border-radius: 999px; background: rgba(244, 246, 242, 0.06); font-size: 0.75rem; color: var(--muted); }
@@ -38,7 +43,7 @@ html:root:not(#_):not(#_) .pd-blk .ps-sub { align-items: center; }
 .pd-odds .pd-odd.lead b { color: var(--lime); }
 
 /* ---------- Lineup call ---------- */
-.pd-call { padding: 16px; border-radius: 20px; background: var(--surface-2); box-shadow: var(--shadow-sm, none); }
+.pd-call { align-content: start; padding: 16px; border-radius: 20px; background: var(--surface-2); box-shadow: var(--shadow-sm, none); }
 .pd-slot { padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink) !important; font: 600 0.6875rem/1.4 var(--font-mono) !important; letter-spacing: 0.02em; }
 .pd-verdict { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
 .pd-verdict > i { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-3); color: var(--muted); }
