@@ -48,16 +48,18 @@ export function parseFeed(xml, source) {
 }
 
 /** ESPN's JSON news (fantasy player feed and site news). RotoWire blurbs carried by ESPN are credited to RotoWire. */
-export function parseEspn(json, espnId) {
+export function parseEspn(json, espnId, rwId) {
   const list = Array.isArray(json?.feed) ? json.feed : Array.isArray(json?.articles) ? json.articles : [];
   const page = espnId ? `https://www.espn.com/nfl/player/_/id/${espnId}` : "";
   return list.map((a) => {
     if (!a || typeof a !== "object" || /media|video/i.test(String(a.type ?? ""))) return null;
     const roto = /rotowire/i.test(String(a.type ?? "") + String(a.source ?? "") + String(a.byline ?? ""));
-    const url = a.links?.web?.href || a.links?.mobile?.href || a.link || page;
+    // ESPN's copies of RotoWire blurbs carry no RotoWire link; his RotoWire page lists the same blurb
+    const rwPage = roto && rwId ? `https://www.rotowire.com/football/player.php?id=${rwId}` : "";
+    const url = rwPage || a.links?.web?.href || a.links?.mobile?.href || a.link || page;
     const at = Date.parse(a.published || a.lastModified || "") || null;
     const it = item(roto ? "RotoWire" : "ESPN", a.headline || a.title || "", a.description || a.story || "", url, at, roto ? "ESPN" : undefined);
-    if (it && url === page) it.page = true;
+    if (it && (url === page || url === rwPage)) it.page = true;
     // ESPN tags the player either in categories (site news) or as a top-level playerId (fantasy news)
     if (it && espnId) it.athlete = String(a.playerId ?? "") === String(espnId)
       || (Array.isArray(a.categories) && a.categories.some((c) => String(c?.athleteId ?? c?.athlete?.id ?? "") === String(espnId)));
@@ -190,10 +192,10 @@ async function espnIdFor(name, team, getJson = (u) => get(u, "json")) {
   return null;
 }
 
-async function espnFor(id, getJson = (u) => get(u, "json")) {
+async function espnFor(id, getJson = (u) => get(u, "json"), rwId) {
   if (!id || !/^\d+$/.test(id)) return [[], []];
-  const fantasy = getJson(`https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players?playerId=${id}&limit=50`).then((j) => parseEspn(j, id)).catch(() => []);
-  const site = getJson(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?athletes=${id}&limit=25`).then((j) => parseEspn(j, id)).catch(() => []);
+  const fantasy = getJson(`https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players?playerId=${id}&limit=50`).then((j) => parseEspn(j, id, rwId)).catch(() => []);
+  const site = getJson(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?athletes=${id}&limit=25`).then((j) => parseEspn(j, id, rwId)).catch(() => []);
   return Promise.all([fantasy, site]);
 }
 
@@ -231,11 +233,11 @@ export async function playerNews({ name, team, espn }, now = Date.now()) {
  * ESPN for one player, run in the browser. ESPN refuses requests from our server (403) but serves its public JSON
  * to browsers with CORS, so the app calls this directly and merges it with the server's answer.
  */
-export async function espnPlayerNews({ name, team, espn }, now = Date.now()) {
+export async function espnPlayerNews({ name, team, espn, rotowire }, now = Date.now()) {
   const who = { ...nameForms(name), team: String(team ?? "").toUpperCase() };
   const getJson = (u) => fetch(u, { signal: AbortSignal.timeout(6000) }).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); });
   const id = espn && /^\d+$/.test(espn) ? espn : await espnIdFor(name, who.team, getJson);
-  const [fantasy, site] = await espnFor(id, getJson);
+  const [fantasy, site] = await espnFor(id, getJson, rotowire);
   return [...fantasy, ...site].filter((i) => i.athlete !== false || matches({ ...i, athlete: undefined }, who))
     .filter((i) => !i.at || now - i.at < 30 * DAY);
 }

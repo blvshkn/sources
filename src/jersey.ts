@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import type { Player } from "./data";
 
-type Row = [number, string, string, string, string?];
+type Row = [number, string, string, string, string?, string?];
 let byId: Record<string, Row> = {};
 let byName = new Map<string, number>();
 let idByName = new Map<string, string>();
@@ -28,7 +28,7 @@ function ingest(players: Record<string, Row>) {
   listeners.forEach((l) => l());
 }
 
-const KEY = "sources.jerseys.v2";
+const KEY = "sources.jerseys.v3";
 let started = false;
 export function loadJerseyNumbers() {
   if (started) return;
@@ -57,8 +57,14 @@ export function sleeperId(p: Pick<Player, "id" | "name" | "nfl">): string | unde
 /** ESPN's id for this player, when Sleeper has one. Lets the news route ask ESPN for his own feed. */
 export function espnId(p: Pick<Player, "id" | "name" | "nfl">): string | undefined {
   const row = byId[p.id];
-  if (row) return row[4];
+  if (row) return row[4] || undefined;
   return espnByName.get(`${norm(p.name)}|${p.nfl}`);
+}
+
+/** RotoWire's id for this player, from Sleeper. Their player page carries every RotoWire blurb about him. */
+export function rotowireId(p: Pick<Player, "id" | "name" | "nfl">): string | undefined {
+  const row = byId[p.id] ?? byId[sleeperId(p) ?? ""];
+  return row?.[5] || undefined;
 }
 
 export function jerseyNumber(p: Pick<Player, "id" | "name" | "nfl">): number | undefined {

@@ -1,6 +1,6 @@
 // Jersey numbers for every active NFL skill player, trimmed from Sleeper's
 // full player file (about 5 MB) down to a few KB and cached at the edge for a day.
-// Response: { updated, players: { [sleeperId]: [number, "First Last", "TEAM", "POS", espnId?] } }
+// Response: { updated, players: { [sleeperId]: [number, "First Last", "TEAM", "POS", espnId|"", rotowireId?] } }
 // The ESPN id lets /api/news ask ESPN for that player's own news feed.
 const POS = new Set(["QB", "RB", "WR", "TE", "K"]);
 
@@ -14,7 +14,9 @@ export default async function handler(req, res) {
       if (!p || !POS.has(p.position) || p.number == null || p.number === "") continue;
       if (!p.team && p.status !== "Active") continue;
       const row = [Number(p.number), [p.first_name, p.last_name].filter(Boolean).join(" "), p.team || "FA", p.position];
-      if (p.espn_id) row.push(String(p.espn_id));
+      row.push(p.espn_id ? String(p.espn_id) : "");
+      // RotoWire's player page lists the same blurbs ESPN carries, so "Read on RotoWire" can land on them
+      if (p.rotowire_id) row.push(String(p.rotowire_id));
       players[id] = row;
     }
     res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");

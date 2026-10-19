@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Player } from "./data";
-import { espnId } from "./jersey";
+import { espnId, rotowireId } from "./jersey";
 // @ts-ignore: plain JS module shared with the server route
 import { espnPlayerNews, mergeNews } from "../api/news.js";
 
@@ -16,7 +16,7 @@ export const sourcesLine = (sep = ", ", last = " and ") => NEWS_SOURCES.slice(0,
 // so reopening a sheet or switching tabs never waits. Stale entries show at once and refresh behind.
 
 const TTL = 10 * 60e3;
-const SKEY = "sources.news.v2.";
+const SKEY = "sources.news.v3.";
 type Entry = { at: number; items: NewsItem[] };
 const mem = new Map<string, Entry>();
 const inflight = new Set<string>();
@@ -58,7 +58,7 @@ export function loadPlayerNews(p: Pick<Player, "id" | "name" | "nfl" | "pos">) {
   // Our route covers RotoWire and RotoBaller; ESPN only answers browsers, so it's fetched here and merged in
   queue.push(() => Promise.all([
     fetch(`/api/news?${q}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<{ items?: NewsItem[] } | null>,
-    (espnPlayerNews({ name: p.name, team: p.nfl, espn: espn ?? "" }) as Promise<NewsItem[]>).catch(() => null),
+    (espnPlayerNews({ name: p.name, team: p.nfl, espn: espn ?? "", rotowire: rotowireId(p) ?? "" }) as Promise<NewsItem[]>).catch(() => null),
   ])
     .then(([d, e2]) => {
       // A failed request keeps whatever we had; only a real answer replaces it
