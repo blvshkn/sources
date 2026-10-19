@@ -33,6 +33,7 @@ import "./scroll.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
+import { scrollAreas } from "./components/ScrollArea";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -43,3 +44,4 @@ createRoot(document.getElementById("root")!).render(
 monoNumbers(document.getElementById("root")!);
 chartReveal(document.getElementById("root")!);
 iconMotion();
+scrollAreas();

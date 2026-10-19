@@ -8,6 +8,7 @@ import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
+import { ScrollArea } from "./ScrollArea";
 
 /** Player details in a bottom sheet, so you stay on the page you were on. */
 export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
@@ -68,7 +69,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
         <WeekStepper week={week} onChange={(w) => { setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />
         </div>
         {/* Only this scrolls; the shell clips it to the rounded corners and the header above stays put */}
-        <div ref={body} className="ps-body" data-sheet-scroll>
+        <ScrollArea ref={body} className="ps-body" data-sheet-scroll>
         {note && cur && <p className="ps-why">{note}</p>}
         {status && week >= WEEK && <p className={`ps-inj${p.status === "O" ? " out" : ""}`}><Icon name="alert" size={14} />{status}</p>}
 
@@ -134,7 +135,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
         </div>
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
-        </div>
+        </ScrollArea>
       </section>
     </div>
   );
