@@ -517,8 +517,8 @@ export default function App() {
     if (status === "loading") { bootAt.current = Date.now(); setBoot("on"); return; }
     if (boot !== "on") return;
     if (status !== "ready") { setBoot("off"); return; }
-    const t1 = window.setTimeout(() => setBoot("leaving"), Math.max(0, 950 - (Date.now() - bootAt.current)));
-    const t2 = window.setTimeout(() => setBoot("off"), Math.max(0, 950 - (Date.now() - bootAt.current)) + 420);
+    const t1 = window.setTimeout(() => setBoot("leaving"), Math.max(0, 1300 - (Date.now() - bootAt.current)));
+    const t2 = window.setTimeout(() => setBoot("off"), Math.max(0, 1300 - (Date.now() - bootAt.current)) + 340);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
