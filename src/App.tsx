@@ -5,7 +5,7 @@ import { Matchup } from "./components/Matchup";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
-  counterFor, evaluate, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidDollars,
+  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidDollars,
   irReport, irLabel, parseTag,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
@@ -124,6 +124,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [switching, setSwitching] = useState<false | "list" | "add">(false);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
   const [give, setGive] = useState<string[]>([]);
+  // More partners in the same deal (a 3 or 4 team trade). Each has its own give and get with you.
+  const [extra, setExtra] = useState<DealLeg[]>([]);
   const [get, setGet] = useState<string[]>([]);
   const [pitch, setPitch] = useState<Trade | null>(null);
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
@@ -335,14 +337,18 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", `What does ${mgr} need?`];
   }, [partners, youNeeds]);
 
-  const trade = give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null;
+  const trade = !extra.length && give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null;
+  const legs: DealLeg[] = [{ teamId: partnerId, give, get }, ...extra];
+  // A multi-team deal reads once every partner has a player moving and you both send and get someone
+  const multi = extra.length && legs.every((l) => l.give.length + l.get.length > 0) && legs.some((l) => l.give.length) && legs.some((l) => l.get.length)
+    ? evaluateMulti(YOU, legs, active, myTags, prices) : null;
   const tip = trade && level !== "light" ? builderTip(trade, active, myTags, prices) : null;
 
   const go = (dest: string, teamId?: string) => {
     // "settings:nudges" opens a screen on a specific section tab
     const [t, section] = dest.split(":");
     if (!(TAB_IDS as string[]).includes(t)) return;
-    if (teamId) { if (t === "league") setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); } }
+    if (teamId) { if (t === "league") setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); setExtra([]); } }
     // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
     if (t !== tab) { const m = document.getElementById("main"); if (m) m.style.minHeight = ""; }
@@ -357,13 +363,30 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
   // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
-  const loadTrade = (t: Trade) => { setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); go("trade"); };
-  const toggle = (side: "give" | "get", id: string) => {
-    const set = side === "give" ? setGive : setGet;
-    // Up to 10 a side, so bigger packages and roster-clearing deals fit
-    set((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 10 ? cur : [...cur, id]));
+  const loadTrade = (t: Trade) => { setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
+  const toggle = (side: "give" | "get", id: string, teamId?: string) => {
+    // Up to 10 a side per team, so bigger packages and roster-clearing deals fit
+    const flip = (cur: string[]) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 10 ? cur : [...cur, id]);
+    // Already in the deal: take it out wherever it is, whichever team it was headed to
+    const inExtra = extra.find((l) => l[side].includes(id));
+    if (inExtra) { setExtra((c) => c.map((l) => (l === inExtra || l.teamId === inExtra.teamId ? { ...l, [side]: l[side].filter((x) => x !== id) } : l))); return; }
+    if (!teamId || teamId === partnerId || !extra.some((l) => l.teamId === teamId)) { (side === "give" ? setGive : setGet)(flip); return; }
+    if ((side === "give" ? give : get).includes(id)) { (side === "give" ? setGive : setGet)(flip); return; }
+    setExtra((c) => c.map((l) => (l.teamId === teamId ? { ...l, [side]: flip(l[side]) } : l)));
   };
-  const setPartner = (id: string) => { setPartnerId(id); setGet([]); };
+  const setPartner = (id: string) => {
+    // Picking a team that's already in a multi-team deal makes it the lead partner, keeping every leg
+    const leg = extra.find((l) => l.teamId === id);
+    if (leg) { setExtra((c) => c.map((l) => (l.teamId === id ? { teamId: partnerId, give, get } : l))); setPartnerId(id); setGive(leg.give); setGet(leg.get); return; }
+    setPartnerId(id); setGet([]);
+  };
+  const addPartner = (id: string) => setExtra((c) => (c.length >= 2 || id === partnerId || c.some((l) => l.teamId === id) ? c : [...c, { teamId: id, give: [], get: [] }]));
+  const removePartner = (id: string) => {
+    if (id !== partnerId) { setExtra((c) => c.filter((l) => l.teamId !== id)); return; }
+    const [next, ...rest] = extra;
+    if (!next) return;
+    setPartnerId(next.teamId); setGive(next.give); setGet(next.get); setExtra(rest);
+  };
   const addTag = (t: Omit<ManagerTag, "id">) => {
     setTags((cur) => [...cur.filter((x) => !(x.teamId === t.teamId && x.text === t.text)), { ...t, id: `u${Date.now()}` }]);
     haptic();
@@ -498,7 +521,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           )}
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
-              clear={() => { setGive([]); setGet([]); }} trade={trade} suggestions={suggestionsByTeam[partnerId] ?? []}
+              clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); }} trade={trade}
+              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} suggestions={suggestionsByTeam[partnerId] ?? []}
               tags={active} myTags={myTags} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (

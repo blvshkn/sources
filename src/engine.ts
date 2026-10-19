@@ -837,3 +837,67 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
 }
 
 export const allPlayers = () => Object.values(PLAYERS);
+
+// ---- Multi-team deals ------------------------------------------------------
+// You at the hub, trading with two or three teams at once. Each partner has its own leg: what you send
+// that team and what it sends you. Sleeper proposes the whole thing as one trade that every team accepts.
+export interface DealLeg { teamId: string; give: string[]; get: string[] }
+export interface LegRead {
+  team: Team; give: string[]; get: string[];
+  /** The leg on its own as a two-team trade. Its "them" side is exact, since a partner only touches its own leg. */
+  trade: Trade; accept: Acceptance;
+}
+export interface MultiTrade {
+  key: string; legs: LegRead[];
+  youBefore: number; youAfter: number; youDelta: number; youDrop: string[];
+  give: string[]; get: string[];
+  marketGive: number; marketGet: number; marketGap: number;
+  /** Chance every partner says yes. */
+  allAccept: number;
+  warnings: string[];
+}
+
+export function evaluateMulti(you: Team, legs: DealLeg[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): MultiTrade {
+  const give = legs.flatMap((l) => l.give), get = legs.flatMap((l) => l.get);
+  const youS = settle(you.roster.filter((id) => !give.includes(id)).concat(get), get);
+  const youBefore = lineupFor(you.roster).total, youAfter = lineupFor(youS.ids).total;
+  const youDelta = round1(youAfter - youBefore);
+  const reads: LegRead[] = legs.map((l) => {
+    const team = teamById(l.teamId);
+    const t = evaluate(you, team, l.give, l.get, tags, myTags, prices);
+    // Your side of each leg is the whole deal, not the leg alone
+    const trade: Trade = { ...t, youBefore, youAfter, youDelta, youDrop: youS.dropped };
+    return { team, give: l.give, get: l.get, trade, accept: acceptance(trade, you, team) };
+  });
+  const warnings = [...new Set(reads.flatMap((r) => r.trade.warnings))];
+  // A price on one of your players is judged against everything coming back, not one leg
+  give.forEach((id) => {
+    if (myTags[id] !== "amazing") return;
+    const price = prices[id] ?? DEFAULT_PRICE;
+    const w = `${playerById(id).name} only moves if you ${priceLabel(price)}. This deal doesn't get there.`;
+    const i = warnings.indexOf(w);
+    if (clearsPrice(id, get, youDelta, price)) { if (i >= 0) warnings.splice(i, 1); } else if (i < 0) warnings.push(w);
+  });
+  const marketGive = packageValue(give), marketGet = packageValue(get);
+  const marketGap = Math.max(marketGive, marketGet) > 0 ? (marketGet - marketGive) / Math.max(marketGive, marketGet) : 0;
+  return {
+    key: legs.map((l) => `${l.teamId}:${l.give.join(",")}>${l.get.join(",")}`).join("|"),
+    legs: reads, youBefore, youAfter, youDelta, youDrop: youS.dropped, give, get, marketGive, marketGet, marketGap,
+    allAccept: reads.reduce((p, r) => p * r.accept.p, 1), warnings,
+  };
+}
+
+/** Plain read of a multi-team deal: does everyone come out ahead, and who's the holdout. */
+export function verdictMulti(m: MultiTrade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
+  const losers = m.legs.filter((l) => l.trade.themDelta < 0.5).map((l) => l.team.manager);
+  const n = m.legs.length + 1;
+  const odds = `${Math.round(m.allAccept * 100)}% chance ${m.legs.length === 2 ? "both" : `all ${m.legs.length}`} say yes.`;
+  const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+  if (m.youDelta >= 0.5 && !losers.length)
+    return { label: `All ${n} teams improve`, tone: "good", line: `You ${fmt(m.youDelta)} a week, and every partner's lineup gets better. ${odds}` };
+  if (m.youDelta >= 0.5)
+    return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(m.youDelta)}), but ${list(losers)} ${losers.length > 1 ? "don't" : "doesn't"} gain enough to say yes. ${odds}` };
+  if (m.youDelta > -0.5)
+    return { label: "Barely moves you", tone: "warn", line: `Your lineup goes ${fmt(m.youDelta)} a week. A ${n}-team trade is a lot of work for that.` };
+  return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week while your partners gain. Ask for more or walk.` };
+}

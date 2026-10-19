@@ -80,3 +80,125 @@ html:root:not(#_):not(#_):not(#_) .fold .dsch { margin-top: 0; padding-top: 4px;
 @container pg (max-width: 699px) {
   html:root:not(#_):not(#_):not(#_) .qs .qs-pill .qs-f { display: none; }
 }
+
+/* ---------- Multi-team deals ---------- */
+/* + Add a team sits between the partner picker and search; its menu drops over the page */
+html:root:not(#_):not(#_):not(#_) .tr-bar:has(> .mt-addteam) { grid-template-columns: minmax(0, 1fr) auto auto; }
+html:root:not(#_):not(#_):not(#_) .mt-addteam { position: relative; }
+html:root:not(#_):not(#_):not(#_) .mt-add { height: 48px; padding: 0 16px 0 12px; gap: 6px; border-radius: 999px; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .mt-add svg { color: var(--lime); }
+html:root:not(#_):not(#_):not(#_) .mt-add:disabled { opacity: 0.45; cursor: default; }
+html:root:not(#_):not(#_):not(#_) .mt-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 48; width: min(360px, calc(100vw - 32px));
+  padding: 6px; border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-md);
+  transform-origin: top right;
+}
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_):not(#_) .mt-menu { animation: st-pop 180ms cubic-bezier(0.23, 1, 0.32, 1); } }
+html:root:not(#_):not(#_):not(#_) .mt-menu-note { margin: 0; padding: 8px 10px 6px; font-size: 0.75rem; line-height: 1.45; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-menu .mt-list { position: static; max-height: min(52vh, 400px); padding: 0; box-shadow: none !important; background: none !important; animation: none; }
+html:root:not(#_):not(#_):not(#_) .mt-menu .tp-opt > svg { color: var(--lime); }
+@container pg (max-width: 520px) {
+  /* The menu spans the bar instead of hanging off a 48px button */
+  html:root:not(#_):not(#_):not(#_) .tr-bar:has(> .mt-addteam) { position: relative; }
+  html:root:not(#_):not(#_):not(#_) .mt-addteam { position: static; }
+  html:root:not(#_):not(#_):not(#_) .mt-menu { left: 0; right: 0; width: auto; transform-origin: top center; }
+  html:root:not(#_):not(#_):not(#_) .mt-add { width: 48px; padding: 0; justify-content: center; }
+  html:root:not(#_):not(#_):not(#_) .mt-add span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+html:root:not(#_):not(#_):not(#_) .mt-count { margin-left: 6px; font: 500 0.8125rem/1 var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-note { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; margin: 4px 0 12px; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-note > svg { flex: none; color: var(--lime); }
+html:root:not(#_):not(#_):not(#_) .mt-note > span { display: block; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-note > svg { margin-top: 2px; }
+
+/* One column per partner; phone stacks them */
+html:root:not(#_):not(#_):not(#_) .mt-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+html:root:not(#_):not(#_):not(#_) .mt-col { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 12px; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_) .mt-colhead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+html:root:not(#_):not(#_):not(#_) .mt-who { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-who b { font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_) .mt-who small { font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_):not(#_) .mt-x:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); } }
+html:root:not(#_):not(#_):not(#_) .mt-x:active { transform: scale(0.92); }
+html:root:not(#_):not(#_):not(#_) .mt-x:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs-give .eyebrow { color: rgb(var(--you-rgb)); }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs-get .eyebrow { color: rgb(var(--good-rgb)); }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs .eyebrow { font-family: var(--font-body) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.75rem !important; font-weight: 600; }
+/* The open picker in one column paints over the columns beside and below it */
+html:root:not(#_):not(#_):not(#_) .mt-col:has(.qs-pick) { position: relative; z-index: 50; }
+
+/* The read: a row per team, then the verdict and pitches */
+html:root:not(#_):not(#_):not(#_) .mt-read { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+html:root:not(#_):not(#_):not(#_) .mt-aside { display: grid; align-content: start; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-teams { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+html:root:not(#_):not(#_):not(#_) .mt-team {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr) auto minmax(84px, auto); align-items: center; column-gap: 12px; row-gap: 4px;
+  padding: 10px 0; border-top: 1px solid var(--line);
+}
+html:root:not(#_):not(#_):not(#_) .mt-team:first-child { border-top: 0; padding-top: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-team .tp-av { width: 32px; height: 32px; }
+html:root:not(#_):not(#_):not(#_) .mt-av.you-dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--action-ink, #10130f); font: 700 0.6875rem/1 var(--font-body); }
+html:root:not(#_):not(#_):not(#_) .mt-tw { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-tw b { font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_) .mt-tw small { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_) .mt-d { font-size: 1.5rem; line-height: 1; white-space: nowrap; text-align: right; }
+html:root:not(#_):not(#_):not(#_) .mt-d.up, html:root:not(#_):not(#_):not(#_) .mt-pos .up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .mt-d.down, html:root:not(#_):not(#_):not(#_) .mt-pos .down { color: var(--bad); }
+html:root:not(#_):not(#_):not(#_) .mt-d.flat, html:root:not(#_):not(#_):not(#_) .mt-pos .flat { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-side { display: grid; gap: 2px; justify-items: end; text-align: right; }
+html:root:not(#_):not(#_):not(#_) .mt-side b { font-size: 0.8125rem; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .mt-side .tc-fair { padding: 2px 8px; border-radius: 999px; }
+html:root:not(#_):not(#_):not(#_) .mt-side small { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .mt-acc.good { color: var(--good); } html:root:not(#_):not(#_):not(#_) .mt-acc.warn { color: var(--warn); } html:root:not(#_):not(#_):not(#_) .mt-acc.bad { color: var(--bad); }
+html:root:not(#_):not(#_):not(#_) .mt-why { grid-column: 2 / -1; font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-pitch { display: grid; gap: 8px; }
+html:root:not(#_):not(#_):not(#_) .mt-pitch p { margin: 0; }
+html:root:not(#_):not(#_):not(#_) .mt-pitch-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+html:root:not(#_):not(#_):not(#_) .mt-pitch-btns .btn { flex: 1 1 140px; justify-content: center; }
+
+/* Position change per team */
+html:root:not(#_):not(#_):not(#_) .mt-pos { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.8125rem; }
+html:root:not(#_):not(#_):not(#_) .mt-pos th { padding: 6px 4px; font-weight: 600; color: var(--muted); text-align: right; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .mt-pos thead th { font-size: 0.75rem; }
+html:root:not(#_):not(#_):not(#_) .mt-pos tbody th { text-align: left; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) .mt-pos td { padding: 6px 4px; text-align: right; white-space: nowrap; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_):not(#_) .mt-pos tbody th { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_):not(#_) .mt-pos td b { font: 600 0.8125rem/1 var(--font-mono); }
+html:root:not(#_):not(#_):not(#_) .mt-pos td small { margin-left: 6px; font: 400 0.6875rem/1 var(--font-mono); color: var(--muted); }
+
+/* Rosters: Send to above yours, partner tabs above theirs, both 40px so the two cards line up */
+html:root:not(#_):not(#_):not(#_) :is(.mt-to, .mt-ptabs) { display: flex; align-items: center; gap: 6px; min-height: 40px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+html:root:not(#_):not(#_):not(#_) .mt-to > span { flex: none; font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-right: 2px; }
+html:root:not(#_):not(#_):not(#_) :is(.mt-to, .mt-ptabs) button {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 8px; border: 0; border-radius: 999px;
+  background: none; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); font: 500 0.8125rem/1 var(--font-body); cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_):not(#_) :is(.mt-to button[aria-checked="true"], .mt-ptabs button[aria-selected="true"]) { background: var(--surface-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--lime); }
+html:root:not(#_):not(#_):not(#_) :is(.mt-to, .mt-ptabs) button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_) :is(.mt-to, .mt-ptabs) .tp-av { width: 20px; height: 20px; }
+html:root:not(#_):not(#_):not(#_) .mt-ptabs button b { min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--surface-3); font: 600 0.6875rem/1 var(--font-mono); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) .to-tag { font-size: 0.6875rem; font-weight: 700; color: rgb(var(--you-rgb)); }
+/* Phone: the tab bar above the rosters picks the partner, so the in-pane tabs step aside */
+@container pg (max-width: 699px) {
+  html:root:not(#_):not(#_):not(#_) .mt-ptabs { display: none; }
+  /* Team rows: odds and value drop under the name so the name and range read in full */
+  html:root:not(#_):not(#_):not(#_) .mt-team { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  html:root:not(#_):not(#_):not(#_) .mt-side { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; justify-items: start; text-align: left; }
+  html:root:not(#_):not(#_):not(#_) .mt-rosters .side-switch button { gap: 6px; padding: 0 6px; min-width: 0; }
+  html:root:not(#_):not(#_):not(#_) .mt-rosters .side-switch button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@container pg (min-width: 700px) {
+  /* Partners side by side: two or three columns across the deal */
+  html:root:not(#_):not(#_):not(#_) .mt-cols[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:root:not(#_):not(#_):not(#_) .mt-cols[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html:root:not(#_):not(#_):not(#_) .mt-read { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: 32px; align-items: start; }
+  html:root:not(#_):not(#_):not(#_) .mt-read > .fold { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_):not(#_) .mt-rosters .side-pane { display: block !important; }
+  html:root:not(#_):not(#_):not(#_) .mt-rosters .side-switch { display: none !important; }
+}
+/* A multi-team deal shows even before players are picked: it's where the partners live */
+html:root:not(#_):not(#_):not(#_) .deal.mt-deal.empty { display: block !important; }

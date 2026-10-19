@@ -3,12 +3,13 @@ import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
-import { FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
+import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
+import { AddTeam, LegState, MultiDeal, MultiRosters } from "./TradeMulti";
 import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
@@ -16,9 +17,10 @@ import { Select } from "./Select";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 
-function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone }: {
+export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone, noteIds }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
   dimIds: Record<string, string>; lockIds: Record<string, string>; wantIds: Record<string, string>; label: string; tone: "give" | "get";
+  noteIds?: Record<string, string>;
 }) {
   // Live leagues: show the lineup exactly as it's set in Sleeper right now. Demo falls back to the best lineup.
   const current = team.starters?.length ? (() => {
@@ -31,6 +33,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     const dim = dimIds[id];
     const lock = lockIds[id];
     const want = wantIds[id];
+    const note = noteIds?.[id];
     return (
       <button key={id + slot} className={`pick tone-${tone}${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}>
         <Avatar p={p} size={34} />
@@ -40,6 +43,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
             {lock && <span className="lock row" style={{ gap: 3 }}><Icon name="lock" size={11} />{lock}</span>}
             {want && <span className="want-tag">{want}</span>}
             {dim && <span className="lock">{dim}</span>}
+            {note && <span className="to-tag">{note}</span>}
           </span>
         </span>
         <span className="pproj">{eff(p).toFixed(1)}</span>
@@ -222,9 +226,31 @@ export function DealSide({ title, team, ids, pool, onToggle, className }: { titl
   );
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag }: {
+/** What your notes on a manager mean for both rosters: their players who won't move, yours they passed on or want. */
+export function tagMaps(them: Team, tags: ManagerTag[]) {
+  const theirTags = tags.filter((t) => t.teamId === them.id);
+  const hit = (t: ManagerTag, id: string) => (t.playerId ? id === t.playerId : playerById(id).pos === t.pos);
+  const dimThem: Record<string, string> = {}, dimYou: Record<string, string> = {}, wantYou: Record<string, string> = {};
+  theirTags.forEach((t) => { if (t.kind === "refuses") them.roster.forEach((id) => { if (hit(t, id)) dimThem[id] = "Won't move"; }); });
+  theirTags.forEach((t) => { if (t.kind === "notInterested") YOU.roster.forEach((id) => { if (hit(t, id)) dimYou[id] = `${them.manager} passed`; }); });
+  theirTags.forEach((t) => { if (t.kind === "wants") YOU.roster.forEach((id) => { if (!dimYou[id] && hit(t, id)) wantYou[id] = `${them.manager} wants`; }); });
+  return { dimThem, dimYou, wantYou };
+}
+/** Your untouchables and overpay-only players, marked on your roster. */
+export function lockMap(myTags: Record<string, MyTag>) {
+  const lockYou: Record<string, string> = {};
+  Object.entries(myTags).forEach(([id, v]) => {
+    if (v === "untouchable") lockYou[id] = "Untouchable";
+    if (v === "amazing") lockYou[id] = "Overpay only";
+  });
+  return lockYou;
+}
+
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner }: {
   partnerId: string; setPartner: (id: string) => void;
-  give: string[]; get: string[]; toggle: (side: "give" | "get", id: string) => void; clear: () => void;
+  give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
+  /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
+  extra?: DealLeg[]; multi?: MultiTrade | null; addPartner?: (id: string) => void; removePartner?: (id: string) => void;
   trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
   tip: string | null;
   coach: (t: TradeT) => { trade: TradeT; line: string } | null;
@@ -233,28 +259,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   onRemoveTag: (id: string) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
+  const isMulti = extra.length > 0;
+  const legs: LegState[] = [{ team: them, give, get }, ...extra.map((l) => ({ team: TEAMS.find((t) => t.id === l.teamId)!, give: l.give, get: l.get }))];
+  const allGive = legs.flatMap((l) => l.give), allGet = legs.flatMap((l) => l.get);
   const [side, setSide] = useState<"give" | "get">("give");
   const theirTags = tags.filter((t) => t.teamId === them.id);
-  const dimThem: Record<string, string> = {};
-  theirTags.forEach((t) => {
-    if (t.kind !== "refuses") return;
-    them.roster.forEach((id) => { if (t.playerId ? id === t.playerId : playerById(id).pos === t.pos) dimThem[id] = "Won't move"; });
-  });
-  const dimYou: Record<string, string> = {};
-  theirTags.forEach((t) => {
-    if (t.kind !== "notInterested") return;
-    YOU.roster.forEach((id) => { if (t.playerId ? id === t.playerId : playerById(id).pos === t.pos) dimYou[id] = `${them.manager} passed`; });
-  });
-  const wantYou: Record<string, string> = {};
-  theirTags.forEach((t) => {
-    if (t.kind !== "wants") return;
-    YOU.roster.forEach((id) => { if (!dimYou[id] && (t.playerId ? id === t.playerId : playerById(id).pos === t.pos)) wantYou[id] = `${them.manager} wants`; });
-  });
-  const lockYou: Record<string, string> = {};
-  Object.entries(myTags).forEach(([id, v]) => {
-    if (v === "untouchable") lockYou[id] = "Untouchable";
-    if (v === "amazing") lockYou[id] = "Overpay only";
-  });
+  const { dimThem, dimYou, wantYou } = tagMaps(them, tags);
+  const lockYou = lockMap(myTags);
   const [received, setReceived] = useState(false);
   // Big deals fold the secondary blocks so the read stays short
   const big = give.length > 2 || get.length > 2;
@@ -315,15 +326,17 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       </header>
 
       {searching ? (
-        <PlayerSearch picked={[...give, ...get]} onClose={() => setSearching(false)} onPick={(id, team) => {
+        <PlayerSearch picked={[...allGive, ...allGet]} onClose={() => setSearching(false)} onPick={(id, team) => {
           setView("build");
           if (team.you) { toggle("give", id); return; }
+          if (extra.some((l) => l.teamId === team.id)) { toggle("get", id, team.id); return; }
           if (team.id !== partnerId) setPartner(team.id);
           toggle("get", id);
         }} />
       ) : (
         <div className="tr-bar">
-          <TeamPicker compact teams={TEAMS.filter((t) => !t.you)} value={partnerId} onChange={setPartner} />
+          <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
+          {addPartner && view === "build" && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
           <button className="btn btn-icon" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={20} /></button>
         </div>
       )}
@@ -350,7 +363,12 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       )}
 
 
-      {view === "build" && <div className="builder">
+      {view === "build" && isMulti && <div className="builder mt-builder">
+        <MultiDeal legs={legs} m={multi} toggle={toggle} onRemove={(id) => removePartner?.(id)} clear={clear} onPitch={onPitch} />
+        <MultiRosters key={legs.map((l) => l.team.id).join(",")} legs={legs} toggle={toggle} tags={tags} myTags={myTags} />
+      </div>}
+
+      {view === "build" && !isMulti && <div className="builder">
         <section className={`card deal${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-live="polite">
           <div className="row" style={{ justifyContent: "space-between" }}>
             <h2 className="section-title">{received ? `Offer from ${them.manager}` : "The deal"}</h2>
@@ -439,13 +457,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       </div>}
 
-      {view === "build" && (give.length > 0 || get.length > 0) && (
+      {view === "build" && (allGive.length > 0 || allGet.length > 0) && (
         <>
         <div className="dt-spacer" aria-hidden="true" />
         <div className="deal-tray" role="region" aria-label="Your deal so far">
           <div className="dt-sides">
             {(["give", "get"] as const).map((k) => {
-              const ids = k === "give" ? give : get;
+              const ids = k === "give" ? allGive : allGet;
               return (
                 <div key={k} className={`dt-side ${k}`}>
                   <button className="dt-label" onClick={() => setSide(k)}>{k === "give" ? "Send" : "Get"}</button>
@@ -455,13 +473,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                         <Avatar p={p} size={22} badge={false} /><span>{p.name.split(" ").slice(-1)[0]}</span><Icon name="x" size={12} />
                       </button>
                     ); })}
-                    {ids.length === 0 && <button className="dt-empty" onClick={() => setSide(k)}>{k === "give" ? "Pick from your roster" : `Pick from ${them.manager}`}</button>}
+                    {ids.length === 0 && <button className="dt-empty" onClick={() => setSide(k)}>{k === "give" ? "Pick from your roster" : isMulti ? "Pick from their rosters" : `Pick from ${them.manager}`}</button>}
                   </div>
                 </div>
               );
             })}
           </div>
-          <button className="btn btn-primary dt-go" disabled={!trade} onClick={() => document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the read</button>
+          <button className="btn btn-primary dt-go" disabled={isMulti ? !multi : !trade} onClick={() => document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the read</button>
         </div>
         </>
       )}
