@@ -1,0 +1,61 @@
+/* Branded tooltip: a small dark chip a step above the surface, a lime sheen along its top edge,
+   a 1px border that runs from lime into white, and a tiny arrow pointing at its trigger. */
+.tt-wrap { display: contents; }
+
+html:root:not(#_) .tt {
+  --tt-bg: #1F2321;
+  --tt-edge-top: rgba(216, 242, 74, 0.35);
+  --tt-edge-bottom: rgba(255, 255, 255, 0.06);
+  position: fixed; z-index: 400; left: 0; top: 0;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 7px 10px 8px;
+  border: 1px solid transparent; border-radius: 10px;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(216, 242, 74, 0.10), rgba(216, 242, 74, 0) 70%) padding-box,
+    linear-gradient(var(--tt-bg), var(--tt-bg)) padding-box,
+    linear-gradient(180deg, var(--tt-edge-top), var(--tt-edge-bottom)) border-box;
+  box-shadow: var(--shadow-md, 0 0 0 1px rgba(255, 255, 255, 0.06), 0 6px 6px -3px rgba(0, 0, 0, 0.3), 0 12px 12px -6px rgba(0, 0, 0, 0.3), 0 24px 24px -12px rgba(0, 0, 0, 0.3));
+  color: #F4F6F2;
+  font: 500 13px/1.35 var(--font-body);
+  letter-spacing: 0;
+  text-align: left; text-wrap: pretty; white-space: normal;
+  pointer-events: none;
+  transform-origin: var(--ax, 50%) calc(100% + 6px);
+  animation: tt-in 120ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+html:root:not(#_) .tt[data-side="bottom"] { transform-origin: var(--ax, 50%) -6px; animation-name: tt-in-b; }
+/* Skip-delay: once a tip is up, its neighbours swap in with no animation */
+html:root:not(#_) .tt[data-instant] { animation: none; }
+
+.tt-in { position: relative; display: block; }
+.tt b, .tt .num, .tt .mono { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tt .num { font-weight: 500; }
+.tt small { display: block; margin-top: 2px; color: #98A39B; font-size: 12px; }
+
+/* Arrow: a small rotated square that shares the chip's fill and edge */
+html:root:not(#_) .tt::after {
+  content: ""; position: absolute; left: var(--ax, 50%); width: 8px; height: 8px;
+  background: var(--tt-bg);
+  border: 1px solid var(--tt-edge-bottom); border-top-color: transparent; border-left-color: transparent;
+  border-bottom-right-radius: 2px;
+  bottom: -5px; transform: translateX(-50%) rotate(45deg);
+}
+html:root:not(#_) .tt[data-side="bottom"]::after {
+  bottom: auto; top: -5px;
+  background: #222820;
+  border-color: var(--tt-edge-top) transparent transparent var(--tt-edge-top);
+  border-radius: 2px 0 0 0;
+}
+
+@keyframes tt-in { from { opacity: 0; transform: translateY(4px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes tt-in-b { from { opacity: 0; transform: translateY(-4px) scale(0.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  @keyframes tt-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes tt-in-b { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* Plain triggers that explain jargon get a dotted underline hint only when focused by keyboard */
+[data-tt]:focus-visible { outline: 2px solid var(--lime, #D8F24A); outline-offset: 2px; border-radius: 4px; }
+.tt-term { text-decoration: underline dotted rgba(244, 246, 242, 0.28); text-underline-offset: 3px; cursor: help; }
+
+.ai-label-k { display: inline-flex; align-items: center; gap: 4px; }

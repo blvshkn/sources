@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Team } from "../data";
 import { Icon } from "./ui";
+import { Trophy } from "./Trophy";
 
 const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 
@@ -49,7 +50,7 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}>
         <TeamAvatar t={cur} size={compact ? 34 : 44} />
-        <span className="tp-who">{compact ? <><small>Trading with</small><b>{cur.name}</b></> : <><b>{cur.name}</b><small>{cur.manager} · {cur.record}</small></>}</span>
+        <span className="tp-who">{compact ? <><small>Trading with</small><b>{cur.name}<Trophy teamId={cur.id} /></b></> : <><b>{cur.name}<Trophy teamId={cur.id} /></b><small>{cur.manager} · {cur.record}</small></>}</span>
         <Icon name="chev" size={18} />
       </button>
       {open && (
@@ -59,7 +60,7 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
             <li key={t.id} id={`${id}-o${i}`} role="option" aria-selected={t.id === value}
               className={`tp-opt${i === hi ? " hi" : ""}`} onPointerEnter={() => setHi(i)} onClick={() => pick(t)}>
               <TeamAvatar t={t} size={36} />
-              <span className="tp-who"><b>{t.name}</b><small>{t.manager} · {t.record}</small></span>
+              <span className="tp-who"><b>{t.name}<Trophy teamId={t.id} /></b><small>{t.manager} · {t.record}</small></span>
               {t.id === value && <Icon name="check" size={16} />}
             </li>
           ))}

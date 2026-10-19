@@ -1,17 +1,22 @@
+import { placeTip, tipClosed, tipDelay, tipOpened } from "./components/Tooltip";
+
 /**
  * Text tooltips for icon-only buttons. Each icon button gets a role="tooltip" label linked with
- * aria-describedby, and one floating tip shows that label on hover and keyboard focus.
+ * aria-describedby, and one floating tip (the same branded chip as <Tooltip>) shows that label on
+ * hover and keyboard focus. Buttons already wrapped in <Tooltip> (data-tt) are left alone.
  */
 export function installIconTooltips(root: HTMLElement = document.body) {
   let n = 0;
   const tip = document.createElement("div");
-  tip.className = "ui-tip";
+  tip.className = "tt";
   tip.setAttribute("aria-hidden", "true");
-  document.body.appendChild(tip);
+  const inner = document.createElement("span");
+  inner.className = "tt-in";
+  tip.appendChild(inner);
 
   const hasText = (b: Element) => /[\p{L}\p{N}]/u.test((b.textContent || "").trim());
   const tag = (b: HTMLElement) => {
-    if (b.dataset.tipDone) return;
+    if (b.dataset.tipDone || b.hasAttribute("data-tt")) return;
     const label = b.getAttribute("aria-label");
     if (!label || hasText(b)) return;
     const id = `tip-${++n}`;
@@ -27,26 +32,41 @@ export function installIconTooltips(root: HTMLElement = document.body) {
   mo.observe(root, { childList: true, subtree: true });
 
   let timer = 0;
-  const show = (b: HTMLElement) => {
-    const label = b.getAttribute("aria-label");
-    if (!label || !b.dataset.tipDone) return;
+  let current: HTMLElement | null = null;
+  const hide = () => {
     window.clearTimeout(timer);
-    timer = window.setTimeout(() => {
-      tip.textContent = label;
-      const r = b.getBoundingClientRect();
-      tip.style.left = `${Math.min(Math.max(8, r.left + r.width / 2), innerWidth - 8)}px`;
-      const above = r.top > 48;
-      tip.style.top = `${above ? r.top - 8 : r.bottom + 8}px`;
-      tip.dataset.side = above ? "top" : "bottom";
-      tip.classList.add("on");
-    }, 350);
+    if (!current) return;
+    current = null;
+    tip.remove();
+    tipClosed(hide);
   };
-  const hide = () => { window.clearTimeout(timer); tip.classList.remove("on"); };
+  const open = (b: HTMLElement, label: string, instant: boolean) => {
+    inner.textContent = label;
+    if (instant) tip.setAttribute("data-instant", ""); else tip.removeAttribute("data-instant");
+    tip.style.animation = "none";
+    document.body.appendChild(tip);
+    void tip.offsetWidth; // restart the entrance animation
+    tip.style.animation = "";
+    placeTip(tip, b);
+    current = b;
+    tipOpened(hide);
+  };
+  const show = (b: HTMLElement, now: boolean) => {
+    const label = b.getAttribute("aria-label");
+    if (!label || !b.dataset.tipDone || b === current) return;
+    window.clearTimeout(timer);
+    const d = now ? 0 : tipDelay();
+    if (d) timer = window.setTimeout(() => open(b, label, false), d);
+    else open(b, label, !now);
+  };
   const target = (e: Event) => (e.target as Element | null)?.closest?.<HTMLElement>("[data-tip-done]") ?? null;
-  root.addEventListener("pointerover", (e) => { const b = target(e); if (b && (e as PointerEvent).pointerType === "mouse") show(b); });
-  root.addEventListener("pointerout", (e) => { if (target(e)) hide(); });
-  root.addEventListener("focusin", (e) => { const b = target(e); if (b && b.matches(":focus-visible")) show(b); });
+  root.addEventListener("pointerover", (e) => { const b = target(e); if (b && (e as PointerEvent).pointerType === "mouse") show(b, false); });
+  root.addEventListener("pointerout", (e) => { const b = target(e); if (b && !b.contains((e as PointerEvent).relatedTarget as Node | null)) hide(); });
+  root.addEventListener("focusin", (e) => { const b = target(e); if (b && b.matches(":focus-visible")) show(b, true); });
   root.addEventListener("focusout", hide);
   root.addEventListener("pointerdown", hide);
-  return () => { mo.disconnect(); tip.remove(); };
+  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") hide(); };
+  addEventListener("keydown", onKey);
+  addEventListener("scroll", hide, true);
+  return () => { mo.disconnect(); hide(); removeEventListener("keydown", onKey); removeEventListener("scroll", hide, true); };
 }

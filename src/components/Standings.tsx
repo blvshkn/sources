@@ -4,6 +4,8 @@ import { TeamNeeds, eff } from "../engine";
 import { Icon, PosBadge, StatusPill } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
+import { Trophy, championLabel } from "./Trophy";
+import { Tooltip } from "./Tooltip";
 
 const POS = ["QB", "RB", "WR", "TE"] as const;
 const ord = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
@@ -86,7 +88,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
         <button className="st-back" onClick={() => setOpen(null)}><Icon name="chev" size={16} />Standings</button>
         <header className="st-dhead">
           <TeamAvatar t={t} size={44} />
-          <span className="st-who"><b>{t.name}</b><small>{sel.w}-{sel.l} · {t.you ? "You" : t.manager}</small></span>
+          <span className="st-who"><b>{t.name}<Trophy teamId={t.id} focusable /></b><small>{sel.w}-{sel.l} · {t.you ? "You" : t.manager}</small></span>
         </header>
         <dl className="ti-stats st-odds">
           <div className="ti-stat"><dt>Make playoffs</dt><dd>{pctText(sel.playoff)}</dd></div>
@@ -126,17 +128,19 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
           <p>Top {spots} make it. {weeksLeft > 0 ? `${weeksLeft} ${weeksLeft === 1 ? "week" : "weeks"} left in the regular season.` : "Regular season is over."} Odds from 3,000 sims of the rest of the season.</p>
         </header>
         <div className="st-table" role="table" aria-label="Standings">
-          <div className="st-row st-th" role="row">
+          <div className="st-row st-th st-po" role="row">
+            <span role="columnheader"><span className="sr-only">Place</span></span>
             <span role="columnheader">Team</span>
-            <span role="columnheader">Playoff</span>
-            <span role="columnheader">#1 seed</span>
-            <span role="columnheader">Proj pts</span>
+            <span role="columnheader"><Tooltip focusable content={`Chance to finish in the top ${spots}, from 3,000 simulated rest-of-seasons`}><span className="tt-term">Playoff</span></Tooltip></span>
+            <span role="columnheader"><Tooltip focusable content="Chance to finish first and get the top seed"><span className="tt-term">#1 seed</span></Tooltip></span>
+            <span role="columnheader"><Tooltip focusable content="Points for so far plus projected points through the regular season"><span className="tt-term">Proj pts</span></Tooltip></span>
           </div>
           {rows.map((r, i) => (
-            <button key={r.x.team.id} className={`st-row st-tap${r.x.team.you ? " you" : ""}${i === spots - 1 ? " cut" : ""}`} role="row" onClick={() => setOpen(r.x.team.id)} aria-label={`${r.x.team.name} details`}>
+            <button key={r.x.team.id} className={`st-row st-po st-tap${r.x.team.you ? " you" : ""}${i === spots - 1 ? " cut" : ""}`} role="row" onClick={() => setOpen(r.x.team.id)} aria-label={`${i + 1}. ${r.x.team.name}${championLabel(r.x.team.id) ? `, ${championLabel(r.x.team.id)}` : ""}, details`}>
+              <span className="st-pl-n" role="cell">{i + 1}</span>
               <span className="st-team" role="cell">
                 <TeamAvatar t={r.x.team} size={30} />
-                <span className="st-who"><b>{r.x.team.name}</b><small>{r.w}-{r.l}{r.x.team.you ? " · You" : ` · ${r.x.team.manager}`}</small></span>
+                <span className="st-who"><b>{r.x.team.name}<Trophy teamId={r.x.team.id} /></b><small>{r.w}-{r.l}{r.x.team.you ? " · You" : ` · ${r.x.team.manager}`}</small></span>
               </span>
               <span className="st-num" role="cell"><b>{pctText(r.playoff)}</b><Bar p={r.playoff} /></span>
               <span className="st-num" role="cell"><b className="lite">{pctText(r.top)}</b><Bar p={r.top} /></span>
@@ -162,7 +166,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
             </div>
             {list.map(({ x, best, worst }) => (
               <button key={x.team.id} className={`st-row st-pos st-tap${x.team.you ? " you" : ""}`} role="row" onClick={() => setOpen(x.team.id)} aria-label={`${x.team.name} details`}>
-                <span className="st-team" role="cell"><TeamAvatar t={x.team} size={30} /><span className="st-who"><b>{x.team.name}</b></span></span>
+                <span className="st-team" role="cell"><TeamAvatar t={x.team} size={30} /><span className="st-who"><b>{x.team.name}<Trophy teamId={x.team.id} /></b></span></span>
                 <span className="st-rank" role="cell"><PosBadge pos={best} /><small>{ord(rk(best, x.team.id))}</small></span>
                 <span className="st-rank" role="cell"><PosBadge pos={worst} /><small>{ord(rk(worst, x.team.id))}</small></span>
               </button>

@@ -15,6 +15,8 @@ import "./startsit.css";
 import "./select.css";
 import "./signs.css";
 import "./icon-motion.css";
+import "./tooltip.css";
+import "./standings.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";

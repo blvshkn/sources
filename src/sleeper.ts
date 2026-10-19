@@ -21,7 +21,7 @@ async function get<T>(path: string): Promise<T> {
 interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; metadata?: { team_name?: string } }
 interface SState { season: string; week: number; display_week?: number; season_type: string }
 export interface SLeague {
-  league_id: string; name: string; season: string; status: string; total_rosters: number; avatar?: string | null;
+  league_id: string; name: string; season: string; previous_league_id?: string | null; status: string; total_rosters: number; avatar?: string | null;
   roster_positions: string[];
   scoring_settings: Record<string, number>;
   settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number; playoff_teams?: number;
@@ -88,6 +88,44 @@ async function fetchLeagues(userId: string): Promise<{ season: string; leagues: 
   return { season, leagues: leagues ?? [] };
 }
 
+// ---- Last season's champion ---------------------------------------------
+
+interface SBracketMatch { r: number; m: number; t1: number | null; t2: number | null; w: number | null; l: number | null; p?: number; t1_from?: { w?: number; l?: number }; t2_from?: { w?: number; l?: number } }
+
+/** The title game in a winners bracket: the one Sleeper marks p: 1, else the final round's game fed by two winners. */
+export function titleGame(bracket: SBracketMatch[]): SBracketMatch | undefined {
+  const marked = bracket.find((m) => m.p === 1);
+  if (marked) return marked;
+  const last = Math.max(0, ...bracket.map((m) => m.r));
+  return bracket.find((m) => m.r === last && m.t1_from?.w !== undefined && m.t2_from?.w !== undefined) ?? bracket.find((m) => m.r === last && !m.p);
+}
+
+/**
+ * Who won the previous season, as the owner's user id. Sleeper links each season's league to the one
+ * before it; the user id carries over even when roster ids don't. Null when there's no previous season
+ * or the title game hasn't been decided. Cached for an hour since a finished season never changes.
+ */
+export const previousChampion = (prevId: string) => cached(`champ:${prevId}`, 60 * 60_000, async () => {
+  const [prev, bracket, rosters] = await Promise.all([
+    get<SLeague | null>(`/v1/league/${prevId}`),
+    get<SBracketMatch[] | null>(`/v1/league/${prevId}/winners_bracket`),
+    get<SRoster[] | null>(`/v1/league/${prevId}/rosters`),
+  ]);
+  const game = titleGame(bracket ?? []);
+  const winner = game?.w != null ? (rosters ?? []).find((r) => r.roster_id === game.w) : undefined;
+  if (!prev || !winner?.owner_id) return null;
+  return { season: prev.season, ownerId: winner.owner_id };
+});
+
+/** Last season's champion as a team in this league: matched on owner or co-owner, since roster ids can change. */
+export async function championFor(league: Pick<SLeague, "previous_league_id">, rosters: Pick<SRoster, "roster_id" | "owner_id" | "co_owners">[]): Promise<{ teamId: string; season: string } | undefined> {
+  const prevId = league.previous_league_id;
+  if (!prevId || prevId === "0") return undefined;
+  const c = await previousChampion(prevId).catch(() => null);
+  const r = c && rosters.find((x) => x.owner_id === c.ownerId || x.co_owners?.includes(c.ownerId));
+  return r && c ? { teamId: String(r.roster_id), season: c.season } : undefined;
+}
+
 export const leagueType = (l: SLeague) => (l.settings.type === 2 ? "dynasty" : l.settings.type === 1 ? "keeper" : "redraft") as "redraft" | "keeper" | "dynasty";
 
 // ---- Mapping helpers -----------------------------------------------------
@@ -124,6 +162,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     get<SRoster[]>(`/v1/league/${leagueId}/rosters`),
   ]);
   const season = league.season;
+  const champP = championFor(league, rosters);
   const live = state.season === season && state.season_type === "regular";
   const week = live ? Math.max(1, state.display_week ?? state.week) : 1;
 
@@ -504,6 +543,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position },
     faabHistory, freeAgents, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
+    champion: await champP,
     valueSource: valueBy.size ? `Blended value: 55% trade market (FantasyCalc, ${dynasty ? "dynasty" : "redraft"}, ${sfLeague ? "Superflex" : "1QB"}, ${league.total_rosters} teams), 45% rest-of-season production over replacement, plus up to 3% Sleeper add/drop momentum` : "Rest-of-season production over replacement (market values unavailable)",
     rosWeeks: weekNums.length,
   };

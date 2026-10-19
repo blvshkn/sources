@@ -1,0 +1,22 @@
+/* Playoff picture: a place number before each team, and the champion's trophy next to names. */
+html:root:not(#_) .st-row.st-po { grid-template-columns: 20px minmax(0, 1fr) 62px 62px 52px; }
+html:root:not(#_) .st-row.st-po .st-pl-n {
+  justify-self: end; font: 500 0.8125rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted);
+}
+html:root:not(#_) .st-row.st-po.you .st-pl-n { color: var(--ink); }
+/* Header: the rank column is blank, Team sits over the names and stays left-aligned */
+html:root:not(#_) .st-row.st-po.st-th > span:nth-child(2) { text-align: left; }
+html:root:not(#_) .st-row.st-po.st-th > span { white-space: nowrap; }
+@media (min-width: 1100px) {
+  /* Wide screens: give the numbers room so they don't huddle at the far edge */
+  html:root:not(#_) .st-row.st-po { grid-template-columns: 22px minmax(0, 1fr) 84px 84px 72px; gap: 12px; }
+}
+@media (max-width: 520px) {
+  html:root:not(#_) .st-row.st-po { grid-template-columns: 16px minmax(0, 1fr) 52px 48px 46px; gap: 6px; padding-left: 12px; padding-right: 12px; }
+  html:root:not(#_) .st-row.st-po .st-team { gap: 8px; }
+}
+
+/* Trophy: warm gold, the one accent here that isn't lime */
+.trophy { display: inline-flex; vertical-align: -2px; margin-left: 5px; color: #F0C75E; flex: none; cursor: default; }
+.trophy svg { display: block; filter: drop-shadow(0 0 6px rgba(240, 199, 94, 0.25)); }
+.st-who b .trophy, .team-name .trophy { vertical-align: -1px; }

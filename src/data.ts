@@ -525,6 +525,8 @@ export interface LeagueData {
   type?: "redraft" | "keeper" | "dynasty";
   /** This week's opponent (team id), if the league has head-to-head matchups. */
   opponentId?: string;
+  /** Last season's champion, when that manager is still in the league. */
+  champion?: { teamId: string; season: string };
 }
 
 export type GameState = "pre_game" | "in_game" | "complete";
@@ -614,6 +616,7 @@ export function demoLeague(): LeagueData {
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS,
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
+    champion: { teamId: "jake", season: "2025" },
     valueSource: "Demo estimate from projections",
   };
 }

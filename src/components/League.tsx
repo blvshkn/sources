@@ -7,6 +7,8 @@ import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Values } from "./Values";
 import { Standings } from "./Standings";
+import { Trophy } from "./Trophy";
+import { Tooltip } from "./Tooltip";
 import { LEAGUE, Activity, ActivityPlayer } from "../data";
 
 const KIND_LABEL: Record<Activity["kind"], string> = { free_agent: "Free agent", waiver: "Waiver claim", trade: "Trade", commissioner: "Commissioner" };
@@ -82,7 +84,7 @@ export function MiniStandings({ onOpen }: { onOpen: () => void }) {
           <li key={t.id} className={t.you ? "you" : undefined}>
             <span className="mst-rk">{i + 1}</span>
             <TeamAvatar t={t} size={22} />
-            <span className="mst-nm">{t.name}</span>
+            <span className="mst-nm">{t.name}<Trophy teamId={t.id} size={12} /></span>
             <span className="mst-rec">{t.record}</span>
             <span className="mst-pf">{t.pf.toFixed(0)}</span>
           </li>
@@ -157,7 +159,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
               <button key={n.team.id} className="partner-card" onClick={() => onOpen(t)}>
                 <span className="partner-rank">{i + 1}</span>
                 <TeamAvatar t={n.team} size={32} />
-                <span className="ptn-who"><b>{n.team.name}</b><span className="ptn-why">{why}</span></span>
+                <span className="ptn-who"><b>{n.team.name}<Trophy teamId={n.team.id} /></b><span className="ptn-why">{why}</span></span>
                 <span className="ptn-nums"><span><small>You</small><Delta n={t.youDelta} /></span><span><small>Them</small><Delta n={t.themDelta} /></span></span>
               </button>
             ))}
@@ -193,11 +195,11 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
             <article key={t.id} id={`team-${t.id}`} className={`card team-card${t.you ? " is-you" : ""}${focusId === t.id ? " is-focus" : ""}`}>
               <header className="tc-head">
                 <TeamAvatar t={t} size={40} />
-                <span className="tc-who"><b className="team-name">{t.name}</b><small>{t.you ? "You" : t.manager} · {t.record}</small></span>
+                <span className="tc-who"><b className="team-name">{t.name}<Trophy teamId={t.id} focusable /></b><small>{t.you ? "You" : t.manager} · {t.record}</small></span>
                 <span className={`tc-mode ${n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : ""}`}>{n.mode}</span>
               </header>
               <dl className="ti-stats tc-stats">
-                <div className="ti-stat"><dt>Power</dt><dd>#{n.rank}</dd></div>
+                <div className="ti-stat"><dt><Tooltip focusable content="Power rank: starting lineup strength against the other teams, 1 is strongest"><span className="tt-term">Power</span></Tooltip></dt><dd>#{n.rank}</dd></div>
                 <div className="ti-stat"><dt>Points for</dt><dd>{t.pf.toFixed(0)}</dd></div>
                 <div className="ti-stat"><dt>Projected</dt><dd>{n.lineup.total.toFixed(1)}<small>/wk</small></dd></div>
               </dl>
