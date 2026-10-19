@@ -304,7 +304,8 @@ html:root:not(#_):not(#_):not(#_) .brief-row { padding: 12.5px 0 11.5px; }
 html:root:not(#_):not(#_):not(#_) .st-row.st-po { padding-top: 11.5px; padding-bottom: 8.5px; }
 html:root:not(#_):not(#_):not(#_) .vb-row { padding-top: 11px; padding-bottom: 9px; }
 html:root:not(#_):not(#_):not(#_) .nl-row { padding-top: 11px; padding-bottom: 9px; }
-html:root:not(#_):not(#_):not(#_) .mu-row { padding-top: 11.5px; padding-bottom: 8.5px; }
+/* Matchup rows: the visible thing is your player's bordered box, so the box (not the text) is centered between dividers */
+html:root:not(#_):not(#_):not(#_) .mu-row { padding-top: 10px; padding-bottom: 10px; }
 /* One height per row in the trade lists: the Bye chip no longer makes its row taller */
 html:root:not(#_):not(#_):not(#_) .pick { min-height: 62px; }
 /* A lineup row with a pending swap keeps its divider like every other row */
@@ -358,3 +359,96 @@ html:root:not(#_):not(#_):not(#_) .composer-who:focus-within:not(:has(:focus-vis
   html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who:hover { background-color: rgba(var(--lime-rgb), 0.22) !important; }
 }
 html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who:active { background-color: rgba(var(--lime-rgb), 0.26) !important; transform: scale(0.97); }
+
+/* ---------- Divided lists, second sweep: every gap measured with the hover pill showing ---------- */
+/* Matchup: the footer's divider sits right under the last row (the grid gap moves inside the footer, so its text stays put),
+   and both dividers around the row you're pointing at fade */
+html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row + .mu-foot { margin-top: -14px; padding-top: 20px; }
+html:root:not(#_):not(#_):not(#_) :is(.card.mu > .mu-row, .mu-foot) { transition: border-color var(--st-dur) var(--st-ease); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row:has(> .mu-mine:hover),
+  html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row:has(> .mu-mine:hover) + :is(.mu-row, .mu-foot) { border-top-color: transparent !important; }
+}
+html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row:has(> .mu-mine:is(:active, :focus-visible)),
+html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row:has(> .mu-mine:is(:active, :focus-visible)) + :is(.mu-row, .mu-foot) { border-top-color: transparent !important; }
+
+/* Lineup: the Bench and IR headings had 6px of margin above their divider, so the last row above them had 10px under its
+   pill and 4px over it. The margin moves into the heading's padding: same heading position, divider flush with the row. */
+html:root:not(#_):not(#_):not(#_) .lu-row + .lu-list-head.sub { margin-top: 0; padding-top: 24px; transition: border-color var(--st-dur) var(--st-ease); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .lu-row.tap:hover + .lu-list-head.sub { border-top-color: transparent; }
+}
+html:root:not(#_):not(#_):not(#_) .lu-row.tap:is(:active, :focus-visible) + .lu-list-head.sub { border-top-color: transparent; }
+
+/* Settings links: they were 14px apart (the card's gap), so the pill had 4px above it and 18px below. Links now meet at
+   the divider, and the gap becomes even padding: the card is exactly as tall as before. */
+html:root:not(#_):not(#_):not(#_) .settings-group > .set-link + .set-link { margin-top: -14px; }
+html:root:not(#_):not(#_):not(#_) .settings-group > .set-link { padding-top: 13.5px; padding-bottom: 13.5px; }
+
+/* Inbox: the hover fill covered the whole item, touching the divider above and stopping 1px short of the one below.
+   Transparent top and bottom borders now hold the fill 4px inside both dividers (the 2px list gap puts the next
+   divider 1px below the item, hence 4px over, 3px under). Padding and every absolute child shift to match, so nothing
+   moves. Corner radius 14px across, 18px down, so the painted corners stay round after the 4px inset. */
+html:root:not(#_):not(#_):not(#_) .ibx-item {
+  border-top: 4px solid transparent; border-bottom: 3px solid transparent; padding-top: 7px; padding-bottom: 12px;
+  background-clip: padding-box; border-radius: 14px / 18px;
+}
+html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { top: -5px; }
+html:root:not(#_):not(#_):not(#_) .ibx-item.urgent::after { top: 10px; bottom: 11px; }
+html:root:not(#_):not(#_):not(#_) .ibx-item .ibx-dot { top: 22px; }
+html:root:not(#_):not(#_):not(#_) .ibx-item .ibx-x { top: 3px; }
+
+/* ---------- Hover never draws a ring ---------- */
+/* Card-like buttons (league pill, trade partner, matchup player, scoreboard and the rest) used to swap their border for a
+   12% inset ring on hover. Hover is a fill now: the border stays exactly as it was at rest, a 5% ink tint goes in, and
+   pressing deepens it to 8%. Rings are for keyboard focus only. */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main):hover {
+    box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 5%, transparent) !important; border-color: var(--line) !important;
+  }
+  html:root:not(#_):not(#_):not(#_) .sb2:has(> .sb2-open:hover) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 4%, transparent) !important; }
+}
+html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner):active {
+  box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 8%, transparent) !important; border-color: var(--line) !important;
+}
+html:root:not(#_):not(#_):not(#_) .sb2:has(> .sb2-open:active) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 7%, transparent) !important; }
+/* The slot report row is a list row with a pill, not a card */
+html:root:not(#_):not(#_):not(#_) .sr-main:is(:hover, :active) { box-shadow: none !important; }
+/* The open matchup row: its fill is the selected state, without the ring */
+html:root:not(#_):not(#_):not(#_) .mu-row.open .mu-mine { box-shadow: none; border-color: var(--line); }
+
+/* Sort and filter pills: surface-2 to surface-3 was too close to see. A tint on top reads at a glance. */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .sel-trigger:is(.wv-sort, .tb-sel, .wv2-sort, .tag-select):not(:disabled):hover { box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 6%, transparent); }
+}
+html:root:not(#_):not(#_):not(#_) .sel-trigger:is(.wv-sort, .tb-sel, .wv2-sort, .tag-select):not(:disabled):active { box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 10%, transparent); }
+
+/* Text links keep their hover color while pressed instead of dropping back to muted */
+html:root:not(#_):not(#_):not(#_) :is(.linkish, .ibx-allread, .nudge-link, .ti-nope):active { color: var(--ink); }
+
+/* ---------- Sheet option rows ("Why won't this work?", league switcher) ---------- */
+/* They had no hover at all, dimmed to 60% on press, and drew a square-ish ring that sat on the dividers. Now they use the
+   list pill: 4px inside both dividers, 12px past the text on each side, dividers either side fade. */
+html:root:not(#_):not(#_):not(#_) .fb-opt { position: relative; isolation: isolate; -webkit-tap-highlight-color: transparent; transition: transform var(--st-dur) var(--st-ease); }
+html:root:not(#_):not(#_):not(#_) .fb-opt::after {
+  content: ""; position: absolute; z-index: -1; inset: var(--dl-y) -10px; border-radius: 10px; pointer-events: none;
+  background: var(--st-tint); opacity: 0;
+  transition: opacity var(--st-dur) var(--st-ease), background-color var(--st-dur) var(--st-ease), box-shadow var(--st-dur) var(--st-ease);
+}
+html:root:not(#_):not(#_):not(#_) .fb-opt:is(:active, :focus-visible) { opacity: 1 !important; outline: none !important; }
+html:root:not(#_):not(#_):not(#_) .fb-opt:active { transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) .fb-opt:active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_):not(#_) .fb-opt:focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_):not(#_) .fb-list > li { transition: border-color var(--st-dur) var(--st-ease); }
+html:root:not(#_):not(#_):not(#_) .fb-opt svg { transition: transform var(--st-dur) var(--st-ease); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .fb-opt:hover::after { opacity: 1; }
+  html:root:not(#_):not(#_):not(#_) .fb-opt:hover svg { transform: translateX(3px); color: var(--muted); }
+  html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:hover),
+  html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:hover) + li { border-top-color: transparent; }
+}
+html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:is(:active, :focus-visible)),
+html:root:not(#_):not(#_):not(#_) .fb-list > li:has(> .fb-opt:is(:active, :focus-visible)) + li { border-top-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) .fb-opt:active, html:root:not(#_):not(#_):not(#_) .fb-opt:hover svg { transform: none; }
+}
