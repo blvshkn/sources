@@ -4,6 +4,7 @@ import { marketValue } from "../engine";
 import { Avatar } from "./Avatar";
 import { useSticky } from "./ui";
 import { Select } from "./Select";
+import { Tooltip } from "./Tooltip";
 
 // Demo leagues have no market feed, so build the board from projection-based values.
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
@@ -25,8 +26,8 @@ const POS = ["ALL", "QB", "RB", "WR", "TE"] as const;
 function split(r: BoardRow) {
   if (!r.market || !r.model) return null;
   const d = r.model / r.market - 1;
-  if (d > 0.25) return <span className="vb-split up" title={`Production model ${Math.round(d * 100)}% above the market`}>Buy low</span>;
-  if (d < -0.25) return <span className="vb-split down" title={`Production model ${Math.round(-d * 100)}% below the market`}>Sell high</span>;
+  if (d > 0.25) return <Tooltip content={<>Production model <b>{Math.round(d * 100)}%</b> above the market</>}><span className="vb-split up">Buy low</span></Tooltip>;
+  if (d < -0.25) return <Tooltip content={<>Production model <b>{Math.round(-d * 100)}%</b> below the market</>}><span className="vb-split down">Sell high</span></Tooltip>;
   return null;
 }
 const tier = (v: number) => v >= 8000 ? "Tier 1" : v >= 6000 ? "Tier 2" : v >= 4000 ? "Tier 3" : v >= 2500 ? "Tier 4" : "Depth";
@@ -86,12 +87,12 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
               <Avatar p={r} size={40} />
               <span className="vb-who">
                 <span className="vb-name">{r.name}{split(r)}</span>
-                <span className="lu-meta" title={tier(r.value)}><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}</span>
+                <span className="lu-meta" data-tier={tier(r.value)}><b className={`lu-pos p-${r.pos}`}>{r.pos}{posRank.get(r.id)}</b><span>{r.nfl}</span>{r.age && <span>Age {r.age}</span>}</span>
                 <span className={`vb-owner${o ? (o === "You" ? " you" : "") : " fa"}`}>{o ?? "Free agent"}</span>
               </span>
               <span className="vb-val">
                 <b>{r.value.toLocaleString()}</b>
-                <span className="vb-bar"><span style={{ width: `${(r.value / max) * 100}%` }} /></span>
+                <Tooltip content={<>Market value <b>{r.value.toLocaleString()}</b>, {tier(r.value)}. The bar is scaled to the top player here.</>}><span className="vb-bar"><span style={{ width: `${(r.value / max) * 100}%` }} /></span></Tooltip>
                 {r.trend !== 0 && <i className={r.trend > 0 ? "up" : "down"}>{r.trend > 0 ? "▲" : "▼"}{Math.abs(r.trend).toLocaleString()}</i>}
               </span>
             </button>

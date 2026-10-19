@@ -13,6 +13,8 @@ import { StartSit } from "./StartSit";
 import { Select } from "./Select";
 import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
+import { Tooltip } from "./Tooltip";
+import { Trophy } from "./Trophy";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -88,7 +90,9 @@ export const heatOf = (pts: number, proj: number, pace: number | null): "fire" |
   pts >= proj && proj > 0 ? "fire" : pace === null || proj <= 0 ? null : pace >= proj ? "heating" : pace < proj * 0.85 ? "cold" : null;
 
 /** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. */
-export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => heat === "fire" ? <Flame /> : heat === "heating" ? (
+const HEAT_TIP = { fire: "Past his projection already", heating: "On pace to beat his projection", cold: "On pace to finish 15% or more under projection" };
+export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => <Tooltip content={HEAT_TIP[heat]}>{heatSvg(heat)}</Tooltip>;
+const heatSvg = (heat: "fire" | "heating" | "cold") => heat === "fire" ? <Flame /> : heat === "heating" ? (
   <svg className="heatwave" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#FFB547" strokeWidth="2" strokeLinecap="round">
     <path d="M7 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M12 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M17 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" />
   </svg>
@@ -385,7 +389,7 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
         {opp && (
           <div className={`mw-win ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true">
             {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
-            <b>{chance}%</b><span className="mw-lbl">to win</span>
+            <Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><span className="mw-lbl">to win</span>
             <span className="mw-bar"><i style={{ width: `${chance}%` }} /></span>
           </div>
         )}
@@ -408,11 +412,11 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
       {opp && <>
         <div className="lu-mx-mid" aria-hidden="true">
           {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
-          <b>{chance}%</b><small>to win</small>
+          <Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small>
           <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
         </div>
         {!mineOnly && <div className="lu-mx-side them">
-          <span className="lu-mx-who"><span>{opp.name}</span><i /></span>
+          <span className="lu-mx-who"><span>{opp.name}<Trophy teamId={opp.id} /></span><i /></span>
           {inPlay ? <>
             <LiveNum className="lu-mx-pts" v={oppNow!} />
             <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>

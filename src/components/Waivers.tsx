@@ -4,6 +4,7 @@ import { DEADLINES, FAAB, YOU, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, Free
 import { WaiverRec, bidDollars, bidsFor, eff, fmt, irReport } from "../engine";
 import { AiLabel, Icon, useSticky } from "./ui";
 import { Avatar } from "./Avatar";
+import { Tooltip } from "./Tooltip";
 import { PlatformLogo } from "./PlatformLogo";
 import { Select } from "./Select";
 
@@ -240,7 +241,7 @@ function BidHistory({ tier, range }: { tier: string; range: [number, number] }) 
       <span className="tiny muted">{estimated ? `Not enough winning ${tier.toLowerCase()} bids in your league yet, so this shows a typical range` : `Winning ${tier.toLowerCase()} bids in your league this season (${bids.length})`}</span>
       <div className="bid-track" role="img" aria-label={`Winning bids: ${bids.join(", ")} percent`}>
         <span className="bid-range" style={{ left: `${(range[0] / max) * 100}%`, width: `${Math.max(2, ((range[1] - range[0]) / max) * 100)}%` }} />
-        {bids.map((b, i) => <span key={i} className="bid-dot" style={{ left: `${(b / max) * 100}%` }} title={`${b}%`} />)}
+        {bids.map((b, i) => <Tooltip key={i} content={<>A winning bid of <b>{b}%</b> of budget</>}><span className="bid-dot" style={{ left: `${(b / max) * 100}%` }} /></Tooltip>)}
       </div>
       <div className="bid-scale"><span>0%</span><span>{Math.round(max / 2)}%</span><span>{max}%</span></div>
     </div>

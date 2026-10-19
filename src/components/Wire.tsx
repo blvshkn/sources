@@ -7,6 +7,8 @@ import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, Live
 import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./PlayerSheet";
 import { TeamAvatar } from "./TeamPicker";
+import { Tooltip } from "./Tooltip";
+import { Trophy } from "./Trophy";
 import { useLive, onPace, teamOutlook, winChance } from "../live";
 import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
@@ -68,7 +70,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
       <dl className="ti-stats">
         {t.accept && (
           <div className={`ti-stat odds ${tone}`}>
-            <dt>{t.accept.label}</dt>
+            <dt><Tooltip focusable content={<>Chance they accept, from their needs, notes and trade history. {t.accept.label === "Likely yes" ? "Likely yes is 65% and up." : t.accept.label === "Worth a shot" ? "Worth a shot is 50 to 64%." : "Long shot is under 50%."}</>}><span className="tt-term">{t.accept.label}</span></Tooltip></dt>
             <dd>{Math.round(t.accept.p * 100)}<small>%</small></dd>
             <span className="ti-meter" aria-hidden="true"><i style={{ width: `${Math.round(t.accept.p * 100)}%` }} /></span>
           </div>
@@ -122,7 +124,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
     <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
-      <span className="sb2-who"><b>{t.name}</b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
+      <span className="sb2-who"><b>{t.name}<Trophy teamId={t.id} /></b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       {inPlay && now !== undefined
         ? <span className="sb2-pts sb2-now"><LiveNum v={now} /><small>proj {pts.toFixed(1)}</small></span>
         : <span className="sb2-pts">{pts.toFixed(1)}</span>}
@@ -144,8 +146,8 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
           <span className="sb2-chance" aria-hidden="true">
             <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
             <span className="sb2-chance-lbl">
-              <span><b>{chance}%</b> to win</span>
-              <span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span>
+              <Tooltip content="Win chance from both projected totals. It firms up as points get played."><span><b>{chance}%</b> to win</span></Tooltip>
+              <Tooltip content={chance >= 55 ? "Favored: 55% or better to win" : chance <= 45 ? "Behind: 45% or less to win" : "Toss-up: between 45% and 55%"}><span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span></Tooltip>
             </span>
           </span>
         )}
@@ -153,13 +155,13 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
       </button>
       {extras && <>
       <dl className="ti-stats sb2-stats">
-        <div className="ti-stat"><dt>Power rank</dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
+        <div className="ti-stat"><dt><Tooltip focusable content="Starting lineup strength against the other teams. 1 is strongest."><span className="tt-term">Power rank</span></Tooltip></dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
         <div className="ti-stat"><dt>Weakest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
       </dl>
       {partner && onPartner ? (
         <button className="sb2-partner" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
           {pt && <TeamAvatar t={pt} size={36} />}
-          <span className="sb2-who"><small>Best trade partner</small><b>{partner}</b></span>
+          <span className="sb2-who"><small>Best trade partner</small><b>{partner}{pt && <Trophy teamId={pt.id} />}</b></span>
           <span className="sb2-go">Build a deal<Icon name="chev" size={16} /></span>
         </button>
       ) : (
@@ -179,7 +181,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
     <section className="card wk imp" aria-label="Where to improve">
       <div className="wk-head"><h2 className="section-title">Where to improve</h2></div>
       <button className="wk-row" onClick={() => onGo("league")}>
-        <span className="imp-k">Power rank</span>
+        <span className="imp-k"><Tooltip content="Starting lineup strength against the other teams. 1 is strongest."><span>Power rank</span></Tooltip></span>
         <span className="wk-name">#{you.rank} of {TEAMS.length}<small>See the standings and every team's values</small></span>
         <Icon name="chev" size={16} />
       </button>
@@ -191,7 +193,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
       {partner && partnerId ? (
         <button className="wk-row" onClick={() => onGo("trade", partnerId)}>
           <span className="imp-k">Trade partner</span>
-          <span className="wk-name imp-who">{pt && <TeamAvatar t={pt} size={28} />}<span>{partner}<small>Has what you need at {you.need}. Build a deal</small></span></span>
+          <span className="wk-name imp-who">{pt && <TeamAvatar t={pt} size={28} />}<span>{partner}{pt && <Trophy teamId={pt.id} />}<small>Has what you need at {you.need}. Build a deal</small></span></span>
           <Icon name="chev" size={16} />
         </button>
       ) : <p className="small muted">No clear trade partner yet.</p>}

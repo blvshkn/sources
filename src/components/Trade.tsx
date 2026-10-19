@@ -12,6 +12,8 @@ import { TagCapture } from "./TagCapture";
 import { TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { Select } from "./Select";
+import { Tooltip } from "./Tooltip";
+import { Trophy } from "./Trophy";
 
 function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -29,8 +31,7 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
     const lock = lockIds[id];
     const want = wantIds[id];
     return (
-      <button key={id + slot} className={`pick tone-${tone}${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}
-        title={dim || lock || want || undefined}>
+      <button key={id + slot} className={`pick tone-${tone}${dim ? " dim" : ""}${want ? " wanted" : ""}`} aria-pressed={on} onClick={() => onToggle(id)}>
         <Avatar p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="pname" style={{ display: "block" }}>{p.name}</span>
@@ -48,8 +49,8 @@ function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds
   return (
     <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
       <div className="roster-head">
-        <div className="rp-t"><span>{label}</span><b>{team.name}</b></div>
-        <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><small>starters pts/wk</small></span>
+        <div className="rp-t"><span>{label}</span><b>{team.name}<Trophy teamId={team.id} /></b></div>
+        <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><Tooltip focusable content="Points a week from the starting lineup only. Bench players don't count."><small className="tt-term">starters pts/wk</small></Tooltip></span>
       </div>
       <div className="slot-label">Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</div>
       {current
@@ -67,7 +68,7 @@ export function AcceptRead({ a, who }: { a: Acceptance; who: string }) {
   const tone = a.label === "Likely yes" ? "good" : a.label === "Worth a shot" ? "warn" : "bad";
   return (
     <div className={`accept ${tone}`}>
-      <div className="accept-top"><b>{a.label}</b><span className="tiny muted">{Math.round(a.p * 100)}% chance {who} accepts</span></div>
+      <div className="accept-top"><Tooltip focusable content={a.label === "Likely yes" ? "Likely yes is 65% and up, from their needs, notes and trade history." : a.label === "Worth a shot" ? "Worth a shot is 50 to 64%. Close enough to send." : "Long shot is under 50%. Expect a counter or a no."}><b>{a.label}</b></Tooltip><span className="tiny muted">{Math.round(a.p * 100)}% chance {who} accepts</span></div>
       {a.theirBlockers.length ? <ul>{a.theirBlockers.map((b) => <li key={b}>{b.charAt(0).toUpperCase() + b.slice(1)}</li>)}</ul>
         : a.reasons.length ? <p className="tiny muted">{a.reasons.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" · ")}</p> : null}
     </div>

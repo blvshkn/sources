@@ -9,6 +9,7 @@ import {
   irReport, irLabel, parseTag,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
+import { Tooltip } from "./components/Tooltip";
 import { Boot } from "./components/Boot";
 import { Logo, Mark } from "./components/Logo";
 import { LeagueCtx } from "./components/LeagueSwitch";
@@ -425,7 +426,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <header className="topbar">
         <button type="button" className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} aria-label="Sources home" onClick={goHome}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
-          {UPDATED && <span className="top-upd" title={UPDATED}>{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span>}
+          {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
           <button className="btn btn-icon btn-ghost top-bell" aria-label={`Inbox${unread ? `, ${unread} unread` : ""}`} aria-expanded={inboxOpen} aria-controls="inbox" onClick={() => setInboxOpen(true)}>
             <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
           </button>

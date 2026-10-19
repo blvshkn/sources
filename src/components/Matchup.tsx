@@ -6,6 +6,8 @@ import { Icon, StatusPill, LiveNum } from "./ui";
 import { useLive, expect, outlookOf, winChance, playCount } from "../live";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
+import { Tooltip } from "./Tooltip";
+import { Trophy } from "./Trophy";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
 /** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
@@ -86,8 +88,8 @@ export function Matchup({ onBack }: { onBack: () => void }) {
         <header className="mu-score">
           <div className="mu-side you"><span>{changed ? "Your what-if" : "Your lineup"}</span>
             {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
-          <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<b>{Math.round(chance)}%</b><small>to win</small></div>
-          <div className="mu-side them"><span>{opp.manager}</span>
+          <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{Math.round(chance)}%</b></Tooltip><small>to win</small></div>
+          <div className="mu-side them"><span>{opp.manager}<Trophy teamId={opp.id} /></span>
             {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>

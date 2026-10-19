@@ -199,7 +199,7 @@ export function League({ needs, tags, fade, focusId, partners, onTrade, onOpen, 
                 <span className={`tc-mode ${n.mode === "Contender" ? "good" : n.mode === "Seller" ? "bad" : ""}`}>{n.mode}</span>
               </header>
               <dl className="ti-stats tc-stats">
-                <div className="ti-stat"><dt><Tooltip focusable content="Power rank: starting lineup strength against the other teams, 1 is strongest"><span className="tt-term">Power</span></Tooltip></dt><dd>#{n.rank}</dd></div>
+                <div className="ti-stat"><dt><Tooltip focusable content="Power rank: starting lineup strength against the other teams. 1 is strongest."><span className="tt-term">Power</span></Tooltip></dt><dd>#{n.rank}</dd></div>
                 <div className="ti-stat"><dt>Points for</dt><dd>{t.pf.toFixed(0)}</dd></div>
                 <div className="ti-stat"><dt>Projected</dt><dd>{n.lineup.total.toFixed(1)}<small>/wk</small></dd></div>
               </dl>

@@ -4,15 +4,17 @@ import { Player, onBye } from "../data";
 import { fmt } from "../engine";
 
 import { Icon, type IconName } from "./icons";
+import { Tooltip } from "./Tooltip";
 export { Icon };
 export type { IconName } from "./icons";
 
 export const PosBadge = ({ pos }: { pos: string }) => <span className={`pos pos-${pos}`}>{pos}</span>;
 
 export function StatusPill({ p }: { p: Player }) {
-  if (onBye(p.nfl)) return <span className="status status-BYE" title="On bye this week">Bye</span>;
+  if (onBye(p.nfl)) return <Tooltip content="On bye this week. He won't score."><span className="status status-BYE">Bye</span></Tooltip>;
   if (!p.status) return null;
-  return <span className={`status status-${p.status}`} title={p.note}>{p.status === "O" ? "Out" : "Questionable"}</span>;
+  const tip = p.injury === "IR" ? "On injured reserve. Can move to an IR slot." : p.status === "O" ? "Ruled out this week." : "Questionable. Check his status before lock.";
+  return <Tooltip content={p.note ? <>{tip}<small>{p.note}</small></> : tip}><span className={`status status-${p.status}`}>{p.status === "O" ? "Out" : "Questionable"}</span></Tooltip>;
 }
 
 export function Delta({ n, suffix = "" }: { n: number; suffix?: string }) {
@@ -28,7 +30,7 @@ export function Stamp({ children = "Per sources" }: { children?: ReactNode }) {
 export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: () => void; dataLabel?: string }) {
   return (
     <span className="ai-label">
-      <Icon name="spark" size={12} />AI summary
+      <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ai-label-k"><Icon name="spark" size={12} />AI summary</span></Tooltip>
       {onData && <button className="linkish" onClick={onData}>{dataLabel}</button>}
     </span>
   );
