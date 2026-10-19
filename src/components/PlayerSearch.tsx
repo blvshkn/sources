@@ -4,17 +4,18 @@ import { TEAMS, Team, playerById } from "../data";
 import { eff } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
+import { Marked } from "./Marked";
+import { useKeyboardInset } from "./useKeyboardInset";
+import { rankPlayers } from "../search";
 
 /** Find any rostered player in the league and see whose fantasy team he's on. */
 export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string, team: Team) => void; picked: string[]; onClose?: () => void }) {
   const [q, setQ] = useState("");
   const input = useRef<HTMLInputElement>(null);
-  const all = useMemo(() => TEAMS.flatMap((t) => t.roster.map((id) => ({ p: playerById(id), team: t }))), []);
+  // Best projections first, then search.ts ranks the matches (initials, word starts, last name) above that order
+  const all = useMemo(() => TEAMS.flatMap((t) => t.roster.map((id) => ({ p: playerById(id), team: t }))).sort((a, b) => eff(b.p) - eff(a.p)), []);
   const term = q.trim().toLowerCase();
-  const hits = term.length < 2 ? [] : all
-    .filter(({ p }) => p.name.toLowerCase().includes(term) || p.nfl.toLowerCase() === term)
-    .sort((a, b) => Number(b.p.name.toLowerCase().startsWith(term)) - Number(a.p.name.toLowerCase().startsWith(term)) || eff(b.p) - eff(a.p))
-    .slice(0, 8);
+  const hits = term.length < 2 ? [] : rankPlayers(q, all, ({ p }) => ({ name: p.name, pos: p.pos, team: p.nfl })).slice(0, 8);
 
   // Results never run under the phone tab bar or off the viewport: the list scrolls inside its own panel
   const list = useRef<HTMLUListElement>(null);
@@ -22,6 +23,8 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
   const [room, setRoom] = useState<number>();
   const showing = term.length >= 2;
   useEdgeFade(list, showing);
+  // Phones: the results fit above the keyboard (useKeyboardInset.ts)
+  const kbMax = useKeyboardInset(field, list);
   useEffect(() => {
     if (!showing) return;
     const fit = () => { if (field.current) setRoom(Math.max(200, roomBelow(field.current))); };
@@ -40,14 +43,14 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
         {onClose && <button className="psr-clear" onClick={onClose} aria-label="Close search"><Icon name="x" size={16} /></button>}
       </label>
       {term.length >= 2 && (
-        <ul className="psr-list" aria-label="Search results" ref={list} style={room ? { maxHeight: room } : undefined}>
-          {hits.length ? hits.map(({ p, team }) => {
+        <ul className="psr-list" aria-label="Search results" ref={list} style={kbMax || room ? { maxHeight: kbMax ?? room } : undefined}>
+          {hits.length ? hits.map(({ item: { p, team }, match }) => {
             const on = picked.includes(p.id);
             return (
               <li key={p.id}>
                 <button className={`psr-row${on ? " on" : ""}`} onClick={() => { onPick(p.id, team); setQ(""); onClose?.(); }}>
                   <Avatar p={p} size={36} />
-                  <span className="psr-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
+                  <span className="psr-n"><b><Marked name={p.name} marks={match.marks} /></b><small>{p.pos} · {p.nfl}</small></span>
                   <span className={`psr-team${team.you ? " you" : ""}`}>{team.you ? "Your team" : team.name}</span>
                   <span className="psr-act">{on ? <Icon name="check" size={16} /> : <Icon name="plus" size={16} />}</span>
                 </button>

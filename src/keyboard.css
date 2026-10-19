@@ -1,0 +1,21 @@
+/* ---------- Search pickers above the phone keyboard (useKeyboardInset.ts) ---------- */
+/* html[data-kb-pick] is set while a picker's search field has focus on a touch device. The hook sizes the list
+   to the space above the keyboard; this file clears the bottom bars out of the way and keeps scrolling inside the list. */
+
+/* Lists scroll on their own and never hand the scroll to the page behind */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.qs-opts, .psr-list, .wv-ta-list) { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+/* The last row clears the bottom edge and its fade */
+html[data-kb-pick]:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.qs-opts, .psr-list, .wv-ta-list) { scroll-padding-bottom: 12px; padding-bottom: 8px; }
+
+@media (max-width: 860px) {
+  /* The deal tray and the tab bar would sit on top of the keyboard and eat the rows; they come back on blur */
+  html[data-kb-pick]:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.deal-tray, .tabbar) { display: none !important; }
+  /* Room below the picker, so the page can scroll its search field up near the top */
+  html[data-kb-pick]:root:not(#_):not(#_):not(#_):not(#_):not(#_) .main { padding-bottom: 70vh !important; }
+}
+
+/* Matched letters: bold, same ink */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.qs-nm, .psr-n b) mark.hl { background: none; color: inherit; font-weight: 700; padding: 0; border-radius: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .psr-n b:has(mark.hl) { font-weight: 500; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .qs-nm mark.hl { color: var(--ink); }

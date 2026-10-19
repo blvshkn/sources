@@ -17,6 +17,9 @@ import { Select } from "./Select";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useHFade } from "./hFade";
+import { Marked } from "./Marked";
+import { useKeyboardInset } from "./useKeyboardInset";
+import { rankPlayers } from "../search";
 
 export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone, noteIds }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -175,12 +178,16 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
   const [q, setQ] = useState("");
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
-  const term = q.trim().toLowerCase();
   const [sort, setSort] = useState<"value" | "proj">("value");
   const val = (p: Player) => packageValue([p.id]);
-  const options = pool.filter((id) => !ids.includes(id)).map(playerById)
-    .filter((p) => !term || p.name.toLowerCase().includes(term) || p.pos.toLowerCase() === term || p.nfl.toLowerCase() === term)
-    .sort((a, b) => (sort === "value" ? val(b) - val(a) || eff(b, true) - eff(a, true) : eff(b, true) - eff(a, true) || val(b) - val(a)));
+  // Sorted by Value or Proj, then search.ts ranks the matches (initials, word starts, last name) above that order
+  const ranked = rankPlayers(q, pool.filter((id) => !ids.includes(id)).map(playerById)
+    .sort((a, b) => (sort === "value" ? val(b) - val(a) || eff(b, true) - eff(a, true) : eff(b, true) - eff(a, true) || val(b) - val(a))), (p) => ({ name: p.name, pos: p.pos, team: p.nfl }));
+  const options = ranked.map((r) => r.item);
+  // Phones: the list fits above the keyboard and the tray steps aside (useKeyboardInset.ts)
+  const field = useRef<HTMLLabelElement>(null);
+  const opts = useRef<HTMLUListElement>(null);
+  const kbMax = useKeyboardInset(field, opts, adding);
   const ghosts = Math.max(0, SLOTS - ids.length);
   // Focus goes back to whatever opens the picker now: the next ghost, or + Add once the slots are full
   const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-ghost, .qs-add")?.focus()); };
@@ -219,7 +226,7 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
         </ul>
         {adding && (
           <div className="qs-pick">
-            <label className="qs-search"><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
+            <label className="qs-search" ref={field}><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
                 onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
             <button className="qs-done" onClick={() => close(true)}>Done</button>
@@ -233,12 +240,12 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
               <Tooltip focusable content="Market value. The same number the deal's trade value adds up."><span className={`qs-col${sort === "value" ? " on" : ""}`}>Value</span></Tooltip>
               <span aria-hidden="true" />
             </div>
-            <ul className="qs-opts qs-scroll">
-              {options.map((p) => (
+            <ul className="qs-opts qs-scroll" ref={opts} style={kbMax ? { maxHeight: kbMax } : undefined}>
+              {ranked.map(({ item: p, match }) => (
                 <li key={p.id}><button onClick={() => { onToggle(p.id); setQ(""); }} aria-label={`Add ${p.name}, ${p.pos}, ${p.nfl}. Projects ${eff(p, true).toFixed(1)}, value ${val(p).toLocaleString()}`}>
                   <Avatar p={p} size={22} badge={false} />
                   <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-                  <span className="qs-on"><span className="qs-nm">{p.name}</span><span className="qs-tm">{p.nfl}</span><StatusPill p={p} /></span>
+                  <span className="qs-on"><span className="qs-nm"><Marked name={p.name} marks={match.marks} /></span><span className="qs-tm">{p.nfl}</span><StatusPill p={p} /></span>
                   <span className="qs-num">{eff(p, true).toFixed(1)}</span>
                   <span className="qs-num">{val(p).toLocaleString()}</span>
                   <Icon name="plus" size={14} />

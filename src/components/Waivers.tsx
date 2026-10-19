@@ -11,6 +11,8 @@ import { Tooltip } from "./Tooltip";
 import { PlatformLogo } from "./PlatformLogo";
 import { Select } from "./Select";
 import { WeekStepper } from "./WeekStepper";
+import { useKeyboardInset } from "./useKeyboardInset";
+import { matchPlayer, pieces, rankPlayers } from "../search";
 
 /** Why a free agent can't help this week, or null when he can. */
 type Avail = null | "played" | "bye" | "out" | "ir";
@@ -74,13 +76,11 @@ function defaultWeek() {
   return (pool.length && locked / pool.length > 0.5) || tuesday ? WEEK + 1 : WEEK;
 }
 
-/** Highlights the typed part of a name in type-ahead results. */
+/** Highlights the matched letters of a name in type-ahead results (search.ts: initials, word starts, substrings). */
 function Hit({ name, term }: { name: string; term: string }) {
-  const low = name.toLowerCase();
-  const w = low.split("").findIndex((_, k) => (k === 0 || low[k - 1] === " ") && low.startsWith(term, k));
-  const i = w >= 0 ? w : low.indexOf(term);
-  if (!term || i < 0) return <>{name}</>;
-  return <>{name.slice(0, i)}<mark>{name.slice(i, i + term.length)}</mark>{name.slice(i + term.length)}</>;
+  const m = term ? matchPlayer(term, name) : null;
+  if (!m?.marks.length) return <>{name}</>;
+  return <>{pieces(name, m.marks).map((x, i) => (x.on ? <mark key={i}>{x.text}</mark> : x.text))}</>;
 }
 
 /** "$40-$90", or "Up to $150" when the low end is zero. Kickers and defenses go for any amount, so they never get a range. */
@@ -207,7 +207,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
-    const list = rows.filter((e) => (pos === "ALL" || e.fa.pos === pos) && (!onlyWatch || watched(e.fa.id)) && (!term || e.fa.name.toLowerCase().includes(term) || e.fa.nfl.toLowerCase() === term));
+    const list = rows.filter((e) => (pos === "ALL" || e.fa.pos === pos) && (!onlyWatch || watched(e.fa.id)) && (!term || !!matchPlayer(term, e.fa.name, { pos: e.fa.pos, team: e.fa.nfl })));
     const num = (e: Row) => (typeof e.pts === "number" ? e.pts : -1);
     const sorted = sort === "trend" ? [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0))
       : sort === "proj" ? [...list].sort((a, b) => num(b) - num(a))
@@ -224,9 +224,13 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
   const term = q.trim().toLowerCase();
   const hits = useMemo(() => {
     if (!term) return [];
-    const starts = (n: string) => n.toLowerCase().split(/\s+/).some((w) => w.startsWith(term));
-    return all.filter((e) => e.fa.name.toLowerCase().includes(term)).sort((a, b) => Number(starts(b.fa.name)) - Number(starts(a.fa.name)) || Number(!!a.avail) - Number(!!b.avail) || b.value - a.value).slice(0, 6);
+    const sorted = [...all].sort((a, b) => Number(!!a.avail) - Number(!!b.avail) || b.value - a.value);
+    return rankPlayers(term, sorted, (e) => ({ name: e.fa.name })).map((r) => r.item).slice(0, 6);
   }, [all, term]);
+  // Phones: the type-ahead fits above the keyboard (useKeyboardInset.ts)
+  const taField = useRef<HTMLLabelElement>(null);
+  const taList = useRef<HTMLUListElement>(null);
+  const taMax = useKeyboardInset(taField, taList);
   const pick = (e: Entry) => {
     setQ(e.fa.name); setSuggest(false); setPos("ALL"); setOnlyWatch(false); setOpen(e.rec || (week !== WEEK && e.later) ? e.fa.id : null);
     requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
@@ -319,7 +323,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
         </div>
         {sel.err && kind !== "current" && <p className="small muted wv3-err">{sel.err}</p>}
         <div className="wv-ta wv2-bar">
-          <label className="psr-field wv-search">
+          <label className="psr-field wv-search" ref={taField}>
             <Icon name="search" size={18} />
             <span className="sr-only">Search free agents</span>
             <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={() => window.setTimeout(() => setSuggest(false), 120)} onKeyDown={onKey}
@@ -336,7 +340,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
               { value: "proj" as typeof sort, label: kind === "past" ? "Scored" : "Projected" },
             ]} />
           {suggest && hits.length > 0 && (
-            <ul className="wv-ta-list" id="wv-ta-list" role="listbox">
+            <ul className="wv-ta-list" id="wv-ta-list" role="listbox" ref={taList} style={taMax ? { maxHeight: taMax, overflowY: "auto" } : undefined}>
               {hits.map((e, i) => (
                 <li key={e.fa.id} id={`wv-ta-${e.fa.id}`} role="option" aria-selected={i === hi}>
                   <button tabIndex={-1} onMouseDown={(ev) => ev.preventDefault()} onClick={() => pick(e)} onMouseEnter={() => setHi(i)} className={`${i === hi ? "on" : ""}${e.avail ? " off" : ""}`}>
