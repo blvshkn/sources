@@ -225,7 +225,7 @@ export function Select<T extends string>({
   return (
     <>
       <button ref={trigger} type="button" id={id} disabled={disabled}
-        className={`sel-trigger sel-${size}${className ? ` ${className}` : ""}`}
+        className={`sel-trigger ${children ? "sel-custom" : `sel-${size}`}${className ? ` ${className}` : ""}`}
         aria-haspopup="listbox" aria-expanded={mounted && shown} aria-controls={mounted ? listId : undefined}
         aria-label={ariaLabel} aria-labelledby={ariaLabelledby}
         data-open={mounted || undefined}

@@ -10,6 +10,7 @@ import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, Page
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { StartSit } from "./StartSit";
+import { Select } from "./Select";
 import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
 
@@ -576,11 +577,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   <div className="pname">{p.name}</div>
                   <div className="pmeta">{p.pos} · {p.nfl}{!starting && " · Bench"} <StatusPill p={p} /></div>
                 </div>
-                <label htmlFor={`tag-${id}`} className="sr-only">Tag for {p.name}</label>
-                <select id={`tag-${id}`} className="tag-select" value={myTags[id] ?? ""} onChange={(e) => setTag(id, e.target.value as MyTag | "")}>
-                  <option value="">No tag</option>
-                  {(Object.keys(TAG_LABEL) as MyTag[]).map((k) => <option key={k} value={k}>{TAG_LABEL[k]}</option>)}
-                </select>
+                <Select id={`tag-${id}`} className="tag-select" aria-label={`Tag for ${p.name}`} value={(myTags[id] ?? "") as MyTag | ""} onChange={(v) => setTag(id, v)}
+                  options={[{ value: "" as MyTag | "", label: "No tag" }, ...(Object.keys(TAG_LABEL) as MyTag[]).map((k) => ({ value: k as MyTag | "", label: TAG_LABEL[k] }))]} />
               </div>
             );
           })}

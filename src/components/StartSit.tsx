@@ -5,6 +5,7 @@ import { seasonFor } from "../schedule";
 import { WeekView, loadWeek, peekWeek } from "../weeks";
 import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
+import { Select } from "./Select";
 import { WeekStepper } from "./WeekStepper";
 
 type Metric = { label: string; get: (p: Player) => number | null; fmt?: (n: number) => string };
@@ -138,16 +139,14 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
   const Pick = ({ s, set, side }: { s: Side; set: (v: string) => void; side: "a" | "b" }) => {
     const p = s.p;
     return (
-      <label className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`}>
+      <Select className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`} value={p.id} onChange={set} aria-label={`${side === "a" ? "First player" : "Second player"}: ${p.name}`}
+        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, disabled: o.id === (side === "a" ? bId : aId) }))}>
         <Avatar p={p} size={44} />
         <b className="sx-name">{p.name}</b>
         <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` · ${s.game}` : ""}</small>
         <span className="sx-status">{loading ? null : s.avail ? <span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`} title={s.avail.kind === "bye" ? `On bye in week ${week}` : p.note}>{s.avail.pill}</span> : null}</span>
         <span className="sx-change">Change<Icon name="chev" size={12} /></span>
-        <select className="sx-native" value={p.id} onChange={(e) => set(e.target.value)} aria-label={side === "a" ? "First player" : "Second player"}>
-          {pool.map((o) => <option key={o.id} value={o.id} disabled={o.id === (side === "a" ? bId : aId)}>{o.name} ({o.pos}{onIr.has(o.id) ? ", IR slot" : ""})</option>)}
-        </select>
-      </label>
+      </Select>
     );
   };
 
@@ -164,9 +163,9 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
         <WeekStepper week={week} onChange={setWeek} className="sx-weeknav" />
       </header>
       <div className="sx-picks">
-        <Pick s={A} set={setA} side="a" />
+        {Pick({ s: A, set: setA, side: "a" })}
         <span className="sx-vs" aria-hidden="true">vs</span>
-        <Pick s={B} set={setB} side="b" />
+        {Pick({ s: B, set: setB, side: "b" })}
       </div>
       <p className={`sx-verdict${v.flip ? " flip" : ""}${loading ? " sx-loading" : ""}`} aria-live="polite">{v.text}</p>
       <div className="sx-rows">
