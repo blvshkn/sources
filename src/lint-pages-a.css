@@ -25,6 +25,11 @@ html:root:not(#_):not(#_) .nl .tag-line > .btn:last-child { grid-column: 4; }
 /* A fading tag dims its words, not its buttons (dimmed buttons read as disabled). */
 html:root:not(#_):not(#_) .nl .tag-line > :not(.btn) { opacity: var(--tag-o, 1); }
 
+/* ---- Wire > Intel: offer card ------------------------------------------ */
+/* "You send" was the you-lime and "You get" good-green: one is identity, the other a verdict.
+   Both are plain labels; the verdict line below says whether it's good. */
+html:root:not(#_):not(#_) .nudge-offer .deal-lists .eyebrow { color: var(--muted) !important; }
+
 /* Collapsed rows drop the Contender/Bubble/Seller badge (it's plain text in the open detail now),
    so the name gets the room; Needs and the projection stay right and vertically centred. */
 html:root:not(#_):not(#_) .nl-row {
@@ -58,3 +63,12 @@ html:root:not(#_):not(#_) .nl-cut > span {
 @container nl (max-width: 560px) {
   html:root:not(#_):not(#_) .nl-cut > span { right: 14px; }
 }
+
+/* ---- Wire > Intel: news card ------------------------------------------- */
+/* "Show all players" was a 10px-corner box under "Show 3 more", a full pill, in the same card.
+   Both are pills (like "More intel"), same 40px height and gap. */
+html:root:not(#_):not(#_) .nxr .nx-more.nxr-all { border-radius: 999px; gap: 8px; }
+
+/* ---- Matchup card (Wire, and the landing's preview) ----------------------- */
+/* The champion's trophy stays on the team name's last word. */
+html:root:not(#_):not(#_) .sb2-who .nw { white-space: nowrap; }

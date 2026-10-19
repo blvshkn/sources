@@ -283,10 +283,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // Offer received, with verdict and a ready counter. Sleeper's API doesn't expose
     // pending offers, so live leagues get this through "Judge an offer" in the builder.
     const offer = demo ? evaluate(YOU, teamById("dan"), ["zay-flowers"], ["ladd-mcconkey"], active, myTags, prices) : null;
+    const counter = offer ? counterFor(offer, active, myTags, prices) : null;
     if (offer) list.push({
       id: "offer-dan", kind: "offer", teamId: "dan", headline: "Dan offered Ladd McConkey for your Zay Flowers.",
-      why: `${offerRead(offer).line} Here's the breakdown and a counter that fits their tags.`, trades: [], time: "12 min ago",
-      offer, counter: counterFor(offer, active, myTags, prices), deadline: DEADLINES.trade,
+      // Only promise a counter when there is one to show
+      why: `${offerRead(offer).line} Here's the breakdown${counter ? " and a counter that fits their tags" : ""}.`, trades: [], time: "12 min ago",
+      offer, counter, deadline: DEADLINES.trade,
     });
     // Needs: teams with a stated or measured need where you have a win-win
     const wantPos = (teamId: string) => active.find((t) => t.teamId === teamId && t.kind === "wants" && t.pos)?.pos;

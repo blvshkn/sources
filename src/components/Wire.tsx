@@ -132,7 +132,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
     <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
-      <span className="sb2-who"><b>{t.name}<Trophy teamId={t.id} /></b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
+      <span className="sb2-who"><b><NameWithTrophy name={t.name} teamId={t.id} /></b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       {inPlay && now !== undefined
         ? <span className="sb2-pts sb2-now"><LiveNum v={now} /><small>proj {pts.toFixed(1)}</small></span>
         : <span className="sb2-pts">{pts.toFixed(1)}</span>}
@@ -219,7 +219,15 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
     return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? `pace ${pace.toFixed(1)}` : `proj ${proj.toFixed(1)}`}</small></span>;
   }
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
-  return <span className="wk-pts muted">{proj.toFixed(1)}</span>;
+  // Not started: the number is his projection, labelled like the live (pace) and final (proj) rows, so every row reads the same
+  return <span className="wk-pts muted"><b>{proj.toFixed(1)}</b><small>proj</small></span>;
+}
+
+/** A team name with its trophy kept on the last word, so a two-line name never leaves the trophy alone on a line. */
+function NameWithTrophy({ name, teamId }: { name: string; teamId: string }) {
+  const cut = name.lastIndexOf(" ");
+  if (cut < 0) return <span className="nw">{name}<Trophy teamId={teamId} /></span>;
+  return <>{name.slice(0, cut + 1)}<span className="nw">{name.slice(cut + 1)}<Trophy teamId={teamId} /></span></>;
 }
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);
@@ -428,7 +436,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
         <div><span className="eyebrow">You send</span><ul>{o.give.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
         <div><span className="eyebrow">You get</span><ul>{o.get.map((id) => <li key={id}><Avatar p={playerById(id)} size={26} /><span>{playerById(id).name}</span></li>)}</ul></div>
       </div>
-      <div className={`verdict ${read.tone}`}><b>{read.label}</b><span className="small">{read.line} {teamById(o.partnerId).manager} gains {fmt(o.themDelta)}.</span></div>
+      <div className={`verdict ${read.tone}`}><b>{read.label}</b><span className="small">{teamById(o.partnerId).manager} gains {fmt(o.themDelta)}.</span></div>
       {n.counter && (
         <div className="coach">
           <p className="small"><b>Ready counter:</b> {n.counter.line}. You {fmt(n.counter.trade.youDelta)}, {teamById(o.partnerId).manager} {fmt(n.counter.trade.themDelta)} a week.</p>

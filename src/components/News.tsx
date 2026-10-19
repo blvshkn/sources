@@ -200,7 +200,8 @@ function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerConte
   const left = Math.max(0, items.length - count);
   const impact = useMemo(() => (items[0] ? impactFor(p, items[0], c) : null), [p.id, items[0]?.id, items[0]?.kind]);
   const newest = useMemo(() => items.reduce((a, b) => ((b.at ?? 0) > (a.at ?? 0) ? b : a), items[0]), [items]);
-  const label = roleLabel(c);
+  // "Starter · WR" repeats the position the line already shows; the slot only adds something when it differs (FLEX, SF)
+  const label = c.role === "starter" && c.slot === p.pos ? "Starter" : roleLabel(c);
   const bodyId = `nxr-b-${p.id}`;
   const listId = `nxs-${p.id}`;
 
