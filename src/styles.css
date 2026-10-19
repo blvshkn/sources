@@ -3693,23 +3693,8 @@ html:root:not(#_) .wv2-pos { align-items: center; }
 html:root:not(#_) .wv2-bar .wv-search input { min-width: 0; }
 @media (max-width: 380px) { html:root:not(#_) .wv2-sort select { padding: 0 30px 0 12px; font-size: 0.8125rem; } }
 
-/* ==== Platform accent: chalk and graphite stay; the accent follows the app you connect.
-   Each value is tuned for contrast on graphite. --lime is the app's accent token name throughout. ==== */
-html:root:not(#_)[data-platform="sleeper"] {
-  --lime: #2DD4BF; --lime-rgb: 45, 212, 191;
-  --stamp: #2DD4BF; --stamp-ink: #0B1F1C; --stamp-soft: rgba(45, 212, 191, 0.10);
-  --action: #2DD4BF; --action-ink: #0B1F1C; --you: #2DD4BF; --you-rgb: 45, 212, 191; --tab-rgb: 45, 212, 191;
-}
-html:root:not(#_)[data-platform="yahoo"] {
-  --lime: #A277FF; --lime-rgb: 162, 119, 255;
-  --stamp: #A277FF; --stamp-ink: #160B2E; --stamp-soft: rgba(162, 119, 255, 0.12);
-  --action: #A277FF; --action-ink: #160B2E; --you: #A277FF; --you-rgb: 162, 119, 255; --tab-rgb: 162, 119, 255;
-}
-html:root:not(#_)[data-platform="espn"] {
-  --lime: #FF5A4E; --lime-rgb: 255, 90, 78;
-  --stamp: #FF5A4E; --stamp-ink: #2A0B08; --stamp-soft: rgba(255, 90, 78, 0.12);
-  --action: #FF5A4E; --action-ink: #2A0B08; --you: #FF5A4E; --you-rgb: 255, 90, 78; --tab-rgb: 255, 90, 78;
-}
+/* ==== Brand color stays Sources lime on every platform. The connected app shows up as its
+   logo and name, never as a recolor of the whole interface. ==== */
 html:root:not(#_)[data-platform][data-tab] { --tab-rgb: var(--lime-rgb); }
 
 /* ==== Color and depth: an ambient glow in the platform color, see-through gradient tints on hero cards,

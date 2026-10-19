@@ -60,8 +60,8 @@ export async function drawCard(t: Trade, accentRgb?: string): Promise<Blob | nul
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Geist', system-ui, sans-serif`;
-  const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "45, 212, 191", A = (o: number) => `rgba(${RGB},${o})`;
-  const LIME = css.getPropertyValue("--lime").trim() || "#2DD4BF", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
+  const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "216, 242, 74", A = (o: number) => `rgba(${RGB},${o})`;
+  const LIME = css.getPropertyValue("--lime").trim() || "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
 
   // Night field: dark turf, a floodlight glow, faint yard lines
