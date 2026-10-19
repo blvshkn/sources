@@ -216,8 +216,14 @@ export function outlookOf(live: Live, ids: (string | null)[], specials: (Special
 }
 export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), specialLineup(t).slots.map((x) => x.player));
 /** Chance team A beats team B, from expected finishes and how much is still to be played. Matches Sleeper's style of read. */
+/** Spread of the final margin per projected point still to play (both teams combined). Fitted to Sleeper's own
+ *  win chance: 121.60 vs 106.54 with 132.57 vs 141.35 projected shows 33%; 116.30 vs 126.80 with 131.31 vs
+ *  160.93 projected shows 9%. Only 0.44 to 0.45 reproduces both. */
+const SLEEPER_SD_PER_PT = 0.445;
+
 export function winChance(a: Outlook, b: Outlook): number {
-  const sd = Math.sqrt(a.variance + b.variance), d = a.expected - b.expected;
+  const left = Math.max(0, a.expected - a.scored) + Math.max(0, b.expected - b.scored);
+  const sd = SLEEPER_SD_PER_PT * left, d = a.expected - b.expected;
   if (sd < 0.01) return d > 0 ? 100 : d < 0 ? 0 : 50;
   const x = d / sd, t = 1 / (1 + 0.2316419 * Math.abs(x)), n = 0.3989423 * Math.exp(-x * x / 2);
   const tail = n * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));

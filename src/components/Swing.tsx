@@ -4,7 +4,7 @@ import { LEAGUE, WEEK, YOU } from "../data";
 /** One reading of your win chance: when, and the percent. */
 type Pt = [number, number];
 
-const keyOf = () => `sources.swing.${LEAGUE.id}.${WEEK}.${YOU.id}`;
+const keyOf = () => `sources.swing2.${LEAGUE.id}.${WEEK}.${YOU.id}`;
 export const readSwing = (): Pt[] => read();
 const read = (): Pt[] => {
   try { const v = JSON.parse(localStorage.getItem(keyOf()) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
