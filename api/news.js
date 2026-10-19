@@ -59,7 +59,9 @@ export function parseEspn(json, espnId) {
     const at = Date.parse(a.published || a.lastModified || "") || null;
     const it = item(roto ? "RotoWire" : "ESPN", a.headline || a.title || "", a.description || a.story || "", url, at, roto ? "ESPN" : undefined);
     if (it && url === page) it.page = true;
-    if (it && espnId && Array.isArray(a.categories)) it.athlete = a.categories.some((c) => String(c?.athleteId ?? c?.athlete?.id ?? "") === String(espnId));
+    // ESPN tags the player either in categories (site news) or as a top-level playerId (fantasy news)
+    if (it && espnId) it.athlete = String(a.playerId ?? "") === String(espnId)
+      || (Array.isArray(a.categories) && a.categories.some((c) => String(c?.athleteId ?? c?.athlete?.id ?? "") === String(espnId)));
     return it;
   }).filter(Boolean);
 }
