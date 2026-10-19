@@ -101,7 +101,12 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   const seen = useRef<Set<string> | null>(null);
   if (!seen.current) seen.current = new Set(items.map((x) => x.id));
   const head = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { if (open) head.current?.focus({ preventScroll: true }); }, [open]);
+  // Opening moves focus into the panel; closing hands it back to whatever opened it
+  const back = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) { back.current = document.activeElement as HTMLElement | null; head.current?.focus({ preventScroll: true }); }
+    else if (back.current && head.current?.closest("aside")?.contains(document.activeElement)) { back.current.focus({ preventScroll: true }); back.current = null; }
+  }, [open]);
   return (
     <>
       <div className="ibx-head">

@@ -251,7 +251,7 @@ function SlotGlance({ onOpen }: { onOpen: () => void }) {
       {weak.length ? weak.map((w) => (
         <div key={w.slot} className="wk-row lu-glance-row">
           <b className="lu-glance-slot">{w.slot}</b>
-          <span className="wk-name">Short {w.misses} of {w.weeks} weeks<small>Trade ideas lean toward fixing it</small></span>
+          <span className="wk-name">Short {w.misses} of {w.weeks} weeks<small>Trade ideas target it</small></span>
           <span className="lu-glance-gap down">{fmt(w.gap)}</span>
         </div>
       )) : <p className="small muted">Every slot is at or above the league average.</p>}
