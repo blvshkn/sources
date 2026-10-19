@@ -83,7 +83,13 @@ html:root:not(#_):not(#_):not(#_) .fold .dsch { margin-top: 0; padding-top: 4px;
 
 /* ---------- Multi-team deals ---------- */
 /* + Add a team sits between the partner picker and search; its menu drops over the page */
-html:root:not(#_):not(#_):not(#_) .tr-bar:has(> .mt-addteam) { grid-template-columns: minmax(0, 1fr) auto auto; }
+/* The bar: picker, then Add a team, the partner profile and search, each sized to itself */
+html:root:not(#_):not(#_):not(#_) .tr-bar { grid-template-columns: minmax(0, 1fr); grid-auto-flow: column; grid-auto-columns: auto; }
+/* Partner profile opens the side panel on the partner card: a slide-over below 1600px, so the rosters keep their width */
+html:root:not(#_):not(#_):not(#_) .tr-profile { height: 48px; padding: 0 16px 0 14px; gap: 8px; border-radius: 999px; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .tr-profile[aria-expanded="true"] svg { color: var(--lime); }
+html:root:not(#_):not(#_):not(#_) .pctx-partner:focus { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_) .pctx-partner:focus:not(:focus-visible) { outline-color: rgba(var(--lime-rgb), 0.5); }
 html:root:not(#_):not(#_):not(#_) .mt-addteam { position: relative; }
 html:root:not(#_):not(#_):not(#_) .mt-add { height: 48px; padding: 0 16px 0 12px; gap: 6px; border-radius: 999px; white-space: nowrap; }
 html:root:not(#_):not(#_):not(#_) .mt-add svg { color: var(--lime); }
@@ -103,6 +109,8 @@ html:root:not(#_):not(#_):not(#_) .mt-menu .tp-opt > svg { color: var(--lime); }
   html:root:not(#_):not(#_):not(#_) .mt-addteam { position: static; }
   html:root:not(#_):not(#_):not(#_) .mt-menu { left: 0; right: 0; width: auto; transform-origin: top center; }
   html:root:not(#_):not(#_):not(#_) .mt-add { width: 48px; padding: 0; justify-content: center; }
+  html:root:not(#_):not(#_):not(#_) .tr-profile { width: 48px; padding: 0; justify-content: center; }
+  html:root:not(#_):not(#_):not(#_) .tr-profile span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   html:root:not(#_):not(#_):not(#_) .mt-add span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 

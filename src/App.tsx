@@ -451,6 +451,15 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (opening) setIbxFocus((n) => n + 1);
   };
   const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
+  // Trade's Partner profile button: one click opens the panel (docked from 1600, a slide-over below) on the partner card
+  const openProfile = () => {
+    if (docked) setDockPref(true); else setInboxOpen(true);
+    setIbxFocus((n) => n + 1);
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>("#inbox .pctx-partner");
+      el?.scrollIntoView({ block: "nearest" }); el?.focus({ preventScroll: true });
+    }, 60);
+  };
   const bellLabel = `Inbox${unread ? `, ${unread} unread` : ""}`;
   const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
   const dismissItem = (it: InboxItem) => {
@@ -531,7 +540,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); }} trade={trade}
-              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} suggestions={suggestionsByTeam[partnerId] ?? []}
+              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []}
               tags={active} myTags={myTags} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (
@@ -568,7 +577,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
           context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} />
             : tab === "waivers" ? <WaiverContext top={recs[0]} onToast={setToast} />
-            : tab === "trade" ? <PartnerContext partnerId={partnerId} needs={needs} tags={active} onNotes={() => go("trade:notes")} />
+            : tab === "trade" ? <>{[partnerId, ...extra.map((l) => l.teamId)].map((id) => <PartnerContext key={id} partnerId={id} needs={needs} tags={active} onNotes={() => { if (id !== partnerId) setPartner(id); go("trade:notes"); }} />)}</>
             : null} />
       </aside>
 

@@ -65,7 +65,7 @@ export function PartnerContext({ partnerId, needs, tags, onNotes }: { partnerId:
   const theirs = tags.filter((x) => x.teamId === t.id);
   const td = tendencies(t.id);
   return (
-    <section className="ibx-ctx pctx" aria-label={`About ${t.name}`}>
+    <section className="ibx-ctx pctx pctx-partner" aria-label={`About ${t.name}`} tabIndex={-1}>
       <div className="ibx-ctx-head"><b>Trading with</b><button className="linkish" onClick={onNotes}>{theirs.length ? `Notes (${theirs.length})` : "Add a note"}</button></div>
       <div className="pctx-row pctx-team">
         <TeamAvatar t={t} size={32} />
