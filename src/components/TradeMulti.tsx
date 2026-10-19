@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { ManagerTag, MyTag, Team, YOU, playerById } from "../data";
 import { FAIR_GAP, MultiTrade, Trade as TradeT, fmt, groupPoints, groupsFor, lineupFor, pct, verdictMulti } from "../engine";
 import { Icon } from "./ui";
@@ -37,9 +37,9 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   };
   return (
     <div className="mt-addteam" ref={wrap}>
-      <button className="btn mt-add" aria-haspopup="listbox" aria-expanded={open} disabled={full}
+      <button className="btn mt-add" aria-label="Add a team" aria-haspopup="listbox" aria-expanded={open} disabled={full}
         title={full ? "Sleeper trades top out at 4 teams" : undefined} onClick={() => setOpen((o) => !o)}>
-        <Icon name="plus" size={16} /><span>Add a team</span>
+        <Icon name="plus" size={16} /><span className="ttb-long">Add a team</span><span className="ttb-short" aria-hidden="true">Team</span>
       </button>
       {open && (
         <div className="mt-menu">
@@ -66,7 +66,9 @@ function valueLine(sends: number, gets: number) {
 }
 
 /** The deal panel for 3 and 4 team trades: one column per partner, then a row per team with its lineup change and odds. */
-export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = [], myTags = {} }: {
+export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = [], myTags = {}, tools }: {
+  /** Search, Add a team and Clear, on the card's first line beside the note. */
+  tools?: ReactNode;
   legs: LegState[]; m: MultiTrade | null; toggle: Toggle; onRemove: (id: string) => void; clear: () => void; onPitch: (t: TradeT) => void;
   tags?: ManagerTag[]; myTags?: Record<string, MyTag>;
 }) {
@@ -80,12 +82,11 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = []
   const flagsFor = (l: LegState) => pillFlags(l.team, tags, myTags, m ? m.warnings : null);
   const allFlags = Object.assign({}, ...legs.map((l) => { const f = flagsFor(l); return { ...f.you, ...f.theirs }; }));
   return (
-    <section className={`card deal mt-deal${any ? "" : " empty"}`} aria-live="polite">
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <h2 className="section-title">The deal <small className="mt-count">{n} teams</small></h2>
-        {any && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>}
+    <section className={`card deal mt-deal ttb-card${any ? "" : " empty"}`} aria-label={`The deal, ${n} teams`} aria-live="polite">
+      <div className="ttb-mhead">
+        <p className="mt-note"><Icon name="trade" size={14} /><span>Proposed in <PlatformName size={12} /> as one {n}-team trade. All {n} managers have to accept.</span></p>
+        {tools ?? (any && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>)}
       </div>
-      <p className="mt-note"><Icon name="trade" size={14} /><span>Proposed in <PlatformName size={12} /> as one {n}-team trade. All {n} managers have to accept.</span></p>
       <div className="mt-cols" data-cols={legs.length}>
         {legs.map((l) => {
           const others = legs.filter((o) => o.team.id !== l.team.id).flatMap((o) => o.give);

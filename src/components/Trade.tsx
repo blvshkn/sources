@@ -455,6 +455,16 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     onAddTag({ teamId: them.id, kind, pos: isPos ? (val as Pos) : undefined, playerId: isPos ? undefined : target, text, weeksOld: 0 });
   };
   const targetOptions = kind === "notInterested" ? YOU.roster : kind === "refuses" ? them.roster : YOU.roster;
+  // The deal card's own tools, right-aligned on its first line: search, Add a team, then Clear.
+  // Clear stays put and greys out when the deal is empty, so nothing beside it moves when the first player lands.
+  const anyPicked = allGive.length > 0 || allGet.length > 0;
+  const dealTools = (
+    <div className="ttb-row">
+      <button type="button" className="btn btn-icon ttb-search" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={18} /></button>
+      {addPartner && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
+      <button type="button" className="btn btn-ghost ttb-clear" onClick={clear} disabled={!anyPicked}>Clear</button>
+    </div>
+  );
 
   return (
     <>
@@ -475,9 +485,17 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       ) : (
         <div className="tr-bar">
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
-          {addPartner && view === "build" && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
           {onProfile && <button className="btn tr-profile" onClick={onProfile} aria-expanded={profileOpen} aria-controls="inbox" title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner profiles" : `${them.manager}'s profile`}</span></button>}
-          <button className="btn btn-icon" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={20} /></button>
+          {/* An offer comes from one manager, so the switch is a two-team thing: the multi-team read never used it */}
+          {view === "build" && !isMulti && (
+            <Tooltip content={`Turn on when ${them.manager} sent you this deal. The read judges their offer instead of yours.`}>
+              <button type="button" role="switch" aria-checked={received} className={`btn ttb-offer${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`${them.manager} sent me this offer`}>
+                <span className="ttb-sw" aria-hidden="true"><span /></span>
+                <span className="ttb-long" aria-hidden="true">{them.manager} sent me this offer</span>
+                <span className="ttb-short" aria-hidden="true">Their offer</span>
+              </button>
+            </Tooltip>
+          )}
         </div>
       )}
 
@@ -504,25 +522,17 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
 
       {view === "build" && isMulti && <div className="builder mt-builder">
-        <MultiDeal legs={legs} m={multi} toggle={toggle} onRemove={(id) => removePartner?.(id)} clear={clear} onPitch={onPitch} tags={tags} myTags={myTags} />
+        <MultiDeal tools={dealTools} legs={legs} m={multi} toggle={toggle} onRemove={(id) => removePartner?.(id)} clear={clear} onPitch={onPitch} tags={tags} myTags={myTags} />
         <MultiRosters key={legs.map((l) => l.team.id).join(",")} legs={legs} toggle={toggle} tags={tags} myTags={myTags} />
       </div>}
 
       {view === "build" && !isMulti && <div className="builder">
-        <section className={`card deal${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-live="polite">
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <h2 className="section-title">{received ? `Offer from ${them.manager}` : "The deal"}</h2>
-            {(give.length > 0 || get.length > 0) && <button className="btn btn-sm btn-ghost" onClick={clear}>Clear</button>}
-          </div>
-          {(give.length > 0 || get.length > 0) && (
-            <label className="offer-toggle">
-              <button role="switch" aria-checked={received} className={`switch${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`${them.manager} sent me this offer`}><span /></button>
-              {them.manager} sent me this offer
-            </label>
-          )}
+        <section className={`card deal ttb-card${give.length === 0 && get.length === 0 ? " empty" : ""}`} aria-label={received ? `Offer from ${them.manager}` : "The deal"} aria-live="polite">
+          {/* The tools share the first grid line with the side labels. With the offer switch on, the same two sides read from the sender's seat */}
           <div className="deal-lists qs-wrap">
-            <DealSide title="You send" team="your roster" ids={give} pool={YOU.roster} onToggle={(id) => toggle("give", id)} flags={flags.you} />
-            <DealSide title="You get" team={`${them.manager}'s roster`} ids={get} pool={them.roster} onToggle={(id) => toggle("get", id)} flags={flags.theirs} />
+            {dealTools}
+            <DealSide title={received ? `${them.manager} asks for` : "You send"} team="your roster" ids={give} pool={YOU.roster} onToggle={(id) => toggle("give", id)} flags={flags.you} />
+            <DealSide title={received ? `${them.manager} offers` : "You get"} team={`${them.manager}'s roster`} ids={get} pool={them.roster} onToggle={(id) => toggle("get", id)} flags={flags.theirs} />
           </div>
           <FlagLine ids={[...give, ...get]} flags={{ ...flags.you, ...flags.theirs }} />
           {!trade ? (
