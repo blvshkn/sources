@@ -29,3 +29,6 @@ html:root:not(#_):not(#_) body::before { content: none; }
     transform: none; background: var(--surface); mask-image: none; -webkit-mask-image: none;
   }
 }
+
+/* The app is dark-only, so the logo keeps its lime mark and chalk word even when the OS is in light mode */
+html:root:not(#_):not(#_) { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }
