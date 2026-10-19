@@ -324,7 +324,7 @@ export function Landing({ onLive, onDemo }: {
 
       <footer className="ld-foot">
         <span>Sources. Your fantasy insider.</span>
-        <span>Not affiliated with Sleeper. The {TEAMS.length} team sample league uses made up data.</span>
+        <span>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</span>
       </footer>
     </div>
     </AvatarPhotos.Provider>

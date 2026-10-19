@@ -155,3 +155,7 @@ html:root:not(#_):not(#_) .act-feed .act-row { padding-left: 18px; padding-right
 /* ---- League > Needs: best partner card ---------------------------------------- */
 /* The rank was centred in its column, 5px right of the heading above it. */
 html:root:not(#_):not(#_) .partner-card .partner-rank { text-align: left; }
+
+/* ---- Landing ------------------------------------------------------------------ */
+/* The username note left "in Sleeper." alone on its last line (hero and end CTA). */
+html:root:not(#_):not(#_) :is(.ld2-help, .ld2-error) { text-wrap: balance; }
