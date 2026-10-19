@@ -20,16 +20,16 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
   html:root:not(#_) :is([aria-current="page"] .ic-lineup, .ic-lineup[data-play]) .m3 { transform-origin: 12px 12.5px; animation: lu-clack 720ms both; }
   @keyframes lu-left {
     0%   { transform: translateX(0) rotate(0); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
-    16%  { transform: translateX(-1px) rotate(-5deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45); }
-    36%  { transform: translateX(1.5px) rotate(3deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    16%  { transform: translateX(-1.2px) rotate(-5deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45); }
+    36%  { transform: translateX(1.2px) rotate(3deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
     56%  { transform: translateX(-0.6px) rotate(-1.5deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
     76%  { transform: translateX(0.2px) rotate(0.4deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
     100% { transform: translateX(0) rotate(0); }
   }
   @keyframes lu-right {
     0%   { transform: translateX(0) rotate(0); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
-    16%  { transform: translateX(1px) rotate(5deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45); }
-    36%  { transform: translateX(-1.5px) rotate(-3deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    16%  { transform: translateX(1.2px) rotate(5deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45); }
+    36%  { transform: translateX(-1.2px) rotate(-3deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
     56%  { transform: translateX(0.6px) rotate(1.5deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
     76%  { transform: translateX(-0.2px) rotate(-0.4deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
     100% { transform: translateX(0) rotate(0); }
