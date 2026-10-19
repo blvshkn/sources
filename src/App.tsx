@@ -120,6 +120,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // Ideas you said won't work, and managers who aren't trading right now
   const [hiddenIdeas, setHiddenIdeas] = usePersist<string[]>(`${scope}.hiddenIdeas`, []);
   const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
+  // Players you said you don't want, so no idea asks you to take them
+  const [passed, setPassed] = usePersist<string[]>(`${scope}.passed`, []);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
   const [switching, setSwitching] = useState<false | "list" | "add">(false);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
@@ -191,9 +193,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   const suggestionsByTeam = useMemo(() => {
     const out: Record<string, Trade[]> = {};
-    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : findTrades(YOU, t, active, myTags, prices).filter((x) => !hiddenIdeas.includes(x.key))));
+    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : findTrades(YOU, t, active, myTags, prices).filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
     return out;
-  }, [active, myTags, prices, fkey, hiddenIdeas, pausedTeams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, myTags, prices, fkey, hiddenIdeas, pausedTeams, passed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const partners = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
     .map((n) => {
@@ -401,16 +403,23 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   /** "Won't work": hide the idea, then teach Sources the reason so similar ideas stop showing up. */
   const ideaFeedback = (t: Trade, r: IdeaReason) => {
     const them = teamById(t.partnerId);
-    const before = { tags, myTags, hiddenIdeas, pausedTeams };
+    const before = { tags, myTags, hiddenIdeas, pausedTeams, passed };
+    // "I don't want Chase Brown" typed into the note box works like the button
+    if (r.kind === "note") {
+      const m = r.text.match(/\b(?:i\s+)?(?:don'?t|do not)\s+want\s+(.+)$/i);
+      const hit = m && t.get.find((id) => { const n = playerById(id).name.toLowerCase(), q = m[1].toLowerCase().replace(/[.!]+$/, "").trim(); return n === q || n.split(" ").slice(-1)[0] === q || n.startsWith(q); });
+      if (hit) r = { kind: "pass", playerId: hit };
+    }
     setHiddenIdeas((c) => [...c.filter((k) => k !== t.key), t.key]);
     let msg = "Hidden. Sources will skip ideas like this.";
     if (r.kind === "refuses") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "refuses", playerId: r.playerId, text: `Won't move ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${playerById(r.playerId).name} is off the table in ideas with ${them.manager}.`; }
     if (r.kind === "notInterested") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "notInterested", playerId: r.playerId, text: `Not interested in ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${them.manager} won't see ${playerById(r.playerId).name} in ideas.`; }
     if (r.kind === "keeping") { setMyTags((c) => ({ ...c, [r.playerId]: "untouchable" })); msg = `${playerById(r.playerId).name} marked untouchable. He's out of every trade idea.`; }
+    if (r.kind === "pass") { const id = r.playerId; setPassed((c) => [...c.filter((x) => x !== id), id]); msg = `Got it. ${playerById(id).name} won't come back to you in any idea. Undo in Settings.`; }
     if (r.kind === "paused") { setPausedTeams((c) => [...c.filter((x) => x !== them.id), them.id]); msg = `No more ideas with ${them.manager} for now. Turn it back on in Settings.`; }
     if (r.kind === "note") { const parsed = parseTag(`${them.manager} ${r.text}`); if (parsed.tag) { setTags((c) => [...c, { ...parsed.tag!, id: `u${Date.now()}` }]); msg = `Saved: ${parsed.tag.text}. Ideas now follow it.`; } }
     haptic();
-    setToast(msg, () => { setTags(before.tags); setMyTags(before.myTags); setHiddenIdeas(before.hiddenIdeas); setPausedTeams(before.pausedTeams); });
+    setToast(msg, () => { setTags(before.tags); setMyTags(before.myTags); setHiddenIdeas(before.hiddenIdeas); setPausedTeams(before.pausedTeams); setPassed(before.passed); });
   };
   const dismiss = (n: Nudge) => {
     const prevIds = dismissedIds;
@@ -542,7 +551,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               onDelete={onDeleteAll}
               onGo={(t) => go(t as Tab)}
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
-              hiddenCount={hiddenIdeas.length} onUnhide={() => { setHiddenIdeas([]); setToast("Hidden trade ideas are back."); }}
+              hiddenCount={hiddenIdeas.length + passed.length} onUnhide={() => { setHiddenIdeas([]); setPassed([]); setToast("Hidden trade ideas are back."); }}
               onReplay={onReconnect} />
           )}
           </Fragment>

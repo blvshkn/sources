@@ -11,6 +11,8 @@ export type IdeaReason =
   | { kind: "refuses"; playerId: string }
   | { kind: "notInterested"; playerId: string }
   | { kind: "keeping"; playerId: string }
+  /** You don't want this player back, from anyone */
+  | { kind: "pass"; playerId: string }
   | { kind: "paused" }
   | { kind: "value" }
   | { kind: "note"; text: string };
@@ -56,6 +58,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
   const first = (id: string) => playerById(id).name;
   const options: { label: string; r: IdeaReason }[] = [
     ...trade.get.map((id) => ({ label: `${them.manager} won't move ${first(id)}`, r: { kind: "refuses", playerId: id } as IdeaReason })),
+    ...trade.get.map((id) => ({ label: `I don't want ${first(id)}`, r: { kind: "pass", playerId: id } as IdeaReason })),
     ...trade.give.map((id) => ({ label: `${them.manager} doesn't want ${first(id)}`, r: { kind: "notInterested", playerId: id } as IdeaReason })),
     ...trade.give.map((id) => ({ label: `I'm keeping ${first(id)}`, r: { kind: "keeping", playerId: id } as IdeaReason })),
     { label: `${them.manager} isn't trading right now`, r: { kind: "paused" } },
