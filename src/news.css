@@ -142,3 +142,9 @@ html:root:not(#_):not(#_) .main-inner:has(> .nudge, > .followup, > .nxr) > :not(
   html:root:not(#_):not(#_) .nxr-g > .nx-list > .nx { height: 100%; display: flex; flex-direction: column; }
   html:root:not(#_):not(#_) .nxr-g > .nx-list > .nx > :last-child { margin-top: auto; }
 }
+
+/* "See the full matchup" under Their threats matches the scoreboard's: full-width row, ink label, muted chevron */
+html:root:not(#_):not(#_) .wk-more { display: flex !important; align-items: center; justify-content: space-between; width: 100%; margin: 14px 0 0 !important; padding: 12px 0 0 !important; border: 0; border-top: 1px solid var(--line) !important; background: none; color: var(--ink) !important; font-size: 0.8125rem !important; font-weight: 600; text-decoration: none !important; cursor: pointer; }
+html:root:not(#_):not(#_) .wk-more svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .wk-more:hover svg { transform: translateX(3px); } }
+html:root:not(#_):not(#_) .wk-more:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 8px; }

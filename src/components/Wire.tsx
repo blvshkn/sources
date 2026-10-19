@@ -237,7 +237,7 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
         </button>
       ))}
       {open && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
-      <button className="wk-more linkish" onClick={() => onGo("matchup")}>See the full matchup</button>
+      <button type="button" className="wk-more" onClick={() => onGo("matchup")}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }
