@@ -55,6 +55,9 @@ function drawField(g: CanvasRenderingContext2D, W: number, H: number, A: (o: num
   const m = h.createRadialGradient(W / 2, H, 0, W / 2, H, Math.max(W * 0.72, K * 1.25));
   m.addColorStop(0, "rgba(0,0,0,1)"); m.addColorStop(0.45, "rgba(0,0,0,0.85)"); m.addColorStop(1, "rgba(0,0,0,0)");
   h.fillStyle = m; h.fillRect(0, 0, W, H);
+  // And nothing behind the players: the lines only start once the roster rows are done
+  const v = h.createLinearGradient(0, H * 0.64, 0, H * 0.8); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,1)");
+  h.fillStyle = v; h.fillRect(0, 0, W, H);
   g.drawImage(f, 0, 0);
 }
 
