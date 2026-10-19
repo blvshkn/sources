@@ -29,3 +29,23 @@ html:root:not(#_)[data-tab="trade"]:not(#_) .main-inner > .page-tabs { order: -1
   html:root:not(#_)[data-tab]:not(#_):not(#_) .main-inner > .desk-bell svg { width: 22px; height: 22px; }
   html:root:not(#_)[data-tab="trade"]:not(#_):not(#_) .main-inner > :is(.tr-bar, .psr) { padding-right: 0; }
 }
+
+/* ---------- Top spacing: status line close to the top, then 16 to the tabs and 20 to the content ---------- */
+/* Desktop: 26px from the top of the window to the status line (was 56). The header carries no padding of its own,
+   so the same numbers hold on every page. Pages without tabs start their content where the tab row would be. */
+html:root:not(#_):not(#_) .main-inner > .page-head { padding-top: 0 !important; padding-bottom: 0 !important; margin-bottom: -8px; }
+html:root:not(#_):not(#_) .main-inner > .page-tabs { margin-bottom: -4px; }
+/* The screen-reader title was in the header's grid flow (a later rule made it static), adding 1px plus a 4px gap */
+html:root:not(#_):not(#_) .main-inner > .page-head h1.sr-only { position: absolute; }
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .main { padding-top: 26px; }
+  html:root:not(#_):not(#_) .main-inner > .page-head .page-meta { margin-top: 0 !important; }
+  /* Bell centred on the status line: half its 13.2px line, less half the 40px bell */
+  html:root:not(#_):not(#_):not(#_) .main-inner > .desk-bell,
+  html:root:not(#_)[data-tab]:not(#_):not(#_) .main-inner > .desk-bell,
+  html:root:not(#_):not(#_):not(#_) .main-inner:has(> .st-back) > .desk-bell { top: -13.4px; }
+}
+/* Phones and tablets: the top bar holds the bell; the league switcher sits 12px under it, the status line 12px under that */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_) .main-inner > .page-head .page-meta { margin-top: 8px !important; }
+}
