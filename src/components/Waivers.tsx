@@ -140,6 +140,14 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
   const [week, setWeek] = useState(defWeek);
   const kind: Kind = week < WEEK ? "past" : week > WEEK ? "future" : "current";
   const listRef = useRef<HTMLDivElement>(null);
+  // Position tabs scroll sideways on phones: keep the selected one in view
+  const posRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = posRef.current, on = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!row || !on || row.scrollWidth <= row.clientWidth) return;
+    const l = on.offsetLeft - 16, r = on.offsetLeft + on.offsetWidth + 16 - row.clientWidth;
+    if (row.scrollLeft > l) row.scrollLeft = l; else if (row.scrollLeft < r) row.scrollLeft = r;
+  }, [pos]);
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
   const live = useLive();
@@ -341,7 +349,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
             </ul>
           )}
         </div>
-        <div className={`wv2-pos wv2-pos-${tabs.length}`} role="group" aria-label="Position">
+        <div ref={posRef} className={`wv2-pos wv2-pos-${tabs.length}`} role="group" aria-label="Position">
           {tabs.map((p) => {
             const n = all.filter((e) => p === "ALL" || e.fa.pos === p).length;
             return <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}><span>{p === "ALL" ? "All" : p}</span><small>{n}</small></button>;
