@@ -69,6 +69,8 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Geist', system-ui, sans-serif`;
+  // Numbers use Geist Mono, the same as everywhere else in the app
+  const FM = (w: number, px: number) => `${w} ${px}px 'Geist Mono', ui-monospace, monospace`;
   const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "216, 242, 74", A = (o: number) => `rgba(${RGB},${o})`;
   const LIME = css.getPropertyValue("--lime").trim() || "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
@@ -127,10 +129,10 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   g.fillStyle = A(0.09); g.strokeStyle = A(0.35); g.lineWidth = 2;
   g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph); g.fill(); g.stroke();
   g.fillStyle = MUTED; g.font = F(700, 20); track("YOUR STARTERS", X + 32, py + 50, 4);
-  g.fillStyle = t.themDelta >= 0 ? LIME : "#F28B82"; g.font = F(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
+  g.fillStyle = t.themDelta >= 0 ? LIME : "#F28B82"; g.font = FM(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
   const bw = g.measureText(big).width; g.fillStyle = INK; g.font = F(500, 32); g.fillText("pts / week", X + 40 + bw, py + 148);
   g.fillStyle = MUTED; g.font = F(700, 20); g.textAlign = "right"; track("", 0, 0, 0);
-  g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = F(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);
+  g.fillText("MINE", W - X - 32, py + 50); g.fillStyle = INK; g.font = FM(600, 40); g.fillText(`${fmt(t.youDelta)}/wk`, W - X - 32, py + 100);
   g.textAlign = "left";
   const need = needsFor(them).need;
   if (t.give.some((id) => playerById(id).pos === need)) { g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`Upgrades your starting ${need}.`, X, py + ph + 50); }
