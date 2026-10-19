@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Logo } from "./Logo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById } from "../data";
 import { activeTags, allNeeds, applyFormat, DEFAULT_FORMAT, findTrades, fmt, groupsFor } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
-import { Delta, Icon, PosBadge } from "./ui";
+import { Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
 import { Avatar } from "./Avatar";
+import { drawCard } from "./PitchSheet";
+import { IdeaScan } from "./IdeaScan";
+import { draftPitch } from "../pitch";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { useLive, startersOf, playCount } from "../live";
 import { eff } from "../engine";
@@ -40,6 +43,15 @@ export function Landing({ onLive, onDemo }: {
     const thin = needs.filter((n) => !n.team.you).sort((a, b) => a.groups[a.need].pct - b.groups[b.need].pct).slice(0, 3);
     return { needs, trade, mike, thin, you: needs.find((n) => n.team.you)! };
   }, []);
+
+  // The same trade card and message the app's pitch sheet makes
+  const [cardUrl, setCardUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!demo.trade) return;
+    let url: string | null = null, alive = true;
+    drawCard(demo.trade).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    return () => { alive = false; if (url) URL.revokeObjectURL(url); };
+  }, [demo.trade]);
 
   const connect = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -171,14 +183,19 @@ export function Landing({ onLive, onDemo }: {
             <article className="card ld-cell ld2-reveal">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
-              <figure className="pitch-card" style={{ margin: 0 }}>
-                <div className="pc-title">A trade that works for {demo.mike.manager}</div>
-                <div className="pc-cols">
-                  <div><span className="pc-k">{demo.mike.manager} gets</span>{demo.trade.give.map((id) => <div key={id} className="pc-p"><PosBadge pos={playerById(id).pos} />{playerById(id).name}</div>)}</div>
-                  <div><span className="pc-k">I get</span>{demo.trade.get.map((id) => <div key={id} className="pc-p"><PosBadge pos={playerById(id).pos} />{playerById(id).name}</div>)}</div>
-                </div>
-                <div className="pc-nums"><span>{demo.mike.manager} <Delta n={demo.trade.themDelta} />/wk</span><span>Me <Delta n={demo.trade.youDelta} />/wk</span></div>
-              </figure>
+              <div className="ld2-pitch">
+                <p className="ld2-bubble">{draftPitch(demo.trade, "friendly")}</p>
+                <figure className="tcard">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
+              </div>
+            </article>
+          )}
+          {demo.trade && (
+            <article className="card ld-cell ld2-reveal wide">
+              <h3>Ideas both sides say yes to</h3>
+              <p>Tell Sources what a league mate said. It reads your notes, checks both lineups, tests the deals and keeps only the ones where both teams gain points.</p>
+              <FinderDemo steps={[`Reading 2 notes on ${demo.mike.manager}`, "Checking what both lineups need", "Testing deals across both rosters", "Keeping trades where both sides gain points"]}>
+                <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
+              </FinderDemo>
             </article>
           )}
           <article className="card ld-cell ld2-reveal wide ld2-live">
@@ -232,6 +249,24 @@ export function Landing({ onLive, onDemo }: {
         <span>Sources. Your fantasy insider.</span>
         <span>Not affiliated with Sleeper. The {TEAMS.length} team sample league uses made up data.</span>
       </footer>
+    </div>
+  );
+}
+
+/** The trade finder doing its thing: it runs through its steps when scrolled into view, then shows what it found. */
+function FinderDemo({ steps, children }: { steps: string[]; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<"wait" | "scan" | "done">("wait");
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setPhase((p) => (p === "wait" ? "scan" : p)); io.disconnect(); } }, { rootMargin: "0px 0px -20% 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className="ld2-finder">
+      {phase !== "done" ? <IdeaScan steps={steps} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} /> : <div className="ld2-found">{children}</div>}
+      {phase === "done" && <button className="ld2-again" onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>}
     </div>
   );
 }

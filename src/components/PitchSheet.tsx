@@ -28,7 +28,7 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
  * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
  */
-async function drawCard(t: Trade): Promise<Blob | null> {
+export async function drawCard(t: Trade): Promise<Blob | null> {
   const them = teamById(t.partnerId);
   const W = 1080, H = 1350, X = 72;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -36,14 +36,15 @@ async function drawCard(t: Trade): Promise<Blob | null> {
   if (!g) return null;
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Geist', system-ui, sans-serif`;
-  const LIME = getComputedStyle(document.documentElement).getPropertyValue("--lime").trim() || "#2DD4BF", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
+  const css = getComputedStyle(document.documentElement), RGB = css.getPropertyValue("--lime-rgb").trim() || "45, 212, 191", A = (o: number) => `rgba(${RGB},${o})`;
+  const LIME = css.getPropertyValue("--lime").trim() || "#2DD4BF", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
   const track = (txt: string, x: number, y: number, sp: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; } return cx; };
 
   // Night field: dark turf, a floodlight glow, faint yard lines
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#181A19"); bg.addColorStop(1, "#0F1110");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   const glow = g.createRadialGradient(W * 0.85, -60, 0, W * 0.85, -60, 820);
-  glow.addColorStop(0, "rgba(216,242,74,0.26)"); glow.addColorStop(1, "rgba(216,242,74,0)");
+  glow.addColorStop(0, A(0.26)); glow.addColorStop(1, A(0));
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
   g.strokeStyle = "rgba(255,255,255,0.045)"; g.lineWidth = 2;
   for (let y = 120; y < H; y += 120) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = 40; x < W; x += 54) { g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x, y + 8); g.stroke(); } }
@@ -69,7 +70,7 @@ async function drawCard(t: Trade): Promise<Blob | null> {
       if (img) g.drawImage(img, X, cy - av / 2, av, av);
       else { g.fillStyle = INK; g.font = F(700, av * 0.36); g.textAlign = "center"; g.fillText(p.name.split(" ").map((w) => w[0]).slice(0, 2).join(""), X + av / 2, cy + av * 0.13); g.textAlign = "left"; }
       g.restore();
-      g.strokeStyle = hot ? "rgba(216,242,74,0.55)" : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = hot ? A(0.55) : "rgba(255,255,255,0.14)"; g.lineWidth = 3; g.beginPath(); g.arc(X + av / 2, cy, av / 2, 0, Math.PI * 2); g.stroke();
       g.fillStyle = INK; g.font = F(700, Math.round(rowH * 0.4)); g.fillText(p.name, X + av + 28, cy + 2, W - X * 2 - av - 28);
       g.fillStyle = MUTED; g.font = F(500, 26); g.fillText(`${p.pos} · ${p.nfl}`, X + av + 28, cy + 38);
       y += rowH;
@@ -87,7 +88,7 @@ async function drawCard(t: Trade): Promise<Blob | null> {
 
   // Impact panel
   const py = H - 340, ph = 196;
-  g.fillStyle = "rgba(216,242,74,0.09)"; g.strokeStyle = "rgba(216,242,74,0.35)"; g.lineWidth = 2;
+  g.fillStyle = A(0.09); g.strokeStyle = A(0.35); g.lineWidth = 2;
   g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph); g.fill(); g.stroke();
   g.fillStyle = MUTED; g.font = F(700, 20); track("YOUR STARTERS", X + 32, py + 50, 4);
   g.fillStyle = t.themDelta >= 0 ? LIME : "#F28B82"; g.font = F(700, 96); const big = fmt(t.themDelta); g.fillText(big, X + 28, py + 150);
