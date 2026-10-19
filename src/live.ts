@@ -191,7 +191,7 @@ export const startersOf = (t: Team): string[] => {
 
 export interface Outlook { expected: number; scored: number; variance: number }
 /** One player's outcome spread: about 0.8 of his projection, shrinking with the share of his game left. */
-const SPREAD = 0.8;
+const SPREAD = 0.75;
 function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number) {
   const st = live.games[nfl], pts = live.points[id], known = pts !== undefined;
   const frac = st === "complete" ? 0 : st === "in_game" ? live.left?.[nfl] ?? 0.5 : 1;
