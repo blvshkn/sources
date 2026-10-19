@@ -4049,7 +4049,7 @@ html:root:not(#_) .env-turf { position: absolute; inset: 0; transform: rotateX(6
     repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--ink) 7%, transparent) 22px 23px) 0 62% / 100% 18px no-repeat;
   clip-path: inset(100% 0 0 0); animation: env-draw 1400ms var(--ease-fluid) 200ms forwards; }
 @keyframes env-draw { to { clip-path: inset(0 0 0 0); } }
-html:root:not(#_) .env-grain { position: absolute; inset: 0; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+html:root:not(#_) .env-grain { position: absolute; inset: 0; opacity: 0.035; }
 
 /* Load sequence: nav, eyebrow, headline lines, copy, form, then the product and the players */
 html:root:not(#_) .ld2-nav { animation: ld3-down 700ms var(--ease-fluid) both; }

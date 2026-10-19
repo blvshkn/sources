@@ -151,7 +151,7 @@ export function Landing({ onLive, onDemo }: {
       <div className="ld2-env" ref={env} aria-hidden="true">
         <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
         <div className="env-field"><div className="env-turf" /></div>
-        <i className="env-grain" />
+        <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
       <nav className="ld-nav ld2-nav" aria-label="Sources">
         <div className="brand" style={{ padding: 0 }}><Logo height={28} /></div>
@@ -310,6 +310,9 @@ export function Landing({ onLive, onDemo }: {
     </div>
   );
 }
+
+// Inline so the stylesheet has no url() and Vite skips its PostCSS pass
+const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
 /** Everything Sources does, one headline at a time. The first is the promise; the rest rotate in behind it. */
 const HEADLINES = [
