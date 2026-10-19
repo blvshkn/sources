@@ -31,6 +31,11 @@ export function Landing({ onLive, onDemo }: {
   applyFormat(DEFAULT_FORMAT);
   // The landing is for Sleeper leagues, so it wears Sleeper's accent like the app does
   useEffect(() => { document.documentElement.dataset.platform = "sleeper"; }, []);
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "Sources: fantasy football trades for Sleeper leagues";
+    return () => { document.title = prev; };
+  }, []);
   const live = useLive();
   const starters = startersOf(YOU).map(playerById);
   const order = { in_game: 0, complete: 1, pre_game: 2 } as Record<string, number>;
@@ -95,15 +100,18 @@ export function Landing({ onLive, onDemo }: {
     </>
   );
   const tagline = "Every offer judged by both starting lineups, then pitched around what the other manager needs.";
+  // Each answer stands on its own, so search and AI answers can quote it without the question
   const faqs: [string, string][] = [
-    ["Is Sources free?", "Yes. Connect your Sleeper league and use every screen at no cost."],
-    ["Do you need my Sleeper password?", "No. Sources only needs your username. League data comes from Sleeper's public API, so there's nothing to sign into."],
-    ["Can Sources make moves in my league?", "No. It's read only. It drafts offers, lineup changes and waiver bids, and you make the move in Sleeper yourself."],
-    ["Where do trade values come from?", "Public market values for your league's format, blended with a projection model for the rest of the season and each team's actual starting needs."],
-    ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device and are never shown to them."],
+    ["What is Sources?", "Sources is a free trade tool for Sleeper fantasy football leagues. It reads your league, measures what every team needs at each starting slot, and builds trades that raise both teams' starting points. It also drafts the pitch, lineup fixes and waiver bids."],
+    ["Is Sources free?", "Yes. Sources is free. Connect your Sleeper league with your username and use every screen, from trade ideas to waiver bids, at no cost."],
+    ["Do you need my Sleeper password?", "No. Sources only needs your Sleeper username. League data comes from Sleeper's public API, so there's no password and nothing to sign into."],
+    ["Can Sources make moves in my league?", "No. Sources is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
+    ["Where do trade values come from?", "Sources blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
+    ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Sources never shows them to other managers."],
     ["Does the win chance match Sleeper?", "Yes. Sources uses the lineup you set in Sleeper and the same method Sleeper does, refreshed every 15 seconds while games are on."],
-    ["Which platforms work?", "Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
+    ["Which platforms work?", "Sources works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
+  const faqLd = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) });
 
   return (
     <div className="landing ld2" ref={root}>
@@ -231,6 +239,7 @@ export function Landing({ onLive, onDemo }: {
 
       <section className="ld-section ld2-faq" aria-labelledby="ld-faq">
         <h2 id="ld-faq" className="ld-h2 ld2-reveal">Questions, answered.</h2>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqLd }} />
         <div className="ld2-faq-list ld2-reveal">
           {faqs.map(([q, a]) => (
             <details key={q}><summary>{q}<Icon name="chev" size={16} /></summary><p>{a}</p></details>

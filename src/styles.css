@@ -4005,3 +4005,25 @@ html:root:not(#_) .ld2-final-panel { width: 100%; display: grid; justify-items: 
   html:root:not(#_) .ld2-final-panel { padding: 96px 48px; }
 }
 @media (min-width: 1200px) { html:root:not(#_) .ld2-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 64px; } }
+
+/* Landing motion, tablet and desktop: calm arrivals, transform and opacity only, no bounce */
+@media (min-width: 600px) and (prefers-reduced-motion: no-preference) {
+  /* Sections rise a short way instead of a long blurred drop */
+  html:root:not(#_) .ld2-reveal { filter: none; transform: translateY(24px); transition: opacity 700ms var(--ease-fluid), transform 700ms var(--ease-fluid); }
+  html:root:not(#_) .ld2-reveal.in { transform: none; }
+  html:root:not(#_) .ld2-steps li:nth-child(2), html:root:not(#_) .ld2 .ld-trust-list li:nth-child(2) { transition-delay: 60ms; }
+  html:root:not(#_) .ld2-steps li:nth-child(3), html:root:not(#_) .ld2 .ld-trust-list li:nth-child(3) { transition-delay: 120ms; }
+  /* Tagline words light up through opacity, not a color repaint */
+  html:root:not(#_) .ld2-tag span { color: var(--ink); opacity: 0.28; transition: opacity 600ms var(--ease-fluid); }
+  html:root:not(#_) .ld2-tag span.on { opacity: 1; }
+  /* An opened answer fades in instead of appearing at once */
+  html:root:not(#_) .ld2-faq details[open] p { animation: fade-up 200ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+}
+@media (min-width: 960px) and (prefers-reduced-motion: no-preference) {
+  /* The right hand cell in each bento row follows its neighbor by a beat */
+  html:root:not(#_) .ld2 .ld-bento > .ld-cell:nth-child(2n) { transition-delay: 60ms; }
+}
+/* Press feedback, fast enough to feel direct */
+html:root:not(#_) :is(.ld2-link, .ld2-again) { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_) :is(.ld2-link, .ld2-again):active { transform: scale(0.97); }
+html:root:not(#_) :is(.ld2-link svg, .ld2-faq summary svg) { transition-duration: 200ms; }
