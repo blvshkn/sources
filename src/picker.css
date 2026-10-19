@@ -2,15 +2,16 @@
    Rule for a fully rounded pill of height H with a leading avatar of diameter D:
    - the avatar is concentric with the left end cap: left inset = top inset = (H - D) / 2
    - the trailing chevron sits inside the straight part of the pill, not in the end-cap curve:
-     painted mark to right edge >= max(16px, end-cap radius x 0.75). Every dropdown trigger follows it.
+     painted mark (stroke included) to right edge >= max(20px, end-cap radius x 0.75), 16px on triggers under 40px tall.
+     Every dropdown trigger follows it; measured on the painted path, not the icon box.
    - label and name share one text column, centered on the avatar; long names truncate before the chevron */
 
 /* ---------- Trade: "Trading with" partner picker (single and multi-team) ----------
-   H 52, D 36, inset 8. Chevron: 20px box; the rotated mark is 10px wide, centered, so it paints 5px
-   inside the box. padding-right 15 puts the mark 20px from the right edge (radius 26 x 0.75 = 19.5). */
+   H 52, D 36, inset 8. Chevron: 20px box; the rotated mark paints about 4px inside the box once its stroke
+   is counted. padding-right 17 puts the painted mark 21px from the right edge (rule 20; radius 26 x 0.75 = 19.5). */
 html:root:not(#_):not(#_) .tp-compact .tp-btn {
   grid-template-columns: 36px minmax(0, 1fr) 20px; column-gap: 12px; align-items: center;
-  height: 52px; min-height: 52px; padding: 0 15px 0 8px; box-sizing: border-box;
+  height: 52px; min-height: 52px; padding: 0 17px 0 8px; box-sizing: border-box;
 }
 html:root:not(#_):not(#_) .tp-compact .tp-btn > :first-child { width: 36px; height: 36px; border-radius: 50%; }
 /* Initials sit on their own disc so the circle (and its concentric inset) reads against the pill in every state (rest, hover, open) */
@@ -30,27 +31,31 @@ html:root:not(#_):not(#_) .tp-compact .tp-btn[aria-expanded="true"] > svg { tran
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .tp-compact .tp-btn > svg { transition: none; } }
 
 /* ---------- Phones: league switcher pill ----------
-   H 44, D 24, inset 10. Switch icon: 16px box, mark 6px wide, 5px inside the box.
-   padding-right 13 puts the mark 18px from the right edge (radius 22 x 0.75 = 16.5). */
+   H 44, D 24, inset 10. Switch icon: 16px box, painted about 4px inside the box.
+   padding-right 17 puts the painted mark 21px from the right edge (rule 20). */
 @media (max-width: 860px) {
-  html:root:not(#_):not(#_) .page-league { height: 44px; min-height: 44px; padding: 0 13px 0 10px; gap: 10px; box-sizing: border-box; }
+  html:root:not(#_):not(#_) .page-league { height: 44px; min-height: 44px; padding: 0 17px 0 10px; gap: 10px; box-sizing: border-box; }
   html:root:not(#_):not(#_) .page-league > svg { width: 16px; height: 16px; margin-left: 2px; }
 }
 
 /* ---------- Other dropdown triggers: same chevron-to-edge rule ----------
-   Painted mark-to-edge, measured: Values Show 17.5, Lineup tag / Price another player 17.5, Trade notes pickers 17.5,
-   notes "who" chip 16.5, Watching 17 (all need 16 or 16.5).
-   Sidebar league card (radius 16, mark 19px in) and Waivers sort (radius 22, 18.4px in) already pass. */
+   Painted mark (with stroke) to edge, before -> after: sidebar league card 18.2 -> 21.2, Waivers sort 17.6 -> 21.6,
+   Trade notes pickers (40px) 17.5 -> 21, notes "who" chip (34px) 15.7 -> 16.7.
+   Values Show (34px) and Lineup tag / Price another player (30px) sit at 17.5, over the 16 for small triggers. */
+/* Sidebar league card (63px, r16) */
+html:root:not(#_):not(#_):not(#_) .league-pill.lsw-btn { padding-right: 17px; }
+/* Waivers sort (44px, r22) */
+html:root:not(#_):not(#_):not(#_) .sel-trigger.wv2-sort { padding-right: 18px; }
 /* Values "Show" (34px, r17 -> 16) and Lineup tag / Price another player (30px, r15 -> 16) */
 html:root:not(#_):not(#_):not(#_) .sel-trigger:is(.wv-sort, .tag-select) { padding-right: 14px; }
-/* Trade notes sentence pickers (40px, r20 -> 16) */
-html:root:not(#_):not(#_):not(#_) .sel-trigger.tb-sel { padding-right: 14px; }
+/* Trade notes sentence pickers (40px, r20 -> 20) */
+html:root:not(#_):not(#_):not(#_) .sel-trigger.tb-sel { padding-right: 18px; }
 /* Notes "who" chip (34px, r17 -> 16), inside its 1px border */
-html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who { padding-right: 13px; }
+html:root:not(#_):not(#_):not(#_) .sel-trigger.composer-who { padding-right: 14px; }
 /* The drawn chevron sits half a unit off its box center; nudge the paint onto the trigger's center line */
 html:root:not(#_):not(#_):not(#_) .sel-chev.down .ic { translate: 0 -0.29px; }
 html:root:not(#_):not(#_):not(#_) .sel-trigger[data-open] .sel-chev.down .ic { translate: 0 0.29px; }
-/* Waivers "Watching" filter (44px, r22 -> 16.5): its trailing count gets the same room as a chevron */
+/* Waivers "Watching" filter (44px): a toggle, not a dropdown; its trailing count keeps 17px */
 html:root:not(#_):not(#_):not(#_) .wv3-watching { padding: 0 17px 0 14px; }
 
 /* ---------- Trade on narrow columns (520px and below): the picker gets its own full-width row ----------
