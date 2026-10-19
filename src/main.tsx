@@ -25,6 +25,7 @@ import "./trade-multi.css";
 import "./waivers-weeks.css";
 import "./trade-deal.css";
 import "./lineup-weeks.css";
+import "./price.css";
 import "./frame.css";
 import "./sheet.css";
 import { monoNumbers } from "./monoNumbers";

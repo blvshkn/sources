@@ -545,7 +545,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   myTags: Record<string, MyTag>;
   setTag: (id: string, t: MyTag | "") => void;
   prices: Record<string, Price>;
-  setPrice: (id: string, p: Price) => void;
+  setPrice: (id: string, p: Price | null) => void;
   tags: ManagerTag[];
   level: string;
   onPitch: (t: Trade) => void;
@@ -554,7 +554,12 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const by = (slot: string) => s.filter((x) => x.slot === slot);
   const flex = by("FLEX")[0];
   const bestBench = lineup.bench.filter((p) => p.pos !== "QB" && !isOut(p, true))[0];
-  const locked = YOU.roster.filter((id) => myTags[id] === "amazing");
+  // Anyone you'd move can carry an asking price: overpay-only guys always do, trade bait and shopping
+  // players once you set one. Untouchables are listed so you can switch them to a price instead.
+  const locked = YOU.roster.filter((id) => myTags[id] === "amazing" || ((myTags[id] === "available" || myTags[id] === "shopping" || !myTags[id]) && prices[id]));
+  const movable = YOU.roster.filter((id) => (myTags[id] === "available" || myTags[id] === "shopping") && !prices[id]);
+  const untouch = YOU.roster.filter((id) => myTags[id] === "untouchable");
+  const unpriced = YOU.roster.filter((id) => !myTags[id] && !prices[id]);
   const diff = sleeperDiff(lineup);
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
   const [cmp, setCmp] = useState<string | undefined>(undefined);
@@ -681,9 +686,28 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "price" && <section className="card wt" aria-labelledby="wt-title">
         <header className="wt-head">
           <h2 className="section-title" id="wt-title">What would it take?</h2>
-          <p>Set an asking price for your overpay-only guys. Sources finds the cheapest offer from each team that meets it.</p>
+          <p>Set an asking price on anyone you'd move. Sources finds the cheapest offer from each team that meets it, and trade ideas never go below it.</p>
         </header>
-        {locked.length === 0 && <p className="wt-empty">No one tagged "Overpay only" yet. <button className="linkish" onClick={() => setView("tags")}>Tag a player</button> to set an asking price.</p>}
+        {(movable.length > 0 || untouch.length > 0) && (
+          <ul className="wt-quick" aria-label="Tagged players without a price">
+            {movable.map((pid) => { const p = playerById(pid); return (
+              <li key={pid}><Avatar p={p} size={28} /><span className="wt-qname"><b>{p.name}</b><small>{TAG_LABEL[myTags[pid]!]} · no asking price</small></span>
+                <button className="btn btn-xs" onClick={() => setPrice(pid, DEFAULT_PRICE)}>Set a price</button></li>
+            ); })}
+            {untouch.map((pid) => { const p = playerById(pid); return (
+              <li key={pid}><Avatar p={p} size={28} /><span className="wt-qname"><b>{p.name}</b><small>Untouchable · left out of every idea</small></span>
+                <button className="btn btn-xs" onClick={() => { setTag(pid, "amazing"); setPrice(pid, DEFAULT_PRICE); }}>Set a price instead</button></li>
+            ); })}
+          </ul>
+        )}
+        {unpriced.length > 0 && (
+          <div className="wt-add">
+            <Select id="wt-add" className="tag-select" aria-label="Set a price on another player" value={"" as string}
+              onChange={(v) => { if (v) setPrice(v, DEFAULT_PRICE); }}
+              options={[{ value: "", label: "Price another player" }, ...unpriced.map((id) => ({ value: id, label: `${playerById(id).name} · ${playerById(id).pos}` }))]} />
+          </div>
+        )}
+        {locked.length === 0 && movable.length === 0 && untouch.length === 0 && <p className="wt-empty">No asking prices yet. Pick a player above, or <button className="linkish" onClick={() => setView("tags")}>tag a player</button> as overpay only.</p>}
         {locked.map((pid) => {
           const p = playerById(pid);
           const price = prices[pid] ?? DEFAULT_PRICE;
@@ -699,6 +723,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 <Avatar p={p} size={40} />
                 <span className="wt-name"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
                 <span className={`wt-count${real.length ? " on" : ""}`}><b>{real.length}</b> of {TEAMS.length - 1} teams</span>
+                {myTags[pid] !== "amazing" && <button className="linkish wt-clear" onClick={() => setPrice(pid, null)}>Remove price</button>}
               </div>
 
               <div className="wt-price">

@@ -1,0 +1,13 @@
+/* Asking price: quick rows for tagged players without a price, and the "price another player" picker */
+html:root:not(#_):not(#_) .wt-quick { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+html:root:not(#_):not(#_) .wt-quick li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; padding: 6px 4px; }
+html:root:not(#_):not(#_) .wt-qname { display: grid; min-width: 0; }
+html:root:not(#_):not(#_) .wt-qname b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .wt-qname small { color: var(--muted); font-size: 0.8125rem; }
+html:root:not(#_):not(#_) .wt-add { max-width: 320px; }
+html:root:not(#_):not(#_) .wt-who { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+html:root:not(#_):not(#_) .wt-clear { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
+@media (max-width: 520px) {
+  html:root:not(#_):not(#_) .wt-who { grid-template-columns: auto minmax(0, 1fr) auto; }
+  html:root:not(#_):not(#_) .wt-clear { grid-column: 2 / -1; justify-self: start; }
+}

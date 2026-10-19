@@ -296,7 +296,8 @@ export function evaluate(you: Team, them: Team, give: string[], get: string[], t
   });
   give.forEach((id) => {
     if (myTags[id] === "untouchable") warnings.push(`${playerById(id).name} is marked untouchable.`);
-    if (myTags[id] === "amazing") {
+    // A price applies to "Overpay only" players and to anyone you've set one on
+    if (myTags[id] === "amazing" || prices[id]) {
       const price = prices[id] ?? DEFAULT_PRICE;
       if (!clearsPrice(id, get, youDelta, price))
         warnings.push(`${playerById(id).name} only moves if you ${priceLabel(price)}. This deal doesn't get there.`);
@@ -888,7 +889,7 @@ export function evaluateMulti(you: Team, legs: DealLeg[], tags: ManagerTag[], my
   const warnings = [...new Set(reads.flatMap((r) => r.trade.warnings))];
   // A price on one of your players is judged against everything coming back, not one leg
   give.forEach((id) => {
-    if (myTags[id] !== "amazing") return;
+    if (myTags[id] !== "amazing" && !prices[id]) return;
     const price = prices[id] ?? DEFAULT_PRICE;
     const w = `${playerById(id).name} only moves if you ${priceLabel(price)}. This deal doesn't get there.`;
     const i = warnings.indexOf(w);

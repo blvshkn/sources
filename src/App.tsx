@@ -551,7 +551,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           )}
           {tab === "roster" && (
             <Roster side={<Threats onGo={go} />} lineup={yourLineup} myTags={myTags} prices={prices} tags={active} level={level} onPitch={setPitch}
-              setPrice={(id, p) => setPrices((c) => ({ ...c, [id]: p }))}
+              setPrice={(id, p) => setPrices((c) => { const n = { ...c }; if (p) n[id] = p; else delete n[id]; return n; })}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={recs} onToast={setToast} watch={watch} onWatch={setWatch} />}
