@@ -537,7 +537,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                   { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
                     <PtsCell key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
                     <PtsCell key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
-                  { label: "Trade value", tip: "Market value. The best player counts in full and each extra piece for less, so three bench players can't add up to one star.", cells: [
+                  { label: "Trade value", tip: "Market value, the plain sum of each player's value, the same way a trade calculator adds it up. The verdict also adjusts for extra pieces, so three bench players can't add up to one star.", cells: [
                     <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
                     <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
                     extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
@@ -569,7 +569,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 <div className="why">
                   <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
                   <div><span className="eyebrow">{them.manager}'s starters</span><Changes team={them} trade={trade} side="them" /></div>
-                  <p className="tiny muted">Two lenses. Points per week counts starting lineups only. Market value weighs the best player in full and each extra piece for less, so three bench players can't add up to one star. Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
+                  <p className="tiny muted">Two lenses. Points per week counts starting lineups only. Trade value is the plain sum of player values: <span className="num">{trade.marketGive.toLocaleString()}</span> you give, <span className="num">{trade.marketGet.toLocaleString()}</span> you get. {give.length !== get.length || give.length > 1 ? <>The verdict counts the best player on each side in full and each extra piece for less (85%, 72%, 61%). Adjusted for {give.length}-for-{get.length}: <span className="num">{trade.adjGive.toLocaleString()}</span> you give, <span className="num">{trade.adjGet.toLocaleString()}</span> you get. </> : null}Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
                 </div>
               )}
               {tip && (

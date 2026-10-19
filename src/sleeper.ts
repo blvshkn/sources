@@ -370,6 +370,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   //   45%  our production model: rest-of-season projected points over replacement for THIS league,
   //        read onto the market's own value curve by rank, and held within 0.5x-2x of the market
   // then nudged up to +/-3% by Sleeper add/drop momentum over the past week.
+  let fcScale = 1; // raw FantasyCalc value -> our 0-10,000 scale
   {
     const sk = recSetting >= 1 ? "ppr" : recSetting >= 0.5 ? "half" : "std";
     const teBonus = league.scoring_settings.bonus_rec_te ?? 0;
@@ -418,6 +419,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       raw.set(p.id, blended * (1 + Math.max(-1, Math.min(1, (net.get(p.id) ?? 0) / maxNet)) * 0.03));
     });
     const scale = 10000 / Math.max(1, ...raw.values());
+    fcScale = scale;
     skill.forEach((p) => {
       p.value = Math.round((raw.get(p.id) ?? 0) * scale);
       const mk = valueBy.get(p.id);
@@ -585,7 +587,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   rosters.forEach((r) => (r.players ?? []).forEach((id) => ownerOf.set(id, String(r.roster_id))));
   const board: BoardRow[] = market.filter((m) => m.player?.sleeperId && ["QB", "RB", "WR", "TE"].includes(m.player.position ?? ""))
     .sort((a, b) => b.value - a.value).slice(0, 300)
-    .map((m) => { const id = String(m.player.sleeperId); const p = players[id]; const k = p?.fcValue && m.value ? p.fcValue / m.value : 1;
+    .map((m) => { const id = String(m.player.sleeperId); const p = players[id]; const k = fcScale; // same scale as every other value in the app
       return { id, name: p?.name ?? m.player.name ?? `Player ${id}`, pos: m.player.position!, nfl: p?.nfl ?? m.player.maybeTeam ?? "FA", age: m.player.maybeAge ? Math.floor(m.player.maybeAge) : undefined,
         value: p?.value ?? Math.round(m.value * k), trend: Math.round((m.trend30Day ?? 0) * k), ownerId: ownerOf.get(id), market: p?.fcValue, model: p?.modelValue }; })
     .sort((a, b) => b.value - a.value);

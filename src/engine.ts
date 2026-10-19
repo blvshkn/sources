@@ -96,8 +96,10 @@ export function irReport(team: Team): IrReport {
 export const irLabel = (p: Player) => p.injury === "IR" ? "Injured reserve" : p.injury === "PUP" ? "PUP list" : p.injury === "Sus" ? "Suspended" : p.injury === "NA" ? "Not with team" : p.injury ?? "Healthy";
 
 // ---- Market value ---------------------------------------------------------
-// Live leagues use FantasyCalc values (real fantasy trades, matched to league
-// settings). The demo league estimates value from projections on a similar scale.
+// Live leagues use the blended value set in sleeper.ts: FantasyCalc redraft or
+// dynasty values for this league's QB format, scoring and size, blended with a
+// production model and rescaled so the top player is 10,000. The demo league
+// estimates value from projections on a similar scale.
 export const marketValue = (p: Player): number => {
   if (p.value !== undefined) return p.value;
   if (p.status === "O" && p.longTerm) return 0;
@@ -111,6 +113,8 @@ export const marketValue = (p: Player): number => {
  */
 // 85% on the second piece reproduces RotoTrade's package adjustment exactly on a tested 2-for-1.
 const PIECE_WEIGHTS = [1, 0.85, 0.72, 0.61];
+/** Plain sum of player values: the number a trade calculator shows for a side. */
+export const sumValue = (ids: string[]) => ids.reduce((s, id) => s + marketValue(playerById(id)), 0);
 export const packageValue = (ids: string[]) =>
   Math.round(ids.map((id) => marketValue(playerById(id))).sort((a, b) => b - a).reduce((s, v, i) => s + v * (PIECE_WEIGHTS[i] ?? 0.5), 0));
 export const pct = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.round(Math.abs(n) * 100)}%`;
@@ -237,10 +241,13 @@ export interface Trade {
   themDelta: number;
   youDrop: string[]; // bench players you'd cut to make roster room
   themDrop: string[];
-  /** Market value of each side's package after the consolidation adjustment. */
+  /** Market value of each side: the plain sum of player values, as a trade calculator shows it. */
   marketGive: number;
   marketGet: number;
-  /** (get - give) / larger side. Positive = you receive more market value. */
+  /** Each side after the consolidation adjustment (extra pieces count for less). Drives the verdict. */
+  adjGive: number;
+  adjGet: number;
+  /** (adjGet - adjGive) / larger side. Positive = you receive more market value. */
   marketGap: number;
   fillsWant: boolean;
   warnings: string[];
@@ -295,16 +302,16 @@ export function evaluate(you: Team, them: Team, give: string[], get: string[], t
         warnings.push(`${playerById(id).name} only moves if you ${priceLabel(price)}. This deal doesn't get there.`);
     }
   });
-  const marketGive = packageValue(give);
-  const marketGet = packageValue(get);
-  const marketGap = Math.max(marketGive, marketGet) > 0 ? (marketGet - marketGive) / Math.max(marketGive, marketGet) : 0;
+  const marketGive = sumValue(give), marketGet = sumValue(get);
+  const adjGive = packageValue(give), adjGet = packageValue(get);
+  const marketGap = Math.max(adjGive, adjGet) > 0 ? (adjGet - adjGive) / Math.max(adjGive, adjGet) : 0;
   const wants = theirTags.filter((t) => t.kind === "wants");
   const fillsWant = give.some((id) => wants.some((w) => (w.playerId ? w.playerId === id : w.pos === playerById(id).pos)));
   return {
     key: `${them.id}:${give.join(",")}>${get.join(",")}`,
     partnerId: them.id,
     give, get, youBefore, youAfter, themBefore, themAfter, youDelta, themDelta,
-    youDrop: youS.dropped, themDrop: themS.dropped, marketGive, marketGet, marketGap, fillsWant, warnings,
+    youDrop: youS.dropped, themDrop: themS.dropped, marketGive, marketGet, adjGive, adjGet, marketGap, fillsWant, warnings,
   };
 }
 
@@ -356,7 +363,7 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   // Likelihood. The value term matches RotoTrade's observed acceptance curve: 45% at even value,
   // plus one point for every point of value (on a 0-100 scale) the other side gains. On top of
   // that, things RotoTrade can't see: league need, stated wants, lineup gain and trade history.
-  const theirGainPts = (t.marketGive - t.marketGet) / 100;
+  const theirGainPts = (t.adjGive - t.adjGet) / 100;
   let p = 0.45 + Math.max(-40, Math.min(45, theirGainPts)) / 100;
   p += Math.min(0.1, Math.max(0, (t.themDelta - 1) * 0.03));
   const need = needsFor(them).need;
@@ -859,7 +866,8 @@ export interface MultiTrade {
   key: string; legs: LegRead[];
   youBefore: number; youAfter: number; youDelta: number; youDrop: string[];
   give: string[]; get: string[];
-  marketGive: number; marketGet: number; marketGap: number;
+  /** Plain sums for display; adj* after the consolidation adjustment, which drives marketGap. */
+  marketGive: number; marketGet: number; adjGive: number; adjGet: number; marketGap: number;
   /** Chance every partner says yes. */
   allAccept: number;
   warnings: string[];
@@ -886,11 +894,12 @@ export function evaluateMulti(you: Team, legs: DealLeg[], tags: ManagerTag[], my
     const i = warnings.indexOf(w);
     if (clearsPrice(id, get, youDelta, price)) { if (i >= 0) warnings.splice(i, 1); } else if (i < 0) warnings.push(w);
   });
-  const marketGive = packageValue(give), marketGet = packageValue(get);
-  const marketGap = Math.max(marketGive, marketGet) > 0 ? (marketGet - marketGive) / Math.max(marketGive, marketGet) : 0;
+  const marketGive = sumValue(give), marketGet = sumValue(get);
+  const adjGive = packageValue(give), adjGet = packageValue(get);
+  const marketGap = Math.max(adjGive, adjGet) > 0 ? (adjGet - adjGive) / Math.max(adjGive, adjGet) : 0;
   return {
     key: legs.map((l) => `${l.teamId}:${l.give.join(",")}>${l.get.join(",")}`).join("|"),
-    legs: reads, youBefore, youAfter, youDelta, youDrop: youS.dropped, give, get, marketGive, marketGet, marketGap,
+    legs: reads, youBefore, youAfter, youDelta, youDrop: youS.dropped, give, get, marketGive, marketGet, adjGive, adjGet, marketGap,
     allAccept: reads.reduce((p, r) => p * r.accept.p, 1), warnings,
   };
 }

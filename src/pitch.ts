@@ -15,9 +15,10 @@ export type SellPoint =
   | { kind: "none" };
 export function sellPoint(t: Trade): SellPoint {
   if (t.themDelta >= 0.5) return { kind: "pts", delta: t.themDelta };
-  const amount = t.marketGive - t.marketGet; // what they receive minus what they send
+  const amount = t.marketGive - t.marketGet; // what they receive minus what they send, as a calculator sums it
   const pct = t.marketGet > 0 ? (amount / t.marketGet) * 100 : 0;
-  if (amount > 0 && pct >= 3) return { kind: "value", pct, amount };
+  // Only claim a value edge that survives the consolidation adjustment too
+  if (amount > 0 && pct >= 3 && t.adjGive > t.adjGet) return { kind: "value", pct, amount };
   const them = teamById(t.partnerId), need = needsFor(them).need;
   if (t.give.some((id) => playerById(id).pos === need)) return { kind: "need", pos: need };
   return { kind: "none" };
