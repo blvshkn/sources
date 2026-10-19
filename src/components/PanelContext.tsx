@@ -3,14 +3,18 @@ import { TeamNeeds, WaiverRec, bidDollars, fmt, groupsFor, irReport, recDrop, te
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { bidText } from "./Waivers";
+import { useWeekPick } from "../waiverWeeks";
 
 /** Waivers, in the docked panel: what you can spend, when claims run, and the one add worth making.
  *  Same numbers and wording as the Waivers screen's top pickup card. */
-export function WaiverContext({ top, onToast }: { top?: WaiverRec; onToast: (m: string) => void }) {
+export function WaiverContext({ top: thisWeek, onToast }: { top?: WaiverRec; onToast: (m: string) => void }) {
   const run = DEADLINES.waivers.replace(/^Waivers run\s*/i, "") || "Weekly";
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
-  const starts = !!top && top.gain > 0.05;
+  // Following the week picked on the Waivers screen: that week's pick, its number and what it does for your lineup
+  const wp = useWeekPick();
+  const top = wp ? wp.rec : thisWeek;
+  const starts = wp ? wp.gain > 0.05 : !!top && top.gain > 0.05;
   const drop = top ? recDrop(top) : null;
   const kd = top?.kdef;
   return (
@@ -32,17 +36,18 @@ export function WaiverContext({ top, onToast }: { top?: WaiverRec; onToast: (m: 
       )}
       {top ? (
         <div className="pctx-pick">
-          <span className="pctx-eyebrow">Top pickup</span>
+          <span className="pctx-eyebrow">{wp ? `${wp.kind === "past" ? "Top scorer" : "Top pickup"}, week ${wp.week}` : "Top pickup"}</span>
           <div className="pctx-row">
             <Avatar p={top.fa} size={28} badge={false} />
             <span className="pctx-who">
               <b>{top.fa.name}</b>
-              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {(kd ? top.value : top.fa.proj).toFixed(1)} proj</small>
+              <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {wp ? `${wp.pts.toFixed(1)} ${wp.kind === "past" ? "scored" : "proj"}` : `${(kd ? top.value : top.fa.proj).toFixed(1)} proj`}</small>
             </span>
             <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid) : "Priority"}</b></span>
           </div>
           <ul className="pctx-plan">
-            <li className={starts ? "good" : undefined}>{kd?.fix ? <>Your {top.fa.pos} is {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "on bye" : "out"}. <b>{fmt(top.gain)} pts</b> this week.</> : starts ? <>Starts for you, <b>{fmt(top.gain)} pts</b> this week.</> : "Bench stash for now."}</li>
+            <li className={starts ? "good" : undefined}>{wp ? (wp.kind === "past" ? (starts ? <>Would have added <b>{fmt(wp.gain)} pts</b> in week {wp.week}.</> : <>Wouldn't have cracked your week {wp.week} lineup.</>)
+              : starts ? <>Starts for you in week {wp.week}, <b>{fmt(wp.gain)} pts</b>.</> : <>Bench depth in week {wp.week}.</>) : kd?.fix ? <>Your {top.fa.pos} is {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "on bye" : "out"}. <b>{fmt(top.gain)} pts</b> this week.</> : starts ? <>Starts for you, <b>{fmt(top.gain)} pts</b> this week.</> : "Bench stash for now."}</li>
             <li>{kd?.drop ? <>Drop <b>{kd.drop.name}</b>.</> : irMove ? <>Move <b>{irMove.name}</b> to IR first. No drop needed.</>
               : drop ? <>Drop <b>{drop.name}</b>.</> : "You have an open roster spot."}</li>
           </ul>

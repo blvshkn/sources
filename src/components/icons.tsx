@@ -5,7 +5,7 @@
 export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
-  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell";
+  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark";
 
 const ICONS: Record<IconName, string> = {
   wire: "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3.5\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
@@ -26,6 +26,7 @@ const ICONS: Record<IconName, string> = {
   chev: "<path class=\"m1\" d=\"M9.5 6l6 6-6 6\"/>",
   x: "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
   check: "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>",
+  bookmark: "<path d=\"M6.5 6A2.5 2.5 0 0 1 9 3.5h6A2.5 2.5 0 0 1 17.5 6v14.5L12 16.8l-5.5 3.7z\"/>",
   plus: "<path d=\"M12 5v14M5 12h14\"/>",
   alert: "<path d=\"M10.3 4.2a2 2 0 0 1 3.4 0l7.4 12.9a2 2 0 0 1-1.7 3H4.6a2 2 0 0 1-1.7-3z\"/><path d=\"M12 9.5v4\"/><circle cx=\"12\" cy=\"16.8\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>",
   eye: "<path d=\"M2.5 12c2.2-4.3 5.5-6.5 9.5-6.5s7.3 2.2 9.5 6.5c-2.2 4.3-5.5 6.5-9.5 6.5S4.7 16.3 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",

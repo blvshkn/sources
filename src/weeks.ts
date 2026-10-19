@@ -48,7 +48,7 @@ export function statLine(pos: string, s: Record<string, number | undefined>): st
   return parts.join(" · ");
 }
 
-const ptsFrom = (pos: string, s: Record<string, number | undefined>) => {
+export const ptsFrom = (pos: string, s: Record<string, number | undefined>) => {
   const f = currentFormat();
   const base = f.scoring === "ppr" ? s.pts_ppr : f.scoring === "half" ? s.pts_half_ppr : s.pts_std;
   return Math.round(((base ?? 0) + (f.tePremium && pos === "TE" ? (s.rec ?? 0) * 0.5 : 0)) * 10) / 10;
@@ -91,7 +91,7 @@ const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.im
 const TEAMS = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LV", "LAC", "LAR", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SF", "SEA", "TB", "TEN", "WAS"];
 /** Demo bye week per NFL team. The Lineup, the Start / Sit compare and the player sheet all read it, so they agree. */
 export const demoBye = (team: string) => (team === "PIT" || team === "NE" ? 7 : 5 + (TEAMS.indexOf(team) % 10) + (TEAMS.indexOf(team) % 10 >= 2 ? 1 : 0));
-function demoStats(pos: string, pts: number, seed: number): Record<string, number> {
+export function demoStats(pos: string, pts: number, seed: number): Record<string, number> {
   const r = (a: number, b: number) => Math.round(a + (b - a) * hash(`${seed}${a}${b}`));
   if (pos === "QB") { const td = Math.max(0, Math.round(pts / 8)); return { pass_cmp: r(16, 27), pass_att: r(28, 40), pass_yd: Math.round(pts * 11 + 40), pass_td: td, pass_int: r(0, 1), rush_att: r(1, 7), rush_yd: r(2, 38) }; }
   if (pos === "RB") return { rush_att: r(9, 21), rush_yd: Math.round(pts * 4.2), rush_td: pts > 15 ? 1 : 0, rec: r(1, 5), rec_tgt: r(2, 6), rec_yd: r(4, 35) };

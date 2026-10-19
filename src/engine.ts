@@ -4,7 +4,7 @@ import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
-  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick,
+  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent,
 } from "./data";
 
 // ---- League format --------------------------------------------------------
@@ -632,23 +632,7 @@ export function waiverHidden() {
 
 export function waiverRecs(you: Team): WaiverRec[] {
   const base = lineupFor(you.roster, true);
-  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => {
-    // Live free agents are already in PLAYERS; demo ones get a temporary entry.
-    const existed = !!PLAYERS[fa.id];
-    if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
-    const p = PLAYERS[fa.id];
-    const withFa = lineupFor([...you.roster, fa.id], true);
-    const gain = round1(withFa.total - base.total);
-    // Drop by rest-of-season value, never by a one-week bye
-    const drop = you.roster.map(playerById).filter((x) => !withFa.slots.some((sl) => sl.player?.id === x.id)).sort((a, b) => eff(a) - eff(b))[0] ?? null;
-    const value = eff(p);
-    const tier: BidTier["tier"] = gain >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
-    const { bids, estimated } = bidsFor(tier);
-    const sorted = bids.slice().sort((a, b) => a - b);
-    const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
-    if (!existed) delete PLAYERS[fa.id];
-    return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated };
-  });
+  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, base, fa));
   const all: WaiverRec[] = [...skill, ...specialRecs(you, base)];
   // Skill pickups that start, plus K/DEF that fill a slot scoring zero, rank by gain. A K/DEF stream that only
   // beats what you have comes next, then everything that doesn't change your lineup (skill players first).
@@ -658,6 +642,30 @@ export function waiverRecs(you: Team): WaiverRec[] {
   all.forEach((r) => { if (r.kdef && bestFix.get(r.fa.pos) === r.fa.id) r.kdef.lead = true; });
   const group = (r: WaiverRec) => (r.kdef ? (r.kdef.lead ? 0 : r.gain > 0.05 ? 1 : 3) : r.gain > 0.05 ? 0 : 2);
   return all.sort((a, b) => group(a) - group(b) || b.gain - a.gain || b.value - a.value);
+}
+
+/** Claim details for skill players whose game already kicked off this week, so a later week can still show a bid and a drop. */
+export const lockedRecs = (you: Team): WaiverRec[] => {
+  const base = lineupFor(you.roster, true);
+  return FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, base, fa));
+};
+
+function skillRec(you: Team, base: Lineup, fa: FreeAgent): WaiverRec {
+  // Live free agents are already in PLAYERS; demo ones get a temporary entry.
+  const existed = !!PLAYERS[fa.id];
+  if (!existed) { const g = demoGame(fa.nfl); PLAYERS[fa.id] = { id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date }; }
+  const p = PLAYERS[fa.id];
+  const withFa = lineupFor([...you.roster, fa.id], true);
+  const gain = round1(withFa.total - base.total);
+  // Drop by rest-of-season value, never by a one-week bye
+  const drop = you.roster.map(playerById).filter((x) => !withFa.slots.some((sl) => sl.player?.id === x.id)).sort((a, b) => eff(a) - eff(b))[0] ?? null;
+  const value = eff(p);
+  const tier: BidTier["tier"] = gain >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
+  const { bids, estimated } = bidsFor(tier);
+  const sorted = bids.slice().sort((a, b) => a - b);
+  const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
+  if (!existed) delete PLAYERS[fa.id];
+  return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated };
 }
 
 /** Kickers and defenses on the wire against the one you start this week. */

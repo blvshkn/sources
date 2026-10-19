@@ -125,6 +125,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
   // Players you said you don't want, so no idea asks you to take them
   const [passed, setPassed] = usePersist<string[]>(`${scope}.passed`, []);
+  // Free agents you're watching on Waivers, with the week you marked each one for
+  const [watch, setWatch] = usePersist<Record<string, number>>(`${scope}.watch`, {});
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
   const [switching, setSwitching] = useState<false | "list" | "add">(false);
   const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
@@ -552,7 +554,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setPrice={(id, p) => setPrices((c) => ({ ...c, [id]: p }))}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
-          {tab === "waivers" && <Waivers recs={recs} onToast={setToast} />}
+          {tab === "waivers" && <Waivers recs={recs} onToast={setToast} watch={watch} onWatch={setWatch} />}
           {tab === "ask" && <Ask initial={askSeed} answer={(q) => ask(q, active, myTags, prices)} onLink={onLink} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}

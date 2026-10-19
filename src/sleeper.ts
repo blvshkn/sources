@@ -77,10 +77,13 @@ interface SMatchup { roster_id: number; matchup_id?: number | null; starters: st
 
 /** Weekly stats or projections for every player, keyed by Sleeper id. Used by the week browser. */
 export type WeekRow = { team: string | null; stats: Record<string, number | undefined>; player?: SProj["player"] };
-export async function fetchWeekRows(season: string, week: number, kind: "stats" | "projections"): Promise<Map<string, WeekRow>> {
+// Shared for a minute, so the Lineup week browser and the Waivers week view asking for the same week make one request
+export function fetchWeekRows(season: string, week: number, kind: "stats" | "projections"): Promise<Map<string, WeekRow>> {
   const q = "season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF";
-  const rows = await get<(WeekRow & { player_id: string })[]>(`/${kind}/nfl/${season}/${week}?${q}`);
-  return new Map(rows.map((r) => [r.player_id, r]));
+  return cached(`rows:${season}:${week}:${kind}`, 60_000, async () => {
+    const rows = await get<(WeekRow & { player_id: string })[]>(`/${kind}/nfl/${season}/${week}?${q}`);
+    return new Map(rows.map((r) => [r.player_id, r]));
+  });
 }
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
