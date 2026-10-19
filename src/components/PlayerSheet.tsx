@@ -91,17 +91,17 @@ export function PlayerSheet({ p, where, onClose, onCompare }: { p: Player; where
           {games.length ? (
             <div className="ps-bars" role="list">
               {avg !== null && <span className="ps-avg" aria-hidden="true" style={{ bottom: `calc(18px + (100% - 36px) * ${(avg / max).toFixed(3)})` }} />}
-              {games.map((g) => {
+              {games.map((g, i) => {
                 const tone = !g.started ? " bn" : avg !== null && g.pts >= avg ? " hi" : "";
                 return (
-                  <div key={g.w} className={`ps-bar${tone}`} role="listitem" aria-label={`Week ${g.w}: ${g.pts.toFixed(1)} points${g.started ? "" : ", on your bench"}`}>
+                  <div key={g.w} className={`ps-bar${tone}`} style={{ ["--i" as string]: i }} role="listitem" aria-label={`Week ${g.w}: ${g.pts.toFixed(1)} points${g.started ? "" : ", on your bench"}`}>
                     <b>{g.pts.toFixed(1)}</b>
                     <span><i style={{ height: `${Math.max(2, (g.pts / max) * 100)}%` }} /></span>
                     <small>W{g.w}</small>
                   </div>
                 );
               })}
-              <div className="ps-bar proj" role="listitem" aria-label={onBye(p.nfl) ? `Week ${WEEK}: bye` : `Week ${WEEK} projection: ${eff(p, true).toFixed(1)}`}>
+              <div className="ps-bar proj" style={{ ["--i" as string]: games.length }} role="listitem" aria-label={onBye(p.nfl) ? `Week ${WEEK}: bye` : `Week ${WEEK} projection: ${eff(p, true).toFixed(1)}`}>
                 <b>{onBye(p.nfl) ? "Bye" : eff(p, true).toFixed(1)}</b>
                 <span><i style={{ height: `${onBye(p.nfl) ? 0 : Math.max(2, (eff(p, true) / max) * 100)}%` }} /></span>
                 <small>W{WEEK}</small>

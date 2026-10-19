@@ -3842,3 +3842,31 @@ html:root:not(#_) .topbar { transition: background-color 0.2s ease, border-color
 html:root:not(#_):not([data-scrolled]) .topbar { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; border-bottom-color: transparent !important; box-shadow: none !important; }
 html:root:not(#_):not([data-scrolled]) .topbar::after, html:root:not(#_):not([data-scrolled]) .topbar::before { opacity: 0 !important; }
 html:root:not(#_) .page-league .plat-logo { flex: none; border-radius: 6px; }
+
+/* ==== Motion with a job ====
+   Charts grow in when a sheet or section mounts, so the data reads as arriving rather than snapping in.
+   Strong ease-out, under 700ms, a short stagger so bars read left to right. Transform only. */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) :is(.ps-bar span i, .slot-bars .sb-you) { transform-origin: 50% 100%; animation: grow-y 620ms cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(var(--i, 0) * 40ms + 80ms); }
+  html:root:not(#_) .ps-bar b { animation: fade-up 360ms cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(var(--i, 0) * 40ms + 260ms); }
+  html:root:not(#_) :is(.sx-bar i, .vb-bar > span, .bar-fill.up, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i) { transform-origin: 0 50%; animation: grow-x 700ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
+  html:root:not(#_) .bar-fill.down { transform-origin: 100% 50%; animation: grow-x 700ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
+  @keyframes grow-y { from { transform: scaleY(0.04); } }
+  @keyframes grow-x { from { transform: scaleX(0.02); } }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(4px); } }
+
+  /* Icons react to their state change, once. The tab you land on gives a small settle, so the tap feels received. */
+  html:root:not(#_) :is(.tabbar, .side, nav) button[aria-current="page"] .ic { animation: ic-settle 320ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+  @keyframes ic-settle { from { transform: scale(0.82) translateY(1px); } }
+  /* A confirmed state draws its check in */
+  html:root:not(#_) :is(.ss-ok, .scan-steps li.done .scan-mark) .ic path { stroke-dasharray: 24; animation: ic-draw 380ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
+  @keyframes ic-draw { from { stroke-dashoffset: 24; } }
+
+  /* Loader: the mark spirals on its long axis like a thrown football while the lanes fill */
+  html:root:not(#_) .boot3-mark { animation: spiral 420ms cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+  html:root:not(#_) .boot3-mark path { vector-effect: non-scaling-stroke; }
+  @keyframes spiral { from { transform: rotate(-40deg) scaleY(1) rotate(40deg); } to { transform: rotate(-40deg) scaleY(0.22) rotate(40deg); } }
+}
+
+/* Matchup scores read in chalk on both sides */
+html:root:not(#_) .mu-side :is(.mu-big, b) { color: var(--ink) !important; opacity: 1 !important; }

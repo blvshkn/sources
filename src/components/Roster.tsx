@@ -272,7 +272,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
             <div key={h.slot} className={`slot-col${isWeak ? " weak" : ""}`}>
               <div className="slot-bars" role="img" aria-label={`${h.slot}: ${h.you.filter((v, i) => v >= h.avg[i]).length} of 6 weeks at or above average`}>
                 {h.you.map((v, i) => (
-                  <span key={i} className="sb">
+                  <span key={i} className="sb" style={{ ["--i" as string]: i }}>
                     <span className={`sb-you${v < h.avg[i] ? " under" : ""}`} style={{ height: `${(v / max) * 100}%` }} />
                     <span className="sb-avg" style={{ bottom: `${(h.avg[i] / max) * 100}%` }} />
                   </span>
