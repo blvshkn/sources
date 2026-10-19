@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { roomBelow, useEdgeFade } from "./edgeFade";
 import { TEAMS, Team, playerById } from "../data";
 import { eff } from "../engine";
 import { Avatar } from "./Avatar";
@@ -15,9 +16,23 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
     .sort((a, b) => Number(b.p.name.toLowerCase().startsWith(term)) - Number(a.p.name.toLowerCase().startsWith(term)) || eff(b.p) - eff(a.p))
     .slice(0, 8);
 
+  // Results never run under the phone tab bar or off the viewport: the list scrolls inside its own panel
+  const list = useRef<HTMLUListElement>(null);
+  const field = useRef<HTMLLabelElement>(null);
+  const [room, setRoom] = useState<number>();
+  const showing = term.length >= 2;
+  useEdgeFade(list, showing);
+  useEffect(() => {
+    if (!showing) return;
+    const fit = () => { if (field.current) setRoom(Math.max(200, roomBelow(field.current))); };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [showing]);
+
   return (
     <div className="psr">
-      <label className="psr-field">
+      <label className="psr-field" ref={field}>
         <Icon name="search" size={18} />
         <span className="sr-only">Search players in your league</span>
         <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key === "Escape" && onClose) onClose(); }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
@@ -25,7 +40,7 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
         {onClose && <button className="psr-clear" onClick={onClose} aria-label="Close search"><Icon name="x" size={16} /></button>}
       </label>
       {term.length >= 2 && (
-        <ul className="psr-list" aria-label="Search results">
+        <ul className="psr-list" aria-label="Search results" ref={list} style={room ? { maxHeight: room } : undefined}>
           {hits.length ? hits.map(({ p, team }) => {
             const on = picked.includes(p.id);
             return (

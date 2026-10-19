@@ -104,7 +104,9 @@ export function Select<T extends string>({
     const maxHeight = Math.max(120, Math.min(MAX_H, up ? above : below));
     const minWidth = Math.min(r.width, vw - EDGE * 2);
     const width = Math.min(Math.max(m.offsetWidth, minWidth), vw - EDGE * 2);
-    const left = Math.max(EDGE, Math.min(r.left, vw - EDGE - width));
+    // Line up with the trigger's left edge; when that would run off the right side, line up with its right edge
+    // instead of sliding a few px off both
+    const left = r.left + width <= vw - EDGE ? r.left : Math.max(EDGE, Math.min(r.right - width, vw - EDGE - width));
     const h = Math.min(natural, maxHeight);
     const top = up ? r.top - GAP - h : r.bottom + GAP;
     setPlace({ top, left, minWidth, maxHeight, up, originX: Math.max(0, Math.min(width, r.left + r.width / 2 - left)) });

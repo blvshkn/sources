@@ -108,3 +108,20 @@ html:root:not(#_):not(#_) .toast { z-index: 85; }
 @media (min-width: 861px) {
   html:root:not(#_):not(#_) .ps:is(.fb, .lsw) { max-width: 520px; grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Side panel: partner card ----------
+   Its initials avatar had no disc (.tp-av-ini is bare by default), the fault the Trading with menu had */
+html:root:not(#_):not(#_) .pctx .tp-av-ini { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); border-radius: 50%; }
+
+/* ---------- Player search results ----------
+   Eight results ran under the tab bar at 390. The list now stops above it (PlayerSearch.tsx) and scrolls inside its
+   rounded panel. The list paints its own background, so a mask would erase it: the bottom fade is a sticky gradient
+   in the panel's color, shown only while more rows sit below (edgeFade's data-fade), taking no space of its own. */
+html:root:not(#_):not(#_) .psr > .psr-list { overflow-y: auto; overscroll-behavior: contain; }
+html:root:not(#_):not(#_) .psr > .psr-list::after {
+  content: ""; display: none; position: sticky; bottom: -6px; height: 32px; margin: -32px -6px -6px; pointer-events: none;
+  border-radius: 0 0 20px 20px; background: linear-gradient(to bottom, transparent, var(--surface-2) 85%);
+}
+html:root:not(#_):not(#_) .psr > .psr-list:is([data-fade="end"], [data-fade="both"])::after { display: block; }
+/* Phones: the team pill gave names ~110px ("Ja'Marr Ch…"); a narrower pill gives them the room */
+@media (max-width: 520px) { html:root:not(#_):not(#_) .psr .psr-team { max-width: 96px; } }
