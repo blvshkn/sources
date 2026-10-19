@@ -3,10 +3,11 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor, eff, weakSlots } from "../engine";
+import { Swing, useSwing } from "./Swing";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { useLive, onPace, teamOutlook, winChance } from "../live";
+import { useLive, onPace, teamOutlook, winChance, stillPlaying } from "../live";
 import { RosterNews } from "./News";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
 
@@ -110,6 +111,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   const mine = myO.expected;
   const theirs = oppO ? oppO.expected : null;
   const chance = oppO ? Math.round(winChance(myO, oppO)) : null;
+  const swing = useSwing(chance);
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
   // Once games start, the big numbers are points scored and the projection drops to a footnote
@@ -146,6 +148,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
               <span><b>{chance}%</b> to win</span>
               <span>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span>
             </span>
+            {inPlay && stillPlaying(liveNow, [YOU, opp]) && <Swing pts={swing} now={chance} className="sb2-swing" />}
           </span>
         )}
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}

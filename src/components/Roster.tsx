@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, lastWeek } from "../weeks";
-import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
+import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts, stillPlaying } from "../live";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
+import { Swing, useSwing } from "./Swing";
 import { TeamAvatar } from "./TeamPicker";
 import { StartSit } from "./StartSit";
 import { PlayerSheet } from "./PlayerSheet";
@@ -339,6 +340,7 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
   const myO = teamOutlook(live, YOU), oppO = opp ? teamOutlook(live, opp) : null;
   const myTotal = myO.expected, oppTotal = oppO ? oppO.expected : null;
   const chance = oppO ? Math.round(winChance(myO, oppO)) : 0;
+  const swing = useSwing(oppO ? chance : null);
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: who you are, where you stand, score and where it's headed
     const wins = (t: Team) => Number(t.record.split("-")[0]) || 0;
@@ -362,6 +364,7 @@ export function MatchupStrip({ onOpen, mineOnly = false }: { onOpen?: () => void
             <span className="mw-bar"><i style={{ width: `${chance}%` }} /></span>
           </div>
         )}
+        {opp && inPlay && stillPlaying(live, [YOU, opp]) && <Swing pts={swing} now={chance} className="mw-swing" />}
       </section>
     );
   }

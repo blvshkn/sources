@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye } from "./data";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
 import { eff, lineupFor, specialLineup, specialPts } from "./engine";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
@@ -178,6 +178,13 @@ export function playCount(live: Live, nfls: (string | null | undefined)[]): Play
   return c;
 }
 
+/** True while either team has a starter playing now or still to play: the window when the win chance swings. */
+export const stillPlaying = (live: Live, teams: (Team | null | undefined)[]) => teams.some((t) => {
+  if (!t) return false;
+  const c = playCount(live, [...startersOf(t).map((id) => playerById(id).nfl), ...specialLineup(t).slots.map((x) => x.player?.nfl)]);
+  return c.live + c.left > 0;
+});
+
 export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a, id) => {
   if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
   return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);
@@ -185,7 +192,8 @@ export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a
 
 /** The lineup a team actually set in Sleeper (skill players), falling back to the best projected lineup. */
 export const startersOf = (t: Team): string[] => {
-  const set = (t.starters ?? []).filter((id) => PLAYERS[id]);
+  const own = t.starters?.length ? t.starters : t.id === YOU.id ? Object.values(SLEEPER_SET ?? {}).flat() : [];
+  const set = own.filter((id) => PLAYERS[id]);
   return set.length ? set : (lineupFor(t.roster, true).slots.map((x) => x.player?.id).filter(Boolean) as string[]);
 };
 

@@ -3,9 +3,10 @@ import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, pla
 import { eff, fits, fmt, lineupFor, round1, SlotName, specialLineup } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill, LiveNum } from "./ui";
-import { useLive, expect, outlookOf, winChance, playCount } from "../live";
+import { useLive, expect, outlookOf, winChance, playCount, stillPlaying } from "../live";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
+import { Swing, readSwing } from "./Swing";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
 /** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
@@ -20,6 +21,8 @@ function slotted(team: Team, starters: string[] | undefined): { slot: SlotName; 
     return { slot: s.slot, id };
   });
 }
+
+const changed0 = (a: { id: string | null }[], b: { id: string | null }[]) => a.some((s, i) => s.id !== b[i]?.id);
 
 export function Matchup({ onBack }: { onBack: () => void }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
@@ -43,6 +46,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
   const baseO = outlookOf(live, sleeperMine.map((s) => s.id), specialLineup(YOU).slots.map((x) => x.player));
   const myTotal = round1(myO.expected), oppTotal = round1(oppO.expected), baseTotal = round1(baseO.expected);
   const chance = winChance(myO, oppO);
+  const swing = readSwing();
   const ids = [...mine.map((s) => s.id), ...theirs.map((s) => s.id)];
   const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
   const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
@@ -91,6 +95,7 @@ export function Matchup({ onBack }: { onBack: () => void }) {
             {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className="mu-bar" aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
+        {started && stillPlaying(live, [YOU, opp]) && !changed0(mine, sleeperMine) && <Swing pts={swing} now={Math.round(chance)} className="mu-swing" />}
         <p className="mu-sum">
           You win <b>{winning} of {mine.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
