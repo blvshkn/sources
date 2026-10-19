@@ -210,7 +210,7 @@ export function MultiRosters({ legs, toggle, tags, myTags }: { legs: LegState[];
           ))}
         </div>
         <RosterPicker team={YOU} lineup={lineupFor(YOU.roster)} picked={allGive} onToggle={(id) => toggle("give", id, dest)}
-          dimIds={mapsTo.dimYou} lockIds={lockMap(myTags)} wantIds={mapsTo.wantYou} noteIds={noteYou} label="You send" tone="give" />
+          dimIds={mapsTo.dimYou} lockIds={lockMap(myTags)} wantIds={mapsTo.wantYou} noteIds={noteYou} label="Your roster" tone="give" />
       </div>
       <div className="side-pane side-get" role="tabpanel">
         <div className="mt-ptabs" role="tablist" aria-label="Partner roster">
@@ -221,7 +221,7 @@ export function MultiRosters({ legs, toggle, tags, myTags }: { legs: LegState[];
           ))}
         </div>
         <RosterPicker team={partner.team} lineup={lineupFor(partner.team.roster)} picked={partner.get} onToggle={(id) => toggle("get", id, partner.team.id)}
-          dimIds={mapsP.dimThem} lockIds={{}} wantIds={{}} label={`${partner.team.manager} sends you`} tone="get" />
+          dimIds={mapsP.dimThem} lockIds={{}} wantIds={{}} label={`${partner.team.manager}'s roster`} tone="get" />
       </div>
     </div>
   );

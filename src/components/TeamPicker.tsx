@@ -44,9 +44,9 @@ export function TeamPicker({ teams, value, onChange, compact }: { teams: Team[];
       <button className="tp-btn" aria-haspopup="listbox" aria-expanded={open} aria-labelledby={`${id}-l ${id}-b`} id={`${id}-b`}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}>
-        <TeamAvatar t={cur} size={compact ? 34 : 44} />
+        <TeamAvatar t={cur} size={compact ? 36 : 44} />
         <span className="tp-who">{compact ? <><small>Trading with</small><b>{cur.name}<Trophy teamId={cur.id} /></b></> : <><b>{cur.name}<Trophy teamId={cur.id} /></b><small>{cur.manager} · {cur.record}</small></>}</span>
-        <Icon name="chev" size={18} />
+        <Icon name="chev" size={20} />
       </button>
       {open && (
         <ul className="tp-list" role="listbox" ref={list} tabIndex={-1} aria-labelledby={`${id}-l`}

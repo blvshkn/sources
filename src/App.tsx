@@ -129,7 +129,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [watch, setWatch] = usePersist<Record<string, number>>(`${scope}.watch`, {});
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
   const [switching, setSwitching] = useState<false | "list" | "add">(false);
-  const [partnerId, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
+  const [pickedPartner, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
+  // The partner is always another team in this league. A deep link or saved trade can carry your own
+  // team's id (or one from another league); the picker would then show one team while the rosters read
+  // another, so anything that isn't a valid partner falls back to the first other team everywhere at once.
+  const isPartner = (id?: string) => !!id && TEAMS.some((t) => t.id === id && !t.you);
+  const partnerId = isPartner(pickedPartner) ? pickedPartner : TEAMS.find((t) => !t.you)!.id;
   const [give, setGive] = useState<string[]>([]);
   // More partners in the same deal (a 3 or 4 team trade). Each has its own give and get with you.
   const [extra, setExtra] = useState<DealLeg[]>([]);
@@ -354,7 +359,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // "settings:nudges" opens a screen on a specific section tab
     const [t, section] = dest.split(":");
     if (!(TAB_IDS as string[]).includes(t)) return;
-    if (teamId) { if (t === "league") setFocusTeam(teamId); if (t === "trade") { setPartnerId(teamId); setGive([]); setGet([]); setExtra([]); } }
+    if (teamId) { if (t === "league") setFocusTeam(teamId); if (t === "trade" && isPartner(teamId)) { setPartnerId(teamId); setGive([]); setGet([]); setExtra([]); } }
     // Leaving a section starts it fresh next time (views like Standings or a filter only stick through a reload)
     if (t !== tab) { try { Object.keys(localStorage).filter((k) => k.startsWith("sources.ui.")).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ } }
     if (t !== tab) { const m = document.getElementById("main"); if (m) m.style.minHeight = ""; }
@@ -369,7 +374,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
   // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
-  const loadTrade = (t: Trade) => { setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
+  const loadTrade = (t: Trade) => { if (!isPartner(t.partnerId)) return; setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
   const toggle = (side: "give" | "get", id: string, teamId?: string) => {
     // Up to 10 a side per team, so bigger packages and roster-clearing deals fit
     const flip = (cur: string[]) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 10 ? cur : [...cur, id]);
@@ -381,6 +386,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     setExtra((c) => c.map((l) => (l.teamId === teamId ? { ...l, [side]: flip(l[side]) } : l)));
   };
   const setPartner = (id: string) => {
+    if (!isPartner(id)) return;
     // Picking a team that's already in a multi-team deal makes it the lead partner, keeping every leg
     const leg = extra.find((l) => l.teamId === id);
     if (leg) { setExtra((c) => c.map((l) => (l.teamId === id ? { teamId: partnerId, give, get } : l))); setPartnerId(id); setGive(leg.give); setGet(leg.get); return; }

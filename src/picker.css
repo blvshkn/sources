@@ -1,0 +1,39 @@
+/* Pill selects, optically aligned (Trade "Trading with" picker, phone league switcher).
+   Rule for a fully rounded pill of height H with a leading avatar of diameter D:
+   - the avatar is concentric with the left end cap: left inset = top inset = (H - D) / 2
+   - the trailing chevron gets a fixed icon box; its painted mark sits the same distance from the
+     right edge as the avatar does from the left, plus ~4px, since a chevron carries less visual
+     mass than a circle and reads as crammed when matched exactly
+   - label and name share one text column, centered on the avatar; long names truncate before the chevron */
+
+/* ---------- Trade: "Trading with" partner picker (single and multi-team) ----------
+   H 52, D 36, inset 8. Chevron: 20px box; the rotated mark is 10px wide, centered, so it paints 5px
+   inside the box. padding-right 7 puts the mark 12px (8 + 4) from the right edge. */
+html:root:not(#_):not(#_) .tp-compact .tp-btn {
+  grid-template-columns: 36px minmax(0, 1fr) 20px; column-gap: 12px; align-items: center;
+  height: 52px; min-height: 52px; padding: 0 7px 0 8px; box-sizing: border-box;
+}
+html:root:not(#_):not(#_) .tp-compact .tp-btn > :first-child { width: 36px; height: 36px; border-radius: 50%; }
+/* Initials sit on their own disc so the circle (and its concentric inset) reads against the pill in every state (rest, hover, open) */
+html:root:not(#_):not(#_) .tp-compact .tp-btn > .tp-av-ini { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); }
+/* One 36px text column (16 + 20) centered on the avatar */
+html:root:not(#_):not(#_) .tp-compact .tp-who { display: grid; grid-template-rows: 16px 20px; gap: 0; align-content: center; min-width: 0; }
+html:root:not(#_):not(#_) .tp-compact .tp-who small { font-size: 0.75rem; line-height: 16px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .tp-compact .tp-who b { display: block; min-width: 0; font-size: 0.9375rem; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Chevron: muted like the label, points down, turns 180deg when open.
+   The drawn chevron sits half a unit off its box center, so a sub-pixel nudge centers the paint on the pill. */
+html:root:not(#_):not(#_) .tp-compact .tp-btn > svg {
+  width: 20px; height: 20px; justify-self: center; color: var(--muted);
+  transform: rotate(90deg); translate: 0 -0.42px;
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), translate 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .tp-compact .tp-btn[aria-expanded="true"] > svg { transform: rotate(270deg); translate: 0 0.42px; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .tp-compact .tp-btn > svg { transition: none; } }
+
+/* ---------- Phones: league switcher pill ----------
+   H 44, D 24, inset 10. Switch icon: 16px box, mark 6px wide, 5px inside the box.
+   padding-right 9 puts the mark 14px (10 + 4) from the right edge. */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_) .page-league { height: 44px; min-height: 44px; padding: 0 9px 0 10px; gap: 10px; box-sizing: border-box; }
+  html:root:not(#_):not(#_) .page-league > svg { width: 16px; height: 16px; margin-left: 2px; }
+}
