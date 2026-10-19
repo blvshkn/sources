@@ -228,3 +228,89 @@ html:root:not(#_):not(#_) .card .partner-card:active { transform: none !importan
 html:root:not(#_):not(#_) .card .partner-card:active::before { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 html:root:not(#_):not(#_) .card .partner-card:focus-visible::before { box-shadow: 0 0 0 2px var(--lime); }
 html:root:not(#_):not(#_) .card .partner-card:is(:hover, :active, :focus-visible) { box-shadow: none !important; background: none !important; }
+
+/* ---------- Divided lists: one spacing rule for every list with hairlines between rows ----------
+   Measured, not eyeballed (see the sweep): rows sit flush against each other so a divider is exactly one row edge,
+   rows pad the same top and bottom, and the hover pill sits 4px inside both dividers. Lists whose dividers stop at
+   the card's content edge let the pill reach 12px past them; full-bleed lists keep it 6px off the card edge.
+   Both land the pill 6px from the card edge. While a row is hovered, pressed or focused, the divider above and the
+   one below it hide, so the pill never meets a line. */
+html:root:not(#_):not(#_):not(#_) { --dl-y: 4px; }
+
+/* 1. Rows meet: the container gap between rows goes, the header keeps its old distance */
+html:root:not(#_):not(#_):not(#_) .card.briefing { row-gap: 0; }
+html:root:not(#_):not(#_):not(#_) .card.briefing > .row:first-child { margin-bottom: 8px; }
+html:root:not(#_):not(#_):not(#_) .briefing .row + .brief-row { margin-top: 0; }
+html:root:not(#_):not(#_):not(#_) .card.wk { row-gap: 0; }
+html:root:not(#_):not(#_):not(#_) .card.wk > .wk-head { margin-bottom: 8px; }
+html:root:not(#_):not(#_):not(#_) .card.mu > .mu-row + .mu-row { margin-top: -14px; }
+
+/* 2. Even padding, one row height per list */
+html:root:not(#_):not(#_):not(#_) .brief-row { padding: 12px 0; min-height: 48px; }
+html:root:not(#_):not(#_):not(#_) .wk-row { padding: 8px 0; }
+
+/* 3. Pills: 4px inside both dividers */
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, .lsw-row)::after { inset: var(--dl-y) -12px; }
+html:root:not(#_):not(#_):not(#_) :is(button.st-row, .pick, .psr-row, .nl-row)::after { inset: var(--dl-y) 6px; }
+/* Dividers drawn as a 1px inset shadow sit inside the row, so the pill starts a pixel lower to stay 4px clear */
+html:root:not(#_):not(#_):not(#_) :is(.lu-row.tap, .vb-row:not(:disabled))::after { inset: calc(var(--dl-y) + 1px) 6px var(--dl-y); }
+
+/* 4. The dividers either side of an active row step aside */
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .nl-item, .sr-row, .wv, .lu-row, .psr-row, .vb-row) {
+  transition-property: background-color, box-shadow, transform, opacity, color, border-color;
+  transition-duration: var(--st-dur); transition-timing-function: var(--st-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more):hover,
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link):hover + :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more),
+  html:root:not(#_):not(#_):not(#_) :is(.nl-item:has(> .nl-row:hover), .sr-row:has(> .sr-main:hover), .wv:has(> .wv-row:hover)),
+  html:root:not(#_):not(#_):not(#_) :is(.nl-item:has(> .nl-row:hover) + .nl-item, .sr-row:has(> .sr-main:hover) + .sr-row, .wv:has(> .wv-row:hover) + .wv) { border-top-color: transparent !important; }
+  html:root:not(#_):not(#_):not(#_) :is(.lu-row.tap, .vb-row:not(:disabled)):hover,
+  html:root:not(#_):not(#_):not(#_) :is(.lu-row.tap, .vb-row:not(:disabled)):hover + :is(.lu-row, .vb-row),
+  html:root:not(#_):not(#_):not(#_) .wv:has(> .wv-row:hover), html:root:not(#_):not(#_):not(#_) .wv:has(> .wv-row:hover) + .wv { box-shadow: none !important; }
+}
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more):is(:active, :focus-visible),
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link):is(:active, :focus-visible) + :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more),
+html:root:not(#_):not(#_):not(#_) :is(.nl-item:has(> .nl-row:is(:active, :focus-visible)), .sr-row:has(> .sr-main:is(:active, :focus-visible)), .wv:has(> .wv-row:is(:active, :focus-visible))),
+html:root:not(#_):not(#_):not(#_) :is(.nl-item:has(> .nl-row:is(:active, :focus-visible)) + .nl-item, .sr-row:has(> .sr-main:is(:active, :focus-visible)) + .sr-row, .wv:has(> .wv-row:is(:active, :focus-visible)) + .wv) { border-top-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_) :is(.lu-row.tap, .vb-row:not(:disabled)):is(:active, :focus-visible),
+html:root:not(#_):not(#_):not(#_) :is(.lu-row.tap, .vb-row:not(:disabled)):is(:active, :focus-visible) + :is(.lu-row, .vb-row),
+html:root:not(#_):not(#_):not(#_) .wv:has(> .wv-row:is(:active, :focus-visible)), html:root:not(#_):not(#_):not(#_) .wv:has(> .wv-row:is(:active, :focus-visible)) + .wv { box-shadow: none !important; }
+
+/* 5. Rows that had no pill (settings links, the "See the full matchup" footer, slot report rows) join the system.
+   The slot report row loses its card ring: a ring inside a list read as a box drawn around the row. */
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main) { position: relative; isolation: isolate; -webkit-tap-highlight-color: transparent; }
+html:root:not(#_):not(#_):not(#_) .card.wk > .wk-more { margin: 0 !important; padding: 0 !important; min-height: 48px; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main)::after {
+  content: ""; position: absolute; z-index: -1; inset: var(--dl-y) -12px; border-radius: 10px; pointer-events: none;
+  background: var(--st-tint); opacity: 0;
+  transition: opacity var(--st-dur) var(--st-ease), background-color var(--st-dur) var(--st-ease), box-shadow var(--st-dur) var(--st-ease);
+}
+html:root:not(#_):not(#_):not(#_) .sr-main:is(:hover, :active, :focus-visible) { box-shadow: none !important; background: transparent !important; outline: none !important; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):hover::after { opacity: 1; }
+}
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.99) !important; opacity: 1 !important; transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible { outline: none !important; }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active { transform: none !important; }
+}
+
+/* 6. Optical centering: two-line rows carry extra leading under the second line, so the top padding takes a little
+   more than the bottom. Values are what the sweep measured to land the text within a pixel of centered. */
+html:root:not(#_):not(#_):not(#_) .brief-row { padding: 12.5px 0 11.5px; }
+html:root:not(#_):not(#_):not(#_) .st-row.st-po { padding-top: 11.5px; padding-bottom: 8.5px; }
+html:root:not(#_):not(#_):not(#_) .vb-row { padding-top: 11px; padding-bottom: 9px; }
+html:root:not(#_):not(#_):not(#_) .nl-row { padding-top: 11px; padding-bottom: 9px; }
+html:root:not(#_):not(#_):not(#_) .mu-row { padding-top: 11.5px; padding-bottom: 8.5px; }
+/* One height per row in the trade lists: the Bye chip no longer makes its row taller */
+html:root:not(#_):not(#_):not(#_) .pick { min-height: 62px; }
+/* A lineup row with a pending swap keeps its divider like every other row */
+html:root:not(#_):not(#_):not(#_) .lu-row + .lu-row.has-swap { box-shadow: inset 0 1px 0 var(--line) !important; }
+/* Waiver rows: the divider is an inset line on the row's wrapper, inside the row, so the pill starts a pixel lower */
+html:root:not(#_):not(#_):not(#_) .wv-row::after { inset: var(--dl-y) 6px; }
+html:root:not(#_):not(#_):not(#_) .wv + .wv > .wv-row::after { top: calc(var(--dl-y) + 1px); }
+/* Positions tables: a long team name plus the champion's trophy wrapped to a second line and made that one row taller */
+html:root:not(#_):not(#_):not(#_) .st-row.st-pos .st-who b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
