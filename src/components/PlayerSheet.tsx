@@ -66,7 +66,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare, focus }: { p: 
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
         {note && <p className="ps-why">{note}</p>}
-        {(p.note || p.injury) && <p className="ps-inj"><Icon name="alert" size={14} />{[p.injury, p.note].filter(Boolean).join(" · ")}</p>}
+        {(p.note || p.injury) && <p className="ps-inj"><Icon name="alert" size={14} />{p.note && p.injury && p.note.startsWith(p.injury) ? p.note : [p.injury, p.note].filter(Boolean).join(" · ")}</p>}
 
         {(() => {
           const bye = onBye(p.nfl);

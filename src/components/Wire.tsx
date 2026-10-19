@@ -11,7 +11,7 @@ import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useLive, onPace, teamOutlook, winChance } from "../live";
 import { RosterNews } from "./News";
-import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive } from "./Roster";
+import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -265,7 +265,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const order = ["Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "This week", "Bye"];
   const days = order.map((d) => ({ d, ps: mine.filter((p) => dayOf(p) === d) })).filter((x) => x.ps.length);
   const hurt = (ps: Player[]) => ps.filter((p) => p.status && !onBye(p.nfl));
-  const detail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
+  const detail = injuryDetail;
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [DEADLINES.lock, DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
   const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
@@ -292,7 +292,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
         {injured.length === 0 ? <p className="small muted">Nobody in this matchup carries an injury tag.</p> : injured.map(({ p, you }) => (
           <button key={p.id} className="wk-row" onClick={() => onGo(you ? "roster" : "matchup")}>
             <Avatar p={p} size={40} />
-            <span className="wk-name"><span className="wk-nm">{p.name}<span className={`wk-tag s-${p.status}`}>{p.status}</span></span><small>{detail(p)}</small></span>
+            <span className="wk-name"><span className="wk-nm">{p.name}<span className={`wk-tag s-${p.status}`}>{injuryTag(p)}</span></span><small>{detail(p)}</small></span>
             <span className={`wk-who${you ? " you" : ""}`}>{you ? "You" : "Them"}</span>
           </button>
         ))}

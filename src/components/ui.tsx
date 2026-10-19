@@ -13,8 +13,10 @@ export const PosBadge = ({ pos }: { pos: string }) => <span className={`pos pos-
 export function StatusPill({ p }: { p: Player }) {
   if (onBye(p.nfl)) return <Tooltip content="On bye this week. He won't score."><span className="status status-BYE">Bye</span></Tooltip>;
   if (!p.status) return null;
-  const tip = p.injury === "IR" ? "On injured reserve. Can move to an IR slot." : p.status === "O" ? "Ruled out this week." : "Questionable. Check his status before lock.";
-  return <Tooltip content={p.note ? <>{tip}<small>{p.note}</small></> : tip}><span className={`status status-${p.status}`}>{p.status === "O" ? "Out" : "Questionable"}</span></Tooltip>;
+  const tip = p.injury === "IR" ? "On injured reserve. Can move to an IR slot." : p.injury === "PUP" ? "On the PUP list." : p.injury === "Sus" ? "Suspended." : p.status === "O" ? "Ruled out this week." : p.injury === "Doubtful" ? "Doubtful. Unlikely to play." : "Questionable. Check his status before lock.";
+  // Same word Sleeper uses, so IR, PUP and Doubtful don't all read as Out or Questionable
+  const word = p.injury === "IR" ? "IR" : p.injury === "PUP" ? "PUP" : p.injury === "Sus" ? "Suspended" : p.injury === "Doubtful" ? "Doubtful" : p.status === "O" ? "Out" : "Questionable";
+  return <Tooltip content={p.note ? <>{tip}<small>{p.note}</small></> : tip}><span className={`status status-${p.status}`}>{word}</span></Tooltip>;
 }
 
 export function Delta({ n, suffix = "" }: { n: number; suffix?: string }) {

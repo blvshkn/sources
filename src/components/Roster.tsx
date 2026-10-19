@@ -25,7 +25,11 @@ const TAG_LABEL: Record<MyTag, string> = {
 // Standard normal CDF, for a win chance from two projections
 const ringOf = (p: Player): "bad" | "warn" | undefined => (onBye(p.nfl) || p.status === "O" ? "bad" : p.status === "Q" ? "warn" : undefined);
 /** "Questionable, Groin" becomes "Groin". */
-export const injuryDetail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || (p.status === "O" ? "Out" : "Game-time decision");
+const LONG_WORD: Record<string, string> = { IR: "Injured reserve", PUP: "PUP list", Sus: "Suspended", NA: "Not active", DNR: "Did not report", COV: "COVID list" };
+export const injuryDetail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || LONG_WORD[p.injury ?? ""] || (p.status === "O" ? "Out" : "Game-time decision");
+/** The pill Sleeper shows next to the name: Q, D, OUT, IR, PUP, SUS. */
+const SLEEPER_TAG: Record<string, string> = { Questionable: "Q", Doubtful: "D", Out: "OUT", IR: "IR", PUP: "PUP", Sus: "SUS", NA: "NA", DNR: "DNR", COV: "COV" };
+export const injuryTag = (p: { status?: string; injury?: string }) => SLEEPER_TAG[p.injury ?? ""] ?? (p.status === "Q" ? "Q" : "OUT");
 const statusWord = (p: Player) => (onBye(p.nfl) ? "Bye" : p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : null);
 
 /** IR and taxi: players who don't count against your roster limit, plus anything that needs a move. */
@@ -180,7 +184,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: st
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
-        <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{p.status === "Q" ? "Q" : "OUT"}</b>}</span>
+        <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{injuryTag(p)}</b>}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
         {p.status && !onBye(p.nfl) && (g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
@@ -205,7 +209,7 @@ function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot
       <span className={`lu-slot s-${slot}`}>{slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
-        <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}</span>
+        <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}{p.status === "Q" && <b className="lu-tag warn">Q</b>}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
       </span>
       {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
