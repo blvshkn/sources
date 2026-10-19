@@ -7,18 +7,65 @@
    the target on every page, at 1440 and 390. */
 
 /* ---------- The boxes ---------- */
-html:root:not(#_):not(#_) :is(.btn-icon, .top-bell) {
+html:root:not(#_):not(#_) :is(.btn-icon, .top-bell, .ibx-close, .ibx-x, .ps-x, .psr-clear, .qs-x, .saved-x, .mt-x, .composer-btn, .ibx-send, .wv3-watch) {
   /* Centring that works whether the box is grid or flex; display itself is left alone, so a hidden copy stays hidden */
   align-items: center; justify-content: center; place-items: center; padding: 0;
 }
-html:root:not(#_):not(#_) :is(.btn-icon, .top-bell) > svg { display: block; flex: none; margin: 0; }
+html:root:not(#_):not(#_) :is(.btn-icon, .top-bell, .ibx-close, .ibx-x, .ps-x, .psr-clear, .qs-x, .saved-x, .mt-x, .composer-btn, .ibx-send, .wv3-watch) > svg,
+html:root:not(#_):not(#_) .dt-chip > svg.ic-x { display: block; flex: none; margin: 0; }
 /* Square: .btn's 38px height was beating aspect-ratio, so 40px circles came out 40x38 */
 html:root:not(#_):not(#_) .btn.btn-icon { height: auto !important; min-height: 0 !important; aspect-ratio: 1 / 1; }
+
+/* Every icon-only button is a true circle, and its hover and press fill is that same circle */
+html:root:not(#_):not(#_) :is(.btn-icon, .top-bell, .ibx-close, .ibx-x, .ps-x, .psr-clear, .qs-x, .saved-x, .mt-x, .composer-btn, .ibx-send, .wv3-watch) {
+  border-radius: 50% !important; aspect-ratio: 1 / 1; flex: none; padding-inline: 0 !important; min-width: 0;
+}
+
+/* Ask's send button sat in a stretching row and came out 40x44; it centres on the 44px field as a 40px circle */
+html:root:not(#_):not(#_) .chat-input > .btn-icon { align-self: center; height: auto !important; }
+
+/* ---------- Sheet close: a circle tucked into the sheet's top-right corner ---------- */
+/* Same button on every sheet (player, league switcher, "Why won't this work", pitch). It sits concentric-ish with the
+   corner curve: inset = (corner radius - button radius) x 0.3 + 8px, so 11px for the 28px corner and 36px button,
+   equal from the top and the right. */
+html:root:not(#_):not(#_) :is(.ps, .sheet) { --sheet-r: 28px; --x-size: 36px; }
+html:root:not(#_):not(#_):not(#_) :is(.ps, .sheet) .ps-x {
+  position: absolute; z-index: 2; margin: 0;
+  top: calc((var(--sheet-r) - var(--x-size) / 2) * 0.3 + 8px); right: calc((var(--sheet-r) - var(--x-size) / 2) * 0.3 + 8px);
+  width: var(--x-size) !important; height: var(--x-size) !important;
+}
+/* The pitch sheet is taller than the window and scrolls, so its close is a direct child pinned with sticky instead:
+   same 11px corner, it stays put as the sheet scrolls, and its margins cancel its space in the column (16px gap). */
+html:root:not(#_):not(#_) .sheet { --x-inset: calc((var(--sheet-r) - var(--x-size) / 2) * 0.3 + 8px); --sheet-pad: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .sheet > .ps-x {
+  position: sticky; top: calc(var(--x-inset) - var(--sheet-pad)); right: auto; /* sticky counts from inside the padding */ order: -1; align-self: flex-end;
+  margin: calc(var(--x-inset) - var(--sheet-pad)) calc(var(--x-inset) - var(--sheet-pad)) calc(var(--sheet-pad) - var(--x-inset) - var(--x-size) - 16px) 0;
+}
+/* Its title row keeps clear of it (the circle's far edge is 47px in, the sheet padding 22, then 8px air) */
+html:root:not(#_):not(#_) .sheet > .sheet-grab { padding-right: 33px; }
 
 /* ---------- Glyph nudges ---------- */
 /* Bell: the drawing is centred in its 24 box (icons.tsx). The dome carries the weight and the badge sits up and to
    the right, so it read high and left: 0.75px right and 1px down at 22px. */
-html:root:not(#_):not(#_) svg.ic-bell > .m1 { translate: 0.82px 1.09px; }
+html:root:not(#_):not(#_) .top-bell > svg.ic-bell > .m1 { translate: 0.82px 1.09px; }
 /* Chevrons in circles (the week stepper): the drawing leans 0.5 toward its point; centre it, then 1px back at 18px,
    so the arrow's weight, not its box, is centred. The back arrow is the same glyph turned round. */
 html:root:not(#_):not(#_) .btn-icon svg.ic-chev > .m1 { translate: -1.83px 0; }
+/* Send: the plane points up and right, so it reads high and right: about 1px left and 1px down at 16 to 18px */
+html:root:not(#_):not(#_) :is(.btn-icon, .composer-btn, .ibx-send) > svg.ic-send > * { translate: -1.4px 1.6px; }
+/* Search: the handle pulls it right and down */
+html:root:not(#_):not(#_) .btn-icon svg.ic-search > .m1 { translate: -0.25px -0.25px; }
+
+/* ---------- Unread badge on the bell: on the circle's rim at 45 degrees, clear of the glyph ---------- */
+/* Its centre sits at (cx + r cos45, cy - r sin45): 85.36% across and 14.64% down the button, pulled back by half its own
+   size, so one digit (an 18px circle) and two (a pill) share the same centre. It overlaps the rim, not the dome, and a
+   2px ring in the background colour cuts it cleanly from the button. It is the button's child, not the svg's, so the
+   ring animation swings only the glyph; the badge does its one pulse with the separate scale property. */
+html:root:not(#_):not(#_) .top-bell .ibx-badge {
+  /* Percentages resolve against the padding box, inside the button's 1px border, so the radius is 50% + 1px */
+  position: absolute; top: calc(50% - 0.70711 * (50% + 1px)); left: calc(50% + 0.70711 * (50% + 1px)); right: auto; bottom: auto; margin: 0;
+  transform: translate(-50%, -50%); transform-origin: 50% 50%;
+  height: 18px; min-width: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px;
+  display: grid; place-items: center; font: 700 0.625rem/16px var(--font-mono); padding-top: 2px; /* digits have no descenders: their ink sat 1px high */ font-variant-numeric: tabular-nums; letter-spacing: 0;
+  box-shadow: 0 0 0 2px var(--bg); pointer-events: none;
+}

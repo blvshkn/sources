@@ -310,12 +310,13 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
       <div ref={sheet} className="sheet" role="dialog" aria-modal="true" aria-labelledby="pitch-title"
         style={{ transform: reduce ? undefined : "translate3d(0, 100vh, 0)" }}>
         <div className="sheet-handle" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />
+        {/* Pinned in the corner while the sheet scrolls (icon-center.css) */}
+        <button className="ps-x" onClick={() => dismiss()} aria-label="Close"><Icon name="x" size={18} /></button>
         <div className="row sheet-grab" style={{ justifyContent: "space-between" }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
           <div>
             <span className="stamp">Pitch for {them.manager}</span>
             <h2 id="pitch-title" style={{ marginTop: 10 }}>Send the offer</h2>
           </div>
-          <button className="btn btn-sm btn-ghost" onPointerDown={(e) => e.stopPropagation()} onClick={() => dismiss()} aria-label="Close"><Icon name="x" size={18} /></button>
         </div>
 
         {trade.warnings.length > 0 && (
