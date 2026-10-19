@@ -1,1 +1,31 @@
 /* App field and app QA fixes. Owned by the app QA pass; loaded last. No url() in this file: it makes Vite run PostCSS. */
+
+/* The landing field, laid along the bottom of the app behind everything.
+   A real element inside .shell: body paints an opaque !important gradient, which hid
+   anything at z-index -1 on the root (the old body::before attempt, and the ambient glow). */
+html:root:not(#_):not(#_) .shell { isolation: isolate; }
+html:root:not(#_):not(#_) .app-field {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; height: min(44vh, 440px); overflow: hidden; pointer-events: none;
+  perspective: 900px; perspective-origin: 50% 0%;
+  mask-image: radial-gradient(ellipse 70% 100% at 50% 100%, #000 22%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 100% at 50% 100%, #000 22%, transparent 74%);
+}
+html:root:not(#_):not(#_) .app-turf {
+  /* Taller than its box: tilted toward the viewer, a 100% plane stops ~100px short of the screen edge */
+  position: absolute; top: 0; left: 50%; width: 2400px; height: 170%; margin-left: -1200px;
+  transform: rotateX(64deg); transform-origin: 50% 0%;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 158px, rgba(var(--lime-rgb), 0.09) 158px 160px),
+    repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--ink) 7%, transparent) 22px 23px) 0 27% / 100% 18px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--ink) 7%, transparent) 22px 23px) 0 37% / 100% 18px no-repeat;
+}
+
+/* Undo the earlier body::before attempt (it sat under body's opaque paint, and on phones it
+   overwrote the safe-area strip and pinned itself to the top). Restore that strip. */
+html:root:not(#_):not(#_) body::before { content: none; }
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_) body::before {
+    content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; width: auto; margin: 0;
+    transform: none; background: var(--surface); mask-image: none; -webkit-mask-image: none;
+  }
+}

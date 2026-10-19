@@ -375,6 +375,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   return (
     <div className={`shell${tab === "trade" ? " wide" : ""}${inboxOpen ? " inbox-open" : ""}`}>
       <a className="skip-link" href="#main">Skip to content</a>
+      <div className="app-field" aria-hidden="true"><div className="app-turf" /></div>
       <aside className="side">
         <div className="brand">
           <div className="lockup" style={{ ["--lh" as string]: "30px" }}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></div>
