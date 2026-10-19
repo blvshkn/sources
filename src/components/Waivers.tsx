@@ -201,7 +201,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
     const num = (e: Row) => (typeof e.pts === "number" ? e.pts : -1);
     const sorted = sort === "trend" ? [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0))
       : sort === "proj" ? [...list].sort((a, b) => num(b) - num(a))
-      : kind === "current" ? list : [...list].sort((a, b) => Number(b.help) - Number(a.help) || b.score - a.score || b.gain - a.gain || num(b) - num(a));
+      : kind === "current" ? list : [...list].sort((a, b) => Number(b.help) - Number(a.help) || Number(b.pick) - Number(a.pick) || b.score - a.score || b.gain - a.gain || num(b) - num(a));
     // This week, anyone who can't play sinks; other weeks, byes sink. Players you're watching float to the top.
     // Players you passed on go to the very end (unless you just did it here), still there to find.
     const gone = (e: Row) => e.no && !stay.includes(e.fa.id);
@@ -430,7 +430,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                   <div className="wv-grid">
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>
-                      : drop ? <><b>{drop.name}</b> ({drop.note}, your lowest bench player)</> : r.noDrop ? "Nobody on your bench is worth cutting for him" : "Open roster spot"}</p></div>
+                      : drop ? <><b>{drop.name}</b> ({drop.note}, the least you'd lose)</> : r.noDrop ? "Nobody on your bench is worth cutting for him" : "Open roster spot"}</p></div>
                     <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</> : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}

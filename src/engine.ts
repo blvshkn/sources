@@ -749,7 +749,7 @@ export function waiverRecs(you: Team): WaiverRec[] {
   });
   // Weakness first: anyone who helps ranks by fitScore; then K/DEF streams that don't help, then plain depth
   const helps = (r: WaiverRec) => (r.score ?? 0) > 0.05;
-  return all.sort((a, b) => Number(helps(b)) - Number(helps(a)) || (b.score ?? 0) - (a.score ?? 0) || Number(!!a.noDrop) - Number(!!b.noDrop) || Number(!!a.kdef) - Number(!!b.kdef) || b.gain - a.gain || b.value - a.value);
+  return all.sort((a, b) => Number(helps(b)) - Number(helps(a)) || Number(!!b.pick) - Number(!!a.pick) || (b.score ?? 0) - (a.score ?? 0) || Number(!!a.noDrop) - Number(!!b.noDrop) || Number(!!a.kdef) - Number(!!b.kdef) || b.gain - a.gain || b.value - a.value);
 }
 
 /** Claim details for skill players whose game already kicked off this week, so a later week can still show a bid and a drop. */
@@ -802,9 +802,12 @@ function skillRec(you: Team, ctx: RecCtx, fa: FreeAgent): WaiverRec {
   // Drop by rest-of-season value, never by a one-week bye. Anyone who'd start for you either week stays.
   const starters = new Set([...withFa.slots, ...withRos.slots].map((s) => s.player?.id).filter(Boolean) as string[]);
   const drop = pickDrop(you, ctx, fa, value, ros, holeNames.length > 0, starters);
-  const full = you.roster.length >= LEAGUE.rosterMax;
+  // Same room rule as K/DEF: skill spots plus K/DEF spots on the full Sleeper roster
+  const full = you.roster.length + (you.special ?? []).length >= LEAGUE.rosterMax + (LEAGUE.specialSlots ?? []).length;
   const noDrop = !drop && full;
-  const tier: BidTier["tier"] = gain >= 2 || ros >= 2 || value >= 12 ? "Starter" : value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
+  // Tier is what he'd be for you, not in a vacuum: a 15-point QB behind two better QBs is depth, not a starter
+  const useful = ros > 0.05 || holeNames.length > 0;
+  const tier: BidTier["tier"] = gain >= 2 && useful || ros >= 2 ? "Starter" : useful && value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
   const { bids, estimated } = bidsFor(tier);
   const sorted = bids.slice().sort((a, b) => a - b);
   const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
