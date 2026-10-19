@@ -165,3 +165,6 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
     100% { transform: translateX(0); }
   }
 }
+
+/* Rows that already nudge their chevron on hover (states-qa) don't also run the icon nudge, so it moves once, 3px */
+html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .sb2) [data-play] { animation: none !important; }
