@@ -4172,3 +4172,18 @@ html:root:not(#_):not(#_) .ld2-idea .ti { background: transparent; }
 html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: translate3d(0, calc(var(--sy) * -0.06px), 0); transform-style: flat; will-change: auto; }
 html:root:not(#_):not(#_) .ld2-card { animation-name: ld3-card2; }
 @keyframes ld3-card2 { from { opacity: 0; transform: translateY(40px); } }
+
+/* No headshot tucks behind a card: all sit in front, and the bottom pair clears the card edge even after scroll drift */
+html:root:not(#_):not(#_) .ld2-head { z-index: 2; }
+html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -128px; right: 26%; }
+html:root:not(#_):not(#_) .ld2-head.h6 { bottom: -112px; left: 4%; }
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -84px; right: 8%; }
+}
+html:root:not(#_):not(#_) .ld2-head.h0 { top: -84px; left: -48px; }
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_) .ld2-stage { margin-top: 88px; }
+  html:root:not(#_):not(#_) .ld2-head:is(.h0, .h1, .h2) { top: -80px; }
+  html:root:not(#_):not(#_) .ld2-head.h0 { left: 0; }
+}
+html:root:not(#_):not(#_) .ld2-idea .ti { background: transparent !important; }
