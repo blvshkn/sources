@@ -1,1 +1,81 @@
 /* Landing QA fixes. Owned by the landing QA pass; loaded last. No url() in this file: it makes Vite run PostCSS. */
+
+/* The landing is always dark, so the logo keeps its lime mark and chalk word even when the OS is in light mode */
+html:root:not(#_):not(#_) .ld2 { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }
+
+/* Nothing hangs past the bottom of the page: the closing field ends where the page ends */
+html:root:not(#_):not(#_) .ld2 { overflow: clip; }
+
+/* "Your Sleeper username": the logo sits on the text baseline instead of dropping the word below it */
+html:root:not(#_):not(#_) .ld2-label .plat-name { display: inline; white-space: nowrap; }
+html:root:not(#_):not(#_) .ld2-label .plat-logo { margin: 0 0.3em 0 0.15em; vertical-align: -0.2em; }
+
+/* ==== Floating headshots ====
+   Bottom pair drifts no faster than the cards on scroll, so they only ever move away from the card edge.
+   Every placement leaves at least 16px to the nearest card, form or nav control, including pointer drift. */
+html:root:not(#_):not(#_) .ld2-head.h3 { --d: 0.5; }
+html:root:not(#_):not(#_) .ld2-head.h6 { --d: 0.45; }
+
+/* Tablet: the stage is only as wide as its card, so the players frame the card instead of the empty column */
+@media (min-width: 600px) and (max-width: 959px) {
+  html:root:not(#_):not(#_) .ld2-stage { max-width: 640px; }
+  html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -100px; }
+}
+
+@media (min-width: 960px) {
+  html:root:not(#_):not(#_) .ld2-head.h0 { top: -92px; left: -48px; --d: 0.8; }
+  html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -100px; right: 26%; }
+  html:root:not(#_):not(#_) .ld2-head.h6 { display: block; bottom: -100px; left: 4%; }
+}
+/* Small desktop: no gutter beside the cards, so the players line up above and below them */
+@media (min-width: 960px) and (max-width: 1279px) {
+  html:root:not(#_):not(#_) .ld2-head.h1 { top: -92px; left: 22%; right: auto; }
+  html:root:not(#_):not(#_) .ld2-head.h2 { top: -92px; left: 46%; right: auto; --d: 0.8; }
+  html:root:not(#_):not(#_) .ld2-head:is(.h4, .h5) { display: none; }
+}
+/* Wide desktop: the gutter outside the cards holds the side players */
+@media (min-width: 1280px) {
+  html:root:not(#_):not(#_) .ld2-head.h4 { top: -28px; right: -60px; }
+  html:root:not(#_):not(#_) .ld2-head.h5 { display: none; }
+}
+@media (min-width: 1360px) {
+  html:root:not(#_):not(#_) .ld2-head.h5 { display: block; bottom: 16%; right: -80px; --d: 0.6; }
+}
+
+/* ==== Feature grid ==== */
+/* Sunday, live: the heading and its paragraph get the same 8px every other cell has */
+html:root:not(#_):not(#_) .ld2-live-head p { margin-top: 8px; }
+
+/* Finder: the notes it reads, shown above the scan */
+html:root:not(#_):not(#_) .ld2-notes { display: grid; gap: 8px; }
+html:root:not(#_):not(#_) .ld2-notes-k { font: 500 0.6875rem/1rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_):not(#_) .ld2-notes ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+html:root:not(#_):not(#_) .ld2-notes li { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); font-size: 0.8125rem; line-height: 1.25rem; color: var(--ink); }
+html:root:not(#_):not(#_) .ld2-notes li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+html:root:not(#_):not(#_) .ld2-notes li.no::before { background: #FF7A66; }
+
+/* ==== Closing call to action ==== */
+/* Label, help text and link share the heading's centered axis at every width */
+html:root:not(#_):not(#_) .ld2-final :is(.ld2-label, .ld2-help, .ld2-error) { text-align: center; }
+html:root:not(#_):not(#_) .ld2-final .ld2-help { margin-inline: auto; }
+
+/* Finder at desktop: the result stays under the heading and its actions sit on the card's bottom edge.
+   The cell, the result and the idea stretch as columns to fill the row; the action row takes the slack above it.
+   Scan and result share one cell either way, so the card is the same height before and after the scan. */
+@media (min-width: 960px) {
+  html:root:not(#_):not(#_) .ld-bento > .ld-cell:has(.ld2-finder) .ld2-finder { flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px; }
+  html:root:not(#_):not(#_) .ld2-finder-cell { flex: 1 1 auto; }
+  html:root:not(#_):not(#_) .ld2-found { display: flex; flex-direction: column; align-self: stretch; }
+  html:root:not(#_):not(#_) .ld2-found > .ti { flex: 1 1 auto; display: flex; flex-direction: column; }
+  html:root:not(#_):not(#_) .ld2-found > .ti > .ti-actions { margin-top: auto; }
+  html:root:not(#_):not(#_) .ld2-found > .ti > .ti-why { margin-bottom: 16px; }
+  html:root:not(#_):not(#_) .ld2-finder > .ld2-again { align-self: flex-start; }
+}
+
+/* Under 960 the stage has no scroll drift of its own: the players and the card move with the page,
+   so the players above the card never slide up into the link or help text */
+@media (max-width: 959px) {
+  html:root:not(#_):not(#_) .ld2-stage .ld2-preview, html:root:not(#_):not(#_) .ld2-head { transform: none; }
+}
+/* Top right player drifts slowly so it never climbs into the nav */
+html:root:not(#_):not(#_) .ld2-head.h4 { --d: 0.3; }

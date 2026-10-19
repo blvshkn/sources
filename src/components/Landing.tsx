@@ -47,7 +47,8 @@ export function Landing({ onLive, onDemo }: {
     const mike = teamById("mike");
     const trade = findTrades(YOU, mike, tags, INITIAL_MY_TAGS, {}, 1)[0];
     const thin = needs.filter((n) => !n.team.you).sort((a, b) => a.groups[a.need].pct - b.groups[b.need].pct).slice(0, 3);
-    return { needs, trade, mike, thin, you: needs.find((n) => n.team.you)! };
+    const notes = INITIAL_MANAGER_TAGS.filter((t) => t.teamId === mike.id);
+    return { needs, trade, mike, thin, notes, you: needs.find((n) => n.team.you)! };
   }, []);
 
   // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
@@ -260,7 +261,11 @@ export function Landing({ onLive, onDemo }: {
             <article className="card ld-cell ld2-reveal wide">
               <h3>Ideas both sides say yes to</h3>
               <p>Tell Sources what a league mate said. It reads your notes, checks both lineups, tests the deals and keeps only the ones where both teams gain points.</p>
-              <FinderDemo steps={[`Reading 2 notes on ${demo.mike.manager}`, "Checking what both lineups need", "Testing deals across both rosters", "Keeping trades where both sides gain points"]}>
+              <div className="ld2-notes">
+                <span className="ld2-notes-k">Your notes on {demo.mike.manager}</span>
+                <ul>{demo.notes.map((t) => <li key={t.id} className={t.kind === "wants" ? "want" : "no"}>{t.text}</li>)}</ul>
+              </div>
+              <FinderDemo steps={[`Reading ${demo.notes.length} notes on ${demo.mike.manager}`, "Checking what both lineups need", "Testing deals across both rosters", "Keeping trades where both sides gain points"]}>
                 <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
               </FinderDemo>
             </article>
@@ -348,14 +353,18 @@ function TypedHeadline({ lines }: { lines: string[] }) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setState({ i: 0, n: lines[0].length, typing: false }); return; }
     // Driven off the frame clock, so keystrokes land at an even pace instead of drifting with timers
     const TYPE = 56, ERASE = 24, HOLD_FIRST = 4200, HOLD = 3000, GAP = 320;
-    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1;
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } });
+    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1, started = false;
+    // One loop at a time: resuming only re-arms it if it isn't already running
+    const resume = () => { if (started && visible && !document.hidden && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; resume(); });
     if (ref.current) io.observe(ref.current);
     function tick(now: number) {
       raf = 0;
       if (!visible || document.hidden) return;
-      if (!t0) t0 = now - (phase === "type" ? Math.max(last, 0) * TYPE : 0);
-      const el = now - t0, len = lines[i].length;
+      const len = lines[i].length;
+      // Picking up after a pause continues from the letter it stopped on, typing or erasing
+      if (!t0) t0 = now - (phase === "type" ? Math.max(last, 0) * TYPE : phase === "erase" ? (len - Math.max(last, 0)) * ERASE : 0);
+      const el = now - t0;
       let n = last, typing = false;
       if (phase === "type") { n = Math.min(len, Math.floor(el / TYPE)); typing = true; if (n >= len) { phase = "hold"; t0 = now; } }
       else if (phase === "hold") { n = len; if (el > (i === 0 ? HOLD_FIRST : HOLD)) { phase = "erase"; t0 = now; } }
@@ -364,10 +373,9 @@ function TypedHeadline({ lines }: { lines: string[] }) {
       if (n !== last || phase === "hold") { last = n; setState((s) => (s.i === i && s.n === n && s.typing === typing ? s : { i, n, typing })); }
       raf = requestAnimationFrame(tick);
     }
-    const vis = () => { if (!document.hidden && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } };
-    document.addEventListener("visibilitychange", vis);
-    const start = window.setTimeout(() => { raf = requestAnimationFrame(tick); }, 420);
-    return () => { clearTimeout(start); cancelAnimationFrame(raf); io.disconnect(); document.removeEventListener("visibilitychange", vis); };
+    document.addEventListener("visibilitychange", resume);
+    const start = window.setTimeout(() => { started = true; resume(); }, 420);
+    return () => { started = false; clearTimeout(start); cancelAnimationFrame(raf); raf = 0; io.disconnect(); document.removeEventListener("visibilitychange", resume); };
   }, [lines]);
   const full = lines[state.i];
   return (
