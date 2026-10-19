@@ -238,9 +238,11 @@ export function Landing({ onLive, onDemo }: {
             <article className="card ld-cell ld2-reveal">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
-              <div className="ld2-pitch">
+              <div className="ld2-pitch ld2-thread">
+                <div className="thr-head"><span className="thr-av" aria-hidden="true">{demo.mike.manager.slice(0, 1)}</span><b>{demo.mike.manager}</b><span>Text message</span></div>
+                <figure className="tcard thr-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
                 <p className="ld2-bubble">{draftPitch(demo.trade, "friendly")}</p>
-                <figure className="tcard">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
+                <span className="thr-meta">Delivered</span>
               </div>
             </article>
           )}
@@ -377,8 +379,12 @@ function FinderDemo({ steps, children }: { steps: string[]; children: ReactNode 
   }, []);
   return (
     <div ref={ref} className="ld2-finder">
-      {phase !== "done" ? <IdeaScan steps={steps} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} /> : <div className="ld2-found">{children}</div>}
-      {phase === "done" && <button className="ld2-again" onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>}
+      {/* Scan and result share one cell, so the card is its final size from the start and never grows */}
+      <div className="ld2-finder-cell">
+        <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{children}</div>
+        {phase !== "done" && <IdeaScan steps={steps} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
+      </div>
+      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>
     </div>
   );
 }

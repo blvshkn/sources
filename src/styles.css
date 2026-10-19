@@ -4135,3 +4135,22 @@ html:root:not(#_) .ld2-caret.on { animation: none; }
 
 /* Desktop hero: copy starts near the top instead of floating mid-column beside the tall preview */
 @media (min-width: 1100px) { html:root:not(#_) .ld2-hero { align-items: start; } html:root:not(#_) .ld2-copy { padding-top: 72px; } }
+
+/* Finder: result and scan stacked in one cell. The result holds the space (hidden) while the scan runs */
+html:root:not(#_):not(#_) .ld2-finder-cell { display: grid; }
+html:root:not(#_):not(#_) .ld2-finder-cell > * { grid-area: 1 / 1; min-width: 0; }
+html:root:not(#_):not(#_) .ld2-found { visibility: hidden; animation: none; }
+html:root:not(#_):not(#_) .ld2-found.on { visibility: visible; animation: fade-up 480ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+html:root:not(#_):not(#_) .ld2-finder-cell > .scan { align-self: start; }
+html:root:not(#_):not(#_) .ld2-again.off { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .ld2-found.on { animation: none; } }
+
+/* Pitch: a text thread. The trade card arrives as a big attachment on the left, the message follows as a sent bubble */
+html:root:not(#_):not(#_) .ld2-thread { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 24px; background: var(--bg); }
+html:root:not(#_):not(#_) .thr-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 0.8125rem; }
+html:root:not(#_):not(#_) .thr-head > span:last-child { font-size: 0.6875rem; color: var(--muted); }
+html:root:not(#_):not(#_) .thr-av { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-3); color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .ld2-thread .thr-img { align-self: flex-start; width: 78%; max-width: 340px; margin: 0; }
+html:root:not(#_):not(#_) .ld2-thread .thr-img :is(img, .tcard-skel) { width: 100%; max-height: none; margin: 0; border-radius: 18px 18px 18px 6px; }
+html:root:not(#_):not(#_) .ld2-thread .ld2-bubble { align-self: flex-end; max-width: 82%; border-radius: 20px 20px 6px 20px; }
+html:root:not(#_):not(#_) .thr-meta { align-self: flex-end; padding-right: 4px; font-size: 0.6875rem; color: var(--muted); }
