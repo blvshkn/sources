@@ -145,7 +145,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
               <span className="st-pl-n" role="cell">{i + 1}</span>
               <span className="st-team" role="cell">
                 <TeamAvatar t={r.x.team} size={30} />
-                <span className="st-who"><b>{r.x.team.name}<Trophy teamId={r.x.team.id} /></b><small>{r.w}-{r.l}{r.x.team.you ? " · You" : ` · ${r.x.team.manager}`}</small></span>
+                <span className="st-who"><b><span className="st-nm">{r.x.team.name}</span><Trophy teamId={r.x.team.id} /></b><small>{r.w}-{r.l}{r.x.team.you ? " · You" : ` · ${r.x.team.manager}`}</small></span>
               </span>
               <span className="st-num" role="cell"><b>{pctText(r.playoff)}</b><Bar p={r.playoff} /></span>
               <span className="st-num" role="cell"><b className="lite">{pctText(r.top)}</b><Bar p={r.top} /></span>
@@ -171,7 +171,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
             </div>
             {list.map(({ x, best, worst }) => (
               <button key={x.team.id} className={`st-row st-pos st-tap${x.team.you ? " you" : ""}`} role="row" onClick={() => setOpen(x.team.id)} aria-label={`${x.team.name} details`}>
-                <span className="st-team" role="cell"><TeamAvatar t={x.team} size={30} /><span className="st-who"><b>{x.team.name}<Trophy teamId={x.team.id} /></b></span></span>
+                <span className="st-team" role="cell"><TeamAvatar t={x.team} size={30} /><span className="st-who"><b><span className="st-nm">{x.team.name}</span><Trophy teamId={x.team.id} /></b></span></span>
                 <span className="st-rank" role="cell"><PosBadge pos={best} /><small>{ord(rk(best, x.team.id))}</small></span>
                 <span className="st-rank" role="cell"><PosBadge pos={worst} /><small>{ord(rk(worst, x.team.id))}</small></span>
               </button>

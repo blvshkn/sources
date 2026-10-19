@@ -20,3 +20,21 @@ html:root:not(#_) .st-row.st-po.st-th > span { white-space: nowrap; }
 .trophy { display: inline-flex; vertical-align: -2px; margin-left: 5px; color: #F0C75E; flex: none; cursor: default; }
 .trophy svg { display: block; filter: drop-shadow(0 0 6px rgba(240, 199, 94, 0.25)); }
 .st-who b .trophy, .team-name .trophy { vertical-align: -1px; }
+
+/* Table rows can never grow past the card. The single table column is pinned to the card's width (an auto column
+   lets an intrinsic-size pass size it from the full, unwrapped team name, which pushed Playoff, #1 seed and Proj pts
+   off the right edge in a real league), and every cell may shrink below its content. */
+html:root:not(#_) :is(.st, .st-table) { grid-template-columns: minmax(0, 1fr); }
+html:root:not(#_) .st-row { min-width: 0; max-width: 100%; }
+html:root:not(#_) .st-row > *, html:root:not(#_) .st-who { min-width: 0; }
+html:root:not(#_) .st-who { grid-template-columns: minmax(0, 1fr); }
+/* Team names: one line, cut with an ellipsis, the champion's trophy kept visible after the cut */
+html:root:not(#_):not(#_) .st-row .st-who b { display: flex; align-items: center; min-width: 0; white-space: nowrap; overflow: visible; }
+html:root:not(#_):not(#_) .st-row .st-who b .st-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .st-row .st-who b .trophy, html:root:not(#_):not(#_) .st-row .st-who b > :not(.st-nm) { flex: none; }
+html:root:not(#_) .st-row .st-who small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) {
+  /* Phones: the team column is narrow, so a name gets two lines before it's cut */
+  html:root:not(#_):not(#_) .st-row .st-who b { white-space: normal; }
+  html:root:not(#_):not(#_) .st-row .st-who b .st-nm { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+}
