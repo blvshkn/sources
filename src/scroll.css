@@ -1,67 +1,104 @@
-/* Scrollbars. One style, defined once; loads last. No CSS url function in this file: it makes Vite run PostCSS.
-   - The page itself keeps the platform scrollbar (overlay on macOS). Only internal scrollers are styled.
-   - Chrome and Safari draw the ::-webkit-scrollbar version: 8px, a rounded thumb inset 2px, no track.
-     Chrome ignores those pseudo-elements on any element that sets scrollbar-width or scrollbar-color,
-     so the standard properties are reset to auto there, and only Firefox gets the standard thin bar.
+/* Scrollbars. One style for every scroller, the page included, defined once; loads last.
+   No CSS url function in this file: it makes Vite run PostCSS and breaks the build.
+   - Chrome and Safari draw the ::-webkit-scrollbar version: 8px, a muted pill thumb inset 2px, no track,
+     and the track stops short of rounded corners so the bar always sits inside the shape.
+     Chrome ignores those pseudo-elements on any element that sets scrollbar-width or scrollbar-color
+     and falls back to its own grey bar, so no other file sets them (except scrollbar-width: none on rows
+     that hide their bar). Firefox has no pseudo-elements and gets scrollbar-width: thin plus
+     scrollbar-color in the same colors.
+   - scrollbar-gutter on the page root belongs to frame.css, not here.
    - Side-scrolling pill and tab rows hide their bar and fade at the edge they can scroll toward. */
 
 html:root:not(#_):not(#_) {
   --sb-thumb: color-mix(in srgb, var(--ink) 18%, transparent);
-  --sb-thumb-hover: color-mix(in srgb, var(--ink) 30%, transparent);
-  /* Sheets and the league switcher lock the page with overflow: hidden, which removes a classic
-     scrollbar and shifts everything 15px, then puts it back on close. Keeping the gutter reserved
-     stops that flash. It is a no-op with macOS overlay scrollbars. */
-  scrollbar-gutter: stable;
+  --sb-thumb-hover: color-mix(in srgb, var(--ink) 32%, transparent);
 }
 /* The page never scrolls sideways, even for a frame while something slides in. On body, not html,
-   so body's overflow (and the overlays' overflow: hidden lock) still propagates to the viewport. */
+   so body's overflow (and the sheets' overflow: hidden lock) still propagates to the viewport. */
 html:root:not(#_):not(#_) body { overflow-x: clip; }
 
-/* ---------- The one scrollbar ---------- */
-@supports selector(::-webkit-scrollbar) {
-  /* Let the pseudo-elements below apply (older rules asked for a thin standard bar) */
-  html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
-    scrollbar-width: auto; scrollbar-color: auto;
-  }
-}
+/* ---------- The one scrollbar (Chrome, Edge, Safari) ---------- */
+html:root:not(#_):not(#_)::-webkit-scrollbar,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
-html:root:not(#_):not(#_) body *::-webkit-scrollbar-track { background: transparent; border: 0; margin: 6px 0; }
+html:root:not(#_):not(#_)::-webkit-scrollbar-track,
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-track { background: transparent; border: 0; box-shadow: none; }
+html:root:not(#_):not(#_) body *::-webkit-scrollbar-track:vertical { margin: 6px 0; }
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-track:horizontal { margin: 0 6px; }
+html:root:not(#_):not(#_)::-webkit-scrollbar-thumb,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb {
   background-color: var(--sb-thumb); background-clip: padding-box;
-  border: 2px solid transparent; border-radius: 999px; min-height: 32px;
+  border: 2px solid transparent; border-radius: 999px; min-height: 32px; min-width: 32px;
 }
+html:root:not(#_):not(#_)::-webkit-scrollbar-thumb:hover,
+html:root:not(#_):not(#_)::-webkit-scrollbar-thumb:active,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb:hover,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-thumb:active { background-color: var(--sb-thumb-hover); }
+html:root:not(#_):not(#_)::-webkit-scrollbar-corner,
+html:root:not(#_):not(#_)::-webkit-scrollbar-button,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-corner,
 html:root:not(#_):not(#_) body *::-webkit-scrollbar-button { display: none; width: 0; height: 0; background: transparent; }
 
-/* Firefox: the standard thin bar in the same colors. :where() keeps it below every row that hides its bar. */
+/* ---------- Firefox: the standard thin bar in the same colors ---------- */
+/* :where() keeps it at zero specificity, below every row that sets scrollbar-width: none */
 @supports not selector(::-webkit-scrollbar) {
-  :where(body *) { scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent; }
-  html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
-    scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent;
-  }
+  :where(html, body *) { scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent; }
 }
 
 /* ---------- Internal scrollers: stay inside, don't drag the page ---------- */
-html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams) {
+html:root:not(#_):not(#_) :is(.side, .sel-list, .builder .deal, .ibx-list, .tp-list, .qs-opts, .mu-swap, .psr-list, .ps, .sheet, .onboard, .ob-teams, .table-wrap) {
   overscroll-behavior: contain;
 }
-/* Rounded menus and sheets: the track starts and ends clear of the corners so the bar is never cut by them */
-html:root:not(#_):not(#_) :is(.sel-list, .tp-list, .qs-opts, .mu-swap, .psr-list)::-webkit-scrollbar-track { margin: 10px 0; }
-html:root:not(#_):not(#_) :is(.ps, .sheet, .builder .deal)::-webkit-scrollbar-track { margin: 18px 0; }
-/* Inbox feed: the bar sits 4px in from the panel edge, and the bottom fade no longer eats it */
+/* Rounded menus: the track starts and ends past the corners (12 to 14px), so the bar only ever runs
+   along the straight part of the edge. The select list sits under its header, so only its bottom matters. */
+html:root:not(#_):not(#_) :is(.tp-list, .qs-opts, .mu-swap)::-webkit-scrollbar-track:vertical { margin: 14px 0; }
+html:root:not(#_):not(#_) .sel-list::-webkit-scrollbar-track:vertical { margin: 4px 0 14px; }
+/* Trade search results (20px corners on desktop) */
+html:root:not(#_):not(#_) .psr-list::-webkit-scrollbar-track:vertical { margin: 20px 0; }
+/* Sheets that still scroll their own shell (feedback, league switcher, pitch: 28px corners) and the sticky deal panel */
+html:root:not(#_):not(#_) :is(.ps, .sheet, .builder .deal)::-webkit-scrollbar-track:vertical { margin: 28px 0; }
+
+/* ---------- Player sheet: the shell clips, the body scrolls ---------- */
+/* The rounded .ps shell never scrolls. Handle and header stay put; .ps-body scrolls under them,
+   4px in from the shell's right edge, its track stopping short of the bottom corners. */
+html:root:not(#_):not(#_) .ps:has(> .ps-body) {
+  display: flex; flex-direction: column; align-items: stretch; gap: 16px; overflow: hidden; padding: 10px 0 0;
+}
+html:root:not(#_):not(#_) .ps:has(> .ps-body) > .ps-handle { align-self: center; flex: none; }
+html:root:not(#_):not(#_) .ps:has(> .ps-body) > .ps-head { flex: none; padding-inline: 20px; }
+html:root:not(#_):not(#_) .ps > .ps-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  display: grid; gap: 20px; align-content: start;
+  margin-right: 4px; padding: 0 16px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
+}
+html:root:not(#_):not(#_) .ps > .ps-body::-webkit-scrollbar-track:vertical { margin: 4px 0 12px; }
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .ps:has(> .ps-body) { padding: 16px 0 0; }
+  html:root:not(#_):not(#_) .ps:has(> .ps-body) > .ps-head { padding-inline: 24px; }
+  /* The log and the numbers side by side, as before, now laid out inside the body */
+  html:root:not(#_):not(#_) .ps > .ps-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; row-gap: 16px; align-items: start;
+    padding: 0 20px 24px 24px;
+  }
+  html:root:not(#_):not(#_) .ps > .ps-body > * { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_) .ps > .ps-body > .ps-hero { grid-column: 1; align-self: stretch; }
+  html:root:not(#_):not(#_) .ps > .ps-body > .ps-games:not(.ps-sched):not(.ps-news) { grid-column: 2; align-self: stretch; }
+  html:root:not(#_):not(#_) .ps > .ps-body > .ps-cta { justify-self: end; width: auto; padding-inline: 24px; }
+  /* Centered modal: all four corners are 28px, so the track clears the bottom ones */
+  html:root:not(#_):not(#_) .ps > .ps-body::-webkit-scrollbar-track:vertical { margin: 4px 0 28px; }
+}
+/* Tables (12px corners): the horizontal bar clears both bottom corners */
+html:root:not(#_):not(#_) .table-wrap::-webkit-scrollbar-track:horizontal { margin: 0 12px; }
+/* Inbox feed: the bar sits 4px in from the panel edge, clear of the bottom fade */
 html:root:not(#_):not(#_) .ibx-list { margin-right: 4px; padding-right: 4px; }
-html:root:not(#_):not(#_) .ibx-list::-webkit-scrollbar-track { margin: 4px 0 16px; }
+html:root:not(#_):not(#_) .ibx-list::-webkit-scrollbar-track:vertical { margin: 4px 0 16px; }
 /* Sidebar on short screens: the bar sits off the divider line */
-html:root:not(#_):not(#_) .side::-webkit-scrollbar-track { margin: 12px 0; }
+html:root:not(#_):not(#_) .side::-webkit-scrollbar-track:vertical { margin: 12px 0; }
 
 /* ---------- Side-scrolling rows: no bar, an edge fade only where there's more ---------- */
-html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg) {
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
   scrollbar-width: none; overscroll-behavior-x: contain;
 }
-html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg)::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 @property --sb-fl { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @property --sb-fr { syntax: "<length>"; inherits: false; initial-value: 0px; }
@@ -73,7 +110,7 @@ html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2
   100% { --sb-fl: 28px; --sb-fr: 0px; }
 }
 @supports (animation-timeline: scroll()) {
-  html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, :is(.page-head, .page-tabs) .seg) {
+  html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
     -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
     mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
     animation: sb-edge linear both;

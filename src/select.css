@@ -77,7 +77,6 @@ html:root:not(#_):not(#_) .sel-menu[data-state="closed"] { pointer-events: none;
 html:root:not(#_):not(#_) .sel-head { flex: none; padding: 10px 14px 6px; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
 html:root:not(#_):not(#_) .sel-list {
   position: relative; overflow-y: auto; overscroll-behavior: contain; padding: 4px; outline: none;
-  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
 html:root:not(#_):not(#_) .sel-group { padding: 10px 10px 4px; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
 html:root:not(#_):not(#_) .sel-group:not(:first-child) { margin-top: 4px; border-top: 1px solid var(--line); }

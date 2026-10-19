@@ -40,7 +40,7 @@ html:root:not(#_):not(#_) { --logo-mark: #D8F24A; --logo-word: #F2F4F1; }
   html:root:not(#_):not(#_) .side {
     height: 100vh; height: 100dvh; max-height: 100dvh;
     overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+    -webkit-overflow-scrolling: touch;
   }
   html:root:not(#_):not(#_) .side > * { flex-shrink: 0; }
 }

@@ -290,7 +290,7 @@ p { margin: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.75rem; color: var(--muted); }
 
 /* ---------- trade builder ---------- */
-.partner-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.partner-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .partner {
   flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
   padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); text-align: left;
