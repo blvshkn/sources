@@ -65,6 +65,8 @@ const FITS: Record<string, string[]> = {
   FLEX: ["RB", "WR", "TE"], WRRB_FLEX: ["RB", "WR"], REC_FLEX: ["WR", "TE"], SUPER_FLEX: ["QB", "RB", "WR", "TE"],
 };
 export const SLOT_NAME: Record<string, string> = { WRRB_FLEX: "FLEX", REC_FLEX: "FLEX", SUPER_FLEX: "SF" };
+/** Can a player at `pos` start in Sleeper slot `slot` (QB, FLEX, WRRB_FLEX, SUPER_FLEX, K, ...)? Shown names work too. */
+export const slotFits = (slot: string, pos: string) => (FITS[slot] ?? FITS[slot === "SF" ? "SUPER_FLEX" : slot] ?? [slot]).includes(pos);
 export function bestLineup(pool: WeekPlayer[], order: string[]) {
   const sorted = [...pool].sort((a, b) => (b.pts ?? -1) - (a.pts ?? -1));
   const used = new Set<string>();

@@ -1,0 +1,69 @@
+/* Lineup swaps (Roster.tsx with the shared SwapPicker.tsx): the swap menu under or above a lineup row, locked rows,
+   the Player info row, the what-if note and Use optimal lineup. Loads just before frame.css. Every rule is scoped to
+   .lu-list, .lu-pick, .lu-wi, .ss or .mu-swap children: nothing here styles bare .card, .btn or .row. */
+
+/* The menu's anchor sits right after its row with no height, so rows stay siblings and keep their dividers.
+   placeSwap (SwapPicker.tsx) puts the row's height on it as --sw-rowh for the "above" position. */
+html:root:not(#_):not(#_) .lu-list .lu-pick-at { position: relative; height: 0; z-index: 30; }
+html:root:not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick {
+  position: absolute; z-index: 30; top: -4px; bottom: auto; left: 62px; right: 12px; width: auto; margin: 0;
+  max-height: 360px; overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; border-radius: 14px; background: var(--surface-2); box-shadow: var(--shadow-md);
+}
+html:root:not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick.is-up { top: auto; bottom: calc(var(--sw-rowh, 68px) - 4px); transform-origin: bottom center; }
+@media (min-width: 900px) {
+  html:root:not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick { right: auto; width: min(440px, calc(100% - 74px)); }
+}
+/* The list card clips its corners; while a menu is open the menu may hang past the card's edge */
+html:root:not(#_):not(#_) .card.lu-list:has(.lu-pick-at) { overflow: visible; }
+/* The row after an open menu's anchor keeps its divider */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-pick-at + .lu-row { box-shadow: inset 0 1px 0 var(--line) !important; }
+/* The row whose menu is open stays filled while the menu is up */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-open { background-color: var(--surface-2) !important; }
+
+/* Locked rows (game started, final, week over, past weeks): no hover or press feedback, and a tap shows a lock badge
+   on the corner while the toast explains why. The row's dividers stay. No transform here beyond the press reset: the
+   shake is a Web Animation. */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-locked { cursor: default; }
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-locked:active { transform: none; }
+/* The badge sits on the avatar's bottom right corner (the avatar ends 118px from the row's left edge at every width,
+   and its bottom is 56px down), so it never covers the points */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row .lu-lockic {
+  position: absolute; left: 104px; top: 42px; width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--ink); box-shadow: 0 0 0 2px var(--bg), 0 2px 6px rgba(0,0,0,0.35);
+  opacity: 0; transform: scale(0.85); transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); pointer-events: none;
+}
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-locked[data-denied] .lu-lockic { opacity: 1; transform: none; }
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row .lu-lockic > svg { display: block; }
+
+/* Player info: the first row of a Lineup swap menu, 44px tall */
+html:root:not(#_):not(#_) .mu-swap > .sw-info {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; margin: 0 0 4px; padding: 0 10px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 0.875rem; font-weight: 600;
+  text-align: left; text-decoration: none; cursor: pointer; box-shadow: inset 0 -1px 0 var(--line);
+}
+html:root:not(#_):not(#_) .mu-swap > .sw-info > span { flex: 1; }
+html:root:not(#_):not(#_) .mu-swap > .sw-info > svg { color: var(--muted); flex: none; }
+@media (hover: hover) { html:root:not(#_):not(#_) .mu-swap > .sw-info:hover { background-color: var(--surface); } }
+html:root:not(#_):not(#_) .mu-swap > .sw-info:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; }
+
+/* A bench player's menu: the slot he'd take, then the starter now in it */
+html:root:not(#_):not(#_) .mu-opt .sw-at { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+/* The slot pill takes the headshot's place, so names keep their room on a phone */
+html:root:not(#_):not(#_) .mu-opt .sw-at .mu-p { grid-template-columns: minmax(0, 1fr); }
+html:root:not(#_):not(#_) .mu-opt .sw-at .mu-p > :not(.mu-n) { display: none; }
+html:root:not(#_):not(#_) .mu-opt .sw-slot { font-size: 0.6875rem; font-weight: 700; color: var(--muted); text-align: center; padding: 4px 0; border-radius: 6px; background: var(--surface-3); }
+
+/* The what-if note under the starters: text on one line, buttons under it, so swapping never changes its height */
+html:root:not(#_):not(#_) .lu-list .lu-wi { display: grid; gap: 8px; margin: 6px 16px 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .lu-list .lu-wi-txt { margin: 0; font-size: 0.8125rem; line-height: 1.35; color: var(--muted); min-height: 2.7em; }
+html:root:not(#_):not(#_) .lu-list .lu-wi-txt b { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .lu-list .lu-wi-txt b.lu-wi-up { color: var(--good); }
+html:root:not(#_):not(#_) .lu-list .lu-wi-txt b.lu-wi-down { color: var(--bad); }
+html:root:not(#_):not(#_) .lu-list .lu-wi-btns { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+html:root:not(#_):not(#_) .lu-list .lu-wi-btns > :is(a, button) { text-decoration: none; }
+
+/* Use optimal lineup, in the Start / Sit head where "Lineup set" shows. The head keeps one height either way. */
+html:root:not(#_):not(#_) .lu-list .ss .ss-head { min-height: 32px; gap: 8px; }
+html:root:not(#_):not(#_) .lu-list .ss .ss-best { gap: 6px; text-decoration: none; white-space: nowrap; }
+html:root:not(#_):not(#_) .lu-list .ss .ss-best .ss-best-gain { color: var(--good); font-size: inherit; font-variant-numeric: tabular-nums; }

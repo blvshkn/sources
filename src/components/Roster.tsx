@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { WeekView, loadWeek, peekWeek, order } from "../weeks";
-import { LineupWeek, useWeekMatch } from "../weekMatch";
+import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
+import { LineupWeek } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
-import { Live, useLive, onPace, matchNow, chanceTone, playCount, PlayCount as Counts } from "../live";
+import { Live, useLive, onPace, matchNow, chanceTone, playCount, expect, PlayCount as Counts } from "../live";
 import { playLabel, resultOf, scoreTone, flipTone, toneCls, type Result } from "../liveMath";
-import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
-import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { LEAGUE, OPPONENT_ID, PLAYERS, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
+import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -17,6 +17,9 @@ import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
+import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu } from "./SwapPicker";
+import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
+import { deny } from "../deny";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -177,14 +180,26 @@ function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
   return fallback ? <span className="lu-game">{fallback}</span> : null;
 }
 
-function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: string; bench?: boolean; swap?: { from: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live }) {
+/** What a tappable lineup row needs to open its swap menu (or deny when locked). */
+type RowTap = { onTap: (el: Element) => void; lock: boolean; expanded: boolean; label: string };
+/** Props that make a lineup row a button: a tap opens its swap menu, or shakes and says why when it's locked. */
+const tapProps = (t: RowTap) => ({
+  role: "button", tabIndex: 0, "aria-disabled": t.lock ? true : undefined, "aria-expanded": t.lock ? undefined : t.expanded, "aria-label": t.label,
+  onClick: (e: { currentTarget: Element }) => t.onTap(e.currentTarget),
+  onKeyDown: (e: { key: string; target: unknown; currentTarget: Element; preventDefault: () => void }) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); t.onTap(e.currentTarget); } },
+});
+const tapCls = (t?: RowTap) => (!t ? "" : t.lock ? " is-locked" : ` tap${t.expanded ? " is-open" : ""}`);
+const LockIc = ({ t }: { t?: RowTap }) => (t?.lock ? <span className="lu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span> : null);
+
+function LineupRow({ p, slot, bench, swap, onOpen, live, tap }: { p: Player; slot: string; bench?: boolean; swap?: { to: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live; tap?: RowTap }) {
   const st = statusWord(p);
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
+  const sheet = !tap && onOpen;
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${onOpen ? " tap" : ""}${playCls(g, onBye(p.nfl))}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
-      onClick={onOpen ? () => onOpen(p, where) : undefined}
-      onKeyDown={onOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } : undefined}>
+    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}`}
+      {...(tap ? tapProps(tap) : sheet ? { role: "button", tabIndex: 0, onClick: () => onOpen(p, where),
+        onKeyDown: (e: { key: string; preventDefault: () => void }) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } } : {})}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
@@ -196,20 +211,21 @@ function LineupRow({ p, slot, bench, swap, onOpen, live }: { p: Player; slot: st
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
-          <span>Sleeper has <b>{swap.from.name}</b>{onBye(swap.from.nfl) ? " (bye)" : isOut(swap.from, true) ? " (out)" : ""} here. Swap for <b className="good">+{swap.gain.toFixed(1)}</b>.</span>
+          <span>Start <b>{swap.to.name}</b> here instead{onBye(p.nfl) ? ` (${p.name} is on bye)` : isOut(p, true) ? ` (${p.name} is out)` : ""} for <b className="good">+{swap.gain.toFixed(1)}</b>.</span>
         </span>
       )}
+      <LockIc t={tap} />
     </div>
   );
 }
 
 /** Kicker or defense row. Same layout as a skill player. */
-function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot: string; bench?: boolean; swapFrom?: SpecialPlayer; live?: Live }) {
+function SpecialRow({ p, slot, bench, swapTo, live, tap }: { p: SpecialPlayer; slot: string; bench?: boolean; swapTo?: SpecialPlayer; live?: Live; tap?: RowTap }) {
   const bye = p.wk === null;
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swapFrom ? " has-swap" : ""}${playCls(g, bye)}`}>
+    <div className={`lu-row${bench ? " bench" : ""}${swapTo ? " has-swap" : ""}${tapCls(tap)}${playCls(g, bye)}`} {...(tap ? tapProps(tap) : {})}>
       <span className={`lu-slot s-${slot}`}>{slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
@@ -217,21 +233,51 @@ function SpecialRow({ p, slot, bench, swapFrom, live }: { p: SpecialPlayer; slot
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
       </span>
       {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
-      {swapFrom && (
+      {swapTo && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
-          <span>Sleeper has <b>{swapFrom.name}</b>{swapFrom.wk === null ? " (bye)" : ""} here. Swap for <b className="good">+{(specialPts(p) - specialPts(swapFrom)).toFixed(1)}</b>.</span>
+          <span>Start <b>{swapTo.name}</b> here instead{bye ? ` (${p.name} is on bye)` : ""} for <b className="good">+{(specialPts(swapTo) - specialPts(p)).toFixed(1)}</b>.</span>
         </span>
       )}
+      <LockIc t={tap} />
     </div>
   );
 }
 
-/** Any other week: past weeks show what you started and the stat lines, future weeks show projections. */
-function WeekPanel({ v }: { v: WeekView }) {
+type SwapMenu = ReturnType<typeof useSwapMenu<string>>;
+/** A slot pill in front of the player a bench player would replace, in a bench row's swap menu. */
+const SlotAt = ({ slot, children }: { slot: string; children: ReactNode }) => <span className="sw-at"><b className="sw-slot">{slot}</b>{children}</span>;
+/** The menu sits in a zero-height anchor right after its row, so rows stay siblings and keep their dividers. */
+const PickAt = ({ children }: { children: ReactNode }) => <div className="lu-pick-at" data-swap-row="prev">{children}</div>;
+
+/** Under the starters: swaps here are a what-if (Sources can't write to Sleeper), with the way back and the way there. */
+function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { changed: boolean; delta: number; locked: boolean; base: string; resetLabel: string; onReset: (el: Element) => void }) {
+  return (
+    <div className="lu-wi">
+      <p className="lu-wi-txt">{changed ? <><b>What-if lineup</b> <b className={delta >= 0 ? "lu-wi-up" : "lu-wi-down"}>{fmt(delta)} pts</b> vs {base}. Make the swap in Sleeper to lock it in.</>
+        : locked ? "Lineups are locked for this week." : "Tap a player to try a swap. Swaps here are a what-if, so make them in Sleeper too."}</p>
+      <div className="lu-wi-btns">
+        {changed && <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => onReset(e.currentTarget)}>{resetLabel}</button>}
+        <a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
+      </div>
+    </div>
+  );
+}
+
+/** Any other week: past weeks show what you started and the stat lines (locked: a tap shakes and says why), future
+ *  weeks show projections and take swaps, shared with that week's full matchup (lineupWhatIf). */
+function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (p: Player, where: string) => void }) {
+  const { m, raw, wi } = useWeekWhatIf(v.week);
   if (v.empty) return <p className="small muted" style={{ padding: "4px 16px 18px" }}>{v.empty}</p>;
-  const row = (p: WeekView["bench"][number], slot: string, bench?: boolean) => (
-    <div key={`${slot}-${p.id}`} className={`lu-row${bench ? " bench" : ""}`}>
+  const past = v.kind === "past", future = !past && m?.kind === "future";
+  const starters = future ? wi.starters : v.starters, bench = future ? wi.bench : v.bench;
+  const { open, setOpen, menuRef } = menu;
+  const tapFor = (key: string, label: string): RowTap | undefined => past
+    ? { onTap: (el) => deny(el, `Week ${v.week} is over. Lineups can't change.`), lock: true, expanded: false, label: `${label}, locked` }
+    : future ? { onTap: (el) => setOpen(open === key ? null : key, el), lock: false, expanded: open === key, label } : undefined;
+  const infoFor = (p: WeekPlayer, where: string) => (PLAYERS[p.id] ? { name: p.name, onOpen: () => { setOpen(null); onInfo(playerById(p.id), where); } } : undefined);
+  const row = (p: WeekView["bench"][number], slot: string, tap: RowTap | undefined, bench?: boolean) => (
+    <div key={`${slot}-${p.id}`} className={`lu-row${bench ? " bench" : ""}${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
       <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
       <span className="lu-who">
@@ -240,15 +286,43 @@ function WeekPanel({ v }: { v: WeekView }) {
         {v.kind === "past" && (p.line && p.pts !== null ? <span className="lu-line">{p.line}</span> : <span className="lu-line" aria-hidden="true">&nbsp;</span>)}
       </span>
       {p.pts === null ? <span className="lu-pts bye">BYE</span> : <span className={`lu-pts${v.kind === "past" ? " actual" : ""}`}>{p.pts.toFixed(1)}</span>}
+      <LockIc t={tap} />
     </div>
   );
   return (
     <>
       {/* No summary box: the team strip above already shows the week's final or projected score */}
       <div className="lu-list-head"><b>{v.kind === "past" ? "Started" : "Starters"}</b><span className="tiny muted">{v.kind === "past" ? "Pts" : "Proj"}</span></div>
-      {v.starters.map((x, i) => x.p ? row(x.p, x.slot) : <div key={`e${i}`} className="lu-row"><span className={`lu-slot s-${x.slot}`}>{SLOT_LABEL[x.slot] ?? x.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /></div>)}
-      <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{v.bench.length} players</span></div>
-      {v.bench.map((p) => row(p, "BN", true))}
+      {starters.map((x, i) => {
+        const key = `f${i}`, label = SLOT_LABEL[x.slot] ?? x.slot;
+        const tap = tapFor(key, x.p ? (past ? `${x.p.name} at ${label}` : `Swap ${x.p.name} at ${label}`) : `Empty ${label} slot`);
+        const options: SwapOption[] = !future ? [] : bench.filter((b) => wi.fitsAt(i, b.pos)).map((b) => {
+          const d = (b.pts ?? 0) - (x.p?.pts ?? 0);
+          return { key: b.id, who: <WeekWho p={b} side="you" week={v.week} />, name: b.name, pts: b.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, onPick: (from) => { wi.swap(i, b.id); setOpen(null, from); } };
+        });
+        return (
+          <Fragment key={`s${i}`}>
+            {x.p ? row(x.p, x.slot, tap) : <div className={`lu-row${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
+            {open === key && future && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={x.p ? infoFor(x.p, `Starting at ${label} in Week ${v.week}`) : undefined} /></PickAt>}
+          </Fragment>
+        );
+      })}
+      {future && m && raw && <LuWhatIf changed={wi.changed} delta={round1(m.me.total - raw.me.total)} locked={false} base="your best projected lineup" resetLabel="Reset" onReset={(el) => { wi.reset(); setOpen(null, el); }} />}
+      <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{bench.length} players</span></div>
+      {bench.map((p) => {
+        const key = `fb${p.id}`;
+        const tap = tapFor(key, past ? `${p.name} on the bench` : `Start ${p.name}`);
+        const options: SwapOption[] = !future ? [] : starters.map((x, i) => ({ x, i })).filter(({ i }) => wi.fitsAt(i, p.pos)).map(({ x, i }) => {
+          const label = SLOT_LABEL[x.slot] ?? x.slot, d = (p.pts ?? 0) - (x.p?.pts ?? 0);
+          return { key: `${i}`, who: <SlotAt slot={label}><WeekWho p={x.p} side="you" week={v.week} /></SlotAt>, name: `${label}, ${x.p?.name ?? "empty"}`, pts: x.p?.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, onPick: (from) => { wi.swap(i, p.id); setOpen(null, from); } };
+        });
+        return (
+          <Fragment key={p.id}>
+            {row(p, "BN", tap, true)}
+            {open === key && future && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={infoFor(p, `On your bench in Week ${v.week}`)} /></PickAt>}
+          </Fragment>
+        );
+      })}
     </>
   );
 }
@@ -417,7 +491,8 @@ function StripFoot({ week, res, chance, live, tip, msg }: { week: number; res?: 
 /** The team strip for any week but this one: a past week's final and the result, or a future week's projected
  *  totals and win chance. Loading and empty weeks keep the same rows so nothing below moves. */
 function WeekStrip({ week }: { week: number }) {
-  const { m, err } = useWeekMatch(week);
+  // A week ahead follows the shared what-if, so a swap on Lineup moves the total and win % here right away
+  const { m, err, wi } = useWeekWhatIf(week);
   const myTotal = m?.me.total ?? peekWeek(week)?.total;
   if (!m) return (
     <section className={`mw mwf${err ? "" : " is-skel"}`} aria-label={err ?? `Loading Week ${week}`} aria-busy={!err}>
@@ -436,7 +511,7 @@ function WeekStrip({ week }: { week: number }) {
     + (res ? `Final, ${res.long}` : past ? `Final ${m.me.total.toFixed(1)}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
   return (
     <section className="mw mwf" aria-label={label}>
-      <Side t={YOU} pts={m.me.total} note={past ? undefined : "projected"} dim={wkTone === "trail"} />
+      <Side t={YOU} pts={m.me.total} note={past ? undefined : wi.changed ? "what-if" : "projected"} dim={wkTone === "trail"} />
       <Side t={opp?.team ?? null} pts={opp ? opp.total : null} note={opp && !past ? "projected" : undefined} dim={wkTone === "lead"} empty={{ title: m.empty?.title ?? "No matchup", body: m.empty?.body }} />
       <StripFoot week={week} res={res} chance={opp && !past ? chance : null} tip="Win chance from both projected lineups for that week, the same model as this week's." />
     </section>
@@ -449,8 +524,10 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
   const nowLive = Object.values(live.games).some((x) => x === "in_game");
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  // Sleeper's set lineups, K/DEF included, scored the way the Wire card and full matchup score them (live.matchNow)
-  const ms = matchNow(live);
+  // Sleeper's set lineups, K/DEF included, scored the way the Wire card and full matchup score them (live.matchNow).
+  // On Lineup (mineOnly) your side is the shared what-if once you've swapped (lineupWhatIf), like the full matchup.
+  const wi = useNowLineup();
+  const ms = mineOnly ? nowScore(live, wi.mine, wi.mineK, wi.changed) : matchNow(live);
   const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
   const myTotal = ms.me.proj, oppTotal = ms.opp ? ms.opp.proj : null;
@@ -463,7 +540,7 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
     const myPts = inPlay ? myNow! : myTotal, oppPts = opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null;
     return (
       <section className="mw mwf" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`}>
-        <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"} dim={myTone === "trail"} />
+        <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `${wi.changed ? "what-if" : "proj"} ${myTotal.toFixed(1)}` : wi.changed ? "what-if" : "projected"} dim={myTone === "trail"} />
         <Side t={opp} pts={oppPts} live={inPlay} note={res || !opp ? undefined : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected"} dim={myTone === "lead"} empty={{ title: "No matchup", body: `You don't play anyone in Week ${WEEK}.` }} />
         <StripFoot week={WEEK} res={opp ? res : null} chance={opp && !res ? chance : null} live={inPlay && nowLive} msg="Bye week" />
       </section>
@@ -573,14 +650,42 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     loadWeek(week).then((v) => live && setWv(v)).catch(() => live && setWErr("Couldn't load that week from Sleeper. Try again in a minute."));
     return () => { live = false; };
   }, [week]);
-  // A K/DEF swap is needed when Sleeper starts someone at that slot who isn't our pick
-  const specialSwap = (p: SpecialPlayer) => {
-    const setIds = LEAGUE.sleeperSpecial ?? [];
-    if (!setIds.length || setIds.includes(p.id)) return undefined;
-    const from = setIds.map((id) => LEAGUE.specials?.[id]).find((x) => x && x.pos === p.pos);
-    return from && specialPts(p) - specialPts(from) >= 0.5 ? from : undefined;
+  // The lineup shown this week is the shared what-if (lineupWhatIf): Sleeper's until you swap, here or in the matchup
+  const now = useNowLineup();
+  const ms = nowScore(live, now.mine, now.mineK, now.changed);
+  const pastWeek = !!live.past || !!ms.result;
+  const { starterLock, candidateLock } = lockRules(live, pastWeek);
+  // Use optimal lineup: the best skill lineup that leaves locked players where they are, skill players compared to
+  // skill players. The same helper as the matchup's Use best lineup, so the two never disagree.
+  const lockedId = (id: string) => pastWeek || !!lockOf(live, playerById(id));
+  const best = bestNow(live, now.mine, lockedId);
+  // Start / Sit: the moves from your Sleeper lineup to the optimal one you can still set, from the same helper, so the
+  // card, the row hints and the button agree (a player whose game started is never suggested)
+  const optIds = bestUnderLocks(now.base.mine, lockedId).map((x) => x.id).filter((id): id is string => !!id);
+  const baseIds = now.base.mine.map((x) => x.id).filter((id): id is string => !!id);
+  const sits = baseIds.filter((id) => !optIds.includes(id)).map(playerById);
+  const moves = optIds.filter((id) => !baseIds.includes(id)).map(playerById).map((p, i) => ({ start: p, benched: sits[i], gain: round1(eff(p, true) - (sits[i] ? eff(sits[i], true) : 0)) })).filter((d) => !!d.benched);
+  const allLocked = pastWeek || (now.mine.every((x) => !!starterLock(x.id ? playerById(x.id) : null)) && now.mineK.every((p) => !!starterLock(p)));
+  const menu = useSwapMenu<string>();
+  const { open, setOpen, menuRef } = menu;
+  // Switching weeks or tabs closes any open menu, holding the scroll where it is
+  useEffect(() => { if (open !== null) setOpen(null); }, [week, view]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shownIds = now.mine.map((x) => x.id);
+  const benchNow = YOU.roster.filter((id) => !shownIds.includes(id)).map(playerById).sort((a, b) => eff(b, true) - eff(a, true));
+  const benchK = (YOU.special ?? []).map((id) => LEAGUE.specials?.[id]).filter((p): p is SpecialPlayer => !!p && !now.mineK.some((x) => x?.id === p.id)).sort((a, b) => spPts(live, b) - spPts(live, a));
+  const tapFor = (key: string, lock: string | null, label: string): RowTap => ({
+    lock: !!lock, expanded: open === key, label: lock ? `${label}, locked` : label,
+    onTap: (el) => { if (lock) { if (open !== null) setOpen(null, el); deny(el, lock); } else setOpen(open === key ? null : key, el); },
+  });
+  const pick = (fn: () => void) => (from: Element) => { fn(); setOpen(null, from); };
+  const info = (p: Player, where: string) => ({ name: p.name, onOpen: () => { setOpen(null); openPlayer(p, where); } });
+  const lbl = (slot: string) => SLOT_LABEL[slot] ?? slot;
+  // A starter Sleeper has where the optimal lineup starts someone else: the row says who, until he's in
+  const hintFor = (id: string) => { const d = moves.find((x) => x.benched.id === id && !shownIds.includes(x.start.id)); return d ? { to: d.start, gain: d.gain } : undefined; };
+  const kHint = (p: SpecialPlayer, slot: string) => {
+    const b = kdef.slots.find((x) => x.slot === slot)?.player;
+    return b && b.id !== p.id && !now.mineK.some((x) => x?.id === b.id) && specialPts(b) - specialPts(p) >= 0.5 ? b : undefined;
   };
-  const swapFor = (id: string) => { const d = diff.find((x) => x.start.id === id); return d ? { from: d.benched, gain: d.gain } : undefined; };
 
   return (
     <>
@@ -600,33 +705,86 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           {(
             <section className="card lu-list" aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
-              {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : (wv?.week === week ? wv : peekWeek(week)) ? <WeekPanel v={(wv?.week === week ? wv : peekWeek(week))!} /> : <WeekSkel week={week} />) : <>
-              <div className={`ss${diff.length ? "" : " ok"}`} aria-label="Start and sit">
+              {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : (wv?.week === week ? wv : peekWeek(week)) ? <WeekPanel v={(wv?.week === week ? wv : peekWeek(week))!} menu={menu} onInfo={openPlayer} /> : <WeekSkel week={week} />) : <>
+              <div className={`ss${moves.length ? "" : " ok"}`} aria-label="Start and sit">
                 <div className="ss-head">
                   <b>Start / Sit</b>
-                  {diff.length > 0
-                    ? <span className="ss-gain">{fmt(diff.reduce((a, d) => a + d.gain, 0))} pts</span>
+                  {!allLocked && best.gain > 0
+                    ? <button className="btn btn-sm ss-best" onClick={(e: { currentTarget: Element }) => { now.setMine(best.slots); setOpen(null, e.currentTarget); }}>Use optimal lineup <b className="ss-best-gain">{fmt(best.gain)}</b></button>
                     : <span className="ss-ok"><Icon name="check" size={14} />Lineup set</span>}
                 </div>
-                {diff.length > 0 ? <>
-                  {diff.map((d) => (
+                {moves.length > 0 ? <>
+                  {moves.map((d) => (
                     <div key={d.start.id} className="ss-move">
                       <div className="ss-p start"><span className="ss-tag">Start</span><Avatar p={d.start} size={32} /><span className="ss-n"><b>{d.start.name}</b><small>{d.start.pos} · {d.start.nfl}</small></span><span className="ss-pts">{eff(d.start, true).toFixed(1)}</span></div>
                       <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></div>
                     </div>
                   ))}
-                  <div className="ss-foot"><span>Make the {diff.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
+                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
-              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">Optimal lineup this week{diff.length ? ". Highlighted rows need a swap in Sleeper." : ". Matches Sleeper."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
-              {started && <div className="lu-play"><PlayCount c={playCount(live, [...s.map((x) => x.player.nfl), ...kdef.slots.map((x) => x.player?.nfl)])} /></div>}
-              {s.map((x) => <LineupRow key={x.player.id} p={x.player} slot={x.slot} swap={swapFor(x.player.id)} onOpen={openPlayer} live={live} />)}
-              {kdef.slots.map((x, i) => x.player
-                ? <SpecialRow key={x.player.id} p={x.player} slot={x.slot} swapFrom={specialSwap(x.player)} live={live} />
-                : <div key={`empty-${x.slot}-${i}`} className="lu-row"><span className={`lu-slot s-${x.slot}`}>{x.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span><span className="lu-meta">Pick up a {x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.</span></span><span /></div>)}
-              <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length + kdef.bench.length} players</span></div>
-              {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench onOpen={openPlayer} live={live} />)}
-              {kdef.bench.map((p) => <SpecialRow key={p.id} p={p} slot="BN" bench live={live} />)}
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
+              {started && <div className="lu-play"><PlayCount c={playCount(live, [...now.mine.map((x) => (x.id ? playerById(x.id).nfl : undefined)), ...now.mineK.map((p) => p?.nfl)])} /></div>}
+              {now.mine.map((x, i) => {
+                const p = x.id ? playerById(x.id) : null, key = `s${i}`, label = lbl(x.slot);
+                const tap = tapFor(key, starterLock(p), p ? `Swap ${p.name} at ${label}` : `Fill the empty ${label} slot`);
+                const options: SwapOption[] = benchNow.filter((b) => fits(x.slot, b.pos)).map((b) => {
+                  const d = eff(b, true) - expect(live, x.id);
+                  return { key: b.id, who: <Who p={b} side="you" />, name: b.name, pts: eff(b, true), delta: round1(d), up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMine((cur) => swapInto(cur, i, b.id))) };
+                });
+                return (
+                  <Fragment key={key}>
+                    {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} />
+                      : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
+                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={p ? info(p, `Starting at ${label}`) : undefined} /></PickAt>}
+                  </Fragment>
+                );
+              })}
+              {now.base.k.map((sk, i) => {
+                const p = now.mineK[i] ?? null, key = `k${i}`;
+                if (!p) return <div key={`empty-${sk.slot}-${i}`} className="lu-row"><span className={`lu-slot s-${sk.slot}`}>{sk.slot}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span><span className="lu-meta">Pick up a {sk.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.</span></span><span /></div>;
+                const tap = tapFor(key, starterLock(p), `Swap ${p.name} at ${sk.slot}`);
+                const options: SwapOption[] = benchK.filter((b) => b.pos === sk.slot).map((b) => {
+                  const d = round1(spPts(live, b) - spPts(live, p));
+                  return { key: b.id, who: <SpecialWho p={b} side="you" />, name: b.name, pts: spPts(live, b), delta: d, up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMineK((cur) => cur.map((y, j) => (j === i ? b : y)))) };
+                });
+                return (
+                  <Fragment key={key}>
+                    <SpecialRow p={p} slot={sk.slot} swapTo={kHint(p, sk.slot)} live={live} tap={tap} />
+                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${sk.slot}`} empty={`No other ${sk.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} /></PickAt>}
+                  </Fragment>
+                );
+              })}
+              <LuWhatIf changed={now.changed} delta={round1(ms.me.proj - matchNow(live).me.proj)} locked={allLocked} base="your Sleeper lineup" resetLabel="Reset to Sleeper" onReset={(el) => { now.reset(); setOpen(null, el); }} />
+              <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{benchNow.length + benchK.length} players</span></div>
+              {benchNow.map((p) => {
+                const key = `b${p.id}`;
+                const tap = tapFor(key, candidateLock(p), `Start ${p.name}`);
+                const options: SwapOption[] = now.mine.map((x, i) => ({ x, i })).filter(({ x }) => fits(x.slot, p.pos)).map(({ x, i }) => {
+                  const cur = x.id ? playerById(x.id) : null, label = lbl(x.slot), d = eff(p, true) - expect(live, x.id);
+                  return { key: `${i}`, who: <SlotAt slot={label}><Who p={cur} side="you" /></SlotAt>, name: `${label}, ${cur?.name ?? "empty"}`, pts: cur ? expect(live, cur.id) : 0, delta: round1(d), up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMine((c) => swapInto(c, i, p.id))) };
+                });
+                return (
+                  <Fragment key={key}>
+                    <LineupRow p={p} slot="BN" bench live={live} tap={tap} />
+                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={info(p, "On your bench")} /></PickAt>}
+                  </Fragment>
+                );
+              })}
+              {benchK.map((p) => {
+                const key = `bk${p.id}`;
+                const tap = tapFor(key, candidateLock(p), `Start ${p.name}`);
+                const options: SwapOption[] = now.base.k.map((sk, i) => ({ sk, i })).filter(({ sk }) => sk.slot === p.pos).map(({ sk, i }) => {
+                  const cur = now.mineK[i] ?? null, d = round1(spPts(live, p) - spPts(live, cur));
+                  return { key: `${i}`, who: <SlotAt slot={sk.slot}><SpecialWho p={cur} side="you" /></SlotAt>, name: `${sk.slot}, ${cur?.name ?? "empty"}`, pts: spPts(live, cur), delta: d, up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMineK((c) => c.map((y, j) => (j === i ? p : y)))) };
+                });
+                return (
+                  <Fragment key={key}>
+                    <SpecialRow p={p} slot="BN" bench live={live} tap={tap} />
+                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`No ${p.pos} slot to start ${p.name} in.`} options={options} /></PickAt>}
+                  </Fragment>
+                );
+              })}
               <IrBlock onOpen={openPlayer} />
               </>}
             </section>

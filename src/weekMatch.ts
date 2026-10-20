@@ -59,6 +59,13 @@ function finish(week: number, mine: WeekView, opp: MatchSide | null, posted: boo
   return { week, kind, me, opp, chance };
 }
 
+/** The same week with your starters swapped for a what-if lineup: your total and a future week's win chance follow. */
+export function withMine(m: WeekMatch, starters: Slot[]): WeekMatch {
+  const me: MatchSide = { ...m.me, starters, total: sum(starters) };
+  const chance = m.kind === "future" && m.opp ? Math.round(winChance(scoredSide(starters), scoredSide(m.opp.starters))) : m.chance;
+  return { ...m, me, chance };
+}
+
 function demoMatch(week: number): WeekMatch {
   const week0 = peekWeek(week)!;
   const id = demoOppId(week), t = id ? teamOf(id) : undefined;
