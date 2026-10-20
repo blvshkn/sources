@@ -36,7 +36,7 @@ export function TeamLines({ t, match, extra }: { t: Team; match?: TeamHit["match
 /** The search field at the top of a team list. */
 export function TeamSearchField({ q, setQ, onKey, input, label, wrap }: {
   q: string; setQ: (q: string) => void; onKey: (e: { key: string; preventDefault(): void; stopPropagation(): void }) => void;
-  input: RefObject<HTMLInputElement | null>; label: string; wrap?: RefObject<HTMLLabelElement | null>;
+  input: RefObject<HTMLInputElement>; label: string; wrap?: RefObject<HTMLLabelElement>;
 }) {
   return (
     <label className="tp-search" ref={wrap}>
