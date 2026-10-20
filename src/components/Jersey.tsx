@@ -1,6 +1,8 @@
 // A front-view football jersey in any team's colorway and trim. Pure SVG: the number is live text,
 // so it stays selectable and changes with the `number` prop. Stripes, panels and signature patterns
 // are drawn from jerseys.ts; no logos, names or maker marks.
+// Collar: plain (body color with seams), solid (one color band) or striped (a band with stripes
+// parallel to its edge), each with its own band width and V depth, and an optional notch at the point.
 // Rendering: lit like a 3D cloth render, all in SVG. A fine hex mesh and turbulence grain sit under the
 // trim and number, then a key light (angle set by `light`), a rim light opposite it, cloth folds, a hem
 // vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
@@ -10,7 +12,7 @@
 // stylesheet link in index.html. Each face is sized to the same cap height so every team's number
 // fills the chest the same way.
 import { useId } from "react";
-import { colorway, numberStyle, trimFor, type Band, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
+import { colorway, numberStyle, trimFor, type Band, type Collar, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
 
 export interface JerseyProps {
   /** NFL abbreviation, e.g. "BUF" */
@@ -70,19 +72,47 @@ const BODY = `${LEFT} Q 300 696 ${VW - 98} 684 ${rightHalfReversed(LEFT)} Z`;
 
 // Cuff band, sitting just inside the arched sleeve opening.
 const CUFF_L = "M 18 190 C 50 178 98 190 126 232 L 131 212 C 104 166 46 152 8 166 Z";
-// Collar band: the shoulders carry the outer stripe, the V front carries the inner stripe with two
-// thin pinstripes, and the back of the neck shows through the opening.
-const OUT: Pt[] = [[184, 4], [300, 110], [416, 4]];
-const INN: Pt[] = [[212, 0], [300, 82], [388, 0]];
-const BAND = `M ${OUT.map((p) => p.join(" ")).join(" L ")} L ${[...INN].reverse().map((p) => p.join(" ")).join(" L ")} Z`;
-const SHOULDER_L = "M 184 4 L 230 46 L 248.5 34 L 212 0 Z";
 const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-const pin = (t: number) => {
-  const a = lerp([230, 46], [248.5, 34], t);
-  const v = lerp([300, 110], [300, 82], t);
-  return `M ${a.join(" ")} L ${v.join(" ")} L ${mx(a).join(" ")}`;
-};
-const NECK = `M ${INN.map((p) => p.join(" ")).join(" L ")} Z`;
+
+// Collar: a V band from the shoulder corners (184 and 416 at the top edge) down to a point at `depth`,
+// `w` thick measured straight up at the point. Every line inside the band runs parallel to its outer
+// edge, so stripes keep an even width down both arms. The back of the neck shows through the opening.
+const COLLAR_W = 26;
+const COLLAR_DEPTH = 110;
+function collarGeo(depth: number, w: number) {
+  const k = 116 / (depth - 4); // x run per unit of y along the outer arm
+  /** The V line `o` px up from the outer edge (at the point), run well past the top edge. */
+  const vAt = (o: number): [Pt, Pt, Pt] => {
+    const py = depth - o;
+    return [[300 - k * (py + 20), -20], [300, py], [300 + k * (py + 20), -20]];
+  };
+  const xi = 300 - k * (depth - w);
+  const band = `M 184 4 L 300 ${depth} L 416 4 L ${VW - xi} 0 L 300 ${depth - w} L ${xi} 0 Z`;
+  /** A strip between offsets a and b from the outer edge, clipped to the band when drawn. */
+  const strip = (a: number, b: number) => {
+    const A = vAt(a);
+    const B = vAt(b);
+    return `M ${[...A, ...[...B].reverse()].map(f).join(" L ")} Z`;
+  };
+  const len = Math.hypot(116, depth - 4);
+  const mid: Pt = [242, (4 + depth) / 2];
+  const across: [Pt, Pt] = [mid, add(mid, [(depth - 4) / len, -116 / len], (w * 116) / len)];
+  return {
+    band,
+    strip,
+    neck: `M ${xi} 0 L 300 ${depth - w} L ${VW - xi} 0 Z`,
+    arm: `M 184 4 L 300 ${depth} L 300 ${depth - w} L ${xi} 0 Z`,
+    across,
+    outer: `M 184 4 L 300 ${depth} L 416 4`,
+    inner: `M ${xi} 0 L 300 ${depth - w} L ${VW - xi} 0`,
+    /** A short slit cut up into the point of the V. */
+    notch: (() => {
+      const s = Math.min(11, w * 0.45);
+      const dl: Pt = [-116 / len, -(depth - 4) / len];
+      return `M ${f(add([300, depth], dl, s))} L 300 ${(depth - w * 0.62).toFixed(1)} L ${f(add([300, depth], [-dl[0], dl[1]], s))} L 300 ${depth + 1} Z`;
+    })(),
+  };
+}
 // Seams: raglan from collar to sleeve, a sleeve seam, the side panel curve and the lower front arc.
 const RAGLAN_L = "M 222 50 C 190 92 152 140 120 196";
 const SLEEVE_L = "M 22 60 C 32 98 36 132 38 170";
@@ -138,10 +168,6 @@ const CURL_L = "M 214 76 C 150 66 74 62 34 90 C 18 102 12 124 14 152 C 24 126 32
 
 // Lighting geometry.
 const CENTER: Pt = [300, 345];
-// Collar arms for the satin overlay, and the gradient line across each arm from outer to inner edge.
-const ARM_L = "M 184 4 L 300 110 L 300 82 L 212 0 Z";
-const ARM_ACROSS_L: [Pt, Pt] = [[242, 57], [256.7, 40.9]];
-const COLLAR_V = "M 184 4 L 300 110 L 416 4";
 // Cloth folds, left side: diagonal drape from the armpit toward the waist as shadow and highlight pairs.
 const FOLDS_L = {
   shadow: [taper([136, 244], [232, 478], 26, 10), taper([132, 300], [186, 430], 16, 6), taper([170, 150], [210, 250], 12, -4)],
@@ -224,6 +250,9 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
   const seam = shade(c.body);
   const panelSeam = shade(c.panel);
   const edge = shade(c.body, 0.28);
+  const col: Collar = c.collar;
+  const cw = col.w ?? COLLAR_W;
+  const cg = collarGeo(col.depth ?? COLLAR_DEPTH, cw);
   // Chest number sits high on the chest. One digit stands tall; two digits come down a touch with a little
   // tracking so the outlines meet without the fills touching. Every face is sized to Teko's cap height
   // (0.656 em at 300 and 258 px), held to a width that keeps clear of the sleeves and trim.
@@ -306,6 +335,9 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
         <clipPath id={`${id}-b`}>
           <path d={BODY} />
         </clipPath>
+        <clipPath id={`${id}-cb`}>
+          <path d={cg.band} />
+        </clipPath>
         <clipPath id={`${id}-s`}>
           <path d={SLEEVE_ZONE_L} />
         </clipPath>
@@ -352,8 +384,8 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
         </radialGradient>
         {/* Satin collar: dark falloff at both edges with a sharp specular band */}
         {[1, -1].map((side) => {
-          const [p, q] = side > 0 ? ARM_ACROSS_L : ARM_ACROSS_L.map(mx);
-          const spec = Math.min(0.8, satin(side));
+          const [p, q] = side > 0 ? cg.across : cg.across.map(mx);
+          const spec = Math.min(col.style === "plain" ? 0.3 : 0.8, satin(side));
           return (
             <linearGradient key={side} id={`${id}-c${side > 0 ? "l" : "r"}`} gradientUnits="userSpaceOnUse" x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]}>
               <stop offset="0" stopColor="#000" stopOpacity="0.28" />
@@ -417,26 +449,39 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           <path d={BELLY} stroke={seam} />
         </g>
         {/* Contact shadow under the collar */}
-        <path d={COLLAR_V} transform="translate(0 7)" fill="none" stroke="#000" strokeOpacity={L > 0.6 ? 0.22 : 0.45} strokeWidth="12" filter={rich ? u("cs") : undefined} />
+        <path d={cg.outer} transform="translate(0 7)" fill="none" stroke="#000" strokeOpacity={L > 0.6 ? 0.22 : 0.45} strokeWidth="12" filter={rich ? u("cs") : undefined} />
       </g>
 
       {/* Cuffs */}
       <path d={CUFF_L} fill={c.cuff} />
       <path d={mirror(CUFF_L)} fill={c.cuff} />
 
-      {/* V-neck: outer stripe, inner stripe, back of the neck, then the satin sheen */}
-      <path d={NECK} fill={shade(c.body, 0.05)} />
-      <path d={NECK} fill={u("n")} />
-      <path d={BAND} fill={c.collar2} />
-      <path d={SHOULDER_L} fill={c.collar1} />
-      <path d={mirror(SHOULDER_L)} fill={c.collar1} />
-      <g fill="none" stroke={c.collar1} strokeWidth="2" strokeOpacity="0.75" strokeLinejoin="miter">
-        <path d={pin(0.36)} />
-        <path d={pin(0.68)} />
-      </g>
-      <path d={ARM_L} fill={u("cl")} />
-      <path d={mirror(ARM_L)} fill={u("cr")} />
-      <path d={BAND} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
+      {/* V-neck: back of the neck, the band (plain, solid or striped), an optional notch, then the satin sheen */}
+      <path d={cg.neck} fill={shade(c.body, 0.05)} />
+      <path d={cg.neck} fill={u("n")} />
+      <path d={cg.band} fill={col.style === "plain" ? c.body : col.c} />
+      {col.style === "striped" && (
+        <g clipPath={u("cb")}>
+          {(() => {
+            let o = 0;
+            return col.s.map(([color, w], i) => {
+              const a = o;
+              o += w;
+              return color ? <path key={i} d={cg.strip(a, o)} fill={color} /> : null;
+            });
+          })()}
+        </g>
+      )}
+      {col.style === "plain" && (
+        <g fill="none" stroke={seam} strokeWidth="2.2" strokeLinejoin="miter">
+          <path d={cg.outer} />
+          <path d={cg.inner} />
+        </g>
+      )}
+      {col.style !== "plain" && col.notch && <path d={cg.notch} fill={c.body} />}
+      <path d={cg.arm} fill={u("cl")} />
+      <path d={mirror(cg.arm)} fill={u("cr")} />
+      <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
 
       {/* Chest number */}
       {num({ x: 300, y: numY, size: fs, strokeW: stroke })}
