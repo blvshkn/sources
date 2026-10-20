@@ -5,7 +5,8 @@
 // Collar: plain (body color with seams), solid (one color band) or striped (a band with stripes
 // parallel to its edge), each with its own band width and V depth, and an optional notch at the point.
 // Shoulder trim: sleeve stripes run around the sleeve parallel to the cuff; bars are straight stripes that
-// run over the shoulder (yoke stripes, shoulder bands).
+// run over the shoulder (yoke stripes, shoulder bands); taper stripes run along the cuff and narrow to a
+// point toward the chest; the raglan band can taper and carry its edge on the chest side only.
 // Rendering: lit like a 3D cloth render, all in SVG. A fine hex mesh and turbulence grain sit under the
 // trim and number, then a key light (angle set by `light`), a rim light opposite it, cloth folds, a hem
 // vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
@@ -17,7 +18,7 @@
 // whatever the digit shape.
 // Collar: flat knit trim. Only a faint sheen and a soft contact shadow, no tube-like shading.
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type PatternId, type Trim } from "../jerseys";
+import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type PatternId, type TaperStripe, type Trim } from "../jerseys";
 import { numberPath, numberText, teamNumerals, type NumberText } from "../numerals";
 
 export interface JerseyProps {
@@ -143,10 +144,9 @@ const TIGER_L = [
 // lower edge in the main color, ending above the cuff.
 const PEAK_CAP_L = "M -20 70 L 210 96 L 196 128 L -20 106 Z";
 const PEAK_TEETH_L = "M -20 104 L 196 126 L 186 140 L 150 132 L 128 154 L 96 128 L 62 150 L 40 120 L -20 124 Z";
-// Hook: a curved sleeve stripe, wide at the outer edge and tapering to a point toward the chest, with a
-// thin accent line under it.
-const HOOK_L = "M -20 58 C 50 66 130 84 204 106 C 130 104 56 112 -20 124 Z";
-const HOOK_LINE_L = "M -20 136 C 56 124 130 114 196 112";
+// Cap: the outer sleeve above a shoulder band, from below the shoulder number out to the sleeve edge,
+// narrowing to a point near the raglan seam. Its lower edge runs a few px above the band's upper edge.
+const CAP_L = "M -20 26 Q 92 38 165 94 L -20 136 Z";
 // Side marks: three small triangles stacked down the chest side.
 const MARKS_L = [300, 324, 348].map((y) => `M 160 ${y - 7} L 167 ${y + 5} L 153 ${y + 5} Z`).join(" ");
 
@@ -181,6 +181,66 @@ function mix(a: string, b: string, t: number): string {
 type Glyphs = { d?: string; t?: NumberText };
 const shade = (c: string, t = 0.16) => (lum(c) < 0.06 ? mix(c, "#FFFFFF", t * 0.9) : mix(c, "#000000", t));
 
+const cubic = (p: Pt[], t: number): Pt => {
+  const u = 1 - t;
+  const k = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+  return [k.reduce((s, w, i) => s + w * p[i][0], 0), k.reduce((s, w, i) => s + w * p[i][1], 0)];
+};
+
+/** A stripe along the cuff, `w` wide at the outer edge and tapering to a point at the underarm. Past the
+    outer edge it sweeps up a little, the way the stripe curls toward the back of the sleeve. */
+function taperStripe({ at, w }: TaperStripe): string {
+  const lo: Pt[] = [];
+  const hi: Pt[] = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    const p = cubic(CUFF_TOP, t);
+    lo.push(add(p, N, at));
+    hi.push(add(p, N, at + w * (1 - t) ** 0.9));
+  }
+  const loOut = add(add(lo[0], D, -50), N, 1);
+  const hiOut = add(add(hi[0], D, -50), N, 4);
+  return `M ${[loOut, ...lo, ...hi.reverse(), hiOut].map(f).join(" L ")} Z`;
+}
+
+// The raglan seam as a cubic, for bands that taper along it.
+const RAGLAN_P: Pt[] = [[222, 50], [190, 92], [152, 140], [120, 196]];
+/** A strip along the raglan seam between offsets a(t) and b(t), positive toward the chest. Starts a little
+    above the seam's top (under the collar) so the band reaches the shoulder line. */
+function raglanStrip(a: (t: number) => number, b: (t: number) => number): string {
+  const one: Pt[] = [];
+  const two: Pt[] = [];
+  for (let i = 0; i <= 18; i++) {
+    const t = -0.3 + (1.3 * i) / 18;
+    const p = cubic(RAGLAN_P, t);
+    const q = cubic(RAGLAN_P, t + 0.01);
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    let n: Pt = [-(q[1] - p[1]) / len, (q[0] - p[0]) / len];
+    if (n[0] < 0) n = [-n[0], -n[1]];
+    one.push(add(p, n, a(Math.max(0, t))));
+    two.push(add(p, n, b(Math.max(0, t))));
+  }
+  return `M ${[...one, ...two.reverse()].map(f).join(" L ")} Z`;
+}
+
+/** The raglan band: centered on the seam, tapering from `w` to `w2`, with edges on both sides or only
+    the chest side. Filled shapes, mirrored to the right. */
+function raglan(b: Band) {
+  const half = (t: number) => (b.w + ((b.w2 ?? b.w) - b.w) * t) / 2;
+  const e = 4;
+  const shapes: [string, string][] = [[raglanStrip((t) => -half(t), half), b.c]];
+  if (b.edge) {
+    shapes.push([raglanStrip(half, (t) => half(t) + e), b.edge]);
+    if (!b.inner) shapes.push([raglanStrip((t) => -half(t) - e, (t) => -half(t)), b.edge]);
+  }
+  return shapes.map(([d, c], i) => (
+    <g key={i} fill={c}>
+      <path d={d} />
+      <path d={mirror(d)} />
+    </g>
+  ));
+}
+
 function stripes(trim: Trim) {
   return (trim.sleeve ?? []).flatMap((set, i) => {
     let at = set.at;
@@ -203,13 +263,8 @@ function pattern(id: PatternId, c: string, c2?: string) {
           <path d={PEAK_TEETH_L} fill={c} />
         </g>
       );
-    case "hook":
-      return (
-        <g>
-          <path d={HOOK_L} fill={c} />
-          {c2 && <path d={HOOK_LINE_L} fill="none" stroke={c2} strokeWidth={5} />}
-        </g>
-      );
+    case "cap":
+      return <path d={CAP_L} fill={c} />;
   }
 }
 
@@ -469,12 +524,13 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
         {rich && <rect width={VW} height={VH} filter={u("g")} opacity={L > 0.6 ? 0.16 : 0.24} />}
         {/* Trim: side band, raglan band, then sleeve stripes and patterns, mirrored to the right sleeve */}
         {trim?.side && band(SIDE_L, trim.side)}
-        {trim?.raglan && band(RAGLAN_L, trim.raglan)}
+        {trim?.raglan && raglan(trim.raglan)}
         {trim?.marks && <path d={`${MARKS_L} ${mirror(MARKS_L)}`} fill={trim.marks} />}
-        {trim && (trim.sleeve || trim.pattern || trim.bars) && [false, true].map((flip) => (
+        {trim && (trim.sleeve || trim.taper || trim.pattern || trim.bars) && [false, true].map((flip) => (
           <g key={String(flip)} transform={flip ? `matrix(-1 0 0 1 ${VW} 0)` : undefined}>
             <g clipPath={u("s")}>
               {stripes(trim)}
+              {trim.taper?.map((t, i) => <path key={`t${i}`} d={taperStripe(t)} fill={t.c} />)}
               {trim.pattern && pattern(trim.pattern.id, trim.pattern.c, trim.pattern.c2)}
             </g>
             {trim.bars && bars(trim.bars)}

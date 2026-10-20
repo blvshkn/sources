@@ -39,13 +39,25 @@ export interface StripeSet {
 }
 
 /** Signature patterns, each drawn as our own simplified vector take on the team's look. */
-export type PatternId = "tiger" | "peaks" | "hook";
+export type PatternId = "tiger" | "peaks" | "cap";
 
 /** A band with an optional edge color on both sides. */
 export interface Band {
   c: string;
   w: number;
   edge?: string;
+  /** Width at the far end (the underarm for a raglan band), tapering from `w`. */
+  w2?: number;
+  /** Edge on the chest side only. */
+  inner?: boolean;
+}
+
+/** A sleeve stripe parallel to the cuff that is `w` wide at the outer edge of the sleeve and tapers to a
+    point toward the underarm, sweeping up a little past the outer edge. `at` is its gap above the cuff. */
+export interface TaperStripe {
+  at: number;
+  w: number;
+  c: string;
 }
 
 /** A run of straight parallel stripes on the left shoulder (mirrored to the right), centered on the
@@ -60,6 +72,8 @@ export interface Bars {
 export interface Trim {
   /** Sleeve or shoulder stripes. */
   sleeve?: StripeSet[];
+  /** Tapered sleeve stripes, drawn over the straight ones. */
+  taper?: TaperStripe[];
   /** Straight stripes over the shoulder: yoke stripes, shoulder bands. */
   bars?: Bars[];
   /** A band that follows the raglan seam from collar to underarm. */
@@ -220,7 +234,9 @@ const st = (at: number, ...s: [string, number][]): StripeSet => ({ at, s });
 // Trim from each team's current home and road jerseys, checked against photos (see JERSEYS). Left out on
 // purpose, because each one is a logo or comes from one: the Rams shoulder horn, the Ravens feather
 // collar, the Chargers shoulder bolt, the Titans underarm stars and collar monogram, the Seahawks collar
-// feathers, every sleeve or shoulder logo patch, and the wordmark inside the Cardinals road stripe.
+// feathers, the Texans road bull-horn shoulders, the Cowboys shoulder stars, the Jaguars shoulder patch,
+// every sleeve or shoulder logo patch, and the wordmark inside the Cardinals road stripe. None of these get
+// a stand-in shape either.
 const NAVY_BUF = "#0C2340";
 export const TRIMS: Record<string, TeamTrim> = {
   // AFC East
@@ -250,8 +266,7 @@ export const TRIMS: Record<string, TeamTrim> = {
     away: { sleeve: [st(3, ["#FFB612", 7], ["#101820", 3], ["#FFB612", 20], ["#101820", 3], ["#FFB612", 7])] },
   },
   // AFC South
-  // Road: a curved navy sleeve hook over a thin red line.
-  HOU: { away: { pattern: { id: "hook", c: "#03202F", c2: "#A71930" } } },
+  // HOU: nothing. The road shoulders are the bull-horn shape from the logo, so no stand-in either.
   // Two stripes running over each shoulder near the collar.
   IND: {
     home: { bars: [{ a: [128, -14], b: [100, 82], s: [[W, 13], ["", 10], [W, 13]] }] },
@@ -288,9 +303,19 @@ export const TRIMS: Record<string, TeamTrim> = {
     away: { sleeve: [st(4, ["#0076B6", 7], ["", 5], ["#0076B6", 7], ["", 5], ["#0076B6", 7])] },
   },
   GB: { home: { sleeve: [st(5, ["#FFB612", 9], [W, 7], ["#FFB612", 9])] }, away: { sleeve: [st(5, ["#203731", 9], ["#FFB612", 7], ["#203731", 9])] } },
-  MIN: { home: { sleeve: [st(3, ["#FFC62F", 9], [W, 11])] }, away: { sleeve: [st(3, ["#FFC62F", 9], ["#4F2683", 11])] } },
+  // A gold stripe at the cuff with a horn-shaped stripe above it: full width at the outer edge of the
+  // sleeve, tapering to a point toward the chest. White on purple, purple on white.
+  MIN: {
+    home: { sleeve: [st(3, ["#FFC62F", 9])], taper: [{ at: 15, w: 20, c: W }] },
+    away: { sleeve: [st(3, ["#FFC62F", 9])], taper: [{ at: 15, w: 20, c: "#4F2683" }] },
+  },
   // NFC South
-  CAR: { home: { raglan: { c: "#0085CA", w: 11, edge: "#BFC0BF" } }, away: { raglan: { c: "#0085CA", w: 11, edge: "#BFC0BF" } } },
+  // A wide blue stripe down the front of each shoulder to the underarm, tapering as it goes, edged on the
+  // chest side only: silver on black, black on white.
+  CAR: {
+    home: { raglan: { c: "#0085CA", w: 34, w2: 12, edge: "#A5ACAF", inner: true } },
+    away: { raglan: { c: "#0085CA", w: 34, w2: 12, edge: "#101820", inner: true } },
+  },
   // Pewter sleeve ends on both.
   TB: { home: { sleeve: [st(0, ["#34302B", 14])] }, away: { sleeve: [st(0, ["#34302B", 14])] } },
   // NFC West
@@ -300,10 +325,12 @@ export const TRIMS: Record<string, TeamTrim> = {
   LAR: { away: { sleeve: [st(0, ["#FFD100", 260])] } },
   // Three equal stripes: white on scarlet, scarlet on white.
   SF: { home: { sleeve: [st(6, [W, 12], ["", 9], [W, 12], ["", 9], [W, 12])] }, away: { sleeve: [st(6, ["#AA0000", 12], ["", 9], ["#AA0000", 12], ["", 9], ["#AA0000", 12])] } },
-  // A band from the collar across the shoulder to the sleeve: wolf gray tipped action green; navy on the road.
+  // A band from the collar across the shoulder to the sleeve, with the outer sleeve above it in a cap
+  // set off by a thin body-color gap: wolf gray band and action green cap at home, both navy on the road.
+  // No feather print on the sleeves of the 2026 home or road jersey; the collar feathers stay off (logo).
   SEA: {
-    home: { bars: [{ a: [236, 98], b: [-10, 154], s: [["#A5ACAF", 30]] }, { a: [52, 144], b: [-10, 158], s: [["#69BE28", 30]] }] },
-    away: { bars: [{ a: [236, 98], b: [-10, 154], s: [["#002244", 30]] }] },
+    home: { pattern: { id: "cap", c: "#69BE28" }, bars: [{ a: [236, 98], b: [-10, 154], s: [["#A5ACAF", 30]] }] },
+    away: { pattern: { id: "cap", c: "#002244" }, bars: [{ a: [236, 98], b: [-10, 154], s: [["#002244", 30]] }] },
   },
 };
 
