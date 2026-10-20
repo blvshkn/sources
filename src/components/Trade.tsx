@@ -488,8 +488,18 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   // The deal card's own tools, right-aligned on its first line: search, Add a team, then Clear.
   // Clear stays put and greys out when the deal is empty, so nothing beside it moves when the first player lands.
   const anyPicked = allGive.length > 0 || allGet.length > 0;
+  // Picking from the search: your player goes on the side you send, anyone else on the side you get, with that team
+  const searchPick = (id: string, team: { id: string; you?: boolean }) => {
+    setView("build");
+    if (team.you) { toggle("give", id); return; }
+    if (extra.some((l) => l.teamId === team.id)) { toggle("get", id, team.id); return; }
+    if (team.id !== partnerId) setPartner(team.id);
+    toggle("get", id);
+  };
   const dealTools = (
     <div className="ttb-row">
+      {/* Tablet and desktop: the search is always there, filling the line, so there's nothing to open first */}
+      <div className="ttb-find"><PlayerSearch picked={[...allGive, ...allGet]} onPick={searchPick} /></div>
       <button type="button" className="btn btn-icon ttb-search" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={18} /></button>
       {addPartner && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
       <button type="button" className="btn btn-ghost ttb-clear" aria-disabled={!anyPicked || undefined} onClick={anyPicked ? clear : denyOn("Nothing to clear yet. Add a player to start a deal.")}>Clear</button>
@@ -505,13 +515,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       </header>
 
       {searching ? (
-        <PlayerSearch picked={[...allGive, ...allGet]} onClose={() => setSearching(false)} onPick={(id, team) => {
-          setView("build");
-          if (team.you) { toggle("give", id); return; }
-          if (extra.some((l) => l.teamId === team.id)) { toggle("get", id, team.id); return; }
-          if (team.id !== partnerId) setPartner(team.id);
-          toggle("get", id);
-        }} />
+        <PlayerSearch picked={[...allGive, ...allGet]} onClose={() => setSearching(false)} onPick={searchPick} />
       ) : (
         <div className="tr-bar">
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />

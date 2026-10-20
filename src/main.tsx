@@ -45,6 +45,7 @@ import "./matchup-rows.css";
 import "./lineup-swap.css";
 import "./sugg-bid.css";
 import "./kickoff.css";
+import "./trade-find.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

@@ -38,7 +38,7 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
       <label className="psr-field" ref={field}>
         <Icon name="search" size={18} />
         <span className="sr-only">Search players in your league</span>
-        <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key === "Escape" && onClose) onClose(); }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
+        <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key !== "Escape") return; if (onClose) onClose(); else if (q) setQ(""); else input.current?.blur(); }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
         {q && !onClose && <button className="psr-clear" onClick={() => { setQ(""); input.current?.focus(); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
         {onClose && <button className="psr-clear" onClick={onClose} aria-label="Close search"><Icon name="x" size={16} /></button>}
       </label>

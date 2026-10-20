@@ -1,0 +1,25 @@
+/* The deal card's always-on search (Trade.tsx .ttb-find). Phones keep the search icon that opens the full-width
+   field above the deal; from 700px of page width the field sits in the toolbar line itself, filling the room left of
+   Add a team and Clear, so there's nothing to tap first. Scoped to .ttb-row and .ttb-find. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ttb-row > .ttb-find { display: none; }
+@container pg (min-width: 700px) {
+  /* The toolbar takes the whole first line of the card, the field grows into the space */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .ttb-row { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-row > .ttb-find { display: block; flex: 1 1 auto; min-width: 0; position: relative; z-index: 4; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-row > .ttb-search { display: none; }
+  /* The side labels move to their own line under the toolbar, so nothing hides behind the field */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(2),
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(3) { grid-row: 2; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(3) > .eyebrow { max-width: none; }
+
+  /* The field: the toolbar's 40px height, its pill shape and the app's search surface */
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-find .psr { position: relative; width: 100%; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-find .psr-field { min-height: 40px; height: 40px; padding: 0 4px 0 14px; gap: 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-find .psr-field input { height: 38px; font-size: 0.9375rem; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-find .psr-clear { width: 32px; height: 32px; min-height: 32px; }
+  /* Results float over the deal below, the width of the field, with the layered shadow every menu uses */
+  html:root:not(#_):not(#_):not(#_):not(#_) .ttb-find .psr > .psr-list {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60; margin: 0;
+    max-height: min(420px, 60vh); background: var(--surface-2); border-color: transparent; box-shadow: var(--shadow-md);
+  }
+}
