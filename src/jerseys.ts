@@ -101,8 +101,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   BUF: { name: "Buffalo Bills", conf: "AFC", div: "East", body: "#00338D", number: W, outline: "#C60C30", collar: striped(W, [["", 9], ["#C60C30", 7], ["#0C2340", 6]], { w: 22 }), cuff: "#00338D", panel: "#00338D",
     away: { number: "#00338D", outline: "#C60C30", collar: striped("#00338D", [["", 9], ["#C60C30", 7], ["#0C2340", 6]], { w: 22 }), cuff: W } },
   // Plain aqua V and plain sleeves; white numbers trimmed orange.
-  MIA: { name: "Miami Dolphins", conf: "AFC", div: "East", body: "#0095A2", number: W, outline: "#FC4C02", collar: plain(), cuff: "#0095A2", panel: "#0095A2",
-    away: { number: "#0095A2", outline: "#FC4C02", collar: plain(), cuff: W } },
+  MIA: { name: "Miami Dolphins", conf: "AFC", div: "East", body: "#00909C", number: W, outline: "#FC4C02", collar: plain(), cuff: "#00909C", panel: "#00909C",
+    away: { number: "#00909C", outline: "#FC4C02", collar: plain(), cuff: W } },
   // Plain V, red and white stripes over the shoulders, white numbers trimmed red.
   NE: { name: "New England Patriots", conf: "AFC", div: "East", body: "#002244", number: W, outline: "#C60C30", collar: plain(), cuff: "#002244", panel: "#002244",
     away: { number: "#002244", outline: "#C60C30", collar: plain(), cuff: W } },
@@ -199,8 +199,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   // no outline and a pale sol inline. White road jersey: plain white V, sol sleeves and cuffs, royal
   // numbers with a lighter royal inline. The horn over each shoulder is the Rams logo, so it is not
   // drawn: the home shoulder stays royal and the road sleeve is sol right up to the seam.
-  LAR: { name: "Los Angeles Rams", conf: "NFC", div: "West", body: "#0A3BA6", number: "#FFD100", outline: "#FFD100", collar: plain({ w: 28 }), cuff: "#0A3BA6", panel: "#0A3BA6",
-    away: { number: "#0A3BA6", outline: "#0A3BA6", collar: plain({ w: 28 }), cuff: "#FFD100" } },
+  LAR: { name: "Los Angeles Rams", conf: "NFC", div: "West", body: "#1D4BC0", number: "#FFD100", outline: "#FFD100", collar: plain({ w: 28 }), cuff: "#1D4BC0", panel: "#1D4BC0",
+    away: { number: "#1D4BC0", outline: "#1D4BC0", collar: plain({ w: 28 }), cuff: "#FFD100" } },
   // A solid scarlet V (a shade deeper, as the ribbed collar reads in photos), three equal sleeve stripes, flat numbers.
   SF: { name: "San Francisco 49ers", conf: "NFC", div: "West", body: "#AA0000", number: W, outline: W, collar: solid("#960000", { w: 24 }), cuff: "#AA0000", panel: "#AA0000",
     away: { number: "#AA0000", outline: "#AA0000", collar: solid(W, { w: 24 }), cuff: W } },
@@ -332,6 +332,9 @@ export interface NumberTrim {
   noShoulder?: boolean;
   /** A thin line of this color just inside the number's edge (a lighter tone of the fill). */
   inline?: string;
+  /** Inline inset from the edge and line width, in chest-number artboard px times two (defaults 8, 5). */
+  inlineAt?: number;
+  inlineW?: number;
 }
 
 export type NumberStyle = NumberTrim;
@@ -370,7 +373,7 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   NO: {},
   TB: { home: { outline2: "#34302B" }, away: { outline2: "#34302B" } },
   ARI: { away: OFF },
-  LAR: { home: { plain: true, noShoulder: true, inline: "#FFEB80" }, away: { plain: true, noShoulder: true, inline: "#5A82E0" } },
+  LAR: { home: { plain: true, noShoulder: true, inline: "#FFE76A", inlineAt: 13, inlineW: 4 }, away: { plain: true, noShoulder: true, inline: "#4F78DA", inlineAt: 13, inlineW: 4 } },
   SF: { home: FLAT, away: FLAT },
   SEA: {},
 };

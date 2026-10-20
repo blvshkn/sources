@@ -11,12 +11,14 @@
 // vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
 // white jerseys stay clean and black ones still show form. Under 120 px the mesh, grain and blurred
 // folds drop out.
-// Numbers: original digit outlines per team (see numerals.ts), every set held to the same cap height so
-// one and two digits fill the chest the same way. Outlines are strokes under the fill, so they keep
-// the same visual widths whatever the digit shape.
+// Numbers: per team, either an openly licensed Google Fonts face set as SVG text or one of our own
+// drawn digit sets (see numerals.ts), every set held to the same cap height so one and two digits fill
+// the chest the same way. Outlines are strokes under the fill, so they keep the same visual widths
+// whatever the digit shape.
+// Collar: flat knit trim. Only a faint sheen and a soft contact shadow, no tube-like shading.
 import { useId, useMemo } from "react";
 import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type PatternId, type Trim } from "../jerseys";
-import { numberPath, numeralSet } from "../numerals";
+import { numberPath, numberText, teamNumerals, type NumberText } from "../numerals";
 
 export interface JerseyProps {
   /** NFL abbreviation, e.g. "BUF" */
@@ -175,6 +177,8 @@ function mix(a: string, b: string, t: number): string {
   return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("");
 }
 /** A shade off the body: darker on light jerseys, lighter on near-black ones so seams still read. */
+/** A number's geometry: drawn outlines (path data) or text in the team font. */
+type Glyphs = { d?: string; t?: NumberText };
 const shade = (c: string, t = 0.16) => (lum(c) < 0.06 ? mix(c, "#FFFFFF", t * 0.9) : mix(c, "#000000", t));
 
 function stripes(trim: Trim) {
@@ -256,18 +260,36 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
   const ns = numberStyle(team, away);
   const stroke = 16;
   const outline = ns.plain ? c.number : c.outline;
-  const { id: setId, set } = numeralSet(team);
+  const tn = teamNumerals(team);
   const paths = useMemo(() => {
-    const at = (box: typeof CHEST, x: number) => numberPath(setId, set, n, x, box.y, box.cap, box.maxW[two ? 1 : 0]).d;
+    const at = (box: typeof CHEST, x: number): Glyphs => {
+      const maxW = box.maxW[two ? 1 : 0];
+      if (tn.kind === "font") return { t: numberText(tn, n, x, box.y, box.cap, maxW) };
+      return { d: numberPath(tn.id, tn.set, n, x, box.y, box.cap, maxW).d };
+    };
     return { chest: at(CHEST, 300), left: at(SHOULDER, 112), right: at(SHOULDER, 488) };
-  }, [setId, set, n, two]);
+  }, [tn, n, two]);
 
-  const num = (props: { d: string; x: number; y: number; strokeW: number; rotate?: number; key: string }) => {
-    if (!props.d) return null;
+  /** The number's shape, as a path or as text in the team font. */
+  const shape = (g: Glyphs, p: { fill?: string; stroke?: string; strokeWidth?: number; transform?: string }) => {
+    const common = { fill: p.fill ?? "none", stroke: p.stroke, strokeWidth: p.strokeWidth, strokeLinejoin: "miter" as const, strokeMiterlimit: 3, paintOrder: "stroke" };
+    if (g.t && tn.kind === "font") {
+      const t = g.t;
+      const inner = t.transform ?? "";
+      const tf = [p.transform, inner].filter(Boolean).join(" ") || undefined;
+      return (
+        <text x={t.x} y={t.y.toFixed(1)} fontFamily={`'${tn.family}', sans-serif`} fontWeight={tn.weight} fontSize={t.size.toFixed(1)} transform={tf} {...common}>
+          {t.text}
+        </text>
+      );
+    }
+    return <path d={g.d} transform={p.transform} {...common} />;
+  };
+
+  const num = (props: { g: Glyphs; x: number; y: number; strokeW: number; rotate?: number; key: string }) => {
+    if (!props.g.d && !props.g.t?.text) return null;
     const transforms = [props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : "", ns.slant ? `translate(${props.x} ${props.y}) skewX(${-ns.slant}) translate(${-props.x} ${-props.y})` : ""].filter(Boolean);
-    const layer = (fill: string, w: number, dx = 0, dy = 0) => (
-      <path d={props.d} transform={dx || dy ? `translate(${dx} ${dy})` : undefined} fill={fill} stroke={fill} strokeWidth={w} strokeLinejoin="miter" strokeMiterlimit={3} paintOrder="stroke" />
-    );
+    const layer = (fill: string, w: number, dx = 0, dy = 0) => shape(props.g, { fill, stroke: fill, strokeWidth: w, transform: dx || dy ? `translate(${dx} ${dy})` : undefined });
     const k = props.strokeW / stroke;
     const w2 = props.strokeW + 12 * k;
     // Inline: a thin line of a lighter tone set just inside the number's edge, drawn as two strokes
@@ -275,12 +297,10 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
     const clip = `${id}-ni${props.key}`;
     const inl = ns.inline && (
       <>
-        <clipPath id={clip}>
-          <path d={props.d} />
-        </clipPath>
-        <g clipPath={`url(#${clip})`} fill="none" strokeLinejoin="round">
-          <path d={props.d} stroke={ns.inline} strokeWidth={13 * k} />
-          <path d={props.d} stroke={c.number} strokeWidth={8 * k} />
+        <clipPath id={clip}>{shape(props.g, { fill: "#000" })}</clipPath>
+        <g clipPath={`url(#${clip})`} strokeLinejoin="round">
+          {shape(props.g, { stroke: ns.inline, strokeWidth: (ns.inlineAt ?? 8) * k + (ns.inlineW ?? 5) * k })}
+          {shape(props.g, { stroke: c.number, strokeWidth: (ns.inlineAt ?? 8) * k })}
         </g>
       </>
     );
@@ -289,7 +309,7 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
         {ns.shadow && layer(ns.shadow, ns.outline2 ? w2 : props.strokeW, 9 * k, 9 * k)}
         {ns.outline2 && layer(ns.outline2, w2)}
         {!ns.plain && layer(outline, props.strokeW)}
-        <path d={props.d} fill={c.number} />
+        {shape(props.g, { fill: c.number })}
         {inl}
       </g>
     );
@@ -372,26 +392,24 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           <stop offset="1" stopColor={shadowInk} stopOpacity={vig} />
         </linearGradient>
         <linearGradient id={`${id}-n`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#000" stopOpacity="0.3" />
-          <stop offset="1" stopColor="#000" stopOpacity="0.04" />
+          <stop offset="0" stopColor="#000" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.02" />
         </linearGradient>
         <radialGradient id={`${id}-a`} cx="0.5" cy="0.5" r="0.5">
           <stop offset="0" stopColor={shadowInk} stopOpacity={sh * 1.1} />
           <stop offset="1" stopColor={shadowInk} stopOpacity="0" />
         </radialGradient>
-        {/* Satin collar: dark falloff at both edges with a sharp specular band */}
+        {/* Flat knit collar: a faint, broad sheen across the band (stronger on the lit side), no rolled edges */}
         {[1, -1].map((side) => {
           const [p, q] = side > 0 ? cg.across : cg.across.map(mx);
-          const spec = Math.min(col.style === "plain" ? 0.3 : 0.8, satin(side));
+          const spec = Math.min(col.style === "plain" ? 0.05 : 0.09, satin(side) * 0.14);
           return (
             <linearGradient key={side} id={`${id}-c${side > 0 ? "l" : "r"}`} gradientUnits="userSpaceOnUse" x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]}>
-              <stop offset="0" stopColor="#000" stopOpacity="0.28" />
-              <stop offset="0.3" stopColor="#000" stopOpacity="0" />
-              <stop offset="0.4" stopColor="#fff" stopOpacity="0.04" />
+              <stop offset="0" stopColor="#000" stopOpacity="0.04" />
+              <stop offset="0.2" stopColor="#fff" stopOpacity="0" />
               <stop offset="0.5" stopColor="#fff" stopOpacity={spec} />
-              <stop offset="0.6" stopColor="#fff" stopOpacity="0.06" />
-              <stop offset="0.75" stopColor="#000" stopOpacity="0" />
-              <stop offset="1" stopColor="#000" stopOpacity="0.3" />
+              <stop offset="0.8" stopColor="#fff" stopOpacity="0" />
+              <stop offset="1" stopColor="#000" stopOpacity="0.04" />
             </linearGradient>
           );
         })}
@@ -436,8 +454,8 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           </g>
         ))}
         {/* Shoulder-top numbers, cut by the shoulder line as they wrap over the top */}
-        {!ns.noShoulder && num({ d: paths.left, x: 112, y: SHOULDER.y, strokeW: 7, rotate: -5, key: "l" })}
-        {!ns.noShoulder && num({ d: paths.right, x: 488, y: SHOULDER.y, strokeW: 7, rotate: 5, key: "r" })}
+        {!ns.noShoulder && num({ g: paths.left, x: 112, y: SHOULDER.y, strokeW: 7, rotate: -5, key: "l" })}
+        {!ns.noShoulder && num({ g: paths.right, x: 488, y: SHOULDER.y, strokeW: 7, rotate: 5, key: "r" })}
         <g fill="none" strokeWidth="2.2" strokeLinecap="round">
           <path d={RAGLAN_L} stroke={seam} />
           <path d={mirror(RAGLAN_L)} stroke={seam} />
@@ -447,8 +465,8 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           <path d={mirror(SIDE_L)} stroke={panelSeam} />
           <path d={BELLY} stroke={seam} />
         </g>
-        {/* Contact shadow under the collar */}
-        <path d={cg.outer} transform="translate(0 7)" fill="none" stroke="#000" strokeOpacity={L > 0.6 ? 0.22 : 0.45} strokeWidth="12" filter={rich ? u("cs") : undefined} />
+        {/* A very soft contact shadow under the collar edge */}
+        <path d={cg.outer} transform="translate(0 4)" fill="none" stroke="#000" strokeOpacity={L > 0.6 ? 0.08 : 0.16} strokeWidth="7" filter={rich ? u("cs") : undefined} />
       </g>
 
       {/* Cuffs */}
@@ -480,10 +498,10 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
       {col.style !== "plain" && col.notch && <path d={cg.notch} fill={c.body} />}
       <path d={cg.arm} fill={u("cl")} />
       <path d={mirror(cg.arm)} fill={u("cr")} />
-      <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
+      <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.1" strokeWidth="1.2" />
 
       {/* Chest number */}
-      {num({ d: paths.chest, x: 300, y: CHEST.y, strokeW: stroke, key: "c" })}
+      {num({ g: paths.chest, x: 300, y: CHEST.y, strokeW: stroke, key: "c" })}
 
       {/* Shading over everything on the body, number and trim included, so they sit in the cloth */}
       <g clipPath={u("b")} style={{ pointerEvents: "none" }}>

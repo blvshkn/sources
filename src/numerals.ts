@@ -573,7 +573,7 @@ export type FamilyId = keyof typeof FAMILIES;
 
 /** Per-team family and tuning. */
 const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
-  BUF: ["BLOCK", { w: 0.54, stem: 0.16, bar: 0.145, one: { flag: 0.14, fb: 0.12, fj: 0.21, foot: 0.12, footH: 0.8 }, seven: { stub: 0, foot: 0.18, weight: 0.8 } }],
+  BUF: ["BLOCK", { w: 0.54, stem: 0.16, bar: 0.145, ro: 0.03, rc: 0.01, one: { flag: 0.14, fb: 0.12, fj: 0.21, foot: 0.12, footH: 0.8 }, seven: { stub: 0, foot: 0.18, weight: 0.8 } }],
   MIA: ["ROUNDED", { w: 0.52, ro: [0.07, 0.08], rc: 0.012, ri: 0.012 }],
   NE: ["NARROW", { w: 0.5, stem: 0.175, ro: 0.025, one: { flag: 0.12, fb: 0.1, fj: 0.19, foot: 0.09 } }],
   NYJ: ["HEAVY", { w: 0.6, stem: 0.21, bar: 0.19 }],
@@ -582,7 +582,8 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   CLE: ["BLOCK", { w: 0.5, stem: 0.165, bar: 0.15, ro: 0.03, rc: 0.006 }],
   PIT: ["OVAL", { w: 0.42, stem: 0.14, bar: 0.115, ro: [0.21, 0.25], rc: [0.07, 0.16], six: { type: "diag", stub: 0, bowl: 0.6, foot: 0.26 } }],
   HOU: ["CHAMFER", { w: 0.54, stem: 0.155, bar: 0.145 }],
-  IND: ["BLOCK", { w: 0.58, stem: 0.185, ro: 0.06, rc: 0.03, ri: 0.01 }],
+  // Heavy block with clipped corners, square counters and a footed 1.
+  IND: ["CHAMFER", { w: 0.58, stem: 0.2, bar: 0.18, ro: 0.07, counter: "square", rc: 0, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 } }],
   JAX: ["ROUNDED", { w: 0.5, stem: 0.145, bar: 0.13, ro: [0.09, 0.11], rc: [0.05, 0.07], one: { flag: 0.12, fb: 0.12, fj: 0.22, flare: 0.035 }, two: { neck: "diag", stub: 0.06, dy: 0.44 }, six: { stub: 0.05, curl: 0.22 } }],
   TEN: ["SOFT", { ro: 0.055, rc: 0.02 }],
   DEN: ["ROUNDED", { w: 0.5, stem: 0.14, bar: 0.13, one: { flag: 0.08, fb: 0.08, fj: 0.16 } }],
@@ -590,7 +591,7 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   LV: ["BLOCK", { w: 0.56, stem: 0.185, ro: 0.006 }],
   // Wide, heavy and leaning (the slant is in jerseys.ts): softly rounded outside corners, narrow square
   // counters, square 2 neck, short stubs, a flat-topped flag on the 1 and no foot.
-  LAC: ["ROUNDED", { w: 0.56, stem: 0.195, bar: 0.165, ro: [0.08, 0.09], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
+  LAC: ["ROUNDED", { w: 0.58, stem: 0.195, bar: 0.165, ro: [0.1, 0.11], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
   DAL: ["BLOCK", { w: 0.54, stem: 0.18, bar: 0.165, ro: 0.05, rc: 0.02 }],
   NYG: ["BLOCK", { w: 0.52, stem: 0.165, bar: 0.15, ro: 0.02, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.07 }, six: { stub: 0 }, four: { type: "diag", cy: 0.66, xr: 0.6 } }],
   PHI: ["SLAB", { corner: "round", ro: 0.07, rc: 0.04 }],
@@ -610,6 +611,116 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   SF: ["HEAVY", { w: 0.58, stem: 0.2 }],
   SEA: ["CHAMFER", { w: 0.5, stem: 0.16, one: { flag: 0.15, ft: 0.04, fb: 0.15, fj: 0.25 } }],
 };
+
+// ---------------------------------------------------------------------------------------------
+// Font numerals: an openly licensed Google Fonts face (OFL or Apache) chosen per team because its
+// digits share the team's number style, set as SVG text so the number stays live text. Metrics are
+// measured once from the font (see `m`), so sizing and centering never wait on the font to load:
+// until it arrives the browser shows a fallback, then repaints in place at the same size.
+
+/** Digit metrics in units of 1/1000 em: `cap` is the height of a flat-topped digit, `base` how far
+    flat-bottomed digits sit below the baseline, and `d` gives each digit 0 to 9 as [advance, ink left,
+    ink right] measured from the pen position. */
+export interface FontMetrics {
+  cap: number;
+  base: number;
+  d: [number, number, number][];
+}
+
+export interface FontNumerals {
+  kind: "font";
+  family: string;
+  weight: number;
+  /** Horizontal scale, for a face that is a touch narrower or wider than the team's numbers. */
+  scaleX?: number;
+  /** Extra space between digits, in 1/1000 em. */
+  track?: number;
+  /** Slant in degrees, positive leans right. */
+  skew?: number;
+  m: FontMetrics;
+}
+
+/** One number set as text: an x per digit (the pen positions), the baseline, the font size and a
+    transform for scaleX and skew around the number's center. */
+export interface NumberText {
+  text: string;
+  x: string;
+  y: number;
+  size: number;
+  width: number;
+  transform?: string;
+}
+
+/**
+ * `num` set in font `f`, centered on cx with the ink bottom on y, the cap height at most `cap` and the
+ * run no wider than `maxW`. Every number of a team is sized against the widest possible run, so 11
+ * and 88 stand the same height, as with the drawn sets.
+ */
+export function numberText(f: FontNumerals, num: string, cx: number, y: number, cap: number, maxW: number): NumberText {
+  const digits = num.split("").map(Number);
+  if (!digits.length) return { text: "", x: "", y, size: 0, width: 0 };
+  const sx = f.scaleX ?? 1;
+  const tr = f.track ?? 0;
+  // The widest run: the widest digit repeated, less its side bearings at the two ends.
+  const wide = f.m.d.reduce((a, g) => (g[0] > a[0] ? g : a));
+  const full = digits.length * wide[0] + (digits.length - 1) * tr - (wide[0] - (wide[2] - wide[1]));
+  const sc = Math.min(cap / f.m.cap, maxW / (full * sx));
+  const pens: number[] = [];
+  let pen = 0;
+  digits.forEach((g, i) => {
+    pens.push(pen);
+    pen += f.m.d[g][0] + (i < digits.length - 1 ? tr : 0);
+  });
+  const first = f.m.d[digits[0]];
+  const last = f.m.d[digits[digits.length - 1]];
+  const left = pens[0] + first[1];
+  const right = pens[pens.length - 1] + last[2];
+  const mid = (left + right) / 2;
+  const xs = pens.map((p) => (cx + (p - mid) * sc).toFixed(1)).join(" ");
+  const parts = [sx !== 1 ? `scale(${sx} 1)` : "", f.skew ? `skewX(${-f.skew})` : ""].filter(Boolean);
+  return {
+    text: num,
+    x: xs,
+    y: y - f.m.base * sc,
+    size: 1000 * sc,
+    width: (right - left) * sc * sx,
+    transform: parts.length ? `translate(${cx} ${y}) ${parts.join(" ")} translate(${-cx} ${-y})` : undefined,
+  };
+}
+
+/** Teams whose numbers are set in a font, with the face's measured digit metrics. */
+type Metric = [number, number, number];
+const font = (family: string, weight: number, cap: number, d: Metric[], o: Partial<FontNumerals> = {}): FontNumerals => ({ kind: "font", family, weight, m: { cap, base: 0, d }, ...o });
+// Measured with canvas text metrics at 1000 px from the Google Fonts files.
+const OSWALD_640: Metric[] = [[546, 47, 500], [384, 16, 313], [509, 31, 484], [509, 31, 484], [519, 16, 516], [505, 31, 484], [534, 47, 500], [432, 16, 406], [518, 31, 484], [533, 31, 484]];
+const ANTONIO_650: Metric[] = [[471, 47, 422], [355, 31, 281], [451, 63, 422], [454, 47, 422], [451, 31, 438], [451, 63, 406], [451, 47, 422], [451, 47, 422], [451, 31, 406], [451, 31, 406]];
+const ANTONIO_520: Metric[] = [[436, 47, 391], [396, 47, 297], [429, 63, 406], [430, 47, 391], [429, 31, 422], [429, 63, 391], [429, 47, 406], [429, 31, 406], [429, 31, 391], [429, 31, 391]];
+const CHAKRA_700: Metric[] = [[652, 47, 609], [382, 16, 313], [574, 31, 547], [603, 31, 563], [579, 0, 578], [606, 31, 563], [622, 47, 578], [522, 0, 500], [638, 47, 594], [627, 47, 578]];
+const FONT_TEAM: Record<string, FontNumerals> = {
+  // Narrow, rounded, light: oval counters and plain stroke ends.
+  BAL: font("Antonio", 650, 859, ANTONIO_650, { scaleX: 1.06 }),
+  CIN: font("Antonio", 520, 859, ANTONIO_520),
+  // Condensed with clipped corners and square counters.
+  MIA: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.72 }),
+  JAX: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.78 }),
+  // Round bowls, a straight 7 and a 9 whose tail turns to a flat end; a touch wider than the face.
+  LAR: font("Oswald", 640, 813, OSWALD_640, { scaleX: 1.04 }),
+};
+
+/** Number setting for a team: a font, or one of the drawn sets above. */
+export type TeamNumerals = FontNumerals | { kind: "drawn"; id: string; set: NumeralSet };
+const numeralsCache = new Map<string, TeamNumerals>();
+export function teamNumerals(team: string): TeamNumerals {
+  let t = numeralsCache.get(team);
+  if (!t) {
+    t = FONT_TEAM[team] ?? { kind: "drawn", ...numeralSet(team) };
+    numeralsCache.set(team, t);
+  }
+  return t;
+}
+
+/** Google Fonts families (with weights) the team fonts use, for the stylesheet link. */
+export const FONT_FAMILIES = (): string[] => [...new Set(Object.values(FONT_TEAM).map((f) => `${f.family}:${f.weight}`))];
 
 const resolved = new Map<string, NumeralSet>();
 /** The numeral set for a team, with a cache key for its outlines. */
