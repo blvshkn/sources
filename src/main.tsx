@@ -33,6 +33,7 @@ import "./lint-overlays.css";
 import "./passed.css";
 import "./lint-pages-b.css";
 import "./keyboard.css";
+import "./partner.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

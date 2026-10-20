@@ -11,6 +11,7 @@ import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
 import { AddTeam, LegState, MultiDeal, MultiRosters } from "./TradeMulti";
 import { TagCapture } from "./TagCapture";
+import { PartnerProfile } from "./PartnerProfile";
 import { TeamAvatar, TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { Select } from "./Select";
@@ -392,12 +393,13 @@ export function lockMap(myTags: Record<string, MyTag>) {
   return lockYou;
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, profileOpen = false }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
   extra?: DealLeg[]; multi?: MultiTrade | null; addPartner?: (id: string) => void; removePartner?: (id: string) => void;
-  /** Opens the side panel on the partner profile: docked from 1600px, a slide-over over the page below that. */
+  /** Turns on the partner profile button. The profile opens in its own sheet (phones) or modal (768px up); the side
+   *  panel keeps its partner card as is. profileOpen is no longer read. */
   onProfile?: () => void; profileOpen?: boolean;
   trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
   tip: string | null;
@@ -448,6 +450,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   ];
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
   const [searching, setSearching] = useState(false);
+  const [profile, setProfile] = useState(false);
   // How this manager trades: short facts plus one piece of advice
   const scoutParts = td.summary.split(/(?<=\.)\s+/).map((x) => x.trim().replace(/\.$/, "")).filter(Boolean)
     .map((x) => x.startsWith(them.manager + " ") ? x.slice(them.manager.length + 1) : x)
@@ -495,7 +498,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       ) : (
         <div className="tr-bar">
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
-          {onProfile && <button className="btn tr-profile" onClick={onProfile} aria-expanded={profileOpen} aria-controls="inbox" title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner profiles" : `${them.manager}'s profile`}</span></button>}
+          {onProfile && <button type="button" className="btn tr-profile" onClick={() => setProfile(true)} aria-haspopup="dialog" aria-expanded={profile} title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner profiles" : `${them.manager}'s profile`}</span></button>}
+          {profile && <PartnerProfile teamIds={legs.map((l) => l.team.id)} initial={partnerId} tags={tags} onClose={() => setProfile(false)}
+            onNotes={(id) => { if (id !== partnerId) setPartner(id); setView("notes"); }} />}
           {/* An offer comes from one manager, so the switch is a two-team thing: the multi-team read never used it */}
           {view === "build" && !isMulti && (
             <Tooltip content={`Turn on when ${them.manager} sent you this deal. The read judges their offer instead of yours.`}>

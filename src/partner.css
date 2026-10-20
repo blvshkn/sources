@@ -1,0 +1,85 @@
+/* Partner profile (PartnerProfile.tsx), opened from Trade's "<Manager>'s profile" button.
+   Below 768px a bottom sheet; from 768px up (tablet and desktop) a centered modal. Loads just before frame.css.
+   Every rule is scoped to .ps-partner, .pp-wrap or a .pp-* class: nothing here styles bare .ps or .ps-wrap. */
+
+/* ---------- Shell: fixed header, only the body scrolls ---------- */
+html:root:not(#_):not(#_) .ps.ps-partner {
+  display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden;
+  max-height: 88vh; max-height: 88dvh; grid-template-columns: none;
+}
+html:root:not(#_):not(#_) .ps-partner > .pp-top { flex: none; display: grid; gap: 12px; padding: 10px 20px 14px; border-bottom: 1px solid var(--line); }
+html:root:not(#_):not(#_) .ps-partner .ps-handle { justify-self: center; }
+html:root:not(#_):not(#_) .ps-partner .pp-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: grid; gap: 20px; align-content: start; padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- Header ---------- */
+/* Clear of the corner close button (11px inset + 36px circle + 8px air) */
+html:root:not(#_):not(#_) .ps-partner .pp-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding-right: 44px; }
+html:root:not(#_):not(#_) .ps-partner .pp-switch + .pp-head { padding-right: 0; }
+html:root:not(#_):not(#_) .ps-partner .pp-who { display: grid; gap: 3px; min-width: 0; }
+html:root:not(#_):not(#_) .ps-partner .pp-who > b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
+html:root:not(#_):not(#_) .ps-partner .pp-who > small { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .ps-partner .pp-mode { font-size: 0.6875rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: var(--surface-3); color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .ps-partner .pp-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Multi-team: one pill per partner, above the name, clear of the close button */
+html:root:not(#_):not(#_) .ps-partner .pp-switch { justify-self: start; max-width: calc(100% - 44px); overflow-x: auto; scrollbar-width: none; }
+html:root:not(#_):not(#_) .ps-partner .pp-switch::-webkit-scrollbar { display: none; }
+html:root:not(#_):not(#_) .ps-partner .pp-switch button { white-space: nowrap; min-height: 32px; padding: 6px 14px; cursor: pointer; }
+
+/* ---------- Body ---------- */
+html:root:not(#_):not(#_) .ps-partner .pp-sec { display: grid; gap: 10px; }
+html:root:not(#_):not(#_) .ps-partner .pp-sec + .pp-sec { padding-top: 18px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .ps-partner .pp-h { margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+html:root:not(#_):not(#_) .ps-partner .pp-h-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+html:root:not(#_):not(#_) .ps-partner :is(.pp-line, .pp-tip, .pp-none) { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ps-partner .pp-line b { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .ps-partner .pp-key { margin: 0; font-size: 0.75rem; color: var(--faint); }
+
+/* Their starters against the league. Their strength isn't good or bad for you, so no green or red here:
+   above average reads in full ink, their weakest group gets an outline. */
+html:root:not(#_):not(#_) .ps-partner .pp-vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
+html:root:not(#_):not(#_) .ps-partner .pp-vs > span { display: grid; justify-items: center; gap: 4px; padding: 8px 2px; border-radius: 10px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .ps-partner .pp-vs small { font-size: 0.6875rem; font-weight: 600; color: var(--faint); }
+html:root:not(#_):not(#_) .ps-partner .pp-vs b { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+html:root:not(#_):not(#_) .ps-partner .pp-vs .up b { color: var(--ink); }
+html:root:not(#_):not(#_) .ps-partner .pp-vs .need { box-shadow: inset 0 0 0 1px var(--line-strong, var(--faint)); }
+html:root:not(#_):not(#_) .ps-partner .pp-vs .need small { color: var(--ink); }
+
+html:root:not(#_):not(#_) .ps-partner .pp-stats { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+html:root:not(#_):not(#_) .ps-partner .pp-stats > div { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); min-width: 0; }
+html:root:not(#_):not(#_) .ps-partner .pp-stats dt { font-size: 0.6875rem; font-weight: 600; color: var(--faint); }
+html:root:not(#_):not(#_) .ps-partner .pp-stats dd { margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .ps-partner .pp-dash { color: var(--faint); font-weight: 500; }
+html:root:not(#_):not(#_) .ps-partner .pp-tip { display: flex; gap: 8px; align-items: flex-start; color: var(--ink); }
+html:root:not(#_):not(#_) .ps-partner .pp-tip svg { flex: none; margin-top: 3px; color: var(--muted); }
+
+html:root:not(#_):not(#_) .ps-partner .pp-trades { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+html:root:not(#_):not(#_) .ps-partner .pp-trades li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 10px; font-size: 0.875rem; line-height: 1.4; color: var(--muted); }
+html:root:not(#_):not(#_) .ps-partner .pp-trades b { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .ps-partner .pp-wk { font-size: 0.75rem; color: var(--faint); padding-top: 2px; white-space: nowrap; }
+html:root:not(#_):not(#_) .ps-partner .pp-with { color: var(--faint); }
+
+html:root:not(#_):not(#_) .ps-partner .pp-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+html:root:not(#_):not(#_) .ps-partner .pp-tags li { max-width: 100%; padding: 5px 10px; border-radius: 8px; background: var(--surface-2); font-size: 0.8125rem; color: var(--ink); }
+
+/* ---------- 768px up: a centered modal ----------
+   The shared .ps shell turns into a centered panel only from 861px, so the tablet range is handled here too. */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ps-wrap.pp-wrap { align-items: center; padding: 32px; }
+  html:root:not(#_):not(#_) .ps.ps-partner {
+    max-width: 600px; max-height: min(85vh, 780px);
+    border-radius: 28px; border-bottom: 1px solid var(--line);
+    transform: scale(0.96); opacity: 0;
+    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out;
+  }
+  html:root:not(#_):not(#_) .ps-wrap.pp-wrap.in .ps.ps-partner { transform: none; opacity: 1; }
+  html:root:not(#_):not(#_) .ps-partner > .pp-top { padding: 20px 24px 16px; }
+  html:root:not(#_):not(#_) .ps-partner .ps-handle { display: none; }
+  html:root:not(#_):not(#_) .ps-partner .pp-body { padding: 18px 24px 24px; }
+}
+@media (min-width: 768px) and (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .ps.ps-partner { transform: none; transition: opacity 160ms ease-out; }
+}
