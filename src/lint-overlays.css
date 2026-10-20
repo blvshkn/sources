@@ -99,7 +99,8 @@ html:root:not(#_):not(#_) .qs-pick { scroll-margin-bottom: 16px; scroll-margin-t
    (69/70), so a sheet opened from the inbox below 1241px opened behind it. The toast (60) hid under the same scrim. */
 html:root:not(#_):not(#_) .ps-wrap,
 html:root:not(#_):not(#_) .scrim-wrap { z-index: 75; }
-html:root:not(#_):not(#_) .toast { z-index: 85; }
+/* Toasts portal to body and sit above every sheet, modal and scrim (60 to 80), below menus and tooltips */
+html:root:not(#_):not(#_) .toast { z-index: 900; }
 
 /* ---------- Why won't this work (.ps.fb) and the league switcher (.ps.lsw) on desktop ----------
    desktop-tabs.css lays out the player sheet with a bare .ps selector, so from 861px these two sheets also got the

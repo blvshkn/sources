@@ -1,12 +1,22 @@
 /* The sidebar is its own scroller and never hands a scroll to the page.
-   app-qa.css already gives .side a 100dvh box with overflow-y: auto and overscroll-behavior: contain, but
-   browsers skip a scroller that has nothing to scroll: on a tablet or desktop where the nav fits, a wheel,
-   trackpad or touch drag over it fell through and moved the main column instead.
-   An out-of-flow spacer one pixel taller than the box keeps it a live scroller at every height, so contain
-   always applies. It doesn't touch the flex layout, and ScrollArea draws no thumb for 1px of travel. */
+   It used to be a sticky grid item with overflow-y: auto. Chrome scrolls that fine, but iOS Safari routes a touch
+   drag on a sticky scroller to the page instead (seen on a phone in landscape and on iPad), so the nav never moved.
+   It's now position: fixed, which iOS scrolls reliably, with the same widths the grid column had. A ::before on the
+   shell holds that first column, so the main column and the docked inbox keep their places.
+   The out-of-flow spacer one pixel taller than the box keeps it a live scroller at every height, so
+   overscroll-behavior: contain always applies and a wheel over a short nav never falls through to the page. */
 @media (min-width: 861px) {
+  html:root:not(#_):not(#_) .shell::before { content: ""; grid-column: 1; grid-row: 1; }
+  html:root:not(#_):not(#_) .shell > .side {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 30; width: 220px;
+    height: 100vh; height: 100dvh; max-height: none;
+    overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
   html:root:not(#_):not(#_) .side::before {
     content: ""; position: absolute; top: 0; left: 0; width: 1px; height: calc(100% + 1px);
     pointer-events: none; visibility: hidden;
   }
 }
+@media (min-width: 1440px) { html:root:not(#_):not(#_) .shell > .side { width: 232px; } }
+@media (min-width: 1600px) { html:root:not(#_):not(#_) .shell > .side { width: 248px; } }

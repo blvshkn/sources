@@ -63,6 +63,12 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x:focus-visible { outline: 2px
    replaces the divider above, so there's never a line 4px over a dashed one */
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li.qs-addli { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); margin: 0 var(--qs-px); padding: var(--dl-y, 4px) 0; border-top-color: transparent; background: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli > * { grid-area: 1 / 1; }
+/* Side by side with a 16px gutter, the add rows bled 8px into it from both sides and their dashed boxes touched.
+   The inner edges stay inside their column, so there's always a gutter between You send and You get. */
+@container pg (max-width: 699.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .deal-lists > .qs:nth-child(2) .qs-list > li.qs-addli { margin-right: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .deal-lists > .qs:nth-child(3) .qs-list > li.qs-addli { margin-left: 0; }
+}
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add {
   display: flex; align-items: center; justify-content: flex-start; gap: 12px;
   width: 100% !important; height: 100%; min-height: 44px; margin: 0; padding: 0 12px 0 calc(-1 * var(--qs-px) - 1px);

@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
 import { loadLeague } from "./sleeper";
@@ -656,11 +657,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       }} />}
       {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
       <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.id}>{toast.msg}</span>}</div>
-      {toast && (
+      {/* On document.body, so it sits above sheets and modals (they portal there too) */}
+      {toast && createPortal(
         <div className={`toast${toastOut ? " leaving" : ""}`} key={toast.id}>
           <span>{toast.msg}</span>
           {toast.undo && <button className="toast-undo" onClick={() => { toast.undo!(); setToastState(null); }}>Undo</button>}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
