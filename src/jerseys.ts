@@ -1,5 +1,6 @@
 // Jersey colorways for the 32 NFL teams, drawn by components/Jersey.tsx.
-// Team colors only: no logos, wordmarks, names or signature uniform patterns ever go on a jersey.
+// Team colors and trim only: stripes, panels and signature patterns are fine, but no logos,
+// logo-derived marks, wordmarks, names, league shield or maker marks ever go on a jersey.
 // Hex values from teamcolorcodes.com (NFL team color codes), checked against each team's
 // current uniform. Names are for labels outside the jersey (review sheets, pickers) only.
 
@@ -20,6 +21,28 @@ export interface Colorway {
   panel: string;
 }
 
+/** A run of sleeve stripes, parallel to the cuff. */
+export interface StripeSet {
+  /** Gap from the top edge of the cuff to the first stripe, in artboard px (600 wide). */
+  at: number;
+  /** Stripes working up from the cuff: [color, width]. An empty color leaves a gap. */
+  s: [string, number][];
+}
+
+/** Signature patterns, each drawn as a simplified vector take on the team's look. */
+export type PatternId = "tiger" | "feather" | "peaks" | "horn";
+
+export interface Trim {
+  /** Sleeve stripes near the cuff, or shoulder stripes when `at` is large. */
+  sleeve?: StripeSet[];
+  /** A band that follows the raglan seam from collar to underarm. */
+  raglan?: { c: string; w: number; edge?: string };
+  /** Piping along the side panel seam. */
+  sidePipe?: string;
+  /** Signature pattern with its main and accent colors. */
+  pattern?: { id: PatternId; c: string; c2?: string };
+}
+
 export type Conference = "AFC" | "NFC";
 export type Division = "East" | "North" | "South" | "West";
 
@@ -29,7 +52,13 @@ export interface TeamJersey extends Colorway {
   div: Division;
   /** White (or road) colorway. Missing fields come from the home colorway, see `colorway()`. */
   away?: Partial<Colorway>;
+  /** Home trim. */
+  trim?: Trim;
+  /** White (or road) trim. Plain when missing, since home colors rarely work on white. */
+  awayTrim?: Trim;
 }
+
+const st = (at: number, ...s: [string, number][]): StripeSet => ({ at, s });
 
 const W = "#FFFFFF";
 
