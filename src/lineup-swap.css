@@ -36,16 +36,24 @@ html:root:not(#_):not(#_):not(#_) .lu-list .lu-row .lu-lockic {
 html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-locked[data-denied] .lu-lockic { opacity: 1; transform: none; }
 html:root:not(#_):not(#_):not(#_) .lu-list .lu-row .lu-lockic > svg { display: block; }
 
-/* Player info: the first row of a Lineup swap menu, 44px tall */
+/* Player info: the first row of a Lineup swap menu, 44px tall. An outlined button, the same box as the outlined
+   starter rows (1px line border, 10px corners), so it reads as something to tap rather than a heading */
 html:root:not(#_):not(#_) .mu-swap > .sw-info {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; margin: 0 0 4px; padding: 0 10px;
-  border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 0.875rem; font-weight: 600;
-  text-align: left; text-decoration: none; cursor: pointer; box-shadow: inset 0 -1px 0 var(--line);
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; margin: 2px 0 8px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--ink) 3%, transparent);
+  color: var(--ink); font: inherit; font-size: 0.875rem; font-weight: 600;
+  text-align: left; text-decoration: none; cursor: pointer; box-shadow: none;
+  transition: background-color 180ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms cubic-bezier(0.23, 1, 0.32, 1), transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 html:root:not(#_):not(#_) .mu-swap > .sw-info > span { flex: 1; }
-html:root:not(#_):not(#_) .mu-swap > .sw-info > svg { color: var(--muted); flex: none; }
-@media (hover: hover) { html:root:not(#_):not(#_) .mu-swap > .sw-info:hover { background-color: var(--surface); } }
-html:root:not(#_):not(#_) .mu-swap > .sw-info:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; }
+html:root:not(#_):not(#_) .mu-swap > .sw-info > svg { color: var(--muted); flex: none; transition: color 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .mu-swap > .sw-info:hover { background-color: color-mix(in srgb, var(--ink) 7%, transparent); border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+  html:root:not(#_):not(#_) .mu-swap > .sw-info:hover > svg { color: var(--ink); }
+}
+html:root:not(#_):not(#_) .mu-swap > .sw-info:active { transform: scale(0.99); background-color: color-mix(in srgb, var(--ink) 10%, transparent); }
+html:root:not(#_):not(#_) .mu-swap > .sw-info:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .mu-swap > .sw-info:active { transform: none; } }
 
 /* A bench player's menu: the slot he'd take, then the starter now in it */
 html:root:not(#_):not(#_) .mu-opt .sw-at { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
