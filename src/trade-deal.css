@@ -155,10 +155,11 @@ html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i { display: block; min-width:
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:first-child { background: var(--lime); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:last-child { background: color-mix(in srgb, var(--ink) 38%, transparent); }
 
-/* Actions: Write pitch first, Show the math as a quiet link beside it */
+/* Actions: Show the math as a quiet link, Write pitch on the right. Tablet and up push both to the far right. */
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .btn { flex: 0 0 auto; justify-content: center; padding-inline: 22px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish { margin: 0; color: var(--muted); }
+@media (min-width: 768px) { html:root:not(#_):not(#_):not(#_):not(#_) .dv-actions { justify-content: flex-end; } }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-foot { margin-top: -8px !important; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-main .why { grid-template-columns: minmax(0, 1fr); }
 

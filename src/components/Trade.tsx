@@ -600,8 +600,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               {/* Warnings about a player live on his pill; anything else still reads here */}
               {trade.warnings.filter((w) => ![...give, ...get].some((id) => w.includes(playerById(id).name))).map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
               <div className="dv-actions">
-                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
                 <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math"}</button>
+                <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
               </div>
               {why && (
                 <div className="why">
