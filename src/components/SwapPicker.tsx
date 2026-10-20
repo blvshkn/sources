@@ -76,6 +76,14 @@ export function placeSwap(menu: HTMLElement) {
   const row = prev ? host.previousElementSibling as HTMLElement | null : host;
   if (!row) return;
   if (prev) host.style.setProperty("--sw-rowh", `${row.offsetHeight}px`);
+  // Matchup: the menu hangs straight off the starter it swaps, same left edge and width, so the two read as one
+  // piece (CSS squares the touching corners through data-sw on the row)
+  const mine = prev ? null : host.querySelector<HTMLElement>(":scope > .mu-mine");
+  if (mine) {
+    menu.style.left = `${mine.offsetLeft}px`; menu.style.right = "auto"; menu.style.width = `${mine.offsetWidth}px`;
+    menu.style.top = `${mine.offsetTop + mine.offsetHeight - 1}px`; menu.style.bottom = "";
+    host.dataset.sw = "down";
+  }
   const sc = scrollerOf(row);
   const page = sc === document.scrollingElement || sc === document.documentElement;
   menu.classList.remove("is-up");
@@ -94,7 +102,10 @@ export function placeSwap(menu: HTMLElement) {
   // screen but fits above it, since the page doesn't scroll to show it.
   if (prev ? h <= below || (h <= floor - m.top - 8 && h > above) : h <= floor - m.top - 8) return;
   // Doesn't fit below: take the side with more room on screen, never past the content's top or end
-  if (above > below) menu.classList.add("is-up");
+  if (above > below) {
+    menu.classList.add("is-up");
+    if (mine) { menu.style.top = "auto"; menu.style.bottom = `${host.offsetHeight - mine.offsetTop - 1}px`; host.dataset.sw = "up"; }
+  }
   const room = Math.max(above, below);
   if (h > room) menu.style.maxHeight = `${Math.max(120, Math.floor(room))}px`;
 }
@@ -114,6 +125,7 @@ export function useSwapMenu<K extends string | number>() {
     setOpenState(k);
   };
   useLayoutEffect(() => {
+    document.querySelectorAll<HTMLElement>(".mu-row[data-sw]").forEach((r) => { if (!r.contains(menuRef.current)) delete r.dataset.sw; });
     if (menuRef.current) placeSwap(menuRef.current);
     const h = hold.current;
     hold.current = null;
