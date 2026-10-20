@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { WeekStepper } from "./WeekStepper";
 import { WeekPlayer } from "../weeks";
 import { Slot, gameIn, pendingMatchupWeek, clearMatchupWeek, useWeekMatch } from "../weekMatch";
-import { OPPONENT_ID, Player, SLEEPER_SET, SpecialPlayer, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
+import { LEAGUE, OPPONENT_ID, Player, SLEEPER_SET, SpecialPlayer, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
 import { eff, fits, fmt, lineupFor, round1, SlotName, specialPts, startedSpecials, StartedSpecial } from "../engine";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -24,6 +24,53 @@ const lockOf = (live: Live, p: { nfl: string } | null): "live" | "final" | null 
   const st = p ? live.games[p.nfl] : undefined;
   return st === "complete" ? "final" : st === "in_game" ? "live" : null;
 };
+/** Anyone in a lineup slot: a skill player, a kicker or a defense. Defenses read as "it", not "him". */
+type Lockable = { name: string; nfl: string; pos: string };
+const him = (p: Lockable) => (p.pos === "DEF" ? "it" : "him");
+
+/** The element that scrolls the matchup: the sheet's body, or the page itself on #matchup. */
+const scrollerOf = (el: Element | null): HTMLElement =>
+  el?.closest<HTMLElement>("[data-sheet-scroll]") ?? (document.scrollingElement as HTMLElement) ?? document.documentElement;
+
+/**
+ * Open the swap menu below its row when it fits, above it when it doesn't, so it never reaches past the end of the
+ * scroll area. A menu that hung past the end made the area taller while open; closing it took that height away and
+ * the browser pulled scrollTop up to the new end, so the rows jumped. Measured with the menu hidden, against the
+ * scroll content's own top and bottom. When it doesn't fit below, the side with more room on screen wins and the
+ * menu's height is capped to that room, so all of it shows without scrolling the matchup.
+ */
+/** The part of the page the matchup shows through on #matchup: below the sticky top bar, above the phone tab bar. */
+function pageView() {
+  const bar = document.querySelector(".topbar"), tabs = document.querySelector(".tabbar");
+  const fixed = (el: Element | null) => !!el && /sticky|fixed/.test(getComputedStyle(el).position) && el.getClientRects().length > 0;
+  const top = fixed(bar) ? Math.max(0, bar!.getBoundingClientRect().bottom) : 0;
+  const bottom = fixed(tabs) ? Math.min(window.innerHeight, tabs!.getBoundingClientRect().top) : window.innerHeight;
+  return { top, bottom };
+}
+
+function placeSwap(menu: HTMLElement) {
+  const row = menu.parentElement;
+  if (!row) return;
+  const sc = scrollerOf(row);
+  const page = sc === document.scrollingElement || sc === document.documentElement;
+  menu.classList.remove("is-up");
+  menu.style.maxHeight = "";
+  const m = menu.getBoundingClientRect();
+  const shown = menu.style.display;
+  menu.style.display = "none";
+  const top = page ? 0 : sc.getBoundingClientRect().top + sc.clientTop;
+  const floor = top + sc.scrollHeight - sc.scrollTop, ceil = top - sc.scrollTop;
+  const r = row.getBoundingClientRect();
+  menu.style.display = shown;
+  const h = m.height;
+  if (h <= floor - m.top - 8) return;
+  // Doesn't fit below: take the side with more room on screen, never past the content's top or end
+  const view = page ? pageView() : sc.getBoundingClientRect();
+  const below = Math.min(floor, view.bottom) - m.top - 8, above = r.top + 4 - Math.max(ceil, view.top) - 8;
+  if (above > below) menu.classList.add("is-up");
+  const room = Math.max(above, below);
+  if (h > room) menu.style.maxHeight = `${Math.max(120, Math.floor(room))}px`;
+}
 /** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
 function slotted(team: Team, starters: string[] | undefined): { slot: SlotName; id: string | null }[] {
   const base = lineupFor(team.roster, true);
@@ -44,6 +91,17 @@ const spPts = (live: Live, p: SpecialPlayer | null) => {
   if (now === undefined) return pr;
   return st === "complete" ? now : st === "in_game" ? onPace(now, pr, live.left?.[p.nfl]) ?? Math.max(now, pr) : pr;
 };
+
+/** One side of a row this week: headshot, name, position, team and game. Lives out here, not inside MatchupNow, so a
+ *  re-render (a toast, a live update) keeps the same rows instead of mounting every one of them again. */
+function Who({ p, side }: { p: Player | null; side: "you" | "them" }) {
+  return p ? (
+    <span className={`mu-p ${side}`}>
+      <Avatar p={p} size={32} />
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{!onBye(p.nfl) && gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small></span>
+    </span>
+  ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
+}
 
 /** A K/DEF in the matchup. One Sleeper left empty shows our best-projected pick, labeled Suggested. */
 function SpecialWho({ s, side }: { s: StartedSpecial | null; side: "you" | "them" }) {
@@ -87,8 +145,27 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   }, []);
   const theirs = useMemo(() => (opp ? slotted(opp, opp.starters) : []), [opp]);
   const [mine, setMine] = useState(sleeperMine);
-  const [open, setOpen] = useState<number | null>(null);
+  // The K and DEF Sleeper starts, and our what-if picks for those slots (same index)
+  const sleeperK = useMemo(() => startedSpecials(YOU), []);
+  const [mineK, setMineK] = useState(() => sleeperK.map((x) => x.player));
+  // Which row's swap menu is open: skill slots by index, then K/DEF slots after them
+  const [open, setOpenState] = useState<number | null>(null);
   const live = useLive();
+  // Taps keep the view exactly where it was. Each open or close notes the scroller's position first, and once React
+  // has committed (and the menu has been placed) puts it back if anything moved it.
+  const hold = useRef<{ el: HTMLElement; top: number } | null>(null);
+  const swapEl = useRef<HTMLDivElement>(null);
+  const setOpen = (i: number | null, from?: Element | null) => {
+    const el = scrollerOf(from ?? swapEl.current);
+    hold.current = { el, top: el.scrollTop };
+    setOpenState(i);
+  };
+  useLayoutEffect(() => {
+    if (swapEl.current) placeSwap(swapEl.current);
+    const h = hold.current;
+    hold.current = null;
+    if (h && Math.abs(h.el.scrollTop - h.top) > 0.5) h.el.scrollTop = h.top;
+  }, [open]);
   const pts = (id: string | null) => expect(live, id);
 
   if (!opp) return (
@@ -98,12 +175,13 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   // Totals include the K/DEF started in Sleeper (best projected only for a slot left empty). Each side's score is
   // Sleeper's team score for that roster, the one the Wire card shows (live.sideScore); a what-if lineup is ours
   // to add up. Win % turns into the result once every starter on both sides is done.
-  const myK = startedSpecials(YOU), oppK = startedSpecials(opp);
-  const myKs = myK.map((x) => x.player), oppKs = oppK.map((x) => x.player);
-  const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
+  const myK: StartedSpecial[] = sleeperK.map((x, i) => ({ slot: x.slot, player: mineK[i] ?? null, suggested: x.suggested && mineK[i]?.id === x.player?.id }));
+  const oppK = startedSpecials(opp);
+  const myKs = mineK, oppKs = oppK.map((x) => x.player), baseKs = sleeperK.map((x) => x.player);
+  const changed = mine.some((s, i) => s.id !== sleeperMine[i].id) || mineK.some((p, i) => p?.id !== baseKs[i]?.id);
   const meS = sideScore(live, YOU, mine.map((s) => s.id), myKs, !changed);
   const oppS = sideScore(live, opp, theirs.length ? theirs.map((s) => s.id) : startersOf(opp), oppKs);
-  const baseS = sideScore(live, YOU, sleeperMine.map((s) => s.id), myKs);
+  const baseS = sideScore(live, YOU, sleeperMine.map((s) => s.id), baseKs);
   const ms = scoreMatch(meS, oppS, live.past), res = ms.result;
   const myTotal = round1(meS.proj), oppTotal = round1(oppS.proj), baseTotal = round1(baseS.proj);
   const chance = ms.chance ?? 50;
@@ -117,6 +195,8 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), p.wk === null) : "");
   const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
+  // K and DEF on the roster that aren't in a K/DEF slot right now: the only ones a K or DEF row can swap in
+  const benchK = (YOU.special ?? []).map((id) => LEAGUE.specials?.[id]).filter((p): p is SpecialPlayer => !!p && !mineK.some((x) => x?.id === p.id));
   const best = lineupFor(YOU.roster, true);
   const edges = mine.map((s, i) => round1(pts(s.id) - pts(theirs[i]?.id ?? null)));
   const kEdges = myK.map((x, i) => round1(spPts(live, x.player) - spPts(live, oppK[i]?.player ?? null)));
@@ -126,19 +206,20 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
 
   // A starter whose game kicked off, or any starter once the week is over, can't be swapped: the row shakes and says why.
   // Over means Sleeper's state moved past it, or every starter on both sides is done (the result is final), byes included.
+  // The same rules, game states and words for every slot: skill players, kickers and defenses.
   const pastWeek = !!live.past || !!res;
-  const starterLock = (p: Player | null): string | null => {
+  const starterLock = (p: Lockable | null): string | null => {
     if (pastWeek) return `Week ${WEEK} is over. Lineups can't change.`;
     const l = lockOf(live, p);
-    return !p || !l ? null : l === "final" ? `${p.name}'s game is final. His spot locked at kickoff.` : `${p.name} is playing now. Lineups lock at kickoff.`;
+    return !p || !l ? null : l === "final" ? `${p.name}'s game is final. ${him(p) === "it" ? "Its" : "His"} spot locked at kickoff.` : `${p.name} is playing now. Lineups lock at kickoff.`;
   };
-  const candidateLock = (p: Player): string | null => {
+  const candidateLock = (p: Lockable): string | null => {
     const l = lockOf(live, p);
-    return !l ? null : l === "final" ? `${p.name}'s game is final, so Sleeper won't move him in.` : `${p.name} is playing now, so Sleeper won't move him in.`;
+    return !l ? null : l === "final" ? `${p.name}'s game is final, so Sleeper won't move ${him(p)} in.` : `${p.name} is playing now, so Sleeper won't move ${him(p)} in.`;
   };
-  const allLocked = pastWeek || mine.every((s) => !!starterLock(s.id ? playerById(s.id) : null));
+  const allLocked = pastWeek || (mine.every((s) => !!starterLock(s.id ? playerById(s.id) : null)) && mineK.every((p) => !!starterLock(p)));
 
-  const swap = (slotIdx: number, id: string) => {
+  const swap = (slotIdx: number, id: string, from: Element) => {
     setMine((cur) => {
       const next = cur.map((s) => ({ ...s }));
       const other = next.findIndex((s) => s.id === id);
@@ -147,16 +228,18 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
       if (other >= 0) next[other].id = prev && fits(next[other].slot, playerById(prev).pos) ? prev : null;
       return next;
     });
-    setOpen(null);
+    setOpen(null, from);
   };
-  const useBest = () => { setMine(best.slots.map((s) => ({ slot: s.slot, id: s.player?.id ?? null }))); setOpen(null); };
-
-  const Who = ({ p, side }: { p: Player | null; side: "you" | "them" }) => p ? (
-    <span className={`mu-p ${side}`}>
-      <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{!onBye(p.nfl) && gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small></span>
-    </span>
-  ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
+  const swapK = (slotIdx: number, p: SpecialPlayer, from: Element) => {
+    setMineK((cur) => cur.map((x, i) => (i === slotIdx ? p : x)));
+    setOpen(null, from);
+  };
+  const useBest = (e: { currentTarget: Element }) => { setMine(best.slots.map((s) => ({ slot: s.slot, id: s.player?.id ?? null }))); setOpen(null, e.currentTarget); };
+  // A tap on one of your starters: locked shakes and says why; otherwise it opens or closes that slot's swap menu
+  const tapStarter = (idx: number, lock: string | null) => (e: { currentTarget: Element }) => {
+    if (lock) { if (open !== null) setOpen(null, e.currentTarget); deny(e.currentTarget, lock); }
+    else setOpen(open === idx ? null : idx, e.currentTarget);
+  };
 
   return (
     <>
@@ -184,7 +267,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           <div className="mu-whatif">
             <span><b>What-if lineup</b>{fmt(round1(myTotal - baseTotal))} pts vs your Sleeper lineup. Make the swap in Sleeper to lock it in.</span>
             <div className="mu-wbtn">
-              <button className="btn btn-sm" onClick={() => { setMine(sleeperMine); setOpen(null); }}>Reset</button>
+              <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => { setMine(sleeperMine); setMineK(baseKs); setOpen(null, e.currentTarget); }}>Reset</button>
               <a className="btn btn-sm btn-primary" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
             </div>
           </div>
@@ -201,7 +284,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
             <div key={i} className={`mu-row${open === i ? " open" : ""}`}>
               <span className="mu-slot">{s.slot}</span>
               <button className={`mu-mine${rowCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined}
-                onClick={(e) => { if (lock) { setOpen(null); deny(e.currentTarget, lock); } else setOpen(open === i ? null : i); }}
+                onClick={tapStarter(i, lock)}
                 aria-expanded={lock ? undefined : open === i} aria-label={lock ? `${me?.name ?? "Empty"} at ${s.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${s.slot}`}>
                 <Who p={me} side="you" />
                 {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
@@ -209,14 +292,14 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
               <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
               {open === i && (
-                <div className="mu-swap">
+                <div className="mu-swap" ref={swapEl}>
                   <small>Swap in at {s.slot}</small>
                   {options.length ? options.map((p) => {
                     // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
                     const why = candidateLock(p);
                     return (
                       <button key={p.id} className={`mu-opt${why ? " is-locked" : ""}`} aria-disabled={why ? true : undefined}
-                        onClick={(e) => (why ? deny(e.currentTarget, why) : swap(i, p.id))} aria-label={why ? `${p.name}, locked` : undefined}>
+                        onClick={(e: { currentTarget: Element }) => (why ? deny(e.currentTarget, why) : swap(i, p.id, e.currentTarget))} aria-label={why ? `${p.name}, locked` : undefined}>
                         <Who p={p} side="you" />
                         <span className="mu-pts">{eff(p, true).toFixed(1)}</span>
                         {why ? <span className="mu-delta mu-locked">Locked</span>
@@ -230,13 +313,36 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           );
         })}
         {myK.map((x, i) => {
-          const them = oppK[i] ?? null, e = kEdges[i];
+          // Kickers and defenses follow the starters' rules: locked from kickoff, swappable before it for another K
+          // or DEF on your roster, through the same menu
+          const them = oppK[i] ?? null, e = kEdges[i], idx = mine.length + i, me = x.player;
+          const lock = starterLock(me);
+          const options = benchK.filter((p) => p.pos === x.slot).sort((a, b) => spPts(live, b) - spPts(live, a));
           return (
-            <div key={`k-${i}`} className="mu-row">
+            <div key={`k-${i}`} className={`mu-row${open === idx ? " open" : ""}`}>
               <span className="mu-slot">{x.slot}</span>
-              <span className={`mu-mine${spCls(x.player)}`}><SpecialWho s={x} side="you" />{x.player ? <PtsCell id={x.player.id} g={gameNow(live, x.player.id, x.player.nfl)} proj={specialPts(x.player)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}</span>
+              <button className={`mu-mine${spCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined} onClick={tapStarter(idx, lock)}
+                aria-expanded={lock ? undefined : open === idx} aria-label={lock ? `${me?.name ?? "Empty"} at ${x.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${x.slot}`}>
+                <SpecialWho s={x} side="you" />{me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={specialPts(me)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
+              </button>
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
               <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho s={them} side="them" />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+              {open === idx && (
+                <div className="mu-swap" ref={swapEl}>
+                  <small>Swap in at {x.slot}</small>
+                  {options.length ? options.map((p) => {
+                    const why = candidateLock(p), d = round1(spPts(live, p) - spPts(live, me));
+                    return (
+                      <button key={p.id} className={`mu-opt${why ? " is-locked" : ""}`} aria-disabled={why ? true : undefined}
+                        onClick={(ev: { currentTarget: Element }) => (why ? deny(ev.currentTarget, why) : swapK(i, p, ev.currentTarget))} aria-label={why ? `${p.name}, locked` : undefined}>
+                        <SpecialWho s={{ slot: x.slot, player: p, suggested: false }} side="you" />
+                        <span className="mu-pts">{spPts(live, p).toFixed(1)}</span>
+                        {why ? <span className="mu-delta mu-locked">Locked</span> : <span className={`mu-delta ${d >= 0 ? "up" : "down"}`}>{fmt(d)}</span>}
+                      </button>
+                    );
+                  }) : <p className="small muted">No other {x.slot === "DEF" ? "defense" : "kicker"} on your roster.</p>}
+                </div>
+              )}
             </div>
           );
         })}
@@ -259,6 +365,11 @@ function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; side: "yo
       <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl} · {game ?? "Bye"}{suggested && <span className="muted"> · Suggested</span>}</small></span>
     </span>
   );
+}
+
+/** Points for one side of a row in another week. Out here so a re-render doesn't mount it again. */
+function Num({ x, past }: { x: Slot; past: boolean }) {
+  return x.p?.pts === null ? <span className="lu-pts mu-pts bye">BYE</span> : <span className={`lu-pts mu-pts${past ? " actual" : ""}`}>{(x.p?.pts ?? 0).toFixed(1)}</span>;
 }
 
 function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => void; stepper: ReactNode }) {
@@ -284,7 +395,6 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   const res = past ? resultOf(m.me.total, opp.total) : null;
   // A past week is final (winner bright, loser dimmed); a week ahead is projections only, so both stay bright
   const wkTone = scoreTone(m.me.total, opp.total, past ? "final" : "pre");
-  const Num = ({ x }: { x: Slot }) => x.p?.pts === null ? <span className="lu-pts mu-pts bye">BYE</span> : <span className={`lu-pts mu-pts${past ? " actual" : ""}`}>{pts(x).toFixed(1)}</span>;
   return (
     <>
       {back}{stepper}
@@ -305,10 +415,10 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
           return (
             <div key={i} className="mu-row">
               <span className="mu-slot">{a.slot || b.slot}</span>
-              {past ? <button className="mu-mine is-locked mu-past" aria-disabled="true" aria-label={`${a.p?.name ?? "Empty"} at ${a.slot || b.slot}, locked`} onClick={denyOn(`Week ${week} is over. Lineups can't change.`)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></button>
-                : <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></span>}
+              {past ? <button className="mu-mine is-locked mu-past" aria-disabled="true" aria-label={`${a.p?.name ?? "Empty"} at ${a.slot || b.slot}, locked`} onClick={denyOn(`Week ${week} is over. Lineups can't change.`)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} past={past} /></button>
+                : <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} past={past} /></span>}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} /><Num x={b} /></span>
+              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} /><Num x={b} past={past} /></span>
             </div>
           );
         })}

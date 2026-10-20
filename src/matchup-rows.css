@@ -1,0 +1,11 @@
+/* Full matchup rows (Matchup.tsx), on the #matchup page and in the matchup sheet. Loads just before frame.css.
+   Every rule is scoped to .mu-row, .mu-swap or .card.mu: nothing here styles bare .card or .row. */
+
+/* The swap menu opens above its row when the space below would run past the end of the scroll area (placeSwap in
+   Matchup.tsx sets is-up and, when neither side has room for all of it, a max-height) */
+/* grid-row auto: an absolutely placed grid child measures from its grid area, and the wide layout puts the menu in
+   row 3, so without this "above" would be measured from the bottom of the row instead of its top */
+html:root:not(#_):not(#_) .mu-row > .mu-swap.is-up { grid-row: auto; top: auto; bottom: calc(100% - 4px); transform-origin: bottom center; }
+
+/* Read-only rows (another week's projected lineups) aren't buttons, so a press shows no fill, ring or scale */
+html:root:not(#_):not(#_) .card.mu span.mu-mine:is(:hover, :active):not(#_) { background: none !important; box-shadow: none !important; transform: none !important; }
