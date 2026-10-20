@@ -592,17 +592,18 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   // Wide, heavy and leaning (the slant is in jerseys.ts): softly rounded outside corners, narrow square
   // counters, square 2 neck, short stubs, a flat-topped flag on the 1 and no foot.
   LAC: ["ROUNDED", { w: 0.58, stem: 0.195, bar: 0.165, ro: [0.1, 0.11], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
-  DAL: ["BLOCK", { w: 0.54, stem: 0.18, bar: 0.165, ro: 0.05, rc: 0.02 }],
+  DAL: ["CHAMFER", { w: 0.56, stem: 0.18, bar: 0.16, ro: 0.035, counter: "chamfer", rc: 0.004, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3, notch: 0.04 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 }, eight: { pinch: 0.04 } }],
   NYG: ["BLOCK", { w: 0.52, stem: 0.165, bar: 0.15, ro: 0.02, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.07 }, six: { stub: 0 }, four: { type: "diag", cy: 0.66, xr: 0.6 } }],
   PHI: ["SLAB", { corner: "round", ro: 0.07, rc: 0.04 }],
   WAS: ["NARROW", { w: 0.48, stem: 0.16, ro: 0.012, rc: 0.004 }],
-  CHI: ["OVAL", { w: 0.42, stem: 0.115, bar: 0.097, one: { flag: 0, fb: 0, fj: 0 }, two: { neck: "diag", stub: 0.04, dy: 0.46 }, six: { stub: 0.04 }, cut: 0 }],
+  CHI: ["OVAL", { w: 0.42, stem: 0.13, bar: 0.11, one: { flag: 0, fb: 0, fj: 0 }, two: { neck: "diag", stub: 0.04, dy: 0.46 }, six: { stub: 0.04 }, cut: 0 }],
   DET: ["ROUNDED", { w: 0.51, ro: [0.1, 0.13], rc: [0.07, 0.09] }],
   GB: ["SOFT", { w: 0.58, stem: 0.19, ro: 0.04, rc: 0.02, dig: { "8": { ro: 0.13, rc: 0.06 } } }],
   // Heavy wide block with pointed stubs (the spur) and a long square flag on the 1.
   MIN: ["HEAVY", { w: 0.6, stem: 0.2, bar: 0.18, ro: 0.03, rc: 0.006, spur: 0.05, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
   ATL: ["NARROW", { w: 0.52, stem: 0.165, bar: 0.15 }],
-  CAR: ["CHAMFER", { w: 0.54, stem: 0.17, ro: 0.035, rc: 0.02, cut: 0, two: { neck: "square", stub: 0.08 }, three: { stub: 0.08, arm: 0.3 }, six: { stub: 0.08 } }],
+  // Block with small clipped corners, square counters, footed 1, notched 3 and 8.
+  CAR: ["CHAMFER", { w: 0.58, stem: 0.18, bar: 0.16, ro: 0.05, counter: "square", rc: 0, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3, notch: 0.04 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 }, eight: { pinch: 0.04 } }],
   NO: ["HEAVY", { w: 0.56, stem: 0.185, bar: 0.165, two: { neck: "bevel", stub: 0.08, bevel: 0.08 }, six: { stub: 0.05 }, four: { type: "closed", cy: 0.68, xr: 0.52 } }],
   TB: ["OCTAGON", { stem: 0.17, bar: 0.155, mid: 0.46 }],
   ARI: ["BLOCK", { w: 0.54, rc: 0.04, ro: 0.018 }],
@@ -696,7 +697,19 @@ const OSWALD_640: Metric[] = [[546, 47, 500], [384, 16, 313], [509, 31, 484], [5
 const ANTONIO_650: Metric[] = [[471, 47, 422], [355, 31, 281], [451, 63, 422], [454, 47, 422], [451, 31, 438], [451, 63, 406], [451, 47, 422], [451, 47, 422], [451, 31, 406], [451, 31, 406]];
 const ANTONIO_520: Metric[] = [[436, 47, 391], [396, 47, 297], [429, 63, 406], [430, 47, 391], [429, 31, 422], [429, 63, 391], [429, 47, 406], [429, 31, 406], [429, 31, 391], [429, 31, 391]];
 const CHAKRA_700: Metric[] = [[652, 47, 609], [382, 16, 313], [574, 31, 547], [603, 31, 563], [579, 0, 578], [606, 31, 563], [622, 47, 578], [522, 0, 500], [638, 47, 594], [627, 47, 578]];
+const CHAKRA_600: Metric[] = [[644, 47, 594], [374, 16, 313], [566, 31, 531], [595, 31, 547], [571, 0, 563], [598, 47, 563], [614, 47, 578], [514, 0, 484], [630, 47, 578], [619, 47, 563]];
+const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], [668, 47, 625], [672, 16, 641], [666, 47, 625], [695, 47, 641], [569, 16, 547], [689, 47, 641], [699, 63, 656]];
+const TOMORROW_700: Metric[] = [[692, 47, 656], [478, 47, 453], [683, 47, 641], [695, 63, 656], [709, 16, 688], [708, 63, 672], [715, 47, 672], [603, 0, 578], [696, 47, 656], [730, 63, 688]];
+const BIG_SHOULDERS_700: Metric[] = [[467, 31, 438], [252, 31, 219], [451, 31, 422], [464, 31, 422], [474, 16, 453], [474, 31, 438], [459, 31, 438], [439, 16, 422], [460, 31, 422], [459, 31, 422]];
 const FONT_TEAM: Record<string, FontNumerals> = {
+  // Clipped corners and clipped counters, a footless 1 with a short flag.
+  ARI: font("Chakra Petch", 600, 703, CHAKRA_600, { scaleX: 0.72 }),
+  ATL: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.85 }),
+  // Clipped block with a footed 1 and 4.
+  DET: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.82 }),
+  GB: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.78 }),
+  // Condensed rounded rectangles, a 9 on a straight leg (opsz settles on the display cut at jersey sizes).
+  DEN: font("Big Shoulders", 700, 813, BIG_SHOULDERS_700, { scaleX: 1.04 }),
   // Narrow, rounded, light: oval counters and plain stroke ends.
   BAL: font("Antonio", 650, 859, ANTONIO_650, { scaleX: 1.06 }),
   CIN: font("Antonio", 520, 859, ANTONIO_520),
