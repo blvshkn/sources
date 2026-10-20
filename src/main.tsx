@@ -46,6 +46,7 @@ import "./lineup-swap.css";
 import "./sugg-bid.css";
 import "./kickoff.css";
 import "./trade-find.css";
+import "./partners-list.css";
 import "./matchup-card.css";
 import "./frame.css";
 import "./sheet.css";

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { ManagerTag, POS_ORDER, TEAMS, YOU } from "../data";
+import { ManagerTag, POS_ORDER, TEAMS, YOU, playerById } from "../data";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { FadeWeeks, Group, TeamNeeds, Trade, tendencies } from "../engine";
+import { FadeWeeks, Group, TeamNeeds, Trade, activeTags, fmt, tendencies } from "../engine";
 import { NeedsList } from "./NeedsList";
 import { AiLabel, Delta, Icon, Phase, PosBadge, Stamp, useSticky, PageTabs } from "./ui";
 import { TagCapture } from "./TagCapture";
@@ -24,6 +24,26 @@ const when = (at: number) => {
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 };
 const managerOf = (id: string) => { const t = LEAGUE.teams.find((x) => x.id === id); return t ? (t.you ? "You" : t.manager) : "Unknown"; };
+
+/** Why a partner fits, short enough for one line on desktop: their need, then the player of yours that fills it.
+ *  Positions read in their own color, your players in ink, and a name never breaks across lines. */
+function PartnerWhy({ n, t, want }: { n: TeamNeeds; t: Trade; want?: ManagerTag }) {
+  const g = n.groups[n.need];
+  const names = t.give.map((id) => playerById(id).name);
+  const players = names.map((name, i) => <span key={name}>{i > 0 && <span className="ptn-plus"> + </span>}<span className="ptn-player">{name}</span></span>);
+  // A wants tag is their own words; its position, when it names one, gets the position color
+  const lead = want ? (() => {
+    const pos = want.pos && new RegExp(`\\b${want.pos}\\b`).exec(want.text);
+    return pos ? <>{want.text.slice(0, pos.index)}<span className={`ptn-pos p-${want.pos}`}>{want.pos}</span>{want.text.slice(pos.index + pos[0].length)}</> : want.text;
+  })() : g.diff < -0.5 ? <>Thin at <span className={`ptn-pos p-${n.need}`}>{n.need}</span>, <span className="num">{fmt(g.diff)}</span>/wk</> : <>No glaring need</>;
+  return (
+    <span className="ptn-why">
+      <span className="ptn-lead">{lead}</span>
+      <span className="ptn-sep" aria-hidden="true"> · </span>
+      <span className="ptn-fill">{players} {want || g.diff < -0.5 ? (names.length > 1 ? "fill it" : "fills it") : names.length > 1 ? "fit" : "fits"}</span>
+    </span>
+  );
+}
 
 function Move({ p, add }: { p: ActivityPlayer; add: boolean }) {
   return (
@@ -113,6 +133,7 @@ export function League({ needs, tags, fade, focusId, onFocused, partners, onTrad
   // A deep link to a team lands on Needs, where its row opens
   useEffect(() => { if (focusId && view !== "needs") setView("needs"); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [focusId]);
   const you = needs.find((n) => n.team.you)!;
+  const wants = activeTags(tags, fade).filter((x) => x.kind === "wants");
   // Starter copy: "Per sources, three teams are thin at RB. You have two to spare."
   const headline = (() => {
     const spare = POS_ORDER.map((pos) => ({ pos, n: you.lineup.bench.filter((p) => p.pos === pos).length }))
@@ -144,12 +165,15 @@ export function League({ needs, tags, fade, focusId, onFocused, partners, onTrad
           <h3>{partners.length === 1 ? "Your best trade partner this week" : `Your ${partners.length} best trade partners this week`}</h3>
           {headline && <p className="lg-spare">{headline}</p>}
           <div className="partners">
-            {partners.map(({ n, t, why }, i) => (
-              <button key={n.team.id} className="partner-card" onClick={() => onOpen(t)}>
-                <span className="partner-rank">{i + 1}</span>
+            {partners.map(({ n, t, why }) => (
+              <button key={n.team.id} className="partner-card ptn-row" onClick={() => onOpen(t)} aria-label={`${n.team.name}. ${why} You ${fmt(t.youDelta)}, them ${fmt(t.themDelta)} a week. Open this trade.`}>
                 <TeamAvatar t={n.team} size={32} />
-                <span className="ptn-who"><b>{n.team.name}<Trophy teamId={n.team.id} /></b><span className="ptn-why">{why}</span></span>
-                <span className="ptn-nums"><span><small>You</small><Delta n={t.youDelta} /></span><span><small>Them</small><Delta n={t.themDelta} /></span></span>
+                <b className="ptn-name">{n.team.name}<Trophy teamId={n.team.id} /></b>
+                <PartnerWhy n={n} t={t} want={wants.find((x) => x.teamId === n.team.id)} />
+                <span className="ptn-nums">
+                  <span className="ptn-stat"><small>You</small><Delta n={t.youDelta} /></span>
+                  <span className="ptn-stat"><small>Them</small><Delta n={t.themDelta} /></span>
+                </span>
               </button>
             ))}
           </div>

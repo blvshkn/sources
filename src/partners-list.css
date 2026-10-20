@@ -1,0 +1,82 @@
+/* ---------- League: "Your best trade partners this week" ----------
+   One row per partner: avatar, name with the deltas on the same line, the reason under both.
+   The order already says who is best, so there is no rank number.
+   When the list is narrow (phones, the split column at tablet width) the deltas drop under the reason. */
+
+html:root:not(#_):not(#_) .nudge .partners { container: ptn / inline-size; }
+
+html:root:not(#_):not(#_) .card .partner-card.ptn-row {
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-areas: "av name nums" "av why why";
+  align-items: baseline;
+  gap: 2px 12px;
+  width: 100%;
+  padding: 14px 0 !important;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+html:root:not(#_):not(#_) .ptn-row > :first-child { grid-area: av; align-self: start; margin-top: 4px; }
+
+html:root:not(#_):not(#_) .ptn-row .ptn-name {
+  grid-area: name; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 0.9375rem/1.3 "Geist", sans-serif !important; letter-spacing: -0.01em; color: var(--ink);
+}
+
+html:root:not(#_):not(#_) .ptn-row .ptn-why {
+  grid-area: why; min-width: 0;
+  font: 400 0.8125rem/1.45 "Geist", sans-serif; color: var(--muted);
+  text-wrap: pretty;
+}
+html:root:not(#_):not(#_) .ptn-row .ptn-player { color: var(--ink); font-weight: 500; white-space: nowrap; }
+html:root:not(#_):not(#_) .ptn-row .ptn-plus { color: var(--muted); }
+html:root:not(#_):not(#_) .ptn-row .ptn-pos { font: 600 0.75rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--ink); }
+html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-QB { color: var(--qb); }
+html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-RB { color: var(--rb); }
+html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-WR { color: var(--wr); }
+html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-TE { color: var(--te); }
+html:root:not(#_):not(#_) .ptn-row .ptn-why .num { font: 500 0.75rem/1 var(--font-mono) !important; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+/* Deltas: two small stats on one line, label then value, every value the same width so rows line up */
+html:root:not(#_):not(#_) .ptn-row .ptn-nums {
+  grid-area: nums; justify-self: end;
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 0; white-space: nowrap;
+}
+html:root:not(#_):not(#_) .ptn-row .ptn-stat { display: inline-flex; align-items: baseline; gap: 6px; font-size: inherit; }
+html:root:not(#_):not(#_) .ptn-row .ptn-stat small { font: 500 0.75rem/1 "Geist", sans-serif; color: var(--muted); }
+html:root:not(#_):not(#_) .ptn-row .ptn-stat .delta {
+  min-width: 5ch; text-align: right;
+  font: 500 0.875rem/1 var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+
+@container ptn (max-width: 419px) {
+  html:root:not(#_):not(#_) .card .partner-card.ptn-row {
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-areas: "av name" "av why" "av nums";
+  }
+  html:root:not(#_):not(#_) .ptn-row .ptn-nums { justify-self: start; margin-top: 6px; }
+  html:root:not(#_):not(#_) .ptn-row .ptn-stat .delta { min-width: 0; text-align: left; }
+}
+
+/* ---------- States: the shared row pill, drawn behind the content ---------- */
+html:root:not(#_):not(#_) .card .partner-card.ptn-row {
+  position: relative; isolation: isolate;
+  transition-property: transform; transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+html:root:not(#_):not(#_) .card .partner-card.ptn-row::before {
+  content: ""; position: absolute; inset: 4px -12px; z-index: -1; border-radius: 12px; pointer-events: none;
+  background: var(--st-tint); opacity: 0;
+  transition: opacity var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)), background-color var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .card .partner-card.ptn-row:hover::before { opacity: 1; background: var(--st-tint); }
+}
+html:root:not(#_):not(#_) .card .partner-card.ptn-row:active { transform: scale(0.99) !important; transition-duration: 100ms; }
+html:root:not(#_):not(#_) .card .partner-card.ptn-row:active::before { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_) .card .partner-card.ptn-row:focus-visible::before { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .card .partner-card.ptn-row:active { transform: none !important; }
+}
