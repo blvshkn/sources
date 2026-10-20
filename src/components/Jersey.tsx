@@ -1,5 +1,6 @@
-// A front-view football jersey in any team's colorway and trim. Pure SVG: the number is live text,
-// so it stays selectable and changes with the `number` prop. Stripes, panels and signature patterns
+// A front-view football jersey in any team's colorway and trim. Pure SVG: the number is drawn as paths
+// from the team's numeral set and changes with the `number` prop; the svg's label carries it for
+// assistive tech. Stripes, panels and signature patterns
 // are drawn from jerseys.ts; no logos, names or maker marks.
 // Collar: plain (body color with seams), solid (one color band) or striped (a band with stripes
 // parallel to its edge), each with its own band width and V depth, and an optional notch at the point.
@@ -10,11 +11,12 @@
 // vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
 // white jerseys stay clean and black ones still show form. Under 120 px the mesh, grain and blurred
 // folds drop out.
-// Number fonts: one free Google Font per team (see NUMBERS in jerseys.ts), loaded by a single
-// stylesheet link in index.html. Each face is sized to the same cap height so every team's number
-// fills the chest the same way.
-import { useId } from "react";
-import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
+// Numbers: original digit outlines per team (see numerals.ts), every set held to the same cap height so
+// one and two digits fill the chest the same way. Outlines are strokes under the fill, so they keep
+// the same visual widths whatever the digit shape.
+import { useId, useMemo } from "react";
+import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type PatternId, type Trim } from "../jerseys";
+import { numberPath, numeralSet } from "../numerals";
 
 export interface JerseyProps {
   /** NFL abbreviation, e.g. "BUF" */
@@ -32,25 +34,9 @@ export interface JerseyProps {
 
 const VW = 600;
 const VH = 690;
-const FALLBACK_FONTS = `"Teko", "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif`;
-
-/** Family, weight, cap height and widest digit advance (both in em), measured in Chromium. */
-const FONTS: Record<NumFont, { family: string; weight: number; cap: number; adv: number }> = {
-  teko: { family: "Teko", weight: 700, cap: 0.656, adv: 0.507 },
-  oswald: { family: "Oswald", weight: 700, cap: 0.828, adv: 0.55 },
-  bigShoulders: { family: "Big Shoulders Display", weight: 900, cap: 0.813, adv: 0.515 },
-  saira: { family: "Saira Condensed", weight: 800, cap: 0.703, adv: 0.489 },
-  barlow: { family: "Barlow Condensed", weight: 800, cap: 0.719, adv: 0.508 },
-  chakra: { family: "Chakra Petch", weight: 700, cap: 0.703, adv: 0.652 },
-  squada: { family: "Squada One", weight: 400, cap: 0.672, adv: 0.469 },
-  jost: { family: "Jost", weight: 800, cap: 0.719, adv: 0.732 },
-};
-/** Font size for `digits` in face `f`, so the cap height is `cap` and the run is no wider than `maxW`. */
-function fitSize(f: { cap: number; adv: number }, digits: number, cap: number, maxW: number, track: number) {
-  const byCap = cap / f.cap;
-  const width = digits * f.adv + (digits - 1) * track;
-  return Math.min(byCap, maxW / width);
-}
+// Chest and shoulder number boxes: cap height, widest run and baseline, in artboard units.
+const CHEST = { cap: 190, maxW: [200, 296], y: 366 };
+const SHOULDER = { cap: 64, maxW: [70, 112], y: 38 };
 
 // Left half of the silhouette, mirrored for the right: shoulder corner, capped sleeve, arched cuff
 // opening (it wraps the arm), then a side that tucks in at the waist and flares to the hem.
@@ -265,50 +251,34 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
   const col: Collar = c.collar;
   const cw = col.w ?? COLLAR_W;
   const cg = collarGeo(col.depth ?? COLLAR_DEPTH, cw);
-  // Chest number sits high on the chest. One digit stands tall; two digits come down a touch with a little
-  // tracking so the outlines meet without the fills touching. Every face is sized to Teko's cap height
-  // (0.656 em at 300 and 258 px), held to a width that keeps clear of the sleeves and trim.
+  // Chest number sits high on the chest; one and two digits share the cap height, and the run is held
+  // to a width that keeps clear of the sleeves and trim.
   const ns = numberStyle(team, away);
-  const face = FONTS[ns.font];
-  const fontFamily = `"${face.family}", ${FALLBACK_FONTS}`;
-  const track = two ? 0.02 : 0;
-  const fs = fitSize(face, n.length || 1, two ? 169 : 197, two ? 290 : 190, track);
-  const numY = two ? 358 : 370;
   const stroke = 16;
   const outline = ns.plain ? c.number : c.outline;
+  const { id: setId, set } = numeralSet(team);
+  const paths = useMemo(() => {
+    const at = (box: typeof CHEST, x: number) => numberPath(setId, set, n, x, box.y, box.cap, box.maxW[two ? 1 : 0]).d;
+    return { chest: at(CHEST, 300), left: at(SHOULDER, 112), right: at(SHOULDER, 488) };
+  }, [setId, set, n, two]);
 
-  const num = (props: { x: number; y: number; size: number; strokeW: number; rotate?: number; letter?: number }) => {
+  const num = (props: { d: string; x: number; y: number; strokeW: number; rotate?: number }) => {
+    if (!props.d) return null;
     const transforms = [props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : "", ns.slant ? `translate(${props.x} ${props.y}) skewX(${-ns.slant}) translate(${-props.x} ${-props.y})` : ""].filter(Boolean);
-    const common = {
-      x: props.x,
-      y: props.y,
-      textAnchor: "middle" as const,
-      fontFamily,
-      fontWeight: face.weight,
-      fontSize: props.size,
-      letterSpacing: `${props.letter ?? track}em`,
-      transform: transforms.length ? transforms.join(" ") : undefined,
-    };
     const layer = (fill: string, w: number, dx = 0, dy = 0) => (
-      <text {...common} x={props.x + dx} y={props.y + dy} aria-hidden="true" fill={fill} stroke={fill} strokeWidth={w} strokeLinejoin="miter" strokeMiterlimit={3} paintOrder="stroke" style={{ userSelect: "none" }}>
-        {n}
-      </text>
+      <path d={props.d} transform={dx || dy ? `translate(${dx} ${dy})` : undefined} fill={fill} stroke={fill} strokeWidth={w} strokeLinejoin="miter" strokeMiterlimit={3} paintOrder="stroke" />
     );
     const k = props.strokeW / stroke;
     const w2 = props.strokeW + 12 * k;
     return (
-      <>
+      <g transform={transforms.length ? transforms.join(" ") : undefined} aria-hidden="true">
         {ns.shadow && layer(ns.shadow, ns.outline2 ? w2 : props.strokeW, 9 * k, 9 * k)}
         {ns.outline2 && layer(ns.outline2, w2)}
         {!ns.plain && layer(outline, props.strokeW)}
-        <text {...common} fill={c.number}>
-          {n}
-        </text>
-      </>
+        <path d={props.d} fill={c.number} />
+      </g>
     );
   };
-  // Shoulder numbers: the same face at a third of the chest size.
-  const sfs = fitSize(face, n.length || 1, 65.6, two ? 112 : 70, two ? 0.02 : 0);
 
   // Light: strengths by body luminance (0 black, 1 white).
   const L = lum(c.body);
@@ -451,8 +421,8 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           </g>
         ))}
         {/* Shoulder-top numbers, cut by the shoulder line as they wrap over the top */}
-        {!ns.noShoulder && num({ x: 112, y: 38, size: sfs, strokeW: 7, rotate: -5, letter: two ? 0.02 : 0 })}
-        {!ns.noShoulder && num({ x: 488, y: 38, size: sfs, strokeW: 7, rotate: 5, letter: two ? 0.02 : 0 })}
+        {!ns.noShoulder && num({ d: paths.left, x: 112, y: SHOULDER.y, strokeW: 7, rotate: -5 })}
+        {!ns.noShoulder && num({ d: paths.right, x: 488, y: SHOULDER.y, strokeW: 7, rotate: 5 })}
         <g fill="none" strokeWidth="2.2" strokeLinecap="round">
           <path d={RAGLAN_L} stroke={seam} />
           <path d={mirror(RAGLAN_L)} stroke={seam} />
@@ -498,7 +468,7 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
       <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
 
       {/* Chest number */}
-      {num({ x: 300, y: numY, size: fs, strokeW: stroke })}
+      {num({ d: paths.chest, x: 300, y: CHEST.y, strokeW: stroke })}
 
       {/* Shading over everything on the body, number and trim included, so they sit in the cloth */}
       <g clipPath={u("b")} style={{ pointerEvents: "none" }}>

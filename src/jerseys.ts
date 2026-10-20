@@ -311,21 +311,8 @@ export function trimFor(team: string, away = false): Trim | undefined {
   return t && (away ? t.away : t.home);
 }
 
-/** Free Google Fonts stand-ins for each team's number face. The real faces are custom, so these are
-    the closest open fonts by shape, never copies. */
-export type NumFont =
-  | "teko" // tall condensed, squared
-  | "oswald" // classic block with rounded bowls
-  | "bigShoulders" // squared full block
-  | "saira" // modern squared with soft corners
-  | "barlow" // modern rounded condensed
-  | "chakra" // chamfered, angular cuts
-  | "squada" // squared with clipped corners
-  | "jost"; // geometric, round bowls
-
 /** Number treatment for one colorway. The fill and first outline come from the colorway. */
 export interface NumberTrim {
-  font?: NumFont;
   /** Second, outer outline. */
   outline2?: string;
   /** Drop shadow color, offset down and to the right. */
@@ -338,53 +325,51 @@ export interface NumberTrim {
   noShoulder?: boolean;
 }
 
-export interface NumberStyle extends NumberTrim {
-  font: NumFont;
-}
+export type NumberStyle = NumberTrim;
 
-// Number face per team, from current home and road photos. Teams on the same face share one stand-in.
+// Number treatment per team, from current home and road photos. The digit shapes themselves are drawn
+// in numerals.ts, one original set per team.
 const FLAT: NumberTrim = { plain: true };
 const OFF: NumberTrim = { noShoulder: true };
-export const NUMBERS: Record<string, { font: NumFont; home?: NumberTrim; away?: NumberTrim }> = {
-  BUF: { font: "bigShoulders", home: { outline2: NAVY_BUF }, away: { outline2: NAVY_BUF } },
-  MIA: { font: "oswald" },
-  NE: { font: "bigShoulders", home: OFF, away: OFF },
-  NYJ: { font: "bigShoulders", home: FLAT, away: FLAT },
-  BAL: { font: "oswald" },
-  CIN: { font: "teko", home: OFF, away: OFF },
-  CLE: { font: "bigShoulders", home: FLAT, away: FLAT },
-  PIT: { font: "jost", home: FLAT, away: FLAT },
-  HOU: { font: "chakra" },
-  IND: { font: "bigShoulders", home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
-  JAX: { font: "bigShoulders", home: FLAT, away: FLAT },
-  TEN: { font: "bigShoulders" },
-  DEN: { font: "saira", home: OFF, away: OFF },
-  KC: { font: "bigShoulders" },
-  LV: { font: "bigShoulders", home: FLAT },
-  LAC: { font: "saira", home: { slant: 6, noShoulder: true }, away: { slant: 6, noShoulder: true } },
-  DAL: { font: "bigShoulders", away: { outline2: W } },
-  NYG: { font: "bigShoulders", home: FLAT, away: FLAT },
-  PHI: { font: "squada", home: { shadow: "#000000" }, away: { shadow: "#000000" } },
-  WAS: { font: "bigShoulders" },
-  CHI: { font: "teko" },
-  DET: { font: "barlow" },
-  GB: { font: "oswald", home: FLAT, away: FLAT },
-  MIN: { font: "squada", home: FLAT, away: FLAT },
-  ATL: { font: "bigShoulders" },
-  CAR: { font: "chakra" },
-  NO: { font: "bigShoulders" },
-  TB: { font: "bigShoulders", home: { outline2: "#34302B" }, away: { outline2: "#34302B" } },
-  ARI: { font: "bigShoulders", home: FLAT, away: OFF },
-  LAR: { font: "barlow", home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
-  SF: { font: "bigShoulders", home: FLAT, away: FLAT },
-  SEA: { font: "squada" },
+export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> = {
+  BUF: { home: { outline2: NAVY_BUF }, away: { outline2: NAVY_BUF } },
+  MIA: {},
+  NE: { home: OFF, away: OFF },
+  NYJ: { home: FLAT, away: FLAT },
+  BAL: {},
+  CIN: { home: OFF, away: OFF },
+  CLE: { home: FLAT, away: FLAT },
+  PIT: { home: FLAT, away: FLAT },
+  HOU: {},
+  IND: { home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
+  JAX: { home: FLAT, away: FLAT },
+  TEN: {},
+  DEN: { home: OFF, away: OFF },
+  KC: {},
+  LV: { home: FLAT },
+  LAC: { home: { slant: 6, noShoulder: true }, away: { slant: 6, noShoulder: true } },
+  DAL: { away: { outline2: W } },
+  NYG: { home: FLAT, away: FLAT },
+  PHI: { home: { shadow: "#000000" }, away: { shadow: "#000000" } },
+  WAS: {},
+  CHI: {},
+  DET: {},
+  GB: { home: FLAT, away: FLAT },
+  MIN: { home: FLAT, away: FLAT },
+  ATL: {},
+  CAR: {},
+  NO: {},
+  TB: { home: { outline2: "#34302B" }, away: { outline2: "#34302B" } },
+  ARI: { home: FLAT, away: OFF },
+  LAR: { home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
+  SF: { home: FLAT, away: FLAT },
+  SEA: {},
 };
 
 /** Number face and treatment for the colorway `colorway(team, away)` returns. */
 export function numberStyle(team: string, away = false): NumberStyle {
   const t = NUMBERS[team];
-  if (!t) return { font: "teko" };
-  return { font: t.font, ...(away ? t.away : t.home) };
+  return { ...(t && (away ? t.away : t.home)) };
 }
 
 /** Review order: AFC East, North, South, West, then NFC. */
