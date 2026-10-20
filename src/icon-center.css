@@ -48,10 +48,10 @@ html:root:not(#_):not(#_) .sheet > .sheet-grab { padding-right: 33px; }
 /* Bell: the drawing is centred in its 24 box (icons.tsx). The dome carries the weight and the badge sits up and to
    the right, so it read high and left: 0.75px right and 1px down at 22px. */
 html:root:not(#_):not(#_) .top-bell > svg.ic-bell > .m1 { translate: 0.82px 1.09px; }
-/* Chevrons in circles (the week stepper): the drawing leans 0.5 toward its point, so pull it back to the exact centre.
-   A nudge either way (tried 1px toward and away from the point) read off in the stepper. The back arrow is the same
-   glyph turned round. */
-html:root:not(#_):not(#_) .btn-icon svg.ic-chev > .m1 { translate: -0.5px 0; }
+/* Chevrons in circles (the week stepper): the open side carries the weight, so a box-centred chevron reads pushed
+   back. Shift it about 1.5px toward its point at 18px (the drawing already leans 0.5 that way). The back arrow is the
+   same glyph turned round, so it moves toward its own point: left arrows sit left, right arrows sit right. */
+html:root:not(#_):not(#_) .btn-icon svg.ic-chev > .m1 { translate: 1.5px 0; }
 /* Send: the plane points up and right, so it reads high and right: about 1px left and 1px down at 16 to 18px */
 html:root:not(#_):not(#_) :is(.btn-icon, .composer-btn, .ibx-send) > svg.ic-send > * { translate: -1.4px 1.6px; }
 /* Search: the handle pulls it right and down */
