@@ -517,7 +517,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const specialBids: number[] = [];
   txns.filter((t) => t.type === "waiver" && t.status === "complete" && t.adds && t.settings?.waiver_bid !== undefined)
     .forEach((t) => Object.keys(t.adds!).forEach((id) => {
-      const pct = Math.round(((t.settings!.waiver_bid ?? 0) / budget) * 100);
+      // One decimal, so a $5 kicker claim in a $1,000 league stays $5 instead of rounding to $10
+      const pct = Math.round(((t.settings!.waiver_bid ?? 0) / budget) * 1000) / 10;
       if (isSpecialId(id)) specialBids.push(pct); else tiers[tierOf(id)].push(pct);
     }));
   const faabHistory: BidTier[] = (Object.keys(tiers) as BidTier["tier"][]).map((tier) => ({ tier, bids: tiers[tier] }));
@@ -629,7 +630,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       trade: td && td < 99 ? `Trade deadline Week ${td}` : "No trade deadline",
     },
     byeTeams, teams, players, sleeperSet, slotHistory,
-    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position },
+    // Sleeper's own suggested bid only reaches its mobile app through a signed-in private endpoint, so Sources sizes it
+    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Sources" },
     faabHistory, freeAgents, specialFreeAgents, specialBids, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     userPhoto: avatarSrc(userBy.get(userId)?.avatar) ?? undefined,

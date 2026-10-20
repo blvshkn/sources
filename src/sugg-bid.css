@@ -1,0 +1,3 @@
+/* Sugg. bid: the label carries a note on where the numbers come from, and every amount reads in Geist Mono */
+.topk-bid .sugg-bid-lbl { text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--faint); cursor: help; }
+.topk-bid dd, .wv-c-bid b, .pctx-bid b, .sugg-bid-amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

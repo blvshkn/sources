@@ -1,8 +1,8 @@
 import { DEADLINES, FAAB, ManagerTag, TEAMS, YOU, sleeperUrl } from "../data";
-import { TeamNeeds, WaiverRec, bidDollars, fmt, groupsFor, irReport, recDrop, tendencies } from "../engine";
+import { TeamNeeds, WaiverRec, fmt, groupsFor, irReport, recDrop, tendencies } from "../engine";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
-import { bidText, useHoldHeight } from "./Waivers";
+import { SUGG_BID, bidText, useHoldHeight } from "./Waivers";
 import { useWeekPick } from "../waiverWeeks";
 
 /** Waivers, in the docked panel: what you can spend, when claims run, and the one add worth making.
@@ -45,7 +45,7 @@ export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: {
               <b>{top.fa.name}</b>
               <small><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b> {top.fa.nfl} · {wp ? `${wp.pts.toFixed(wp.kind === "past" ? 2 : 1)} ${wp.kind === "past" ? "scored" : "proj"}` : `${(kd ? top.value : top.fa.proj).toFixed(1)} proj`}</small>
             </span>
-            <span className="pctx-bid"><small>{FAAB.enabled ? "Bid" : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</b></span>
+            <span className="pctx-bid"><small>{FAAB.enabled ? SUGG_BID : "Claim"}</small><b>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</b></span>
           </div>
           <ul className="pctx-plan">
             <li className={starts ? "good" : undefined}>{wp ? (wp.kind === "past" ? (starts ? <>Would have added <b>{fmt(wp.gain)} pts</b> in week {wp.week}.</> : <>Wouldn't have cracked your week {wp.week} lineup.</>)
@@ -56,7 +56,7 @@ export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: {
           {(wp ? wp.fit : !kd && top.fit) && <p className="pctx-note ps-fit">{wp ? wp.fit : top.fit}</p>}
           <span className="ps-ctx-acts">
             <a className="linkish pctx-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(top.bid[1])} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
+              onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
               Claim in Sleeper
             </a>
             {onPass && <button className="linkish ps-ctx-pass" onClick={() => onPass({ id: top.fa.id, name: top.fa.name })} aria-label={`Not interested in ${top.fa.name}`}>Not interested</button>}

@@ -7,7 +7,7 @@ import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
-  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidDollars,
+  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
@@ -332,8 +332,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     const wDrop = w && recDrop(w);
     if (w) list.push({
       id: `waiver-${w.fa.id}`, kind: "waiver", headline: w.kdef?.fix ? w.kdef.line.split(".")[0] + "." : w.fit ? `${w.fa.name} is your best add this week.` : demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`,
-      emph: w.kdef ? (FAAB.enabled ? `Grab ${w.fa.name} for $${bidDollars(w.bid[1])} or less.` : "Put in a low priority claim.") : FAAB.enabled ? `Bid ${w.bid[0]} to ${w.bid[1]} percent.` : "Put in a claim.",
-      why: `${w.kdef ? `${w.fa.name} adds ${fmt(w.gain)} to your starters` : w.fit ? w.fit.replace(/\.$/, "") : `${w.fa.name} adds ${fmt(w.gain)} to your starters`}${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely cost more than a dollar." : "Bid based on what wins in your league."}`,
+      emph: w.kdef ? (FAAB.enabled ? `Sugg. bid ${bidRange(w.bid)}.` : "Put in a low priority claim.") : FAAB.enabled ? `Sugg. bid ${bidRange(w.bid)}.` : "Put in a claim.",
+      why: `${w.kdef ? `${w.fa.name} adds ${fmt(w.gain)} to your starters` : w.fit ? w.fit.replace(/\.$/, "") : `${w.fa.name} adds ${fmt(w.gain)} to your starters`}${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely draw real bids." : "Sized to your budget and how fast he's being added."}`,
       trades: [], time: "Today", deadline: DEADLINES.waivers, go: { label: "Open waivers", tab: "waivers" }, pass: { id: w.fa.id, name: w.fa.name },
     });
     // Aging tags
@@ -360,7 +360,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const briefing: Briefing = {
     lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
     trade: partners[0]?.t ?? null,
-    waiver: topRec ? `${topRec.fa.name}: bid ${topRec.bid[0]}-${topRec.bid[1]}%${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
+    waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
   };
 

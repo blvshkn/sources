@@ -47,7 +47,7 @@ export function HowItWorks({ onBack }: { onBack: () => void }) {
             <li><b>Best lineup</b> fills your league's slots with the highest projected players who can play there.</li>
             <li><b>Win chance</b> follows your platform: the two projected totals, with less room for surprises as fewer points are left to play.</li>
             <li><b>Playoff odds</b> come from thousands of simulated rest-of-season schedules using each team's current best lineup.</li>
-            <li><b>Waiver bids</b> are a suggested range of your remaining budget based on how much a player adds to your starters and how your league has bid before.</li>
+            <li><b>Sugg. bid</b> is a dollar range sized to your league budget, how fast a player is being added across Sleeper, how much he adds to your starters and how high winning bids run in your league. It never goes past what you have left.</li>
           </ul>
         </section>
         <section>

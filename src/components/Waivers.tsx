@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
-import { WaiverRec, bidDollars, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
+import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
 import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
@@ -85,9 +85,12 @@ function Hit({ name, term }: { name: string; term: string }) {
 }
 
 /** "$40-$90", or "Up to $150" when the low end is zero. Kickers and defenses go for any amount, so they never get a range. */
-export const bidText = (b: [number, number] | number[], fa?: WaiverFA) => { if (fa && isSpecialFA(fa)) return "Any amount"; const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo <= 0 ? `Up to $${hi}` : `$${lo}-$${hi}`; };
-/** The Bid cell for any row, with or without claim details. */
-const bidCell = (fa: WaiverFA, r?: WaiverRec) => FAAB.enabled ? (isSpecialFA(fa) ? "Any amount" : r ? bidText(r.bid) : "–") : (isSpecialFA(fa) ? "Low priority" : r ? r.tier : "–");
+/** The Sugg. bid as Sleeper shows it, "$100-$200". K/DEF use the league's K/DEF range, never "Any amount". */
+export const bidText = (b: [number, number] | number[], fa?: WaiverFA) => bidRange(fa && isSpecialFA(fa) ? specialBidRange().bid : b);
+/** The Sugg. bid cell for any row, with or without claim details. */
+const bidCell = (fa: WaiverFA, r?: WaiverRec) => FAAB.enabled ? (isSpecialFA(fa) ? bidText([0, 0], fa) : r ? bidText(r.bid) : "–") : (isSpecialFA(fa) ? "Low priority" : r ? r.tier : "–");
+/** The label over every suggested amount. */
+export const SUGG_BID = "Sugg. bid";
 
 /** Actual scores over the last three completed weeks, oldest first, best one brightest. A dash is a bye, a dot is still loading. */
 function LastThree({ v, weeks }: { v: (number | null | undefined)[]; weeks: number[] }) {
@@ -390,7 +393,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
           const cant = kind === "current" && !r ? (e.avail === "bye" ? "Bye" : e.avail === "out" ? "Out" : e.avail === "ir" ? "IR" : st === "in_game" ? "Playing" : "Played") : null;
           const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span> : <>
             <span className="wv-c-lu"><i>Your lineup</i><b className={!cant && e.gain > 0.05 ? "good" : "flat"}>{cant ?? (loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change")}</b></span>
-            <span className="wv-c-bid"><i>{FAAB.enabled ? "Bid" : "Tier"}</i><b>{bidCell(e.fa, r)}</b></span>
+            <span className="wv-c-bid"><i>{FAAB.enabled ? SUGG_BID : "Tier"}</i><b>{bidCell(e.fa, r)}</b></span>
             <LastThree v={e.l3} weeks={l3Weeks} />
           </>;
           const inner = <>
@@ -437,11 +440,11 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                     <div><span className="eyebrow">Add</span><p className="small"><b>{r.fa.name}</b>, {kd ? `${r.fa.pos} stream for this week` : `${r.tier.toLowerCase()} tier`}</p></div>
                     <div><span className="eyebrow">Drop</span><p className="small">{kd?.drop ? <><b>{kd.drop.name}</b> ({drop!.note}). Swap {r.fa.pos} for {r.fa.pos}, your bench stays put</>
                       : drop ? <><b>{drop.name}</b> ({drop.note}, the least you'd lose)</> : r.noDrop ? "Nobody on your bench is worth cutting for him" : "Open roster spot"}</p></div>
-                    <div><span className="eyebrow">{FAAB.enabled ? "Bid range" : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b>Any amount</b>. Kickers and defenses rarely draw real bids</> : <><b>{bidText(r.bid)}</b> ({r.bid[0]} to {r.bid[1]} percent of budget)</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
+                    <div><span className="eyebrow">{FAAB.enabled ? SUGG_BID : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b className="sugg-bid-amt">{bidText(r.bid, r.fa)}</b>. Kickers and defenses rarely draw real bids.</> : <><b className="sugg-bid-amt">{bidText(r.bid)}</b>. {bidSourceNote()}</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
                   <div className="row wrap">
-                    <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${bidDollars(r.bid[1])} on` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
+                    <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
                       <PlatformLogo size={16} />Open Sleeper
                     </a>
                     <button className="btn btn-sm btn-ghost ps-pass" onClick={() => pass(e, true)}>Not interested</button>
@@ -467,7 +470,6 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
   /** That week's opponent, for a week other than this one. */
   game?: string;
 }) {
-  const hi = bidDollars(top.bid[1]);
   const game = weekGame ?? gameOf(top.fa);
   const kd = top.kdef;
   const drop = recDrop(top);
@@ -485,7 +487,7 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
       <dl className="topk-stats">
         <div><dt>{stat.dt}</dt><dd>{stat.dd}</dd></div>
         <div><dt>{kd ? "Season per week" : "ROS per week"}</dt><dd>{(kd ? top.fa.proj : top.value).toFixed(1)}</dd></div>
-        <div><dt>{FAAB.enabled ? "Bid" : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</dd></div>
+        <div className="topk-bid"><dt>{FAAB.enabled ? <Tooltip content={bidSourceNote()} focusable><span className="sugg-bid-lbl">{SUGG_BID}</span></Tooltip> : "Claim"}</dt><dd>{FAAB.enabled ? bidText(top.bid, top.fa) : "Priority"}</dd></div>
       </dl>
       <p className="topk-why">{why}</p>
       <ul className="topk-plan">
@@ -500,7 +502,7 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
       </ul>
       <div className="ps-actions">
         <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
-          onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Bid up to $${hi} on` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
+          onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
           <PlatformLogo size={18} />Claim in Sleeper
         </a>
         <button className="btn ps-pass" onClick={onPass} aria-label={`Not interested in ${top.fa.name}`}>Not interested</button>
@@ -531,13 +533,13 @@ export function useHoldHeight<T extends HTMLElement>(key: string) {
 function SpecialBidNote() {
   const { bids, estimated } = specialBidRange();
   return <p className="tiny muted wv-kdef-bid">{estimated
-    ? `Your league doesn't have enough K/DEF claims yet. Kickers and defenses usually go for $0 to $${Math.max(1, bidDollars(1))}, so bid low.`
-    : `Winning K/DEF bids in your league this season: ${bids.slice().sort((a, b) => a - b).map((b) => `$${bidDollars(b)}`).join(", ")}.`}</p>;
+    ? `Your league doesn't have enough K/DEF claims yet. Kickers and defenses usually go for ${bidRange(specialBidRange().bid)}, so bid low.`
+    : `Winning K/DEF bids in your league this season: ${bids.slice().sort((a, b) => a - b).map((b) => `$${bidDollars(b, true)}`).join(", ")}.`}</p>;
 }
 
 function BidHistory({ tier, range }: { tier: string; range: [number, number] }) {
   const { bids, estimated } = bidsFor(tier as "Starter" | "Flex" | "Depth" | "Stash");
-  const max = Math.max(30, ...bids);
+  const max = Math.max(30, ...bids, range[1]);
   return (
     <div className="bid-hist">
       <span className="tiny muted">{estimated ? `Not enough winning ${tier.toLowerCase()} bids in your league yet, so this shows a typical range` : `Winning ${tier.toLowerCase()} bids in your league this season (${bids.length})`}</span>

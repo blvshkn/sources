@@ -829,13 +829,12 @@ function skillRec(you: Team, ctx: RecCtx, fa: FreeAgent): WaiverRec {
   // Tier is what he'd be for you, not in a vacuum: a 15-point QB behind two better QBs is depth, not a starter
   const useful = ros > 0.05 || holeNames.length > 0;
   const tier: BidTier["tier"] = gain >= 2 && useful || ros >= 2 ? "Starter" : useful && value >= 9.5 ? "Flex" : fa.rookie ? "Stash" : "Depth";
-  const { bids, estimated } = bidsFor(tier);
-  const sorted = bids.slice().sort((a, b) => a - b);
-  const q = (x: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(x * (sorted.length - 1))))];
+  const { estimated } = bidsFor(tier);
+  const bid = recBid(fa, value, ros, holeNames.length > 0 && gain > 0.05);
   if (!existed) delete PLAYERS[fa.id];
   // No one worth cutting: he still lists, but ranks under anything you can actually claim
   const score = noDrop ? round1(f.score * 0.25) : f.score;
-  return { fa, value, gain, drop, bid: [q(0.25), q(0.85)] as [number, number], tier, estimated, ros, slot: f.slot, hole: holeNames.length > 0 && gain > 0.05, score, fit: f.line, noDrop, rosSlot, pick: f.pick && !noDrop };
+  return { fa, value, gain, drop, bid, tier, estimated, ros, slot: f.slot, hole: holeNames.length > 0 && gain > 0.05, score, fit: f.line, noDrop, rosSlot, pick: f.pick && !noDrop };
 }
 
 /** Kickers and defenses on the wire against the one you start this week. */
@@ -865,7 +864,42 @@ function specialRecs(you: Team, base: Lineup): WaiverRec[] {
     return { fa, value: wk, gain, drop: drop ? null : benchDrop, bid, tier: "Stream" as const, estimated, kdef: { current, baseline, fix, drop, line } };
   });
 }
-export const bidDollars = (pct: number) => Math.round((pct / 100) * FAAB.budget);
+/** Percent of budget to dollars. Suggested amounts round the way Sleeper's do ($1 steps under $20, $5 under $100,
+ *  then $10); pass exact for a real bid from league history. */
+export const bidDollars = (pct: number, exact = false) => {
+  const d = (pct / 100) * FAAB.budget;
+  const step = exact ? 1 : d >= 100 ? 10 : d >= 20 ? 5 : 1;
+  return Math.round(d / step) * step;
+};
+/** A Sugg. bid range in dollars, "$100-$200", the same shape Sleeper shows. */
+export const bidRange = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo === hi ? `$${hi}` : `$${lo}-$${hi}`; };
+/** Where the Sugg. bid numbers come from, for the note beside them. */
+export const bidSourceNote = () => FAAB.source === "Sleeper" ? "From Sleeper."
+  : `From Sources. Sized to your $${FAAB.budget.toLocaleString("en-US")} budget, how fast he's being added and what your lineup needs.`;
+
+// ---- Sugg. bid ----------------------------------------------------------------
+// Sized the way Sleeper sizes its own suggested bid: what the player is worth, how fast he's being added across the
+// platform and how much your lineup needs him, scaled to how high winning bids run in your league. Sleeper shows
+// its number only in its mobile app, from a signed-in private endpoint, so Sources computes its own and tunes it to
+// land near Sleeper's (Tyrone Tracy, $100-$200 in a $1,000 league, week 7 of 2026).
+const POS_FLOOR: Record<string, number> = { QB: 12, RB: 5, WR: 5, TE: 4 };
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+/** How hot he is across the platform, 0 to 1: Sleeper-wide adds this week (100k is the top), else roster % and trend. */
+export const demandOf = (fa: FreeAgent) => fa.adds !== undefined ? clamp01(Math.log10(fa.adds + 1) / 5)
+  : clamp01((fa.rostered ?? 0) / 80 + (fa.trend === "up" ? 0.35 : 0));
+/** How high winning skill bids run in your league, as a percent of budget: the 90th percentile, else 15. */
+const leagueTop = () => {
+  const all = FAAB_HISTORY.flatMap((h) => h.bids).filter((b) => b > 0).sort((a, b) => a - b);
+  return all.length >= 4 ? Math.max(5, all[Math.round(0.9 * (all.length - 1))]) : 15;
+};
+/** Sugg. bid for a skill player, as [low, high] percent of the full budget, never more than you have left. */
+export function recBid(fa: FreeAgent, value: number, ros: number, hole: boolean): [number, number] {
+  const worth = clamp01((value - (POS_FLOOR[fa.pos] ?? 5)) / 10);
+  const need = clamp01(ros / 4) * 0.8 + (hole ? 0.2 : 0);
+  const mid = leagueTop() * 2.5 * (0.35 * worth + 0.4 * demandOf(fa) + 0.25 * need);
+  const left = FAAB.budget > 0 ? (FAAB.remaining / FAAB.budget) * 100 : 0;
+  return [round1(Math.min(left, mid * 0.65)), round1(Math.min(left, Math.max(1, mid * 1.3)))];
+}
 
 // ---- Manager tendencies ---------------------------------------------------
 
@@ -1013,10 +1047,10 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     const r = waiverRecs(YOU).find((x) => x.pick && !passed.includes(x.fa.id));
     if (!r) return { text: "Nothing on the wire beats your bench this week.", points: [], links: [{ label: "Open waivers", tab: "waivers" }] };
     return {
-      text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Bid ${r.bid[0]} to ${r.bid[1]} percent.` : " Put in a claim."}`,
+      text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Sugg. bid ${bidRange(r.bid)}.` : " Put in a claim."}`,
       points: [r.kdef?.fix ? r.kdef.line : r.fit ?? `Adds ${fmt(r.gain)} to your starters this week.`, (() => { const d = recDrop(r); return d ? `Drop ${d.name} (${d.note}).` : "You have an open spot."; })(),
-        r.kdef ? (r.estimated ? "Kickers and defenses usually go for $0 to $1, so bid low." : `Based on ${SPECIAL_BIDS.length} winning K/DEF bids in your league this season.`)
-        : r.estimated ? "Your league doesn't have enough winning bids yet, so this range is a typical one." : `Based on ${bidsFor(r.tier as BidTier["tier"]).bids.length} winning ${r.tier.toLowerCase()} bids in your league this season.`],
+        r.kdef ? (r.estimated ? `Kickers and defenses usually go for ${bidRange(r.bid)}, so bid low.` : `Based on ${SPECIAL_BIDS.length} winning K/DEF bids in your league this season.`)
+        : bidSourceNote()],
       links: [{ label: "Open waivers", tab: "waivers" }],
     };
   }
