@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
-import { LineupWeek } from "../weekMatch";
+import { LineupWeek, gameIn } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, matchNow, chanceTone, playCount, expect, PlayCount as Counts } from "../live";
 import { playLabel, resultOf, scoreTone, flipTone, toneCls, type Result } from "../liveMath";
@@ -17,7 +17,7 @@ import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu } from "./SwapPicker";
+import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
 
@@ -298,7 +298,7 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
         const tap = tapFor(key, x.p ? (past ? `${x.p.name} at ${label}` : `Swap ${x.p.name} at ${label}`) : `Empty ${label} slot`);
         const options: SwapOption[] = !future ? [] : bench.filter((b) => wi.fitsAt(i, b.pos)).map((b) => {
           const d = (b.pts ?? 0) - (x.p?.pts ?? 0);
-          return { key: b.id, who: <WeekWho p={b} side="you" week={v.week} />, name: b.name, pts: b.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, onPick: (from) => { wi.swap(i, b.id); setOpen(null, from); } };
+          return { key: b.id, who: <WeekWho p={b} side="you" week={v.week} />, name: b.name, pts: b.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, ...weekBye(b, v.week), onPick: (from) => { wi.swap(i, b.id); setOpen(null, from); } };
         });
         return (
           <Fragment key={`s${i}`}>
@@ -311,7 +311,8 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
       <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{bench.length} players</span></div>
       {bench.map((p) => {
         const key = `fb${p.id}`;
-        const tap = tapFor(key, past ? `${p.name} on the bench` : `Start ${p.name}`);
+        // On bye that week: starting him only scores 0, so the row says so instead of opening the slots
+        const tap: RowTap | undefined = future && !gameIn(p, v.week) ? { onTap: (el) => deny(el, byeWhy(p, v.week)), lock: true, expanded: false, label: `${p.name}, on bye` } : tapFor(key, past ? `${p.name} on the bench` : `Start ${p.name}`);
         const options: SwapOption[] = !future ? [] : starters.map((x, i) => ({ x, i })).filter(({ i }) => wi.fitsAt(i, p.pos)).map(({ x, i }) => {
           const label = SLOT_LABEL[x.slot] ?? x.slot, d = (p.pts ?? 0) - (x.p?.pts ?? 0);
           return { key: `${i}`, who: <SlotAt slot={label}><WeekWho p={x.p} side="you" week={v.week} /></SlotAt>, name: `${label}, ${x.p?.name ?? "empty"}`, pts: x.p?.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, onPick: (from) => { wi.swap(i, p.id); setOpen(null, from); } };

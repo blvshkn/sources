@@ -21,6 +21,13 @@ export const lockOf = (live: Live, p: { nfl: string } | null): "live" | "final" 
 /** Anyone in a lineup slot: a skill player, a kicker or a defense. Defenses read as "it", not "him". */
 export type Lockable = { name: string; nfl: string; pos: string };
 const him = (p: Lockable) => (p.pos === "DEF" ? "it" : "him");
+/** On bye this week: a K/DEF carries wk null, a skill player's team is on the bye list. */
+const isBye = (p: Lockable) => ("wk" in p ? (p as { wk: unknown }).wk === null : onBye(p.nfl));
+/** Swapping in someone on bye only scores 0, so bye candidates stay listed, dimmed and marked Bye, and a tap says why. */
+export const BYE_TAG = "Bye";
+export const byeWhy = (p: Lockable, week: number) => `${p.name} is on bye in Week ${week}, so ${him(p) === "it" ? "it" : "he"} won't score there.`;
+/** For a week other than this one: lock and tag for a candidate with no game that week. */
+export const weekBye = (p: WeekPlayer, week: number) => (gameIn(p, week) ? {} : { lock: byeWhy(p, week), tag: BYE_TAG });
 
 /** This week's lock words, the same everywhere. A starter whose game kicked off, or any starter once the week is
  *  over, can't move; a bench player whose game started can't come in. */
@@ -32,6 +39,7 @@ export function lockRules(live: Live, pastWeek: boolean) {
   };
   const candidateLock = (p: Lockable): string | null => {
     if (pastWeek) return `Week ${WEEK} is over. Lineups can't change.`;
+    if (isBye(p)) return byeWhy(p, WEEK);
     const l = lockOf(live, p);
     return !l ? null : l === "final" ? `${p.name}'s game is final, so Sleeper won't move ${him(p)} in.` : `${p.name} is playing now, so Sleeper won't move ${him(p)} in.`;
   };
@@ -181,6 +189,8 @@ export interface SwapOption {
   up: boolean;
   /** Why this one can't move, or null. Locked options stay listed, dimmed, and a tap shakes and says why. */
   lock: string | null;
+  /** The short label in place of the point change when locked; "Locked" unless set ("Bye"). */
+  tag?: string;
   onPick: (from: Element) => void;
 }
 
@@ -201,10 +211,10 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
       <small>{title}</small>
       {options.length ? options.map((o) => (
         <button key={o.key} className={`mu-opt${o.lock ? " is-locked" : ""}`} aria-disabled={o.lock ? true : undefined}
-          onClick={(e: { currentTarget: Element }) => (o.lock ? deny(e.currentTarget, o.lock) : o.onPick(e.currentTarget))} aria-label={o.lock ? `${o.name}, locked` : undefined}>
+          onClick={(e: { currentTarget: Element }) => (o.lock ? deny(e.currentTarget, o.lock) : o.onPick(e.currentTarget))} aria-label={o.lock ? `${o.name}, ${/ on bye /.test(o.lock) ? "on bye" : "locked"}` : undefined}>
           {o.who}
           <span className="mu-pts">{o.pts.toFixed(1)}</span>
-          {o.lock ? <span className="mu-delta mu-locked">Locked</span> : <span className={`mu-delta ${o.up ? "up" : "down"}`}>{fmt(o.delta)}</span>}
+          {o.lock ? <span className="mu-delta mu-locked">{o.tag ?? (/ on bye /.test(o.lock) ? BYE_TAG : "Locked")}</span> : <span className={`mu-delta ${o.up ? "up" : "down"}`}>{fmt(o.delta)}</span>}
         </button>
       )) : <p className="small muted">{empty}</p>}
     </div>

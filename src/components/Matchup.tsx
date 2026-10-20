@@ -13,7 +13,7 @@ import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { deny, denyOn } from "../deny";
-import { SwapPicker, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu } from "./SwapPicker";
+import { SwapPicker, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, slotted, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
@@ -277,7 +277,7 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
                 <SwapPicker menuRef={menuRef} title={`Swap in at ${a.slot}`} empty={`No bench player can play ${a.slot}.`}
                   options={options.map((p) => {
                     const d = (p.pts ?? 0) - pts(a);
-                    return { key: p.id, who: <WeekWho p={p} side="you" week={week} />, name: p.name, pts: p.pts ?? 0, delta: round1(d), up: d >= 0, lock: null,
+                    return { key: p.id, who: <WeekWho p={p} side="you" week={week} />, name: p.name, pts: p.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, ...weekBye(p, week),
                       onPick: (from: Element) => { wi.swap(i, p.id); setOpen(null, from); } };
                   })} />
               )}
