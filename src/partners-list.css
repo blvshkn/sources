@@ -8,7 +8,7 @@ html:root:not(#_):not(#_) .nudge .partners { container: ptn / inline-size; }
 html:root:not(#_):not(#_) .card .partner-card.ptn-row {
   display: grid !important;
   grid-template-columns: 32px minmax(0, 1fr) auto;
-  grid-template-areas: "av name nums" "av why why";
+  grid-template-areas: "av name nums" "av why nums";
   align-items: baseline;
   gap: 2px 12px;
   width: 100%;
@@ -38,9 +38,10 @@ html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-WR { color: var(--wr); }
 html:root:not(#_):not(#_) .ptn-row .ptn-pos.p-TE { color: var(--te); }
 html:root:not(#_):not(#_) .ptn-row .ptn-why .num { font: 500 0.75rem/1 var(--font-mono) !important; font-variant-numeric: tabular-nums; color: var(--muted); }
 
-/* Deltas: two small stats on one line, label then value, every value the same width so rows line up */
+/* Deltas: on wide rows they sit in their own column on the right, centered against the name and reason together.
+   Two small stats on one line, label then value, every value the same width so rows line up */
 html:root:not(#_):not(#_) .ptn-row .ptn-nums {
-  grid-area: nums; justify-self: end;
+  grid-area: nums; justify-self: end; align-self: center;
   display: flex; align-items: baseline; gap: 14px;
   padding: 0; white-space: nowrap;
 }
@@ -56,7 +57,7 @@ html:root:not(#_):not(#_) .ptn-row .ptn-stat .delta {
     grid-template-columns: 32px minmax(0, 1fr);
     grid-template-areas: "av name" "av why" "av nums";
   }
-  html:root:not(#_):not(#_) .ptn-row .ptn-nums { justify-self: start; margin-top: 6px; }
+  html:root:not(#_):not(#_) .ptn-row .ptn-nums { justify-self: start; align-self: baseline; margin-top: 6px; }
   html:root:not(#_):not(#_) .ptn-row .ptn-stat .delta { min-width: 0; text-align: left; }
 }
 
