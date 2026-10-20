@@ -601,7 +601,7 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   DET: ["ROUNDED", { w: 0.51, ro: [0.1, 0.13], rc: [0.07, 0.09] }],
   GB: ["SOFT", { w: 0.58, stem: 0.19, ro: 0.04, rc: 0.02, dig: { "8": { ro: 0.13, rc: 0.06 } } }],
   // Heavy wide block with pointed stubs (the spur) and a long square flag on the 1.
-  MIN: ["HEAVY", { w: 0.6, stem: 0.2, bar: 0.18, ro: 0.07, rc: 0.006, spur: 0.05, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
+  MIN: ["HEAVY", { w: 0.56, stem: 0.19, bar: 0.17, ro: [0.12, 0.1], rc: 0.006, ri: 0.012, spur: 0.06, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
   ATL: ["NARROW", { w: 0.52, stem: 0.165, bar: 0.15 }],
   // Block with small clipped corners, square counters, footed 1, notched 3 and 8.
   CAR: ["CHAMFER", { w: 0.58, stem: 0.18, bar: 0.16, ro: 0.05, counter: "square", rc: 0, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3, notch: 0.04 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 }, eight: { pinch: 0.04 } }],
@@ -725,9 +725,9 @@ const font = (family: string, weight: number, cap: number, d: Metric[], o: Parti
 };
 // Measured with canvas text metrics at 1000 px from the Google Fonts files.
 const OSWALD_500: Metric[] = [[534, 47, 484], [382, 16, 297], [497, 31, 469], [496, 31, 469], [504, 31, 500], [493, 31, 469], [521, 47, 484], [413, 16, 391], [510, 31, 469], [521, 31, 469]];
+const PATHWAY: Metric[] = [[411, 47, 375], [235, 0, 188], [400, 47, 359], [408, 47, 359], [379, 0, 359], [378, 31, 344], [404, 47, 375], [333, 16, 313], [417, 47, 375], [404, 31, 359]];
 const OSWALD_640: Metric[] = [[546, 47, 500], [384, 16, 313], [509, 31, 484], [509, 31, 484], [519, 16, 516], [505, 31, 484], [534, 47, 500], [432, 16, 406], [518, 31, 484], [533, 31, 484]];
 const ANTONIO_650: Metric[] = [[471, 47, 422], [355, 31, 281], [451, 63, 422], [454, 47, 422], [451, 31, 438], [451, 63, 406], [451, 47, 422], [451, 47, 422], [451, 31, 406], [451, 31, 406]];
-const ANTONIO_520: Metric[] = [[436, 47, 391], [396, 47, 297], [429, 63, 406], [430, 47, 391], [429, 31, 422], [429, 63, 391], [429, 47, 406], [429, 31, 406], [429, 31, 391], [429, 31, 391]];
 const CHAKRA_700: Metric[] = [[652, 47, 609], [382, 16, 313], [574, 31, 547], [603, 31, 563], [579, 0, 578], [606, 31, 563], [622, 47, 578], [522, 0, 500], [638, 47, 594], [627, 47, 578]];
 const CHAKRA_600: Metric[] = [[644, 47, 594], [374, 16, 313], [566, 31, 531], [595, 31, 547], [571, 0, 563], [598, 47, 563], [614, 47, 578], [514, 0, 484], [630, 47, 578], [619, 47, 563]];
 const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], [668, 47, 625], [672, 16, 641], [666, 47, 625], [695, 47, 641], [569, 16, 547], [689, 47, 641], [699, 63, 656]];
@@ -748,11 +748,11 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   // Tall, narrow and round, with a slight lean.
   PIT: font("League Gothic", 400, 750, LEAGUE_GOTHIC, { skew: 5 }),
   // Tall, narrow and round, with a footed 1.
-  PHI: font("Fjalla One", 400, 844, FJALLA, { scaleX: 0.82 }),
+  PHI: font("Fjalla One", 400, 844, FJALLA, { scaleX: 0.76 }),
   // Squared bowls with softened corners and an angled flag.
   SEA: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.78 }),
-  // Angular, light, pointed.
-  HOU: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.84 }),
+  // Clipped wedge corners, an angled 7 and flag, a closed diagonal 4.
+  HOU: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.8 }),
   // Clipped block, footed 1 and 4, a diagonal 2: the classic pro block in its current cut.
   KC: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.82 }),
   LV: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.72 }),
@@ -771,10 +771,12 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   DEN: font("Big Shoulders", 700, 813, BIG_SHOULDERS_700, { scaleX: 1.04 }),
   // Narrow, rounded, light: oval counters and plain stroke ends.
   BAL: font("Antonio", 650, 859, ANTONIO_650, { scaleX: 1.06 }),
-  CIN: font("Antonio", 520, 859, ANTONIO_520),
+  // Very tall and light, a long angled flag on the 1, straight diagonal 2 and 7.
+  CIN: font("Pathway Gothic One", 400, 703, PATHWAY, { scaleX: 0.92 }),
   // Condensed with clipped corners and square counters.
   MIA: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.72 }),
-  JAX: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.78 }),
+  // The 2026 trimmed set: round bowls and a curved 2 (the plain teal set is a clipped block).
+  JAX: font("Oswald", 500, 813, OSWALD_500, { scaleX: 0.88 }),
   // Round bowls, a straight 7 and a 9 whose tail turns to a flat end; a touch wider than the face.
   LAR: font("Oswald", 640, 813, OSWALD_640, { scaleX: 1.08 }),
   // Tall and narrow with round bowls and slot counters, a curved 2 and a bare slab 1 with no flag.

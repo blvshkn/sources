@@ -361,7 +361,7 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   DEN: { home: OFF, away: OFF },
   KC: {},
   LV: { home: FLAT },
-  LAC: { home: { slant: 5, noShoulder: true }, away: { slant: 5, noShoulder: true } },
+  LAC: { home: { slant: 8, noShoulder: true }, away: { slant: 8, noShoulder: true } },
   DAL: { away: { outline2: W } },
   NYG: { home: FLAT, away: FLAT },
   // White numbers lined silver, then black; green lined silver, then black, on the road.
