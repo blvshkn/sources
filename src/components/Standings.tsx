@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { LEAGUE, WEEK, playerById } from "../data";
 import { TeamNeeds, eff } from "../engine";
-import { Icon, PosBadge, StatusPill } from "./ui";
+import { PosBadge, StatusPill } from "./ui";
+import { DetailSheet } from "./DetailSheet";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, championLabel } from "./Trophy";
@@ -77,24 +78,24 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
     const byDiff = [...POS].sort((a, b) => (depthPts(x, b) - avgDepth[b]) - (depthPts(x, a) - avgDepth[a]));
     return { x, best: byDiff[0], worst: byDiff[byDiff.length - 1] };
   });
-  const [open, setOpenRaw] = useState<string | null>(null);
-  const setOpen = (id: string | null) => { setOpenRaw(id); requestAnimationFrame(() => document.querySelector(".page-head")?.scrollIntoView({ block: "start", behavior: "smooth" })); };
+  const [open, setOpen] = useState<string | null>(null);
   const n = needs.length;
   const rankTone = (r: number) => (r <= Math.ceil(n * 0.3) ? "good" : r <= Math.ceil(n * 0.7) ? "warn" : "bad");
 
   const Bar = ({ p }: { p: number }) => <span className={`st-bar ${tone(p)}`} aria-hidden="true"><i style={{ width: `${Math.max(3, p * 100)}%` }} /></span>;
 
   const sel = open ? rows.find((r) => r.x.team.id === open) : null;
-  if (sel) {
-    const t = sel.x.team;
-    const roster = t.roster.map(playerById).sort((a, b) => POS.indexOf(a.pos as typeof POS[number]) - POS.indexOf(b.pos as typeof POS[number]) || eff(b) - eff(a));
-    return (
-      <section className="card st st-detail" aria-label={`${t.name} details`}>
-        <button className="st-back" onClick={() => setOpen(null)}><Icon name="chev" size={16} />Standings</button>
-        <header className="st-dhead">
-          <TeamAvatar t={t} size={44} />
-          <span className="st-who"><b>{t.name}<Trophy teamId={t.id} focusable /></b><small>{sel.w}-{sel.l} · {t.you ? "You" : t.manager}</small></span>
-        </header>
+  const selT = sel?.x.team;
+  const roster = selT ? selT.roster.map(playerById).sort((a, b) => POS.indexOf(a.pos as typeof POS[number]) - POS.indexOf(b.pos as typeof POS[number]) || eff(b) - eff(a)) : [];
+  // A team's detail opens over the table (sheet on phones, modal from 768px); the table stays where it was
+  const detail = sel && selT && (
+    <DetailSheet className="st-sheet" label={`${selT.name} details`} onClose={() => setOpen(null)} title={
+      <span className="st-dhead">
+        <TeamAvatar t={selT} size={40} />
+        <span className="st-who"><b>{selT.name}<Trophy teamId={selT.id} focusable /></b><small>{sel.w}-{sel.l} · {selT.you ? "You" : selT.manager}</small></span>
+      </span>
+    }>
+      <div className="st-detail">
         <dl className="ti-stats st-odds">
           <div className="ti-stat"><dt>Make playoffs</dt><dd>{pctText(sel.playoff)}</dd></div>
           <div className="ti-stat"><dt>#1 seed</dt><dd>{pctText(sel.top)}</dd></div>
@@ -106,9 +107,9 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
             <span role="columnheader" />
             {POS.map((pos) => <span key={pos} role="columnheader"><PosBadge pos={pos} /></span>)}
             <span className="st-gl" role="rowheader">Starters</span>
-            {POS.map((pos) => { const r = rankOf(pos, t.id); return <span key={pos} className={`st-rk ${rankTone(r)}`} role="cell">{ord(r)}<i /></span>; })}
+            {POS.map((pos) => { const r = rankOf(pos, selT.id); return <span key={pos} className={`st-rk ${rankTone(r)}`} role="cell">{ord(r)}<i /></span>; })}
             <span className="st-gl" role="rowheader">Depth</span>
-            {POS.map((pos) => { const r = depthRank(pos, t.id); return <span key={pos} className={`st-rk ${rankTone(r)}`} role="cell">{ord(r)}<i /></span>; })}
+            {POS.map((pos) => { const r = depthRank(pos, selT.id); return <span key={pos} className={`st-rk ${rankTone(r)}`} role="cell">{ord(r)}<i /></span>; })}
           </div>
         </div>
         <div className="st-roster">
@@ -121,9 +122,9 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
             </div>
           ))}
         </div>
-      </section>
-    );
-  }
+      </div>
+    </DetailSheet>
+  );
 
   return (
     <>
@@ -141,7 +142,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
             <span role="columnheader"><Tooltip focusable content="Points for so far plus projected points through the regular season"><span className="tt-term">Proj pts</span></Tooltip></span>
           </div>
           {rows.map((r, i) => (
-            <button key={r.x.team.id} className={`st-row st-po st-tap${r.x.team.you ? " you" : ""}${i === spots - 1 ? " cut" : ""}`} role="row" onClick={() => setOpen(r.x.team.id)} aria-label={`${i + 1}. ${r.x.team.name}${championLabel(r.x.team.id) ? `, ${championLabel(r.x.team.id)}` : ""}, details`}>
+            <button key={r.x.team.id} className={`st-row st-po st-tap${r.x.team.you ? " you" : ""}${i === spots - 1 ? " cut" : ""}`} role="row" aria-haspopup="dialog" onClick={() => setOpen(r.x.team.id)} aria-label={`${i + 1}. ${r.x.team.name}${championLabel(r.x.team.id) ? `, ${championLabel(r.x.team.id)}` : ""}, details`}>
               <span className="st-pl-n" role="cell">{i + 1}</span>
               <span className="st-team" role="cell">
                 <TeamAvatar t={r.x.team} size={30} />
@@ -170,7 +171,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
               <span role="columnheader">Weakness</span>
             </div>
             {list.map(({ x, best, worst }) => (
-              <button key={x.team.id} className={`st-row st-pos st-tap${x.team.you ? " you" : ""}`} role="row" onClick={() => setOpen(x.team.id)} aria-label={`${x.team.name} details`}>
+              <button key={x.team.id} className={`st-row st-pos st-tap${x.team.you ? " you" : ""}`} role="row" aria-haspopup="dialog" onClick={() => setOpen(x.team.id)} aria-label={`${x.team.name} details`}>
                 <span className="st-team" role="cell"><TeamAvatar t={x.team} size={30} /><span className="st-who"><b><span className="st-nm">{x.team.name}</span><Trophy teamId={x.team.id} /></b></span></span>
                 <span className="st-rank" role="cell"><PosBadge pos={best} /><small>{ord(rk(best, x.team.id))}</small></span>
                 <span className="st-rank" role="cell"><PosBadge pos={worst} /><small>{ord(rk(worst, x.team.id))}</small></span>
@@ -179,6 +180,7 @@ export function Standings({ needs }: { needs: TeamNeeds[] }) {
           </div>
         </section>
       ))}
+      {detail}
     </>
   );
 }

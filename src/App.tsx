@@ -217,7 +217,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return out;
   }, [active, myTags, prices, fkey, hiddenIdeas, pausedTeams, passed]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const partners = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
+  // Every team with a trade idea, best chance first. The top three are "best trade partners"; League Needs orders its cards by the whole list.
+  const fits = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
     .map((n) => {
       const t = suggestionsByTeam[n.team.id][0];
       const g = n.groups[n.need];
@@ -226,8 +227,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       const why = `${lead}. Your ${t.give.map((id) => playerById(id).name).join(" + ")} gets it done.`;
       return { n, t, why };
     })
-    .sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) + (b.t.fillsWant ? 1 : 0) - Math.min(a.t.youDelta, a.t.themDelta) - (a.t.fillsWant ? 1 : 0))
-    .slice(0, 3), [needs, suggestionsByTeam, active]);
+    .sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) + (b.t.fillsWant ? 1 : 0) - Math.min(a.t.youDelta, a.t.themDelta) - (a.t.fillsWant ? 1 : 0)), [needs, suggestionsByTeam, active]);
+  const partners = useMemo(() => fits.slice(0, 3), [fits]);
 
   // Every free agent, ranked weakness first. Waivers lists them all (passed ones dimmed); every other surface
   // only sees the ones you haven't passed on, and only recommends a real pick.
@@ -597,7 +598,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "how" && <HowItWorks onBack={() => go("settings:about")} />}
           {tab === "legal" && <Legal onBack={() => go("settings:about")} />}
           {tab === "league" && (
-            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} onFocused={() => setFocusTeam(undefined)} partners={partners} onAddTag={addTag}
+            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} onFocused={() => setFocusTeam(undefined)} partners={partners} fits={fits} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />
           )}
           {tab === "trade" && (

@@ -1,0 +1,60 @@
+/* League Needs as cards (NeedsList.tsx): one card per team in a responsive grid, best trade chance with you first.
+   1 column on phones, 2 from tablet width, 3 when the page is wide. Tapping a card opens the team's detail in the
+   shared sheet or modal (detail-sheet.css). Hover, press and focus follow the shared card states: a soft tint and
+   hairline on fine pointers, 0.99 press scale, the lime focus ring, no movement with reduced motion.
+   Loads just before frame.css; every rule is scoped to .nc-grid or a .nc-* class. */
+
+html:root:not(#_):not(#_) .nc-grid { container: nc / inline-size; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; }
+@container pg (min-width: 560px) {
+  html:root:not(#_):not(#_) .nc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container pg (min-width: 1040px) {
+  html:root:not(#_):not(#_) .nc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+}
+
+/* ---------- The card: avatar, name and projection on top, needs underneath, a fit note when there is one ---------- */
+html:root:not(#_):not(#_) .card.nc-card {
+  display: grid; width: 100%; margin: 0; align-content: start;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-areas: "av name proj" "av sub proj" "fit fit fit" "note note note";
+  column-gap: 12px; row-gap: 2px;
+  padding: 16px !important; text-align: left; color: inherit; font: inherit; cursor: pointer; text-decoration: none;
+  position: relative; isolation: isolate; -webkit-tap-highlight-color: transparent;
+  transition-property: box-shadow, transform, background-color;
+  transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+html:root:not(#_):not(#_) .nc-card > :first-child { grid-area: av; align-self: center; border-radius: 50%; object-fit: cover; }
+html:root:not(#_):not(#_) .nc-card .nc-name {
+  grid-area: name; align-self: end; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 0.9375rem/1.3 "Geist", sans-serif !important; letter-spacing: -0.01em; color: var(--ink);
+}
+html:root:not(#_):not(#_) .nc-card .nc-name .trophy { vertical-align: -1px; margin-left: 4px; }
+html:root:not(#_):not(#_) .nc-card .nc-sub { grid-area: sub; align-self: start; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .nc-card .nc-proj { grid-area: proj; align-self: center; justify-self: end; font: 500 0.9375rem/1 var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
+html:root:not(#_):not(#_) .nc-card .nc-proj small { margin-left: 2px; font: 400 0.75rem/1 "Geist", sans-serif; color: var(--muted); }
+
+html:root:not(#_):not(#_) .nc-card .nc-fit { grid-area: fit; display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .nc-card .nc-chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+html:root:not(#_):not(#_) .nc-card .nc-chip small { font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_) .nc-card .nc-chip .pos { min-width: 30px; height: 20px; font-size: 0.625rem; }
+
+html:root:not(#_):not(#_) .nc-card .nc-note { grid-area: note; margin-top: 8px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+html:root:not(#_):not(#_) .nc-card .nc-pos { font: 600 0.75rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--ink); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-QB { color: var(--qb); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-RB { color: var(--rb); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-WR { color: var(--wr); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-TE { color: var(--te); }
+
+/* Your own team, marked like the Standings table */
+html:root:not(#_):not(#_) .card.nc-card.you { background: color-mix(in srgb, rgb(var(--you-rgb)) 10%, var(--surface)) !important; }
+
+/* ---------- States ---------- */
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .card.nc-card:hover { box-shadow: var(--st-lift) !important; }
+}
+html:root:not(#_):not(#_) .card.nc-card:active { box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .card.nc-card:focus-visible { outline: 2px solid var(--lime) !important; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .card.nc-card:active { transform: none; }
+}

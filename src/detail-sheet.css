@@ -1,0 +1,95 @@
+/* The shared detail surface (DetailSheet.tsx): a bottom sheet below 768px, a centered modal from 768px up.
+   Same shell as the partner profile and the full matchup: a fixed header with the title slot and the round close,
+   and only the body scrolls. Loads just before frame.css. Every rule is scoped to .ps-detail, .ds-wrap, a .ds-*
+   class or one of the detail kinds below (.nd-sheet, .st-sheet, .doc-sheet): nothing here styles bare .ps or .card. */
+
+/* ---------- Shell ---------- */
+html:root:not(#_):not(#_) .ps.ps-detail {
+  display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden;
+  max-height: 88vh; max-height: 88dvh; grid-template-columns: none;
+}
+html:root:not(#_):not(#_) .ps-detail > .ds-top {
+  flex: none; position: relative; display: grid; gap: 10px;
+  padding: 10px 20px 14px; border-bottom: 1px solid var(--line);
+}
+html:root:not(#_):not(#_) .ps-detail .ps-handle { justify-self: center; }
+/* Clear of the corner close button (11px inset + 36px circle + 8px air) */
+html:root:not(#_):not(#_) .ps-detail .ds-title { min-width: 0; padding-right: 44px; min-height: 36px; display: flex; align-items: center; }
+html:root:not(#_):not(#_) .ps-detail .ds-h { margin: 0; font: 600 1.0625rem/1.3 "Geist", sans-serif; letter-spacing: -0.01em; color: var(--ink); }
+html:root:not(#_):not(#_) .ps-detail .ds-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* 768px up: a centered modal. The shared .ps shell only centers from 861px, so the tablet range is set here too. */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ps-wrap.ds-wrap { align-items: center; padding: 32px; }
+  html:root:not(#_):not(#_) .ps.ps-detail {
+    max-width: 600px; max-height: min(85vh, 820px);
+    border-radius: 28px; border-bottom: 1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.16), 0 32px 80px -16px rgba(0, 0, 0, 0.32);
+    transform: scale(0.96); opacity: 0;
+    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out;
+  }
+  html:root:not(#_):not(#_) .ps-wrap.ds-wrap.in .ps.ps-detail { transform: none; opacity: 1; }
+  html:root:not(#_):not(#_) .ps-detail > .ds-top { padding: 18px 24px 16px; }
+  html:root:not(#_):not(#_) .ps-detail .ps-handle { display: none; }
+  html:root:not(#_):not(#_) .ps-detail .ds-body { padding: 20px 24px 24px; }
+  html:root:not(#_):not(#_) .ps.ps-detail.doc-sheet { max-width: 680px; }
+}
+@media (min-width: 768px) and (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .ps.ps-detail { transform: none; transition: opacity 160ms ease-out; }
+}
+
+/* ---------- Team header in the title slot (Needs and Standings) ---------- */
+html:root:not(#_):not(#_) .ps-detail :is(.nd-head, .st-dhead) {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 0; min-width: 0;
+}
+html:root:not(#_):not(#_) .ps-detail :is(.nd-head, .st-dhead) > :first-child { border-radius: 50%; object-fit: cover; }
+html:root:not(#_):not(#_) .ps-detail :is(.nd-who, .st-dhead .st-who) { display: grid; gap: 3px; min-width: 0; }
+html:root:not(#_):not(#_) .ps-detail :is(.nd-who, .st-dhead .st-who) > b {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 1.125rem/1.25 "Geist", sans-serif !important; letter-spacing: -0.015em; color: var(--ink);
+}
+html:root:not(#_):not(#_) .ps-detail :is(.nd-who, .st-dhead .st-who) > small { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- Needs detail ---------- */
+html:root:not(#_):not(#_) .nd-sheet .nd-body { display: grid; gap: 20px; }
+html:root:not(#_):not(#_) .nd-sheet .tc-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html:root:not(#_):not(#_) .nd-sheet .nd-outlook { font-weight: 600; color: var(--ink); }
+html:root:not(#_):not(#_) .nd-sheet .nd-sec { display: grid; gap: 10px; }
+html:root:not(#_):not(#_) .nd-sheet .nd-h { margin: 0; font: 600 0.9375rem/1.3 "Geist", sans-serif; color: var(--ink); }
+html:root:not(#_):not(#_) .nd-sheet .bars { display: grid; gap: 8px; margin: 0; min-width: 0; }
+html:root:not(#_):not(#_) .nd-sheet .bar-row { grid-template-columns: 44px minmax(0, 1fr) 52px; }
+html:root:not(#_):not(#_) .nd-sheet .bar-label { font: 500 0.8125rem/1 "Geist", sans-serif !important; letter-spacing: 0 !important; color: var(--muted); }
+html:root:not(#_):not(#_) .nd-sheet .bar-val { font: 500 0.875rem/1 var(--font-mono) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; text-align: right; color: var(--muted); }
+html:root:not(#_):not(#_) .nd-sheet .bar-val.up { color: var(--good); }
+html:root:not(#_):not(#_) .nd-sheet .bar-val.down { color: var(--bad); }
+html:root:not(#_):not(#_) .nd-sheet .bar-track { position: relative; overflow: visible; }
+html:root:not(#_):not(#_) .nd-sheet .bar-mid { display: block; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: 0.45; z-index: 1; }
+html:root:not(#_):not(#_) .nd-sheet .tc-scale { margin-bottom: -2px; }
+html:root:not(#_):not(#_) .nd-sheet .tag-list { display: grid; gap: 6px; margin: 0; }
+html:root:not(#_):not(#_) .nd-sheet .tag-line { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .nd-sheet .tag-line b { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .nd-sheet .tag-line .btn { height: 30px !important; min-height: 30px !important; padding: 0 10px; font-size: 0.75rem !important; border: 0 !important; background: transparent !important; color: var(--muted) !important; }
+html:root:not(#_):not(#_) .nd-sheet .nd-act { display: grid; }
+html:root:not(#_):not(#_) .nd-sheet .tc-trade { width: 100%; height: 44px !important; justify-content: space-between; padding: 0 14px; font-size: 0.875rem !important; border-radius: 10px !important; text-decoration: none; }
+html:root:not(#_):not(#_) .nd-sheet .tc-trade svg { color: var(--muted); }
+
+/* ---------- Standings detail ---------- */
+html:root:not(#_):not(#_) .st-sheet .st-detail { display: grid; gap: 20px; padding: 0 !important; }
+html:root:not(#_):not(#_) .st-sheet .st-odds { margin: 0; }
+html:root:not(#_):not(#_) .st-sheet :is(.st-eval, .st-roster) { padding: 0; }
+html:root:not(#_):not(#_) .st-sheet :is(.st-eval, .st-roster) h3 { margin: 0; font: 600 0.9375rem/1.3 "Geist", sans-serif; color: var(--ink); }
+html:root:not(#_):not(#_) .st-sheet .st-pp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .st-sheet .st-rk { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- Docs (How Sources works, Terms) ---------- */
+html:root:not(#_):not(#_) .doc-sheet .doc { padding: 0; }
+html:root:not(#_):not(#_) .doc-sheet .doc > section:first-of-type { padding-top: 0; }
+html:root:not(#_):not(#_) .doc-sheet .doc-updated { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted); }
+
+/* ---------- Stat rows inside a detail: the header rule already separates them, so no box and no top hairline ---------- */
+html:root:not(#_):not(#_) .ps-detail :is(.tc-stats, .st-odds) { background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0; overflow: visible; }
+html:root:not(#_):not(#_) .ps-detail :is(.tc-stats, .st-odds) .ti-stat { background: none !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+html:root:not(#_):not(#_) .ps-detail :is(.tc-stats, .st-odds) .ti-stat:first-child { padding-left: 0 !important; }

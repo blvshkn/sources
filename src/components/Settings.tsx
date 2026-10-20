@@ -4,6 +4,8 @@ import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
 import { PlatformLogo } from "./PlatformLogo";
+import { DetailSheet } from "./DetailSheet";
+import { HowItWorksDoc, LegalDoc } from "./About";
 import { Account, accountLabel } from "../accounts";
 
 export type Level = "light" | "standard" | "hands";
@@ -25,7 +27,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, onGo, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
@@ -35,7 +37,8 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   fade: FadeWeeks; setFade: (f: FadeWeeks) => void;
   dismissed: Record<string, number>; resetDismissed: () => void;
   onDisconnect: () => void; onDelete: () => void; onReplay: () => void;
-  onGo: (tab: string) => void;
+  /** Navigates to another tab. Nothing in Settings uses it since the docs open in a sheet; kept for callers. */
+  onGo?: (tab: string) => void;
   paused: { id: string; manager: string }[]; onResume: (id: string) => void;
   hiddenCount: number; onUnhide: () => void;
   /** Players you said you're not interested in. One list per league, shared by trade ideas and every waiver suggestion. */
@@ -44,6 +47,8 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   onRemoveAccount?: (userId: string) => void; onAddAccount?: () => void; onSwitchLeague?: () => void;
 }) {
   const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league", ["league", "nudges", "privacy", "about"]);
+  // How it works and the terms open over Settings (sheet on phones, modal from 768px) instead of replacing it
+  const [doc, setDoc] = useState<"how" | "legal" | null>(null);
   const [confirm, setConfirm] = useState<"none" | "disconnect" | "delete">("none");
   const muted = Object.entries(dismissed).filter(([, n]) => n >= 2).map(([k]) => k);
   return (
@@ -198,10 +203,15 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
       {view === "about" && <>
       <section className="card settings-group">
         <h2 className="section-title">About Sources</h2>
-        <button className="set-link" onClick={() => onGo("how")}><span className="grow"><b>How Sources works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
-        <button className="set-link" onClick={() => onGo("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
+        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("how")}><span className="grow"><b>How Sources works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
+        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
       </section>
       </>}
+      {doc && (
+        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Sources works" : "Terms and legal"}</h2>}>
+          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
+        </DetailSheet>
+      )}
     </>
   );
 }

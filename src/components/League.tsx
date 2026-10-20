@@ -115,13 +115,15 @@ export function MiniStandings({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function League({ needs, tags, fade, focusId, onFocused, partners, onTrade, onOpen, onRemoveTag, onKeepTag, onAddTag }: {
+export function League({ needs, tags, fade, focusId, onFocused, partners, fits, onTrade, onOpen, onRemoveTag, onKeepTag, onAddTag }: {
   needs: TeamNeeds[];
   tags: ManagerTag[];
   fade: FadeWeeks;
   focusId?: string;
   onFocused?: () => void;
   partners: { n: TeamNeeds; t: Trade; why: string }[];
+  /** Every team with a trade idea, best chance first (the same ranking as partners, not cut to three) */
+  fits: { n: TeamNeeds; t: Trade }[];
   onTrade: (teamId: string) => void;
   onOpen: (t: Trade) => void;
   onRemoveTag: (id: string) => void;
@@ -200,7 +202,7 @@ export function League({ needs, tags, fade, focusId, onFocused, partners, onTrad
       {view === "tendencies" && <p className="small muted">Built from completed trades and offers in this league over the last year. <Phase v="v1" /></p>}
 
       {view === "standings" ? <Standings needs={needs} /> : view === "activity" ? <ActivityFeed /> : view === "values" ? <Values onTarget={(_, ownerId) => onTrade(ownerId)} /> : view === "needs" ? (
-        <NeedsList needs={needs} tags={tags} fade={fade} focusId={focusId} topPartnerId={partners[0]?.n.team.id} onFocused={onFocused}
+        <NeedsList needs={needs} tags={tags} fade={fade} focusId={focusId} fits={fits} onFocused={onFocused}
           onTrade={onTrade} onRemoveTag={onRemoveTag} onKeepTag={onKeepTag} />
       ) : <div className="needs-grid">
         {sorted.map((n) => {
