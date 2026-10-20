@@ -1,0 +1,12 @@
+/* The sidebar is its own scroller and never hands a scroll to the page.
+   app-qa.css already gives .side a 100dvh box with overflow-y: auto and overscroll-behavior: contain, but
+   browsers skip a scroller that has nothing to scroll: on a tablet or desktop where the nav fits, a wheel,
+   trackpad or touch drag over it fell through and moved the main column instead.
+   An out-of-flow spacer one pixel taller than the box keeps it a live scroller at every height, so contain
+   always applies. It doesn't touch the flex layout, and ScrollArea draws no thumb for 1px of travel. */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .side::before {
+    content: ""; position: absolute; top: 0; left: 0; width: 1px; height: calc(100% + 1px);
+    pointer-events: none; visibility: hidden;
+  }
+}
