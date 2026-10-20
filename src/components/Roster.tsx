@@ -7,7 +7,7 @@ import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
 import { playLabel } from "../liveMath";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
-import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
@@ -522,13 +522,14 @@ export function gameDayChecks(lineup: Lineup): Check[] {
   const closeCall = flex && bestBench && eff(flex.player, true) - eff(bestBench, true) < 1.5;
   const benchOut = lineup.bench.filter((p) => isOut(p, true));
   const ir = irReport(YOU);
-  const emptySpecial = specialLineup(YOU).slots.filter((x) => !x.player);
+  // A K/DEF slot Sleeper has empty, even with one rostered (the suggested pick is the one to start)
+  const emptySpecial = startedSpecials(YOU).filter((x) => !x.player || x.suggested);
   return [
     ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, text: `Activate ${p.name} from IR. Sleeper blocks adds and trades until he's moved.`, player: p })),
     ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, text: `Move ${ir.moveIn[0].name} to IR. It frees a bench spot without a drop.` }] : []),
     ...s.filter((x) => x.player.status).map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, player: x.player,
       text: x.player.status === "O" ? `${x.player.name} is out (${injuryDetail(x.player)}). Swap him before lock.` : `${x.player.name} is questionable (${injuryDetail(x.player)}). Check the inactives 90 minutes before kickoff.` })),
-    ...emptySpecial.map((x) => ({ key: `empty-${x.slot}`, tone: "bad" as const, icon: "helmet" as IconName, text: `Your ${x.slot} slot is empty. Pick up a ${x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.` })),
+    ...emptySpecial.map((x) => ({ key: `empty-${x.slot}`, tone: "bad" as const, icon: "helmet" as IconName, text: x.player ? `Your ${x.slot} slot is empty in Sleeper. Start ${x.player.name} before lock.` : `Your ${x.slot} slot is empty. Pick up a ${x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.` })),
     ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Basically a coin flip.` }] : []),
     ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName,
       text: `Thin bench this week. ${benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(" and ")} can't cover a starter.` }] : []),
