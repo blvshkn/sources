@@ -20,6 +20,8 @@ import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { FaceOff } from "./FaceOff";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
+import { SentLine } from "./SentOffers";
+import type { SentDeal, SentOffer } from "../sentOffers";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -423,7 +425,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass, sent, onOpenSent }: {
   you: TeamNeeds;
   partner: string | null;
   partnerId: string | null;
@@ -443,6 +445,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   level: string;
   /** "Not interested" on a suggested player: one list shared by every suggestion. */
   onPass?: (p: { id: string; name: string }) => void;
+  /** Your newest offer still out (or just accepted), as one line in Quick moves that opens it */
+  sent?: SentDeal | null; onOpenSent?: (o: SentOffer) => void;
 }) {
   useKickoffs();
   const [leaving, setLeaving] = useState<string[]>([]);
@@ -480,6 +484,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No trade helps both sides this week."}</span>
           <Icon name="chev" size={16} />
         </button>
+        {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
         <div className="ps-brief">
           <button className="brief-row" onClick={() => onGo("waivers")}>
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />

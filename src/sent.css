@@ -1,0 +1,99 @@
+/* Sent offers (SentOffers.tsx): Trade's Sent tab, the Wire's "You sent Mike an offer" line and the Mark as sent
+   button in the pitch sheet. Phones first: one column, row actions under the players. 768px up: the actions sit on
+   the right of each row. Hover, leave and press share one curve: 160ms cubic-bezier(0.23, 1, 0.32, 1), press 0.97.
+   Green means it went through, red means declined; waiting stays plain. Numbers in Geist Mono.
+   Loads just before frame.css; every rule is scoped to .so-card or a .so-* class. */
+
+html:root:not(#_):not(#_) .card.so-card { display: grid; gap: 4px; padding: 16px !important; }
+html:root:not(#_):not(#_) .so-card .so-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+html:root:not(#_):not(#_) .so-card .so-head .section-title { margin: 0; }
+html:root:not(#_):not(#_) .so-card .so-note { margin: 0; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .so-card .so-empty { margin: 4px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); }
+
+html:root:not(#_):not(#_) .so-card .so-list { list-style: none; margin: 0; padding: 0; display: grid; }
+html:root:not(#_):not(#_) .so-card .so-row { padding: 12px 0; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+html:root:not(#_):not(#_) .so-card .so-row:first-child { border-top: 0; padding-top: 4px; }
+
+/* The row opens the deal in the builder */
+html:root:not(#_):not(#_) .so-card .so-open {
+  display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: start; column-gap: 12px;
+  width: calc(100% + 16px); margin: 0 -8px; padding: 8px; border: 0; border-radius: 12px; background: transparent;
+  color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .so-card .so-open > svg { align-self: center; color: var(--muted); }
+html:root:not(#_):not(#_) .so-card .so-av-empty { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); }
+html:root:not(#_):not(#_) .so-card .so-main { display: grid; gap: 3px; min-width: 0; }
+html:root:not(#_):not(#_) .so-card .so-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+html:root:not(#_):not(#_) .so-card .so-name { font: 600 0.9375rem/1.3 "Geist", sans-serif; letter-spacing: -0.01em; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .so-card .so-line { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 6px; font-size: 0.875rem; line-height: 1.4; }
+html:root:not(#_):not(#_) .so-card .so-k { font-size: 0.75rem; line-height: 1.6; color: var(--muted); }
+html:root:not(#_):not(#_) .so-card .so-p { color: var(--ink); min-width: 0; }
+html:root:not(#_):not(#_) .so-card .so-when,
+html:root:not(#_):not(#_) .so-wire .grow { font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .so-card .so-when { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .so-card .num { font-family: var(--font-mono); }
+
+/* Status: waiting is plain, accepted green, declined red */
+html:root:not(#_):not(#_) .so-card .so-status {
+  flex: none; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px;
+  font: 600 0.75rem/1 "Geist", sans-serif; background: var(--surface-2); color: var(--muted);
+}
+html:root:not(#_):not(#_) .so-card .so-status.is-accepted { background: var(--good-soft); color: var(--good); }
+html:root:not(#_):not(#_) .so-card .so-status.is-declined { background: var(--bad-soft); color: var(--bad); }
+html:root:not(#_):not(#_) .so-card .so-row.is-declined .so-p { color: var(--muted); }
+
+/* Row actions: small outlined buttons, never underlined */
+html:root:not(#_):not(#_) .so-card .so-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-left: 48px; }
+html:root:not(#_):not(#_) .so-card .so-act,
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; margin: 0;
+  border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink);
+  font: 500 0.8125rem/1 "Geist", sans-serif; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, color, border-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .so-card .so-more { margin-left: auto; border-color: transparent; color: var(--muted); padding-right: 6px; }
+html:root:not(#_):not(#_) .so-card .so-more svg { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); transform: rotate(90deg); }
+html:root:not(#_):not(#_) .so-card .so-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
+
+/* Earlier versions, under the latest */
+html:root:not(#_):not(#_) .so-card .so-earlier { list-style: none; margin: 0 0 0 48px; padding: 0 0 0 10px; border-left: 2px solid var(--line); display: grid; gap: 2px; }
+html:root:not(#_):not(#_) .so-card .so-ver {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 10px;
+  width: 100%; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: inherit;
+  font: 400 0.8125rem/1.4 "Geist", sans-serif; text-align: left; text-decoration: none; cursor: pointer;
+  transition-property: background-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .so-card .so-vn { font: 500 0.75rem/1 var(--font-mono); color: var(--muted); }
+html:root:not(#_):not(#_) .so-card .so-vp { color: var(--ink); min-width: 0; }
+
+/* The pitch sheet's footer: the note and Mark as sent */
+html:root:not(#_):not(#_) .so-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+html:root:not(#_):not(#_) .so-sheet-foot .tiny { margin: 0; }
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark { height: 36px; padding: 0 12px; border-radius: 999px; }
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark svg { color: var(--muted); transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark.is-saved { color: var(--good); border-color: var(--good-soft); background: var(--good-soft); cursor: default; }
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark.is-saved svg { color: var(--good); }
+
+/* Shared states */
+html:root:not(#_):not(#_) :is(.so-card .so-open, .so-card .so-act, .so-card .so-ver, .so-sheet-foot .so-mark):is(:hover, :focus, :active) { text-decoration: none; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) :is(.so-card .so-open, .so-card .so-ver):hover { background: var(--surface-2); }
+  html:root:not(#_):not(#_) :is(.so-card .so-act, .so-sheet-foot .so-mark:not(.is-saved)):hover { background: var(--surface-2); }
+}
+html:root:not(#_):not(#_) :is(.so-card .so-open, .so-card .so-act, .so-card .so-ver, .so-sheet-foot .so-mark:not(.is-saved)):active { transform: scale(0.97); }
+html:root:not(#_):not(#_) :is(.so-card .so-open, .so-card .so-act, .so-card .so-ver, .so-sheet-foot .so-mark):focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.so-card .so-open, .so-card .so-act, .so-card .so-ver, .so-sheet-foot .so-mark):active { transform: none; }
+}
+
+/* ---------- 768px up: the actions on the right of each row ---------- */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .card.so-card { padding: 20px 24px !important; }
+  html:root:not(#_):not(#_) .so-card .so-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; }
+  html:root:not(#_):not(#_) .so-card .so-top { justify-content: flex-start; gap: 10px; }
+  html:root:not(#_):not(#_) .so-card .so-open { width: calc(100% + 8px); margin-right: 0; }
+  html:root:not(#_):not(#_) .so-card .so-acts { padding-left: 0; flex-wrap: nowrap; justify-content: flex-end; }
+  html:root:not(#_):not(#_) .so-card .so-more { margin-left: 0; order: -1; }
+  html:root:not(#_):not(#_) .so-card .so-earlier { grid-column: 1 / -1; }
+}

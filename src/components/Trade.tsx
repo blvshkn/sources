@@ -9,6 +9,8 @@ import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, group
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
+import { SentOffers } from "./SentOffers";
+import type { SentOffer } from "../sentOffers";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { DealDetails } from "./DealDetails";
 import { DetailSheet } from "./DetailSheet";
@@ -447,7 +449,7 @@ export function lockMap(myTags: Record<string, MyTag>) {
   return lockYou;
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], onReopenSent, onDeclineSent, onClearSent }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -463,6 +465,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   onPitch: (t: TradeT) => void; onLoad: (t: TradeT) => void;
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
   onRemoveTag: (id: string) => void;
+  /** Offers you sent, for the Sent tab. Tapping one puts it back in the builder. */
+  sent?: SentOffer[]; onReopenSent?: (o: SentOffer) => void; onDeclineSent?: (o: SentOffer) => void; onClearSent?: (o: SentOffer) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const isMulti = extra.length > 0;
@@ -481,7 +485,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const counter = trade && received && trade.youDelta < 0.5 ? coach(trade) : null;
   const td = tendencies(them.id);
   const [why, setWhy] = useState(false);
-  const [view, setView] = useSticky<"build" | "ideas" | "notes">("trade.view", "build", ["build", "ideas", "notes"]);
+  const [view, setView] = useSticky<"build" | "ideas" | "notes" | "sent">("trade.view", "build", ["build", "ideas", "notes", "sent"]);
+  const sentCount = new Set(sent.map((o) => o.deal)).size;
   // Re-run the finder visibly whenever what it reads has changed: a new or removed note, or a new partner
   const sig = `${partnerId}|${theirTags.map((t) => t.id).join(",")}`;
   const seen = useRef<Record<string, { sig: string; keys: string[] }>>({});
@@ -572,7 +577,12 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       )}
 
-      <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }]} />
+      <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }, { v: "sent", label: sentCount ? `Sent (${sentCount})` : "Sent", icon: "send" }]} />
+
+      {view === "sent" && (
+        <SentOffers offers={sent} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
+          onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} />
+      )}
 
       {view === "ideas" && (
         <div className="tr-scout" aria-label={`How ${them.manager} trades`}>

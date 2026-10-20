@@ -196,7 +196,13 @@ function PitchStream({ text, box, onDone }: { text: string; box: RefObject<HTMLT
   return <div ref={ref} className="pitch-stream" aria-hidden="true"><Words text={text} k={k} /></div>;
 }
 
-export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: () => void; onSent: (msg: string, via?: string) => void }) {
+export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
+  trade: Trade; onClose: () => void; onSent: (msg: string, via?: string) => void;
+  /** Saves the deal to Sent offers. Called on every send: a share, a copy, an email or a text. */
+  onRecord?: (pitch: string, via: string) => void;
+  /** "Mark as sent", for an offer that went out some other way. Saves it and says so. */
+  onMark?: (pitch: string) => void;
+}) {
   const them = teamById(trade.partnerId);
   const [tone, setTone] = useState<Tone>("friendly");
   const [method, setMethod] = useState<Method>("text");
@@ -213,6 +219,9 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   }, [trade]); // eslint-disable-line react-hooks/exhaustive-deps
   const cardUrl = card?.url ?? null;
   const [shareOpen, setShareOpen] = useState(false);
+  // Once anything here sends the deal, it's in Sent offers, and the Mark as sent button says so
+  const [saved, setSaved] = useState(false);
+  const record = (via: string) => { setSaved(true); onRecord?.(text, via); };
   const [app, setApp] = useState<LeagueApp>("Sleeper");
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
@@ -334,7 +343,7 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
     try { shared = navigator.share({ files: [c.file], text, title: `Trade offer for ${them.manager}` }); } catch (e) { shared = Promise.reject(e); }
     copied.then((ok) => { if (ok) onSent("Message copied"); });
     shared.then(
-      async () => { haptic(); onSent((await copied) ? "Shared. The message is copied too." : "Shared.", "share sheet"); },
+      async () => { haptic(); record("share sheet"); onSent((await copied) ? "Shared. The message is copied too." : "Shared.", "share sheet"); },
       (e: unknown) => {
         if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet: nothing to say
         setShareOpen(true); // the share sheet refused the file: fall back to ours
@@ -342,9 +351,9 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   };
 
   const primary = async () => {
-    if (method === "text") { onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
-    if (method === "group") { const ok = await copy(); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
-    if (method === "app") { const ok = await copy(); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
+    if (method === "text") { record("text"); onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
+    if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
+    if (method === "app") { const ok = await copy(); record(app); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
     if (method === "share") shareImage();
   };
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share" }[method];
@@ -408,15 +417,23 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
         <div className="sa2">
           <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>
           <div className="sa2-row">
-            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied" : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
+            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); if (ok) record("copied"); onSent(ok ? "Message copied" : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
             <button className="btn sa2-sub" onClick={shareImage}><Icon name="share" size={16} />Share image</button>
           </div>
         </div>
-        <p className="tiny muted">Nothing sends until you hit send in your messaging app.</p>
+        <div className="so-sheet-foot">
+          <p className="tiny muted">Nothing sends until you hit send in your messaging app.</p>
+          {onMark && (
+            <button type="button" className={`so-mark${saved ? " is-saved" : ""}`} aria-pressed={saved}
+              onClick={() => { if (saved) return; setSaved(true); onMark(text); }}>
+              <Icon name={saved ? "check" : "send"} size={16} /><span>{saved ? "In Sent offers" : "Mark as sent"}</span>
+            </button>
+          )}
+        </div>
       </div>
       {shareOpen && card && (
         <ShareCard url={card.url} blob={card.blob} fileName={fileName} text={text} subject={`Trade offer for ${them.manager}`}
-          alt={`Trade offer card for ${them.manager}`} onToast={(m) => onSent(m)} onClose={() => setShareOpen(false)} />
+          alt={`Trade offer card for ${them.manager}`} onToast={(m) => onSent(m)} onShared={record} onClose={() => setShareOpen(false)} />
       )}
     </div>
   );

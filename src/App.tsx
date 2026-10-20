@@ -41,6 +41,9 @@ import { FirstRun, FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { PitchSheet } from "./components/PitchSheet";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
+import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
+import { leagueTransactions } from "./sleeper";
+import { dealStatus } from "./components/SentOffers";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -136,6 +139,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [passed, setPassed] = usePersist<string[]>(`${scope}.passed`, []);
   // Free agents you're watching on Waivers, with the week you marked each one for
   const [watch, setWatch] = usePersist<Record<string, number>>(`${scope}.watch`, {});
+  // Offers you sent (Sleeper can't see pending offers), per league on this device. See sentOffers.ts.
+  const [sent, setSent] = usePersist<SentOffer[]>(`${scope}.${SENT_KEY}`, [], readSent);
+  // The sent deal open in the builder, so sending it again after a tweak makes the next version of it
+  const [reopened, setReopened] = useState<{ deal: string; partnerId: string } | null>(null);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
   const [switching, setSwitching] = useState<false | "list" | "add">(false);
   const [pickedPartner, setPartnerId] = useState(() => (demo ? "mike" : TEAMS.find((t) => !t.you)!.id));
@@ -408,7 +415,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
   // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
-  const loadTrade = (t: Trade) => { if (!isPartner(t.partnerId)) return; setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
+  const loadTrade = (t: Trade) => { if (!isPartner(t.partnerId)) return; setReopened(null); setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
   const toggle = (side: "give" | "get", id: string, teamId?: string) => {
     // Can't happen from the pickers (each lists one roster), but a search or idea could try it: say so, don't add
     if (side === "get" && YOU.roster.includes(id)) { deny(null, `${playerById(id).name} is already yours. Add him to the side you send.`); return; }
@@ -430,7 +437,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // Picking a team that's already in a multi-team deal makes it the lead partner, keeping every leg
     const leg = extra.find((l) => l.teamId === id);
     if (leg) { setExtra((c) => c.map((l) => (l.teamId === id ? { teamId: partnerId, give, get } : l))); setPartnerId(id); setGive(leg.give); setGet(leg.get); return; }
-    setPartnerId(id); setGet([]);
+    setPartnerId(id); setGet([]); setReopened(null);
   };
   const addPartner = (id: string) => extra.length >= 2 ? deny(null, "Sleeper trades top out at 4 teams. Remove one to add another.") : setExtra((c) => (c.length >= 2 || id === partnerId || c.some((l) => l.teamId === id) ? c : [...c, { teamId: id, give: [], get: [] }]));
   const removePartner = (id: string) => {
@@ -439,6 +446,58 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (!next) return;
     setPartnerId(next.teamId); setGive(next.give); setGet(next.get); setExtra(rest);
   };
+  // ---- Sent offers ----
+  const saveSent = (t: Trade, pitchText: string, via: string) =>
+    setSent((c) => recordSent(c, { leagueId: LEAGUE.id, partnerId: t.partnerId, give: t.give, get: t.get, pitch: pitchText, via, week: WEEK, now: Date.now(),
+      reopened: reopened && reopened.partnerId === t.partnerId ? reopened.deal : null }).list);
+  const markSent = (t: Trade, pitchText: string) => {
+    const prev = sent;
+    saveSent(t, pitchText, "marked");
+    haptic();
+    setToast("Saved to Sent offers.", () => setSent(prev));
+  };
+  /** A sent deal back in the builder, filled in. Players who've moved since are left out, and it says so. */
+  const reopenSent = (o: SentOffer) => {
+    if (!isPartner(o.partnerId)) { setToast("That manager isn't in this league anymore."); return; }
+    const them = teamById(o.partnerId);
+    const give = o.give.filter((id) => YOU.roster.includes(id)), get = o.get.filter((id) => them.roster.includes(id));
+    setPartnerId(o.partnerId); setGive(give); setGet(get); setExtra([]);
+    setReopened({ deal: o.deal, partnerId: o.partnerId });
+    go("trade");
+    if (give.length < o.give.length || get.length < o.get.length) setToast("Some players have moved since, so they're left out.");
+  };
+  const declineSent = (o: SentOffer) => {
+    const prev = sent;
+    setSent((c) => c.map((x) => (x.id === o.id ? { ...x, status: "declined", statusAt: Date.now() } : x)));
+    setToast(`Marked declined by ${teamById(o.partnerId)?.manager ?? "them"}.`, () => setSent(prev));
+  };
+  const clearSent = (o: SentOffer) => {
+    const prev = sent;
+    setSent((c) => c.filter((x) => x.deal !== o.deal));
+    if (reopened?.deal === o.deal) setReopened(null);
+    setToast("Offer cleared.", () => setSent(prev));
+  };
+  // Sleeper lists a trade once it goes through, so an offer that matches a completed trade is marked accepted
+  const openKey = sent.filter((o) => o.status !== "accepted").map((o) => o.id).join();
+  useEffect(() => {
+    if (demo || !openKey || !LEAGUE.id) return;
+    let alive = true;
+    const open = sent.filter((o) => o.status !== "accepted");
+    const from = Math.max(1, WEEK - 3, Math.min(...open.map((o) => o.week || WEEK)));
+    const weeks = Array.from({ length: Math.max(1, WEEK - from + 1) }, (_, i) => from + i);
+    Promise.all(weeks.map((w) => leagueTransactions(LEAGUE.id, w).catch(() => []))).then((rs) => {
+      if (!alive) return;
+      const hits = acceptedFrom(sent, rs.flat(), YOU.id);
+      if (!hits.length) return;
+      setSent((c) => c.map((x) => { const h = hits.find((y) => y.id === x.id); return h ? { ...x, status: "accepted", statusAt: h.at } : x; }));
+      const first = sent.find((o) => o.id === hits[0].id);
+      setToast(hits.length > 1 ? `${hits.length} of your offers went through.` : `${(first && TEAMS.find((t) => t.id === first.partnerId)?.manager) ?? "They"} accepted your offer.`);
+    });
+    return () => { alive = false; };
+  }, [openKey, demo]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The Wire's line: the newest deal still out, or one accepted in the last three days
+  const wireSent = useMemo(() => sentDeals(sent).find((d) => { const st = dealStatus(d); return st === "pending" || (st === "accepted" && Date.now() - ([d.head, ...d.earlier].find((o) => o.status === "accepted")?.statusAt ?? 0) < 3 * 864e5); }) ?? null, [sent]);
+
   const addTag = (t: Omit<ManagerTag, "id">) => {
     setTags((cur) => [...cur.filter((x) => !(x.teamId === t.teamId && x.text === t.text)), { ...t, id: `u${Date.now()}` }]);
     haptic();
@@ -592,7 +651,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onPass={passPlayer}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
-              onCapture={() => go("league")}
+              onCapture={() => go("league")} sent={wireSent} onOpenSent={reopenSent}
               onKeepTag={keepTag} onClearTag={clearTag} />
           )}
           {tab === "matchup" && <Matchup onBack={() => go("wire")} />}
@@ -604,7 +663,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           )}
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
-              clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); }} trade={trade}
+              clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
+              sent={sent} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent}
               extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
@@ -659,7 +719,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       {switching && <LeagueSwitcher demo={demo} accounts={accounts} activeUserId={session.mode === "live" ? session.userId : undefined} adding={switching === "add"}
         onPick={onSwitchLeague} onAdd={(a) => onAccounts(mergeAccounts(accounts, a))} onConnect={onReconnect} onClose={() => setSwitching(false)} />}
       {feedbackFor && <IdeaFeedback trade={feedbackFor} onPick={(r) => ideaFeedback(feedbackFor, r)} onClose={() => setFeedbackFor(null)} />}
-      {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onSent={(m, via) => {
+      {pitch && <PitchSheet trade={pitch} onClose={() => setPitch(null)} onRecord={(txt, via) => saveSent(pitch, txt, via)} onMark={(txt) => markSent(pitch, txt)} onSent={(m, via) => {
         setToast(m);
         if (via) haptic();
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));

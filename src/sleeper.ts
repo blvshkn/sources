@@ -17,6 +17,12 @@ async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+/** One week of a league's transactions (trades, waivers, adds). Read-only: Sleeper only lists what already happened,
+ *  so a completed trade shows up here but a pending offer never does. Used to mark sent offers accepted. */
+export function leagueTransactions(leagueId: string, week: number): Promise<STxn[]> {
+  return get<STxn[]>(`/v1/league/${leagueId}/transactions/${week}`);
+}
+
 // ---- Raw shapes (only the fields we read) --------------------------------
 
 interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; metadata?: { team_name?: string; avatar?: string; [k: string]: unknown } | null }

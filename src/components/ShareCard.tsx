@@ -25,9 +25,11 @@ type Act = "save" | "img" | "msg" | "mail" | "sms";
  * a centered modal from 768px up and a bottom sheet below, with pull to dismiss, Escape and Back to close.
  * Email and text only carry the message, so the note under the card says to save the image to attach it.
  */
-export function ShareCard({ url, blob, fileName, text, subject, alt, onToast, onClose }: {
+export function ShareCard({ url, blob, fileName, text, subject, alt, onToast, onClose, onShared }: {
   url: string; blob: Blob; fileName: string; text: string; subject: string; alt: string;
   onToast: (msg: string) => void; onClose: () => void;
+  /** Any action that sends the offer on its way: saves it to Sent offers */
+  onShared?: (via: string) => void;
 }) {
   const [done, setDone] = useState<Act | null>(null);
   const [said, setSaid] = useState("");
@@ -44,13 +46,14 @@ export function ShareCard({ url, blob, fileName, text, subject, alt, onToast, on
     a.href = url; a.download = fileName;
     document.body.appendChild(a); a.click(); a.remove();
     flash("save", "Image saved");
+    onShared?.("saved image");
   };
   const copyImage = async () => {
-    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); flash("img", "Image copied"); }
+    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); flash("img", "Image copied"); onShared?.("copied image"); }
     catch { onToast("Couldn't copy the image. Save it instead."); }
   };
   const copyMessage = async () => {
-    try { await navigator.clipboard.writeText(text); flash("msg", "Message copied"); }
+    try { await navigator.clipboard.writeText(text); flash("msg", "Message copied"); onShared?.("copied"); }
     catch { onToast("Couldn't copy the message. Select it in the box and copy it."); }
   };
   const touch = isTouch();
@@ -74,11 +77,11 @@ export function ShareCard({ url, blob, fileName, text, subject, alt, onToast, on
           {btn("save", "download", "Save image", "Saved", save, true)}
           {canCopyImage() && btn("img", "image", "Copy image", "Copied", copyImage)}
           {btn("msg", "copy", "Copy message", "Copied", copyMessage)}
-          <a className={`shr-act${done === "mail" ? " is-done" : ""}`} href={mail} onClick={() => flash("mail", "Opening your email app")}>
+          <a className={`shr-act${done === "mail" ? " is-done" : ""}`} href={mail} onClick={() => { flash("mail", "Opening your email app"); onShared?.("email"); }}>
             <Icon name={done === "mail" ? "check" : "mail"} size={18} /><span>{done === "mail" ? "Opening email" : "Email"}</span>
           </a>
           {touch && (
-            <a className={`shr-act${done === "sms" ? " is-done" : ""}`} href={sms} onClick={() => flash("sms", "Opening Messages")}>
+            <a className={`shr-act${done === "sms" ? " is-done" : ""}`} href={sms} onClick={() => { flash("sms", "Opening Messages"); onShared?.("text"); }}>
               <Icon name={done === "sms" ? "check" : "msg"} size={18} /><span>{done === "sms" ? "Opening Messages" : "Text message"}</span>
             </a>
           )}
