@@ -1,4 +1,5 @@
 import { Fragment, useContext, useState } from "react";
+import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
@@ -143,7 +144,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   );
   return (
     <section className="card sb2" aria-label="This week">
-      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
+      <button className="sb2-rows sb2-open" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
         <span className="sb2-head">
           <span>Week {WEEK} matchup</span>
           {res ? <span className={`sb2-final ${res.tone}`}>Final</span> : inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
@@ -289,7 +290,7 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
       ))} />
       {open && opp && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
       {mu && <MatchupSheet week={WEEK} onClose={() => setMu(false)} />}
-      <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+      <button type="button" className="wk-more" onClick={opp ? go : denyOn(`You're on bye in Week ${WEEK}, so there's no matchup to open.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }
@@ -319,7 +320,7 @@ function WeekThreats({ week }: { week: number }) {
       }) : null} />
       {open && opp && <PlayerSheet p={open} where={`${opp.team.manager}'s ${open.pos}, Week ${week}`} onClose={() => setOpen(null)} />}
       {mu && <MatchupSheet week={week} onClose={() => setMu(false)} />}
-      <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+      <button type="button" className="wk-more" onClick={opp ? go : denyOn(m ? `You're on bye in Week ${week}, so there's no matchup to open.` : `Week ${week} is still loading. Try again in a moment.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }

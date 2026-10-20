@@ -14,8 +14,16 @@ import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
+import { deny, denyOn } from "../deny";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
+
+/** Sleeper locks a player at his game's kickoff: "live" while it's on, "final" once it's over, null before. Byes
+ *  have no kickoff, so they stay movable. Reads the same per-team game states the rows' points cells use. */
+const lockOf = (live: Live, p: { nfl: string } | null): "live" | "final" | null => {
+  const st = p ? live.games[p.nfl] : undefined;
+  return st === "complete" ? "final" : st === "in_game" ? "live" : null;
+};
 /** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
 function slotted(team: Team, starters: string[] | undefined): { slot: SlotName; id: string | null }[] {
   const base = lineupFor(team.roster, true);
@@ -113,6 +121,20 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const bigWin = edges.reduce((bi, e, i) => (e > edges[bi] ? i : bi), 0);
   const bigLoss = edges.reduce((bi, e, i) => (e < edges[bi] ? i : bi), 0);
 
+  // A starter whose game kicked off, or any starter once the week is over, can't be swapped: the row shakes and says why.
+  // Over means Sleeper's state moved past it, or every starter on both sides is done (the result is final), byes included.
+  const pastWeek = !!live.past || !!res;
+  const starterLock = (p: Player | null): string | null => {
+    if (pastWeek) return `Week ${WEEK} is over. Lineups can't change.`;
+    const l = lockOf(live, p);
+    return !p || !l ? null : l === "final" ? `${p.name}'s game is final. His spot locked at kickoff.` : `${p.name} is playing now. Lineups lock at kickoff.`;
+  };
+  const candidateLock = (p: Player): string | null => {
+    const l = lockOf(live, p);
+    return !l ? null : l === "final" ? `${p.name}'s game is final, so Sleeper won't move him in.` : `${p.name} is playing now, so Sleeper won't move him in.`;
+  };
+  const allLocked = pastWeek || mine.every((s) => !!starterLock(s.id ? playerById(s.id) : null));
+
   const swap = (slotIdx: number, id: string) => {
     setMine((cur) => {
       const next = cur.map((s) => ({ ...s }));
@@ -171,10 +193,13 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           const them = theirs[i]?.id ? playerById(theirs[i].id!) : null;
           const e = edges[i];
           const options = bench.filter((p) => fits(s.slot, p.pos)).sort((a, b) => eff(b, true) - eff(a, true));
+          const lock = starterLock(me);
           return (
             <div key={i} className={`mu-row${open === i ? " open" : ""}`}>
               <span className="mu-slot">{s.slot}</span>
-              <button className={`mu-mine${rowCls(me)}`} onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} aria-label={`Swap ${me?.name ?? "empty"} at ${s.slot}`}>
+              <button className={`mu-mine${rowCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined}
+                onClick={(e) => { if (lock) { setOpen(null); deny(e.currentTarget, lock); } else setOpen(open === i ? null : i); }}
+                aria-expanded={lock ? undefined : open === i} aria-label={lock ? `${me?.name ?? "Empty"} at ${s.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${s.slot}`}>
                 <Who p={me} side="you" />
                 {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
               </button>
@@ -183,13 +208,19 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
               {open === i && (
                 <div className="mu-swap">
                   <small>Swap in at {s.slot}</small>
-                  {options.length ? options.map((p) => (
-                    <button key={p.id} className="mu-opt" onClick={() => swap(i, p.id)}>
-                      <Who p={p} side="you" />
-                      <span className="mu-pts">{eff(p, true).toFixed(1)}</span>
-                      <span className={`mu-delta ${eff(p, true) - pts(s.id) >= 0 ? "up" : "down"}`}>{fmt(round1(eff(p, true) - pts(s.id)))}</span>
-                    </button>
-                  )) : <p className="small muted">No bench player can play {s.slot}.</p>}
+                  {options.length ? options.map((p) => {
+                    // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
+                    const why = candidateLock(p);
+                    return (
+                      <button key={p.id} className={`mu-opt${why ? " is-locked" : ""}`} aria-disabled={why ? true : undefined}
+                        onClick={(e) => (why ? deny(e.currentTarget, why) : swap(i, p.id))} aria-label={why ? `${p.name}, locked` : undefined}>
+                        <Who p={p} side="you" />
+                        <span className="mu-pts">{eff(p, true).toFixed(1)}</span>
+                        {why ? <span className="mu-delta mu-locked">Locked</span>
+                          : <span className={`mu-delta ${eff(p, true) - pts(s.id) >= 0 ? "up" : "down"}`}>{fmt(round1(eff(p, true) - pts(s.id)))}</span>}
+                      </button>
+                    );
+                  }) : <p className="small muted">No bench player can play {s.slot}.</p>}
                 </div>
               )}
             </div>
@@ -207,8 +238,8 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           );
         })}
         <div className="mu-foot">
-          <span>Tap any of your players to try a swap.</span>
-          {round1(best.total - myTotal) > 0 && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(round1(best.total - myTotal))}</button>}
+          <span>{allLocked ? (pastWeek ? `Week ${WEEK} is final. Lineups are locked.` : "Every starter's game has kicked off. Lineups are locked.") : "Tap any of your players to try a swap."}</span>
+          {round1(best.total - myTotal) > 0 && !allLocked && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(round1(best.total - myTotal))}</button>}
         </div>
       </section>
     </>
@@ -269,7 +300,8 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
           return (
             <div key={i} className="mu-row">
               <span className="mu-slot">{a.slot || b.slot}</span>
-              <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></span>
+              {past ? <button className="mu-mine is-locked mu-past" aria-disabled="true" aria-label={`${a.p?.name ?? "Empty"} at ${a.slot || b.slot}, locked`} onClick={denyOn(`Week ${week} is over. Lineups can't change.`)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></button>
+                : <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></span>}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
               <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} /><Num x={b} /></span>
             </div>

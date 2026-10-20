@@ -1,0 +1,5 @@
+/* Matchup header play-count chips ("2 to play, 2 live"): the header's spans truncate with an ellipsis, which cut
+   the chip text at phone widths. The chip wraps to its content inside its column instead, so nothing clips from 320 up. */
+html:root:not(#_):not(#_):not(#_) .mu-side .pc { min-width: 0; max-width: 100%; }
+html:root:not(#_):not(#_):not(#_) .mu-side .pc > span { white-space: normal; overflow: visible; text-overflow: clip; max-width: 100%; min-width: 0; border-radius: 10px; line-height: 1.25 !important; text-wrap: balance; }
+html:root:not(#_):not(#_):not(#_) .mu-side.them .pc > span { text-align: right; }

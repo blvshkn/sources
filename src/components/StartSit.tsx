@@ -142,7 +142,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
     return (
       <Select className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`} value={p.id} onChange={set} aria-label={`${side === "a" ? "First player" : "Second player"}: ${p.name}`}
         searchPlaceholder="Search your players"
-        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId) }))}>
+        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId), why: `${o.name} is already in the other spot. Pick someone else to compare.` }))}>
         <Avatar p={p} size={44} />
         <b className="sx-name">{p.name}</b>
         <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` · ${s.game}` : ""}</small>

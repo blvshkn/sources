@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { deny, denyOn } from "../deny";
 import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
@@ -228,8 +229,10 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
           ); })}
           {/* Tapped, the row itself becomes the search field: same box, + turns into the search icon, Done on the right */}
           <li className={`qs-addli${adding ? " open" : ""}`}>
-            {/* 10 a side is the cap (App.tsx), so the row says so instead of opening a list that can't add */}
-            <button className="qs-add" disabled={ids.length >= 10} tabIndex={adding ? -1 : undefined} aria-hidden={adding || undefined} aria-expanded={adding} aria-haspopup="listbox" aria-label={ids.length >= 10 ? "10 players a side is the most" : `Add a player from ${team}`} onClick={() => setAdding(true)}>
+            {/* 10 a side is the cap (App.tsx), so the row says so instead of opening a list that can't add. It still
+                takes the tap: aria-disabled, a shake and a toast saying why (deny.ts) */}
+            <button className="qs-add" aria-disabled={ids.length >= 10 || undefined} tabIndex={adding ? -1 : undefined} aria-hidden={adding || undefined} aria-expanded={adding} aria-haspopup="listbox" aria-label={ids.length >= 10 ? "10 players a side is the most" : `Add a player from ${team}`}
+              onClick={(e) => (ids.length >= 10 ? deny(e.currentTarget, "10 players a side is the most. Remove one to add another.") : setAdding(true))}>
               <span className="qs-plus" aria-hidden="true"><Icon name="plus" size={16} /></span><span>{ids.length >= 10 ? "10 players max" : "Add player"}</span>
             </button>
             {adding && (
@@ -488,7 +491,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     <div className="ttb-row">
       <button type="button" className="btn btn-icon ttb-search" onClick={() => setSearching(true)} aria-label="Search any player in your league"><Icon name="search" size={18} /></button>
       {addPartner && <AddTeam count={legs.length + 1} onAdd={addPartner} teams={TEAMS.filter((t) => !t.you && !legs.some((l) => l.team.id === t.id))} />}
-      <button type="button" className="btn btn-ghost ttb-clear" onClick={clear} disabled={!anyPicked}>Clear</button>
+      <button type="button" className="btn btn-ghost ttb-clear" aria-disabled={!anyPicked || undefined} onClick={anyPicked ? clear : denyOn("Nothing to clear yet. Add a player to start a deal.")}>Clear</button>
     </div>
   );
 
@@ -672,7 +675,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               );
             })}
           </div>
-          <button className="btn btn-primary dt-go" disabled={isMulti ? !multi : !trade} onClick={() => document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See the read</button>
+          <button className="btn btn-primary dt-go" aria-disabled={(isMulti ? !multi : !trade) || undefined}
+            onClick={(e) => (isMulti ? multi : trade) ? document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              : deny(e.currentTarget, isMulti ? "Add a player for every team in the deal to see the read." : !allGive.length && !allGet.length ? "Add a player to each side to see the read." : !allGive.length ? "Add a player you send to see the read." : "Add a player you get to see the read.")}>See the read</button>
         </div>
         </>
       )}

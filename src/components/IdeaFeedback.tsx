@@ -1,4 +1,5 @@
 import { createContext, useEffect, useRef, useState } from "react";
+import { deny } from "../deny";
 import { playerById, teamById } from "../data";
 import type { Trade } from "../engine";
 import { Icon } from "./ui";
@@ -88,7 +89,8 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
           <label htmlFor="fb-text">Something else</label>
           <div className="composer">
             <input id="fb-text" className="composer-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={`${them.manager} only wants youth`} />
-            <button type="submit" className="composer-btn send" disabled={!note.trim()} aria-label="Save reason"><Icon name="send" size={18} /></button>
+            <button type="submit" className="composer-btn send" aria-disabled={!note.trim() || undefined} aria-label="Save reason"
+              onClick={(e) => { if (!note.trim()) { e.preventDefault(); deny(e.currentTarget, "Type a reason first, or pick one above."); } }}><Icon name="send" size={18} /></button>
           </div>
         </form>
       </section>

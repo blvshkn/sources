@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { deny } from "../deny";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
 import { marketValue, specialValue } from "../engine";
 import { Avatar } from "./Avatar";
@@ -97,7 +98,11 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
           const o = ownerName(r.ownerId);
           const sp = isSpecial(r.pos);
           return (
-            <button key={r.id} className="vb-row" onClick={() => !sp && r.ownerId && r.ownerId !== mine && onTarget?.(r.id, r.ownerId)} disabled={sp || !r.ownerId || r.ownerId === mine}>
+            <button key={r.id} className="vb-row" aria-disabled={sp || !r.ownerId || r.ownerId === mine || undefined}
+              onClick={(e) => sp ? deny(e.currentTarget, `${r.pos === "K" ? "Kickers" : "Defenses"} aren't part of trade values. Pick a player at another position.`)
+                : !r.ownerId ? deny(e.currentTarget, `${r.name} is a free agent. Claim him from Waivers instead.`)
+                : r.ownerId === mine ? deny(e.currentTarget, `${r.name} is already yours. Pick someone on another team to trade for.`)
+                : onTarget?.(r.id, r.ownerId)}>
               <span className="vb-rank">{pos === "ALL" ? i + 1 : posRank.get(r.id)}</span>
               <Avatar p={r} size={40} />
               <span className="vb-who">

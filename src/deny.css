@@ -1,0 +1,48 @@
+/* The "locked" interaction (deny.ts). Controls that can't act right now use aria-disabled instead of disabled, so the
+   tap still lands, shakes and toasts why. These rules keep each one's old dimming and drop its hover and press
+   feedback, so it doesn't look ready. No transform here: the shake is a Web Animation and an !important transform
+   would cancel it. */
+
+/* Week stepper arrows at the first or last week */
+html:root:not(#_):not(#_):not(#_) .lu-weeknav > .btn[aria-disabled="true"] { opacity: 0.35; cursor: default; }
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_) .lu-weeknav > .btn[aria-disabled="true"]:hover { background-color: transparent !important; }
+}
+
+/* Trade: + Add player at 10 a side, Clear with an empty deal, See the read before both sides have someone */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-disabled="true"] { opacity: 0.5; cursor: default; box-shadow: none !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-disabled="true"]:hover { color: inherit; border-color: inherit; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ttb-row .ttb-clear[aria-disabled="true"] { opacity: 0.4; cursor: default; background: transparent !important; }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-go[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+
+/* Wire: See the full matchup and the score card on a bye week */
+html:root:not(#_):not(#_):not(#_) .wk-more[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+html:root:not(#_):not(#_):not(#_) .sb2-open[aria-disabled="true"] { cursor: default; }
+
+/* League values: K/DEF, free agents and your own players aren't trade targets */
+html:root:not(#_):not(#_):not(#_) .vb-row[aria-disabled="true"] { cursor: default; }
+html:root:not(#_):not(#_):not(#_):not(#_) .vb-row[aria-disabled="true"]::after { opacity: 0 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .vb-row[aria-disabled="true"]:is(:hover, :active) { background: none !important; }
+
+/* Composer send buttons with nothing to send */
+html:root:not(#_):not(#_):not(#_) .composer-btn.send[aria-disabled="true"] { background: var(--surface-3) !important; color: var(--faint) !important; cursor: default; }
+html:root:not(#_):not(#_):not(#_) .chat-input .ask-send[aria-disabled="true"] { opacity: 0.4; cursor: default; }
+
+/* Inbox: Mark all read with nothing unread */
+html:root:not(#_):not(#_):not(#_) .ibx-allread[aria-disabled="true"] { color: var(--faint); cursor: default; }
+
+/* Matchup: a starter whose game kicked off, or any row in a week that's over. It keeps its scores readable, so no
+   dimming, just no hover or press lift. Past weeks keep the read-only look they had as plain text. */
+html:root:not(#_):not(#_):not(#_) .mu-mine.is-locked { cursor: default; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-mine.is-locked:is(:hover, :active) { background: transparent !important; box-shadow: none !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-mine.mu-past { border-color: transparent !important; background: none !important; box-shadow: none !important; }
+html:root:not(#_):not(#_):not(#_) .mu-mine.mu-past { font: inherit; color: inherit; text-align: inherit; width: 100%; }
+
+/* Swap candidates whose game already started: dimmed, with Locked where the point change would be */
+html:root:not(#_):not(#_):not(#_) .mu-opt.is-locked { cursor: default; }
+html:root:not(#_):not(#_):not(#_) .mu-opt.is-locked > :not(.mu-locked) { opacity: 0.45; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-opt.is-locked:is(:hover, :active) { background-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_) .mu-opt .mu-locked { color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+
+/* Waivers: a free agent who's locked or can't help this week */
+html:root:not(#_):not(#_):not(#_) .wv-row.wv-locked { cursor: default; }

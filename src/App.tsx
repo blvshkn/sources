@@ -23,6 +23,7 @@ import { Icon, IconName } from "./components/ui";
 import { Briefing, FollowUp, Nudge, Threats, Wire, needCopy } from "./components/Wire";
 import { InboxItem, InboxPanel, buildInbox } from "./components/Inbox";
 import { useLive } from "./live";
+import { deny, setDenySink } from "./deny";
 import { useRosterNews } from "./news";
 import { yourPlayers } from "./impact";
 import { urgentNews } from "./components/News";
@@ -147,6 +148,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [pitch, setPitch] = useState<Trade | null>(null);
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
+  useEffect(() => setDenySink(setToast), [setToast]);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
   // The inbox: a slide-over from the bell on phones, tablets and small laptops (inboxOpen). From 1241px it docks as the
   // right panel, which the bell opens and closes, on every page.
@@ -398,7 +400,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
   const loadTrade = (t: Trade) => { if (!isPartner(t.partnerId)) return; setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
   const toggle = (side: "give" | "get", id: string, teamId?: string) => {
-    // Up to 10 a side per team, so bigger packages and roster-clearing deals fit
+    // Can't happen from the pickers (each lists one roster), but a search or idea could try it: say so, don't add
+    if (side === "get" && YOU.roster.includes(id)) { deny(null, `${playerById(id).name} is already yours. Add him to the side you send.`); return; }
+    // Up to 10 a side per team, so bigger packages and roster-clearing deals fit. An 11th shakes and says why.
+    const lead = side === "give" ? give : get;
+    const leadLeg = !teamId || teamId === partnerId || !extra.some((l) => l.teamId === teamId) || lead.includes(id);
+    const target = extra.some((l) => l[side].includes(id)) ? null : leadLeg ? lead : extra.find((l) => l.teamId === teamId)![side];
+    if (target && !target.includes(id) && target.length >= 10) { deny(null, "10 players a side is the most. Remove one to add another."); return; }
     const flip = (cur: string[]) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= 10 ? cur : [...cur, id]);
     // Already in the deal: take it out wherever it is, whichever team it was headed to
     const inExtra = extra.find((l) => l[side].includes(id));
@@ -414,7 +422,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (leg) { setExtra((c) => c.map((l) => (l.teamId === id ? { teamId: partnerId, give, get } : l))); setPartnerId(id); setGive(leg.give); setGet(leg.get); return; }
     setPartnerId(id); setGet([]);
   };
-  const addPartner = (id: string) => setExtra((c) => (c.length >= 2 || id === partnerId || c.some((l) => l.teamId === id) ? c : [...c, { teamId: id, give: [], get: [] }]));
+  const addPartner = (id: string) => extra.length >= 2 ? deny(null, "Sleeper trades top out at 4 teams. Remove one to add another.") : setExtra((c) => (c.length >= 2 || id === partnerId || c.some((l) => l.teamId === id) ? c : [...c, { teamId: id, give: [], get: [] }]));
   const removePartner = (id: string) => {
     if (id !== partnerId) { setExtra((c) => c.filter((l) => l.teamId !== id)); return; }
     const [next, ...rest] = extra;
@@ -646,8 +654,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         if (via) haptic();
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
+      {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
+      <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.id}>{toast.msg}</span>}</div>
       {toast && (
-        <div className={`toast${toastOut ? " leaving" : ""}`} role="status" key={toast.id}>
+        <div className={`toast${toastOut ? " leaving" : ""}`} key={toast.id}>
           <span>{toast.msg}</span>
           {toast.undo && <button className="toast-undo" onClick={() => { toast.undo!(); setToastState(null); }}>Undo</button>}
         </div>

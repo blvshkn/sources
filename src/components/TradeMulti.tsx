@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { deny } from "../deny";
 import { ManagerTag, MyTag, Team, YOU, playerById } from "../data";
 import { FAIR_GAP, MultiTrade, Trade as TradeT, fmt, groupPoints, groupsFor, lineupFor, pct, verdictMulti } from "../engine";
 import { Icon } from "./ui";
@@ -54,7 +55,7 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   };
   const addBtn = (
     <button className="btn mt-add" aria-label="Add a team" aria-haspopup="listbox" aria-expanded={open} aria-disabled={full || undefined}
-      onClick={() => { if (!full) setOpen((o) => !o); }}>
+      onClick={(e) => { if (full) deny(e.currentTarget, `Sleeper trades top out at ${MAX_PARTNERS + 1} teams. Remove one to add another.`); else setOpen((o) => !o); }}>
       <Icon name="plus" size={16} /><span className="ttb-long">Add a team</span><span className="ttb-short" aria-hidden="true">Team</span>
     </button>
   );

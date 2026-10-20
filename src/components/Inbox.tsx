@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { Player, DEADLINES, YOU, playerById } from "../data";
 import { eff, fmt, Trade } from "../engine";
@@ -148,7 +149,8 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
     <>
       <div className="ibx-head">
         <h2 className="ibx-title" ref={head} tabIndex={-1}>Inbox{unread > 0 && <span className="ibx-count" aria-label={`${unread} unread`}>{unread}</span>}</h2>
-        {unread > 0 && <button className="ibx-allread" onClick={onReadAll}>Mark all read</button>}
+        {/* Always there, so the header never shifts; with nothing unread it dims and a tap says so (deny.ts) */}
+        <button className="ibx-allread" aria-disabled={unread === 0 || undefined} onClick={unread > 0 ? onReadAll : denyOn("Nothing unread. You're caught up.")}>Mark all read</button>
         <button className="btn btn-icon btn-ghost ibx-close" aria-label="Close inbox" onClick={onClose}><Icon name="x" size={20} /></button>
       </div>
       {context}

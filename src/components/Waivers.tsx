@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
 import { WaiverRec, bidDollars, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
@@ -406,10 +407,18 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
             {/* Reserved end column, kept the same width on every row */}
             <span className="wv-end" aria-hidden="true" />
           </>;
+          // This week, a player Sleeper has locked (his game started, or his team is off) or who can't help still takes
+          // the tap: it shakes and says why instead of doing nothing (deny.ts)
+          const lockWhy = kind === "current" && !r && !e.no && e.avail ? (
+            e.avail === "played" ? (st === "in_game" ? `${e.fa.name} is playing now, so Sleeper locks him until waivers run.` : `${e.fa.name} already played this week, so Sleeper locks him until waivers run.`)
+            : e.avail === "bye" ? `${e.fa.name} is on bye this week. Step to Week ${WEEK + 1} to plan a claim.`
+            : `${e.fa.name} is ${e.avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           return (
             <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${isOpen && !e.no ? " open" : ""}${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${e.no ? " ps-no" : ""}`}>
-              {r && !e.no ? <button className="wv-row" onClick={() => setOpen(isOpen ? null : e.fa.id)} aria-expanded={isOpen}>{inner}</button> : <div className="wv-row">{inner}</div>}
+              {r && !e.no ? <button className="wv-row" onClick={() => setOpen(isOpen ? null : e.fa.id)} aria-expanded={isOpen}>{inner}</button>
+                : lockWhy ? <button className="wv-row wv-locked" aria-disabled="true" onClick={denyOn(lockWhy)}>{inner}</button>
+                : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
                 <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="bookmark" size={16} /></button>
               </Tooltip>

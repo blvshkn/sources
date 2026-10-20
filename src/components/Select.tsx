@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { deny } from "../deny";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./icons";
 import { useEdgeFade } from "./edgeFade";
@@ -11,6 +12,8 @@ export type SelectOption<T extends string = string> = {
   label: string;
   hint?: string;
   disabled?: boolean;
+  /** Why a disabled option can't be picked. Tapping it shakes the row and toasts this (deny.ts). */
+  why?: string;
   icon?: ReactNode;
   /** Rows with the same group sit under one header, in the order they first appear. */
   group?: string;
@@ -115,6 +118,8 @@ export function Select<T extends string>({
   }, []);
 
   const choose = (i: number) => {
+    const w = options[i]?.disabled ? options[i].why : undefined;
+    if (w) { deny(document.getElementById(optId(i)), w); return; }
     if (!enabled(i)) return;
     if (options[i].value !== value) onChange(options[i].value);
     close(true);

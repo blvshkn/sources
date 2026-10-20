@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { deny } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { Answer } from "../engine";
 import { AiLabel, Icon } from "./ui";
@@ -56,7 +57,8 @@ export function Ask({ answer, onLink, starters, initial }: { answer: (q: string)
         <form className="chat-input" onSubmit={(e) => { e.preventDefault(); send(q); }}>
           <label htmlFor="ask" className="sr-only">Ask a question about your league</label>
           <input id="ask" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Who needs a TE most?" autoComplete="off" />
-          <button className="btn btn-primary btn-icon" type="submit" aria-label="Ask" disabled={!q.trim()}><Icon name="send" size={18} /></button>
+          <button className="btn btn-primary btn-icon ask-send" type="submit" aria-label="Ask" aria-disabled={!q.trim() || undefined}
+            onClick={(e) => { if (!q.trim()) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap one of the suggestions."); } }}><Icon name="send" size={18} /></button>
         </form>
       </section>
       <p className="tiny muted">Sources only reads what you give it: your league's public rosters and the tags you log. It never scans private group chats.</p>
