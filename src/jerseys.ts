@@ -1,5 +1,6 @@
 // Jersey colorways for the 32 NFL teams, drawn by components/Jersey.tsx.
-// Team colors only: no logos, wordmarks, names or signature uniform patterns ever go on a jersey.
+// Team colors and trim only: stripes, panels and signature patterns are fine, but no logos,
+// logo-derived marks, wordmarks, names, league shield or maker marks ever go on a jersey.
 // Hex values from teamcolorcodes.com (NFL team color codes), checked against each team's
 // current uniform. Names are for labels outside the jersey (review sheets, pickers) only.
 
@@ -18,6 +19,36 @@ export interface Colorway {
   cuff: string;
   /** Side panel fill, under the arms down to the hem. Same as body unless the team has a panel accent. */
   panel: string;
+}
+
+/** A run of sleeve stripes, parallel to the cuff. */
+export interface StripeSet {
+  /** Gap from the top edge of the cuff to the first stripe, in artboard px (600 wide). Large values
+      put the run high on the capped sleeve, which is how shoulder stripes read from the front. */
+  at: number;
+  /** Stripes working up from the cuff: [color, width]. An empty color leaves a gap. */
+  s: [string, number][];
+}
+
+/** Signature patterns, each drawn as our own simplified vector take on the team's look. */
+export type PatternId = "tiger" | "feather" | "peaks" | "curl";
+
+/** A band with an optional edge color on both sides. */
+export interface Band {
+  c: string;
+  w: number;
+  edge?: string;
+}
+
+export interface Trim {
+  /** Sleeve or shoulder stripes. */
+  sleeve?: StripeSet[];
+  /** A band that follows the raglan seam from collar to underarm. */
+  raglan?: Band;
+  /** A band along the side panel seam. */
+  side?: Band;
+  /** Signature pattern with its main and accent colors. */
+  pattern?: { id: PatternId; c: string; c2?: string };
 }
 
 export type Conference = "AFC" | "NFC";
@@ -52,7 +83,9 @@ export const JERSEYS: Record<string, TeamJersey> = {
   IND: { name: "Indianapolis Colts", conf: "AFC", div: "South", body: "#002C5F", number: W, outline: "#A2AAAD", collar1: W, collar2: "#002C5F", cuff: W, panel: "#002C5F",
     away: { number: "#002C5F", outline: "#002C5F", collar1: "#002C5F", collar2: W, cuff: "#002C5F" } },
   JAX: { name: "Jacksonville Jaguars", conf: "AFC", div: "South", body: "#006778", number: W, outline: "#D7A22A", collar1: "#D7A22A", collar2: "#101820", cuff: "#101820", panel: "#006778" },
-  TEN: { name: "Tennessee Titans", conf: "AFC", div: "South", body: "#0C2340", number: W, outline: "#4B92DB", collar1: "#4B92DB", collar2: "#C8102E", cuff: "#4B92DB", panel: "#0C2340" },
+  // 2026: Titans blue at home, white numbers trimmed red.
+  TEN: { name: "Tennessee Titans", conf: "AFC", div: "South", body: "#4B92DB", number: W, outline: "#C8102E", collar1: "#0C2340", collar2: "#C8102E", cuff: "#0C2340", panel: "#4B92DB",
+    away: { number: "#4B92DB", outline: "#C8102E", collar1: "#0C2340", collar2: "#C8102E", cuff: "#0C2340" } },
   // AFC West
   DEN: { name: "Denver Broncos", conf: "AFC", div: "West", body: "#FB4F14", number: "#002244", outline: W, collar1: "#002244", collar2: W, cuff: "#002244", panel: "#FB4F14" },
   KC: { name: "Kansas City Chiefs", conf: "AFC", div: "West", body: "#E31837", number: W, outline: "#FFB81C", collar1: W, collar2: "#FFB81C", cuff: "#FFB81C", panel: "#E31837" },
@@ -65,7 +98,9 @@ export const JERSEYS: Record<string, TeamJersey> = {
     away: { body: "#041E42", number: W, outline: "#869397", collar1: "#869397", collar2: W, cuff: "#869397", panel: "#041E42" } },
   NYG: { name: "New York Giants", conf: "NFC", div: "East", body: "#0B2265", number: W, outline: "#A71930", collar1: "#A71930", collar2: W, cuff: "#A71930", panel: "#0B2265" },
   PHI: { name: "Philadelphia Eagles", conf: "NFC", div: "East", body: "#004C54", number: W, outline: "#000000", collar1: "#A5ACAF", collar2: "#000000", cuff: "#A5ACAF", panel: "#004C54" },
-  WAS: { name: "Washington Commanders", conf: "NFC", div: "East", body: "#5A1414", number: "#FFB612", outline: W, collar1: "#FFB612", collar2: W, cuff: "#FFB612", panel: "#5A1414" },
+  // 2026: burgundy with white numbers trimmed gold.
+  WAS: { name: "Washington Commanders", conf: "NFC", div: "East", body: "#5A1414", number: W, outline: "#FFB612", collar1: "#FFB612", collar2: W, cuff: "#FFB612", panel: "#5A1414",
+    away: { number: "#5A1414", outline: "#FFB612", collar1: "#5A1414", collar2: "#FFB612", cuff: "#5A1414" } },
   // NFC North
   CHI: { name: "Chicago Bears", conf: "NFC", div: "North", body: "#0B162A", number: W, outline: "#C83803", collar1: "#C83803", collar2: W, cuff: "#C83803", panel: "#0B162A" },
   DET: { name: "Detroit Lions", conf: "NFC", div: "North", body: "#0076B6", number: W, outline: "#B0B7BC", collar1: W, collar2: "#B0B7BC", cuff: W, panel: "#0076B6",
@@ -73,7 +108,9 @@ export const JERSEYS: Record<string, TeamJersey> = {
   GB: { name: "Green Bay Packers", conf: "NFC", div: "North", body: "#203731", number: W, outline: "#FFB612", collar1: "#FFB612", collar2: W, cuff: "#FFB612", panel: "#203731" },
   MIN: { name: "Minnesota Vikings", conf: "NFC", div: "North", body: "#4F2683", number: W, outline: "#FFC62F", collar1: "#FFC62F", collar2: W, cuff: "#FFC62F", panel: "#4F2683" },
   // NFC South
-  ATL: { name: "Atlanta Falcons", conf: "NFC", div: "South", body: "#000000", number: W, outline: "#A71930", collar1: "#A71930", collar2: "#A5ACAF", cuff: "#A71930", panel: "#000000" },
+  // 2026: red at home again; white road numbers in red trimmed black.
+  ATL: { name: "Atlanta Falcons", conf: "NFC", div: "South", body: "#A71930", number: W, outline: "#000000", collar1: "#000000", collar2: W, cuff: "#000000", panel: "#A71930",
+    away: { number: "#A71930", outline: "#000000", collar1: "#A71930", collar2: "#000000", cuff: "#A71930" } },
   CAR: { name: "Carolina Panthers", conf: "NFC", div: "South", body: "#101820", number: W, outline: "#0085CA", collar1: "#0085CA", collar2: "#BFC0BF", cuff: "#0085CA", panel: "#101820" },
   NO: { name: "New Orleans Saints", conf: "NFC", div: "South", body: "#101820", number: "#D3BC8D", outline: W, collar1: "#D3BC8D", collar2: W, cuff: "#D3BC8D", panel: "#101820" },
   TB: { name: "Tampa Bay Buccaneers", conf: "NFC", div: "South", body: "#D50A0A", number: W, outline: "#34302B", collar1: "#34302B", collar2: "#FF7900", cuff: "#34302B", panel: "#D50A0A" },
@@ -83,6 +120,150 @@ export const JERSEYS: Record<string, TeamJersey> = {
   SF: { name: "San Francisco 49ers", conf: "NFC", div: "West", body: "#AA0000", number: W, outline: "#B3995D", collar1: "#B3995D", collar2: W, cuff: "#B3995D", panel: "#AA0000" },
   SEA: { name: "Seattle Seahawks", conf: "NFC", div: "West", body: "#002244", number: W, outline: "#69BE28", collar1: "#69BE28", collar2: "#A5ACAF", cuff: "#69BE28", panel: "#002244" },
 };
+
+/** Trim for one team: home, and white (or road) when it differs. A missing side is plain. */
+export interface TeamTrim {
+  home?: Trim;
+  away?: Trim;
+}
+
+const st = (at: number, ...s: [string, number][]): StripeSet => ({ at, s });
+/** Shoulder stripes: a run set high on the capped sleeve, under the shoulder numbers. */
+const shoulder = (...s: [string, number][]): StripeSet => st(44, ...s);
+
+// Trim from each team's current home and road jerseys (2025 and 2026 seasons). Left out on purpose,
+// because each one is a logo or comes from one: the Rams shoulder horn, the Ravens feather collar,
+// the Chargers shoulder bolt, the Texans road sleeve horns, the Titans underarm stars and collar
+// monogram, every sleeve or shoulder logo patch, and the wordmark inside the Cardinals road stripe.
+export const TRIMS: Record<string, TeamTrim> = {
+  // AFC East
+  BUF: { home: { sleeve: [st(14, [W, 4], ["#C60C30", 10], [W, 4])] }, away: { sleeve: [st(14, ["#00338D", 4], ["#C60C30", 10], ["#00338D", 4])] } },
+  MIA: { home: { sleeve: [st(14, ["#FC4C02", 3], [W, 10], ["#FC4C02", 3])] }, away: { sleeve: [st(14, ["#FC4C02", 3], ["#008E97", 10], ["#FC4C02", 3])] } },
+  NE: { home: { sleeve: [st(12, [W, 4], ["#C60C30", 12], [W, 4])] }, away: { sleeve: [st(12, ["#002244", 4], ["#C60C30", 12], ["#002244", 4])] } },
+  NYJ: { home: { sleeve: [shoulder([W, 7], ["", 6], [W, 7])] }, away: { sleeve: [shoulder(["#125740", 7], ["", 6], ["#125740", 7])] } },
+  // AFC North
+  CIN: { home: { pattern: { id: "tiger", c: "#FB4F14" } }, away: { pattern: { id: "tiger", c: "#000000" } } },
+  CLE: {
+    home: { sleeve: [st(12, [W, 4], ["#FF3C00", 4], [W, 4], ["#FF3C00", 4], [W, 4])] },
+    away: { sleeve: [st(12, ["#311D00", 4], ["#FF3C00", 4], ["#311D00", 4], ["#FF3C00", 4], ["#311D00", 4])] },
+  },
+  PIT: { away: { sleeve: [st(14, ["#101820", 5], ["#FFB612", 6], ["#101820", 5])] } },
+  // AFC South
+  IND: { home: { sleeve: [shoulder([W, 8], ["", 7], [W, 8])] }, away: { sleeve: [shoulder(["#002C5F", 8], ["", 7], ["#002C5F", 8])] } },
+  JAX: { home: { sleeve: [st(8, ["#101820", 16], ["#D7A22A", 3])] }, away: { sleeve: [st(8, ["#101820", 16], ["#D7A22A", 3])] } },
+  // Six thin navy "strings" edged in white and red: on the Titans blue body at home, in a blue band on the road.
+  TEN: {
+    home: { sleeve: [st(10, ["#C8102E", 3], [W, 3], ["", 3], ...strings("#0C2340", ""), [W, 3], ["#C8102E", 3])] },
+    away: { sleeve: [st(10, ["#C8102E", 3], ["#0C2340", 2], ["#4B92DB", 3], ...strings("#0C2340", "#4B92DB"), ["#0C2340", 2], ["#C8102E", 3])] },
+  },
+  // AFC West
+  DEN: { home: { pattern: { id: "peaks", c: "#002244", c2: W } }, away: { pattern: { id: "peaks", c: "#002244", c2: "#FB4F14" } } },
+  KC: { home: { sleeve: [st(14, [W, 6], ["", 5], [W, 6])] }, away: { sleeve: [st(14, ["#E31837", 6], ["", 5], ["#E31837", 6])] } },
+  // NFC East
+  DAL: { home: { sleeve: [st(12, ["#041E42", 5], ["#003594", 7], ["#041E42", 5])] }, away: { sleeve: [st(12, ["#869397", 4], [W, 7], ["#869397", 4])] } },
+  NYG: { away: { sleeve: [st(14, ["#0B2265", 4], ["#A71930", 6], ["#0B2265", 4])] } },
+  PHI: {
+    home: { sleeve: [st(12, ["#A5ACAF", 3], ["#000000", 10], ["#A5ACAF", 3])], side: { c: "#000000", w: 10, edge: "#A5ACAF" } },
+    away: { sleeve: [st(12, ["#000000", 3], ["#004C54", 10], ["#000000", 3])], side: { c: "#004C54", w: 10, edge: "#000000" } },
+  },
+  WAS: { home: { sleeve: [st(12, [W, 5], ["#FFB612", 8], [W, 5])] }, away: { sleeve: [st(12, ["#5A1414", 5], ["#FFB612", 8], ["#5A1414", 5])] } },
+  // NFC North
+  CHI: { home: { sleeve: [st(12, ["#C83803", 5], [W, 5], ["#C83803", 5])] }, away: { sleeve: [st(12, ["#0B162A", 5], ["#C83803", 5], ["#0B162A", 5])] } },
+  DET: { home: { sleeve: [shoulder([W, 4], ["#B0B7BC", 7], [W, 4])] }, away: { sleeve: [shoulder(["#0076B6", 4], ["#B0B7BC", 7], ["#0076B6", 4])] } },
+  GB: { home: { sleeve: [st(12, ["#FFB612", 5], [W, 5], ["#FFB612", 5])] }, away: { sleeve: [st(12, ["#203731", 5], ["#FFB612", 5], ["#203731", 5])] } },
+  MIN: { home: { pattern: { id: "curl", c: "#FFC62F", c2: W } }, away: { pattern: { id: "curl", c: "#4F2683", c2: "#FFC62F" } } },
+  // NFC South
+  CAR: { home: { raglan: { c: "#0085CA", w: 11, edge: "#BFC0BF" } }, away: { raglan: { c: "#0085CA", w: 11, edge: "#BFC0BF" } } },
+  // NFC West
+  ARI: { away: { sleeve: [st(12, ["#97233F", 4], ["", 12], ["#97233F", 4])] } },
+  // The horn is the Rams logo, so a thin sol pin pair above the cuff stands in for it.
+  LAR: { home: { sleeve: [st(12, [W, 2], ["", 4], ["#FFD100", 3])] }, away: { sleeve: [st(12, ["#003594", 2], ["", 4], ["#FFD100", 3])] } },
+  SF: { home: { sleeve: [st(12, [W, 5], ["", 4], [W, 5], ["", 4], [W, 5])] }, away: { sleeve: [st(12, ["#AA0000", 5], ["", 4], ["#AA0000", 5], ["", 4], ["#AA0000", 5])] } },
+  SEA: { home: { pattern: { id: "feather", c: "#A5ACAF", c2: "#69BE28" } }, away: { pattern: { id: "feather", c: "#002244", c2: "#69BE28" } } },
+};
+
+/** Six thin string lines on a band color, for the Titans sleeve. */
+function strings(line: string, band: string): [string, number][] {
+  return Array.from({ length: 6 }, () => [[line, 2], [band, 3]] as [string, number][]).flat();
+}
+
+/** Trim for the colorway `colorway(team, away)` returns. */
+export function trimFor(team: string, away = false): Trim | undefined {
+  const t = TRIMS[team];
+  return t && (away ? t.away : t.home);
+}
+
+/** Free Google Fonts stand-ins for each team's number face. The real faces are custom, so these are
+    the closest open fonts by shape, never copies. */
+export type NumFont =
+  | "teko" // tall condensed, squared
+  | "oswald" // classic block with rounded bowls
+  | "bigShoulders" // squared full block
+  | "saira" // modern squared with soft corners
+  | "barlow" // modern rounded condensed
+  | "chakra" // chamfered, angular cuts
+  | "squada" // squared with clipped corners
+  | "jost"; // geometric, round bowls
+
+/** Number treatment for one colorway. The fill and first outline come from the colorway. */
+export interface NumberTrim {
+  font?: NumFont;
+  /** Second, outer outline. */
+  outline2?: string;
+  /** Drop shadow color, offset down and to the right. */
+  shadow?: string;
+  /** Italic slant in degrees, positive leans right. */
+  slant?: number;
+  /** No outline at all: the number is a single flat color. */
+  plain?: boolean;
+}
+
+export interface NumberStyle extends NumberTrim {
+  font: NumFont;
+}
+
+// Number face per team, from current home and road jerseys. Teams on the same face share one stand-in.
+export const NUMBERS: Record<string, { font: NumFont; home?: NumberTrim; away?: NumberTrim }> = {
+  BUF: { font: "bigShoulders" },
+  MIA: { font: "oswald" },
+  NE: { font: "oswald" },
+  NYJ: { font: "oswald", home: { plain: true }, away: { plain: true } },
+  BAL: { font: "saira" },
+  CIN: { font: "teko" },
+  CLE: { font: "bigShoulders" },
+  PIT: { font: "jost" },
+  HOU: { font: "chakra" },
+  IND: { font: "bigShoulders", home: { plain: true }, away: { plain: true } },
+  JAX: { font: "oswald" },
+  TEN: { font: "oswald" },
+  DEN: { font: "saira" },
+  KC: { font: "bigShoulders" },
+  LV: { font: "bigShoulders" },
+  LAC: { font: "saira" },
+  DAL: { font: "bigShoulders" },
+  NYG: { font: "bigShoulders" },
+  PHI: { font: "squada" },
+  WAS: { font: "oswald" },
+  CHI: { font: "oswald" },
+  DET: { font: "barlow" },
+  GB: { font: "oswald" },
+  MIN: { font: "chakra" },
+  ATL: { font: "oswald" },
+  CAR: { font: "chakra" },
+  NO: { font: "bigShoulders" },
+  TB: { font: "bigShoulders" },
+  ARI: { font: "saira" },
+  LAR: { font: "barlow" },
+  SF: { font: "bigShoulders" },
+  SEA: { font: "squada" },
+};
+
+/** Number face and treatment for the colorway `colorway(team, away)` returns. */
+export function numberStyle(team: string, away = false): NumberStyle {
+  const t = NUMBERS[team];
+  if (!t) return { font: "teko" };
+  return { font: t.font, ...(away ? t.away : t.home) };
+}
 
 /** Review order: AFC East, North, South, West, then NFC. */
 export const DIVISIONS: { conf: Conference; div: Division; teams: string[] }[] = (["AFC", "NFC"] as const).flatMap((conf) =>
