@@ -277,17 +277,23 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
       const t = g.t;
       const inner = t.transform ?? "";
       const tf = [p.transform, inner].filter(Boolean).join(" ") || undefined;
+      // Slab 1s are a path beside the text (siblings, not a group, so the shape also works in a clipPath).
       return (
-        <text x={t.x} y={t.y.toFixed(1)} fontFamily={`'${tn.family}', sans-serif`} fontWeight={tn.weight} fontSize={t.size.toFixed(1)} transform={tf} {...common}>
-          {t.text}
-        </text>
+        <>
+          {t.text && (
+            <text x={t.x} y={t.y.toFixed(1)} fontFamily={`'${tn.family}', sans-serif`} fontWeight={tn.weight} fontSize={t.size.toFixed(1)} transform={tf} {...common}>
+              {t.text}
+            </text>
+          )}
+          {t.bars && <path d={t.bars} transform={tf} {...common} />}
+        </>
       );
     }
     return <path d={g.d} transform={p.transform} {...common} />;
   };
 
   const num = (props: { g: Glyphs; x: number; y: number; strokeW: number; rotate?: number; key: string }) => {
-    if (!props.g.d && !props.g.t?.text) return null;
+    if (!props.g.d && !props.g.t?.text && !props.g.t?.bars) return null;
     const transforms = [props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : "", ns.slant ? `translate(${props.x} ${props.y}) skewX(${-ns.slant}) translate(${-props.x} ${-props.y})` : ""].filter(Boolean);
     const layer = (fill: string, w: number, dx = 0, dy = 0) => shape(props.g, { fill, stroke: fill, strokeWidth: w, transform: dx || dy ? `translate(${dx} ${dy})` : undefined });
     const k = props.strokeW / stroke;

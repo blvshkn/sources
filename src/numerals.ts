@@ -639,6 +639,10 @@ export interface FontNumerals {
   track?: number;
   /** Slant in degrees, positive leans right. */
   skew?: number;
+  /** Draw every 1 as a plain upright bar (no flag, no foot) in place of the face's own 1, for teams
+      whose 1 is a bare slab: `w` is the bar width and `r` its corner radius, in 1/1000 em, and `sb`
+      the space on each side. The metrics for 1 follow from these (see `font`). */
+  slabOne?: { w: number; r: number; sb: number };
   m: FontMetrics;
 }
 
@@ -651,6 +655,8 @@ export interface NumberText {
   size: number;
   width: number;
   transform?: string;
+  /** Path data for slab 1s (see `slabOne`), in the same frame as the text; the text then leaves them out. */
+  bars?: string;
 }
 
 /**
@@ -678,22 +684,47 @@ export function numberText(f: FontNumerals, num: string, cx: number, y: number, 
   const left = pens[0] + first[1];
   const right = pens[pens.length - 1] + last[2];
   const mid = (left + right) / 2;
-  const xs = pens.map((p) => (cx + (p - mid) * sc).toFixed(1)).join(" ");
+  const X = (p: number) => cx + (p - mid) * sc;
+  const slab = f.slabOne;
+  const keep = digits.map((g) => !(slab && g === 1));
+  const xs = pens.filter((_, i) => keep[i]).map((p) => X(p).toFixed(1)).join(" ");
+  let bars: string | undefined;
+  if (slab && keep.includes(false)) {
+    const bw = slab.w * sc;
+    const bh = f.m.cap * sc;
+    const r = Math.min(slab.r * sc, bw / 2);
+    const top = y - (f.m.cap - f.m.base) * sc;
+    const q = (v: number) => v.toFixed(1);
+    bars = pens
+      .filter((_, i) => !keep[i])
+      .map((p) => {
+        const x0 = X(p + slab.sb);
+        return `M${q(x0 + r)} ${q(top)}H${q(x0 + bw - r)}A${q(r)} ${q(r)} 0 0 1 ${q(x0 + bw)} ${q(top + r)}V${q(top + bh - r)}A${q(r)} ${q(r)} 0 0 1 ${q(x0 + bw - r)} ${q(top + bh)}H${q(x0 + r)}A${q(r)} ${q(r)} 0 0 1 ${q(x0)} ${q(top + bh - r)}V${q(top + r)}A${q(r)} ${q(r)} 0 0 1 ${q(x0 + r)} ${q(top)}Z`;
+      })
+      .join("");
+  }
   const parts = [sx !== 1 ? `scale(${sx} 1)` : "", f.skew ? `skewX(${-f.skew})` : ""].filter(Boolean);
   return {
-    text: num,
+    text: digits.filter((_, i) => keep[i]).join(""),
     x: xs,
     y: y - f.m.base * sc,
     size: 1000 * sc,
     width: (right - left) * sc * sx,
     transform: parts.length ? `translate(${cx} ${y}) ${parts.join(" ")} translate(${-cx} ${-y})` : undefined,
+    bars,
   };
 }
 
 /** Teams whose numbers are set in a font, with the face's measured digit metrics. */
 type Metric = [number, number, number];
-const font = (family: string, weight: number, cap: number, d: Metric[], o: Partial<FontNumerals> = {}): FontNumerals => ({ kind: "font", family, weight, m: { cap, base: 0, d }, ...o });
+const font = (family: string, weight: number, cap: number, d: Metric[], o: Partial<FontNumerals> = {}): FontNumerals => {
+  // A slab 1 replaces the face's 1, so its metrics come from the bar: side space, bar, side space.
+  const s1 = o.slabOne;
+  const dd = s1 ? d.map((g, i) => (i === 1 ? ([s1.sb * 2 + s1.w, s1.sb, s1.sb + s1.w] as Metric) : g)) : d;
+  return { kind: "font", family, weight, m: { cap, base: 0, d: dd }, ...o };
+};
 // Measured with canvas text metrics at 1000 px from the Google Fonts files.
+const OSWALD_500: Metric[] = [[534, 47, 484], [382, 16, 297], [497, 31, 469], [496, 31, 469], [504, 31, 500], [493, 31, 469], [521, 47, 484], [413, 16, 391], [510, 31, 469], [521, 31, 469]];
 const OSWALD_640: Metric[] = [[546, 47, 500], [384, 16, 313], [509, 31, 484], [509, 31, 484], [519, 16, 516], [505, 31, 484], [534, 47, 500], [432, 16, 406], [518, 31, 484], [533, 31, 484]];
 const ANTONIO_650: Metric[] = [[471, 47, 422], [355, 31, 281], [451, 63, 422], [454, 47, 422], [451, 31, 438], [451, 63, 406], [451, 47, 422], [451, 47, 422], [451, 31, 406], [451, 31, 406]];
 const ANTONIO_520: Metric[] = [[436, 47, 391], [396, 47, 297], [429, 63, 406], [430, 47, 391], [429, 31, 422], [429, 63, 391], [429, 47, 406], [429, 31, 406], [429, 31, 391], [429, 31, 391]];
@@ -702,17 +733,18 @@ const CHAKRA_600: Metric[] = [[644, 47, 594], [374, 16, 313], [566, 31, 531], [5
 const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], [668, 47, 625], [672, 16, 641], [666, 47, 625], [695, 47, 641], [569, 16, 547], [689, 47, 641], [699, 63, 656]];
 const TOMORROW_700: Metric[] = [[692, 47, 656], [478, 47, 453], [683, 47, 641], [695, 63, 656], [709, 16, 688], [708, 63, 672], [715, 47, 672], [603, 0, 578], [696, 47, 656], [730, 63, 688]];
 const BIG_SHOULDERS_700: Metric[] = [[467, 31, 438], [252, 31, 219], [451, 31, 422], [464, 31, 422], [474, 16, 453], [474, 31, 438], [459, 31, 438], [439, 16, 422], [460, 31, 422], [459, 31, 422]];
-const BIG_SHOULDERS_800: Metric[] = [[487, 31, 453], [263, 31, 234], [470, 31, 453], [484, 31, 453], [492, 16, 484], [494, 31, 453], [479, 31, 453], [462, 16, 438], [480, 31, 453], [479, 31, 438]];
 const LEAGUE_GOTHIC: Metric[] = [[354, 31, 328], [240, 16, 203], [363, 31, 328], [352, 16, 328], [351, 16, 344], [342, 16, 313], [342, 16, 313], [307, 16, 297], [340, 16, 328], [342, 16, 313]];
 const FJALLA: Metric[] = [[520, 47, 469], [403, 0, 406], [476, 31, 438], [489, 31, 453], [532, 31, 516], [498, 47, 453], [508, 47, 469], [409, 16, 406], [504, 31, 469], [508, 47, 469]];
 const RAJDHANI_700: Metric[] = [[536, 47, 484], [334, 16, 281], [493, 31, 453], [509, 31, 469], [541, 31, 531], [506, 31, 469], [525, 47, 484], [431, 16, 422], [542, 47, 500], [525, 31, 484]];
+// One block face shared by teams whose real numerals are the same cut, so they can never drift apart.
+const NINERS_BLOCK = font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 });
 const FONT_TEAM: Record<string, FontNumerals> = {
   TEN: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.8 }),
   WAS: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.78 }),
-  SF: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 }),
+  // Rounded block, footed 1 with a flag, diagonal 4, straight 7. The Browns wear the same numerals.
+  SF: NINERS_BLOCK,
+  CLE: NINERS_BLOCK,
   TB: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 }),
-  // Condensed rounded rectangles with flat sides.
-  CLE: font("Big Shoulders", 800, 813, BIG_SHOULDERS_800, { scaleX: 1.15 }),
   // Tall, narrow and round, with a slight lean.
   PIT: font("League Gothic", 400, 750, LEAGUE_GOTHIC, { skew: 5 }),
   // Tall, narrow and round, with a footed 1.
@@ -745,6 +777,8 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   JAX: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.78 }),
   // Round bowls, a straight 7 and a 9 whose tail turns to a flat end; a touch wider than the face.
   LAR: font("Oswald", 640, 813, OSWALD_640, { scaleX: 1.08 }),
+  // Tall and narrow with round bowls and slot counters, a curved 2 and a bare slab 1 with no flag.
+  CHI: font("Oswald", 500, 813, OSWALD_500, { scaleX: 0.8, slabOne: { w: 105, r: 14, sb: 50 } }),
 };
 
 /** Number setting for a team: a font, or one of the drawn sets above. */
