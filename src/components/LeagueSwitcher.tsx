@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBackClose } from "../backClose";
 import { SleeperError, findLeagues, findUser, managerAvatar, teamAvatarIn } from "../sleeper";
 import { LEAGUE, LEAGUE_NAME } from "../data";
 import { Account, accountLabel } from "../accounts";
@@ -75,6 +76,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
     el?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
   }, [added, accounts.length]);
 
+  useBackClose(close);
   usePullToDismiss(sheet,
     (y) => {
       if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }

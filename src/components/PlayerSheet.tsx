@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useBackClose } from "../backClose";
 import { createPortal } from "react-dom";
 import { ScheduleStrip } from "./Schedule";
 import { LineupCall, OutcomeRange, WeekDepth, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
@@ -37,6 +38,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   useEdgeFade(body);
   const scrim = useRef<HTMLDivElement>(null);
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it
+  useBackClose(close);
   usePullToDismiss(sheet,
     (y) => {
       if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }

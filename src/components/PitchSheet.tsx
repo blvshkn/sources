@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
+import { useBackClose } from "../backClose";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { Trade } from "../engine";
@@ -268,6 +269,7 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   };
 
   // Pull down from anywhere on the sheet once it's scrolled to the top
+  useBackClose(() => dismiss());
   usePullToDismiss(sheet,
     (y) => { cancelAnimationFrame(raf.current); closing.current = false; apply(y); },
     (y, v) => { if (y + project(v) > Math.min(height() * 0.35, 240)) dismiss(v); else springTo(0, 0.8, 0.3, v); });

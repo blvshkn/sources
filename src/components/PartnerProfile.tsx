@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useBackClose } from "../backClose";
 import { createPortal } from "react-dom";
 import { COMPLETED_TRADES, ManagerTag, PastTrade, TEAMS, teamById } from "../data";
 import { allNeeds, fmt, groupsFor, tendencies } from "../engine";
@@ -68,6 +69,7 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose }: {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pull down to dismiss, on the phone sheet only; the modal stays put
+  useBackClose(() => close());
   usePullToDismiss(sheet,
     (y) => {
       if (!isSheet()) return;

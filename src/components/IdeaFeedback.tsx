@@ -1,4 +1,5 @@
 import { createContext, useEffect, useRef, useState } from "react";
+import { useBackClose } from "../backClose";
 import { deny } from "../deny";
 import { playerById, teamById } from "../data";
 import type { Trade } from "../engine";
@@ -45,6 +46,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
     return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useBackClose(close);
   usePullToDismiss(sheet,
     (y) => {
       if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }

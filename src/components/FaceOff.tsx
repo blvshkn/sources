@@ -80,7 +80,7 @@ function Side({ s, side }: { s: FaceSide; side: "you" | "them" }) {
     <span className={`fo-side ${side}${s.dim ? " is-dim" : ""}`}>
       {t ? <TeamAvatar t={t} size={44} /> : <span className="fo-av-none" />}
       <span className="fo-who">
-        <b className={t ? undefined : "muted"}><span>{t ? t.name : s.empty ?? "No matchup"}</span>{t && <Trophy teamId={t.id} />}</b>
+        <b className={t ? undefined : "muted"}>{/* The trophy sits on the outside of each name: before it on your side, after it on theirs */}{t && side === "you" && <Trophy teamId={t.id} />}<span>{t ? t.name : s.empty ?? "No matchup"}</span>{t && side === "them" && <Trophy teamId={t.id} />}</b>
         <small>{t ? standing(t, t.id === YOU.id) : " "}</small>
       </span>
       <span className="fo-score">

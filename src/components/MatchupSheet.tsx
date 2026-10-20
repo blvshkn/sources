@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBackClose } from "../backClose";
 import { createPortal } from "react-dom";
 import { WEEK } from "../data";
 import { Icon } from "./ui";
@@ -54,6 +55,7 @@ export function MatchupSheet({ week: start = WEEK, onClose }: { week?: number; o
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useBackClose(close);
   usePullToDismiss(sheet,
     (y) => {
       if (!isSheet()) return;
