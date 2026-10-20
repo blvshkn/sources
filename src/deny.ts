@@ -39,6 +39,12 @@ export function shake(el: Element | null | undefined) {
 export function deny(el: Element | null | undefined, message: string) {
   const target = el ?? lastPress?.closest(PRESSABLE) ?? (document.activeElement !== document.body ? document.activeElement : null);
   shake(target);
+  // data-denied lets a control show its own locked cue (the matchup rows show a lock badge) while the toast is up
+  if (target instanceof HTMLElement) {
+    target.dataset.denied = "";
+    clearTimeout(Number(target.dataset.deniedT));
+    target.dataset.deniedT = String(window.setTimeout(() => { delete target.dataset.denied; delete target.dataset.deniedT; }, 1800));
+  }
   try { navigator.vibrate?.(10); } catch { /* unsupported */ }
   sink?.(message);
 }
