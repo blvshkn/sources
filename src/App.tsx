@@ -8,13 +8,14 @@ import { Matchup } from "./components/Matchup";
 import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
-  Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
+  Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, askSteps, builderTip,
   counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
 import { Tooltip } from "./components/Tooltip";
 import { Boot } from "./components/Boot";
+import { IDLE, tracer, type TraceState } from "./think";
 import { Logo, Mark } from "./components/Logo";
 import { LeagueCtx } from "./components/LeagueSwitch";
 import { LeagueSwitcher } from "./components/LeagueSwitcher";
@@ -613,7 +614,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
-          {tab === "ask" && <Ask initial={askSeed} answer={(q) => ask(q, active, myTags, prices, passed)} onLink={onLink} starters={askStarters} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q) => askSteps(q, active, myTags, prices, passed)} onLink={onLink} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
@@ -687,6 +688,8 @@ export default function App() {
   const liveKey = session.mode === "live" ? `${session.userId}:${session.leagueId}` : session.mode;
   const [status, setStatus] = useState<"loading" | "ready" | "error">(session.mode === "live" ? "loading" : "ready");
   const [step, setStep] = useState("Loading your league");
+  // The league load's real steps (each Sleeper and FantasyCalc fetch), shown under the logo while it loads
+  const [bootTrace, setBootTrace] = useState<TraceState>(IDLE);
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0);
   const [initialMyTags, setInitialMyTags] = useState<Record<string, MyTag> | undefined>();
@@ -709,9 +712,10 @@ export default function App() {
     }
     let cancelled = false;
     setStatus("loading");
-    loadLeague(session.leagueId, session.userId, activeAccount(session)?.username ?? "", setStep)
-      .then((d) => { if (cancelled) return; setLeague(d); setVersion((v) => v + 1); setStatus("ready"); })
-      .catch((e: unknown) => { if (cancelled) return; setError(e instanceof Error ? e.message : "We couldn't load your league from Sleeper. Try again in a minute."); setStatus("error"); });
+    const tr = tracer(setBootTrace, () => !cancelled);
+    loadLeague(session.leagueId, session.userId, activeAccount(session)?.username ?? "", setStep, tr)
+      .then(async (d) => { await tr.finish(); if (cancelled) return; setLeague(d); setVersion((v) => v + 1); setStatus("ready"); })
+      .catch((e: unknown) => { if (cancelled) return; tr.fail(); setError(e instanceof Error ? e.message : "We couldn't load your league from Sleeper. Try again in a minute."); setStatus("error"); });
     return () => { cancelled = true; };
     // Adding or removing an account leaves the league on screen alone, so it doesn't reload it.
   }, [liveKey, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -732,7 +736,7 @@ export default function App() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (status === "loading") return <Boot step={step} />;
+  if (status === "loading") return <Boot step={step} trace={bootTrace} />;
   if (status === "error") {
     return (
       <div className="boot">
@@ -751,7 +755,7 @@ export default function App() {
   if (session.mode === "none" && LEAGUE.mode !== "demo") setLeague(demoLeague());
   return (
     <>
-      {boot !== "off" && <Boot step={step} leaving={boot === "leaving"} />}
+      {boot !== "off" && <Boot step={step} trace={bootTrace} leaving={boot === "leaving"} />}
       {session.mode !== "none" ? (
         <Shell key={`${leagueKey()}:${version}`} session={session} initialMyTags={initialMyTags}
           onReconnect={toLanding}

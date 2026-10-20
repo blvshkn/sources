@@ -1,25 +1,59 @@
 import { useEffect, useRef, useState } from "react";
+import type { Steps } from "../steps";
+import { useTrace } from "../think";
+import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { deny } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { Answer } from "../engine";
 import { AiLabel, Icon } from "./ui";
 import { Mark } from "./Logo";
 
-type Msg = { id: number; from: "you" | "sources"; q?: string; a?: Answer };
+type Msg = { id: number; from: "you" | "sources"; q: string };
+
+/** One answer: the trace of the work, then the answer streaming in as it's written out. */
+function AskTurn({ q, answer, onLink, onGrow }: { q: string; answer: (q: string) => Steps<Answer>; onLink: (l: Answer["links"][number]) => void; onGrow: () => void }) {
+  const { trace, result: a, start } = useTrace<Answer>();
+  useEffect(() => { start(() => answer(q)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Text, then each point, as one stream
+  const counts = a ? [wordCount(a.text), ...a.points.map(wordCount)] : [];
+  const total = counts.reduce((x, y) => x + y, 0);
+  const k = useReveal(total, !!a);
+  const done = !!a && k >= total;
+  useEffect(onGrow, [trace.steps.length, trace.status, !!a, done]); // eslint-disable-line react-hooks/exhaustive-deps
+  let base = counts[0] ?? 0;
+  return (
+    <div className="ask-turn">
+      <ThinkingTrace trace={trace} />
+      {a && (
+        <div className="bubble sources" aria-busy={!done}>
+          <p><b><Words text={a.text} k={k} /></b></p>
+          {a.points.length > 0 && <ul>{a.points.map((p, i) => { const b = base; base += counts[i + 1]; return <li key={p} className={k > b ? undefined : "thk-wait"}><Words text={p} k={k} base={b} /></li>; })}</ul>}
+          {a.links.length > 0 && (
+            <div className={`row wrap ask-links${done ? "" : " wait"}`}>
+              {a.links.map((l) => <button key={l.label} className="btn btn-sm" tabIndex={done ? undefined : -1} onClick={() => onLink(l)}>{l.label}<Icon name="chev" size={14} /></button>)}
+            </div>
+          )}
+          <AiLabel />
+        </div>
+      )}
+    </div>
+  );
+}
 
 
-export function Ask({ answer, onLink, starters, initial }: { answer: (q: string) => Answer; onLink: (l: Answer["links"][number]) => void; starters: string[]; initial?: string }) {
-  // A question sent from the inbox composer arrives already answered
-  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, from: "you", q: initial.trim() }, { id: 2, from: "sources", a: answer(initial.trim()) }] : []));
+export function Ask({ answer, onLink, starters, initial }: { answer: (q: string) => Steps<Answer>; onLink: (l: Answer["links"][number]) => void; starters: string[]; initial?: string }) {
+  // A question sent from the inbox composer arrives here and starts working at once
+  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, from: "you", q: initial.trim() }, { id: 2, from: "sources", q: initial.trim() }] : []));
   const [q, setQ] = useState("");
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs]);
+  const grow = () => end.current?.scrollIntoView({ block: "end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  useEffect(grow, [msgs]);
 
   const send = (text: string) => {
     const t = text.trim();
     if (!t) return;
     const id = Date.now();
-    setMsgs((m) => [...m, { id, from: "you", q: t }, { id: id + 1, from: "sources", a: answer(t) }]);
+    setMsgs((m) => [...m, { id, from: "you", q: t }, { id: id + 1, from: "sources", q: t }]);
     setQ("");
   };
 
@@ -41,14 +75,7 @@ export function Ask({ answer, onLink, starters, initial }: { answer: (q: string)
         {msgs.map((m) => m.from === "you" ? (
           <div key={m.id} className="bubble you">{m.q}</div>
         ) : (
-          <div key={m.id} className="bubble sources">
-            <p><b>{m.a!.text}</b></p>
-            {m.a!.points.length > 0 && <ul>{m.a!.points.map((p) => <li key={p}>{p}</li>)}</ul>}
-            <div className="row wrap">
-              {m.a!.links.map((l) => <button key={l.label} className="btn btn-sm" onClick={() => onLink(l)}>{l.label}<Icon name="chev" size={14} /></button>)}
-            </div>
-            <AiLabel />
-          </div>
+          <AskTurn key={m.id} q={m.q} answer={answer} onLink={onLink} onGrow={grow} />
         ))}
         <div ref={end} />
         <div className="chips-row">

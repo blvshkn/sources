@@ -1,5 +1,6 @@
 // Sleeper's public, read-only API. No password or token: a username is enough.
 // Everything here runs in the user's browser; nothing is stored on a server.
+import type { Chip } from "./steps";
 import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
@@ -210,14 +211,22 @@ const positionsQuery = SKILL.map((p) => `position[]=${p}`).join("&");
 
 // ---- Load a whole league -------------------------------------------------
 
-export async function loadLeague(leagueId: string, userId: string, username: string, onStep?: (s: string) => void): Promise<LeagueData> {
+/** Where a league load reports its steps (think.ts tracer). Every count is what Sleeper and FantasyCalc sent back. */
+export interface LoadTrace {
+  step: (doing: string, done: string, opts?: { n?: number; chips?: Chip[] }) => Promise<void>;
+  n: (n: number, chip?: Chip, done?: string) => Promise<void>;
+}
+
+export async function loadLeague(leagueId: string, userId: string, username: string, onStep?: (s: string) => void, tr?: LoadTrace): Promise<LeagueData> {
   onStep?.("Loading your league");
+  await tr?.step("Loading your league from Sleeper", "Loaded {n} teams from Sleeper", { chips: [{ label: "Sleeper", kind: "feed" }] });
   const [state, league, users, rosters] = await Promise.all([
     getState(),
     get<SLeague>(`/v1/league/${leagueId}`),
     get<SUser[]>(`/v1/league/${leagueId}/users`),
     get<SRoster[]>(`/v1/league/${leagueId}/rosters`),
   ]);
+  await tr?.n(rosters.length, { label: league.name, kind: "team" });
   const season = league.season;
   const champP = championFor(league, rosters);
   const live = state.season === season && state.season_type === "regular";
@@ -235,6 +244,9 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const fcUrl = `https://api.fantasycalc.com/values/current?isDynasty=${dynasty}&numQbs=${sfLeague ? 2 : 1}&numTeams=${league.total_rosters}&ppr=${recSetting >= 1 ? 1 : recSetting >= 0.5 ? 0.5 : 0}`;
 
   onStep?.("Loading projections and trade values");
+  const projWeeks = 1 + futureWeeks.length;
+  await tr?.step(`Loading ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and trade values`, `Loaded ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and {n} trade values`,
+    { chips: [{ label: "Sleeper", kind: "feed" }, { label: "FantasyCalc", kind: "feed" }] });
   const specialQuery = "position[]=K&position[]=DEF";
   const [weekProj, seasonProj, trending, futureProj, market, kdefWeek, kdefSeason] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),
@@ -245,7 +257,9 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
     get<SProj[]>(`/projections/nfl/${season}?season_type=regular&${specialQuery}`).catch(() => [] as SProj[]),
   ]);
+  await tr?.n(market.length);
   // Which games have kicked off this week (Sleeper locks those players), and who is on bye
+  await tr?.step(`Loading the ${season} NFL schedule`, `Loaded {n} games on the ${season} schedule`);
   const schedule = await fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`).then((r) => (r.ok ? r.json() : [])).catch(() => []) as { week: number; home: string; away: string; status: string }[];
   const games: Record<string, "pre_game" | "in_game" | "complete"> = {};
   for (const g of schedule.filter((x) => x.week === week)) {
@@ -258,6 +272,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   for (const g of schedule) { (slateOpp[g.home] ??= {})[g.week] = `v${g.away}`; (slateOpp[g.away] ??= {})[g.week] = `@${g.home}`; }
   const slateProj: Record<string, Record<number, number>> = {};
   [weekProj, ...futureProj].forEach((wp, i) => { const w = [week, ...futureWeeks][i]; wp.forEach((p) => { const v = ptsOf(p.stats); if (v && v[scoreKey] > 0) (slateProj[p.player_id] ??= {})[w] = Math.round(v[scoreKey] * 10) / 10; }); });
+  await tr?.n(schedule.length);
+  await tr?.step("Loading this week's adds and drops", "Loaded {n} trending adds and drops");
   const trendingDrops = await get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
@@ -273,7 +289,9 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return { ppr: sum.ppr / n, half: sum.half / n, std: sum.std / n, rec: sum.rec / n };
   };
 
+  await tr?.n(trending.length + trendingDrops.length);
   onStep?.("Loading trades, waivers and past weeks");
+  await tr?.step(`Loading ${week} ${week === 1 ? "week" : "weeks"} of trades and matchups`, `Loaded {n} moves over ${week} ${week === 1 ? "week" : "weeks"}`);
   const weeks = Array.from({ length: week }, (_, i) => i + 1);
   const [txnsByWeek, allMatchups] = await Promise.all([
     Promise.all(weeks.map((w) => get<STxn[]>(`/v1/league/${leagueId}/transactions/${w}`).catch(() => [] as STxn[]))),
@@ -284,6 +302,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   matchupsByWeek.forEach((ms, i) => ms.forEach((m) => Object.entries(m.players_points ?? {}).forEach(([pid, v]) => { (slatePts[pid] ??= {})[i + 1] = Math.round(v * 10) / 10; })));
   const thisWeek = live ? allMatchups[allMatchups.length - 1] ?? [] : [];
   const txns = txnsByWeek.flat();
+  await tr?.n(txns.length);
+  await tr?.step("Reading players from the feeds", "Read {n} players from the feeds");
 
   // Players: names, teams and injuries come with the projections feed.
   const weekBy = new Map(weekProj.map((p) => [p.player_id, p]));
@@ -330,6 +350,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   };
   seasonProj.forEach((p) => add(p.player_id, p.player, p.team));
   weekProj.forEach((p) => add(p.player_id, { ...seasonBy.get(p.player_id)?.player, ...p.player }, p.team));
+  await tr?.n(Object.keys(players).length);
 
   // Kickers and defenses: shown in the lineup, kept out of the trade engine.
   const specials: Record<string, SpecialPlayer> = {};
@@ -360,6 +381,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const missing = [...rostered].filter((id) => !players[id] && !specials[id]);
   if (missing.length) {
     onStep?.("Loading player details");
+    await tr?.step(`Loading ${missing.length} missing ${missing.length === 1 ? "player" : "players"}`, `Loaded ${missing.length} missing ${missing.length === 1 ? "player" : "players"}`);
     const all = await get<Record<string, SPlayerLite>>("/v1/players/nfl").catch(() => ({} as Record<string, SPlayerLite>));
     missing.forEach((id) => { add(id, all[id], null); if (!players[id]) addSpecial(id, all[id], null); });
   }
@@ -370,6 +392,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   //   45%  our production model: rest-of-season projected points over replacement for THIS league,
   //        read onto the market's own value curve by rank, and held within 0.5x-2x of the market
   // then nudged up to +/-3% by Sleeper add/drop momentum over the past week.
+  await tr?.step("Valuing players for this league", "Valued {n} players for this league", { chips: [{ label: "Market 55%", kind: "feed" }, { label: "Projections 45%", kind: "feed" }] });
   let fcScale = 1; // raw FantasyCalc value -> our 0-10,000 scale
   {
     const sk = recSetting >= 1 ? "ppr" : recSetting >= 0.5 ? "half" : "std";
@@ -428,6 +451,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     });
   }
 
+  await tr?.n(Object.keys(players).length);
   // Teams
   const userBy = new Map(users.map((u) => [u.user_id, u]));
   const teams: Team[] = rosters.map((r) => {

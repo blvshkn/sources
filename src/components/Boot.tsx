@@ -1,8 +1,11 @@
 /** Loading screen: the stacked logo (mark, wordmark, tagline), centered. The mark sits in graphite and fills with green along
  *  both lanes, then hands back to graphite, until the league is ready. */
 import { MARK, WORD } from "./Logo";
+import { ThinkingTrace } from "./ThinkingTrace";
+import type { TraceState } from "../think";
 
-export function Boot({ step, leaving = false }: { step: string; leaving?: boolean }) {
+/** `trace` lists what the load has really fetched so far (sleeper.ts loadLeague), under the logo. */
+export function Boot({ step, leaving = false, trace }: { step: string; leaving?: boolean; trace?: TraceState }) {
   const lanes = (cls: string) => MARK.map((d, i) => <path key={i} className={cls} d={d} pathLength={1} />);
   return (
     <div className={`boot3${leaving ? " leaving" : ""}`} role="status" aria-live="polite">
@@ -20,6 +23,7 @@ export function Boot({ step, leaving = false }: { step: string; leaving?: boolea
         </svg>
         <span className="boot3-tag">Your fantasy insider</span>
       </div>
+      {trace && trace.status !== "idle" && <div className="boot3-trace"><ThinkingTrace trace={trace} verb={{ doing: "Loading", done: "Loaded" }} /></div>}
     </div>
   );
 }

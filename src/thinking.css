@@ -1,0 +1,124 @@
+/* The thinking trace (components/ThinkingTrace.tsx) and the AI mark (components/AiDots.tsx). Loads before frame.css.
+   Phone first; the trace is one column at every width, so tablet and desktop only widen the text measure. */
+
+/* ---------- AI mark: a braille cell ---------- */
+html:root:not(#_):not(#_) svg.aid { flex: none; overflow: visible; }
+html:root:not(#_):not(#_) svg.aid circle { transform-box: fill-box; transform-origin: center; }
+html:root:not(#_):not(#_) svg.aid .aid-off { opacity: 0.26; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) svg.aid:is(.aid-run, [data-play]) .aid-on { animation: aid-flip-on 1300ms cubic-bezier(0.45, 0, 0.55, 1) both; }
+  html:root:not(#_):not(#_) svg.aid:is(.aid-run, [data-play]) .aid-off { animation: aid-flip-off 1300ms cubic-bezier(0.45, 0, 0.55, 1) both; }
+  html:root:not(#_):not(#_) svg.aid.aid-run circle { animation-iteration-count: infinite; }
+}
+/* Each dot turns edge-on, swaps lit for faint while it's edge-on, turns back, then later turns home again */
+@keyframes aid-flip-on {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  15% { transform: scaleX(0); opacity: 1; }
+  15.1% { opacity: 0.26; }
+  30%, 56% { transform: scaleX(1); opacity: 0.26; }
+  71% { transform: scaleX(0); opacity: 0.26; }
+  71.1% { opacity: 1; }
+  86% { transform: scaleX(1); opacity: 1; }
+}
+@keyframes aid-flip-off {
+  0%, 100% { transform: scaleX(1); opacity: 0.26; }
+  15% { transform: scaleX(0); opacity: 0.26; }
+  15.1% { opacity: 1; }
+  30%, 56% { transform: scaleX(1); opacity: 1; }
+  71% { transform: scaleX(0); opacity: 1; }
+  71.1% { opacity: 0.26; }
+  86% { transform: scaleX(1); opacity: 0.26; }
+}
+
+/* ---------- Trace ---------- */
+html:root:not(#_):not(#_) .thk { display: flex; flex-direction: column; min-width: 0; font: 400 0.8125rem/1.45 var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_) .thk-head {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 28px; margin: 0 0 0 -6px; padding: 0 8px 0 6px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .thk-head:disabled { cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .thk-head:not(:disabled):hover { background: var(--surface-2); color: var(--ink); }
+}
+html:root:not(#_):not(#_) .thk-head:not(:disabled):active { transform: scale(0.98); }
+html:root:not(#_):not(#_) .thk-head:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+html:root:not(#_):not(#_) .thk-ic { width: 16px; height: 16px; display: grid; place-items: center; color: var(--ink); }
+html:root:not(#_):not(#_) .thk-ic .ic-chev { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .thk-head[aria-expanded="true"] .thk-ic .ic-chev { transform: rotate(90deg); }
+html:root:not(#_):not(#_) .thk-word { font-weight: 500; }
+html:root:not(#_):not(#_) .thk-sec { font-family: var(--font-mono); font-size: 0.75rem; color: var(--faint); font-variant-numeric: tabular-nums; min-width: 3.5ch; }
+
+/* A light that travels across the letters while it works */
+html:root:not(#_):not(#_) .thk .shim {
+  background-image: linear-gradient(90deg, var(--muted) 0%, var(--muted) 38%, var(--ink) 50%, var(--muted) 62%, var(--muted) 100%);
+  background-size: 260% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: thk-shim 1.7s linear infinite;
+}
+@keyframes thk-shim { to { background-position: -60% 0; } }
+
+/* The steps fold and unfold by height, so whatever sits under the trace slides instead of jumping */
+html:root:not(#_):not(#_) .thk-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 280ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .thk-body.open { grid-template-rows: 1fr; opacity: 1; }
+html:root:not(#_):not(#_) .thk-clip { min-height: 0; overflow: hidden; }
+
+html:root:not(#_):not(#_) .thk-think { margin: 2px 0 6px 22px; color: var(--ink); max-width: 62ch; }
+html:root:not(#_):not(#_) .thk-steps { list-style: none; margin: 0; padding: 4px 0 6px; display: flex; flex-direction: column; gap: 2px; }
+html:root:not(#_):not(#_) .thk-step { display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 6px; padding: 2px 0; animation: thk-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+html:root:not(#_):not(#_) .thk-mark { width: 16px; height: 22px; display: grid; place-items: center; color: var(--ink); }
+html:root:not(#_):not(#_) i.thk-mark::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+html:root:not(#_):not(#_) .thk-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 22px; line-height: 20px; }
+html:root:not(#_):not(#_) .thk-step.done .thk-label { color: var(--muted); }
+html:root:not(#_):not(#_) .thk-plan { grid-column: 2; margin: 0 0 4px; font-size: 0.75rem; line-height: 1.45; color: var(--faint); max-width: 62ch; }
+html:root:not(#_):not(#_) .thk-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+html:root:not(#_):not(#_) .thk-chip {
+  display: inline-flex; align-items: center; height: 20px; max-width: 18ch; padding: 0 7px; border-radius: 6px;
+  background: var(--surface-2); color: var(--ink); font-size: 0.75rem; font-weight: 500; line-height: 20px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; animation: thk-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+html:root:not(#_):not(#_) .thk-chip.thk-more { background: transparent; color: var(--faint); padding: 0 2px; }
+@keyframes thk-in { from { opacity: 0; transform: translateY(3px); } }
+
+/* Rolling count */
+html:root:not(#_):not(#_) .thk-roll { display: inline-flex; vertical-align: top; height: 20px; font-family: var(--font-mono); font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--ink); }
+html:root:not(#_):not(#_) .thk-roll > span[aria-hidden] { display: inline-flex; }
+html:root:not(#_):not(#_) .thk-dg { display: inline-block; height: 20px; overflow: hidden; }
+html:root:not(#_):not(#_) .thk-dg-col { display: flex; flex-direction: column; transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .thk-dg-col > span, html:root:not(#_):not(#_) .thk-sep { height: 20px; line-height: 20px; }
+
+/* Streamed words: each fades and sharpens in. Hidden words keep their space, so nothing reflows */
+html:root:not(#_):not(#_) .thk-w { opacity: 0; filter: blur(5px); transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1), filter 300ms cubic-bezier(0.23, 1, 0.32, 1), color 500ms ease; }
+html:root:not(#_):not(#_) .thk-w.on { opacity: 1; filter: blur(0); }
+html:root:not(#_):not(#_) .thk-w.old { color: var(--muted); }
+
+/* ---------- Ask: the trace sits above each answer ---------- */
+html:root:not(#_):not(#_) .ask-turn { display: flex; flex-direction: column; gap: 8px; align-self: stretch; min-width: 0; }
+html:root:not(#_):not(#_) .ask-turn > .bubble.sources { align-self: flex-start; }
+html:root:not(#_):not(#_) .ask-turn li.thk-wait::marker { color: transparent; }
+html:root:not(#_):not(#_) .ask-links { transition: opacity 240ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .ask-links.wait { opacity: 0; pointer-events: none; }
+html:root:not(#_):not(#_) .ask-turn .ai-label { transition: opacity 240ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .ask-turn .ask-links.wait + .ai-label { opacity: 0; }
+
+/* ---------- Inbox ask box: the mark runs while a question is on its way ---------- */
+html:root:not(#_):not(#_) .ibx-ask > svg.aid { color: var(--lime); }
+
+/* ---------- Loading a league: the steps sit under the logo ---------- */
+/* The loader is always dark, so the trace takes dark ink in either theme */
+html:root:not(#_):not(#_) .boot3-trace {
+  position: absolute; left: 50%; top: calc(50% + 112px); transform: translateX(-50%); width: min(360px, calc(100vw - 32px));
+  --ink: #F2F4F1; --muted: #9AA19B; --faint: #626963; --surface-2: rgba(255, 255, 255, 0.08);
+}
+@media (min-width: 768px) { html:root:not(#_):not(#_) .boot3-trace { top: calc(50% + 124px); } }
+html:root:not(#_):not(#_) .boot3.leaving .boot3-trace { opacity: 0; transition: opacity 200ms ease; }
+
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .thk-chip { max-width: 24ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .thk .shim { animation: none; background: none; color: inherit; }
+  html:root:not(#_):not(#_) .thk-w { transition: none; filter: none; }
+  html:root:not(#_):not(#_) :is(.thk-step, .thk-chip) { animation: none; }
+  html:root:not(#_):not(#_) :is(.thk-body, .thk-dg-col, .ask-links) { transition: none; }
+}

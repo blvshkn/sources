@@ -7,6 +7,7 @@ import {
   SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
 import { nameWords, playersInText, teamsInText } from "./search";
+import { drain, type Steps, type TraceEv } from "./steps";
 
 // ---- League format --------------------------------------------------------
 
@@ -233,8 +234,11 @@ export function needsFor(team: Team, rosterOverride?: string[]): TeamNeeds {
   return { team, lineup, groups, need, surplus, surplusPlayer, mode, rank: 0 };
 }
 
-export function allNeeds(): TeamNeeds[] {
-  const list = TEAMS.map((t) => needsFor(t));
+export function allNeeds(): TeamNeeds[] { return drain(allNeedsSteps()); }
+/** allNeeds, one team at a time, counting the lineups it has built (steps.ts). */
+export function* allNeedsSteps(): Steps<TeamNeeds[]> {
+  const list: TeamNeeds[] = [];
+  for (const t of TEAMS) { list.push(needsFor(t)); yield { t: "n", n: list.length }; }
   [...list].sort((a, b) => b.lineup.total - a.lineup.total).forEach((n, i) => (n.rank = i + 1));
   return list;
 }
@@ -408,10 +412,17 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
 }
 
 export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Trade[] {
+  return drain(scanTrades(you, them, tags, myTags, prices, limit));
+}
+/** findTrades as steps: after each package from your side it reports how many swaps it has scored. `scored` carries
+ *  the count across several teams. */
+export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3, scored = { n: 0 }): Steps<Trade[]> {
   const results: Trade[] = [];
   for (const give of combos(you.roster, 2)) {
+    yield { t: "n", n: scored.n };
     for (const get of combos(them.roster, 2)) {
       if (give.length + get.length > 3) continue;
+      scored.n++;
       const t = evaluate(you, them, give, get, tags, myTags, prices);
       if (t.warnings.length) continue;
       if (t.youDelta < 1 || t.themDelta < 1) continue;
@@ -454,16 +465,23 @@ export function whatItWouldTake(you: Team, them: Team, playerId: string, tags: M
 
 /** What it would take to GET a player: the package from your roster that works for them and costs you least. */
 export function costToGet(you: Team, playerId: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): { trade: Trade; works: boolean } | null {
+  return drain(costToGetSteps(you, playerId, tags, myTags, prices));
+}
+/** costToGet as steps, counting the packages from your roster it has tried. */
+export function* costToGetSteps(you: Team, playerId: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Steps<{ trade: Trade; works: boolean } | null> {
   const owner = TEAMS.find((t) => t.roster.includes(playerId));
   if (!owner || owner.you) return null;
   let best: Trade | null = null;
   let closest: Trade | null = null;
+  let tried = 0;
   for (const give of combos(you.roster, 2)) {
+    yield { t: "n", n: tried++ };
     const t = evaluate(you, owner, give, [playerId], tags, myTags, prices);
     if (t.warnings.length) continue;
     if (t.themDelta >= 1 && !acceptance(t, you, owner).theirBlockers.length && (!best || t.youDelta > best.youDelta)) best = t;
     if (t.youDelta >= 0 && (!closest || t.themDelta > closest.themDelta)) closest = t;
   }
+  yield { t: "n", n: tried };
   if (best) return { trade: best, works: true };
   return closest ? { trade: closest, works: false } : null;
 }
@@ -754,10 +772,18 @@ export function waiverHidden() {
   return { played, bye };
 }
 
-export function waiverRecs(you: Team): WaiverRec[] {
+export function waiverRecs(you: Team): WaiverRec[] { return drain(waiverRecsSteps(you)); }
+/** waiverRecs as steps: counts the free agents it has put in your lineup. */
+export function* waiverRecsSteps(you: Team): Steps<WaiverRec[]> {
   const ctx = recCtx(you);
-  const skill: WaiverRec[] = FREE_AGENTS.filter((fa) => !lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, ctx, fa));
+  const skill: WaiverRec[] = [];
+  for (const fa of FREE_AGENTS) {
+    if (lockedThisWeek(fa.nfl)) continue;
+    skill.push(skillRec(you, ctx, fa));
+    yield { t: "n", n: skill.length };
+  }
   const all: WaiverRec[] = [...skill, ...specialRecs(you, ctx.base)];
+  yield { t: "n", n: all.length };
   // Only the best K/DEF fix per slot jumps the line: you need one defense, not four. A fix is a hole and counts
   // in full; a stream that only beats what you have counts half, like any one-week fill at a slot that's fine.
   const bestFix = new Map<string, string>();
@@ -989,14 +1015,35 @@ export function playerInText(text: string, skip?: [number, number][]) {
 export interface Answer { text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[] }
 
 export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
+  return drain(askSteps(q, tags, myTags, prices, passed));
+}
+
+const poss = (name: string) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+const names = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
+const yourRoster = (): TraceEv => ({ t: "step", doing: "Reading your roster", done: `Read your roster (${YOU.roster.length} players)`, chips: [{ label: YOU.name, kind: "team" }] });
+
+/**
+ * Ask, as the steps it really takes. It reads the question, says in a sentence what it's going to do, then reports
+ * each piece of work with real counts (rosters checked, lineups built, swaps scored) before it returns the answer.
+ * ask() runs the same steps straight through.
+ */
+export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Steps<Answer> {
   const s = q.toLowerCase();
-  const needs = allNeeds();
   const pos = POS_WORDS.find(([re]) => re.test(q))?.[1];
   const said = teamInText(q);
   const named = playerInText(q, said ? [said.span] : undefined);
+  const others = TEAMS.filter((t) => !t.you);
 
   if (/(who has|who owns|who'?s got|who got|whose team|where is|which team)/.test(s) && named) {
-    const owner = TEAMS.find((x) => x.roster.includes(named.id) || x.ir?.includes(named.id));
+    yield { t: "think", text: `You want to know who has ${named.name}. I'll go through every roster in the league, IR spots included.` };
+    yield { t: "step", doing: "Checking {n} rosters", done: "Checked {n} rosters", n: 0, chips: [{ label: named.name, kind: "player" }] };
+    let owner: Team | undefined;
+    let n = 0;
+    for (const x of TEAMS) {
+      n++;
+      if (x.roster.includes(named.id) || x.ir?.includes(named.id)) { owner = x; yield { t: "n", n, chip: { label: x.name, kind: "team" } }; break; }
+      yield { t: "n", n };
+    }
     if (!owner) return { text: `${named.name} isn't on a roster. He's a free agent.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open waivers", tab: "waivers" }] };
     if (owner.you) return { text: `${named.name} is on your team.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open your lineup", tab: "roster" }] };
     return {
@@ -1007,12 +1054,16 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   }
 
   if (/(what would it take|cost|get|trade for|acquire)/.test(s) && named && !YOU.roster.includes(named.id)) {
-    const r = costToGet(YOU, named.id, tags, myTags, prices);
     const owner = TEAMS.find((x) => x.roster.includes(named.id))!;
+    yield { t: "think", text: `You want ${named.name}${owner ? ` from ${owner.manager}` : ""}. I'll try every one and two player package from your roster, skip anyone you've marked untouchable, and keep the cheapest one ${owner?.manager ?? "they"} would say yes to.` };
+    yield yourRoster();
+    yield { t: "step", doing: `Pricing {n} packages for ${named.name}`, done: `Priced {n} packages for ${named.name}`, n: 0, chips: owner ? [{ label: owner.name, kind: "team" }] : [] };
+    const r = yield* costToGetSteps(YOU, named.id, tags, myTags, prices);
+    if (r) yield { t: "step", doing: "Picking the closest offer", done: r.works ? "Picked the cheapest offer that works" : "Nothing clears, so kept the closest", chips: r.trade.give.map((id) => ({ label: playerById(id).name, kind: "player" as const })) };
     if (r && !r.works) {
       const t = r.trade;
       return {
-        text: `${named.name} is expensive. The closest you get is ${t.give.map((id) => playerById(id).name).join(" + ")}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
+        text: `${named.name} is expensive. The closest you get is ${names(t.give)}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
         points: [`Your starters go ${fmt(t.youDelta)} a week.`, `${owner.manager}'s starters go ${fmt(t.themDelta)}. They'd need a reason, like a need you fill.`, "Your untouchables and his tags were left out."],
         links: [{ label: "Open it in builder", tab: "trade", trade: t }],
       };
@@ -1020,13 +1071,17 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     const t = r?.trade;
     if (!t) return { text: `Nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }] };
     return {
-      text: `${t.give.map((id) => playerById(id).name).join(" + ")} gets it done with ${owner.manager}.`,
+      text: `${names(t.give)} gets it done with ${owner.manager}.`,
       points: [`${owner.manager}'s starters gain ${fmt(t.themDelta)} a week.`, `Your starters go ${fmt(t.youDelta)} a week.`, ...(t.youDrop.length ? [`You'd drop ${t.youDrop.map((id) => playerById(id).name).join(", ")} to make room.`] : [])],
       links: [{ label: "Open in builder", tab: "trade", trade: t }],
     };
   }
   if (/(need|thin|weak|hurting|short)/.test(s) && pos) {
+    yield { t: "think", text: `You asked who's thin at ${pos}. I'll build every team's best lineup, compare its ${pos} points with the league average, and rank the biggest gaps.` };
+    yield { t: "step", doing: "Building {n} best lineups", done: "Built {n} best lineups", n: 0 };
+    const needs = yield* allNeedsSteps();
     const ranked = needs.filter((n) => !n.team.you).sort((a, b) => a.groups[pos].pct - b.groups[pos].pct).slice(0, 3);
+    yield { t: "step", doing: `Ranking ${others.length} teams at ${pos}`, done: `Ranked ${others.length} teams at ${pos}`, chips: ranked.map((n) => ({ label: n.team.name, kind: "team" as const })) };
     return {
       text: `${ranked[0].team.name} needs a ${pos} most.`,
       points: ranked.map((n) => `${n.team.name}: ${fmt(n.groups[pos].diff)} pts a week vs league average at ${pos}.`),
@@ -1034,17 +1089,31 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     };
   }
   if (/(start|sit|flex|lineup)/.test(s)) {
+    yield { t: "think", text: "You asked about your lineup. I'll project everyone on your roster for this week, set the best lineup, and check it against what's set in Sleeper." };
+    yield yourRoster();
     const lu = lineupFor(YOU.roster, true);
+    const off = lu.bench.filter((p) => isOut(p, true));
+    yield { t: "step", doing: `Projecting ${YOU.roster.length} players for week ${WEEK}`, done: `Set the best lineup: ${lu.total.toFixed(1)} projected`, chips: off.map((p) => ({ label: `${p.name} ${p.status === "O" ? "out" : "bye"}`, kind: "player" as const })) };
     const flex = lu.slots.find((x) => x.slot === "FLEX")?.player;
     const diff = sleeperDiff(lu);
+    yield { t: "step", doing: "Checking your Sleeper lineup", done: diff.length ? `Found ${diff.length} better ${diff.length === 1 ? "swap" : "swaps"} than Sleeper` : "Your Sleeper lineup is already the best", chips: diff.map((d) => ({ label: d.start.name, kind: "player" as const })) };
     return {
       text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
-      points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...lu.bench.filter((p) => isOut(p, true)).map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
+      points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
     };
   }
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
-    const r = waiverRecs(YOU).find((x) => x.pick && !passed.includes(x.fa.id));
+    yield { t: "think", text: "You asked about waivers. I'll find your weak spots, drop every free agent into your lineup to see what he adds, and pick the best claim." };
+    yield yourRoster();
+    yield { t: "step", doing: "Comparing your starting slots with the league average", done: "Found {n} weak spots in your lineup", n: 0 };
+    const weak = weakSet(slotGaps());
+    let wn = 0;
+    for (const w of weak) yield { t: "n", n: ++wn, chip: { label: w, kind: "pos" } };
+    yield { t: "step", doing: "Testing {n} free agents in your lineup", done: "Tested {n} free agents in your lineup", n: 0 };
+    const recs = yield* waiverRecsSteps(YOU);
+    const r = recs.find((x) => x.pick && !passed.includes(x.fa.id));
+    yield { t: "step", doing: "Picking the best add", done: r ? "Picked the best add" : "Nobody beats your bench", chips: r ? [{ label: r.fa.name, kind: "player" }] : [] };
     if (!r) return { text: "Nothing on the wire beats your bench this week.", points: [], links: [{ label: "Open waivers", tab: "waivers" }] };
     return {
       text: `${r.fa.name} is your best add.${FAAB.enabled ? ` Sugg. bid ${bidRange(r.bid)}.` : " Put in a claim."}`,
@@ -1055,25 +1124,41 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
     };
   }
   if (/(trade with|partner|who should i trade|best trade|deal)/.test(s)) {
-    const top = needs.filter((n) => !n.team.you).map((n) => ({ n, t: findTrades(YOU, n.team, activeTags(tags, 4), myTags, prices, 1)[0] })).filter((x) => x.t)
-      .sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) - Math.min(a.t.youDelta, a.t.themDelta)).slice(0, 3);
+    yield { t: "think", text: `You asked who to trade with. I'll check what each of the ${others.length} other teams needs, score every one and two player swap with each of them, and keep the deals both sides would take.` };
+    yield yourRoster();
+    yield { t: "step", doing: "Checking {n} teams' needs", done: "Checked {n} teams' needs", n: 0 };
+    const needs = yield* allNeedsSteps();
+    yield { t: "step", doing: "Scoring {n} trade combos", done: "Scored {n} trade combos", n: 0 };
+    const scored = { n: 0 };
+    const found: { n: TeamNeeds; t: Trade }[] = [];
+    for (const n of needs.filter((x) => !x.team.you)) {
+      const t = (yield* scanTrades(YOU, n.team, activeTags(tags, 4), myTags, prices, 1, scored))[0];
+      yield { t: "n", n: scored.n, chip: { label: n.team.name, kind: "team" } };
+      if (t) found.push({ n, t });
+    }
+    const top = found.sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) - Math.min(a.t.youDelta, a.t.themDelta)).slice(0, 3);
+    yield { t: "step", doing: "Picking the best deals", done: !top.length ? "No deal works for both sides" : found.length === 1 ? "Kept the one deal both sides would take" : `Kept the best ${top.length} of ${found.length} deals both sides would take`, chips: top.map((x) => ({ label: x.n.team.name, kind: "team" as const })) };
     if (!top.length) return { text: "No clean win-win trades right now.", points: [], links: [{ label: "See the needs map", tab: "league" }] };
     return {
       text: `${top[0].n.team.name} is your best trade partner this week.`,
-      points: top.map((x) => `${x.n.team.name}: your ${x.t.give.map((id) => playerById(id).name).join(" + ")} for ${x.t.get.map((id) => playerById(id).name).join(" + ")} (you ${fmt(x.t.youDelta)}, them ${fmt(x.t.themDelta)}).`),
+      points: top.map((x) => `${x.n.team.name}: your ${names(x.t.give)} for ${names(x.t.get)} (you ${fmt(x.t.youDelta)}, them ${fmt(x.t.themDelta)}).`),
       links: [{ label: "Open the top deal", tab: "trade", trade: top[0].t }],
     };
   }
   const team = said?.item;
   if (team) {
-    const n = needs.find((x) => x.team.id === team.id)!;
+    yield { t: "think", text: `You asked about ${team.name}. I'll compare their lineup with the league average at each spot, look for a spare starter on their bench, and read how ${team.manager} trades.` };
+    yield { t: "step", doing: `Reading ${poss(team.name)} lineup`, done: `Read ${poss(team.name)} lineup (${team.roster.length} players)`, chips: [{ label: team.name, kind: "team" }] };
+    const n = needsFor(team);
     const td = tendencies(team.id);
+    yield { t: "step", doing: `Reading ${poss(team.manager)} trades`, done: `Read ${poss(team.manager)} trades (${td.trades})`, chips: td.buys.map((p) => ({ label: `Buys ${p}`, kind: "pos" as const })) };
     return {
       text: `${team.name} is a ${n.mode.toLowerCase()} that needs a ${n.need}.`,
       points: [`${fmt(n.groups[n.need].diff)} pts a week vs league average at ${n.need}.`, n.surplusPlayer ? `Has a spare ${n.surplus}: ${n.surplusPlayer.name}.` : "No obvious spare starter on the bench.", td.summary],
       links: [{ label: `Build a trade with ${team.manager}`, tab: "trade", teamId: team.id }],
     };
   }
+  yield { t: "think", text: "I couldn't match that to a player, team, position or move in your league, so here's what I can answer." };
   return {
     text: "I can answer questions about your league's rosters, needs, trades, lineup and waivers.",
     points: ["Try: \"Who needs a WR most?\"", "\"Who should I trade with?\"", "\"Who should I start at flex?\""],
