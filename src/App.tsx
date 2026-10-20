@@ -3,6 +3,7 @@ import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAM
 import { loadLeague } from "./sleeper";
 import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
+import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
@@ -479,7 +480,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     const spare = n.surplusPlayer && n.surplus !== n.need ? ` Spare ${n.surplus}: ${n.surplusPlayer.name}.` : "";
     return { id: partnerId, text: `${n.team.name} needs ${n.need}.${spare} ${tendencies(partnerId).summary}`.trim(), onNotes: () => go("trade:notes") };
   }, [give.length, get.length, partnerId, needs]); // eslint-disable-line react-hooks/exhaustive-deps
-  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer, partner: partnerNote })
+  // "Open matchup" from the inbox closes it and opens the matchup sheet over whatever page you're on
+  const [matchupSheet, setMatchupSheet] = useState(false);
+  const inboxGo = (dest: string) => { if (dest === "matchup") { setInboxOpen(false); setMatchupSheet(true); } else go(dest); };
+  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, partner: partnerNote })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
   [nudges, checks, yourLineup, live, dismissedIds, tab, urgent, partnerNote]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
@@ -621,6 +625,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           onDismiss={dismissItem} onClose={closeInbox}
           onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }} />
       </aside>
+      {matchupSheet && <MatchupSheet onClose={() => setMatchupSheet(false)} />}
 
       <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
         data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
