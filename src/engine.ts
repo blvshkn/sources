@@ -155,7 +155,11 @@ export interface Lineup {
 }
 
 export function lineupFor(ids: string[], thisWeek = false): Lineup {
-  const pool = ids.map(playerById).sort((a, b) => eff(b, thisWeek) - eff(a, thisWeek));
+  // Each player's points are worked out once, not on every comparison: this runs thousands of times per trade scan.
+  // Same numbers and a stable sort, so the order is exactly what sorting by eff() directly gives.
+  const scoredPool = ids.map((id) => { const p = playerById(id); return { p, e: eff(p, thisWeek) }; });
+  scoredPool.sort((a, b) => b.e - a.e);
+  const pool = scoredPool.map((x) => x.p);
   const used = new Set<string>();
   const slots: Lineup["slots"] = [];
   // Fill fixed slots first, then FLEX, then Superflex, so flex gets the best leftover.
@@ -171,6 +175,27 @@ export function lineupFor(ids: string[], thisWeek = false): Lineup {
   const total = round1(slots.reduce((s, x) => s + (x.player ? eff(x.player, thisWeek) : 0), 0));
   return { slots, bench, total };
 }
+
+/** lineupFor(ids, thisWeek).total without building the lineup: the same sort, the same slot order and the same sum,
+ *  so it's exactly equal. Trade scans call it tens of thousands of times and only need the number. */
+export function lineupTotal(ids: string[], thisWeek = false): number {
+  const n = ids.length;
+  const ps: Player[] = new Array(n), es: number[] = new Array(n), order: number[] = new Array(n);
+  for (let i = 0; i < n; i++) { ps[i] = playerById(ids[i]); es[i] = eff(ps[i], thisWeek); order[i] = i; }
+  order.sort((a, b) => es[b] - es[a]);
+  const used: boolean[] = new Array(n).fill(false);
+  const slots = slotsFor();
+  let s = 0;
+  const fill = (slot: SlotName) => {
+    for (let k = 0; k < n; k++) { const i = order[k]; if (!used[i] && fits(slot, ps[i].pos)) { used[i] = true; s += es[i]; return; } }
+  };
+  for (const slot of slots) if (slot !== "FLEX" && slot !== "SF") fill(slot);
+  for (const slot of slots) if (slot === "FLEX" || slot === "SF") fill(slot);
+  return round1(s);
+}
+
+/** Starting totals before a trade, shared by every swap a scan scores against the same two rosters. */
+interface Before { you: number; them: number }
 
 // ---- Needs map ------------------------------------------------------------
 
@@ -304,13 +329,13 @@ export function clearsPrice(pid: string, get: string[], youDelta: number, price:
   return incoming >= eff(playerById(pid)) * (1 + price.amount / 100) && youDelta >= 0;
 }
 
-export function evaluate(you: Team, them: Team, give: string[], get: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Trade {
+export function evaluate(you: Team, them: Team, give: string[], get: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, before?: Before): Trade {
   const youS = settle(you.roster.filter((id) => !give.includes(id)).concat(get), get);
   const themS = settle(them.roster.filter((id) => !get.includes(id)).concat(give), give);
-  const youBefore = lineupFor(you.roster).total;
-  const themBefore = lineupFor(them.roster).total;
-  const youAfter = lineupFor(youS.ids).total;
-  const themAfter = lineupFor(themS.ids).total;
+  const youBefore = before ? before.you : lineupTotal(you.roster);
+  const themBefore = before ? before.them : lineupTotal(them.roster);
+  const youAfter = lineupTotal(youS.ids);
+  const themAfter = lineupTotal(themS.ids);
   const youDelta = round1(youAfter - youBefore);
   const themDelta = round1(themAfter - themBefore);
   const theirTags = tags.filter((t) => t.teamId === them.id);
@@ -345,6 +370,14 @@ export function evaluate(you: Team, them: Team, give: string[], get: string[], t
     give, get, youBefore, youAfter, themBefore, themAfter, youDelta, themDelta,
     youDrop: youS.dropped, themDrop: themS.dropped, marketGive, marketGet, adjGive, adjGet, marketGap, fillsWant, warnings,
   };
+}
+
+/** True when both lineups gain at least a point a week: evaluate()'s youDelta and themDelta, without the rest.
+ *  settle() only ever cuts bench players, and cutting a player the lineup never picked can't change who starts or
+ *  the sum, so the total before the cut is exactly the total after it. */
+function bothGain(you: Team, them: Team, give: string[], get: string[], before: Before): boolean {
+  if (round1(lineupTotal(you.roster.filter((id) => !give.includes(id)).concat(get)) - before.you) < 1) return false;
+  return round1(lineupTotal(them.roster.filter((id) => !get.includes(id)).concat(give)) - before.them) >= 1;
 }
 
 function combos(ids: string[], max: number): string[][] {
@@ -438,10 +471,16 @@ export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: R
   const results: Trade[] = [];
   for (const give of combos(you.roster, 2)) {
     yield { t: "n", n: scored.n };
+    // Both "before" lineups are the same for every swap below, so they're built once per package (after the yield,
+    // so nothing that changed while the trace painted is missed).
+    const before: Before = { you: lineupTotal(you.roster), them: lineupTotal(them.roster) };
     for (const get of combos(them.roster, 2)) {
       if (give.length + get.length > 3) continue;
       scored.n++;
-      const t = evaluate(you, them, give, get, tags, myTags, prices);
+      // Most swaps fail the points test below. Check it first with the same numbers evaluate() would get, and only
+      // build the full trade (values, warnings, key) for the ones that pass. The filters and their results are unchanged.
+      if (!bothGain(you, them, give, get, before)) continue;
+      const t = evaluate(you, them, give, get, tags, myTags, prices, before);
       if (t.warnings.length) continue;
       if (t.youDelta < 1 || t.themDelta < 1) continue;
       const a = acceptance(t, you, them);
