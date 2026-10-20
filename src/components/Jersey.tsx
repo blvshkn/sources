@@ -16,7 +16,7 @@
 // the chest the same way. Outlines are strokes under the fill, so they keep the same visual widths
 // whatever the digit shape.
 // Collar: flat knit trim. Only a faint sheen and a soft contact shadow, no tube-like shading.
-import { useId, useMemo } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type PatternId, type Trim } from "../jerseys";
 import { numberPath, numberText, teamNumerals, type NumberText } from "../numerals";
 
@@ -270,6 +270,27 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
     return { chest: at(CHEST, 300), left: at(SHOULDER, 112), right: at(SHOULDER, 488) };
   }, [tn, n, two]);
 
+  // Optical centring: advance widths and slants (skew around the baseline, long flags on a 1) can leave the
+  // painted number off centre. Measure the ink once it's drawn (and again when web fonts arrive) and shift it so
+  // its middle sits on the chest's centre line.
+  const chestRef = useRef<SVGGElement>(null);
+  const [chestDx, setChestDx] = useState(0);
+  useLayoutEffect(() => {
+    let live = true;
+    const fit = () => {
+      const g = chestRef.current;
+      if (!g || !live) return;
+      try {
+        const b = g.getBBox();
+        if (b.width > 0) { const next = 300 - (b.x + b.width / 2); setChestDx(Math.abs(next) < 0.25 ? 0 : next); }
+      } catch { /* not rendered yet */ }
+    };
+    setChestDx(0);
+    const raf = requestAnimationFrame(fit);
+    document.fonts?.ready.then(() => requestAnimationFrame(fit)).catch(() => {});
+    return () => { live = false; cancelAnimationFrame(raf); };
+  }, [team, n, away]);
+
   /** The number's shape, as a path or as text in the team font. */
   const shape = (g: Glyphs, p: { fill?: string; stroke?: string; strokeWidth?: number; transform?: string }) => {
     const common = { fill: p.fill ?? "none", stroke: p.stroke, strokeWidth: p.strokeWidth, strokeLinejoin: "miter" as const, strokeMiterlimit: 3, paintOrder: "stroke" };
@@ -507,7 +528,7 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
       <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.1" strokeWidth="1.2" />
 
       {/* Chest number */}
-      {num({ g: paths.chest, x: 300, y: CHEST.y, strokeW: stroke, key: "c" })}
+      <g ref={chestRef} data-chest="" transform={chestDx ? `translate(${chestDx.toFixed(2)} 0)` : undefined}>{num({ g: paths.chest, x: 300, y: CHEST.y, strokeW: stroke, key: "c" })}</g>
 
       {/* Shading over everything on the body, number and trim included, so they sit in the cloth */}
       <g clipPath={u("b")} style={{ pointerEvents: "none" }}>
