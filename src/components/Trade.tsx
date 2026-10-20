@@ -191,8 +191,19 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
   const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-add")?.focus()); };
   useEffect(() => {
     if (!adding) return;
-    // The picker drops over the page; bring all of it on screen (clear of the phone tab bar, lint-overlays.css)
-    requestAnimationFrame(() => wrap.current?.querySelector(".qs-pick")?.scrollIntoView({ block: "nearest" }));
+    // The picker drops over the page; bring all of it on screen (clear of the phone tab bar, lint-overlays.css),
+    // but never past its own + Add player row: that row stays just above the picker, clear of the sticky top bar
+    requestAnimationFrame(() => {
+      const add = list.current?.querySelector(".qs-add"), pick = wrap.current?.querySelector(".qs-pick");
+      if (!add || !pick) return;
+      const bar = document.querySelector(".topbar");
+      const top = (bar && /sticky|fixed/.test(getComputedStyle(bar).position) ? Math.max(0, bar.getBoundingClientRect().bottom) : 0) + 8;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const a = add.getBoundingClientRect(), k = pick.getBoundingClientRect();
+      const below = k.bottom + (parseFloat(getComputedStyle(pick).scrollMarginBottom) || 16) - vh;
+      const dy = a.top < top ? a.top - top : below > 0 ? Math.min(below, a.top - top) : 0;
+      if (dy) window.scrollBy({ top: dy, behavior: "instant" as ScrollBehavior });
+    });
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);

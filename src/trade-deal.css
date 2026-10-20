@@ -59,10 +59,12 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x {
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; }
 
 /* + Add player: the hover pill's box, dashed, so it reads as the next row waiting to be filled */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli { display: block; padding: var(--dl-y, 4px) 0; background: none; }
+/* The row itself reaches the pill's 8px past the content edge, so the box sits inside it; its own dashed edge
+   replaces the divider above, so there's never a line 4px over a dashed one */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li.qs-addli { display: block; margin: 0 var(--qs-px); padding: var(--dl-y, 4px) 0; border-top-color: transparent; background: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add {
   display: flex; align-items: center; justify-content: flex-start; gap: 12px;
-  width: calc(100% - 2 * var(--qs-px)) !important; height: 100%; min-height: 44px; margin: 0 var(--qs-px); padding: 0 12px 0 calc(-1 * var(--qs-px) - 1px);
+  width: 100% !important; height: 100%; min-height: 44px; margin: 0; padding: 0 12px 0 calc(-1 * var(--qs-px) - 1px);
   border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 10px; background: none;
   color: var(--muted); font: 500 0.875rem/1 var(--font-body); white-space: nowrap; text-align: left; cursor: pointer;
 }

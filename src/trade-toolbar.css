@@ -78,6 +78,17 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(
   html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(2) > .eyebrow { max-width: calc(100% - 200px); }
 }
 
+/* Mid widths: a half is too narrow for its label plus search, + Add a team and Clear (about 250px), so the tools
+   take their own line above both columns and both labels read in full. 1100px of page leaves each label 250px. */
+@media (min-width: 561px) {
+  @container pg (max-width: 1099px) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .ttb-row { grid-row: 1; grid-column: 1 / -1; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(2) { grid-row: 2; grid-column: 1; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(3) { grid-row: 2; grid-column: 2; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card .deal-lists > .qs:nth-child(n) > .eyebrow { height: 24px; line-height: 24px; max-width: none; }
+  }
+}
+
 /* Multi-team: the note shares the line with the tools */
 html:root:not(#_):not(#_):not(#_):not(#_) .ttb-card > .ttb-mhead { display: flex; align-items: center; gap: 12px; min-height: 40px; margin-bottom: 12px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ttb-mhead > .mt-note { flex: 1 1 auto; min-width: 0; margin: 0; }
