@@ -3524,17 +3524,6 @@ html:root:not(#_) .ps-sched { margin-top: 8px; }
 html:root:not(#_) .qs-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 560px) { html:root:not(#_) .qs-wrap { grid-template-columns: minmax(0, 1fr); } }
 html:root:not(#_) .qs { display: grid; align-content: start; gap: 8px; min-width: 0; }
-html:root:not(#_) .qs > ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
-html:root:not(#_) .qs > ul li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 4px 4px 8px; border-radius: 12px; background: var(--surface-2); }
-html:root:not(#_) .qs-n { flex: 1; min-width: 0; display: grid; gap: 1px; font-size: 0.875rem; font-weight: 600; }
-html:root:not(#_) .qs-n small { font-size: 0.6875rem; font-weight: 400; color: var(--muted); }
-html:root:not(#_) .qs-x { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: transform 120ms ease-out, background-color 120ms ease-out; }
-html:root:not(#_) .qs-x:hover { background: rgba(255, 255, 255, 0.06); color: var(--ink); }
-html:root:not(#_) .qs-x:active { transform: scale(0.94); }
-html:root:not(#_) .qs-add { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 1px dashed var(--line); border-radius: 12px; background: none; color: var(--ink); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: transform 120ms ease-out, background-color 120ms ease-out; }
-html:root:not(#_) .qs-add svg { color: var(--lime); }
-html:root:not(#_) .qs-add:hover { background: rgba(255, 255, 255, 0.04); }
-html:root:not(#_) .qs-add:active { transform: scale(0.98); }
 html:root:not(#_) .qs-pick { display: grid; gap: 6px; padding: 8px; border-radius: 14px; background: var(--surface-2); }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_) .qs-pick { animation: wv-open 200ms var(--ease-out); } }
 html:root:not(#_) .qs-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; background: var(--surface); color: var(--muted); }

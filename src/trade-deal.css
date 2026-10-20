@@ -1,53 +1,88 @@
-/* Trade Build: the deal read in one column. Pills with ghost slots and flags, one verdict, three comparison rows,
+/* Trade Build: the deal read in one column. Player rows with flags and + Add player, one verdict, three comparison rows,
    the actions, then Details folded. Loaded after trade-multi.css. Four :not(#_) so these beat the older deal rules.
    No url references in this file. */
 
 /* ---------- Empty deal ---------- */
-/* Ghost pills give an empty deal a starting point, so it shows on phones too */
+/* + Add player gives an empty deal a starting point, so it shows on phones too */
 html:root:not(#_):not(#_):not(#_):not(#_) .builder .deal.empty { display: block !important; }
 
-/* ---------- Pills: three slots per side ---------- */
-/* Every slot, real or ghost, takes the same share of the row, so a pill lands where its ghost was and nothing moves */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills { align-items: stretch; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > :is(.qs-pill, .qs-ghostli) { flex: 1 1 140px; min-width: 0; max-width: 100%; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > .qs-addli { flex: 0 0 auto; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill { container-type: inline-size; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-n { flex: 1 1 auto !important; }
-/* A narrow slot keeps the last name */
-@container (max-width: 188px) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-f { display: none; } }
+/* ---------- Deal rows: one list per side ----------
+   Each player is a row on the roster rows' height and divider: avatar, name over position and team, this week's
+   projection, then a 44px remove circle. The hover pill sits 4px inside the dividers and reaches 8px past the side's
+   content edge, as in states-qa.css; the dividers either side step aside while it shows. The last row is
+   + Add player: the same box as that pill, dashed, with the + where the avatars sit. Every row is the same height
+   in every column, so You send and You get line up row for row and adding a player only grows the list. */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs { --qs-h: 60px; --qs-px: -8px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mt-col .qs { --qs-px: -6px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-row { position: relative; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding: 0; list-style: none; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li { box-sizing: border-box; height: var(--qs-h); min-width: 0; margin: 0; padding: 0; border-top: 1px solid transparent; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li + li { border-top-color: var(--line); transition: border-color var(--st-dur, 160ms) var(--st-ease, ease-out); }
 
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghostli { display: flex; padding: 0 !important; background: none !important; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost {
-  display: flex; align-items: center; gap: 6px; width: 100%; height: 34px; min-width: 0; padding: 0 12px 0 6px; margin: 0;
-  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 999px; background: none;
-  color: var(--muted); font: 500 0.8125rem/1 var(--font-body); white-space: nowrap; cursor: pointer;
-  transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1), border-color 140ms cubic-bezier(0.23, 1, 0.32, 1), transform 100ms ease-out;
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 44px; column-gap: 12px; align-items: center;
 }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gav {
-  display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%;
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item::after {
+  content: ""; position: absolute; z-index: -1; inset: var(--dl-y, 4px) var(--qs-px); border-radius: 10px; pointer-events: none;
+  background: var(--st-tint); opacity: 0; transition: opacity var(--st-dur, 160ms) var(--st-ease, ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item:hover::after { opacity: 1; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > .qs-item:hover,
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > .qs-item:hover + li { border-top-color: transparent; }
+}
+
+/* Avatar, with a lock or alert badge on its top corner for a flagged player (the team logo keeps the bottom one) */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-av { position: relative; display: grid; place-items: center; width: 34px; height: 34px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag {
+  position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--bad); color: var(--surface); box-shadow: 0 0 0 2px var(--surface); cursor: default;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag svg { display: block; width: 10px; height: 10px; stroke-width: 2.4; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
+
+/* Name over position and team; long names cut at the end, never wrap */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-who { display: grid; gap: 3px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 0.875rem/1.25 var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pm { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; font: 400 0.75rem/1.2 var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pm .lu-pos { flex: none; font: 600 0.6875rem/1 var(--font-mono); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pm .status { flex: none; height: 18px; margin-left: 4px; padding: 0 6px; font-size: 0.625rem; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pts { justify-self: end; min-width: 4ch; text-align: right; font: 500 0.875rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+
+/* Remove: a 44px circle, its 16px x centered, pulled 10px right so the glyph sits near the content edge */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x {
+  display: grid; place-items: center; justify-self: end; width: 44px; height: 44px; margin: 0 -10px 0 0; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x:hover { background: var(--st-tint-2); color: var(--ink); } }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; }
+
+/* + Add player: the hover pill's box, dashed, so it reads as the next row waiting to be filled */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli { display: block; padding: var(--dl-y, 4px) 0; background: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add {
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+  width: calc(100% - 2 * var(--qs-px)) !important; height: 100%; min-height: 44px; margin: 0 var(--qs-px); padding: 0 12px 0 calc(-1 * var(--qs-px) - 1px);
+  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 10px; background: none;
+  color: var(--muted); font: 500 0.875rem/1 var(--font-body); white-space: nowrap; text-align: left; cursor: pointer;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-plus {
+  display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%;
   background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--muted);
 }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gl { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-plus svg { display: block; }
 @media (hover: hover) and (pointer: fine) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink); border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:hover .qs-gav { color: var(--ink); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:hover:not(:disabled) { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:hover:not(:disabled) .qs-plus { color: var(--ink); }
 }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:active { transform: scale(0.98); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost[aria-expanded="true"] { border-style: solid; border-color: var(--lime); color: var(--ink); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost[aria-expanded="true"] .qs-gav { color: var(--lime); }
-@media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { height: 40px; } }
-@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { transition: none; } html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost:active { transform: none; } }
-/* Phone: just the + */
-@container pg (max-width: 699px) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-gl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-ghost { justify-content: center; padding: 0; }
-}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:active:not(:disabled) { transform: scale(0.99) !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+/* Open: the box turns solid and the + takes the brand lime; the search below carries the focus ring */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-expanded="true"] { border-style: solid; border-color: color-mix(in srgb, var(--ink) 30%, transparent); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-expanded="true"] .qs-plus { color: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:disabled { opacity: 0.5; cursor: default; box-shadow: none !important; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:active { transform: none !important; } }
 
-/* Flagged players: a red ring on the pill and a small lock or alert, the reason in a tooltip */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill.flagged { box-shadow: inset 0 0 0 1.5px var(--bad); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: 50%; color: var(--bad); cursor: default; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-flags { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0 0; font-size: 0.8125rem; line-height: 1.4; color: var(--bad); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-flags > svg { flex: none; margin-top: 2px; }
 
@@ -123,18 +158,6 @@ html:root:not(#_):not(#_):not(#_):not(#_) .dv-details > .fold { padding-left: 24
 html:root:not(#_):not(#_):not(#_):not(#_) .accept.good b, html:root:not(#_):not(#_):not(#_):not(#_) .mt-acc.good { color: var(--ink); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ti-stat.odds.neutral dt { color: var(--muted); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ti-stat.odds.neutral .ti-meter i { background: color-mix(in srgb, var(--ink) 55%, transparent); }
-/* Position sits right after the name; the x keeps the far end */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-n { flex: 0 1 auto !important; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-x { margin-left: auto !important; }
-/* The flag rides on the avatar as a small badge, so a flagged name keeps its room */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill.flagged { position: relative; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-flag {
-  position: absolute; left: 18px; top: 50%; margin-top: 1px; width: 15px; height: 15px;
-  background: var(--bad); color: var(--surface); box-shadow: 0 0 0 2px var(--surface-2);
-}
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pill .qs-flag svg { width: 9px; height: 9px; stroke-width: 2.4; }
-/* A slot that wraps alone keeps half the row instead of stretching across it */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-pills > :is(.qs-pill, .qs-ghostli) { max-width: calc(50% - 3px); }
 /* With no offer switch above them, the sides still get room under the title */
 html:root:not(#_):not(#_):not(#_):not(#_) .builder .deal > .row + .deal-lists { margin-top: 12px; }
 

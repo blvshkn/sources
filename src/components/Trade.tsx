@@ -168,12 +168,10 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
-/** One side of the deal, editable in place: players as pills with an x, and a matching + Add pill at the end of
- *  the row that drops a searchable list of that roster over the panel below. */
-/** Slots a side shows before it needs + Add: empty ones are ghost pills, so real pills land in place and nothing moves. */
-const SLOTS = 3;
+/** One side of the deal, editable in place: players as rows with an x, and a + Add player row at the end
+ *  that drops a searchable list of that roster under it, over the panel below. */
 export function DealSide({ title, team, ids, pool, onToggle, className, flags = {} }: { title: ReactNode; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void; className?: string;
-  /** Players with a problem: a red ring on the pill and the reason in a tooltip. */
+  /** Players with a problem: a lock or alert badge on the avatar and the reason in a tooltip. */
   flags?: Record<string, { text: string; icon: "lock" | "alert" }> }) {
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
@@ -189,9 +187,8 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
   const field = useRef<HTMLLabelElement>(null);
   const opts = useRef<HTMLUListElement>(null);
   const kbMax = useKeyboardInset(field, opts, adding);
-  const ghosts = Math.max(0, SLOTS - ids.length);
-  // Focus goes back to whatever opens the picker now: the next ghost, or + Add once the slots are full
-  const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-ghost, .qs-add")?.focus()); };
+  // Focus goes back to + Add player, the one thing that opens the picker
+  const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-add")?.focus()); };
   useEffect(() => {
     if (!adding) return;
     // The picker drops over the page; bring all of it on screen (clear of the phone tab bar, lint-overlays.css)
@@ -200,30 +197,28 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);
   }, [adding]);
+  // The tenth player fills the side, so the list closes
+  useEffect(() => { if (adding && ids.length >= 10) close(); }, [ids.length]);
   return (
     <div className={`qs${className ? ` ${className}` : ""}`}>
       <span className="eyebrow">{title}</span>
       <div className="qs-row" ref={wrap}>
-        <ul className="qs-pills" ref={list}>
+        <ul className="qs-list" ref={list}>
           {ids.map((id) => { const p = playerById(id); const f = flags[id]; return (
-            <li key={id} className={`qs-pill${f ? " flagged" : ""}`}><Avatar p={p} size={22} badge={false} /><Tooltip content={p.name}><span className="qs-n">{p.name.includes(" ") ? <><span className="qs-f">{p.name.slice(0, p.name.indexOf(" ") + 1)}</span>{p.name.slice(p.name.indexOf(" ") + 1)}</> : p.name}</span></Tooltip><b className={`lu-pos p-${p.pos}`}>{p.pos}</b>
-              {f && <Tooltip focusable content={f.text}><span className="qs-flag" aria-label={f.text}><Icon name={f.icon} size={12} /></span></Tooltip>}
-              <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={12} /></button></li>
+            <li key={id} className={`qs-item${f ? " flagged" : ""}`}>
+              <span className="qs-av"><Avatar p={p} size={34} />
+                {f && <Tooltip focusable content={f.text}><span className={`qs-flag qs-flag-${f.icon}`} aria-label={f.text}><Icon name={f.icon} size={10} /></span></Tooltip>}</span>
+              <span className="qs-who"><span className="qs-pn">{p.name}</span><span className="qs-pm"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span aria-hidden="true">·</span>{p.nfl}<StatusPill p={p} /></span></span>
+              <Tooltip content="This week's projected points."><span className="qs-pts">{eff(p, true).toFixed(1)}</span></Tooltip>
+              <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={16} /></button>
+            </li>
           ); })}
-          {Array.from({ length: ghosts }, (_, i) => (
-            <li key={`g${i}`} className="qs-ghostli">
-              <button className="qs-ghost" aria-expanded={adding && i === 0} aria-haspopup="listbox" aria-label={`Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
-                <span className="qs-gav" aria-hidden="true"><Icon name="plus" size={12} /></span><span className="qs-gl">Add player</span>
-              </button>
-            </li>
-          ))}
-          {ghosts === 0 && (
-            <li className="qs-addli">
-              <button className="qs-add" aria-expanded={adding} aria-haspopup="listbox" aria-label={`Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
-                <Icon name="plus" size={14} />Add
-              </button>
-            </li>
-          )}
+          <li className="qs-addli">
+            {/* 10 a side is the cap (App.tsx), so the row says so instead of opening a list that can't add */}
+            <button className="qs-add" disabled={ids.length >= 10} aria-expanded={adding} aria-haspopup="listbox" aria-label={ids.length >= 10 ? "10 players a side is the most" : `Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
+              <span className="qs-plus" aria-hidden="true"><Icon name="plus" size={16} /></span><span>{ids.length >= 10 ? "10 players max" : "Add player"}</span>
+            </button>
+          </li>
         </ul>
         {adding && (
           <div className="qs-pick">
@@ -264,7 +259,7 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
 // ---------- The read: one verdict, three rows, then the actions ----------
 
 export type PillFlags = Record<string, { text: string; icon: "lock" | "alert" }>;
-/** Red rings for the pills: your untouchables and priced players, and anything the other manager said no to. */
+/** Badges for the deal rows: your untouchables and priced players, and anything the other manager said no to. */
 export function pillFlags(them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, warnings: string[] | null) {
   const { dimThem, dimYou } = tagMaps(them, tags);
   const you: PillFlags = {}, theirs: PillFlags = {};
@@ -281,7 +276,7 @@ export function pillFlags(them: Team, tags: ManagerTag[], myTags: Record<string,
   return { you, theirs };
 }
 
-/** One short line under the pills when more than one player is flagged. */
+/** One short line under the deal rows when more than one player is flagged. */
 export function FlagLine({ ids, flags }: { ids: string[]; flags: PillFlags }) {
   const hit = ids.filter((id) => flags[id]);
   if (hit.length < 2) return null;
