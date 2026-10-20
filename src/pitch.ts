@@ -1,5 +1,6 @@
 import { Trade, fmt, needsFor, groupPoints, lineupFor, leagueAvg, Group } from "./engine";
 import { playerById, teamById, Pos } from "./data";
+import type { Steps } from "./steps";
 
 export type Tone = "straight" | "friendly" | "trash";
 export type Audience = "dm" | "group";
@@ -87,4 +88,23 @@ export function draftPitch(t: Trade, tone: Tone, audience: Audience = "dm"): str
     case "trash":
       return `${them.manager}, I'm doing you a favor. ${thin}${give} for ${get}.${said ? ` That's ${said}.` : ""}${also} Accept before I come to my senses.`;
   }
+}
+
+const TONE_WORD: Record<Tone, string> = { straight: "straight", friendly: "friendly", trash: "trash talk" };
+const poss = (name: string) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+
+/** draftPitch as the steps it takes (steps.ts): their need, the reasons the deal is good for them, then the words. */
+export function* draftPitchSteps(t: Trade, tone: Tone, audience: Audience = "dm"): Steps<string> {
+  const them = teamById(t.partnerId);
+  yield { t: "think", text: `Writing a ${TONE_WORD[tone]} ${audience === "group" ? "post for the group chat" : "message"} to ${them.manager}. I'll find what ${them.manager} needs most, work out what this deal does for their lineup, and lead with the best reason to say yes.` };
+  yield { t: "step", doing: `Reading ${poss(them.manager)} lineup`, done: `Read ${poss(them.manager)} lineup` };
+  const n = needsFor(them);
+  yield { t: "n", n: 0, chip: { label: `Needs ${n.need}`, kind: "pos" } };
+  yield { t: "step", doing: `Finding reasons for ${them.manager} to say yes`, done: "Found {n} reasons to say yes", n: 0 };
+  const rs = reasonsFor(t);
+  for (let i = 0; i < rs.length; i++) yield { t: "n", n: i + 1, chip: { label: `${rs[i].big} ${rs[i].line.replace(/,.*$/, "")}`, kind: "feed" } };
+  yield { t: "step", doing: `Writing it ${tone === "trash" ? "with some trash talk" : `in a ${TONE_WORD[tone]} voice`}`, done: "Wrote {n} words", n: 0 };
+  const text = draftPitch(t, tone, audience);
+  yield { t: "n", n: text.trim().split(/\s+/).length };
+  return text;
 }

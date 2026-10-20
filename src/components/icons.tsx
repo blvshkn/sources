@@ -2,6 +2,8 @@
 // round joins, softened corners, parallel lanes and seam curves where a shape allows. Dots are tiny filled
 // circles because flat ends hide zero length strokes. The football ("roster") is the logo mark itself.
 
+import { AiDots } from "./AiDots";
+
 export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
@@ -52,12 +54,14 @@ const ICONS: Record<IconName, string> = {
 // Icons with a micro-animation (src/icon-motion.css). "nav" ones play when their tab becomes active and on hover inside
 // the sidebar, tab bar or top bar. "any" ones are affordances that play on hover of whatever control holds them.
 const MOTION: Partial<Record<IconName, "nav" | "any">> = {
-  helmet: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", spark: "nav", gear: "nav",
+  helmet: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", gear: "nav",
   search: "any", pen: "any", chev: "any",
 };
 
 /** One icon. The active tab thickens the line a little. The helmet keeps its original drawing and round ends. */
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
+  // The AI mark is the braille cell (AiDots), not a drawn icon: still at rest, one wave on hover or focus
+  if (name === "spark") return <AiDots size={size} />;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === "helmet" ? 1.8 : active ? 2 : 1.6}
       strokeLinecap={name === "helmet" ? "round" : "butt"} strokeLinejoin="round" aria-hidden="true" className={`ic ic-${name}`} data-m={MOTION[name]}

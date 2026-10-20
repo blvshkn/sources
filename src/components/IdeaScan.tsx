@@ -1,31 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Icon } from "./ui";
+import { useEffect, useRef } from "react";
+import type { Trade } from "../engine";
+import type { Steps } from "../steps";
+import { useTrace } from "../think";
+import { ThinkingTrace } from "./ThinkingTrace";
 
-/** Shows the trade finder working through its steps after something changed (a new note, a new partner).
- *  The steps are what the finder actually weighs; the pacing is just enough to read them. */
-export function IdeaScan({ steps, onDone, paused = false }: { steps: string[]; onDone: () => void; paused?: boolean }) {
-  const [at, setAt] = useState(0);
+/** The trade finder working with one manager, as its real steps (reads.ts ideaSteps): notes read, needs checked,
+ *  swaps scored. Stays on the page folded once it's done, so the steps can be opened again. */
+export function IdeaScan({ run, onDone, paused = false }: { run: () => Steps<Trade[]>; onDone: (found: Trade[]) => void; paused?: boolean }) {
+  const { trace, start } = useTrace<Trade[]>();
   const done = useRef(onDone);
   done.current = onDone;
-  useEffect(() => {
-    if (paused) return;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const each = reduce ? 120 : 420;
-    const t = setInterval(() => setAt((n) => n + 1), each);
-    const end = setTimeout(() => done.current(), each * (steps.length + 1));
-    return () => { clearInterval(t); clearTimeout(end); };
-  }, [steps.length, paused]);
+  useEffect(() => { if (!paused) start(run).then((r) => { if (r) done.current(r); }); }, [paused]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <section className="card scan" aria-live="polite" aria-busy="true" aria-label="Finding trade ideas">
-      <div className="scan-head"><span className="scan-orb" aria-hidden="true"><Icon name="spark" size={16} /></span><b>Finding trade ideas</b></div>
-      <ol className="scan-steps">
-        {steps.map((s, i) => (
-          <li key={s} className={i < at ? "done" : i === at ? "now" : ""}>
-            <span className="scan-mark" aria-hidden="true">{i < at ? <Icon name="check" size={12} /> : null}</span>
-            <span>{s}</span>
-          </li>
-        ))}
-      </ol>
+    <section className="card thk-card" aria-live="polite" aria-busy={trace.status !== "done"} aria-label="Finding trade ideas">
+      <ThinkingTrace trace={trace} verb={{ doing: "Finding trade ideas", done: "Found trade ideas in" }} />
     </section>
   );
 }

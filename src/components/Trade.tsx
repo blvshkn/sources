@@ -24,6 +24,10 @@ import { useHFade } from "./hFade";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
 import { rankPlayers } from "../search";
+import type { Price } from "../engine";
+import { useTrace } from "../think";
+import { ideaSteps, readSteps, type Read } from "../reads";
+import { Stream, ThinkingTrace } from "./ThinkingTrace";
 
 export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone, noteIds }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -360,7 +364,27 @@ export function multiWhy(m: MultiTrade, label: string) {
 /** Verdict colors only mean good or bad for you. Anything in between reads in plain chalk. */
 const vTone = (t: "good" | "warn" | "bad") => (t === "warn" ? "neutral" : t);
 export function DealVerdict({ label, tone, line }: { label: string; tone: "good" | "warn" | "bad"; line: string }) {
-  return <div className={`dv-verdict ${vTone(tone)}`}><b>{label}</b><p>{line}</p></div>;
+  return <div className={`dv-verdict ${vTone(tone)}`}><b>{label}</b><p><Stream text={line} /></p></div>;
+}
+
+/** The read on a two-team deal, worked out as real steps (reads.ts) every time the deal changes. The trace keeps
+ *  to one line so the rows under it never move, and the last verdict stays until the new one is ready. */
+function TradeRead({ them, give, get, tags, myTags, prices, received }: {
+  them: Team; give: string[]; get: string[]; tags: ManagerTag[]; myTags: Record<string, MyTag>; prices: Record<string, Price>; received: boolean;
+}) {
+  const { trace, result, start } = useTrace<Read>();
+  const key = `${them.id}|${give.join(",")}>${get.join(",")}|${received}|${tags.map((t) => t.id).join(",")}|${JSON.stringify(myTags)}|${JSON.stringify(prices)}`;
+  useEffect(() => { start(() => readSteps(them, give, get, tags, myTags, prices, received)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [shown, setShown] = useState<Read | null>(null);
+  useEffect(() => { if (result) setShown(result); }, [result]);
+  const r = result ?? shown;
+  return (
+    <div className="dv-read">
+      <ThinkingTrace trace={trace} compact verb={{ doing: "Reading the deal", done: "Read the deal in" }} />
+      {r ? <div className={trace.status === "done" ? undefined : "dv-stale"}><DealVerdict label={r.v.label} tone={r.v.tone} line={dealWhy(r.v.label, r.trade.youDelta, r.trade.marketGive, r.trade.marketGet, them.manager)} /></div>
+        : <div className="dv-verdict dv-pending" aria-hidden="true"><b>&nbsp;</b><p>&nbsp;<br />&nbsp;</p></div>}
+    </div>
+  );
 }
 
 /** Their odds in neutral ink: it's their call, not good or bad for you. The why sits in a tooltip. */
@@ -423,7 +447,7 @@ export function lockMap(myTags: Record<string, MyTag>) {
   return lockYou;
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -432,6 +456,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
    *  panel keeps its partner card as is. profileOpen is no longer read. */
   onProfile?: () => void; profileOpen?: boolean;
   trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
+  /** Your asking prices, so the read and the idea finder score deals the same way the rest of the app does. */
+  prices?: Record<string, Price>;
   tip: string | null;
   coach: (t: TradeT) => { trade: TradeT; line: string } | null;
   onPitch: (t: TradeT) => void; onLoad: (t: TradeT) => void;
@@ -471,13 +497,11 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     setRescanned(!!before);
     seen.current[partnerId] = { sig, keys: suggestions.map((t) => t.key) };
     setScanned(sig);
+    setShownScan(sig);
   };
-  const scanSteps = [
-    theirTags.length ? `Reading ${theirTags.length} note${theirTags.length > 1 ? "s" : ""} on ${them.manager}` : `No notes on ${them.manager} yet, using league needs`,
-    "Checking what both lineups need",
-    "Testing deals across both rosters",
-    "Keeping trades where both sides gain points",
-  ];
+  // The finished scan stays on the Ideas tab, folded, until you leave it
+  const [shownScan, setShownScan] = useState<string | null>(null);
+  useEffect(() => { if (view !== "ideas") setShownScan(null); }, [view]);
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
   const [searching, setSearching] = useState(false);
   const [profile, setProfile] = useState(false);
@@ -557,7 +581,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {scoutTip && <p className="tr-tip"><Icon name="spark" size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
-      {scanning && <IdeaScan key={sig} steps={scanSteps} onDone={finishScan} />}
+      {view === "ideas" && (scanning || shownScan === sig) && <IdeaScan key={sig} run={() => ideaSteps(them, tags, myTags, prices)} onDone={finishScan} />}
       {view === "ideas" && !scanning && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
       {view === "ideas" && !scanning && suggestions.length > 0 && (
         <section className="card nudge">
@@ -589,7 +613,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           ) : (
             <div className="dv">
               <div className="dv-main">
-              {v && <DealVerdict label={v.label} tone={v.tone} line={dealWhy(v.label, trade.youDelta, trade.marketGive, trade.marketGet, them.manager)} />}
+              {v && <TradeRead them={them} give={give} get={get} tags={tags} myTags={myTags} prices={prices} received={received} />}
               <DealRows
                 cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
                 rows={[
@@ -636,7 +660,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               {tip && (
                 <div className="tip">
                   <Stamp>Tip</Stamp>
-                  <span className="small">{tip}</span>
+                  <span className="small"><Stream text={tip} /></span>
                   <AiLabel />
                 </div>
               )}

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, type PointerEvent as RPE } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPE, type RefObject } from "react";
+import { useTrace } from "../think";
+import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { useBackClose } from "../backClose";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
-import { Audience, Tone, draftPitch, reasonsFor } from "../pitch";
+import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 
@@ -169,6 +171,27 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
 
+/** The draft streaming in over the box it lands in, matched to the box's own type and padding. */
+function PitchStream({ text, box, onDone }: { text: string; box: RefObject<HTMLTextAreaElement | null>; onDone: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const b = box.current, el = ref.current;
+    if (!b || !el) return;
+    const c = getComputedStyle(b);
+    for (const k of ["padding", "font", "lineHeight", "letterSpacing", "borderWidth", "borderStyle", "borderRadius"] as const) el.style[k] = c[k];
+  }, [box]);
+  const total = wordCount(text);
+  const k = useReveal(total, total > 0);
+  const finished = useRef(onDone);
+  finished.current = onDone;
+  useEffect(() => {
+    if (!total || k < total) return;
+    const id = window.setTimeout(() => finished.current(), 320); // lets the last words finish fading in
+    return () => window.clearTimeout(id);
+  }, [k, total]);
+  return <div ref={ref} className="pitch-stream" aria-hidden="true"><Words text={text} k={k} /></div>;
+}
+
 export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: () => void; onSent: (msg: string, via?: string) => void }) {
   const them = teamById(trade.partnerId);
   const [tone, setTone] = useState<Tone>("friendly");
@@ -236,7 +259,13 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
     return () => cancelAnimationFrame(raf.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { setText(draftPitch(trade, tone, audience)); setEdited(false); }, [tone, trade, audience]);
+  // Each draft is written as real steps (pitch.ts draftPitchSteps), then streams into the box
+  const { trace, result, start } = useTrace<string>();
+  const [streaming, setStreaming] = useState<string | null>(null);
+  useEffect(() => { start(() => draftPitchSteps(trade, tone, audience)); }, [tone, trade, audience]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (result !== undefined) { setText(result); setEdited(false); setStreaming(result); } }, [result]);
+  const writing = trace.status === "thinking" || trace.status === "working";
+  const covered = writing || streaming !== null;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
     window.addEventListener("keydown", onKey);
@@ -341,7 +370,11 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
           <AiLabel />
           {edited && <span className="tiny muted">Edited by you</span>}
         </label>
-        <textarea id="pitch-text" ref={textRef} value={text} onChange={(e) => { setText(e.target.value); setEdited(true); }} />
+        <ThinkingTrace trace={trace} compact verb={{ doing: "Writing", done: "Wrote it in" }} />
+        <div className="pitch-box" aria-busy={covered}>
+          <textarea id="pitch-text" ref={textRef} value={text} readOnly={covered} className={covered ? "streaming" : undefined} onChange={(e) => { setText(e.target.value); setEdited(true); }} />
+          {covered && <PitchStream key={writing ? "wait" : streaming ?? ""} text={writing ? "" : streaming ?? ""} box={textRef} onDone={() => setStreaming(null)} />}
+        </div>
 
         <div className="send-methods" role="radiogroup" aria-label="How to send">
           {([["text", "msg", "Text message", "Messages, card attached"], ["group", "group", "Group chat", "Tuned for an audience"], ["app", "app", "League app", "Copy + open trade screen"], ["share", "share", "Share sheet", "WhatsApp, Discord, Slack"]] as [Method, "msg" | "group" | "app" | "share", string, string][]).map(([m, ic, label, sub]) => (

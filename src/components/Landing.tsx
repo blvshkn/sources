@@ -11,6 +11,9 @@ import { Avatar, AvatarPhotos } from "./Avatar";
 import { drawCard } from "./PitchSheet";
 import { loadJerseyNumbers } from "../jersey";
 import { IdeaScan } from "./IdeaScan";
+import { ideaSteps } from "../reads";
+import type { Trade } from "../engine";
+import type { Steps } from "../steps";
 import { draftPitch } from "../pitch";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { useLive, startersOf, playCount } from "../live";
@@ -48,7 +51,7 @@ export function Landing({ onLive, onDemo }: {
     const trade = findTrades(YOU, mike, tags, INITIAL_MY_TAGS, {}, 1)[0];
     const thin = needs.filter((n) => !n.team.you).sort((a, b) => a.groups[a.need].pct - b.groups[b.need].pct).slice(0, 3);
     const notes = INITIAL_MANAGER_TAGS.filter((t) => t.teamId === mike.id);
-    return { needs, trade, mike, thin, notes, you: needs.find((n) => n.team.you)! };
+    return { needs, trade, mike, thin, notes, tags, you: needs.find((n) => n.team.you)! };
   }, []);
 
   // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
@@ -266,7 +269,7 @@ export function Landing({ onLive, onDemo }: {
                 <span className="ld2-notes-k">Your notes on {demo.mike.manager}</span>
                 <ul>{demo.notes.map((t) => <li key={t.id} className={t.kind === "wants" ? "want" : "no"}>{t.text}</li>)}</ul>
               </div>
-              <FinderDemo steps={[`Reading ${demo.notes.length} notes on ${demo.mike.manager}`, "Checking what both lineups need", "Testing deals across both rosters", "Keeping trades where both sides gain points"]}>
+              <FinderDemo run={() => ideaSteps(demo.mike, demo.tags, INITIAL_MY_TAGS, {}, 1)}>
                 <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
               </FinderDemo>
             </article>
@@ -397,7 +400,7 @@ function TypedHeadline({ lines }: { lines: string[] }) {
 }
 
 /** The trade finder doing its thing: it runs through its steps when scrolled into view, then shows what it found. */
-function FinderDemo({ steps, children }: { steps: string[]; children: ReactNode }) {
+function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<"wait" | "scan" | "done">("wait");
   useEffect(() => {
@@ -411,7 +414,7 @@ function FinderDemo({ steps, children }: { steps: string[]; children: ReactNode 
       {/* Scan and result share one cell, so the card is its final size from the start and never grows */}
       <div className="ld2-finder-cell">
         <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{children}</div>
-        {phase !== "done" && <IdeaScan steps={steps} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
+        {phase !== "done" && <IdeaScan run={run} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
       </div>
       <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>
     </div>

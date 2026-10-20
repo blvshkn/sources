@@ -122,3 +122,24 @@ html:root:not(#_):not(#_) .boot3.leaving .boot3-trace { opacity: 0; transition: 
   html:root:not(#_):not(#_) :is(.thk-step, .thk-chip) { animation: none; }
   html:root:not(#_):not(#_) :is(.thk-body, .thk-dg-col, .ask-links) { transition: none; }
 }
+
+/* ---------- Compact traces (Trade read, pitch): one line that never wraps ---------- */
+html:root:not(#_):not(#_) .thk-head { max-width: 100%; }
+html:root:not(#_):not(#_) .thk-word { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .thk-word .thk-roll { vertical-align: bottom; height: auto; }
+html:root:not(#_):not(#_) .thk-word .thk-dg { height: 1.2em; }
+html:root:not(#_):not(#_) .thk-word .thk-dg-col > span { height: 1.2em; line-height: 1.2em; }
+
+/* ---------- Trade: the read and the idea finder ---------- */
+html:root:not(#_):not(#_) .dv-read { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_) .dv-read .dv-stale { opacity: 0.45; transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .dv-read > div:not(.thk) { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .dv-pending { visibility: hidden; }
+html:root:not(#_):not(#_) .thk-card { padding: 14px 16px; }
+@media (min-width: 768px) { html:root:not(#_):not(#_) .thk-card { padding: 16px 20px; } }
+
+/* ---------- Pitch: the draft streams over the box it lands in ---------- */
+html:root:not(#_):not(#_) .pitch-box { position: relative; }
+html:root:not(#_):not(#_) .pitch-box > textarea { display: block; }
+html:root:not(#_):not(#_) .pitch-box textarea.streaming { color: transparent; caret-color: transparent; }
+html:root:not(#_):not(#_) .pitch-stream { position: absolute; inset: 0; pointer-events: none; white-space: pre-wrap; overflow: hidden; border-color: transparent !important; background: transparent !important; }

@@ -51,6 +51,15 @@ export function Words({ text, k, base = 0, muteBefore }: { text: string; k: numb
   );
 }
 
+/** A short line that streams in once, and again whenever its text changes. */
+export function Stream({ text }: { text: string }) {
+  return <StreamOnce key={text} text={text} />;
+}
+function StreamOnce({ text }: { text: string }) {
+  const k = useReveal(wordCount(text));
+  return <Words text={text} k={k} />;
+}
+
 /** A count whose digits roll to their new value. Geist Mono, so the width only changes when a digit is added. */
 export function Roll({ n }: { n: number }) {
   const s = n.toLocaleString("en-US");
@@ -100,10 +109,13 @@ const secs = (ms: number, done: boolean) => {
 };
 
 /** The trace itself. `idle` draws nothing. `doneLabel` lets a surface say "Read" or "Loaded" instead of "Worked". */
-export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", children }: {
+export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, children }: {
   trace: TraceState;
   verb?: { doing: string; done: string };
   className?: string;
+  /** One line only, for places where the trace sits above live controls: the running step shows in the head line
+   *  instead of the timeline opening under it, so nothing below moves. The chevron still opens the steps. */
+  compact?: boolean;
   /** Extra rows at the foot of the timeline (a surface's own detail). */
   children?: ReactNode;
 }) {
@@ -118,7 +130,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   // Open while it runs, folded once it's done; the chevron overrides either
   const [manual, setManual] = useState<boolean | null>(null);
   useEffect(() => { setManual(null); }, [trace.status === "done"]); // eslint-disable-line react-hooks/exhaustive-deps
-  const open = manual ?? running;
+  const open = manual ?? (running && !compact);
 
   const thinkWords = useMemo(() => wordCount(trace.think), [trace.think]);
   // The plan streams inside the thinking line's minimum time, so showing it never holds the work up
@@ -128,12 +140,14 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   const elapsed = (trace.ended ?? t) - trace.started;
   const word = trace.status === "thinking" ? "Thinking" : trace.status === "error" ? "Stopped" : running ? verb.doing : verb.done;
   const thinking = trace.status === "thinking";
+  const active = trace.steps[trace.steps.length - 1];
+  const inline = compact && running && !open && active?.state === "active";
   return (
     <div className={`thk ${className}`} data-status={trace.status}>
-      <button type="button" className="thk-head" aria-expanded={open} disabled={thinking}
+      <button type="button" className="thk-head" aria-expanded={open} disabled={thinking && !compact}
         onClick={() => setManual(!open)}>
-        <span className="thk-ic" aria-hidden="true">{thinking ? <AiDots size={14} run /> : <Icon name="chev" size={14} />}</span>
-        <span className={`thk-word${running ? " shim" : ""}`}>{word}</span>
+        <span className="thk-ic" aria-hidden="true">{thinking || (compact && running && !open) ? <AiDots size={14} run /> : <Icon name="chev" size={14} />}</span>
+        <span className={`thk-word${running ? " shim" : ""}`}>{inline ? <Label text={active.doing} n={active.n} /> : word}</span>
         <span className="thk-sec">{secs(elapsed, !running)}</span>
         <span className="sr-only">{open ? ", hide steps" : ", show steps"}</span>
       </button>
