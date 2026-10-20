@@ -17,7 +17,7 @@ import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
+import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
 
@@ -311,8 +311,9 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
       <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{bench.length} players</span></div>
       {bench.map((p) => {
         const key = `fb${p.id}`;
-        // On bye that week: starting him only scores 0, so the row says so instead of opening the slots
-        const tap: RowTap | undefined = future && !gameIn(p, v.week) ? { onTap: (el) => deny(el, byeWhy(p, v.week)), lock: true, expanded: false, label: `${p.name}, on bye` } : tapFor(key, past ? `${p.name} on the bench` : `Start ${p.name}`);
+        // On bye or out long-term that week: starting him only scores 0, so the row says so instead of opening the slots
+        const why = future ? (!gameIn(p, v.week) ? byeWhy(p, v.week) : outWhy(p, v.week, false)) : null;
+        const tap: RowTap | undefined = why ? { onTap: (el) => deny(el, why), lock: true, expanded: false, label: `${p.name}, can't start` } : tapFor(key, past ? `${p.name} on the bench` : `Start ${p.name}`);
         const options: SwapOption[] = !future ? [] : starters.map((x, i) => ({ x, i })).filter(({ i }) => wi.fitsAt(i, p.pos)).map(({ x, i }) => {
           const label = SLOT_LABEL[x.slot] ?? x.slot, d = (p.pts ?? 0) - (x.p?.pts ?? 0);
           return { key: `${i}`, who: <SlotAt slot={label}><WeekWho p={x.p} side="you" week={v.week} /></SlotAt>, name: `${label}, ${x.p?.name ?? "empty"}`, pts: x.p?.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, onPick: (from) => { wi.swap(i, p.id); setOpen(null, from); } };

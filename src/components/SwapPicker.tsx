@@ -2,7 +2,7 @@
 // Lineup page so there is one implementation. Also the lock rules both use, and the player cells the menu lists.
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
-import { Player, SpecialPlayer, WEEK, gameLine, onBye } from "../data";
+import { PLAYERS, Player, SpecialPlayer, WEEK, gameLine, onBye } from "../data";
 import { fmt, specialPts } from "../engine";
 import { Live, onPace } from "../live";
 import { WeekPlayer } from "../weeks";
@@ -19,7 +19,7 @@ export const lockOf = (live: Live, p: { nfl: string } | null): "live" | "final" 
   return st === "complete" ? "final" : st === "in_game" ? "live" : null;
 };
 /** Anyone in a lineup slot: a skill player, a kicker or a defense. Defenses read as "it", not "him". */
-export type Lockable = { name: string; nfl: string; pos: string };
+export type Lockable = { id?: string; name: string; nfl: string; pos: string };
 const him = (p: Lockable) => (p.pos === "DEF" ? "it" : "him");
 /** On bye this week: a K/DEF carries wk null, a skill player's team is on the bye list. */
 const isBye = (p: Lockable) => ("wk" in p ? (p as { wk: unknown }).wk === null : onBye(p.nfl));
@@ -27,7 +27,26 @@ const isBye = (p: Lockable) => ("wk" in p ? (p as { wk: unknown }).wk === null :
 export const BYE_TAG = "Bye";
 export const byeWhy = (p: Lockable, week: number) => `${p.name} is on bye in Week ${week}, so ${him(p) === "it" ? "it" : "he"} won't score there.`;
 /** For a week other than this one: lock and tag for a candidate with no game that week. */
-export const weekBye = (p: WeekPlayer, week: number) => (gameIn(p, week) ? {} : { lock: byeWhy(p, week), tag: BYE_TAG });
+export const weekBye = (p: WeekPlayer, week: number) => {
+  if (!gameIn(p, week)) return { lock: byeWhy(p, week), tag: BYE_TAG };
+  const out = outWhy(p, week, false);
+  return out ? { lock: out, tag: OUT_TAG } : {};
+};
+/** Out: this week, Sleeper's Out status; any later week, only a long absence (IR, PUP, suspended, not with the team),
+ *  since a plain Out is week to week. Questionable and doubtful players stay pickable; their pill shows the risk. */
+export const OUT_TAG = "Out";
+const LONG: Record<string, string> = { IR: "on IR", PUP: "on the PUP list", Sus: "suspended", NA: "not with the team" };
+export function outWhy(p: { id?: string; name: string; pos: string }, week: number, thisWeek: boolean): string | null {
+  const full = p.id ? PLAYERS[p.id] : undefined;
+  if (!full) return null;
+  const he = p.pos === "DEF" ? "it" : "he";
+  const long = full.injury ? LONG[full.injury] : undefined;
+  if (long) return `${p.name} is ${long}, so ${he} won't play in Week ${week}.`;
+  if (thisWeek && full.status === "O") return `${p.name} is out this week, so ${he} won't score.`;
+  return null;
+}
+/** The short label for a locked option: why, in one word. */
+const tagOf = (lock: string) => (/ on bye /.test(lock) ? BYE_TAG : / is out | is on IR| on the PUP| is suspended| not with the team/.test(lock) ? OUT_TAG : "Locked");
 
 /** This week's lock words, the same everywhere. A starter whose game kicked off, or any starter once the week is
  *  over, can't move; a bench player whose game started can't come in. */
@@ -40,6 +59,8 @@ export function lockRules(live: Live, pastWeek: boolean) {
   const candidateLock = (p: Lockable): string | null => {
     if (pastWeek) return `Week ${WEEK} is over. Lineups can't change.`;
     if (isBye(p)) return byeWhy(p, WEEK);
+    const out = outWhy(p, WEEK, true);
+    if (out) return out;
     const l = lockOf(live, p);
     return !l ? null : l === "final" ? `${p.name}'s game is final, so Sleeper won't move ${him(p)} in.` : `${p.name} is playing now, so Sleeper won't move ${him(p)} in.`;
   };
@@ -211,10 +232,10 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
       <small>{title}</small>
       {options.length ? options.map((o) => (
         <button key={o.key} className={`mu-opt${o.lock ? " is-locked" : ""}`} aria-disabled={o.lock ? true : undefined}
-          onClick={(e: { currentTarget: Element }) => (o.lock ? deny(e.currentTarget, o.lock) : o.onPick(e.currentTarget))} aria-label={o.lock ? `${o.name}, ${/ on bye /.test(o.lock) ? "on bye" : "locked"}` : undefined}>
+          onClick={(e: { currentTarget: Element }) => (o.lock ? deny(e.currentTarget, o.lock) : o.onPick(e.currentTarget))} aria-label={o.lock ? `${o.name}, ${tagOf(o.lock) === "Locked" ? "locked" : tagOf(o.lock).toLowerCase() === "bye" ? "on bye" : "out"}` : undefined}>
           {o.who}
           <span className="mu-pts">{o.pts.toFixed(1)}</span>
-          {o.lock ? <span className="mu-delta mu-locked">{o.tag ?? (/ on bye /.test(o.lock) ? BYE_TAG : "Locked")}</span> : <span className={`mu-delta ${o.up ? "up" : "down"}`}>{fmt(o.delta)}</span>}
+          {o.lock ? <span className="mu-delta mu-locked">{o.tag ?? tagOf(o.lock)}</span> : <span className={`mu-delta ${o.up ? "up" : "down"}`}>{fmt(o.delta)}</span>}
         </button>
       )) : <p className="small muted">{empty}</p>}
     </div>
