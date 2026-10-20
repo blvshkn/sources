@@ -198,6 +198,8 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   // K and DEF on the roster that aren't in a K/DEF slot right now: the only ones a K or DEF row can swap in
   const benchK = (YOU.special ?? []).map((id) => LEAGUE.specials?.[id]).filter((p): p is SpecialPlayer => !!p && !mineK.some((x) => x?.id === p.id));
   const best = lineupFor(YOU.roster, true);
+  // "Use best lineup" only moves skill players, so compare skill players to skill players (K/DEF left out of both)
+  const bestGain = round1(sideScore(live, YOU, best.slots.map((x) => x.player?.id ?? null), [], false).proj - sideScore(live, YOU, mine.map((x) => x.id), [], false).proj);
   const edges = mine.map((s, i) => round1(pts(s.id) - pts(theirs[i]?.id ?? null)));
   const kEdges = myK.map((x, i) => round1(spPts(live, x.player) - spPts(live, oppK[i]?.player ?? null)));
   const winning = [...edges, ...kEdges].filter((e) => e > 0).length;
@@ -348,7 +350,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
         })}
         <div className="mu-foot">
           <span>{allLocked ? (pastWeek ? `Week ${WEEK} is final. Lineups are locked.` : "Every starter's game has kicked off. Lineups are locked.") : "Tap any of your players to try a swap."}</span>
-          {round1(best.total - myTotal) > 0 && !allLocked && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(round1(best.total - myTotal))}</button>}
+          {bestGain > 0 && !allLocked && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(bestGain)}</button>}
         </div>
       </section>
     </>
