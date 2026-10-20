@@ -1,9 +1,16 @@
-// A front-view football jersey in any team's colorway. Pure SVG: the number is live text, so it
-// stays selectable and changes with the `number` prop. No logos, names or maker marks, only team
-// colors.
-// Number font: Teko 700 (Google Fonts, OFL), a squared block face close to a sewn tackle-twill number; loaded in index.html.
+// A front-view football jersey in any team's colorway and trim. Pure SVG: the number is live text,
+// so it stays selectable and changes with the `number` prop. Stripes, panels and signature patterns
+// are drawn from jerseys.ts; no logos, names or maker marks.
+// Rendering: lit like a 3D cloth render, all in SVG. A fine hex mesh and turbulence grain sit under the
+// trim and number, then a key light (angle set by `light`), a rim light opposite it, cloth folds, a hem
+// vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
+// white jerseys stay clean and black ones still show form. Under 120 px the mesh, grain and blurred
+// folds drop out.
+// Number fonts: one free Google Font per team (see NUMBERS in jerseys.ts), loaded by a single
+// stylesheet link in index.html. Each face is sized to the same cap height so every team's number
+// fills the chest the same way.
 import { useId } from "react";
-import { colorway, type Colorway } from "../jerseys";
+import { colorway, numberStyle, trimFor, type Band, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
 
 export interface JerseyProps {
   /** NFL abbreviation, e.g. "BUF" */
@@ -14,12 +21,32 @@ export interface JerseyProps {
   size?: number;
   /** White colorway */
   away?: boolean;
+  /** Key light direction in degrees, counterclockwise from the right: 135 is upper left. */
+  light?: number;
   className?: string;
 }
 
 const VW = 600;
 const VH = 690;
-export const JERSEY_FONT = `"Teko", "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif`;
+const FALLBACK_FONTS = `"Teko", "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif`;
+
+/** Family, weight, cap height and widest digit advance (both in em), measured in Chromium. */
+const FONTS: Record<NumFont, { family: string; weight: number; cap: number; adv: number }> = {
+  teko: { family: "Teko", weight: 700, cap: 0.656, adv: 0.507 },
+  oswald: { family: "Oswald", weight: 700, cap: 0.828, adv: 0.55 },
+  bigShoulders: { family: "Big Shoulders Display", weight: 900, cap: 0.813, adv: 0.515 },
+  saira: { family: "Saira Condensed", weight: 800, cap: 0.703, adv: 0.489 },
+  barlow: { family: "Barlow Condensed", weight: 800, cap: 0.719, adv: 0.508 },
+  chakra: { family: "Chakra Petch", weight: 700, cap: 0.703, adv: 0.652 },
+  squada: { family: "Squada One", weight: 400, cap: 0.672, adv: 0.469 },
+  jost: { family: "Jost", weight: 800, cap: 0.719, adv: 0.732 },
+};
+/** Font size for `digits` in face `f`, so the cap height is `cap` and the run is no wider than `maxW`. */
+function fitSize(f: { cap: number; adv: number }, digits: number, cap: number, maxW: number, track: number) {
+  const byCap = cap / f.cap;
+  const width = digits * f.adv + (digits - 1) * track;
+  return Math.min(byCap, maxW / width);
+}
 
 // Left half of the silhouette, mirrored for the right: shoulder corner, capped sleeve, arched cuff
 // opening (it wraps the arm), then a side that tucks in at the waist and flares to the hem.
@@ -63,6 +90,69 @@ const SIDE_L = "M 132 380 C 165 420 198 455 207 500 C 212 522 214 540 215 562";
 const PANEL_L = "M 132 380 C 165 420 198 455 207 500 C 212 522 214 540 215 562 L 218 700 L 0 700 L 0 380 Z";
 const BELLY = "M 207 502 C 250 478 350 478 393 502";
 
+// Trim geometry, left side only; the right side is the same art mirrored.
+// The sleeve region: everything outside the raglan seam, down to the underarm.
+const SLEEVE_ZONE_L = "M 252 -20 L 222 50 C 190 92 152 140 120 196 L 128 238 L -20 238 L -20 -20 Z";
+// Top edge of the cuff, traced from the outer edge to the underarm, plus the unit vectors along it
+// (D) and away from it up the sleeve (N). Stripes are this curve slid along N.
+const CUFF_TOP: Pt[] = [[8, 166], [46, 152], [104, 166], [131, 212]];
+const D: Pt = [0.937, 0.35];
+const N: Pt = [0.35, -0.937];
+const add = (a: Pt, b: Pt, k = 1): Pt => [a[0] + b[0] * k, a[1] + b[1] * k];
+const f = (p: Pt) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
+function cuffLine(off: number): string {
+  const [p0, p1, p2, p3] = CUFF_TOP.map((p) => add(p, N, off));
+  return `M ${f(add(p0, D, -60))} L ${f(p0)} C ${f(p1)} ${f(p2)} ${f(p3)} L ${f(add(p3, D, 60))}`;
+}
+function cuffAt(t: number): Pt {
+  const [a, b, c, d] = CUFF_TOP;
+  const u = 1 - t;
+  return [0, 1].map((i) => u * u * u * a[i] + 3 * u * u * t * b[i] + 3 * u * t * t * c[i] + t * t * t * d[i]) as Pt;
+}
+/** A stripe that tapers from a base of width `t` at `b` to a point at `e`, bowed sideways by `bow`. */
+function taper(b: Pt, e: Pt, t: number, bow = 0): string {
+  const len = Math.hypot(e[0] - b[0], e[1] - b[1]);
+  const p: Pt = [-(e[1] - b[1]) / len, (e[0] - b[0]) / len];
+  const m = add(lerp(b, e, 0.45), p, bow);
+  return `M ${f(add(b, p, t / 2))} Q ${f(add(m, p, t * 0.45))} ${f(e)} Q ${f(add(m, p, -t * 0.45))} ${f(add(b, p, -t / 2))} Z`;
+}
+// Tiger stripes: our own rough wedges, alternating in from the outer edge and the raglan seam.
+const TIGER_L = [
+  taper([-8, 64], [80, 82], 17, -5),
+  taper([232, 70], [126, 100], 17, 5),
+  taper([-8, 100], [94, 118], 19, -6),
+  taper([206, 110], [104, 130], 16, 5),
+  taper([-8, 136], [64, 146], 13, -3),
+];
+// Feather trim: four broad overlapping feather tips on the cuff, leaning out toward the shoulder edge,
+// each with a quill line.
+const FEATHERS_L = [0.1, 0.32, 0.54, 0.76].map((t) => {
+  const b = add(cuffAt(t), N, 2);
+  const tip = add(add(b, N, 46), D, -22);
+  return { leaf: taper(b, tip, 24, 5), quill: `M ${f(b)} Q ${f(add(lerp(b, tip, 0.45), [-(tip[1] - b[1]), tip[0] - b[0]], 0.06))} ${f(lerp(b, tip, 0.85))}` };
+});
+// Peaks: a single pointed chevron across the sleeve cap.
+const PEAK_L = "M -20 132 L 82 66 L 220 150";
+// Curl: a tapered shoulder stripe that sweeps out from the raglan seam and curls down the sleeve.
+const CURL_L = "M 214 76 C 150 66 74 62 34 90 C 18 102 12 124 14 152 C 24 126 32 112 48 104 C 92 88 150 94 206 102 Z";
+
+// Lighting geometry.
+const CENTER: Pt = [300, 345];
+// Collar arms for the satin overlay, and the gradient line across each arm from outer to inner edge.
+const ARM_L = "M 184 4 L 300 110 L 300 82 L 212 0 Z";
+const ARM_ACROSS_L: [Pt, Pt] = [[242, 57], [256.7, 40.9]];
+const COLLAR_V = "M 184 4 L 300 110 L 416 4";
+// Cloth folds, left side: diagonal drape from the armpit toward the waist as shadow and highlight pairs.
+const FOLDS_L = {
+  shadow: [taper([136, 244], [232, 478], 26, 10), taper([132, 300], [186, 430], 16, 6), taper([170, 150], [210, 250], 12, -4)],
+  light: [taper([156, 236], [250, 452], 14, 10), taper([148, 296], [200, 410], 9, 6)],
+};
+// Hem ripple: short soft folds rising from the hem.
+const HEM = {
+  shadow: [taper([168, 690], [184, 590], 22, -4), taper([292, 696], [300, 612], 20, 3), taper([424, 690], [410, 596], 22, 4)],
+  light: [taper([192, 690], [206, 612], 12, -3), taper([318, 696], [322, 628], 10, 2), taper([400, 690], [388, 618], 12, 3)],
+};
+
 function hex(c: string): [number, number, number] {
   const n = parseInt(c.replace("#", ""), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -79,44 +169,128 @@ function mix(a: string, b: string, t: number): string {
 /** A shade off the body: darker on light jerseys, lighter on near-black ones so seams still read. */
 const shade = (c: string, t = 0.16) => (lum(c) < 0.06 ? mix(c, "#FFFFFF", t * 0.9) : mix(c, "#000000", t));
 
-export function Jersey({ team, number = "", size = 120, away = false, className }: JerseyProps) {
+function stripes(trim: Trim) {
+  return (trim.sleeve ?? []).flatMap((set, i) => {
+    let at = set.at;
+    return set.s.map(([color, w], j) => {
+      const mid = at + w / 2;
+      at += w;
+      return color ? <path key={`${i}-${j}`} d={cuffLine(mid)} stroke={color} strokeWidth={w} fill="none" /> : null;
+    });
+  });
+}
+
+function pattern(id: PatternId, c: string, c2?: string) {
+  switch (id) {
+    case "tiger":
+      return TIGER_L.map((d, i) => <path key={i} d={d} fill={c} />);
+    case "feather":
+      return FEATHERS_L.map((p, i) => (
+        <g key={i}>
+          <path d={p.leaf} fill={c} stroke={c2 ?? c} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke" />
+          <path d={p.quill} stroke={c2 ?? c} strokeWidth={1.6} strokeLinecap="round" />
+        </g>
+      ));
+    case "peaks":
+      return (
+        <g fill="none" strokeLinejoin="miter" strokeMiterlimit={8}>
+          {c2 && <path d={PEAK_L} stroke={c2} strokeWidth={20} />}
+          <path d={PEAK_L} stroke={c} strokeWidth={12} />
+        </g>
+      );
+    case "curl":
+      return <path d={CURL_L} fill={c} stroke={c2 ?? c} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke" />;
+  }
+}
+
+/** A band stroked along `d` and its mirror, with optional edges. */
+function band(d: string, b: Band) {
+  return (
+    <g fill="none" strokeLinecap="butt">
+      {b.edge && <path d={d} stroke={b.edge} strokeWidth={b.w + 5} />}
+      {b.edge && <path d={mirror(d)} stroke={b.edge} strokeWidth={b.w + 5} />}
+      <path d={d} stroke={b.c} strokeWidth={b.w} />
+      <path d={mirror(d)} stroke={b.c} strokeWidth={b.w} />
+    </g>
+  );
+}
+
+export function Jersey({ team, number = "", size = 120, away = false, light = 135, className }: JerseyProps) {
   const id = useId().replace(/:/g, "");
   const c: Colorway = colorway(team, away);
+  const trim = trimFor(team, away);
   const n = String(number).replace(/\D/g, "").slice(0, 2);
   const two = n.length > 1;
   const seam = shade(c.body);
   const panelSeam = shade(c.panel);
   const edge = shade(c.body, 0.28);
   // Chest number sits high on the chest. One digit stands tall; two digits come down a touch with a little
-  // tracking so the outlines meet without the fills touching.
-  const fs = two ? 258 : 300;
+  // tracking so the outlines meet without the fills touching. Every face is sized to Teko's cap height
+  // (0.656 em at 300 and 258 px), held to a width that keeps clear of the sleeves and trim.
+  const ns = numberStyle(team, away);
+  const face = FONTS[ns.font];
+  const fontFamily = `"${face.family}", ${FALLBACK_FONTS}`;
   const track = two ? 0.02 : 0;
+  const fs = fitSize(face, n.length || 1, two ? 169 : 197, two ? 290 : 190, track);
   const numY = two ? 358 : 370;
   const stroke = 16;
-  const dark = lum(c.body) < 0.2;
+  const outline = ns.plain ? c.number : c.outline;
 
   const num = (props: { x: number; y: number; size: number; strokeW: number; rotate?: number; letter?: number }) => {
+    const transforms = [props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : "", ns.slant ? `translate(${props.x} ${props.y}) skewX(${-ns.slant}) translate(${-props.x} ${-props.y})` : ""].filter(Boolean);
     const common = {
       x: props.x,
       y: props.y,
       textAnchor: "middle" as const,
-      fontFamily: JERSEY_FONT,
-      fontWeight: 700,
+      fontFamily,
+      fontWeight: face.weight,
       fontSize: props.size,
       letterSpacing: `${props.letter ?? track}em`,
-      transform: props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : undefined,
+      transform: transforms.length ? transforms.join(" ") : undefined,
     };
+    const layer = (fill: string, w: number, dx = 0, dy = 0) => (
+      <text {...common} x={props.x + dx} y={props.y + dy} aria-hidden="true" fill={fill} stroke={fill} strokeWidth={w} strokeLinejoin="miter" strokeMiterlimit={3} paintOrder="stroke" style={{ userSelect: "none" }}>
+        {n}
+      </text>
+    );
+    const k = props.strokeW / stroke;
+    const w2 = props.strokeW + 12 * k;
     return (
       <>
-        <text {...common} aria-hidden="true" fill={c.outline} stroke={c.outline} strokeWidth={props.strokeW} strokeLinejoin="miter" strokeMiterlimit={3} paintOrder="stroke" style={{ userSelect: "none" }}>
-          {n}
-        </text>
+        {ns.shadow && layer(ns.shadow, ns.outline2 ? w2 : props.strokeW, 9 * k, 9 * k)}
+        {ns.outline2 && layer(ns.outline2, w2)}
+        {!ns.plain && layer(outline, props.strokeW)}
         <text {...common} fill={c.number}>
           {n}
         </text>
       </>
     );
   };
+  // Shoulder numbers: the same face at a third of the chest size.
+  const sfs = fitSize(face, n.length || 1, 65.6, two ? 112 : 70, two ? 0.02 : 0);
+
+  // Light: strengths by body luminance (0 black, 1 white).
+  const L = lum(c.body);
+  const rich = size >= 120;
+  const ramp = (black: number, mid: number, white: number) => (L < 0.3 ? black + (mid - black) * (L / 0.3) : mid + (white - mid) * ((L - 0.3) / 0.7));
+  const hi = ramp(0.2, 0.16, 0.04);
+  const sh = ramp(0.58, 0.48, 0.2);
+  const vig = ramp(0.55, 0.44, 0.14);
+  const rimA = ramp(0.42, 0.3, 0);
+  const foldSh = ramp(0.6, 0.4, 0.2);
+  const foldHi = ramp(0.12, 0.08, 0.5);
+  const shadowInk = L > 0.6 ? "#28324a" : "#000";
+  const meshInk = L < 0.12 ? "#fff" : "#000";
+  const meshA = L < 0.12 ? 0.07 : L > 0.6 ? 0.07 : 0.11;
+  // Key light comes from `light` degrees; the rim light mirrors it across the vertical axis.
+  const a = (light * Math.PI) / 180;
+  const dir: Pt = [Math.cos(a), -Math.sin(a)];
+  const keyFrom = add(CENTER, dir, 420);
+  const keyTo = add(CENTER, dir, -420);
+  const rimFrom = add(CENTER, [-dir[0], dir[1]], 420);
+  const hot = add(CENTER, dir, 210);
+  const satin = (side: number) => 0.22 + 0.5 * Math.max(0, side * -dir[0]) + 0.12 * Math.max(0, -dir[1]);
+  const u = (k: string) => `url(#${id}-${k})`;
 
   return (
     <svg
@@ -132,38 +306,107 @@ export function Jersey({ team, number = "", size = 120, away = false, className 
         <clipPath id={`${id}-b`}>
           <path d={BODY} />
         </clipPath>
+        <clipPath id={`${id}-s`}>
+          <path d={SLEEVE_ZONE_L} />
+        </clipPath>
+        {/* Cylinder form: the body turns away at both sides */}
         <linearGradient id={`${id}-x`} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0" stopColor="#000" stopOpacity={dark ? 0.28 : 0.16} />
-          <stop offset="0.2" stopColor="#000" stopOpacity="0.02" />
-          <stop offset="0.5" stopColor="#fff" stopOpacity={dark ? 0.07 : 0.05} />
-          <stop offset="0.8" stopColor="#000" stopOpacity="0.02" />
-          <stop offset="1" stopColor="#000" stopOpacity={dark ? 0.28 : 0.16} />
+          <stop offset="0" stopColor={shadowInk} stopOpacity={sh * 0.9} />
+          <stop offset="0.22" stopColor={shadowInk} stopOpacity="0" />
+          <stop offset="0.78" stopColor={shadowInk} stopOpacity="0" />
+          <stop offset="1" stopColor={shadowInk} stopOpacity={sh * 0.9} />
         </linearGradient>
-        <linearGradient id={`${id}-y`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity={dark ? 0.06 : 0} />
-          <stop offset="0.35" stopColor="#000" stopOpacity="0" />
-          <stop offset="1" stopColor="#000" stopOpacity={dark ? 0.16 : 0.07} />
+        {/* Key light, with the soft fill keeping the far side from going flat black */}
+        <linearGradient id={`${id}-k`} gradientUnits="userSpaceOnUse" x1={keyFrom[0]} y1={keyFrom[1]} x2={keyTo[0]} y2={keyTo[1]}>
+          <stop offset="0.12" stopColor="#fff" stopOpacity={hi} />
+          <stop offset="0.45" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.6" stopColor={shadowInk} stopOpacity="0" />
+          <stop offset="1" stopColor={shadowInk} stopOpacity={sh * 0.75} />
+        </linearGradient>
+        {/* Rim light along the edge opposite the key */}
+        <linearGradient id={`${id}-r`} gradientUnits="userSpaceOnUse" x1={rimFrom[0]} y1={rimFrom[1]} x2={CENTER[0]} y2={CENTER[1]}>
+          <stop offset="0.25" stopColor="#fff" stopOpacity={rimA} />
+          <stop offset="0.7" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        {/* Key hotspot: the soft bright patch where the key light lands on the chest */}
+        <radialGradient id={`${id}-h`} gradientUnits="userSpaceOnUse" cx={hot[0]} cy={hot[1]} r="270">
+          <stop offset="0" stopColor="#fff" stopOpacity={hi * 1.1} />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-sl`} cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#fff" stopOpacity={hi * 1.2} />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+        {/* Hem vignette */}
+        <linearGradient id={`${id}-v`} gradientUnits="userSpaceOnUse" x1="0" y1="360" x2="0" y2="690">
+          <stop offset="0" stopColor={shadowInk} stopOpacity="0" />
+          <stop offset="1" stopColor={shadowInk} stopOpacity={vig} />
         </linearGradient>
         <linearGradient id={`${id}-n`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#000" stopOpacity="0.16" />
-          <stop offset="1" stopColor="#000" stopOpacity="0" />
+          <stop offset="0" stopColor="#000" stopOpacity="0.3" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.04" />
         </linearGradient>
         <radialGradient id={`${id}-a`} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#000" stopOpacity={dark ? 0.35 : 0.14} />
-          <stop offset="1" stopColor="#000" stopOpacity="0" />
+          <stop offset="0" stopColor={shadowInk} stopOpacity={sh * 1.1} />
+          <stop offset="1" stopColor={shadowInk} stopOpacity="0" />
         </radialGradient>
+        {/* Satin collar: dark falloff at both edges with a sharp specular band */}
+        {[1, -1].map((side) => {
+          const [p, q] = side > 0 ? ARM_ACROSS_L : ARM_ACROSS_L.map(mx);
+          const spec = Math.min(0.8, satin(side));
+          return (
+            <linearGradient key={side} id={`${id}-c${side > 0 ? "l" : "r"}`} gradientUnits="userSpaceOnUse" x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]}>
+              <stop offset="0" stopColor="#000" stopOpacity="0.28" />
+              <stop offset="0.3" stopColor="#000" stopOpacity="0" />
+              <stop offset="0.4" stopColor="#fff" stopOpacity="0.04" />
+              <stop offset="0.5" stopColor="#fff" stopOpacity={spec} />
+              <stop offset="0.6" stopColor="#fff" stopOpacity="0.06" />
+              <stop offset="0.75" stopColor="#000" stopOpacity="0" />
+              <stop offset="1" stopColor="#000" stopOpacity="0.3" />
+            </linearGradient>
+          );
+        })}
+        {rich && (
+          <>
+            {/* Polyester mesh: tiny hex-packed holes */}
+            <pattern id={`${id}-m`} width="7" height="6.06" patternUnits="userSpaceOnUse">
+              <circle cx="1.75" cy="1.52" r="1.15" fill={meshInk} fillOpacity={meshA} />
+              <circle cx="5.25" cy="4.55" r="1.15" fill={meshInk} fillOpacity={meshA} />
+            </pattern>
+            <filter id={`${id}-g`} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="7" />
+              <feColorMatrix type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 1.6 -0.75" />
+            </filter>
+            <filter id={`${id}-f`} x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="7" />
+            </filter>
+            <filter id={`${id}-cs`} x="-5%" y="-20%" width="110%" height="150%">
+              <feGaussianBlur stdDeviation="4" />
+            </filter>
+          </>
+        )}
       </defs>
 
       <path d={BODY} fill={c.body} />
-      <g clipPath={`url(#${id}-b)`}>
+      <g clipPath={u("b")}>
         <path d={PANEL_L} fill={c.panel} />
         <path d={mirror(PANEL_L)} fill={c.panel} />
+        {rich && <rect width={VW} height={VH} fill={u("m")} />}
+        {rich && <rect width={VW} height={VH} filter={u("g")} opacity={L > 0.6 ? 0.16 : 0.24} />}
+        {/* Trim: side band, raglan band, then sleeve stripes and patterns, mirrored to the right sleeve */}
+        {trim?.side && band(SIDE_L, trim.side)}
+        {trim?.raglan && band(RAGLAN_L, trim.raglan)}
+        {trim && (trim.sleeve || trim.pattern) && [false, true].map((flip) => (
+          <g key={String(flip)} transform={flip ? `matrix(-1 0 0 1 ${VW} 0)` : undefined}>
+            <g clipPath={u("s")}>
+              {stripes(trim)}
+              {trim.pattern && pattern(trim.pattern.id, trim.pattern.c, trim.pattern.c2)}
+            </g>
+          </g>
+        ))}
         {/* Shoulder-top numbers, cut by the shoulder line as they wrap over the top */}
-        {num({ x: 112, y: 38, size: 100, strokeW: 7, rotate: -5, letter: two ? 0.02 : 0 })}
-        {num({ x: 488, y: 38, size: 100, strokeW: 7, rotate: 5, letter: two ? 0.02 : 0 })}
-        {/* Underarm folds */}
-        <ellipse cx="130" cy="232" rx="30" ry="20" fill={`url(#${id}-a)`} />
-        <ellipse cx="470" cy="232" rx="30" ry="20" fill={`url(#${id}-a)`} />
+        {num({ x: 112, y: 38, size: sfs, strokeW: 7, rotate: -5, letter: two ? 0.02 : 0 })}
+        {num({ x: 488, y: 38, size: sfs, strokeW: 7, rotate: 5, letter: two ? 0.02 : 0 })}
         <g fill="none" strokeWidth="2.2" strokeLinecap="round">
           <path d={RAGLAN_L} stroke={seam} />
           <path d={mirror(RAGLAN_L)} stroke={seam} />
@@ -173,15 +416,17 @@ export function Jersey({ team, number = "", size = 120, away = false, className 
           <path d={mirror(SIDE_L)} stroke={panelSeam} />
           <path d={BELLY} stroke={seam} />
         </g>
+        {/* Contact shadow under the collar */}
+        <path d={COLLAR_V} transform="translate(0 7)" fill="none" stroke="#000" strokeOpacity={L > 0.6 ? 0.22 : 0.45} strokeWidth="12" filter={rich ? u("cs") : undefined} />
       </g>
 
       {/* Cuffs */}
       <path d={CUFF_L} fill={c.cuff} />
       <path d={mirror(CUFF_L)} fill={c.cuff} />
 
-      {/* V-neck: outer stripe, inner stripe, back of the neck */}
+      {/* V-neck: outer stripe, inner stripe, back of the neck, then the satin sheen */}
       <path d={NECK} fill={shade(c.body, 0.05)} />
-      <path d={NECK} fill={`url(#${id}-n)`} />
+      <path d={NECK} fill={u("n")} />
       <path d={BAND} fill={c.collar2} />
       <path d={SHOULDER_L} fill={c.collar1} />
       <path d={mirror(SHOULDER_L)} fill={c.collar1} />
@@ -189,15 +434,37 @@ export function Jersey({ team, number = "", size = 120, away = false, className 
         <path d={pin(0.36)} />
         <path d={pin(0.68)} />
       </g>
-      <path d={BAND} fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="1.5" />
+      <path d={ARM_L} fill={u("cl")} />
+      <path d={mirror(ARM_L)} fill={u("cr")} />
+      <path d={BAND} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
 
       {/* Chest number */}
       {num({ x: 300, y: numY, size: fs, strokeW: stroke })}
 
-      {/* Fabric depth over everything on the body */}
-      <g clipPath={`url(#${id}-b)`} style={{ pointerEvents: "none" }}>
-        <rect width={VW} height={VH} fill={`url(#${id}-x)`} />
-        <rect width={VW} height={VH} fill={`url(#${id}-y)`} />
+      {/* Shading over everything on the body, number and trim included, so they sit in the cloth */}
+      <g clipPath={u("b")} style={{ pointerEvents: "none" }}>
+        {rich && (
+          <g filter={u("f")}>
+            {[false, true].map((flip) => (
+              <g key={String(flip)} transform={flip ? `matrix(-1 0 0 1 ${VW} 0)` : undefined}>
+                {FOLDS_L.shadow.map((d, i) => <path key={i} d={d} fill={shadowInk} fillOpacity={foldSh} />)}
+                {FOLDS_L.light.map((d, i) => <path key={i} d={d} fill="#fff" fillOpacity={foldHi} />)}
+              </g>
+            ))}
+            {HEM.shadow.map((d, i) => <path key={i} d={d} fill={shadowInk} fillOpacity={foldSh} />)}
+            {HEM.light.map((d, i) => <path key={i} d={d} fill="#fff" fillOpacity={foldHi} />)}
+          </g>
+        )}
+        {/* Sleeve volume: light across the top of each sleeve, falling off toward the cuff */}
+        <ellipse cx="78" cy="96" rx="62" ry="40" transform="rotate(-20 78 96)" fill={u("sl")} opacity={dir[0] < 0 ? 1 : 0.4} />
+        <ellipse cx="522" cy="96" rx="62" ry="40" transform="rotate(20 522 96)" fill={u("sl")} opacity={dir[0] > 0 ? 1 : 0.4} />
+        <ellipse cx="128" cy="236" rx="40" ry="30" fill={u("a")} />
+        <ellipse cx="472" cy="236" rx="40" ry="30" fill={u("a")} />
+        <rect width={VW} height={VH} fill={u("x")} />
+        <rect width={VW} height={VH} fill={u("k")} />
+        <rect width={VW} height={VH} fill={u("h")} />
+        <rect width={VW} height={VH} fill={u("v")} />
+        <path d={BODY} fill="none" stroke={u("r")} strokeWidth="14" filter={rich ? u("cs") : undefined} />
       </g>
       <path d={BODY} fill="none" stroke={edge} strokeWidth="2" />
     </svg>
