@@ -104,8 +104,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   MIA: { name: "Miami Dolphins", conf: "AFC", div: "East", body: "#00909C", number: W, outline: "#FC4C02", collar: plain(), cuff: "#00909C", panel: "#00909C",
     away: { number: "#00909C", outline: "#FC4C02", collar: plain(), cuff: W } },
   // Plain V, red and white stripes over the shoulders, white numbers trimmed red.
-  NE: { name: "New England Patriots", conf: "AFC", div: "East", body: "#002244", number: W, outline: "#C60C30", collar: plain(), cuff: "#002244", panel: "#002244",
-    away: { number: "#002244", outline: "#C60C30", collar: plain(), cuff: W } },
+  NE: { name: "New England Patriots", conf: "AFC", div: "East", body: "#002244", number: W, outline: "#A5ACAF", collar: plain(), cuff: "#002244", panel: "#002244",
+    away: { number: "#002244", outline: "#A5ACAF", collar: plain(), cuff: W } },
   // Legacy set: a wide white V, two white stripes at the cuff, flat white numbers.
   NYJ: { name: "New York Jets", conf: "AFC", div: "East", body: "#125740", number: W, outline: W, collar: solid(W, { w: 30 }), cuff: "#125740", panel: "#125740",
     away: { number: "#125740", outline: "#125740", collar: solid("#125740", { w: 30 }), cuff: W } },
@@ -346,7 +346,8 @@ const OFF: NumberTrim = { noShoulder: true };
 export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> = {
   BUF: { home: { outline2: NAVY_BUF }, away: { outline2: NAVY_BUF } },
   MIA: {},
-  NE: { home: OFF, away: OFF },
+  // White numbers lined silver, then red; navy lined silver, then red, on the road.
+  NE: { home: { noShoulder: true, outline2: "#C60C30" }, away: { noShoulder: true, outline2: "#C60C30" } },
   NYJ: { home: FLAT, away: FLAT },
   BAL: {},
   CIN: { home: OFF, away: OFF },

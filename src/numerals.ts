@@ -581,7 +581,8 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   CIN: ["CURVY", { w: 0.44, stem: 0.135, bar: 0.125, ro: [0.17, 0.24], rc: [0.07, 0.15], spur: 0.04, one: { flag: 0.08, ft: 0.03, fb: 0.09, fj: 0.16 }, six: { stub: 0.05, curl: 0.3 } }],
   CLE: ["BLOCK", { w: 0.5, stem: 0.165, bar: 0.15, ro: 0.03, rc: 0.006 }],
   PIT: ["OVAL", { w: 0.42, stem: 0.14, bar: 0.115, ro: [0.21, 0.25], rc: [0.07, 0.16], six: { type: "diag", stub: 0, bowl: 0.6, foot: 0.26 } }],
-  HOU: ["CHAMFER", { w: 0.54, stem: 0.155, bar: 0.145 }],
+  // Angular and light, with pointed stub ends.
+  HOU: ["CHAMFER", { w: 0.54, stem: 0.155, bar: 0.145, spur: 0.05 }],
   // Heavy block with clipped corners, square counters and a footed 1.
   IND: ["CHAMFER", { w: 0.58, stem: 0.2, bar: 0.18, ro: 0.07, counter: "square", rc: 0, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 } }],
   JAX: ["ROUNDED", { w: 0.5, stem: 0.145, bar: 0.13, ro: [0.09, 0.11], rc: [0.05, 0.07], one: { flag: 0.12, fb: 0.12, fj: 0.22, flare: 0.035 }, two: { neck: "diag", stub: 0.06, dy: 0.44 }, six: { stub: 0.05, curl: 0.22 } }],
@@ -600,7 +601,7 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   DET: ["ROUNDED", { w: 0.51, ro: [0.1, 0.13], rc: [0.07, 0.09] }],
   GB: ["SOFT", { w: 0.58, stem: 0.19, ro: 0.04, rc: 0.02, dig: { "8": { ro: 0.13, rc: 0.06 } } }],
   // Heavy wide block with pointed stubs (the spur) and a long square flag on the 1.
-  MIN: ["HEAVY", { w: 0.6, stem: 0.2, bar: 0.18, ro: 0.03, rc: 0.006, spur: 0.05, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
+  MIN: ["HEAVY", { w: 0.6, stem: 0.2, bar: 0.18, ro: 0.07, rc: 0.006, spur: 0.05, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
   ATL: ["NARROW", { w: 0.52, stem: 0.165, bar: 0.15 }],
   // Block with small clipped corners, square counters, footed 1, notched 3 and 8.
   CAR: ["CHAMFER", { w: 0.58, stem: 0.18, bar: 0.16, ro: 0.05, counter: "square", rc: 0, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3, notch: 0.04 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 }, eight: { pinch: 0.04 } }],
@@ -702,6 +703,14 @@ const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], 
 const TOMORROW_700: Metric[] = [[692, 47, 656], [478, 47, 453], [683, 47, 641], [695, 63, 656], [709, 16, 688], [708, 63, 672], [715, 47, 672], [603, 0, 578], [696, 47, 656], [730, 63, 688]];
 const BIG_SHOULDERS_700: Metric[] = [[467, 31, 438], [252, 31, 219], [451, 31, 422], [464, 31, 422], [474, 16, 453], [474, 31, 438], [459, 31, 438], [439, 16, 422], [460, 31, 422], [459, 31, 422]];
 const FONT_TEAM: Record<string, FontNumerals> = {
+  // Clipped block, footed 1 and 4, a diagonal 2: the classic pro block in its current cut.
+  KC: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.82 }),
+  LV: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.72 }),
+  NO: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.78 }),
+  NYG: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.74 }),
+  NYJ: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.82 }),
+  // Clipped corners, clipped counters, flag-only 1.
+  NE: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.84 }),
   // Clipped corners and clipped counters, a footless 1 with a short flag.
   ARI: font("Chakra Petch", 600, 703, CHAKRA_600, { scaleX: 0.72 }),
   ATL: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.85 }),
