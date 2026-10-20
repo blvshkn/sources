@@ -18,7 +18,6 @@ import { Boot } from "./components/Boot";
 import { IDLE, tracer, type TraceState } from "./think";
 import { Logo, Mark } from "./components/Logo";
 import { LeagueCtx } from "./components/LeagueSwitch";
-import { LeagueSwitcher } from "./components/LeagueSwitcher";
 import { ManagerAvatar } from "./components/Avatar";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
 import { loadJerseyNumbers } from "./jersey";
@@ -37,9 +36,9 @@ import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
 import { PlatformName } from "./components/PlatformLogo";
-import { FirstRun, FirstRunStart } from "./components/FirstRun";
+import type { FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
-import { PitchSheet } from "./components/PitchSheet";
+import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
 import { leagueTransactions } from "./sleeper";
@@ -756,6 +755,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 /** Session wrapper: picks demo or live Sleeper, loads the league, runs first-run setup. */
 export default function App() {
   useEffect(() => installIconTooltips(), []);
+  // The tap-only sheets load in their own chunks; fetch them once the first screen is up (components/lazy.tsx)
+  useEffect(() => preloadOverlays(), []);
   // Older single-account sessions are rewritten into the accounts list on first read, so nobody is signed out.
   const [session, setSession] = usePersist<Session>("session", { mode: "none" }, normalizeSession);
   const [reloadTick, setReloadTick] = useState(0);

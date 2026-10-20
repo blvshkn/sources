@@ -8,7 +8,7 @@ import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPP
 import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
-import { PlayerSheet } from "./PlayerSheet";
+import { PlayerSheet } from "./lazy";
 import { TeamAvatar } from "./TeamPicker";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";

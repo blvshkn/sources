@@ -8,7 +8,7 @@ import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
 import { Avatar, AvatarPhotos } from "./Avatar";
-import { drawCard } from "./PitchSheet";
+import { drawCard } from "./lazy";
 import { loadJerseyNumbers } from "../jersey";
 import { IdeaScan } from "./IdeaScan";
 import { ideaSteps } from "../reads";

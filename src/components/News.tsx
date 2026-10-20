@@ -3,7 +3,7 @@ import { Player } from "../data";
 import { KIND_LABEL, NEWS_SOURCES, NewsItem, ago, byImpact, byNewest, sourcesLine, usePlayerNews, usePlayerRequest, useRosterNews } from "../news";
 import { PlayerContext, contextFor, impactFor, playerWeight, roleLabel, yourPlayers } from "../impact";
 import { Avatar } from "./Avatar";
-import { PlayerSheet } from "./PlayerSheet";
+import { PlayerSheet } from "./lazy";
 import { Tooltip } from "./Tooltip";
 import { Icon, StatusPill } from "./ui";
 

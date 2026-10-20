@@ -13,7 +13,7 @@ import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, Page
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
-import { PlayerSheet } from "./PlayerSheet";
+import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
 import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
