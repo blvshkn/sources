@@ -6,6 +6,7 @@ import {
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
   SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
+import { nameWords, playersInText, teamsInText } from "./search";
 
 // ---- League format --------------------------------------------------------
 
@@ -884,25 +885,49 @@ export interface ParsedTag { tag: Omit<ManagerTag, "id"> | null; reason?: string
 export function parseTag(text: string, teamId?: string): ParsedTag {
   const s = text.trim();
   if (!s) return { tag: null, reason: "Type what they said." };
-  const team = teamId ? TEAMS.find((t) => t.id === teamId && !t.you) : TEAMS.filter((t) => !t.you).find((t) => new RegExp(`\\b${t.manager}\\b`, "i").test(s) || s.toLowerCase().includes(t.name.toLowerCase()));
+  // A manager or team named in the sentence wins ("Sk4zi won't move cook"); otherwise whoever the composer has picked.
+  // One loose word of a team name ("griddy") only decides when nobody is picked.
+  const said = teamInText(s);
+  const named = said && (said.score >= 2 || !teamId) ? said : null;
+  const team = named ? named.item : teamId ? TEAMS.find((t) => t.id === teamId && !t.you) : undefined;
   if (!team) return { tag: null, reason: `Couldn't tell who said it. Start with their name, like "${TEAMS.find((t) => !t.you)?.manager ?? "Mike"} said…".` };
   const lower = s.toLowerCase();
   let kind: ManagerTag["kind"] | null = null;
-  if (/(not interested|doesn'?t want|does not want|pass(ed)? on|no thanks|don'?t want)/.test(lower)) kind = "notInterested";
+  if (/(not interested|(isn|aren)'?t interested|no interest|doesn'?t want|does not want|pass(ed)? on|no thanks|don'?t want)/.test(lower)) kind = "notInterested";
   else if (/(won'?t (move|trade|give|deal)|not (moving|trading|selling)|refuses?|untouchable|keeping|off the table)/.test(lower)) kind = "refuses";
   else if (/(wants?|looking for|needs?|shopping|interested in|after|would take|open to)/.test(lower)) kind = "wants";
   if (!kind) return { tag: null, reason: "Couldn't tell if they want, refuse, or passed. Try words like \"wants\", \"won't move\", or \"not interested\"." };
   // Player: refuses → their roster, notInterested → your roster, wants → either
   const pool = kind === "refuses" ? team.roster : kind === "notInterested" ? YOU.roster : [...YOU.roster, ...team.roster];
-  const player = pool.map(playerById).find((p) => {
-    const last = p.name.split(" ").slice(-1)[0].replace(/(III|II|Jr\.)$/, "");
-    return new RegExp(`\\b${p.name}\\b`, "i").test(s) || (last.length > 3 && new RegExp(`\\b${last}\\b`, "i").test(s));
-  });
+  // Same folding as the pickers: "jamarr", "st brown", "aj brown", "ken walker", "cook's". A shared last name goes to this pool's order.
+  const player = playersInText(s, pool.map(playerById).filter(Boolean), (p) => p.name, { skip: named ? [named.span] : undefined, names: playerWords().names })[0]?.item;
   const pos = POS_WORDS.find(([re]) => re.test(s))?.[1];
   if (!player && !pos) return { tag: null, reason: "Name a player or a position so Sources knows what it applies to." };
   const subject = player ? player.name : `their ${pos}`;
   const label = kind === "wants" ? (player ? `Wants ${player.name}` : `Looking for ${pos} help`) : kind === "refuses" ? `Won't move ${player ? player.name : `his ${pos}`}` : `Not interested in ${subject.replace("their", "your")}`;
   return { tag: { teamId: team.id, kind, playerId: player?.id, pos: player ? undefined : pos, text: label, weeksOld: 0 } };
+}
+
+let wordsKey = "", wordsCache: ReturnType<typeof nameWords> = { words: new Set(), names: new Set() };
+/** Words of every player's name, so a team called "Bijan Mustard" isn't found by "bijan". */
+function playerWords() {
+  const key = `${leagueKey()}:${Object.keys(PLAYERS).length}`;
+  if (key !== wordsKey) { wordsKey = key; wordsCache = nameWords(Object.values(PLAYERS).map((p) => p.name)); }
+  return wordsCache;
+}
+
+/** The other team a sentence names, by manager ("sk4zi", "Mike's") or team name ("jalen my way", "griddy"). */
+export function teamInText(text: string) {
+  return teamsInText(text, TEAMS.filter((t) => !t.you), (t) => t, playerWords())[0] ?? null;
+}
+
+/**
+ * The player a sentence names. Other teams' players come first, then yours, then free agents, so a shared
+ * last name lands on someone you could trade for.
+ */
+export function playerInText(text: string, skip?: [number, number][]) {
+  const order = [...TEAMS.filter((t) => !t.you).flatMap((t) => t.roster), ...YOU.roster, ...Object.keys(PLAYERS)];
+  return playersInText(text, [...new Set(order)].map(playerById).filter(Boolean), (p) => p.name, { skip, names: playerWords().names })[0]?.item;
 }
 
 // ---- Ask your league ------------------------------------------------------
@@ -913,10 +938,19 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
   const s = q.toLowerCase();
   const needs = allNeeds();
   const pos = POS_WORDS.find(([re]) => re.test(q))?.[1];
-  const named = Object.values(PLAYERS).find((p) => {
-    const last = p.name.split(" ").slice(-1)[0];
-    return s.includes(p.name.toLowerCase()) || (last.length > 3 && new RegExp(`\\b${last.toLowerCase()}\\b`).test(s));
-  });
+  const said = teamInText(q);
+  const named = playerInText(q, said ? [said.span] : undefined);
+
+  if (/(who has|who owns|who'?s got|who got|whose team|where is|which team)/.test(s) && named) {
+    const owner = TEAMS.find((x) => x.roster.includes(named.id) || x.ir?.includes(named.id));
+    if (!owner) return { text: `${named.name} isn't on a roster. He's a free agent.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open waivers", tab: "waivers" }] };
+    if (owner.you) return { text: `${named.name} is on your team.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open your lineup", tab: "roster" }] };
+    return {
+      text: `${owner.manager} has ${named.name}.`,
+      points: [`${owner.name} · ${owner.record}`, `${named.pos} · ${named.nfl}`],
+      links: [{ label: `Build a trade with ${owner.manager}`, tab: "trade", teamId: owner.id }],
+    };
+  }
 
   if (/(what would it take|cost|get|trade for|acquire)/.test(s) && named && !YOU.roster.includes(named.id)) {
     const r = costToGet(YOU, named.id, tags, myTags, prices);
@@ -976,7 +1010,7 @@ export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>
       links: [{ label: "Open the top deal", tab: "trade", trade: top[0].t }],
     };
   }
-  const team = TEAMS.find((t) => !t.you && (new RegExp(`\\b${t.manager.toLowerCase()}\\b`).test(s) || s.includes(t.name.toLowerCase())));
+  const team = said?.item;
   if (team) {
     const n = needs.find((x) => x.team.id === team.id)!;
     const td = tendencies(team.id);

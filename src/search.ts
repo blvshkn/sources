@@ -171,3 +171,167 @@ export function pieces(name: string, marks: [number, number][]): { text: string;
   }
   return out;
 }
+
+// ---- Teams ----------------------------------------------------------------
+
+/**
+ * Team lists (Trading with, Add a team, Who said it): a query finds a team by its name or its manager.
+ * Same rules as players: "jmw" or "jalen my" finds "Jalen My Way", "sk4" finds Sk4zi.
+ * `on` says which field matched, so the caller highlights the right line.
+ */
+export function matchTeam(query: string, team: { name: string; manager: string }): (Match & { on: "name" | "manager" }) | null {
+  const toks = tokens(query);
+  if (!toks.length) return { score: 0, marks: [], on: "name" };
+  const a = matchName(toks, prep(team.name)), b = matchName(toks, prep(team.manager));
+  if (!a && !b) return null;
+  return a && (!b || a.score >= b.score) ? { ...a, on: "name" } : { ...b!, on: "manager" };
+}
+
+/** Filter and rank teams, best match first, then the caller's order. */
+export function rankTeams<T>(query: string, items: T[], get: (x: T) => { name: string; manager: string }) {
+  const out: { item: T; match: Match & { on: "name" | "manager" }; i: number }[] = [];
+  items.forEach((item, i) => { const match = matchTeam(query, get(item)); if (match) out.push({ item, match, i }); });
+  return out.sort((a, b) => b.match.score - a.match.score || a.i - b.i).map(({ item, match }) => ({ item, match }));
+}
+
+// ---- Names inside a sentence ----------------------------------------------
+// "Sk4zi won't move cook", "I don't want st brown", "who has jamarr": find the players and managers a sentence mentions,
+// with the same folding as the pickers (case, accents, punctuation, Jr./III don't matter).
+
+/** A mention: what was found, how sure (higher is better), and which sentence words it used ([from, to)). */
+export type Mention<T> = { item: T; score: number; span: [number, number] };
+
+/** Words that are also surnames. Alone, they only count when capitalized ("Love", not "I'd love"). */
+const COMMON = new Set(["strange", "marks", "golden", "reed", "hunter", "love", "will", "young", "white", "hill", "bell", "ford", "price", "hunt", "rice", "worthy", "hall", "gray", "best", "king", "page", "case", "mark", "sweat", "long", "strong", "bowers", "knight", "wright", "hope", "may", "rich", "free", "early", "street"]);
+const PARTICLE = new Set(["st", "de", "la", "le", "van", "von", "del", "da", "di", "mc", "san"]);
+const STOP = new Set(["the", "a", "an", "of", "and", "my", "your", "his", "her", "our", "in", "on", "to", "for", "from", "is", "it", "i", "am", "me", "we", "you", "team", "squad", "club", "fc", "picks", "pick", "made", "state", "wants", "want", "more", "trade", "says", "said", "league", "fantasy"]);
+
+type TWord = { s: string; cap: boolean };
+/** A sentence's words, folded, and whether each was typed with a capital letter. */
+function sentence(text: string): TWord[] {
+  const { chars, at } = fold(text);
+  const out: TWord[] = [];
+  let cur: TWord | null = null;
+  chars.forEach((c, k) => {
+    if (c === " ") { cur = null; return; }
+    if (!cur) { const o = text[at[k]]; cur = { s: "", cap: o !== o.toLowerCase() }; out.push(cur); }
+    cur.s += c;
+  });
+  return out;
+}
+
+const free = (skip: [number, number][] | undefined, i: number, j: number) => !skip?.some(([a, b]) => i < b && j >= a);
+const sorted = <T,>(found: (Mention<T> & { i: number })[]) => found.sort((a, b) => b.score - a.score || a.i - b.i).map(({ item, score, span }) => ({ item, score, span }));
+
+/**
+ * Players a sentence mentions, best first. Pass the pool in order of preference (the relevant roster first):
+ * when two players share a last name ("cook"), the earlier one wins the tie.
+ * - full name: "amon-ra st. brown", "aj brown", "jamarr chase"
+ * - first name start plus last name: "ken walker"
+ * - last name alone: "jefferson", "st brown", "cook's"
+ * - a first name no one else in the pool has: "jamarr", "puka"
+ * `skip` holds word ranges already used (the manager's name), so "Josh" the manager isn't Josh Allen.
+ * `names` are full names of every player (nameWords), so "jordan love" never reads as some other Jordan in the pool.
+ */
+export function playersInText<T>(text: string, items: T[], getName: (x: T) => string, opts: { skip?: [number, number][]; names?: Set<string> } = {}): Mention<T>[] {
+  const { skip, names } = opts;
+  const words = sentence(text);
+  if (!words.length) return [];
+  const preps = items.map((x) => prep(getName(x)));
+  const firsts = new Map<string, number>();
+  preps.forEach((p) => { const f = p.words[0]?.s; if (f) firsts.set(f, (firsts.get(f) ?? 0) + 1); });
+  // Someone's full name starts at word i: a first name there belongs to him, not to whoever else shares it
+  const nameAt = words.map((_, i) => {
+    if (!names) return false;
+    let s = words[i].s;
+    for (let k = i + 1; k < Math.min(words.length, i + 4); k++) { s += words[k].s; if (names.has(s)) return true; }
+    return false;
+  });
+  const found: (Mention<T> & { i: number })[] = [];
+  items.forEach((item, idx) => {
+    const p = preps[idx], w = p.words.map((x) => x.s);
+    if (!w.length) return;
+    const last = w.length - 1;
+    const surnames = [w[last]];
+    if (w.length >= 3 && PARTICLE.has(w[last - 1])) surnames.unshift(w[last - 1] + w[last]);
+    let best: Mention<T> | null = null;
+    const take = (score: number, i: number, j: number) => { if (!best || score > best.score) best = { item, score, span: [i, j + 1] }; };
+    for (let i = 0; i < words.length; i++) {
+      let s = "";
+      for (let j = i; j < Math.min(words.length, i + 6); j++) {
+        if (!free(skip, i, j)) break;
+        s += words[j].s;
+        const len = (j - i + 1) / 10;
+        // A trailing s reads as possessive ("cook's"), a hair below a player whose name really ends in s (Cooks)
+        if (s === p.compact) take(3 + len, i, j);
+        else if (j > i && s === p.compact + "s") take(2.95 + len, i, j);
+        const sur = surnames.find((x) => s === x || s === x + "s");
+        if (sur && (j > i || !COMMON.has(sur) || words[i].cap)) take((s === sur ? 2 : 1.95) + len, i, j);
+        // "ken walker", "j cook": the start of his first name, then his last name ("a" and "the" never count)
+        if (j > i && !STOP.has(words[i].s) && w[0].startsWith(words[i].s)) {
+          const rest = s.slice(words[i].s.length);
+          if (surnames.some((x) => rest === x || rest === x + "s")) take(2.5 + len, i, j);
+        }
+      }
+      // "jamarr": a first name that only one player in the pool has
+      const f = words[i].s;
+      if (free(skip, i, i) && !nameAt[i] && w.length > 1 && f.length >= 4 && (f === w[0] || f === w[0] + "s") && firsts.get(w[0]) === 1 && (!COMMON.has(w[0]) || words[i].cap)) take(1, i, i);
+    }
+    if (best) found.push({ ...(best as Mention<T>), i: idx });
+  });
+  return sorted(found);
+}
+
+/**
+ * Teams a sentence mentions, best first: the manager's name ("sk4zi", "Mike's"), the full team name,
+ * two or more words of it in a row ("jalen my way"), or one word of it no other team uses ("griddy").
+ * `avoid.words` are words of player names, so a team called "Bijan Mustard" isn't found by "bijan".
+ * `avoid.names` are full player names, so "Mike Evans" is the player, not the manager Mike.
+ */
+export function teamsInText<T>(text: string, items: T[], get: (x: T) => { name: string; manager: string }, avoid?: { words?: Set<string>; names?: Set<string> }): Mention<T>[] {
+  const words = sentence(text);
+  if (!words.length) return [];
+  const named = items.map((x) => { const g = get(x); return { mgr: prep(g.manager), team: prep(g.name) }; });
+  const uses = new Map<string, number>();
+  named.forEach(({ team }) => new Set(team.words.map((x) => x.s)).forEach((s) => uses.set(s, (uses.get(s) ?? 0) + 1)));
+  // Does a player's full name start at word i and run past word j?
+  const inName = (i: number, j: number) => {
+    if (!avoid?.names) return false;
+    let s = words.slice(i, j + 1).map((x) => x.s).join("");
+    for (let k = j + 1; k < Math.min(words.length, j + 4); k++) { s += words[k].s; if (avoid.names.has(s)) return true; }
+    return false;
+  };
+  const found: (Mention<T> & { i: number })[] = [];
+  items.forEach((item, idx) => {
+    const { mgr, team } = named[idx];
+    const tw = team.words.map((x) => x.s);
+    let best: Mention<T> | null = null;
+    const take = (score: number, i: number, j: number) => { if (!best || score > best.score) best = { item, score, span: [i, j + 1] }; };
+    for (let i = 0; i < words.length; i++) {
+      let s = "";
+      for (let j = i; j < Math.min(words.length, i + 8); j++) {
+        s += words[j].s;
+        const len = (j - i + 1) / 10;
+        if (mgr.compact && (s === mgr.compact || s === mgr.compact + "s") && !inName(i, j)) take(3 + len, i, j);
+        if (team.compact && s === team.compact) take(3 + len, i, j);
+      }
+      // A run of the team's words, in its order, with at least one real word in it
+      for (let k = 0; k < tw.length; k++) {
+        let n = 0;
+        while (i + n < words.length && k + n < tw.length && words[i + n].s === tw[k + n]) n++;
+        if (n >= 2 && tw.slice(k, k + n).some((x) => x.length >= 3 && !STOP.has(x))) take(2 + n / 10, i, i + n - 1);
+      }
+      const x = words[i].s;
+      if (x.length >= 5 && !STOP.has(x) && !avoid?.words?.has(x) && uses.get(x) === 1 && tw.includes(x)) take(1, i, i);
+    }
+    if (best) found.push({ ...(best as Mention<T>), i: idx });
+  });
+  return found.sort((a, b) => b.score - a.score || a.span[0] - b.span[0] || a.i - b.i).map(({ item, score, span }) => ({ item, score, span }));
+}
+
+/** Every word of these names and each whole name, folded, for teamsInText's `avoid`. */
+export function nameWords(names: string[]): { words: Set<string>; names: Set<string> } {
+  const words = new Set<string>(), full = new Set<string>();
+  names.forEach((n) => { const p = prep(n); p.words.forEach((w) => words.add(w.s)); if (p.words.length > 1) full.add(p.compact); });
+  return { words, names: full };
+}

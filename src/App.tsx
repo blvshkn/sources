@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
 import { loadLeague } from "./sleeper";
+import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
 import { HowItWorks, Legal } from "./components/About";
 import {
@@ -438,7 +439,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // "I don't want Chase Brown" typed into the note box works like the button
     if (r.kind === "note") {
       const m = r.text.match(/\b(?:i\s+)?(?:don'?t|do not)\s+want\s+(.+)$/i);
-      const hit = m && t.get.find((id) => { const n = playerById(id).name.toLowerCase(), q = m[1].toLowerCase().replace(/[.!]+$/, "").trim(); return n === q || n.split(" ").slice(-1)[0] === q || n.startsWith(q); });
+      // Same matcher as the pickers: "st brown", "jamarr", "aj brown", or the picker's own shorthand ("asb", "chase b")
+      const gets = t.get.map(playerById);
+      const hit = m && (playersInText(m[1], gets, (p) => p.name)[0]?.item.id
+        ?? rankPlayers(m[1], gets, (p) => ({ name: p.name })).find((x) => x.match.score >= TIER.inner)?.item.id);
       if (hit) r = { kind: "pass", playerId: hit };
     }
     setHiddenIdeas((c) => [...c.filter((k) => k !== t.key), t.key]);
