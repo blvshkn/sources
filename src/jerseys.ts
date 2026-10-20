@@ -160,8 +160,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   NYG: { name: "New York Giants", conf: "NFC", div: "East", body: "#0B2265", number: W, outline: W, collar: plain(), cuff: "#0B2265", panel: "#0B2265",
     away: { number: "#A71930", outline: "#A71930", collar: plain(), cuff: W } },
   // Wide black V and black sleeve ends; numbers with a black line and black drop shadow.
-  PHI: { name: "Philadelphia Eagles", conf: "NFC", div: "East", body: "#004C54", number: W, outline: "#000000", collar: solid("#000000", { w: 28 }), cuff: "#000000", panel: "#004C54",
-    away: { number: "#004C54", outline: "#000000", collar: solid("#000000", { w: 28 }), cuff: "#000000" } },
+  PHI: { name: "Philadelphia Eagles", conf: "NFC", div: "East", body: "#004C54", number: W, outline: "#A5ACAF", collar: solid("#000000", { w: 28 }), cuff: "#000000", panel: "#004C54",
+    away: { number: "#004C54", outline: "#A5ACAF", collar: solid("#000000", { w: 28 }), cuff: "#000000" } },
   // 2026: burgundy, plain V, gold and white stripes at the cuff, white block numbers trimmed gold.
   WAS: { name: "Washington Commanders", conf: "NFC", div: "East", body: "#5A1414", number: W, outline: "#FFB612", collar: plain(), cuff: "#5A1414", panel: "#5A1414",
     away: { number: "#5A1414", outline: "#FFB612", collar: solid("#5A1414", { w: 24 }), cuff: W } },
@@ -363,7 +363,8 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   LAC: { home: { slant: 5, noShoulder: true }, away: { slant: 5, noShoulder: true } },
   DAL: { away: { outline2: W } },
   NYG: { home: FLAT, away: FLAT },
-  PHI: { home: { shadow: "#000000" }, away: { shadow: "#000000" } },
+  // White numbers lined silver, then black; green lined silver, then black, on the road.
+  PHI: { home: { outline2: "#000000" }, away: { outline2: "#000000" } },
   WAS: {},
   CHI: {},
   DET: {},
@@ -372,7 +373,7 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   ATL: {},
   CAR: {},
   NO: {},
-  TB: { home: { outline2: "#34302B" }, away: { outline2: "#34302B" } },
+  TB: { home: { outline2: "#0A0A08" }, away: { outline2: "#0A0A08" } },
   ARI: { away: OFF },
   LAR: { home: { plain: true, noShoulder: true, inline: "#FFE76A", inlineAt: 13, inlineW: 4 }, away: { plain: true, noShoulder: true, inline: "#4F78DA", inlineAt: 13, inlineW: 4 } },
   SF: { home: FLAT, away: FLAT },

@@ -702,7 +702,25 @@ const CHAKRA_600: Metric[] = [[644, 47, 594], [374, 16, 313], [566, 31, 531], [5
 const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], [668, 47, 625], [672, 16, 641], [666, 47, 625], [695, 47, 641], [569, 16, 547], [689, 47, 641], [699, 63, 656]];
 const TOMORROW_700: Metric[] = [[692, 47, 656], [478, 47, 453], [683, 47, 641], [695, 63, 656], [709, 16, 688], [708, 63, 672], [715, 47, 672], [603, 0, 578], [696, 47, 656], [730, 63, 688]];
 const BIG_SHOULDERS_700: Metric[] = [[467, 31, 438], [252, 31, 219], [451, 31, 422], [464, 31, 422], [474, 16, 453], [474, 31, 438], [459, 31, 438], [439, 16, 422], [460, 31, 422], [459, 31, 422]];
+const BIG_SHOULDERS_800: Metric[] = [[487, 31, 453], [263, 31, 234], [470, 31, 453], [484, 31, 453], [492, 16, 484], [494, 31, 453], [479, 31, 453], [462, 16, 438], [480, 31, 453], [479, 31, 438]];
+const LEAGUE_GOTHIC: Metric[] = [[354, 31, 328], [240, 16, 203], [363, 31, 328], [352, 16, 328], [351, 16, 344], [342, 16, 313], [342, 16, 313], [307, 16, 297], [340, 16, 328], [342, 16, 313]];
+const FJALLA: Metric[] = [[520, 47, 469], [403, 0, 406], [476, 31, 438], [489, 31, 453], [532, 31, 516], [498, 47, 453], [508, 47, 469], [409, 16, 406], [504, 31, 469], [508, 47, 469]];
+const RAJDHANI_700: Metric[] = [[536, 47, 484], [334, 16, 281], [493, 31, 453], [509, 31, 469], [541, 31, 531], [506, 31, 469], [525, 47, 484], [431, 16, 422], [542, 47, 500], [525, 31, 484]];
 const FONT_TEAM: Record<string, FontNumerals> = {
+  TEN: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.8 }),
+  WAS: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.78 }),
+  SF: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 }),
+  TB: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 }),
+  // Condensed rounded rectangles with flat sides.
+  CLE: font("Big Shoulders", 800, 813, BIG_SHOULDERS_800, { scaleX: 1.15 }),
+  // Tall, narrow and round, with a slight lean.
+  PIT: font("League Gothic", 400, 750, LEAGUE_GOTHIC, { skew: 5 }),
+  // Tall, narrow and round, with a footed 1.
+  PHI: font("Fjalla One", 400, 844, FJALLA, { scaleX: 0.82 }),
+  // Squared bowls with softened corners and an angled flag.
+  SEA: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.78 }),
+  // Angular, light, pointed.
+  HOU: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.84 }),
   // Clipped block, footed 1 and 4, a diagonal 2: the classic pro block in its current cut.
   KC: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.82 }),
   LV: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.72 }),
