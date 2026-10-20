@@ -576,7 +576,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     if (!m) return;
     const o = m.matchup_id ? ms.find((x) => x.matchup_id === m.matchup_id && x.roster_id !== m.roster_id) : undefined;
     history[i + 1] = {
-      starters: (m.starters ?? []).filter((id) => id && id !== "0"), players: m.players ?? [], points: m.players_points ?? {},
+      // Keep Sleeper's "0" for an empty slot so every starter stays in its own slot (an empty K doesn't shift DEF up)
+      starters: (m.starters ?? []).map((id) => id || "0"), players: m.players ?? [], points: m.players_points ?? {},
       total: m.points ?? 0, oppTotal: o?.points ?? undefined, oppName: o ? opponentName(o.roster_id) : undefined,
     };
   });

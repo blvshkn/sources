@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
-import { eff, isOut, lineupFor, scored, specialLineup, specialPts } from "./engine";
+import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
 import { countPlays, sleeperLiveProj, sleeperWinProb, type PlayCount } from "./liveMath";
 export type { PlayCount } from "./liveMath";
 
@@ -112,10 +112,10 @@ function demo(): Live {
     const pts = Math.round(eff(p, true) * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
     points[id] = pts; return a + pts;
   }, 0);
-  // Everyone on a roster gets points; only starters count toward the team score
-  const starters = (ids: string[]) => lineupFor(ids, true).slots.map((x) => x.player?.id).filter(Boolean) as string[];
-  sideTotal(YOU.roster); teamPts[YOU.id] = Math.round(starters(YOU.roster).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10;
-  if (OPPONENT_ID) { const r = teamById(OPPONENT_ID).roster; sideTotal(r); teamPts[OPPONENT_ID] = Math.round(starters(r).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10; }
+  // Everyone on a roster gets points; only the starters set in Sleeper count toward the team score
+  const total = (t: Team) => { sideTotal(t.roster); teamPts[t.id] = Math.round(startersOf(t).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10; };
+  total(YOU);
+  if (OPPONENT_ID) total(teamById(OPPONENT_ID));
   return { points, games, teamPts, left, at: Date.now() };
 }
 
@@ -243,7 +243,9 @@ export function projOutlook(starters: { pos: string; pts: number | null }[]): Ou
   for (const s of starters) { const pr = s.pts ?? 0; o.expected += pr; o.variance += ((SWING[s.pos] ?? 0.85) * pr) ** 2; }
   return o;
 }
-export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), t.setSpecial ? t.setSpecial.map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[] : specialLineup(t).slots.map((x) => x.player));
+/** Every K/DEF a team starts in Sleeper; best projected only for a slot Sleeper left empty. */
+export const specialsOf = (t: Team) => startedSpecials(t).map((x) => x.player);
+export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), specialsOf(t));
 /** Chance team A beats team B, as a percent, computed the way Sleeper's matchup page does it from each side's
  *  points so far and projected finish (sleeperWinProb). 1 to 99 until both sides are final. */
 export function winChance(a: Outlook, b: Outlook): number {

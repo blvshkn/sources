@@ -472,7 +472,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const newsPlayers = useMemo(() => yourPlayers(), [fkey, YOU.roster.join()]);
   const rosterNews = useRosterNews(newsPlayers);
   const urgent = useMemo(() => urgentNews(newsPlayers, rosterNews.byId), [rosterNews.byId, newsPlayers]);
-  const inbox = useMemo(() => buildInbox({ nudges, checks, lineup: yourLineup, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer })
+  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
   [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;

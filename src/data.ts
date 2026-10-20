@@ -337,6 +337,7 @@ function demoSpecials(teams: Team[]): Record<string, SpecialPlayer> {
     const def: SpecialPlayer = { id: d[3], name: defName(d[3]), pos: "DEF", nfl: d[3], wk: DEMO_BYES.includes(d[3]) ? null : d[4], proj: d[4], opp: gd ? `${gd.home ? "vs" : "@"} ${gd.opp}` : undefined, gameDate: gd?.date };
     out[k.id] = k; out[def.id] = def;
     t.special = [k.id, def.id];
+    t.setSpecial = [k.id, def.id]; // the demo "Sleeper lineup" starts its only K and DEF
   }
   return out;
 }

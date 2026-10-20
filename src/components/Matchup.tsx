@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 import { WeekStepper } from "./WeekStepper";
 import { WeekPlayer } from "../weeks";
 import { Slot, gameIn, pendingMatchupWeek, clearMatchupWeek, useWeekMatch } from "../weekMatch";
-import { OPPONENT_ID, Player, SLEEPER_SET, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
-import { eff, fits, fmt, lineupFor, round1, SlotName, specialLineup } from "../engine";
+import { OPPONENT_ID, Player, SLEEPER_SET, SpecialPlayer, Team, WEEK, YOU, gameLine, onBye, playerById, sleeperUrl, teamById } from "../data";
+import { eff, fits, fmt, lineupFor, round1, SlotName, specialPts, startedSpecials, StartedSpecial } from "../engine";
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Icon, StatusPill, LiveNum } from "./ui";
-import { useLive, expect, outlookOf, winChance, playCount } from "../live";
+import { Live, useLive, expect, onPace, outlookOf, winChance, playCount } from "../live";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
@@ -26,6 +26,26 @@ function slotted(team: Team, starters: string[] | undefined): { slot: SlotName; 
     if (id) used.add(id);
     return { slot: s.slot, id };
   });
+}
+
+/** A K/DEF's expected finish right now: final points, live points or projection, the way the totals count it. */
+const spPts = (live: Live, p: SpecialPlayer | null) => {
+  if (!p) return 0;
+  const now = live.points[p.id], st = live.games[p.nfl], pr = live.proj?.[p.id] ?? specialPts(p);
+  if (now === undefined) return pr;
+  return st === "complete" ? now : st === "in_game" ? onPace(now, pr, live.left?.[p.nfl]) ?? Math.max(now, pr) : pr;
+};
+
+/** A K/DEF in the matchup. One Sleeper left empty shows our best-projected pick, labeled Suggested. */
+function SpecialWho({ s, side }: { s: StartedSpecial | null; side: "you" | "them" }) {
+  const p = s?.player;
+  if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
+  return (
+    <span className={`mu-p ${side}`}>
+      <Avatar p={p} size={32} />
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{p.wk === null ? " · Bye" : p.opp ? ` · ${p.opp}` : ""}{s.suggested && <span className="muted"> · Suggested</span>}</small></span>
+    </span>
+  );
 }
 
 /** The full matchup for any week. This week is the live, interactive one (try swaps); other weeks are read-only:
@@ -53,10 +73,12 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
     <><button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>{stepper}<section className="card card-pad"><p className="small muted">No matchup this week.</p></section></>
   );
 
-  // Totals include K/DEF; win chance from expected finishes and what's still to play
-  const myO = outlookOf(live, mine.map((s) => s.id), specialLineup(YOU).slots.map((x) => x.player));
-  const oppO = outlookOf(live, theirs.map((s) => s.id), specialLineup(opp).slots.map((x) => x.player));
-  const baseO = outlookOf(live, sleeperMine.map((s) => s.id), specialLineup(YOU).slots.map((x) => x.player));
+  // Totals include the K/DEF started in Sleeper (best projected only for a slot left empty); win chance from
+  // expected finishes and what's still to play
+  const myK = startedSpecials(YOU), oppK = startedSpecials(opp);
+  const myO = outlookOf(live, mine.map((s) => s.id), myK.map((x) => x.player));
+  const oppO = outlookOf(live, theirs.map((s) => s.id), oppK.map((x) => x.player));
+  const baseO = outlookOf(live, sleeperMine.map((s) => s.id), myK.map((x) => x.player));
   const myTotal = round1(myO.expected), oppTotal = round1(oppO.expected), baseTotal = round1(baseO.expected);
   const chance = winChance(myO, oppO);
   const ids = [...mine.map((s) => s.id), ...theirs.map((s) => s.id)];
@@ -64,14 +86,16 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
   const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
   const scored = (o: { scored: number }) => round1(o.scored);
   const nflOf = (id: string | null) => (id ? playerById(id).nfl : null);
-  const myCount = playCount(live, [...mine.map((s) => nflOf(s.id)), ...specialLineup(YOU).slots.map((x) => x.player?.nfl)]);
-  const oppCount = playCount(live, [...theirs.map((s) => nflOf(s.id)), ...specialLineup(opp).slots.map((x) => x.player?.nfl)]);
+  const myCount = playCount(live, [...mine.map((s) => nflOf(s.id)), ...myK.map((x) => x.player?.nfl)]);
+  const oppCount = playCount(live, [...theirs.map((s) => nflOf(s.id)), ...oppK.map((x) => x.player?.nfl)]);
+  const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), p.wk === null) : "");
   const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
   const best = lineupFor(YOU.roster, true);
   const edges = mine.map((s, i) => round1(pts(s.id) - pts(theirs[i]?.id ?? null)));
-  const winning = edges.filter((e) => e > 0).length;
+  const kEdges = myK.map((x, i) => round1(spPts(live, x.player) - spPts(live, oppK[i]?.player ?? null)));
+  const winning = [...edges, ...kEdges].filter((e) => e > 0).length;
   const bigWin = edges.reduce((bi, e, i) => (e > edges[bi] ? i : bi), 0);
   const bigLoss = edges.reduce((bi, e, i) => (e < edges[bi] ? i : bi), 0);
 
@@ -109,7 +133,7 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
         </header>
         <div className={`mu-bar ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">
-          You win <b>{winning} of {mine.length}</b> spots.
+          You win <b>{winning} of {mine.length + myK.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
           {edges[bigLoss] < 0 && <> Weakest spot: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
         </p>
@@ -154,6 +178,17 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
             </div>
           );
         })}
+        {myK.map((x, i) => {
+          const them = oppK[i] ?? null, e = kEdges[i];
+          return (
+            <div key={`k-${i}`} className="mu-row">
+              <span className="mu-slot">{x.slot}</span>
+              <span className={`mu-mine${spCls(x.player)}`}><SpecialWho s={x} side="you" />{x.player ? <PtsCell id={x.player.id} g={gameNow(live, x.player.id, x.player.nfl)} proj={specialPts(x.player)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}</span>
+              <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
+              <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho s={them} side="them" />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+            </div>
+          );
+        })}
         <div className="mu-foot">
           <span>Tap any of your players to try a swap.</span>
           {round1(best.total - myTotal) > 0 && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(round1(best.total - myTotal))}</button>}
@@ -164,13 +199,13 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
 }
 
 /** One side of a row in a week other than this one: name, position, team and that week's game. */
-function WeekWho({ p, side, week }: { p: WeekPlayer | null; side: "you" | "them"; week: number }) {
+function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; side: "you" | "them"; week: number; suggested?: boolean }) {
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
   const game = gameIn(p, week);
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} text={p.pos === "DEF" ? p.nfl : undefined} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl} · {game ?? "Bye"}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl} · {game ?? "Bye"}{suggested && <span className="muted"> · Suggested</span>}</small></span>
     </span>
   );
 }
@@ -216,9 +251,9 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack: () => vo
           return (
             <div key={i} className="mu-row">
               <span className="mu-slot">{a.slot || b.slot}</span>
-              <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} /><Num x={a} /></span>
+              <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} /></span>
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} /><Num x={b} /></span>
+              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} /><Num x={b} /></span>
             </div>
           );
         })}

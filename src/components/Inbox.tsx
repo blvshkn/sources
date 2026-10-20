@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Player, DEADLINES } from "../data";
-import { eff, fmt, Lineup, Trade } from "../engine";
-import type { Live } from "../live";
+import { Player, DEADLINES, YOU, playerById } from "../data";
+import { eff, fmt, Trade } from "../engine";
+import { startersOf, type Live } from "../live";
 import { Icon, IconName } from "./ui";
 import { Tooltip } from "./Tooltip";
 import type { Nudge } from "./Wire";
@@ -29,10 +29,9 @@ const lockShort = () => DEADLINES.lock.replace(/^Lineups lock\s*/i, "Locks ");
 
 /** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
  *  Lineup and Wire screens use, so nothing here is invented for the feed. */
-export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTag, news = [], pass }: {
+export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news = [], pass }: {
   nudges: Nudge[];
   checks: Check[];
-  lineup: Lineup;
   live: Live;
   go: (dest: string) => void;
   loadTrade: (t: Trade) => void;
@@ -57,8 +56,8 @@ export function buildInbox({ nudges, checks, lineup, live, go, loadTrade, keepTa
     });
   });
 
-  // Live moments: starters past their projection, then one running line for the finals
-  const starters = lineup.slots.map((x) => x.player).filter((p): p is Player => !!p);
+  // Live moments: starters past their projection, then one running line for the finals. The lineup set in Sleeper.
+  const starters = startersOf(YOU).map(playerById).filter((p): p is Player => !!p);
   starters.forEach((p) => {
     const pts = live.points[p.id], proj = eff(p, true);
     if (live.games[p.nfl] === "in_game" && pts !== undefined && proj > 0 && pts >= proj)

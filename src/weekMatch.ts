@@ -10,7 +10,8 @@ import { weekMatchups } from "./weekFeed";
 import { projOutlook, winChance } from "./live";
 import { seasonFor } from "./schedule";
 
-export type Slot = { slot: string; p: WeekPlayer | null };
+/** suggested: a K/DEF Sleeper has no lineup for yet (future weeks), filled with the best projected one. */
+export type Slot = { slot: string; p: WeekPlayer | null; suggested?: boolean };
 export interface MatchSide { team: Team; total: number; starters: Slot[] }
 export interface WeekMatch {
   week: number;
@@ -35,6 +36,21 @@ function noOpp(week: number, posted: boolean): WeekMatch["empty"] {
   return { title: "Bye week", body: `You don't play anyone in Week ${week}.` };
 }
 
+const isSpecial = (slot: string) => slot === "K" || slot === "DEF";
+const sum = (st: Slot[]) => Math.round(st.reduce((a, x) => a + (x.p?.pts ?? 0), 0) * 10) / 10;
+/** A future week's lineup: a K/DEF Sleeper already has in that week's matchup stays put; any other K/DEF slot keeps
+ *  the best projected pick and is marked suggested. Skill slots stay the best projected lineup. */
+function passSpecials(side: { starters: Slot[]; bench: WeekPlayer[] }, set: (string | null)[] | null | undefined) {
+  const pool = [...side.starters.map((x) => x.p), ...side.bench].filter((p): p is WeekPlayer => !!p);
+  const starters = side.starters.map((x, i) => {
+    if (!isSpecial(x.slot)) return x;
+    const id = set?.[i];
+    const p = id && id !== "0" ? pool.find((q) => q.id === id && q.pos === x.slot) : undefined;
+    return p ? { slot: x.slot, p } : { ...x, suggested: !!x.p };
+  });
+  return { starters, total: sum(starters) };
+}
+
 function finish(week: number, mine: WeekView, opp: MatchSide | null, posted: boolean): WeekMatch {
   const kind = week < WEEK ? "past" : "future";
   const me: MatchSide = { team: YOU, total: mine.total, starters: mine.starters };
@@ -44,9 +60,13 @@ function finish(week: number, mine: WeekView, opp: MatchSide | null, posted: boo
 }
 
 function demoMatch(week: number): WeekMatch {
-  const mine = peekWeek(week)!;
+  const week0 = peekWeek(week)!;
   const id = demoOppId(week), t = id ? teamOf(id) : undefined;
-  const side = t ? { team: t, ...demoTeamWeek(teamIds(t), week) } : null;
+  const future = week > WEEK;
+  // The demo has no lineups set for weeks ahead, so their K/DEF are suggestions, like a live league's
+  const mine = future ? { ...week0, ...passSpecials(week0, null) } : week0;
+  const tw = t ? demoTeamWeek(teamIds(t), week) : null;
+  const side = t && tw ? { team: t, ...tw, ...(future ? passSpecials(tw, null) : {}) } : null;
   return finish(week, mine, side, true);
 }
 
@@ -65,7 +85,9 @@ async function liveMatch(week: number): Promise<WeekMatch> {
     }));
     return finish(week, mine, { team: t, total: o.points ?? 0, starters }, true);
   }
-  return finish(week, mine, { team: t, ...(await teamWeek(teamIds(t), week)) }, true);
+  // Weeks ahead: best projected lineups, except a K/DEF Sleeper already has set for that week
+  const theirs = await teamWeek(teamIds(t), week);
+  return finish(week, { ...mine, ...passSpecials(mine, row?.starters) }, { team: t, ...passSpecials(theirs, o.starters) }, true);
 }
 
 const cache = new Map<string, WeekMatch>();

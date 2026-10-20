@@ -76,6 +76,26 @@ export function specialLineup(team: Team): SpecialLineup {
   const total = slots.reduce((s, x) => s + (x.player ? specialPts(x.player) : 0), 0);
   return { slots, bench: pool.filter((p) => !used.has(p.id)), total };
 }
+/** The K and DEF a team starts this week, slot by slot, as set in Sleeper. Only a slot Sleeper left empty (or a team
+ *  we have no Sleeper lineup for) falls back to the best-projected one on the roster, marked `suggested`. */
+export interface StartedSpecial { slot: "K" | "DEF"; player: SpecialPlayer | null; suggested: boolean }
+export function startedSpecials(team: Team): StartedSpecial[] {
+  const set = team.setSpecial ?? (team.id === YOU.id ? LEAGUE.sleeperSpecial : undefined) ?? [];
+  const used = new Set<string>();
+  const out: StartedSpecial[] = (LEAGUE.specialSlots ?? []).map((slot) => {
+    const id = set.find((x) => !used.has(x) && LEAGUE.specials?.[x]?.pos === slot);
+    if (id) used.add(id);
+    return { slot, player: id ? LEAGUE.specials![id] : null, suggested: false };
+  });
+  const pool = (team.special ?? []).map((id) => LEAGUE.specials?.[id]).filter((p): p is SpecialPlayer => !!p && !used.has(p.id) && !set.includes(p.id));
+  pool.sort((a, b) => specialPts(b) - specialPts(a));
+  for (const s of out) {
+    if (s.player) continue;
+    const p = pool.find((x) => x.pos === s.slot && !used.has(x.id));
+    if (p) { used.add(p.id); s.player = p; s.suggested = true; }
+  }
+  return out;
+}
 
 // ---- Injured reserve -----------------------------------------------------
 export interface IrReport {

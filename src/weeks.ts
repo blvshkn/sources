@@ -156,7 +156,8 @@ async function liveWeek(week: number): Promise<WeekView> {
     const h = LEAGUE.history?.[week];
     if (!h || !h.players.length) return { week, kind: "past", starters: [], bench: [], total: 0, empty: `No matchup data for Week ${week}.` };
     const ord = order();
-    const starters = h.starters.map((id, i) => ({ slot: SLOT_NAME[ord[i]] ?? ord[i] ?? "FLEX", p: make(id, h.points[id]) }));
+    // What Sleeper says you started, slot for slot; a slot left empty ("0") stays empty
+    const starters = h.starters.map((id, i) => ({ slot: SLOT_NAME[ord[i]] ?? ord[i] ?? "FLEX", p: id && id !== "0" ? make(id, h.points[id]) : null }));
     const bench = h.players.filter((id) => !h.starters.includes(id)).map((id) => make(id, h.points[id])).sort((a, b) => (b.pts ?? -1) - (a.pts ?? -1));
     return { week, kind: "past", starters, bench, total: h.total, oppTotal: h.oppTotal, oppName: h.oppName };
   }

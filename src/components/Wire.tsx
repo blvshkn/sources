@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
-import { Trade, TeamNeeds, fmt, offerRead, verdict, lineupFor, eff, weakSlots } from "../engine";
+import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./PlayerSheet";
 import { TeamAvatar } from "./TeamPicker";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { useLive, onPace, teamOutlook, winChance } from "../live";
+import { useLive, onPace, teamOutlook, winChance, startersOf } from "../live";
 import { avatarSrc } from "../sleeper";
 import { WeekPlayer } from "../weeks";
 import { gameIn, openMatchupWeek, useLineupWeek, useWeekMatch } from "../weekMatch";
@@ -264,7 +264,7 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
   if (week !== WEEK) return <WeekThreats week={week} onGo={onGo} />;
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const go = () => { openMatchupWeek(WEEK); onGo("matchup"); };
-  const threats = opp ? (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3) : [];
+  const threats = opp ? startersOf(opp).map(playerById).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3) : [];
   const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} them />;
   return (
     <section className="card wk thr" aria-label="Opponent threats">
@@ -314,7 +314,7 @@ function WeekThreats({ week, onGo }: { week: number; onGo: (t: string) => void }
 function threatNote(p: Player, rank: number, manager: string) {
   const proj = eff(p, true);
   const place = ["the most", "the second most", "the third most"][rank] ?? "among the most";
-  const mine = (lineupFor(YOU.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]).filter((x) => x.pos === p.pos).sort((a, b) => eff(b, true) - eff(a, true))[0];
+  const mine = startersOf(YOU).map(playerById).filter((x) => x.pos === p.pos).sort((a, b) => eff(b, true) - eff(a, true))[0];
   const vs = vsOf(p);
   const first = `He projects ${proj.toFixed(1)} this week, ${place} in ${manager}'s lineup${vs ? `, playing ${vs.replace(/^v /, "vs ")}` : ""}.`;
   if (!mine) return first;
@@ -327,8 +327,9 @@ function threatNote(p: Player, rank: number, manager: string) {
 function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const live = useLive();
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const mine = lineupFor(YOU.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[];
-  const theirs = opp ? (lineupFor(opp.roster, true).slots.map((x) => x.player).filter(Boolean) as Player[]) : [];
+  // The lineups set in Sleeper (best projected only when Sleeper has none)
+  const mine = startersOf(YOU).map(playerById);
+  const theirs = opp ? startersOf(opp).map(playerById) : [];
   const dayOf = (p: Player) => (onBye(p.nfl) ? "Bye" : p.gameDate ? new Date(`${p.gameDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "long" }) : "This week");
   const order = ["Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "This week", "Bye"];
   const days = order.map((d) => ({ d, ps: mine.filter((p) => dayOf(p) === d) })).filter((x) => x.ps.length);
