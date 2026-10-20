@@ -19,6 +19,10 @@ html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats b { white-space: nowrap;
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats b { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.01em; }
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats .wv-l3 > b { color: var(--faint); }
 
+/* One 1px divider between rows: each row had a border-top AND an inset shadow (2px lines), and the first row's
+   border doubled the list's own top border */
+html:root:not(#_):not(#_) .wv3-list > .wv { border-top: 0; }
+
 /* Not interested (.ps-end) sits exactly over the reserved end column, so the row needs no extra right padding */
 html:root:not(#_):not(#_) .wv3-list .wv.ps-wv > .wv-row { padding-right: 16px !important; }
 html:root:not(#_):not(#_) .wv3-list .wv > .ps-end { right: 16px; }
@@ -31,7 +35,7 @@ html:root:not(#_):not(#_) .wv3-list .wv-name > .wv-nm { flex: 0 1 auto; min-widt
 
 /* Statline under the name (past weeks, and anyone who already played this week): one line, cut short */
 html:root:not(#_):not(#_) .wv3-list .wv-meta > * { flex: none; }
-html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-line { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .wv3-list .wv-meta .wv-line { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @container wvl (min-width: 720px) {
   html:root:not(#_):not(#_) .wv3-list .wv .wv-row {
@@ -142,3 +146,29 @@ html:root:not(#_):not(#_) .deal-tray .dt-chip > span { white-space: nowrap; }
 /* The page already pads its bottom by the tray and tab bar; the spacer, at zero height, only adds the column gap: 20px clear above the tray
    (it was 128px, a dead gap) */
 @media (max-width: 860px) { html:root:not(#_):not(#_) .dt-spacer { height: 0; } }
+
+/* ---------- Lineup: Asking price ---------- */
+/* Quick list sits on the card's content edges: avatars under the title, buttons on the right edge */
+html:root:not(#_):not(#_) .wt .wt-quick li { padding: 6px 0; }
+/* Name row: the count chip and Remove price end on the content edge, with or without the Remove price link */
+html:root:not(#_):not(#_) .wt .wt-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+html:root:not(#_):not(#_) .wt .wt-who > .wt-name { flex: 1 1 0; }
+@media (max-width: 520px) { html:root:not(#_):not(#_) .wt .wt-who > .wt-clear { flex-basis: 100%; padding-left: 52px; } }
+/* Points / % value toggle: the 34px buttons fit inside the track */
+html:root:not(#_):not(#_) .wt .wt-price .seg { height: 40px; }
+/* The number is Geist Mono; the words after it are not */
+html:root:not(#_):not(#_) .wt .wt-readout small { font-family: var(--font-body); letter-spacing: 0; }
+
+/* ---------- Lineup: Tags ---------- */
+/* Header, suggestions and rows share one 16px side inset (rows were 12, the rest 14) */
+html:root:not(#_):not(#_) .roster-grid > .card > :is(.roster-head, .suggest, .roster-row) { padding-left: 16px; padding-right: 16px; }
+/* The first row draws the divider under the suggestions; no second line on top of it */
+html:root:not(#_):not(#_) .roster-grid > .card > .suggest:has(+ .roster-row) { border-bottom: 0; }
+
+/* ---------- Trade: Notes ---------- */
+/* The who chip matches the 40px mic and send buttons beside it */
+html:root:not(#_):not(#_) .composer.has-who > .sel-trigger.composer-who { height: 40px; }
+
+/* ---------- Waivers: Top pickup ---------- */
+/* Points in the plan lines are numbers: Geist Mono like every other number */
+html:root:not(#_):not(#_) .topk .topk-plan b { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.01em; }

@@ -399,7 +399,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
               <span className="wv-name"><span className="wv-nm">{e.fa.name}</span>{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
                 {e.no ? <span className="wv-tag ps-tag">Not interested</span> : e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
                 {kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
-              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}{line && <span className="wv-line">· {line}</span>}</span>
+              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}{line && <Tooltip content={line}><span className="wv-line">· {line}</span></Tooltip>}</span>
             </span>
             <span className={`wv-proj${box.k !== "Proj" ? " wv3-scored" : ""}`}><span>{box.k}</span><b>{box.v}</b></span>
             <span className="wv-stats">{stats}</span>
