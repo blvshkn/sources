@@ -549,7 +549,7 @@ export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad
   if (t.youDelta >= 0.5)
     return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup ${t.themDelta <= -0.05 ? `drops ${Math.abs(t.themDelta).toFixed(1)}` : `barely moves (${fmt(t.themDelta)})`}. ${market}. Expect a no unless you add something.` };
   if (t.themDelta >= 0.5)
-    return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. ${market}. Ask for more or walk.` };
+    return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. ${market}. Ask for a little more before you send it.` };
   return { label: "Lateral", tone: "warn", line: `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)}). ${market}.` };
 }
 
@@ -1149,5 +1149,5 @@ export function verdictMulti(m: MultiTrade): { label: string; tone: "good" | "wa
   const gainers = m.legs.filter((l) => l.trade.themDelta >= 0.5).map((l) => l.team.manager);
   if (!gainers.length)
     return { label: "Nobody wins", tone: "bad", line: `Every lineup in this trade gets worse, yours by ${fmt(m.youDelta).slice(1)} a week. Start from what each team needs.` };
-  return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week while ${gainers.length === m.legs.length ? "your partners gain" : `${list(gainers)} ${gainers.length > 1 ? "gain" : "gains"}`}. Ask for more or walk.` };
+  return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week while ${gainers.length === m.legs.length ? "your partners gain" : `${list(gainers)} ${gainers.length > 1 ? "gain" : "gains"}`}. Ask for a little more before you send it.` };
 }

@@ -306,6 +306,18 @@ export function FlagLine({ ids, flags }: { ids: string[]; flags: PillFlags }) {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** Bring the read's headline into view just under the sticky top bar. Waits a frame so a read that is still rendering has a box to scroll to. */
+function seeRead() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const el = document.querySelector<HTMLElement>(".builder .dv-verdict") ?? document.querySelector<HTMLElement>(".builder .deal");
+    if (!el) return;
+    const bar = document.querySelector<HTMLElement>(".topbar");
+    const pinned = bar && /sticky|fixed/.test(getComputedStyle(bar).position) ? bar.getBoundingClientRect().height : 0;
+    el.style.scrollMarginTop = `${Math.round(pinned) + 16}px`;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+  }));
+}
 /** The why, in one plain sentence: your points, then your value, then what to do. */
 function pointsClause(d: number) {
   return d <= -0.05 ? `You lose ${Math.abs(d).toFixed(1)} points a week` : d >= 0.05 ? `You gain ${d.toFixed(1)} points a week` : "Your lineup barely moves";
@@ -322,8 +334,8 @@ const NEXT: Record<string, (them: string) => string> = {
   "Helps both, tilted your way": (t) => `${t} may want a little more first.`,
   "Helps both, you overpay": () => "Only worth it if you need the fit.",
   "Tough sell": (t) => `${t} gets nothing out of it, so add something.`,
-  "You're overpaying": () => "Ask for more or walk.",
-  "Lateral": () => "Not worth the hassle.",
+  "You're overpaying": () => "Ask for a little more before you send it.",
+  "Lateral": () => "Not worth sending as it stands.",
   "Take it": () => "Accept it.",
   "Win-now move": () => "Worth it if you're chasing a title this year.",
   "Close": () => "Ask for a small sweetener.",
@@ -337,7 +349,7 @@ export function multiWhy(m: MultiTrade, label: string) {
   const holdouts = m.legs.filter((l) => l.accept.label === "Long shot").map((l) => l.team.manager);
   const n = m.legs.length + 1;
   const end = label === "Nobody wins" ? "Start from what each team needs."
-    : label === "You're overpaying" ? "Ask for more or walk."
+    : label === "You're overpaying" ? "Ask for a little more before you send it."
     : label === "Barely moves you" ? `A ${n}-team trade is a lot of work for that.`
     : label.startsWith("All") ? (holdouts.length ? "" : "Everyone gets better, so it has a real shot.") : "";
   const hold = holdouts.length ? `${list(holdouts)} won't say yes as it stands.` : "";
@@ -681,7 +693,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             })}
           </div>
           <button className="btn btn-primary dt-go" aria-disabled={(isMulti ? !multi : !trade) || undefined}
-            onClick={(e) => (isMulti ? multi : trade) ? document.querySelector(".builder .deal")?.scrollIntoView({ behavior: "smooth", block: "start" })
+            onClick={(e) => (isMulti ? multi : trade) ? seeRead()
               : deny(e.currentTarget, isMulti ? "Add a player for every team in the deal to see the read." : !allGive.length && !allGet.length ? "Add a player to each side to see the read." : !allGive.length ? "Add a player you send to see the read." : "Add a player you get to see the read.")}>See the read</button>
         </div>
         </>
