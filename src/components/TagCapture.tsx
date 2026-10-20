@@ -50,7 +50,8 @@ export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { o
       <div className={`composer has-who${listening ? " live" : ""}`}>
         {whoTeam && (
           <Select className="composer-who" size="chip" aria-label="Who said it" header="Who said it" value={who} onChange={pickWho}
-            options={others.map((t) => ({ value: t.id, label: t.manager, hint: t.name !== t.manager ? t.name : undefined }))} />
+            searchPlaceholder="Manager or team"
+            options={others.map((t) => ({ value: t.id, label: t.manager, hint: t.name !== t.manager ? t.name : undefined, match: { also: t.name } }))} />
         )}
         <label htmlFor="capture" className="sr-only">{`What did ${whoTeam?.manager ?? "they"} say?`}</label>
         <input id="capture" className="composer-input" value={text} onChange={(e) => setText(e.target.value)}

@@ -2,7 +2,8 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { ManagerTag, MyTag, Team, YOU, playerById } from "../data";
 import { FAIR_GAP, MultiTrade, Trade as TradeT, fmt, groupPoints, groupsFor, lineupFor, pct, verdictMulti } from "../engine";
 import { Icon } from "./ui";
-import { TeamAvatar } from "./TeamPicker";
+import { TeamAvatar, TeamLines, TeamSearchField, useTeamSearch } from "./TeamPicker";
+import { useKeyboardInset } from "./useKeyboardInset";
 import { PlatformName } from "./PlatformLogo";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { Fold } from "./Fold";
@@ -23,6 +24,11 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const [room, setRoom] = useState<number>();
+  const { on: searching, q, setQ, shown } = useTeamSearch(teams, open);
+  const input = useRef<HTMLInputElement>(null);
+  const field = useRef<HTMLLabelElement>(null);
+  const kbMax = useKeyboardInset(field, list, open && searching);
+  useEffect(() => { setHi(0); }, [q]);
   useEffect(() => {
     if (!open) return;
     setHi(0);
@@ -32,9 +38,9 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
     const fit = () => { const b = wrap.current?.querySelector(".mt-add"); if (b) setRoom(Math.max(160, roomBelow(b) - 12 - 52)); };
     fit();
     window.addEventListener("resize", fit);
-    requestAnimationFrame(() => list.current?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => (searching ? input.current : list.current)?.focus({ preventScroll: true }));
     return () => { document.removeEventListener("pointerdown", away); window.removeEventListener("resize", fit); };
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEdgeFade(list, open);
   useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: "nearest" }); }, [hi, open]);
   const refocus = () => wrap.current?.querySelector<HTMLButtonElement>(".mt-add")?.focus({ preventScroll: true });
@@ -42,9 +48,9 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   const onKey = (e: { key: string; preventDefault(): void; stopPropagation(): void }) => {
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setOpen(false); refocus(); return; }
     if (e.key === "Tab") { setOpen(false); return; }
-    if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(teams.length - 1, h + 1)); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(shown.length - 1, h + 1)); }
     if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }
-    if ((e.key === "Enter" || e.key === " ") && teams[hi]) { e.preventDefault(); pick(teams[hi]); }
+    if ((e.key === "Enter" || (e.key === " " && !searching)) && shown[hi]) { e.preventDefault(); pick(shown[hi].team); }
   };
   const addBtn = (
     <button className="btn mt-add" aria-label="Add a team" aria-haspopup="listbox" aria-expanded={open} aria-disabled={full || undefined}
@@ -59,15 +65,17 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
       {open && (
         <div className="mt-menu">
           <p className="mt-menu-note">Make it a {count + 1}-team trade. <PlatformName size={12} /> takes up to {MAX_PARTNERS + 1} teams in one proposal.</p>
+          {searching && <TeamSearchField q={q} setQ={setQ} onKey={onKey} input={input} wrap={field} label="Search teams by name or manager" />}
           <ul className="tp-list mt-list" role="listbox" ref={list} tabIndex={-1} aria-label="Add a team to this trade" onKeyDown={onKey}
-            aria-activedescendant={teams[hi] ? `mt-o-${teams[hi].id}` : undefined} style={room ? { maxHeight: Math.min(400, room) } : undefined}>
-            {teams.map((t, i) => (
+            aria-activedescendant={shown[hi] ? `mt-o-${shown[hi].team.id}` : undefined} style={kbMax || room ? { maxHeight: kbMax ?? Math.min(400, room! - (searching ? 52 : 0)) } : undefined}>
+            {shown.map(({ team: t, match }, i) => (
               <li key={t.id} id={`mt-o-${t.id}`} role="option" aria-selected={false} className={`tp-opt${i === hi ? " hi" : ""}`} onPointerEnter={() => setHi(i)} onClick={() => pick(t)}>
                 <TeamAvatar t={t} size={32} />
-                <span className="tp-who"><b>{t.name}</b><small>{t.manager} · {t.record}</small></span>
+                <TeamLines t={t} match={match} />
                 <Icon name="plus" size={16} />
               </li>
             ))}
+            {!shown.length && <li className="tp-none" role="presentation">{`No team or manager matches "${q.trim()}"`}</li>}
           </ul>
         </div>
       )}

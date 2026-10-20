@@ -703,7 +703,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
           <div className="wt-add">
             <Select id="wt-add" className="tag-select" aria-label="Set a price on another player" value={"" as string}
               onChange={(v) => { if (v) setPrice(v, DEFAULT_PRICE); }}
-              options={[{ value: "", label: "Price another player" }, ...unpriced.map((id) => ({ value: id, label: `${playerById(id).name} · ${playerById(id).pos}` }))]} />
+              searchPlaceholder="Search your players"
+              options={[{ value: "", label: "Price another player" }, ...unpriced.map((id) => { const p = playerById(id); return { value: id, label: p.name, hint: p.pos, match: { pos: p.pos, team: p.nfl } }; })]} />
           </div>
         )}
         {locked.length === 0 && movable.length === 0 && untouch.length === 0 && <p className="wt-empty">No asking prices yet. Pick a player above, or <button className="linkish" onClick={() => setView("tags")}>tag a player</button> as overpay only.</p>}

@@ -7,6 +7,9 @@ import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { PlatformLogo } from "./PlatformLogo";
 import { ManagerAvatar } from "./Avatar";
+import { Marked } from "./Marked";
+import { SEARCH_AT } from "./Select";
+import { matchPlayer, type Match } from "../search";
 
 type Row = { id: string; name: string; teams: number; avatar?: string | null };
 type Group = Row[] | { error: string } | null;
@@ -124,6 +127,19 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   };
 
   const multi = accounts.length > 1;
+  // More than SEARCH_AT leagues across accounts: a search field filters them by league name or account (search.ts)
+  const [q, setQ] = useState("");
+  const all = accounts.flatMap((a) => { const g = groups[a.userId]; return Array.isArray(g) ? g : []; });
+  const searchable = !demo && all.length > SEARCH_AT;
+  const filtering = searchable && q.trim().length > 0;
+  const hitFor = (r: Row, a: Account): Match | null => {
+    if (!filtering) return { score: 0, marks: [] };
+    const m = matchPlayer(q, r.name);
+    if (m) return m;
+    const b = matchPlayer(q, accountLabel(a).replace(/^@/, "")) ?? matchPlayer(q, a.username);
+    return b && b.score >= 20 ? { score: b.score, marks: [] } : null;
+  };
+  const firstHit = () => { for (const a of accounts) { const g = groups[a.userId]; if (Array.isArray(g)) { const r = g.find((x) => hitFor(x, a)); if (r) return { r, a }; } } return null; };
   const addedAcct = accounts.find((a) => a.userId === added);
 
   return (
@@ -142,8 +158,20 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
           </ul>
         ) : (
           <div className="acc-groups">
+            {searchable && (
+              <label className="tp-search lsw-search">
+                <Icon name="search" size={16} />
+                <span className="sr-only">Search your leagues</span>
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="League or account" autoComplete="off" spellCheck={false} enterKeyHint="go"
+                  onKeyDown={(e) => { if (e.key === "Enter") { const h = firstHit(); if (h) { e.preventDefault(); const on = h.r.id === LEAGUE.id && h.a.userId === activeUserId; if (!on) onPick(h.r.id, h.a.userId); close(); } } }} />
+                {q && <button type="button" className="sel-search-x" aria-label="Clear search" onClick={() => setQ("")}><Icon name="x" size={14} /></button>}
+              </label>
+            )}
+            {filtering && !firstHit() && <p className="lsw-load">{`No league matches "${q.trim()}"`}</p>}
             {accounts.map((a) => {
-              const g = groups[a.userId];
+              const g0 = groups[a.userId];
+              const g = filtering && Array.isArray(g0) ? g0.filter((r) => hitFor(r, a)) : g0;
+              if (filtering && (!Array.isArray(g) || !g.length)) return null;
               const label = accountLabel(a);
               return (
                 <div key={a.userId} className={`acc-group${added === a.userId ? " just-added" : ""}`} data-account={a.userId} role="group" aria-labelledby={`acc-h-${a.userId}`}>
@@ -163,7 +191,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
                           <li key={r.id}>
                             <button className={`lsw-row${on ? " on" : ""}`} aria-current={on ? "true" : undefined} onClick={() => { if (!on) onPick(r.id, a.userId); close(); }}>
                               {mark(r, a)}
-                              <span className="lsw-n"><b>{r.name}</b><small>{on ? `Current league · ${r.teams} teams` : `${r.teams} teams`}</small></span>
+                              <span className="lsw-n"><b><Marked name={r.name} marks={hitFor(r, a)?.marks} /></b><small>{on ? `Current league · ${r.teams} teams` : `${r.teams} teams`}</small></span>
                               {on ? <Icon name="check" size={18} /> : <Icon name="chev" size={16} />}
                             </button>
                           </li>

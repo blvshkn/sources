@@ -141,7 +141,8 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
     const p = s.p;
     return (
       <Select className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`} value={p.id} onChange={set} aria-label={`${side === "a" ? "First player" : "Second player"}: ${p.name}`}
-        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, disabled: o.id === (side === "a" ? bId : aId) }))}>
+        searchPlaceholder="Search your players"
+        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId) }))}>
         <Avatar p={p} size={44} />
         <b className="sx-name">{p.name}</b>
         <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` · ${s.game}` : ""}</small>

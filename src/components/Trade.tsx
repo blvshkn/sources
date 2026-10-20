@@ -682,10 +682,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 { value: "refuses" as ManagerTagKind, label: "won't move" },
                 { value: "notInterested" as ManagerTagKind, label: "isn't interested in" },
               ]} />
-            <Select id="tag-target" className="tb-sel" aria-label="Player or position" value={target} onChange={setTarget}
+            <Select id="tag-target" className="tb-sel" aria-label="Player or position" value={target} onChange={setTarget} searchPlaceholder="Player, position or team"
               options={[
                 ...POS_ORDER.map((p) => ({ value: `pos:${p}`, label: kind === "wants" ? `${p} help` : kind === "refuses" ? `his ${p}` : `your ${p}`, group: "Position" })),
-                ...targetOptions.map((id) => { const pl = playerById(id); return { value: id, label: pl.name, hint: pl.pos, group: kind === "refuses" ? `${them.manager}'s players` : "Your players" }; }),
+                ...targetOptions.map((id) => { const pl = playerById(id); return { value: id, label: pl.name, hint: pl.pos, match: { pos: pl.pos, team: pl.nfl }, group: kind === "refuses" ? `${them.manager}'s players` : "Your players" }; }),
               ]} />
             <button className="btn btn-sm tb-add" onClick={addTag}>Add</button>
           </div>

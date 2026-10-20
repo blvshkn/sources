@@ -1,0 +1,43 @@
+/* ---------- Search inside menus and team lists (Select search, Trading with, Add a team, league switcher) ---------- */
+/* Same matcher and the same bold matched letters as the player pickers (search.ts, Marked.tsx). */
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search) {
+  flex: none; display: flex; align-items: center; gap: 8px; box-sizing: border-box;
+  min-height: 40px; margin: 6px 6px 2px; padding: 0 4px 0 12px; border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); cursor: text;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sel-search { min-width: 236px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search):focus-within { box-shadow: inset 0 0 0 1.5px rgba(var(--lime-rgb), 0.6); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search) input {
+  flex: 1; min-width: 0; height: 38px; padding: 0; border: 0; background: none; box-shadow: none; outline: none;
+  color: var(--ink); font: 400 0.9375rem/1.2 var(--font-body);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search) input::placeholder { color: var(--faint); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sel-search-x {
+  flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px;
+  background: none; color: var(--muted); cursor: pointer;
+}
+@media (hover: hover) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sel-search-x:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); } }
+
+/* The active row reads as focused while typing, since focus sits in the field */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sel-menu:has(.sel-search input:focus-visible) .sel-opt.active { box-shadow: inset 0 0 0 1.5px rgba(var(--lime-rgb), 0.55); }
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-none, .tp-none) { padding: 12px 10px; color: var(--muted); font-size: 0.8125rem; white-space: normal; list-style: none; }
+
+/* League switcher: the field sits above the account groups, full width */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .lsw-search { margin: 0 0 12px; min-height: 44px; }
+
+/* Lists scroll on their own; matched letters bold, same ink */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-list, .tp-list) { overscroll-behavior: contain; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-label, .tp-who, .lsw-n) mark.hl { background: none; color: inherit; font-weight: 700; padding: 0; border-radius: 0; }
+
+@media (max-width: 600px), (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search) { min-height: 44px; }
+  /* 16px so iOS doesn't zoom into the field */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.sel-search, .tp-search) input { font-size: 1rem; }
+}
+
+/* Matched letters stay one run of text inside the flex label */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sel-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Team names are already bold: the name drops to medium so the matched letters stand out, as in the player search */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.tp-who, .lsw-n) b:has(mark.hl) { font-weight: 500; }
