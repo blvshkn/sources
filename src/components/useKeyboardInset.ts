@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
  *
  * While an input inside `field` has focus on a touch device:
  * - html gets data-kb-pick, so keyboard.css hides the deal tray and the tab bar and leaves room to scroll
- * - once the keyboard is up, the page scrolls so the field sits near the top of what's visible
+ * - once the keyboard is up, the page scrolls so the field sits near the top of what's visible, under the sticky top bar
  * - the returned max-height fits `list` between its top and the top of the keyboard, less 12px,
  *   tracked with window.visualViewport (resize and scroll), which is the area actually visible above the keyboard
  * On blur it returns undefined again, so the list goes back to its CSS max-height.
@@ -47,7 +47,10 @@ export function useKeyboardInset(field: RefObject<HTMLElement | null>, list: Ref
       aligned = true;
       const v = view();
       alignedAt = v.height;
-      const delta = el.getBoundingClientRect().top - v.top - GAP;
+      // Clear the sticky top bar when it shows, so the field lands just under it rather than behind it
+      const bar = document.querySelector(".topbar");
+      const barB = bar && /sticky|fixed/.test(getComputedStyle(bar).position) ? Math.max(0, bar.getBoundingClientRect().bottom - v.top) : 0;
+      const delta = el.getBoundingClientRect().top - v.top - GAP - barB;
       if (Math.abs(delta) > 4) window.scrollBy({ top: delta, behavior: "auto" });
       schedule();
     };

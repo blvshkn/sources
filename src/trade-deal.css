@@ -61,7 +61,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-x:focus-visible { outline: 2px
 /* + Add player: the hover pill's box, dashed, so it reads as the next row waiting to be filled */
 /* The row itself reaches the pill's 8px past the content edge, so the box sits inside it; its own dashed edge
    replaces the divider above, so there's never a line 4px over a dashed one */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li.qs-addli { display: block; margin: 0 var(--qs-px); padding: var(--dl-y, 4px) 0; border-top-color: transparent; background: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li.qs-addli { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); margin: 0 var(--qs-px); padding: var(--dl-y, 4px) 0; border-top-color: transparent; background: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli > * { grid-area: 1 / 1; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add {
   display: flex; align-items: center; justify-content: flex-start; gap: 12px;
   width: 100% !important; height: 100%; min-height: 44px; margin: 0; padding: 0 12px 0 calc(-1 * var(--qs-px) - 1px);
@@ -79,9 +80,34 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-plus svg { display: block; }
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:active:not(:disabled) { transform: scale(0.99) !important; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
-/* Open: the box turns solid and the + takes the brand lime; the search below carries the focus ring */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-expanded="true"] { border-style: solid; border-color: color-mix(in srgb, var(--ink) 30%, transparent); color: var(--ink); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add[aria-expanded="true"] .qs-plus { color: var(--lime); }
+/* Open: the row becomes the search field in the same box. The button fades out under it, the field fades in over
+   it with the + turned into the search icon, and Done sits on the right. 180ms, none with reduced motion. */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 100ms ease-out; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli.open > .qs-add { opacity: 0; pointer-events: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field {
+  position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; min-width: 0; height: 100%;
+  padding: 0 5px 0 calc(-1 * var(--qs-px) - 1px); border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 10px;
+  background: var(--surface-2); color: var(--ink);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field:focus-within { border-color: transparent; box-shadow: 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-search {
+  flex: 1 1 auto; display: flex; align-items: center; gap: 12px; min-width: 0; height: 100%; padding: 0;
+  border-radius: 0; background: none; box-shadow: none; color: var(--muted); cursor: text;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-search:focus-within { box-shadow: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-plus { color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field input { flex: 1 1 auto; width: 100%; min-width: 0; height: 100%; padding: 0; border: 0; background: none; color: var(--ink); font: 400 1rem/1 var(--font-body); outline: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field input::placeholder { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-done { position: relative; top: auto; right: auto; flex: none; height: 40px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--surface-3); color: var(--ink); font: 600 0.875rem/1 var(--font-body); }
+/* Done's tap area reaches 44px */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-done::after { content: ""; position: absolute; inset: -2px; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field { animation: qs-morph 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-plus svg { animation: qs-morph-icon 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { transition: none; } }
+@keyframes qs-morph { from { opacity: 0; } }
+@keyframes qs-morph-icon { from { opacity: 0; transform: rotate(-45deg) scale(0.7); } }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:disabled { opacity: 0.5; cursor: default; box-shadow: none !important; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:active { transform: none !important; } }
 
@@ -163,17 +189,14 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ti-stat.odds.neutral .ti-meter i { ba
 /* With no offer switch above them, the sides still get room under the title */
 html:root:not(#_):not(#_):not(#_):not(#_) .builder .deal > .row + .deal-lists { margin-top: 12px; }
 
-/* ---------- Add player picker: one solid panel with the search, a column header and its own scroll ---------- */
-/* Search and list share the panel's padding, so their edges line up, and nothing shows through between them */
+/* ---------- Add player results: one solid panel under the field, a column header and its own scroll ---------- */
+/* It hangs from the field's bottom (the row's 4px padding is the gap) and shares its edges */
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60; isolation: isolate;
+  position: absolute; top: 100%; left: var(--qs-px); right: var(--qs-px); z-index: 60; isolation: isolate;
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; height: auto; min-width: 0; padding: 6px;
   border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-md); transform-origin: top center;
 }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick { animation: st-pop 180ms cubic-bezier(0.23, 1, 0.32, 1); } }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-search { height: 44px; padding: 0 76px 0 12px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-search:focus-within { box-shadow: 0 0 0 2px var(--lime); }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-done { position: absolute; top: 12px; right: 12px; height: 32px; min-height: 32px; padding: 0 12px; background: var(--surface-3); }
 
 /* One template for the header and every row: avatar, position, name, Proj, Value, + */
 html:root:not(#_):not(#_):not(#_):not(#_) .qs :is(.qs-head, .qs-opts button) {

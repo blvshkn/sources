@@ -168,8 +168,8 @@ function Changes({ team, trade, side }: { team: Team; trade: TradeT; side: "you"
   );
 }
 
-/** One side of the deal, editable in place: players as rows with an x, and a + Add player row at the end
- *  that drops a searchable list of that roster under it, over the panel below. */
+/** One side of the deal, editable in place: players as rows with an x, and a + Add player row at the end.
+ *  Tapped, that row turns into the search field in place, and the results drop under it over the panel below. */
 export function DealSide({ title, team, ids, pool, onToggle, className, flags = {} }: { title: ReactNode; team: string; ids: string[]; pool: string[]; onToggle: (id: string) => void; className?: string;
   /** Players with a problem: a lock or alert badge on the avatar and the reason in a tooltip. */
   flags?: Record<string, { text: string; icon: "lock" | "alert" }> }) {
@@ -191,18 +191,20 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
   const close = (refocus = false) => { setAdding(false); setQ(""); if (refocus) requestAnimationFrame(() => list.current?.querySelector<HTMLButtonElement>(".qs-add")?.focus()); };
   useEffect(() => {
     if (!adding) return;
-    // The picker drops over the page; bring all of it on screen (clear of the phone tab bar, lint-overlays.css),
-    // but never past its own + Add player row: that row stays just above the picker, clear of the sticky top bar
+    // The + Add player row is now the search field, with the results panel under it. Phones: the field goes just
+    // under the top bar, so the list gets everything down to the keyboard (useKeyboardInset sizes it). Desktop: the
+    // panel comes fully on screen, but never by pushing the field itself out of view.
     requestAnimationFrame(() => {
-      const add = list.current?.querySelector(".qs-add"), pick = wrap.current?.querySelector(".qs-pick");
-      if (!add || !pick) return;
+      const box = field.current, pick = wrap.current?.querySelector(".qs-pick");
+      if (!box || !pick) return;
       const bar = document.querySelector(".topbar");
       const top = (bar && /sticky|fixed/.test(getComputedStyle(bar).position) ? Math.max(0, bar.getBoundingClientRect().bottom) : 0) + 8;
       const vh = window.visualViewport?.height ?? window.innerHeight;
-      const a = add.getBoundingClientRect(), k = pick.getBoundingClientRect();
+      const a = box.getBoundingClientRect(), k = pick.getBoundingClientRect();
+      const phone = window.matchMedia("(hover: none), (pointer: coarse)").matches;
       const below = k.bottom + (parseFloat(getComputedStyle(pick).scrollMarginBottom) || 16) - vh;
-      const dy = a.top < top ? a.top - top : below > 0 ? Math.min(below, a.top - top) : 0;
-      if (dy) window.scrollBy({ top: dy, behavior: "instant" as ScrollBehavior });
+      const dy = phone || a.top < top ? a.top - top : below > 0 ? Math.min(below, a.top - top) : 0;
+      if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: "instant" as ScrollBehavior });
     });
     const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
     document.addEventListener("pointerdown", away);
@@ -224,19 +226,24 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
               <button className="qs-x" onClick={() => onToggle(id)} aria-label={`Remove ${p.name}`}><Icon name="x" size={16} /></button>
             </li>
           ); })}
-          <li className="qs-addli">
+          {/* Tapped, the row itself becomes the search field: same box, + turns into the search icon, Done on the right */}
+          <li className={`qs-addli${adding ? " open" : ""}`}>
             {/* 10 a side is the cap (App.tsx), so the row says so instead of opening a list that can't add */}
-            <button className="qs-add" disabled={ids.length >= 10} aria-expanded={adding} aria-haspopup="listbox" aria-label={ids.length >= 10 ? "10 players a side is the most" : `Add a player from ${team}`} onClick={() => (adding ? close() : setAdding(true))}>
+            <button className="qs-add" disabled={ids.length >= 10} tabIndex={adding ? -1 : undefined} aria-hidden={adding || undefined} aria-expanded={adding} aria-haspopup="listbox" aria-label={ids.length >= 10 ? "10 players a side is the most" : `Add a player from ${team}`} onClick={() => setAdding(true)}>
               <span className="qs-plus" aria-hidden="true"><Icon name="plus" size={16} /></span><span>{ids.length >= 10 ? "10 players max" : "Add player"}</span>
             </button>
+            {adding && (
+              <div className="qs-field">
+                <label className="qs-search" ref={field}><span className="qs-plus" aria-hidden="true"><Icon name="search" size={16} /></span><span className="sr-only">Search {team}</span>
+                  <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
+                    onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
+                <button className="qs-done" onClick={() => close(true)}>Done</button>
+              </div>
+            )}
           </li>
         </ul>
         {adding && (
           <div className="qs-pick">
-            <label className="qs-search" ref={field}><Icon name="search" size={16} /><span className="sr-only">Search {team}</span>
-              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
-                onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
-            <button className="qs-done" onClick={() => close(true)}>Done</button>
             <div className="qs-head">
               <span className="qs-sort" role="radiogroup" aria-label="Sort players by">
                 {(["value", "proj"] as const).map((k) => (
