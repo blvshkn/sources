@@ -1,6 +1,6 @@
 // A front-view football jersey in any team's colorway. Pure SVG: the number is live text, so it
 // stays selectable and changes with the `number` prop. No logos, names or maker marks, only team
-// colors and a small Sources dot under the collar.
+// colors.
 // Number font: Teko 700 (Google Fonts, OFL), a squared block face close to a sewn tackle-twill number; loaded in index.html.
 import { useId } from "react";
 import { colorway, type Colorway } from "../jerseys";
@@ -87,11 +87,11 @@ export function Jersey({ team, number = "", size = 120, away = false, className 
   const seam = shade(c.body);
   const panelSeam = shade(c.panel);
   const edge = shade(c.body, 0.28);
-  // Chest number: one digit stands tall and centred; two digits come down a touch with a little
+  // Chest number sits high on the chest. One digit stands tall; two digits come down a touch with a little
   // tracking so the outlines meet without the fills touching.
   const fs = two ? 258 : 300;
   const track = two ? 0.02 : 0;
-  const numY = two ? 398 : 410;
+  const numY = two ? 358 : 370;
   const stroke = 16;
   const dark = lum(c.body) < 0.2;
 
@@ -190,12 +190,6 @@ export function Jersey({ team, number = "", size = 120, away = false, className 
         <path d={pin(0.68)} />
       </g>
       <path d={BAND} fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="1.5" />
-
-      {/* Sources dot mark */}
-      <circle cx="234" cy="134" r="8" fill={c.collar1 === c.body ? c.outline : c.collar1} />
-      <text x="234" y="138" textAnchor="middle" fontFamily="Geist, system-ui, sans-serif" fontWeight="700" fontSize="11" fill={c.body} aria-hidden="true" style={{ userSelect: "none" }}>
-        S
-      </text>
 
       {/* Chest number */}
       {num({ x: 300, y: numY, size: fs, strokeW: stroke })}
