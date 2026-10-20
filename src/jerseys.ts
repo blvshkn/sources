@@ -344,7 +344,8 @@ export type NumberStyle = NumberTrim;
 const FLAT: NumberTrim = { plain: true };
 const OFF: NumberTrim = { noShoulder: true };
 export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> = {
-  BUF: { home: { outline2: NAVY_BUF }, away: { outline2: NAVY_BUF } },
+  // White numbers with a single red line (royal on the road).
+  BUF: {},
   MIA: {},
   // White numbers lined silver, then red; navy lined silver, then red, on the road.
   NE: { home: { noShoulder: true, outline2: "#C60C30" }, away: { noShoulder: true, outline2: "#C60C30" } },

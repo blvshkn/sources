@@ -573,7 +573,7 @@ export type FamilyId = keyof typeof FAMILIES;
 
 /** Per-team family and tuning. */
 const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
-  BUF: ["BLOCK", { w: 0.54, stem: 0.16, bar: 0.145, ro: 0.03, rc: 0.01, one: { flag: 0.14, fb: 0.12, fj: 0.21, foot: 0.12, footH: 0.8 }, seven: { stub: 0, foot: 0.18, weight: 0.8 } }],
+  BUF: ["BLOCK", { w: 0.56, stem: 0.15, bar: 0.13, ro: 0.03, rc: 0.01, eight: { pinch: 0.04 }, three: { stub: 0.09, arm: 0.3, notch: 0.035 }, one: { flag: 0.14, fb: 0.12, fj: 0.21, foot: 0.12, footH: 0.8 }, seven: { stub: 0, foot: 0.18, weight: 0.8 } }],
   MIA: ["ROUNDED", { w: 0.52, ro: [0.07, 0.08], rc: 0.012, ri: 0.012 }],
   NE: ["NARROW", { w: 0.5, stem: 0.175, ro: 0.025, one: { flag: 0.12, fb: 0.1, fj: 0.19, foot: 0.09 } }],
   NYJ: ["HEAVY", { w: 0.6, stem: 0.21, bar: 0.19 }],
@@ -592,7 +592,7 @@ const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
   LV: ["BLOCK", { w: 0.56, stem: 0.185, ro: 0.006 }],
   // Wide, heavy and leaning (the slant is in jerseys.ts): softly rounded outside corners, narrow square
   // counters, square 2 neck, short stubs, a flat-topped flag on the 1 and no foot.
-  LAC: ["ROUNDED", { w: 0.58, stem: 0.195, bar: 0.165, ro: [0.1, 0.11], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
+  LAC: ["ROUNDED", { w: 0.58, stem: 0.21, bar: 0.16, ro: [0.11, 0.12], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
   DAL: ["CHAMFER", { w: 0.56, stem: 0.18, bar: 0.16, ro: 0.035, counter: "chamfer", rc: 0.004, ri: 0.01, cut: 0, one: { flag: 0.13, fb: 0.13, fj: 0.24, foot: 0.1 }, two: { neck: "square", stub: 0.09 }, three: { stub: 0.09, arm: 0.3, notch: 0.04 }, five: { stub: 0.09 }, six: { stub: 0.09 }, seven: { stub: 0, foot: 0.18 }, eight: { pinch: 0.04 } }],
   NYG: ["BLOCK", { w: 0.52, stem: 0.165, bar: 0.15, ro: 0.02, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.07 }, six: { stub: 0 }, four: { type: "diag", cy: 0.66, xr: 0.6 } }],
   PHI: ["SLAB", { corner: "round", ro: 0.07, rc: 0.04 }],
@@ -744,7 +744,7 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   MIA: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.72 }),
   JAX: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.78 }),
   // Round bowls, a straight 7 and a 9 whose tail turns to a flat end; a touch wider than the face.
-  LAR: font("Oswald", 640, 813, OSWALD_640, { scaleX: 1.04 }),
+  LAR: font("Oswald", 640, 813, OSWALD_640, { scaleX: 1.08 }),
 };
 
 /** Number setting for a team: a font, or one of the drawn sets above. */
