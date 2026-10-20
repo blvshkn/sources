@@ -4,7 +4,8 @@ import { ScheduleStrip } from "./Schedule";
 import { LineupCall, OutcomeRange, WeekDepth, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
 import { WeekStepper } from "./WeekStepper";
 import { useLive } from "../live";
-import { Player, WEEK, gameLine, onBye } from "../data";
+import { Player, WEEK, onBye } from "../data";
+import { kickLine, useKickoffs } from "../kickoff";
 import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
@@ -18,6 +19,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   const [shown, setShown] = useState(false);
   // Which week the sheet shows. The header and stepper stay put; the body below them swaps.
   const [week, setWeek] = useState(WEEK);
+  useKickoffs(week);
   const cur = week === WEEK;
   const closeBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -68,7 +70,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
           <Avatar p={p} size={56} />
           <span className="ps-who">
             <b id="ps-name">{p.name}</b>
-            <small>{p.pos} · {p.nfl}{onBye(p.nfl) ? "" : gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small>
+            <small>{p.pos} · {p.nfl}{onBye(p.nfl) ? "" : kickLine(p) ? ` ${kickLine(p)}` : ""} <StatusPill p={p} /></small>
             {where && <span className={`ps-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>

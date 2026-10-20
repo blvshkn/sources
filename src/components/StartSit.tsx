@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { LEAGUE, Player, WEEK, YOU, gameLine, onBye, playerById } from "../data";
+import { LEAGUE, Player, WEEK, YOU, onBye, playerById } from "../data";
+import { kickLine, oppAt, useKickoffs } from "../kickoff";
 import { eff, round1, scored } from "../engine";
 import { seasonFor } from "../schedule";
 import { WeekView, loadWeek, peekWeek } from "../weeks";
@@ -50,7 +51,7 @@ function sideFor(p: Player, w: number, view: WeekView | null): Side {
   if (w === WEEK) {
     const bye = onBye(p.nfl);
     const avail = availability(p, w, bye);
-    return { p, bye, avail, pts: bye ? 0 : eff(p, true), game: bye ? "" : gameLine(p) };
+    return { p, bye, avail, pts: bye ? 0 : eff(p, true), game: bye ? "" : kickLine(p) };
   }
   const cell = seasonFor(p).find((c) => c.week === w);
   const hasSchedule = LEAGUE.slate ? Object.keys(LEAGUE.slate.opp).length > 0 : true;
@@ -62,7 +63,7 @@ function sideFor(p: Player, w: number, view: WeekView | null): Side {
   else if (row && row.pts !== null) pts = row.pts;
   else if (w < WEEK) pts = cell?.pts ?? null;
   else pts = cell?.proj ?? (view?.kind === "future" ? 0 : null);
-  return { p, bye, avail, pts, game: !bye && cell?.opp ? oppText(cell.opp) : "" };
+  return { p, bye, avail, pts, game: !bye && cell?.opp ? oppAt(p.nfl, oppText(cell.opp), w) : "" };
 }
 
 /** The verdict for a week, saying plainly when someone can't play. */
@@ -118,6 +119,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
   const [aId, setA] = useState(a0 ?? pool[0]?.id);
   const [bId, setB] = useState(b0 ?? pool[1]?.id);
   const [week, setWeek] = useState(WEEK);
+  useKickoffs(week);
   const [wv, setWv] = useState<WeekView | null>(null);
   const [err, setErr] = useState<{ week: number; msg: string } | null>(null);
   useEffect(() => {
@@ -145,7 +147,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
         options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId), why: `${o.name} is already in the other spot. Pick someone else to compare.` }))}>
         <Avatar p={p} size={44} />
         <b className="sx-name">{p.name}</b>
-        <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` · ${s.game}` : ""}</small>
+        <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` ${s.game}` : ""}</small>
         <span className="sx-status">{loading ? null : s.avail ? <Tooltip content={s.avail.kind === "bye" ? <>On bye in week <span className="num">{week}</span></> : p.note || (s.avail.kind === "ir" ? "On injured reserve" : s.avail.pill)}><span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`}>{s.avail.pill}</span></Tooltip> : null}</span>
         <span className="sx-change">Change<Icon name="chev" size={12} /></span>
       </Select>

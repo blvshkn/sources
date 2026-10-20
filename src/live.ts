@@ -208,6 +208,9 @@ export function useLive(): Live {
   return v;
 }
 
+/** This week's game states as last read (live scoring once it has loaded, else the league's schedule). */
+export const liveGamesNow = (): Record<string, GameState> => current?.games ?? LEAGUE?.games ?? {};
+
 /** A player's game right now: live with points so far, final, or not started. */
 export function playerLive(l: Live, id: string, nfl: string): { state: GameState | null; pts: number } {
   const state = l.games[nfl] ?? null;

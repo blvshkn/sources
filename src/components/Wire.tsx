@@ -15,7 +15,8 @@ import { Trophy } from "./Trophy";
 import { useLive, onPace, startersOf, matchNow, chanceTone } from "../live";
 import { avatarSrc } from "../sleeper";
 import { WeekPlayer } from "../weeks";
-import { gameIn, useLineupWeek, useWeekMatch } from "../weekMatch";
+import { useLineupWeek, useWeekMatch } from "../weekMatch";
+import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
@@ -274,6 +275,7 @@ function ThreatBody({ rows, msg }: { rows: ReactNode[] | null; msg?: { title: st
 export function Threats(_props: { onGo?: (t: string) => void }) {
   const live = useLive();
   const week = useLineupWeek();
+  useKickoffs(week);
   // Tapping a threat opens that player, with the reason he made the list, instead of leaving the page
   const [open, setOpen] = useState<{ p: Player; rank: number } | null>(null);
   const [mu, setMu] = useState(false);
@@ -288,7 +290,7 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
       <ThreatBody msg={opp ? undefined : { title: "Bye week", body: `You don't play anyone in Week ${WEEK}.` }} rows={threats.map((p) => (
         <button key={p.id} className="wk-row" onClick={() => setOpen({ p, rank: threats.indexOf(p) })}>
           <Avatar p={p} size={40} />
-          <span className="wk-name"><span className="thr-n">{p.name}<InjTag id={p.id} /></span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {onBye(p.nfl) ? "Bye" : vsOf(p)}</small></span>
+          <span className="wk-name"><span className="thr-n">{p.name}<InjTag id={p.id} /></span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {onBye(p.nfl) ? "Bye" : oppAt(p.nfl, vsOf(p))}</small></span>
           <Pts p={p} />
         </button>
       ))} />
@@ -303,6 +305,7 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
  *  the same numbers as your starters) or, for a week already played, by what they scored. */
 function WeekThreats({ week }: { week: number }) {
   const { m, err } = useWeekMatch(week);
+  useKickoffs(week);
   const [open, setOpen] = useState<Player | null>(null);
   const [mu, setMu] = useState(false);
   const past = week < WEEK, opp = m?.opp ?? null;
@@ -314,7 +317,7 @@ function WeekThreats({ week }: { week: number }) {
     <section className="card wk thr" aria-label={`Opponent threats, Week ${week}`}>
       <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted thr-sub">{sub}</span></div>
       <ThreatBody msg={msg} rows={m ? top.map((p) => {
-        const game = gameIn(p, week), full = PLAYERS[p.id];
+        const game = gameInAt(p, week), full = PLAYERS[p.id];
         const inner = <>
           <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
           <span className="wk-name"><span className="thr-n">{p.name}{!past && <InjTag id={p.id} />}</span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {game ?? "Bye"}</small></span>
@@ -345,6 +348,7 @@ function threatNote(p: Player, rank: number, manager: string) {
 /** More for the This week tab: when your starters play, who's banged up, the opponent's threats, and the dates that matter. */
 function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const live = useLive();
+  useKickoffs();
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   // The lineups set in Sleeper (best projected only when Sleeper has none)
   const mine = startersOf(YOU).map(playerById);
@@ -355,7 +359,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const hurt = (ps: Player[]) => ps.filter((p) => p.status && !onBye(p.nfl));
   const detail = injuryDetail;
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
-  const dates = [DEADLINES.lock, DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
+  const dates = [lockLine(), DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
   const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
   return (
     <>
@@ -367,7 +371,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
             {ps.map((p) => (
               <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
                 <Avatar p={p} size={40} />
-                <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {vsOf(p)}</small></span>
+                <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {oppAt(p.nfl, vsOf(p))}</small></span>
                 <Pts p={p} />
               </button>
             ))}
@@ -492,6 +496,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   /** "Not interested" on a suggested player: one list shared by every suggestion. */
   onPass?: (p: { id: string; name: string }) => void;
 }) {
+  useKickoffs();
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup", ["matchup", "week", "intel"]);
@@ -506,7 +511,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="The Wire" meta={<>{DEADLINES.lock}</>} />
+          <LeagueSwitch title="The Wire" meta={<>{lockLine()}</>} />
         </div>
       </header>
 

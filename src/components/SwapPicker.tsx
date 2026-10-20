@@ -2,7 +2,8 @@
 // Lineup page so there is one implementation. Also the lock rules both use, and the player cells the menu lists.
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
-import { PLAYERS, Player, SpecialPlayer, WEEK, gameLine, onBye } from "../data";
+import { PLAYERS, Player, SpecialPlayer, WEEK, onBye } from "../data";
+import { gameInAt, kickLine, oppAt, useKickoffs } from "../kickoff";
 import { fmt, specialPts } from "../engine";
 import { Live, onPace } from "../live";
 import { WeekPlayer } from "../weeks";
@@ -167,33 +168,36 @@ export function useSwapMenu<K extends string | number>() {
 /** One side of a row this week: headshot, name, position, team and game. Module level, so a re-render (a toast, a
  *  live update) keeps the same rows instead of mounting every one of them again. */
 export function Who({ p, side }: { p: Player | null; side: "you" | "them" }) {
+  useKickoffs();
   return p ? (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{!onBye(p.nfl) && gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} /></small></span>
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{!onBye(p.nfl) && kickLine(p) ? ` ${kickLine(p)}` : ""} <StatusPill p={p} /></small></span>
     </span>
   ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
 }
 
 /** A K/DEF. One Sleeper left empty shows our best-projected pick, labeled Suggested. */
 export function SpecialWho({ p, side, suggested }: { p: SpecialPlayer | null; side: "you" | "them"; suggested?: boolean }) {
+  useKickoffs();
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{p.wk === null ? " · Bye" : p.opp ? ` · ${p.opp}` : ""}{suggested && <span className="muted"> · Suggested</span>}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{p.wk === null ? " · Bye" : p.opp ? ` ${oppAt(p.nfl, p.opp)}` : ""}{suggested && <span className="muted"> · Suggested</span>}</small></span>
     </span>
   );
 }
 
 /** One side of a row in a week other than this one: name, position, team and that week's game. */
 export function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; side: "you" | "them"; week: number; suggested?: boolean }) {
+  useKickoffs(week);
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
-  const game = gameIn(p, week);
+  const game = gameInAt(p, week);
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} text={p.pos === "DEF" ? p.nfl : undefined} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl} · {game ?? "Bye"}{suggested && <span className="muted"> · Suggested</span>}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{game ? ` ${game}` : " · Bye"}{suggested && <span className="muted"> · Suggested</span>}</small></span>
     </span>
   );
 }

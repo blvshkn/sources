@@ -3,7 +3,8 @@ import { deny, denyOn } from "../deny";
 import { IdeaScan } from "./IdeaScan";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
-import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, gameLine } from "../data";
+import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
+import { kickLine } from "../kickoff";
 import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
@@ -45,7 +46,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
         <Avatar p={p} size={34} />
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="pname" style={{ display: "block" }}>{p.name}</span>
-          <span className="pmeta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> {p.nfl}{gameLine(p) ? ` · ${gameLine(p)}` : ""} <StatusPill p={p} />
+          <span className="pmeta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> {p.nfl}{kickLine(p) ? ` ${kickLine(p)}` : ""} <StatusPill p={p} />
             {lock && <span className="lock row" style={{ gap: 3 }}><Icon name="lock" size={11} />{lock}</span>}
             {want && <span className="want-tag">{want}</span>}
             {dim && <span className="lock">{dim}</span>}

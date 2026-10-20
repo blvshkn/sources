@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
+import { lockLine, useKickoffs } from "./kickoff";
 import { loadLeague } from "./sleeper";
 import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
@@ -258,6 +259,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return best;
   };
 
+  // Kickoff times, for the lock deadline in the inbox and nudges
+  const kick = useKickoffs();
   const nudges: Nudge[] = useMemo(() => {
     const list: Nudge[] = [];
     // Injured reserve comes first: a mistake here blocks every other move
@@ -280,7 +283,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       const d = diff[0];
       list.push({
         id: "lineup", kind: "lineup", headline: `${d.benched.name} is in your ${d.slot} in Sleeper`, emph: `and he's ${d.benched.status === "O" ? "out" : "on bye"}.`,
-        why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before kickoff.`, trades: [], time: "Now", deadline: DEADLINES.lock,
+        why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before kickoff.`, trades: [], time: "Now", deadline: lockLine(),
         go: { label: "Review lineup", tab: "roster" },
       });
     }
@@ -356,7 +359,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (level === "light") return learned.filter((n) => n.kind === "ir" || n.kind === "lineup" || n.kind === "offer" || n.kind === "need").slice(0, 2);
     if (level === "standard") return learned.filter((n) => n.kind !== "slot").slice(0, 5);
     return learned;
-  }, [needs, suggestionsByTeam, active, myTags, prices, recs, diff, level, dismissed, dismissedIds, yourLineup]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [needs, suggestionsByTeam, active, myTags, prices, recs, diff, level, dismissed, dismissedIds, yourLineup, kick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const briefing: Briefing = {
     lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
@@ -494,7 +497,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const inboxGo = (dest: string) => { if (dest === "matchup") { setInboxOpen(false); setMatchupSheet(true); } else go(dest); };
   const inbox = useMemo(() => buildInbox({ nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, partner: partnerNote })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent, partnerNote]);
+  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent, partnerNote, kick]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;

@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
-import { Player, DEADLINES, YOU, playerById } from "../data";
+import { Player, YOU, playerById } from "../data";
+import { lockLine } from "../kickoff";
 import { eff, fmt, Trade } from "../engine";
 import { startersOf, matchNow, type Live } from "../live";
 import { Icon, IconName } from "./ui";
@@ -26,7 +27,7 @@ export interface InboxItem {
   passName?: string;
 }
 
-const lockShort = () => DEADLINES.lock.replace(/^Lineups lock\s*/i, "Locks ");
+const lockShort = () => lockLine().replace(/^Lineups lock\s*/i, "Locks ");
 
 /** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
  *  Lineup and Wire screens use, so nothing here is invented for the feed. */
@@ -44,7 +45,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   partner?: { id: string; text: string; onNotes: () => void };
 }): InboxItem[] {
   const out: InboxItem[] = [];
-  const lock = DEADLINES.lock ? lockShort() : "Before lock";
+  const lock = lockLine() ? lockShort() : "Before lock";
 
   // Game day: anything that still needs a move before lock. IR and the Sleeper swap come from the nudges below.
   checks.filter((c) => !c.key.startsWith("ir")).forEach((c) => {

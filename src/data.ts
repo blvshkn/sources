@@ -317,13 +317,6 @@ const DEMO_SLATE: [string, string, string][] = [
   ["ATL", "NO", "2026-10-25"], ["LAR", "SEA", "2026-10-25"], ["ARI", "SF", "2026-10-25"], ["LV", "LAC", "2026-10-25"],
   ["GB", "MIN", "2026-10-25"], ["DET", "DAL", "2026-10-25"], ["WAS", "CHI", "2026-10-26"],
 ];
-/** "Sun vs LV" style game line. Live opponents come without home/away, so they read "v LV". */
-export function gameLine(x: { opp?: string; gameDate?: string }): string {
-  if (!x.opp) return "";
-  const day = x.gameDate ? new Date(`${x.gameDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" }) : "";
-  const opp = /^(vs|@)\s/.test(x.opp) ? x.opp : `v ${x.opp}`;
-  return [day, opp].filter(Boolean).join(" ");
-}
 export const demoGame = (team: string): { opp: string; home: boolean; date: string } | undefined => {
   const g = DEMO_SLATE.find(([a, h]) => a === team || h === team);
   return g ? { opp: g[0] === team ? g[1] : g[0], home: g[1] === team, date: g[2] } : undefined;

@@ -1,6 +1,7 @@
 // The player sheet's decision blocks: this week's outcome range, the lineup call, recent usage and the matchup,
 // plus the trimmed news row. Everything is computed from league data the app already has; the words are ours.
 import { useEffect, useState } from "react";
+import { kickWhen, kickWhenIn, useKickoffs } from "../kickoff";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, teamNick } from "../data";
 import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
 import { SWING, useLive, type Live } from "../live";
@@ -355,6 +356,7 @@ const oppOf = (p: Player, week: number) => {
 };
 
 export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks>; week: number }) {
+  useKickoffs(week);
   const { cell, team: opp, away, raw } = oppOf(p, week);
   const bye = week === WEEK ? onBye(p.nfl) : !!cell && !cell.opp;
   if (bye || !opp) return (
@@ -368,7 +370,7 @@ export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks
   const tone = cell?.tone, past = week < WEEK;
   return (
     <section className="pd-blk pd-match" aria-label="Matchup">
-      <div className="ps-sub"><b>Matchup</b><span>{[week === WEEK ? dayOf(p.gameDate) : "", raw ? (away ? "Away" : "Home") : ""].filter(Boolean).join(" · ")}</span></div>
+      <div className="ps-sub"><b>Matchup</b><span>{[week === WEEK ? kickWhen(p) : raw ? kickWhenIn(p.nfl, raw, week) : "", raw ? (away ? "Away" : "Home") : ""].filter(Boolean).join(" · ")}</span></div>
       <div className="pd-opp">
         <span className="pd-opp-t"><b>{away ? "at" : "vs"} {opp}</b><small>{teamNick(opp).replace(/^the /, "")} defense</small></span>
         {d && dTone ? <span className={`pd-tone t-${dTone}`}>{dTone === "good" ? `Soft on ${POS_PLURAL[p.pos]}` : dTone === "tough" ? `Tough on ${POS_PLURAL[p.pos]}` : `Average on ${POS_PLURAL[p.pos]}`}</span>

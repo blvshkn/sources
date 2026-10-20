@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, gameLine, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
+import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
+import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
 import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
 import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
@@ -33,8 +34,10 @@ type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later
 type Tab = "ALL" | WaiverPos;
 const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"];
 /** The game line for any free agent: skill players carry it in PLAYERS, kickers and defenses on the entry itself. */
-const gameOf = (fa: WaiverFA) => gameLine(isSpecialFA(fa) ? fa : PLAYERS[fa.id] ?? {});
-/** "Sun vs LAR" for a defense's matchup row, without the weekday when it's tight. */
+const gameOf = (fa: WaiverFA) => kickLine(isSpecialFA(fa) ? fa : PLAYERS[fa.id] ?? {});
+/** A list row's game: the opponent, then "· Sun 1:00 PM" (or the day) as a separate piece that never splits. */
+const GameBits = ({ opp, when }: { opp: string; when: string }) => <><span className="lu-game">{opp}</span>{when && <span className="lu-game wv-when"><i>· </i>{when}</span>}</>;
+/** "vs LAR" for a defense's matchup row. The row adds the kickoff after it when known. */
 const oppShort = (fa: WaiverFA) => (isSpecialFA(fa) && fa.opp ? (/^(vs|@)\s/.test(fa.opp) ? fa.opp : `vs ${fa.opp}`) : "");
 
 /** Current injury designation as a row tag, for weeks still to come. Weekly designations only describe this week. */
@@ -155,6 +158,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
   const live = useLive();
+  useKickoffs(week);
   // Every free agent: the ones who can help this week first, then anyone who already played, is on bye, Out or on IR
   const all = useMemo<Entry[]>(() => {
     const ok: Entry[] = recs.map((r) => ({ fa: r.fa, value: r.value, avail: availOf(r.fa), rec: r }));
@@ -305,7 +309,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
       })() : <EmptyTop label="Top pickup" text="Nobody on the wire fixes a weak spot this week." />)}
       {kind !== "current" && (topRow ? (() => {
         const x = topRow, r = x.r!, starts = x.gain > 0.05, past = topKind === "past", week = topWeek;
-        return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ?? ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} onPass={() => pass(x)}
+        return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ? (past ? x.c.opp : oppAt(r.fa.nfl, x.c.opp, week)) : ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} onPass={() => pass(x)}
           stat={{ dt: past ? `Scored wk ${week}` : `Week ${week}`, dd: (x.pts as number).toFixed(past ? 2 : 1) }}
           why={past ? (x.c?.line ?? null) : x.fit ?? `${x.fa.name} projects ${(x.pts as number).toFixed(1)}${x.c?.opp ? ` ${x.c.opp}` : ""} in week ${week}.`}
           plan={past ? (starts ? <span>Would have added <b>{fmt(x.gain)} pts</b> to your week {week} lineup.</span> : <span>Wouldn't have cracked your week {week} lineup.</span>)
@@ -384,9 +388,13 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
             : kind === "future" ? { k: "Proj", v: num(e.pts) }
             : played ? { k: st === "in_game" ? "So far" : "Scored", v: e.c ? act(e.c.pts) : sel.loading ? "–" : "0.00" }
             : { k: "Proj", v: e.value.toFixed(1) };
+          // Opponent right after the team, then when it kicks off as its own piece, so a narrow row drops the time
+          // to the next line whole instead of cutting it off
+          const src = isSpecialFA(e.fa) ? e.fa : PLAYERS[e.fa.id];
           const meta = kind === "current"
-            ? <>{e.fa.pos === "DEF" ? oppShort(e.fa) && <span className="lu-game">· {oppShort(e.fa)}</span> : game && r && <span className="lu-game">· {game}</span>}</>
-            : e.c?.opp ? <span className="lu-game">· {e.c.opp}</span> : null;
+            ? (e.fa.pos === "DEF" ? oppShort(e.fa) && <GameBits opp={oppShort(e.fa)} when={kickWhenIn(e.fa.nfl, oppShort(e.fa), WEEK)} />
+              : game && r && <GameBits opp={oppText(src?.opp)} when={kickWhen(src ?? {})} />)
+            : e.c?.opp ? <GameBits opp={e.c.opp} when={kind === "future" ? kickWhenIn(e.fa.nfl, e.c.opp, week) : ""} /> : null;
           // What he did that week, or so far this week: one line under the name, cut short rather than wrapping
           const line = kind === "past" ? (e.pts === null ? null : !e.c ? null : e.c.line ?? "Didn't play") : kind === "current" && !r && e.c?.played ? e.c.line : null;
           // Every row carries the same cells in the same order, so the columns never shift between rows, tabs or weeks
@@ -481,7 +489,7 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
         <Avatar p={top.fa} size={52} />
         <div className="topk-id">
           <h3 className="topk-name">{top.fa.name}</h3>
-          <span className="wv-meta"><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b>{top.fa.nfl}{game && <span className="lu-game">· {game}</span>}</span>
+          <span className="wv-meta"><b className={`lu-pos p-${top.fa.pos}`}>{top.fa.pos}</b>{top.fa.nfl}{game && <span className="lu-game">{game}</span>}</span>
         </div>
       </div>
       <dl className="topk-stats">

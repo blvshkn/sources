@@ -1,0 +1,26 @@
+/* Kickoff times on game lines ("NO v PIT · Sun 1:00 PM"). Each piece stays whole: a narrow row moves a piece to the
+   next line instead of splitting "Sun 1:00 PM" or cutting it off. */
+
+/* Lineup rows: team with opponent, then the kickoff (or Live / Final) */
+html:root:not(#_):not(#_) .lu-row .lu-meta > span:not(.lu-inj):not(.lu-st) { white-space: nowrap; }
+
+/* Phones narrower than 360: a little less room for the slot pill and gaps so the kickoff fits under the name */
+@media (max-width: 359px) {
+  html:root:not(#_):not(#_) .lu-row { grid-template-columns: 40px 44px minmax(0, 1fr) auto; column-gap: 8px; }
+}
+
+/* Waivers rows: the time is its own piece after the opponent and drops to the next line whole when the row is tight */
+html:root:not(#_):not(#_) .wv3-list .wv-meta:has(> .wv-when) { flex-wrap: wrap; row-gap: 0; }
+html:root:not(#_):not(#_) .wv3-list .wv-meta > .lu-game { white-space: nowrap; }
+html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-when > i { font-style: normal; }
+/* Phones: the name column can't hold the opponent and the time on one line, so the time always sits on its own
+   line, without a leading dot */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_) .wv3-list .wv-meta { flex-wrap: wrap; row-gap: 0; }
+  html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-when { flex-basis: 100%; }
+  html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-when > i { display: none; }
+}
+/* Under 360, a size smaller so "Mon 8:15 PM" fits whole */
+@media (max-width: 359px) {
+  html:root:not(#_):not(#_) .wv3-list .wv-meta > .wv-when { font-size: 0.65rem; }
+}

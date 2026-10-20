@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, gameIn } from "../weekMatch";
+import { kickWhen, lockLine, oppText, useKickoffs } from "../kickoff";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, matchNow, chanceTone, playCount, expect, PlayCount as Counts } from "../live";
 import { playLabel, resultOf, scoreTone, flipTone, toneCls, type Result } from "../liveMath";
-import { LEAGUE, OPPONENT_ID, PLAYERS, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
+import { LEAGUE, OPPONENT_ID, PLAYERS, Team, SpecialPlayer, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
 import { Avatar } from "./Avatar";
@@ -173,6 +174,11 @@ export function PlayCount({ c, compact }: { c: Counts; compact?: boolean }) {
   );
 }
 
+/** Once a game is live or final the row reads "QB · BUF · Live" as before, without the opponent. */
+const kicked = (g: GameNow) => g.state === "in_game" || g.state === "complete";
+/** Team and opponent together, no dot between them: "NO v PIT". */
+const TeamOpp = ({ nfl, opp }: { nfl: string; opp?: string }) => <span>{nfl}{opp && <> <span className="lu-game">{oppText(opp)}</span></>}</span>;
+
 /** Replaces the kickoff time once the game starts. */
 function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
   if (g.state === "in_game") return <span className="lu-live"><i aria-hidden="true" />Live</span>;
@@ -193,6 +199,7 @@ const LockIc = ({ t }: { t?: RowTap }) => (t?.lock ? <span className="lu-lockic"
 
 function LineupRow({ p, slot, bench, swap, onOpen, live, tap }: { p: Player; slot: string; bench?: boolean; swap?: { to: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live; tap?: RowTap }) {
   const st = statusWord(p);
+  useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   const sheet = !tap && onOpen;
@@ -204,7 +211,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap }: { p: Player; slo
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{injuryTag(p)}</b>}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!onBye(p.nfl) && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
         {p.status && !onBye(p.nfl) && (g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
       {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} />}
@@ -222,6 +229,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap }: { p: Player; slo
 /** Kicker or defense row. Same layout as a skill player. */
 function SpecialRow({ p, slot, bench, swapTo, live, tap }: { p: SpecialPlayer; slot: string; bench?: boolean; swapTo?: SpecialPlayer; live?: Live; tap?: RowTap }) {
   const bye = p.wk === null;
+  useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
   return (
@@ -230,7 +238,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap }: { p: SpecialPlayer; s
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}{p.status === "Q" && <b className="lu-tag warn">Q</b>}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{!bye && <GameTag g={g} fallback={gameLine(p) || null} />}</span>
+        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
       </span>
       {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
       {swapTo && (
@@ -640,6 +648,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
   const kdef = specialLineup(YOU);
   const [week, setWeek] = useState(WEEK);
+  useKickoffs(week);
   const [wv, setWv] = useState<WeekView | null>(null);
   const [wErr, setWErr] = useState<string | null>(null);
   useEffect(() => {
@@ -722,7 +731,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                       <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></div>
                     </div>
                   ))}
-                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {DEADLINES.lock}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
+                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {lockLine()}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
