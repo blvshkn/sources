@@ -1,5 +1,6 @@
 import { Fragment, useContext, useState } from "react";
 import { denyOn } from "../deny";
+import { scoreTone, flipTone, toneCls } from "../liveMath";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
@@ -133,13 +134,16 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
   const res = ms.result, tone = chanceTone(ms);
+  // Score tones (liveMath.scoreTone): the side ahead now, or the winner once final, stays bright; pregame both do
+  const myTone = scoreTone(myNow ?? mine, oppNow ?? theirs, res ? "final" : inPlay ? "live" : "pre");
+  const toneOf = (side: "you" | "them") => toneCls(side === "you" ? myTone : flipTone(myTone));
   const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
     <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
       <span className="sb2-who"><b><NameWithTrophy name={t.name} teamId={t.id} /></b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
       {inPlay && now !== undefined
-        ? <span className="sb2-pts sb2-now"><LiveNum v={now} /><small>proj {pts.toFixed(1)}</small></span>
-        : <span className="sb2-pts">{pts.toFixed(1)}</span>}
+        ? <span className="sb2-pts sb2-now"><LiveNum v={now} className={toneOf(side)} /><small>proj {pts.toFixed(1)}</small></span>
+        : <span className={`sb2-pts ${toneOf(side)}`}>{pts.toFixed(1)}</span>}
     </span>
   );
   return (

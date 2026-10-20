@@ -1,0 +1,8 @@
+/* Matchup score tones (liveMath.scoreTone): the leading or winning score is full ink, the trailing or losing one
+   steps back to muted grey, the same dim as the Lineup team strip. Pregame and ties stay full ink on both sides.
+   The color eases over 150ms when the lead changes. The won/lost line is green for you, red against. Never lime. */
+html:root:not(#_):not(#_):not(#_):not(#_) .sc-lead { color: var(--ink) !important; transition: color 150ms ease-out; }
+html:root:not(#_):not(#_):not(#_):not(#_) .sc-trail { color: var(--muted) !important; transition: color 150ms ease-out; }
+html:root:not(#_):not(#_):not(#_) .mwf-pts { transition: color 150ms ease-out; }
+html:root:not(#_):not(#_):not(#_) .sc-res.up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .sc-res.down { color: var(--bad); }

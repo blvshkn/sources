@@ -5,7 +5,7 @@ import { WeekView, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, useWeekMatch } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, matchNow, chanceTone, playCount, PlayCount as Counts } from "../live";
-import { playLabel, resultOf, type Result } from "../liveMath";
+import { playLabel, resultOf, scoreTone, flipTone, toneCls, type Result } from "../liveMath";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
@@ -429,13 +429,15 @@ function WeekStrip({ week }: { week: number }) {
   const past = m.kind === "past", opp = m.opp;
   // A past week reads its result the same way this week's final does (liveMath.resultOf)
   const res = past && opp ? resultOf(m.me.total, opp.total) : null;
+  // Score tones (liveMath.scoreTone): a past week dims the loser; a week ahead is projections, so neither dims
+  const wkTone = scoreTone(m.me.total, opp?.total, past ? "final" : "pre");
   const chance = m.chance ?? 50;
   const label = `${YOU.name}, ${YOU.record}. Week ${week}${opp ? ` vs ${opp.team.name}` : `, ${m.empty?.title ?? "no matchup"}`}. `
     + (res ? `Final, ${res.long}` : past ? `Final ${m.me.total.toFixed(1)}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
   return (
     <section className="mw mwf" aria-label={label}>
-      <Side t={YOU} pts={m.me.total} note={past ? undefined : "projected"} dim={res?.tone === "down"} />
-      <Side t={opp?.team ?? null} pts={opp ? opp.total : null} note={opp && !past ? "projected" : undefined} dim={res?.tone === "up"} empty={{ title: m.empty?.title ?? "No matchup", body: m.empty?.body }} />
+      <Side t={YOU} pts={m.me.total} note={past ? undefined : "projected"} dim={wkTone === "trail"} />
+      <Side t={opp?.team ?? null} pts={opp ? opp.total : null} note={opp && !past ? "projected" : undefined} dim={wkTone === "lead"} empty={{ title: m.empty?.title ?? "No matchup", body: m.empty?.body }} />
       <StripFoot week={week} res={res} chance={opp && !past ? chance : null} tip="Win chance from both projected lineups for that week, the same model as this week's." />
     </section>
   );
@@ -453,14 +455,16 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
   const myTotal = ms.me.proj, oppTotal = ms.opp ? ms.opp.proj : null;
   const chance = ms.chance ?? 0, res = ms.result, tone = chanceTone(ms);
+  // Score tones (liveMath.scoreTone): ahead now or the winner stays bright, the other dims; pregame both bright
+  const myTone = scoreTone(myNow ?? myTotal, oppNow ?? oppTotal, res ? "final" : inPlay ? "live" : "pre");
   if (mineOnly && week !== WEEK) return <WeekStrip week={week} />;
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: you and them on one score column, then the win chance or the result
     const myPts = inPlay ? myNow! : myTotal, oppPts = opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null;
     return (
       <section className="mw mwf" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`}>
-        <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"} dim={res?.tone === "down"} />
-        <Side t={opp} pts={oppPts} live={inPlay} note={res || !opp ? undefined : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected"} dim={res?.tone === "up"} empty={{ title: "No matchup", body: `You don't play anyone in Week ${WEEK}.` }} />
+        <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"} dim={myTone === "trail"} />
+        <Side t={opp} pts={oppPts} live={inPlay} note={res || !opp ? undefined : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected"} dim={myTone === "lead"} empty={{ title: "No matchup", body: `You don't play anyone in Week ${WEEK}.` }} />
         <StripFoot week={WEEK} res={opp ? res : null} chance={opp && !res ? chance : null} live={inPlay && nowLive} msg="Bye week" />
       </section>
     );
@@ -470,10 +474,10 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
       <div className="lu-mx-side you">
         <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
         {inPlay ? <>
-          <LiveNum className="lu-mx-pts" v={myNow!} />
+          <LiveNum className={`lu-mx-pts ${toneCls(myTone)}`} v={myNow!} />
           <span className="lu-mx-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</span>
         </> : <>
-          <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
+          <span className={`lu-mx-pts ${toneCls(myTone)}`}>{myTotal.toFixed(1)}</span>
           {oppTotal !== null && !mineOnly && <span className={`margin-pill ${myTotal - oppTotal >= 0.05 ? "up" : myTotal - oppTotal <= -0.05 ? "down" : "flat"}`}>{Math.abs(myTotal - oppTotal) < 0.05 ? "even" : fmt(myTotal - oppTotal)}</span>}
           <small>Your best lineup</small>
         </>}
@@ -488,10 +492,10 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
         {!mineOnly && <div className="lu-mx-side them">
           <span className="lu-mx-who"><span>{opp.name}<Trophy teamId={opp.id} /></span><i /></span>
           {inPlay ? <>
-            <LiveNum className="lu-mx-pts" v={oppNow!} />
+            <LiveNum className={`lu-mx-pts ${toneCls(flipTone(myTone))}`} v={oppNow!} />
             <span className="lu-mx-proj">{res ? "final" : `proj ${oppTotal!.toFixed(1)}`}</span>
           </> : <>
-            <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
+            <span className={`lu-mx-pts ${toneCls(flipTone(myTone))}`}>{oppTotal!.toFixed(1)}</span>
             <small>{opp.manager}</small>
           </>}
         </div>}

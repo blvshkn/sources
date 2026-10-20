@@ -127,6 +127,21 @@ export const isFinal = (a: PlayCount, b: PlayCount, past = false) =>
   past || (a.live + a.left + b.live + b.left === 0 && a.done + b.done > 0);
 
 const cents = (n: number) => Math.round(n * 100);
+/** Who's ahead on a head-to-head score, from your side. Final: the winner leads. Live: whoever has more points right
+ *  now leads. Pregame (projections, or 0 to 0): even, so neither side dims. A tie is even. Every matchup score in the
+ *  app reads its tones from here and paints them with .sc-lead / .sc-trail (score-tone.css). */
+export type ScoreTone = "lead" | "trail" | "even";
+export type ScoreState = "pre" | "live" | "final";
+export function scoreTone(you: number, them: number | null | undefined, state: ScoreState): ScoreTone {
+  if (state === "pre" || them === null || them === undefined) return "even";
+  const a = cents(you), b = cents(them);
+  return a > b ? "lead" : a < b ? "trail" : "even";
+}
+/** The other side's tone. */
+export const flipTone = (t: ScoreTone): ScoreTone => (t === "lead" ? "trail" : t === "trail" ? "lead" : "even");
+/** The class for a score in that tone: trailing dims, leading and even stay full ink. */
+export const toneCls = (t: ScoreTone) => (t === "trail" ? "sc-trail" : "sc-lead");
+
 /** Final result as a win percent: 100 if A scored more, 0 if less, 50 on a tie. No clamp. */
 export const finalPct = (a: number, b: number) => (cents(a) > cents(b) ? 100 : cents(a) < cents(b) ? 0 : 50);
 

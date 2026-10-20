@@ -9,7 +9,7 @@ import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Icon, StatusPill, LiveNum } from "./ui";
 import { Live, useLive, expect, onPace, sideScore, scoreMatch, chanceTone, startersOf } from "../live";
-import { finalPct, resultOf } from "../liveMath";
+import { finalPct, resultOf, scoreTone, flipTone, toneCls } from "../liveMath";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
@@ -111,6 +111,9 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
   const nowLive = !res && ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
   const myCount = meS.count, oppCount = oppS.count;
+  // Score tones (liveMath.scoreTone): ahead now or the winner stays bright, the other side dims; pregame both bright
+  const myTone = scoreTone(meS.scored, oppS.scored, res ? "final" : started ? "live" : "pre");
+  const meCls = toneCls(myTone), oppCls = toneCls(flipTone(myTone));
   const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), p.wk === null) : "");
   const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
@@ -162,16 +165,16 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
       <section className="card mu" aria-label={`Week ${WEEK} matchup${res ? `, final. ${res.long}` : ""}`}>
         <header className="mu-score">
           <div className="mu-side you"><span className="mu-who"><TeamAvatar t={YOU} size={22} />{changed ? "Your what-if" : "Your lineup"}</span>
-            {started ? <><LiveNum v={round1(meS.scored)} className="mu-big" /><small className="mu-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={round1(meS.scored)} className={`mu-big ${meCls}`} /><small className="mu-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</small><PlayCount c={myCount} compact /></> : <b className={meCls}>{myTotal.toFixed(1)}</b>}</div>
           <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}
             {res ? <><Tooltip content="Every starter on both sides is done, so this is the result, not a projection."><b className={res.tone === "even" ? undefined : res.tone}>{chance}%</b></Tooltip><small>Final</small></>
               : <><Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small></>}</div>
           <div className="mu-side them"><span className="mu-who">{opp.manager}<Trophy teamId={opp.id} /><TeamAvatar t={opp} size={22} /></span>
-            {started ? <><LiveNum v={round1(oppS.scored)} className="mu-big" /><small className="mu-proj">{res ? "final" : `proj ${oppTotal.toFixed(1)}`}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={round1(oppS.scored)} className={`mu-big ${oppCls}`} /><small className="mu-proj">{res ? "final" : `proj ${oppTotal.toFixed(1)}`}</small><PlayCount c={oppCount} compact /></> : <b className={oppCls}>{oppTotal.toFixed(1)}</b>}</div>
         </header>
         <div className={`mu-bar ${chanceTone(ms)}${res ? " is-final" : ""}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">
-          {res && <>{res.long}, {res.short.charAt(0).toLowerCase()}{res.short.slice(1)}. </>}
+          {res && <>{res.long}, <span className={`sc-res ${res.tone}`}>{res.short.charAt(0).toLowerCase()}{res.short.slice(1)}</span>. </>}
           You {res ? "won" : "win"} <b>{winning} of {mine.length + myK.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
           {edges[bigLoss] < 0 && <> Weakest spot: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
@@ -279,20 +282,22 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   // A past week is final: win % from the scores (100, 0 or 50), the same as this week once it's done
   const chance = past ? finalPct(m.me.total, opp.total) : m.chance ?? 50;
   const res = past ? resultOf(m.me.total, opp.total) : null;
+  // A past week is final (winner bright, loser dimmed); a week ahead is projections only, so both stay bright
+  const wkTone = scoreTone(m.me.total, opp.total, past ? "final" : "pre");
   const Num = ({ x }: { x: Slot }) => x.p?.pts === null ? <span className="lu-pts mu-pts bye">BYE</span> : <span className={`lu-pts mu-pts${past ? " actual" : ""}`}>{pts(x).toFixed(1)}</span>;
   return (
     <>
       {back}{stepper}
       <section className="card mu" aria-label={`Week ${week} matchup`}>
         <header className="mu-score">
-          <div className="mu-side you"><span>{past ? "You scored" : "Your best lineup"}</span><b>{m.me.total.toFixed(1)}</b></div>
+          <div className="mu-side you"><span>{past ? "You scored" : "Your best lineup"}</span><b className={toneCls(wkTone)}>{m.me.total.toFixed(1)}</b></div>
           <div className="mu-mid">{res
             ? <><b className={res.tone === "even" ? undefined : res.tone}>{chance}%</b><small>Final</small></>
             : <><Tooltip content="Win chance from both projected lineups for that week."><b>{chance}%</b></Tooltip><small>to win</small></>}</div>
-          <div className="mu-side them"><span>{opp.team.manager}<Trophy teamId={opp.team.id} /></span><b>{opp.total.toFixed(1)}</b></div>
+          <div className="mu-side them"><span>{opp.team.manager}<Trophy teamId={opp.team.id} /></span><b className={toneCls(flipTone(wkTone))}>{opp.total.toFixed(1)}</b></div>
         </header>
         <div className={`mu-bar ${res ? `${res.tone} is-final` : chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
-        <p className="mu-sum">{res ? <>{res.long}, {res.short.charAt(0).toLowerCase()}{res.short.slice(1)}. You won <b>{winning} of {n}</b> spots.</>
+        <p className="mu-sum">{res ? <>{res.long}, <span className={`sc-res ${res.tone}`}>{res.short.charAt(0).toLowerCase()}{res.short.slice(1)}</span>. You won <b>{winning} of {n}</b> spots.</>
           : <>Projected to win <b>{winning} of {n}</b> spots. Both sides use Sleeper's Week {week} projections.</>}</p>
         <div className="mu-th"><span>Slot</span><span>You, then {opp.team.manager}</span><span className="mu-th-you">You</span><span className="mu-th-them">{opp.team.manager}</span></div>
         {Array.from({ length: n }, (_, i) => {

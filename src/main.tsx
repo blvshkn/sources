@@ -40,6 +40,7 @@ import "./matchup-sheet.css";
 import "./team-strip.css";
 import "./deny.css";
 import "./mu-chips.css";
+import "./score-tone.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
