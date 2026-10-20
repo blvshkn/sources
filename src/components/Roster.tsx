@@ -4,7 +4,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, useWeekMatch } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
-import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
+import { Live, useLive, onPace, matchNow, chanceTone, playCount, PlayCount as Counts } from "../live";
 import { playLabel } from "../liveMath";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
@@ -35,7 +35,7 @@ export const injuryTag = (p: { status?: string; injury?: string }) => SLEEPER_TA
 const statusWord = (p: Player) => (onBye(p.nfl) ? "Bye" : p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : null);
 
 /** IR and taxi: players who don't count against your roster limit, plus anything that needs a move. */
-function IrBlock() {
+function IrBlock({ onOpen }: { onOpen?: (p: Player, where: string) => void }) {
   const ir = irReport(YOU);
   const taxi = (YOU.taxi ?? []).map(playerById);
   if (!ir.slots && !ir.used.length && !taxi.length) return null;
@@ -46,14 +46,16 @@ function IrBlock() {
         const stuck = !p.irEligible;
         const detail = injuryDetail(p);
         return (
-          <div key={p.id} className={`lu-row ir-row${stuck ? " ir-stuck" : ""}`}>
+          <div key={p.id} className={`lu-row ir-row${stuck ? " ir-stuck" : ""}${onOpen ? " tap" : ""}`} role={onOpen ? "button" : undefined} tabIndex={onOpen ? 0 : undefined}
+            onClick={onOpen ? () => onOpen(p, "On injured reserve") : undefined}
+            onKeyDown={onOpen ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(p, "On injured reserve"); } } : undefined}>
             <span className="lu-slot">IR</span>
-            <Avatar p={p} size={36} />
+            <Avatar p={p} size={44} />
             <span className="lu-who">
               <span className="lu-name">{p.name}</span>
               <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span><b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
             </span>
-            {stuck ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Activate</a> : <span className="lu-pts dim">{(p.proj || 0).toFixed(1)}</span>}
+            {stuck ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Activate</a> : <span className="lu-pts dim" title="Players on IR don't score for you">0.0</span>}
           </div>
         );
       })}
@@ -447,26 +449,32 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
   const nowLive = Object.values(live.games).some((x) => x === "in_game");
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
+  // Sleeper's set lineups, K/DEF included, scored the way the Wire card and full matchup score them (live.matchNow)
+  const ms = matchNow(live);
+  const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
-  // Sleeper's set lineups, K/DEF included; expected finishes and win chance move with the games
-  const myO = teamOutlook(live, YOU), oppO = opp ? teamOutlook(live, opp) : null;
-  const myTotal = myO.expected, oppTotal = oppO ? oppO.expected : null;
-  const chance = oppO ? Math.round(winChance(myO, oppO)) : 0;
+  const myTotal = ms.me.proj, oppTotal = ms.opp ? ms.opp.proj : null;
+  const chance = ms.chance ?? 0, res = ms.result, tone = chanceTone(ms);
   if (mineOnly && week !== WEEK) return <WeekStrip week={week} />;
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: who you are, where you stand, score and where it's headed
     return (
-      <section className="mw" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}>
+      <section className="mw" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`}>
         <div className="mw-top">
           <MyId />
           <span className="mw-score">
             {inPlay ? <LiveNum className="mw-pts" v={myNow!} /> : <span className="mw-pts">{myTotal.toFixed(1)}</span>}
-            <small>{inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"}</small>
+            <small>{res ? "final" : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected"}</small>
           </span>
         </div>
-        <VsRow week={WEEK} opp={opp} pts={opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null} note={opp ? (inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected") : undefined} />
-        {opp ? (
+        <VsRow week={WEEK} opp={opp} pts={opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null} note={opp ? (res ? "final" : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected") : undefined} />
+        {opp && res ? (
+          <div className={`mw-win ${res.tone}`} aria-hidden="true">
+            <span className="mw-tag">Final</span>
+            <b className="mw-result">{res.letter}</b>
+            <span className="mw-lbl">{res.short}</span>
+          </div>
+        ) : opp ? (
           <div className={`mw-win ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true">
             {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
             <Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><span className="mw-lbl">to win</span>
@@ -477,12 +485,12 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
     );
   }
   const body = (
-    <div className={`lu-mx${mineOnly ? " mine-only" : ""}`} aria-label={`${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
+    <div className={`lu-mx${mineOnly ? " mine-only" : ""}`} aria-label={res ? `Final. ${res.long}` : `${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
       <div className="lu-mx-side you">
         <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
         {inPlay ? <>
           <LiveNum className="lu-mx-pts" v={myNow!} />
-          <span className="lu-mx-proj">proj {myTotal.toFixed(1)}</span>
+          <span className="lu-mx-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</span>
         </> : <>
           <span className="lu-mx-pts">{myTotal.toFixed(1)}</span>
           {oppTotal !== null && !mineOnly && <span className={`margin-pill ${myTotal - oppTotal >= 0.05 ? "up" : myTotal - oppTotal <= -0.05 ? "down" : "flat"}`}>{Math.abs(myTotal - oppTotal) < 0.05 ? "even" : fmt(myTotal - oppTotal)}</span>}
@@ -490,16 +498,17 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
         </>}
       </div>
       {opp && <>
-        <div className="lu-mx-mid" aria-hidden="true">
-          {inPlay && nowLive && <span className="lu-live"><i />Live</span>}
-          <Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small>
+        <div className={`lu-mx-mid${res ? ` is-final ${tone}` : ""}`} aria-hidden="true">
+          {inPlay && nowLive && !res && <span className="lu-live"><i />Live</span>}
+          {res ? <><b>{res.letter}</b><small>{res.short}</small></>
+            : <><Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small></>}
           <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
         </div>
         {!mineOnly && <div className="lu-mx-side them">
           <span className="lu-mx-who"><span>{opp.name}<Trophy teamId={opp.id} /></span><i /></span>
           {inPlay ? <>
             <LiveNum className="lu-mx-pts" v={oppNow!} />
-            <span className="lu-mx-proj">proj {oppTotal!.toFixed(1)}</span>
+            <span className="lu-mx-proj">{res ? "final" : `proj ${oppTotal!.toFixed(1)}`}</span>
           </> : <>
             <span className="lu-mx-pts">{oppTotal!.toFixed(1)}</span>
             <small>{opp.manager}</small>
@@ -633,7 +642,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
               <div className="lu-list-head sub"><b>Bench</b><span className="tiny muted">{lineup.bench.length + kdef.bench.length} players</span></div>
               {lineup.bench.map((p) => <LineupRow key={p.id} p={p} slot="BN" bench onOpen={openPlayer} live={live} />)}
               {kdef.bench.map((p) => <SpecialRow key={p.id} p={p} slot="BN" bench live={live} />)}
-              <IrBlock />
+              <IrBlock onOpen={openPlayer} />
               </>}
             </section>
           )}

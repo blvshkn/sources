@@ -10,11 +10,12 @@ import { PlayerSheet } from "./PlayerSheet";
 import { TeamAvatar } from "./TeamPicker";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { useLive, onPace, teamOutlook, winChance, startersOf } from "../live";
+import { useLive, onPace, startersOf, matchNow, chanceTone } from "../live";
 import { avatarSrc } from "../sleeper";
 import { WeekPlayer } from "../weeks";
 import { gameIn, openMatchupWeek, useLineupWeek, useWeekMatch } from "../weekMatch";
 import { RosterNews } from "./News";
+import { MatchupSheet } from "./MatchupSheet";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
@@ -116,19 +117,21 @@ function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "y
 export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   // Expected finishes from the lineups actually set in Sleeper (K/DEF included); win chance from what's left to play
-  const liveNow = useLive();
-  const myO = teamOutlook(liveNow, YOU), oppO = opp ? teamOutlook(liveNow, opp) : null;
-  const mine = myO.expected;
-  const theirs = oppO ? oppO.expected : null;
-  const chance = oppO ? Math.round(winChance(myO, oppO)) : null;
+  // One score per team, the same one the full matchup and the Lineup strip read (live.matchNow): Sleeper's team
+  // score, projected finish, and win % that turns into the result once every starter is done
+  const live = useLive();
+  const ms = matchNow(live);
+  const mine = ms.me.proj;
+  const theirs = ms.opp ? ms.opp.proj : null;
+  const chance = ms.chance;
   const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
   const need = you.groups[you.need].diff;
   // Once games start, the big numbers are points scored and the projection drops to a footnote
-  const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
   const nowLive = Object.values(live.games).some((x) => x === "in_game");
-  const myNow = live.teamPts[YOU.id], oppNow = opp ? live.teamPts[opp.id] : undefined;
+  const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
+  const res = ms.result, tone = chanceTone(ms);
   const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
     <span className={`sb2-row ${side}`}>
       <TeamBadge t={t} side={side} />
@@ -140,10 +143,10 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   );
   return (
     <section className="card sb2" aria-label="This week">
-      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label={`Open this week's matchup${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}>
+      <button className="sb2-rows sb2-open" onClick={onMatchup} disabled={!onMatchup} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
         <span className="sb2-head">
           <span>Week {WEEK} matchup</span>
-          {inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
+          {res ? <span className={`sb2-final ${res.tone}`}>Final</span> : inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
         </span>
         <Row t={YOU} pts={mine} now={myNow} side="you" />
         {opp && theirs !== null && <>
@@ -151,12 +154,19 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
           <Row t={opp} pts={theirs} now={oppNow} side="them" />
         </>}
         {chance !== null && (
-          <span className="sb2-chance" aria-hidden="true">
+          <span className={`sb2-chance${res ? ` is-final ${tone}` : ""}`} aria-hidden="true">
             <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
-            <span className="sb2-chance-lbl">
-              <Tooltip content="Win chance from both projected totals. It firms up as points get played."><span><b>{chance}%</b> to win</span></Tooltip>
-              <Tooltip content={chance >= 55 ? "Favored: 55% or better to win" : chance <= 45 ? "Behind: 45% or less to win" : "Toss-up: between 45% and 55%"}><span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span></Tooltip>
-            </span>
+            {res ? (
+              <span className="sb2-chance-lbl">
+                <span>{res.long}</span>
+                <span className={res.tone === "even" ? undefined : res.tone}>{res.short}</span>
+              </span>
+            ) : (
+              <span className="sb2-chance-lbl">
+                <Tooltip content="Win chance from both projected totals. It firms up as points get played."><span><b>{chance}%</b> to win</span></Tooltip>
+                <Tooltip content={chance >= 55 ? "Favored: 55% or better to win" : chance <= 45 ? "Behind: 45% or less to win" : "Toss-up: between 45% and 55%"}><span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span></Tooltip>
+              </span>
+            )}
           </span>
         )}
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
@@ -476,6 +486,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup", ["matchup", "week", "intel"]);
+  // "See the full matchup" on the Overview card opens it over the Wire (sheet or modal) instead of leaving the page
+  const [matchupOpen, setMatchupOpen] = useState(false);
   const visible = showAll ? nudges : nudges.slice(0, 2);
   const leave = (n: Nudge) => {
     setLeaving((c) => [...c, n.id]);
@@ -491,7 +503,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
 
       <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Overview", icon: "app" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
 
-      {view === "matchup" && <Scoreboard you={you} partner={partner} extras={false} onMatchup={() => onGo("matchup")} />}
+      {view === "matchup" && <Scoreboard you={you} partner={partner} extras={false} onMatchup={() => setMatchupOpen(true)} />}
+      {matchupOpen && <MatchupSheet onClose={() => setMatchupOpen(false)} />}
 
       {view === "matchup" && <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>

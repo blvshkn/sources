@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
-import { countPlays, sleeperLiveProj, sleeperWinProb, type PlayCount } from "./liveMath";
-export type { PlayCount } from "./liveMath";
+import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
+export type { PlayCount, Result } from "./liveMath";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
 export interface Live {
@@ -82,7 +82,6 @@ async function freshProj(): Promise<Record<string, number> | undefined> {
   return projCache;
 }
 
-type SMatchup = { roster_id: number; players_points?: Record<string, number> | null; points?: number | null };
 type SGame = { week: number; home: string; away: string; status: string };
 
 const anyLive = (g: Record<string, GameState>) => Object.values(g).some((s) => s === "in_game");
@@ -90,20 +89,33 @@ const anyLeft = (g: Record<string, GameState>) => Object.values(g).some((s) => s
 
 function seed(): Live {
   if (LEAGUE?.mode === "demo") return demo();
+  // Every roster's points from this week's matchups, loaded with the league. The history entry only has your
+  // own players' points, so it's the fallback for a league saved before weekMatchups existed.
+  if (LEAGUE?.weekMatchups?.length) return { ...fromMatchups(LEAGUE.weekMatchups), games: LEAGUE.games ?? {}, left: {}, at: Date.now() };
   const h = LEAGUE?.history?.[WEEK];
   const teamPts: Record<string, number> = {};
   if (h) { teamPts[YOU.id] = h.total; if (OPPONENT_ID && h.oppTotal !== undefined) teamPts[OPPONENT_ID] = h.oppTotal; }
   return { points: h?.points ?? {}, games: LEAGUE?.games ?? {}, teamPts, left: {}, at: Date.now() };
 }
 
+/** Demo only: localStorage sources.fixture = "final-week" turns the sample Sunday into a finished week, every
+ *  game final, with the matchup rows ordered opponent first, the way a real league's roster_ids can fall. */
+const finalFixture = () => { try { return localStorage.getItem("sources.fixture") === "final-week"; } catch { return false; } };
+
 /** Sample data so the demo league shows what a Sunday looks like: one game final, one in progress. */
 function demo(): Live {
   const games: Record<string, GameState> = {};
   const points: Record<string, number> = {};
   const teamPts: Record<string, number> = {};
+  const fin = finalFixture();
   const done = ["MIA", "KC", "CAR", "BAL", "IND"]; const live = ["BUF", "CIN", "PHI", "TB"];
   done.forEach((t) => (games[t] = "complete")); live.forEach((t) => (games[t] = "in_game"));
-  const left: Record<string, number> = { BUF: 0.4, CIN: 0.55, PHI: 0.25, TB: 0.6 };
+  const left: Record<string, number> = fin ? {} : { BUF: 0.4, CIN: 0.55, PHI: 0.25, TB: 0.6 };
+  if (fin) {
+    // Every team with a game this week is final; byes stay off the schedule
+    const nfls = new Set([...Object.values(LEAGUE.players).map((p) => p.nfl), ...Object.values(LEAGUE.specials ?? {}).map((p) => p.nfl)]);
+    nfls.forEach((t) => { if (t && t !== "FA" && !onBye(t)) games[t] = "complete"; });
+  }
   const sideTotal = (ids: string[]) => ids.reduce((a, id) => {
     const p = LEAGUE.players[id]; if (!p) return a;
     const g = games[p.nfl]; if (!g) return a;
@@ -112,23 +124,33 @@ function demo(): Live {
     const pts = Math.round(eff(p, true) * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
     points[id] = pts; return a + pts;
   }, 0);
-  // Everyone on a roster gets points; only the starters set in Sleeper count toward the team score
-  const total = (t: Team) => { sideTotal(t.roster); teamPts[t.id] = Math.round(startersOf(t).reduce((a, id) => a + (points[id] ?? 0), 0) * 10) / 10; };
-  total(YOU);
-  if (OPPONENT_ID) total(teamById(OPPONENT_ID));
+  // Everyone on a roster gets points; only the starters set in Sleeper count toward the team score. Built as
+  // Sleeper's matchup rows and read back through fromMatchups, the same path a live league takes.
+  const row = (t: Team): SleeperMatchupRow => {
+    sideTotal(t.roster);
+    const sp = specialsOf(t).filter((x): x is SpecialPlayer => !!x);
+    sp.forEach((x) => { if (games[x.nfl] && points[x.id] === undefined) points[x.id] = Math.round(specialPts(x) * (games[x.nfl] === "complete" ? 1.1 : 0.5) * 10) / 10; });
+    const starters = [...startersOf(t), ...sp.map((x) => x.id)];
+    const starters_points = starters.map((id) => points[id] ?? 0);
+    const players_points: Record<string, number> = {};
+    [...t.roster, ...sp.map((x) => x.id)].forEach((id) => { if (points[id] !== undefined) players_points[id] = points[id]; });
+    return { roster_id: t.id, matchup_id: 1, starters, starters_points, players: t.roster, players_points, points: Math.round(starters_points.reduce((a, n) => a + n, 0) * 100) / 100 };
+  };
+  const rows = [row(YOU)];
+  if (OPPONENT_ID) rows[fin ? "unshift" : "push"](row(teamById(OPPONENT_ID)));
+  Object.assign(teamPts, fromMatchups(rows).teamPts);
   return { points, games, teamPts, left, at: Date.now() };
 }
 
 async function poll(): Promise<Live | null> {
   try {
     const [ms, sched, left] = await Promise.all([
-      fetch(`https://api.sleeper.app/v1/league/${LEAGUE.id}/matchups/${WEEK}`).then((r) => (r.ok ? r.json() : null)) as Promise<SMatchup[] | null>,
+      fetch(`https://api.sleeper.app/v1/league/${LEAGUE.id}/matchups/${WEEK}`).then((r) => (r.ok ? r.json() : null)) as Promise<SleeperMatchupRow[] | null>,
       fetch(`https://api.sleeper.com/schedule/nfl/regular/${LEAGUE.season}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<SGame[] | null>,
       Promise.resolve({} as Record<string, number>),
     ]);
     if (!ms) return null;
-    const points: Record<string, number> = {}; const teamPts: Record<string, number> = {};
-    ms.forEach((m) => { Object.assign(points, m.players_points ?? {}); teamPts[String(m.roster_id)] = m.points ?? 0; });
+    const { points, teamPts } = fromMatchups(ms);
     const games: Record<string, GameState> = { ...(LEAGUE.games ?? {}) };
     (sched ?? []).filter((g) => g.week === WEEK).forEach((g) => {
       const st: GameState = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
@@ -165,9 +187,9 @@ export function useLive(): Live {
   const [v, setV] = useState<Live>(() => {
     if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
       current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
-      // The saved league only has your team's points, so fetch every team's live points (and the clock) right away
-      // instead of waiting a minute for the first poll
-      if (LEAGUE.mode === "live" && anyLeft(current.games)) poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
+      // Fetch every team's points (and the clock) right away instead of waiting for the first poll. A finished
+      // week gets this one read too, so a league saved mid-week still ends on Sleeper's final scores.
+      if (LEAGUE.mode === "live") poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
     }
     return current;
   });
@@ -249,5 +271,30 @@ export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t
 /** Chance team A beats team B, as a percent, computed the way Sleeper's matchup page does it from each side's
  *  points so far and projected finish (sleeperWinProb). 1 to 99 until both sides are final. */
 export function winChance(a: Outlook, b: Outlook): number {
-  return Math.min(99, Math.max(1, sleeperWinProb(a.scored, a.expected, b.scored, b.expected) * 100));
+  return winPct(a.scored, a.expected, b.scored, b.expected, false);
 }
+
+/** One side's header numbers this week: points scored and projected finish, passed through Sleeper's team score
+ *  for that roster (see passScore), and how many of its starters are done, live or still to play. */
+export interface SideScore { scored: number; proj: number; count: PlayCount }
+export function sideScore(live: Live, t: Team, ids: (string | null)[] = startersOf(t), sp: (SpecialPlayer | null)[] = specialsOf(t), useSleeper = true): SideScore {
+  const o = outlookOf(live, ids, sp);
+  const nfls = [...ids.map((id) => (id && PLAYERS[id] ? PLAYERS[id].nfl : null)), ...sp.map((x) => x?.nfl)];
+  return { ...passScore(useSleeper ? live.teamPts[t.id] : undefined, o.scored, o.expected), count: playCount(live, nfls) };
+}
+
+/** This week's matchup as every view shows it: the Wire card, the Lineup strip, the full matchup and the inbox.
+ *  Final once every starter on both sides is done; then win % is 100, 0 or 50 from the scores. */
+export interface MatchScore { me: SideScore; opp: SideScore | null; final: boolean; chance: number | null; result: Result | null }
+export function scoreMatch(me: SideScore, opp: SideScore | null): MatchScore {
+  if (!opp) return { me, opp: null, final: false, chance: null, result: null };
+  const final = isFinal(me.count, opp.count);
+  return { me, opp, final, chance: winPct(me.scored, me.proj, opp.scored, opp.proj, final), result: final ? resultOf(me.scored, opp.scored) : null };
+}
+export const matchNow = (live: Live): MatchScore => {
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  return scoreMatch(sideScore(live, YOU), opp ? sideScore(live, opp) : null);
+};
+/** Bar and label tone for a win percent: a final reads its result, a live or pregame chance its lean. */
+export const chanceTone = (m: Pick<MatchScore, "final" | "chance" | "result">): "up" | "down" | "even" =>
+  m.result ? m.result.tone : (m.chance ?? 50) >= 55 ? "up" : (m.chance ?? 50) <= 45 ? "down" : "even";

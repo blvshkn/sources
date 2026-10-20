@@ -63,3 +63,73 @@ export function playLabel(c: PlayCount): string {
   if (c.live) return `${c.live} live`;
   return `${c.left} to play`;
 }
+
+// ---- Team scores and final results ----------------------------------------------------------------------
+
+/** One row of Sleeper's /v1/league/<id>/matchups/<week> response. Rows come sorted by roster_id, not by who
+ *  plays whom: the two teams in a matchup share a matchup_id. The demo uses its string team ids as roster_id. */
+export interface SleeperMatchupRow {
+  roster_id: number | string;
+  matchup_id?: number | null;
+  starters?: string[] | null;
+  starters_points?: number[] | null;
+  players?: string[] | null;
+  players_points?: Record<string, number> | null;
+  points?: number | null;
+}
+
+/** A roster's score for the week: Sleeper's `points` when present, else the sum of its starters' points. */
+export function rowScore(row: SleeperMatchupRow): number | undefined {
+  if (typeof row.points === "number") return row.points;
+  if (row.starters_points?.length) return row.starters_points.reduce((a, n) => a + (n || 0), 0);
+  const pp = row.players_points, st = row.starters?.filter((id) => id && id !== "0");
+  if (pp && st?.length) return st.reduce((a, id) => a + (pp[id] ?? 0), 0);
+  return undefined;
+}
+
+/** Every player's points and every roster's score from one week of matchups, keyed by String(roster_id), so a
+ *  team's score never depends on where its row sits in the response. */
+export function fromMatchups(rows: SleeperMatchupRow[]): { points: Record<string, number>; teamPts: Record<string, number> } {
+  const points: Record<string, number> = {}, teamPts: Record<string, number> = {};
+  for (const row of rows) {
+    Object.assign(points, row.players_points ?? {});
+    // starters_points covers a starter missing from players_points
+    (row.starters ?? []).forEach((id, i) => { const v = row.starters_points?.[i]; if (id && id !== "0" && points[id] === undefined && typeof v === "number") points[id] = v; });
+    const s = rowScore(row);
+    if (s !== undefined) teamPts[String(row.roster_id)] = s;
+  }
+  return { points, teamPts };
+}
+
+/** A side's header numbers. `sleeper` is Sleeper's team score for that roster (undefined when we don't have one);
+ *  `scored` and `expected` are our sums over the same starters. Sleeper's score wins, and the projection moves
+ *  with it, so the header, the Wire card and win % all read one number per team. */
+export function passScore(sleeper: number | undefined, scored: number, expected: number): { scored: number; proj: number } {
+  if (sleeper === undefined || !Number.isFinite(sleeper)) return { scored, proj: expected };
+  return { scored: sleeper, proj: expected + (sleeper - scored) };
+}
+
+/** A matchup is final once no starter on either side is live or still to play, or the week is behind us. */
+export const isFinal = (a: PlayCount, b: PlayCount, past = false) =>
+  past || (a.live + a.left + b.live + b.left === 0 && a.done + b.done > 0);
+
+const cents = (n: number) => Math.round(n * 100);
+/** Final result as a win percent: 100 if A scored more, 0 if less, 50 on a tie. No clamp. */
+export const finalPct = (a: number, b: number) => (cents(a) > cents(b) ? 100 : cents(a) < cents(b) ? 0 : 50);
+
+/** Win percent for A, a whole number. Final: from the scores alone. Otherwise Sleeper's model, 1 to 99. */
+export function winPct(aScored: number, aProj: number, bScored: number, bProj: number, final: boolean): number {
+  if (final) return finalPct(aScored, bScored);
+  return Math.round(Math.min(99, Math.max(1, sleeperWinProb(aScored, aProj, bScored, bProj) * 100)));
+}
+
+export interface Result { tone: "up" | "down" | "even"; letter: "W" | "L" | "T"; short: string; long: string }
+/** How a final reads, from your side: "Lost by 1.4" and "You lost 137.3 to 138.7". */
+export function resultOf(mine: number, theirs: number): Result {
+  const pct = finalPct(mine, theirs), d = Math.abs(mine - theirs);
+  const by = d.toFixed(1) === "0.0" ? d.toFixed(2) : d.toFixed(1);
+  const score = `${mine.toFixed(1)} to ${theirs.toFixed(1)}`;
+  if (pct === 100) return { tone: "up", letter: "W", short: `Won by ${by}`, long: `You won ${score}` };
+  if (pct === 0) return { tone: "down", letter: "L", short: `Lost by ${by}`, long: `You lost ${score}` };
+  return { tone: "even", letter: "T", short: "Tied", long: `You tied ${score}` };
+}

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Player, DEADLINES, YOU, playerById } from "../data";
 import { eff, fmt, Trade } from "../engine";
-import { startersOf, type Live } from "../live";
+import { startersOf, matchNow, type Live } from "../live";
 import { Icon, IconName } from "./ui";
 import { Tooltip } from "./Tooltip";
 import type { Nudge } from "./Wire";
@@ -66,7 +66,12 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
       out.push({ id: `fire-${p.id}`, icon: "activity", text: `${p.name} is on fire: ${pts.toFixed(1)} already, past his ${proj.toFixed(1)} projection.`, meta: "Live", action: { label: "Open matchup", run: () => go("matchup") } });
   });
   const done = starters.filter((p) => live.games[p.nfl] === "complete" && live.points[p.id] !== undefined);
-  if (done.length) {
+  // Once both sides are done, one line with the result, the same one the Wire card and the matchup show
+  const ms = matchNow(live);
+  if (ms.result) {
+    out.push({ id: `final-week`, icon: "check", meta: "Final", text: `Final: ${ms.result.long.charAt(0).toLowerCase()}${ms.result.long.slice(1)}.`,
+      action: { label: "Open matchup", run: () => go("matchup") } });
+  } else if (done.length) {
     const got = done.reduce((a, p) => a + (live.points[p.id] ?? 0), 0), want = done.reduce((a, p) => a + eff(p, true), 0);
     out.push({ id: `final-${done.length}`, icon: "check", meta: "Final",
       text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final with ${got.toFixed(1)} pts, ${fmt(got - want)} against their projections.`,

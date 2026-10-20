@@ -1,3 +1,4 @@
+import type { SleeperMatchupRow } from "./liveMath";
 // League data store. The app runs on a live Sleeper league (see sleeper.ts)
 // or on the built-in demo league below. Everything the UI reads lives in the
 // mutable exports at the bottom of this file, swapped in by setLeague().
@@ -516,6 +517,9 @@ export interface LeagueData {
   sleeperSpecial?: string[];
   /** Your matchup results by week (live leagues). */
   history?: Record<number, WeekHistory>;
+  /** This week's rows from Sleeper's /league/<id>/matchups/<week>, every roster (live leagues). Seeds live
+   *  scoring with both teams' points before the first poll, and is all there is once the week is final. */
+  weekMatchups?: SleeperMatchupRow[];
   /** Starting slot order from the league settings, K and DEF included. */
   lineupOrder?: string[];
   /** Last fantasy week of the season. */

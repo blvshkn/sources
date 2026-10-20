@@ -8,7 +8,8 @@ import { eff, fits, fmt, lineupFor, round1, SlotName, specialPts, startedSpecial
 import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Icon, StatusPill, LiveNum } from "./ui";
-import { Live, useLive, expect, onPace, outlookOf, winChance, playCount } from "../live";
+import { Live, useLive, expect, onPace, sideScore, scoreMatch, chanceTone, startersOf } from "../live";
+import { finalPct, resultOf } from "../liveMath";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
@@ -51,13 +52,26 @@ function SpecialWho({ s, side }: { s: StartedSpecial | null; side: "you" | "them
 /** The full matchup for any week. This week is the live, interactive one (try swaps); other weeks are read-only:
  *  a past week's final, slot for slot, or a future week's projected lineups. "See the full matchup" picks the week. */
 export function Matchup({ onBack }: { onBack: () => void }) {
-  const [week, setWeek] = useState(pendingMatchupWeek);
+  const [week, setWeek] = useMatchupWeek();
+  return <MatchupWeek week={week} onBack={onBack} stepper={<WeekStepper week={week} onChange={setWeek} className="mu-weeks" />} />;
+}
+
+/** The week the full matchup opens on: the one passed in, else the one "See the full matchup" picked. Read once. */
+export function useMatchupWeek(start?: number) {
+  const st = useState(() => start ?? pendingMatchupWeek());
   useEffect(() => clearMatchupWeek(), []);
-  const stepper = <WeekStepper week={week} onChange={setWeek} className="mu-weeks" />;
+  return st;
+}
+
+/** One week of the full matchup. The #matchup page passes a back button and the stepper above it; the matchup
+ *  sheet keeps its stepper in its own fixed header and passes neither. */
+export function MatchupWeek({ week, onBack, stepper = null }: { week: number; onBack?: () => void; stepper?: ReactNode }) {
   return week === WEEK ? <MatchupNow onBack={onBack} stepper={stepper} /> : <WeekMatchup week={week} onBack={onBack} stepper={stepper} />;
 }
 
-function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNode }) {
+const BackBtn = ({ onBack }: { onBack?: () => void }) => onBack ? <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button> : null;
+
+function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNode }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const sleeperMine = useMemo(() => {
     const set = Object.values(SLEEPER_SET).flat();
@@ -70,27 +84,27 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
   const pts = (id: string | null) => expect(live, id);
 
   if (!opp) return (
-    <><button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>{stepper}<section className="card card-pad"><p className="small muted">No matchup this week.</p></section></>
+    <><BackBtn onBack={onBack} />{stepper}<section className="card card-pad"><p className="small muted">No matchup this week.</p></section></>
   );
 
-  // Totals include the K/DEF started in Sleeper (best projected only for a slot left empty); win chance from
-  // expected finishes and what's still to play
+  // Totals include the K/DEF started in Sleeper (best projected only for a slot left empty). Each side's score is
+  // Sleeper's team score for that roster, the one the Wire card shows (live.sideScore); a what-if lineup is ours
+  // to add up. Win % turns into the result once every starter on both sides is done.
   const myK = startedSpecials(YOU), oppK = startedSpecials(opp);
-  const myO = outlookOf(live, mine.map((s) => s.id), myK.map((x) => x.player));
-  const oppO = outlookOf(live, theirs.map((s) => s.id), oppK.map((x) => x.player));
-  const baseO = outlookOf(live, sleeperMine.map((s) => s.id), myK.map((x) => x.player));
-  const myTotal = round1(myO.expected), oppTotal = round1(oppO.expected), baseTotal = round1(baseO.expected);
-  const chance = winChance(myO, oppO);
+  const myKs = myK.map((x) => x.player), oppKs = oppK.map((x) => x.player);
+  const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
+  const meS = sideScore(live, YOU, mine.map((s) => s.id), myKs, !changed);
+  const oppS = sideScore(live, opp, theirs.length ? theirs.map((s) => s.id) : startersOf(opp), oppKs);
+  const baseS = sideScore(live, YOU, sleeperMine.map((s) => s.id), myKs);
+  const ms = scoreMatch(meS, oppS), res = ms.result;
+  const myTotal = round1(meS.proj), oppTotal = round1(oppS.proj), baseTotal = round1(baseS.proj);
+  const chance = ms.chance ?? 50;
   const ids = [...mine.map((s) => s.id), ...theirs.map((s) => s.id)];
   const started = ids.some((id) => id && live.points[id] !== undefined && live.games[playerById(id).nfl] && live.games[playerById(id).nfl] !== "pre_game");
-  const nowLive = ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
-  const scored = (o: { scored: number }) => round1(o.scored);
-  const nflOf = (id: string | null) => (id ? playerById(id).nfl : null);
-  const myCount = playCount(live, [...mine.map((s) => nflOf(s.id)), ...myK.map((x) => x.player?.nfl)]);
-  const oppCount = playCount(live, [...theirs.map((s) => nflOf(s.id)), ...oppK.map((x) => x.player?.nfl)]);
+  const nowLive = !res && ids.some((id) => id && live.games[playerById(id).nfl] === "in_game");
+  const myCount = meS.count, oppCount = oppS.count;
   const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), p.wk === null) : "");
   const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
-  const changed = mine.some((s, i) => s.id !== sleeperMine[i].id);
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
   const best = lineupFor(YOU.roster, true);
   const edges = mine.map((s, i) => round1(pts(s.id) - pts(theirs[i]?.id ?? null)));
@@ -121,19 +135,22 @@ function MatchupNow({ onBack, stepper }: { onBack: () => void; stepper: ReactNod
 
   return (
     <>
-      <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>
+      <BackBtn onBack={onBack} />
       {stepper}
-      <section className="card mu" aria-label={`Week ${WEEK} matchup`}>
+      <section className="card mu" aria-label={`Week ${WEEK} matchup${res ? `, final. ${res.long}` : ""}`}>
         <header className="mu-score">
           <div className="mu-side you"><span className="mu-who"><TeamAvatar t={YOU} size={22} />{changed ? "Your what-if" : "Your lineup"}</span>
-            {started ? <><LiveNum v={scored(myO)} className="mu-big" /><small className="mu-proj">proj {myTotal.toFixed(1)}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
-          <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}<Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{Math.round(chance)}%</b></Tooltip><small>to win</small></div>
+            {started ? <><LiveNum v={round1(meS.scored)} className="mu-big" /><small className="mu-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</small><PlayCount c={myCount} compact /></> : <b>{myTotal.toFixed(1)}</b>}</div>
+          <div className="mu-mid">{nowLive && <span className="lu-live"><i />Live</span>}
+            {res ? <><Tooltip content="Every starter on both sides is done, so this is the result, not a projection."><b className={res.tone === "even" ? undefined : res.tone}>{chance}%</b></Tooltip><small>Final</small></>
+              : <><Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small></>}</div>
           <div className="mu-side them"><span className="mu-who">{opp.manager}<Trophy teamId={opp.id} /><TeamAvatar t={opp} size={22} /></span>
-            {started ? <><LiveNum v={scored(oppO)} className="mu-big" /><small className="mu-proj">proj {oppTotal.toFixed(1)}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
+            {started ? <><LiveNum v={round1(oppS.scored)} className="mu-big" /><small className="mu-proj">{res ? "final" : `proj ${oppTotal.toFixed(1)}`}</small><PlayCount c={oppCount} compact /></> : <b>{oppTotal.toFixed(1)}</b>}</div>
         </header>
-        <div className={`mu-bar ${chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
+        <div className={`mu-bar ${chanceTone(ms)}${res ? " is-final" : ""}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
         <p className="mu-sum">
-          You win <b>{winning} of {mine.length + myK.length}</b> spots.
+          {res && <>{res.long}, {res.short.charAt(0).toLowerCase()}{res.short.slice(1)}. </>}
+          You {res ? "won" : "win"} <b>{winning} of {mine.length + myK.length}</b> spots.
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
           {edges[bigLoss] < 0 && <> Weakest spot: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
         </p>
@@ -210,9 +227,9 @@ function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; side: "yo
   );
 }
 
-function WeekMatchup({ week, onBack, stepper }: { week: number; onBack: () => void; stepper: ReactNode }) {
+function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => void; stepper: ReactNode }) {
   const { m, err } = useWeekMatch(week);
-  const back = <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button>;
+  const back = <BackBtn onBack={onBack} />;
   if (!m || !m.opp) return (
     <>{back}{stepper}
       <section className="card card-pad mu-week-msg" aria-busy={!m && !err}>
@@ -228,8 +245,9 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack: () => vo
   const pts = (x: Slot) => x.p?.pts ?? 0;
   const edges = Array.from({ length: n }, (_, i) => round1(pts(at(m.me.starters, i)) - pts(at(opp.starters, i))));
   const winning = edges.filter((e) => e > 0).length;
-  const diff = round1(m.me.total - opp.total);
-  const chance = m.chance ?? 50;
+  // A past week is final: win % from the scores (100, 0 or 50), the same as this week once it's done
+  const chance = past ? finalPct(m.me.total, opp.total) : m.chance ?? 50;
+  const res = past ? resultOf(m.me.total, opp.total) : null;
   const Num = ({ x }: { x: Slot }) => x.p?.pts === null ? <span className="lu-pts mu-pts bye">BYE</span> : <span className={`lu-pts mu-pts${past ? " actual" : ""}`}>{pts(x).toFixed(1)}</span>;
   return (
     <>
@@ -237,13 +255,13 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack: () => vo
       <section className="card mu" aria-label={`Week ${week} matchup`}>
         <header className="mu-score">
           <div className="mu-side you"><span>{past ? "You scored" : "Your best lineup"}</span><b>{m.me.total.toFixed(1)}</b></div>
-          <div className="mu-mid">{past
-            ? <><b className={diff > 0 ? "up" : diff < 0 ? "down" : undefined}>{diff > 0 ? "W" : diff < 0 ? "L" : "T"}</b><small>Final</small></>
+          <div className="mu-mid">{res
+            ? <><b className={res.tone === "even" ? undefined : res.tone}>{chance}%</b><small>Final</small></>
             : <><Tooltip content="Win chance from both projected lineups for that week."><b>{chance}%</b></Tooltip><small>to win</small></>}</div>
           <div className="mu-side them"><span>{opp.team.manager}<Trophy teamId={opp.team.id} /></span><b>{opp.total.toFixed(1)}</b></div>
         </header>
-        <div className={`mu-bar ${past ? (diff > 0 ? "up" : diff < 0 ? "down" : "even") : chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true"><span style={{ width: `${past ? 100 : chance}%` }} /></div>
-        <p className="mu-sum">{past ? <>You {diff >= 0 ? "won" : "lost"} <b>{winning} of {n}</b> spots{diff !== 0 && <>, {diff > 0 ? "winning" : "losing"} by <b>{Math.abs(diff).toFixed(1)}</b></>}.</>
+        <div className={`mu-bar ${res ? `${res.tone} is-final` : chance >= 55 ? "up" : chance <= 45 ? "down" : "even"}`} aria-hidden="true"><span style={{ width: `${chance}%` }} /></div>
+        <p className="mu-sum">{res ? <>{res.long}, {res.short.charAt(0).toLowerCase()}{res.short.slice(1)}. You won <b>{winning} of {n}</b> spots.</>
           : <>Projected to win <b>{winning} of {n}</b> spots. Both sides use Sleeper's Week {week} projections.</>}</p>
         <div className="mu-th"><span>Slot</span><span>You, then {opp.team.manager}</span><span className="mu-th-you">You</span><span className="mu-th-them">{opp.team.manager}</span></div>
         {Array.from({ length: n }, (_, i) => {

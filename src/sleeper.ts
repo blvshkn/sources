@@ -56,7 +56,7 @@ export interface SLeague {
   roster_positions: string[];
   scoring_settings: Record<string, number>;
   settings: { type?: number; waiver_type?: number; waiver_budget?: number; waiver_day_of_week?: number; trade_deadline?: number; playoff_week_start?: number; playoff_teams?: number;
-    reserve_allow_out?: number; reserve_allow_doubtful?: number; reserve_allow_sus?: number; reserve_allow_na?: number; reserve_allow_cov?: number; reserve_allow_dnr?: number };
+    reserve_slots?: number; taxi_slots?: number; reserve_allow_out?: number; reserve_allow_doubtful?: number; reserve_allow_sus?: number; reserve_allow_na?: number; reserve_allow_cov?: number; reserve_allow_dnr?: number };
 }
 interface SRoster {
   roster_id: number; owner_id: string | null; co_owners?: string[] | null; players: string[] | null; starters: string[] | null;
@@ -469,11 +469,12 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   // Active spots = every starter and bench slot. Kickers and defenses aren't modeled, so drop their slots.
   const activeSpots = league.roster_positions.filter((p) => !["IR", "TAXI", "K", "DEF"].includes(p)).length;
   const rosterMax = Math.max(activeSpots, ...teams.map((t) => t.roster.length));
-  const irSlots = league.roster_positions.filter((p) => p === "IR").length;
+  // Sleeper keeps IR and taxi counts in settings, not in roster_positions
+  const irSlots = league.settings.reserve_slots ?? league.roster_positions.filter((p) => p === "IR").length;
   const specialSlots = league.roster_positions.filter((p) => p === "K" || p === "DEF") as ("K" | "DEF")[];
   const nonBench = league.roster_positions.filter((p) => !["BN", "IR", "TAXI"].includes(p));
   const sleeperSpecial = (myRoster.starters ?? []).filter((id, i) => (nonBench[i] === "K" || nonBench[i] === "DEF") && !!id && id !== "0");
-  const taxiSlots = league.roster_positions.filter((p) => p === "TAXI").length;
+  const taxiSlots = league.settings.taxi_slots ?? league.roster_positions.filter((p) => p === "TAXI").length;
 
   // Your lineup as set in Sleeper
   const sleeperSet: Record<string, string[]> = {};
@@ -620,7 +621,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const wd = league.settings.waiver_day_of_week;
   const td = league.settings.trade_deadline;
   return {
-    mode: "live", id: league.league_id, name: league.name, season, week, scoring: league.scoring_settings, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, lineupOrder, lastWeek, board, games, slate: { opp: slateOpp, proj: slateProj, pts: slatePts }, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
+    mode: "live", id: league.league_id, name: league.name, season, week, scoring: league.scoring_settings, slots, format, rosterMax, irSlots, taxiSlots, specialSlots, specials, sleeperSpecial, history, weekMatchups: thisWeek.length ? thisWeek : undefined, lineupOrder, lastWeek, board, games, slate: { opp: slateOpp, proj: slateProj, pts: slatePts }, playoffTeams: league.settings.playoff_teams || 6, playoffStart,
     updated: `Sleeper projections, refreshed ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
     deadlines: {
       waivers: wd !== undefined ? `Waivers run ${DAYS[wd] ?? "Wednesday"}` : "Waivers run Wednesday",

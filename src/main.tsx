@@ -36,6 +36,7 @@ import "./keyboard.css";
 import "./partner.css";
 import "./sidebar.css";
 import "./search.css";
+import "./matchup-sheet.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
