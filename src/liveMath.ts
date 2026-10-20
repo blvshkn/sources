@@ -109,6 +109,19 @@ export function passScore(sleeper: number | undefined, scored: number, expected:
   return { scored: sleeper, proj: expected + (sleeper - scored) };
 }
 
+/** Sleeper's /v1/state/nfl, the fields weekPast reads. */
+export interface NflState { season: string; week: number; display_week?: number; season_type: string }
+/** True once Sleeper has moved on from `week` of `season`: a later season, the regular season over (post or off),
+ *  or a later week. Makes a week final even when a game state is missing or stale, so it never shows a live win %. */
+export function weekPast(state: NflState | null | undefined, season: string, week: number): boolean {
+  if (!state) return false;
+  const s = Number(state.season), mine = Number(season);
+  if (s !== mine) return s > mine;
+  if (state.season_type === "pre") return false;
+  if (state.season_type !== "regular") return true;
+  return Math.max(state.week, state.display_week ?? 0) > week;
+}
+
 /** A matchup is final once no starter on either side is live or still to play, or the week is behind us. */
 export const isFinal = (a: PlayCount, b: PlayCount, past = false) =>
   past || (a.live + a.left + b.live + b.left === 0 && a.done + b.done > 0);

@@ -1,0 +1,76 @@
+/* Lineup team strip (.mwf): you and your opponent on one score column, then the win chance or the final result.
+   Scores sit on a shared right column in Geist Mono; names truncate before a score can be pushed out.
+   Colors: green is good for you, red is bad. Lime stays brand only. */
+
+html:root:not(#_):not(#_) .mw.mwf {
+  display: grid; gap: 12px; padding: 16px; border-radius: var(--r);
+  min-width: 0; overflow: hidden;
+}
+
+/* One side: avatar | name over record line | score over projection. Rows share baselines across the columns. */
+html:root:not(#_):not(#_) .mwf-side {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; grid-template-rows: auto auto;
+  column-gap: 12px; row-gap: 5px; align-items: baseline; align-content: center;
+  min-height: 40px; min-width: 0;
+}
+html:root:not(#_):not(#_) .mwf-side > :first-child { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+html:root:not(#_):not(#_) .mwf-av-none { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line); }
+
+html:root:not(#_):not(#_) .mwf-name {
+  grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 6px; min-width: 0;
+  font: 600 0.9375rem/1.2 var(--font-body); color: var(--ink);
+}
+html:root:not(#_):not(#_) .mwf-name > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .mwf-name > :not(span) { flex: none; }
+html:root:not(#_):not(#_) .mwf-name.muted { color: var(--muted); font-weight: 500; }
+html:root:not(#_):not(#_) .mwf-sub {
+  grid-column: 2; grid-row: 2; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 500 0.75rem/1.2 var(--font-mono); letter-spacing: 0.01em; color: var(--muted);
+}
+
+html:root:not(#_):not(#_) .mwf-pts {
+  grid-column: 3; grid-row: 1; justify-self: end; white-space: nowrap;
+  font: 600 1.5rem/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--ink);
+}
+html:root:not(#_):not(#_) .mwf-note {
+  grid-column: 3; grid-row: 2; justify-self: end; white-space: nowrap;
+  font: 500 0.6875rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
+}
+/* Final: the side that lost steps back, like a scoreboard */
+html:root:not(#_):not(#_) .mwf-side.is-dim .mwf-pts { color: var(--muted); }
+
+/* Bottom line: week, then the bar and chance, or the result. Same height in every state so week and tab switches hold still. */
+html:root:not(#_):not(#_) .mwf-foot {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  box-sizing: border-box; height: 33px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+html:root:not(#_):not(#_) .mwf-wk { flex: none; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_):not(#_) .mwf-foot .lu-live { flex: none; margin: 0; }
+html:root:not(#_):not(#_) .mwf-bar { flex: 1; min-width: 32px; height: 6px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+html:root:not(#_):not(#_) .mwf-bar i { display: block; height: 100%; border-radius: inherit; background: var(--muted); transition: width 600ms var(--ease-out); }
+html:root:not(#_):not(#_) .mwf-chance { flex: none; white-space: nowrap; font-size: 0.8125rem; line-height: 1; color: var(--muted); }
+html:root:not(#_):not(#_) .mwf-chance b { font: 600 0.9375rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+html:root:not(#_):not(#_) .mwf-res { margin-left: auto; white-space: nowrap; font: 600 0.875rem/1 var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_) .mwf-msg { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; font-size: 0.8125rem; line-height: 1; color: var(--muted); }
+
+html:root:not(#_):not(#_) .mwf-foot.up :is(.mwf-chance b, .mwf-res) { color: var(--good); }
+html:root:not(#_):not(#_) .mwf-foot.down :is(.mwf-chance b, .mwf-res) { color: var(--bad); }
+html:root:not(#_):not(#_) .mwf-foot.up .mwf-bar i { background: var(--good); }
+html:root:not(#_):not(#_) .mwf-foot.down .mwf-bar i { background: var(--bad); }
+
+/* Loading: the same rows as placeholders */
+html:root:not(#_):not(#_) .mw.mwf.is-skel :is(.mwf-pts, .mwf-note, .mwf-name > span, .mwf-msg) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .mw.mwf.is-skel :is(.mwf-pts, .mwf-name > span, .mwf-msg) { animation: lw-pulse 1.2s ease-in-out infinite; }
+}
+
+/* Wide screens: keep each name a short read from its score instead of stretching across the page */
+@media (min-width: 900px) {
+  html:root:not(#_):not(#_) .mw.mwf { grid-template-columns: minmax(0, 600px); }
+}
+
+/* Small phones: a touch less score so the names keep room */
+@media (max-width: 360px) {
+  html:root:not(#_):not(#_) .mwf-pts { font-size: 1.375rem; }
+  html:root:not(#_):not(#_) .mwf-side { column-gap: 10px; }
+}

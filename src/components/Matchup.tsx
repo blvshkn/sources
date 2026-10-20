@@ -96,7 +96,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const meS = sideScore(live, YOU, mine.map((s) => s.id), myKs, !changed);
   const oppS = sideScore(live, opp, theirs.length ? theirs.map((s) => s.id) : startersOf(opp), oppKs);
   const baseS = sideScore(live, YOU, sleeperMine.map((s) => s.id), myKs);
-  const ms = scoreMatch(meS, oppS), res = ms.result;
+  const ms = scoreMatch(meS, oppS, live.past), res = ms.result;
   const myTotal = round1(meS.proj), oppTotal = round1(oppS.proj), baseTotal = round1(baseS.proj);
   const chance = ms.chance ?? 50;
   const ids = [...mine.map((s) => s.id), ...theirs.map((s) => s.id)];

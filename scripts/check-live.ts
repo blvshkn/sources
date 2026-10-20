@@ -1,6 +1,6 @@
 // Checks Sources' live math against real Sleeper readings (week 6, 2026, Go Buck Yourself: Blevishkin vs
 // ChefAndreNapier during WAS at SF on Monday night). Run: node --experimental-strip-types scripts/check-live.ts
-import { countPlays, finalPct, fromMatchups, isFinal, passScore, playLabel, resultOf, rowScore, sleeperLiveProj, sleeperWinProb, winPct, type GameState } from "../src/liveMath.ts";
+import { countPlays, finalPct, fromMatchups, isFinal, weekPast, passScore, playLabel, resultOf, rowScore, sleeperLiveProj, sleeperWinProb, winPct, type GameState } from "../src/liveMath.ts";
 import { rows, chef as chef6, zach as zach6, CHEF_ROSTER, ZACH_ROSTER, PROJ } from "./fixtures/week6-final.ts";
 
 let failed = 0;
@@ -97,6 +97,18 @@ near("Row without points: starters_points sum", rowScore({ roster_id: 3, starter
 near("Row without points or starters_points: players_points over starters", rowScore({ roster_id: 3, starters: chef6.starters, players_points: fx.points })!, 138.74, 0.001);
 // Live is unchanged: still Sleeper's model and the 1 to 99 clamp
 near("Live win % keeps the clamp", winPct(125.0, 127.12, 138.74, 139.89, false), 1, 0);
+
+// The week is behind us but a game state is missing or stale (schedule fetch failed, saved league): still final
+const stale = countPlays({}, () => false, Object.values(zach6.nfl)), staleOpp = countPlays({}, () => false, Object.values(chef6.nfl));
+same("No game states: not final on its own", isFinal(stale, staleOpp), false);
+const st = (week: number, season_type = "regular", season = "2026") => ({ season, week, season_type });
+same("Sleeper on week 7: week 6 is past", weekPast(st(7), "2026", 6), true);
+same("Sleeper on week 6: week 6 is not past", weekPast(st(6), "2026", 6), false);
+same("Postseason: week 17 is past", weekPast(st(18, "post"), "2026", 17), true);
+same("Next season: last season is past", weekPast(st(1, "pre", "2027"), "2026", 17), true);
+same("No state: not past", weekPast(null, "2026", 6), false);
+same("Past week with no game states: final", isFinal(stale, staleOpp, weekPast(st(7), "2026", 6)), true);
+near("Past week with no game states: win % from the scores", winPct(me.scored, me.proj, them.scored, them.proj, isFinal(stale, staleOpp, true)), 0, 0);
 
 if (failed) { console.error(`${failed} check(s) failed`); process.exit(1); }
 console.log("All live checks pass");

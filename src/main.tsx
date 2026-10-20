@@ -37,6 +37,7 @@ import "./partner.css";
 import "./sidebar.css";
 import "./search.css";
 import "./matchup-sheet.css";
+import "./team-strip.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

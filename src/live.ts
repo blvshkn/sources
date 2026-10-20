@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
-import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
+import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, weekPast, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
+import { getState } from "./sleeper";
 export type { PlayCount, Result } from "./liveMath";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
@@ -14,6 +15,8 @@ export interface Live {
   /** This week's projections, re-read from Sleeper while games are on (Sleeper revises them during games), scored
    *  for this league. Falls back to the projections loaded with the league. */
   proj?: Record<string, number>;
+  /** Sleeper's NFL state has moved past this week (liveMath.weekPast): the matchup is final whatever the game states say. */
+  past?: boolean;
   at: number;
 }
 
@@ -144,11 +147,13 @@ function demo(): Live {
 
 async function poll(): Promise<Live | null> {
   try {
-    const [ms, sched, left] = await Promise.all([
+    const [ms, sched, left, state] = await Promise.all([
       fetch(`https://api.sleeper.app/v1/league/${LEAGUE.id}/matchups/${WEEK}`).then((r) => (r.ok ? r.json() : null)) as Promise<SleeperMatchupRow[] | null>,
       fetch(`https://api.sleeper.com/schedule/nfl/regular/${LEAGUE.season}`).then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<SGame[] | null>,
       Promise.resolve({} as Record<string, number>),
+      getState().catch(() => null),
     ]);
+    const past = weekPast(state, LEAGUE.season, WEEK);
     if (!ms) return null;
     const { points, teamPts } = fromMatchups(ms);
     const games: Record<string, GameState> = { ...(LEAGUE.games ?? {}) };
@@ -159,7 +164,7 @@ async function poll(): Promise<Live | null> {
     const prevGames = current?.games ?? {};
     for (const [t, st] of Object.entries(games)) if (st === "in_game" && prevGames[t] !== "in_game" && !firstLive[t]) firstLive[t] = Date.now();
     const [clock, proj] = await Promise.all([Object.keys(left).length ? left : clocks(games), anyLive(games) ? freshProj() : Promise.resolve(projCache)]);
-    return { points, games, teamPts, left: clock, proj, at: Date.now() };
+    return { points, games, teamPts, left: clock, proj, past, at: Date.now() };
   } catch { return null; }
 }
 
@@ -286,14 +291,14 @@ export function sideScore(live: Live, t: Team, ids: (string | null)[] = starters
 /** This week's matchup as every view shows it: the Wire card, the Lineup strip, the full matchup and the inbox.
  *  Final once every starter on both sides is done; then win % is 100, 0 or 50 from the scores. */
 export interface MatchScore { me: SideScore; opp: SideScore | null; final: boolean; chance: number | null; result: Result | null }
-export function scoreMatch(me: SideScore, opp: SideScore | null): MatchScore {
+export function scoreMatch(me: SideScore, opp: SideScore | null, past = false): MatchScore {
   if (!opp) return { me, opp: null, final: false, chance: null, result: null };
-  const final = isFinal(me.count, opp.count);
+  const final = isFinal(me.count, opp.count, past);
   return { me, opp, final, chance: winPct(me.scored, me.proj, opp.scored, opp.proj, final), result: final ? resultOf(me.scored, opp.scored) : null };
 }
 export const matchNow = (live: Live): MatchScore => {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  return scoreMatch(sideScore(live, YOU), opp ? sideScore(live, opp) : null);
+  return scoreMatch(sideScore(live, YOU), opp ? sideScore(live, opp) : null, live.past);
 };
 /** Bar and label tone for a win percent: a final reads its result, a live or pregame chance its lean. */
 export const chanceTone = (m: Pick<MatchScore, "final" | "chance" | "result">): "up" | "down" | "even" =>
