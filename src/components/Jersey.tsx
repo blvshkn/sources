@@ -3,6 +3,8 @@
 // are drawn from jerseys.ts; no logos, names or maker marks.
 // Collar: plain (body color with seams), solid (one color band) or striped (a band with stripes
 // parallel to its edge), each with its own band width and V depth, and an optional notch at the point.
+// Shoulder trim: sleeve stripes run around the sleeve parallel to the cuff; bars are straight stripes that
+// run over the shoulder (yoke stripes, shoulder bands).
 // Rendering: lit like a 3D cloth render, all in SVG. A fine hex mesh and turbulence grain sit under the
 // trim and number, then a key light (angle set by `light`), a rim light opposite it, cloth folds, a hem
 // vignette and a satin sheen on the collar shade everything above. Strengths follow body luminance so
@@ -12,7 +14,7 @@
 // stylesheet link in index.html. Each face is sized to the same cap height so every team's number
 // fills the chest the same way.
 import { useId } from "react";
-import { colorway, numberStyle, trimFor, type Band, type Collar, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
+import { colorway, numberStyle, trimFor, type Band, type Bars, type Collar, type Colorway, type NumFont, type PatternId, type Trim } from "../jerseys";
 
 export interface JerseyProps {
   /** NFL abbreviation, e.g. "BUF" */
@@ -134,11 +136,6 @@ function cuffLine(off: number): string {
   const [p0, p1, p2, p3] = CUFF_TOP.map((p) => add(p, N, off));
   return `M ${f(add(p0, D, -60))} L ${f(p0)} C ${f(p1)} ${f(p2)} ${f(p3)} L ${f(add(p3, D, 60))}`;
 }
-function cuffAt(t: number): Pt {
-  const [a, b, c, d] = CUFF_TOP;
-  const u = 1 - t;
-  return [0, 1].map((i) => u * u * u * a[i] + 3 * u * u * t * b[i] + 3 * u * t * t * c[i] + t * t * t * d[i]) as Pt;
-}
 /** A stripe that tapers from a base of width `t` at `b` to a point at `e`, bowed sideways by `bow`. */
 function taper(b: Pt, e: Pt, t: number, bow = 0): string {
   const len = Math.hypot(e[0] - b[0], e[1] - b[1]);
@@ -146,25 +143,24 @@ function taper(b: Pt, e: Pt, t: number, bow = 0): string {
   const m = add(lerp(b, e, 0.45), p, bow);
   return `M ${f(add(b, p, t / 2))} Q ${f(add(m, p, t * 0.45))} ${f(e)} Q ${f(add(m, p, -t * 0.45))} ${f(add(b, p, -t / 2))} Z`;
 }
-// Tiger stripes: our own rough wedges, alternating in from the outer edge and the raglan seam.
+// Tiger stripes: our own claw shapes that hook down over the shoulder cap from the top edge, widest at
+// the top, plus a short one in from the outer edge near the cuff.
 const TIGER_L = [
-  taper([-8, 64], [80, 82], 17, -5),
-  taper([232, 70], [126, 100], 17, 5),
-  taper([-8, 100], [94, 118], 19, -6),
-  taper([206, 110], [104, 130], 16, 5),
-  taper([-8, 136], [64, 146], 13, -3),
+  taper([200, -8], [44, 128], 30, 16),
+  taper([146, -8], [18, 92], 24, 12),
+  taper([98, -6], [6, 54], 17, 7),
+  taper([-10, 132], [70, 146], 12, -3),
 ];
-// Feather trim: four broad overlapping feather tips on the cuff, leaning out toward the shoulder edge,
-// each with a quill line.
-const FEATHERS_L = [0.1, 0.32, 0.54, 0.76].map((t) => {
-  const b = add(cuffAt(t), N, 2);
-  const tip = add(add(b, N, 46), D, -22);
-  return { leaf: taper(b, tip, 24, 5), quill: `M ${f(b)} Q ${f(add(lerp(b, tip, 0.45), [-(tip[1] - b[1]), tip[0] - b[0]], 0.06))} ${f(lerp(b, tip, 0.85))}` };
-});
-// Peaks: a single pointed chevron across the sleeve cap.
-const PEAK_L = "M -20 132 L 82 66 L 220 150";
-// Curl: a tapered shoulder stripe that sweeps out from the raglan seam and curls down the sleeve.
-const CURL_L = "M 214 76 C 150 66 74 62 34 90 C 18 102 12 124 14 152 C 24 126 32 112 48 104 C 92 88 150 94 206 102 Z";
+// Peaks: a band across the sleeve cap in the accent color, with a row of pointed peaks along its
+// lower edge in the main color, ending above the cuff.
+const PEAK_CAP_L = "M -20 70 L 210 96 L 196 128 L -20 106 Z";
+const PEAK_TEETH_L = "M -20 104 L 196 126 L 186 140 L 150 132 L 128 154 L 96 128 L 62 150 L 40 120 L -20 124 Z";
+// Hook: a curved sleeve stripe, wide at the outer edge and tapering to a point toward the chest, with a
+// thin accent line under it.
+const HOOK_L = "M -20 58 C 50 66 130 84 204 106 C 130 104 56 112 -20 124 Z";
+const HOOK_LINE_L = "M -20 136 C 56 124 130 114 196 112";
+// Side marks: three small triangles stacked down the chest side.
+const MARKS_L = [300, 324, 348].map((y) => `M 160 ${y - 7} L 167 ${y + 5} L 153 ${y + 5} Z`).join(" ");
 
 // Lighting geometry.
 const CENTER: Pt = [300, 345];
@@ -210,23 +206,39 @@ function pattern(id: PatternId, c: string, c2?: string) {
   switch (id) {
     case "tiger":
       return TIGER_L.map((d, i) => <path key={i} d={d} fill={c} />);
-    case "feather":
-      return FEATHERS_L.map((p, i) => (
-        <g key={i}>
-          <path d={p.leaf} fill={c} stroke={c2 ?? c} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke" />
-          <path d={p.quill} stroke={c2 ?? c} strokeWidth={1.6} strokeLinecap="round" />
-        </g>
-      ));
     case "peaks":
       return (
-        <g fill="none" strokeLinejoin="miter" strokeMiterlimit={8}>
-          {c2 && <path d={PEAK_L} stroke={c2} strokeWidth={20} />}
-          <path d={PEAK_L} stroke={c} strokeWidth={12} />
+        <g>
+          {c2 && <path d={PEAK_CAP_L} fill={c2} />}
+          <path d={PEAK_TEETH_L} fill={c} />
         </g>
       );
-    case "curl":
-      return <path d={CURL_L} fill={c} stroke={c2 ?? c} strokeWidth={3} strokeLinejoin="round" paintOrder="stroke" />;
+    case "hook":
+      return (
+        <g>
+          <path d={HOOK_L} fill={c} />
+          {c2 && <path d={HOOK_LINE_L} fill="none" stroke={c2} strokeWidth={5} />}
+        </g>
+      );
   }
+}
+
+/** Straight parallel stripes over the left shoulder, centered on a to b and stacked outward. */
+function bars(list: Bars[]) {
+  return list.flatMap((bar, i) => {
+    const [a, b] = [bar.a, bar.b];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    // Unit normal pointing away from the chest (toward smaller x on the left side).
+    let n: Pt = [-(b[1] - a[1]) / len, (b[0] - a[0]) / len];
+    if (n[0] > 0) n = [-n[0], -n[1]];
+    const total = bar.s.reduce((t, [, w]) => t + w, 0);
+    let o = -total / 2;
+    return bar.s.map(([color, w], j) => {
+      const mid = o + w / 2;
+      o += w;
+      return color ? <path key={`${i}-${j}`} d={`M ${f(add(a, n, mid))} L ${f(add(b, n, mid))}`} stroke={color} strokeWidth={w} fill="none" /> : null;
+    });
+  });
 }
 
 /** A band stroked along `d` and its mirror, with optional edges. */
@@ -428,17 +440,19 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
         {/* Trim: side band, raglan band, then sleeve stripes and patterns, mirrored to the right sleeve */}
         {trim?.side && band(SIDE_L, trim.side)}
         {trim?.raglan && band(RAGLAN_L, trim.raglan)}
-        {trim && (trim.sleeve || trim.pattern) && [false, true].map((flip) => (
+        {trim?.marks && <path d={`${MARKS_L} ${mirror(MARKS_L)}`} fill={trim.marks} />}
+        {trim && (trim.sleeve || trim.pattern || trim.bars) && [false, true].map((flip) => (
           <g key={String(flip)} transform={flip ? `matrix(-1 0 0 1 ${VW} 0)` : undefined}>
             <g clipPath={u("s")}>
               {stripes(trim)}
               {trim.pattern && pattern(trim.pattern.id, trim.pattern.c, trim.pattern.c2)}
             </g>
+            {trim.bars && bars(trim.bars)}
           </g>
         ))}
         {/* Shoulder-top numbers, cut by the shoulder line as they wrap over the top */}
-        {num({ x: 112, y: 38, size: sfs, strokeW: 7, rotate: -5, letter: two ? 0.02 : 0 })}
-        {num({ x: 488, y: 38, size: sfs, strokeW: 7, rotate: 5, letter: two ? 0.02 : 0 })}
+        {!ns.noShoulder && num({ x: 112, y: 38, size: sfs, strokeW: 7, rotate: -5, letter: two ? 0.02 : 0 })}
+        {!ns.noShoulder && num({ x: 488, y: 38, size: sfs, strokeW: 7, rotate: 5, letter: two ? 0.02 : 0 })}
         <g fill="none" strokeWidth="2.2" strokeLinecap="round">
           <path d={RAGLAN_L} stroke={seam} />
           <path d={mirror(RAGLAN_L)} stroke={seam} />
