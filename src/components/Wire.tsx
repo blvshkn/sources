@@ -13,7 +13,7 @@ import { Trophy } from "./Trophy";
 import { useLive, onPace, startersOf, matchNow, chanceTone } from "../live";
 import { avatarSrc } from "../sleeper";
 import { WeekPlayer } from "../weeks";
-import { gameIn, openMatchupWeek, useLineupWeek, useWeekMatch } from "../weekMatch";
+import { gameIn, useLineupWeek, useWeekMatch } from "../weekMatch";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
@@ -266,14 +266,15 @@ function ThreatBody({ rows, msg }: { rows: ReactNode[] | null; msg?: { title: st
 
 /** The opponent's three biggest projections, with live points once their games start. On the Lineup page it follows
  *  the week stepper: past weeks show who hurt you most, future weeks that week's opponent and projections. */
-export function Threats({ onGo }: { onGo: (t: string) => void }) {
+export function Threats(_props: { onGo?: (t: string) => void }) {
   const live = useLive();
   const week = useLineupWeek();
   // Tapping a threat opens that player, with the reason he made the list, instead of leaving the page
   const [open, setOpen] = useState<{ p: Player; rank: number } | null>(null);
-  if (week !== WEEK) return <WeekThreats week={week} onGo={onGo} />;
+  const [mu, setMu] = useState(false);
+  if (week !== WEEK) return <WeekThreats week={week} />;
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  const go = () => { openMatchupWeek(WEEK); onGo("matchup"); };
+  const go = () => setMu(true);
   const threats = opp ? startersOf(opp).map(playerById).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3) : [];
   const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} them />;
   return (
@@ -287,6 +288,7 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
         </button>
       ))} />
       {open && opp && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
+      {mu && <MatchupSheet week={WEEK} onClose={() => setMu(false)} />}
       <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
@@ -294,12 +296,13 @@ export function Threats({ onGo }: { onGo: (t: string) => void }) {
 
 /** Their threats for a week other than this one: that week's opponent, ranked by that week's projection (Sleeper's,
  *  the same numbers as your starters) or, for a week already played, by what they scored. */
-function WeekThreats({ week, onGo }: { week: number; onGo: (t: string) => void }) {
+function WeekThreats({ week }: { week: number }) {
   const { m, err } = useWeekMatch(week);
   const [open, setOpen] = useState<Player | null>(null);
+  const [mu, setMu] = useState(false);
   const past = week < WEEK, opp = m?.opp ?? null;
   const top = opp ? (opp.starters.map((x) => x.p).filter((p) => p && p.pts !== null) as WeekPlayer[]).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0)).slice(0, 3) : [];
-  const go = () => { openMatchupWeek(week); onGo("matchup"); };
+  const go = () => setMu(true);
   const sub = opp ? `${opp.team.manager}'s ${past ? "top scorers" : "top projections"}` : `Week ${week}`;
   const msg = err ? { title: "Couldn't load", body: err } : m && !opp ? m.empty : undefined;
   return (
@@ -315,6 +318,7 @@ function WeekThreats({ week, onGo }: { week: number; onGo: (t: string) => void }
         return full ? <button key={p.id} className="wk-row" onClick={() => setOpen(full)}>{inner}</button> : <span key={p.id} className="wk-row">{inner}</span>;
       }) : null} />
       {open && opp && <PlayerSheet p={open} where={`${opp.team.manager}'s ${open.pos}, Week ${week}`} onClose={() => setOpen(null)} />}
+      {mu && <MatchupSheet week={week} onClose={() => setMu(false)} />}
       <button type="button" className="wk-more" onClick={go} disabled={!opp}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
