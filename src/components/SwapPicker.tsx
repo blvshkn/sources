@@ -177,7 +177,7 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
   /** A "Player info" row at the top that opens the player sheet. */
   info?: { name: string; onOpen: () => void };
   /** useSwapMenu's menuRef, so the menu gets placed and the scroll held. */
-  menuRef: RefObject<HTMLDivElement | null>;
+  menuRef: RefObject<HTMLDivElement>;
 }) {
   return (
     <div className={`mu-swap${className ? ` ${className}` : ""}`} ref={menuRef}>
