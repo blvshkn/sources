@@ -1,0 +1,126 @@
+/* Matchup cards: the Wire Overview scoreboard (.sb2), the Wire This week strip (.lu-mx-open) and the Lineup team strip
+   (.mw.mwf). Each one opens the full matchup from anywhere on the card, and all three share one set of states.
+
+   States (.mc-press):
+   - Hover, on devices that hover with a fine pointer: a soft ink tint and a hairline fade in over the card.
+   - Leave: the same fade in reverse, same duration, same curve. Nothing else moves.
+   - Press: the tint deepens, quicker.
+   - Focus-visible: the lime ring.
+   The tint lives on a ::after overlay and only its opacity animates, so the hero gradients never have to interpolate
+   and nothing grows in from the edges. 160ms on the app's strong ease-out, the same as the list rows on these pages. */
+
+html:root:not(#_):not(#_) {
+  --mc-tint: color-mix(in srgb, var(--ink) 7%, transparent);
+  --mc-ring: color-mix(in srgb, var(--ink) 14%, transparent);
+  --mc-hover: 0.6;
+}
+
+html:root:not(#_):not(#_) .mc-press {
+  position: relative; isolation: isolate; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  border-radius: var(--r); outline-offset: 2px;
+  transition: none; transform: none;
+}
+html:root:not(#_):not(#_) .mc-press::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+  background: var(--mc-tint); box-shadow: inset 0 0 0 1px var(--mc-ring);
+  opacity: 0; transition: opacity var(--st-dur) var(--st-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):hover::after { opacity: var(--mc-hover); }
+  html:root:not(#_):not(#_) .mc-press:hover .sb2-more svg { transform: translateX(3px); }
+}
+html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):active::after { opacity: 1; transition-duration: 100ms; }
+html:root:not(#_):not(#_) .mc-press .sb2-more svg { transition: transform var(--st-dur) var(--st-ease); }
+html:root:not(#_):not(#_) .mc-press[aria-disabled="true"] { cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .mc-press .sb2-more svg { transform: none !important; }
+}
+
+/* The scoreboard's button is the whole card, padding included, so a tap near the edge still opens it */
+html:root:not(#_):not(#_) .sb2:has(> .sb2-open:only-child) { padding: 0; }
+html:root:not(#_):not(#_) .sb2 > .sb2-open:only-child { margin: 0; width: 100%; padding: 18px; border-radius: inherit; }
+/* The This week strip's surface is the hero inside the button: same corners, so the tint fits it */
+html:root:not(#_):not(#_) .lu-mx-open.mc-press { border-radius: var(--r); }
+html:root:not(#_):not(#_) .lu-mx-open.mc-press > .lu-mx { border-radius: inherit; }
+
+/* ---------- Face-off: tablet and desktop ---------- */
+/* Phones keep each card's own stacked layout. From 680px of page width the cards swap to one shared face-off (FaceOff.tsx):
+   you on the left, them mirrored on the right, the week's state in the middle, the bar or final line across the bottom. */
+html:root:not(#_):not(#_) .fo { display: none; }
+
+@container pg (min-width: 680px) {
+  html:root:not(#_):not(#_) .sb2-open:has(> .fo) > :not(.fo, .sb2-more) { display: none !important; }
+  html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo) { padding: 20px 24px 18px; }
+  html:root:not(#_):not(#_) .lu-mx:has(> .fo) { display: block !important; padding: 20px 24px !important; }
+  html:root:not(#_):not(#_) .lu-mx:has(> .fo) > :not(.fo) { display: none !important; }
+  html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { display: block; padding: 20px 24px; }
+  html:root:not(#_):not(#_) .mw.mwf:has(> .fo) > :not(.fo) { display: none !important; }
+
+  html:root:not(#_):not(#_) .fo {
+    container: fo / inline-size;
+    display: grid; grid-template-columns: minmax(0, 1fr) 136px minmax(0, 1fr); grid-template-areas: "you mid them" "foot foot foot";
+    column-gap: 20px; row-gap: 18px; align-items: center;
+    width: 100%; max-width: 960px; margin-inline: auto; text-align: left;
+  }
+}
+
+/* One side: avatar | name over record | score over note. Them is the mirror image. */
+html:root:not(#_):not(#_) .fo-side {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "av who score";
+  column-gap: 14px; align-items: center; min-width: 0;
+}
+html:root:not(#_):not(#_) .fo-side.you { grid-area: you; }
+html:root:not(#_):not(#_) .fo-side.them { grid-area: them; grid-template-columns: auto minmax(0, 1fr) 44px; grid-template-areas: "score who av"; text-align: right; }
+html:root:not(#_):not(#_) .fo-side > :first-child { grid-area: av; width: 44px; height: 44px; }
+html:root:not(#_):not(#_) .fo-av-none { display: block; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line); }
+
+html:root:not(#_):not(#_) .fo-who { grid-area: who; display: grid; gap: 5px; min-width: 0; }
+html:root:not(#_):not(#_) .fo-who b { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 0.9375rem/1.2 var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_) .fo-side.them .fo-who b { justify-content: flex-end; }
+html:root:not(#_):not(#_) .fo-who b > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .fo-who b > :not(span) { flex: none; }
+html:root:not(#_):not(#_) .fo-who b.muted { color: var(--muted); font-weight: 500; }
+html:root:not(#_):not(#_) .fo-who small { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 0.75rem/1.2 var(--font-mono); letter-spacing: 0.01em; color: var(--muted); }
+
+html:root:not(#_):not(#_) .fo-score { grid-area: score; display: grid; justify-items: end; gap: 6px; }
+html:root:not(#_):not(#_) .fo-side.them .fo-score { justify-items: start; }
+html:root:not(#_):not(#_) .fo-pts {
+  white-space: nowrap; font: 600 2.25rem/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+  color: var(--ink); transition: color 150ms ease-out;
+}
+html:root:not(#_):not(#_) .fo-side.is-dim .fo-pts, html:root:not(#_):not(#_) .fo-pts.muted { color: var(--muted); }
+html:root:not(#_):not(#_) .fo-note { white-space: nowrap; font: 500 0.6875rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+
+/* Narrower face-offs (tablet): the score drops under the name so long names keep their room */
+@container fo (max-width: 859px) {
+  html:root:not(#_):not(#_) .fo-side { grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "av who" "av score"; row-gap: 10px; align-items: start; }
+  html:root:not(#_):not(#_) .fo-side.them { grid-template-columns: minmax(0, 1fr) 44px; grid-template-areas: "who av" "score av"; }
+  html:root:not(#_):not(#_) .fo-score { justify-items: start; grid-template-columns: auto auto; align-items: baseline; justify-content: start; column-gap: 8px; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-score { justify-items: end; justify-content: end; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-score .fo-note { order: -1; }
+  html:root:not(#_):not(#_) .fo-pts { font-size: 2rem; }
+}
+
+/* The middle: week, state, the headline number, what it means */
+html:root:not(#_):not(#_) .fo-mid { grid-area: mid; display: grid; justify-items: center; align-content: center; gap: 6px; min-width: 0; text-align: center; }
+html:root:not(#_):not(#_) .fo-wk { font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_):not(#_) .fo-tag { display: inline-flex; align-items: center; height: 14px; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+html:root:not(#_):not(#_) .fo-tag .lu-live { margin: 0; }
+html:root:not(#_):not(#_) .fo-big { margin-top: 2px; font: 600 1.75rem/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--ink); }
+html:root:not(#_):not(#_) .fo-small { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.8125rem; line-height: 1.2; color: var(--muted); }
+html:root:not(#_):not(#_) :is(.fo-big, .fo-small).up { color: var(--good); }
+html:root:not(#_):not(#_) :is(.fo-big, .fo-small).down { color: var(--bad); }
+
+/* The bottom line: the win chance bar before and during games, the final score line after. One height for both. */
+html:root:not(#_):not(#_) .fo-foot { grid-area: foot; display: flex; align-items: center; justify-content: center; height: 20px; min-width: 0; }
+html:root:not(#_):not(#_) .fo-bar { flex: 1; height: 6px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: inherit; background: var(--muted); transition: width 600ms var(--ease-out); }
+html:root:not(#_):not(#_) .fo-foot.up .fo-bar i { background: var(--good); }
+html:root:not(#_):not(#_) .fo-foot.down .fo-bar i { background: var(--bad); }
+html:root:not(#_):not(#_) .fo-res { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 0.8125rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+
+/* Loading: the same rows as placeholders */
+html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-note, .fo-who b > span, .fo-big, .fo-small) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-who b > span, .fo-big) { animation: lw-pulse 1.2s ease-in-out infinite; }
+}

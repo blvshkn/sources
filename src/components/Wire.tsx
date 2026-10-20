@@ -19,6 +19,7 @@ import { useLineupWeek, useWeekMatch } from "../weekMatch";
 import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
+import { FaceOff } from "./FaceOff";
 import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
@@ -149,7 +150,7 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   );
   return (
     <section className="card sb2" aria-label="This week">
-      <button className="sb2-rows sb2-open" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
+      <button className="sb2-rows sb2-open mc-press" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
         <span className="sb2-head">
           <span>Week {WEEK} matchup</span>
           {res ? <span className={`sb2-final ${res.tone}`}>Final</span> : inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
@@ -175,6 +176,9 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
             )}
           </span>
         )}
+        <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp ? chance : null} res={opp ? res : null} msg="Bye week"
+          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: res ? "final" : inPlay ? `proj ${mine.toFixed(1)}` : "projected", dim: myTone === "trail" }}
+          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: res ? "final" : inPlay ? `proj ${theirs.toFixed(1)}` : "projected", dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
         {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
       </button>
       {extras && <>

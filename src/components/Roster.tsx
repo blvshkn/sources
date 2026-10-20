@@ -21,6 +21,8 @@ import { Trophy } from "./Trophy";
 import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
+import { FaceOff, pressProps, standing } from "./FaceOff";
+import { MatchupSheet } from "./MatchupSheet";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -460,15 +462,6 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
   );
 }
 
-const ordinal = (n: number) => `${n}${n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"}`;
-/** A team's record and standing from Sleeper's records and points for; your own line adds your points-for rank. */
-function standing(t: Team, withPf = false) {
-  const wins = (x: Team) => Number(x.record.split("-")[0]) || 0;
-  const rank = [...TEAMS].sort((x, y) => wins(y) - wins(x) || y.pf - x.pf).findIndex((x) => x.id === t.id) + 1;
-  const pfRank = [...TEAMS].sort((x, y) => y.pf - x.pf).findIndex((x) => x.id === t.id) + 1;
-  return `${t.record} · ${ordinal(rank)}${withPf ? ` · PF ${ordinal(pfRank)}` : ""}`;
-}
-
 /** One side of the face-off: avatar, name, record line, and the score on the shared right column. */
 function Side({ t, pts, note, live, dim, empty }: { t: Team | null; pts: number | null; note?: string; live?: boolean; dim?: boolean; empty?: { title: string; body?: string } }) {
   return (
@@ -500,7 +493,7 @@ function StripFoot({ week, res, chance, live, tip, msg }: { week: number; res?: 
 
 /** The team strip for any week but this one: a past week's final and the result, or a future week's projected
  *  totals and win chance. Loading and empty weeks keep the same rows so nothing below moves. */
-function WeekStrip({ week }: { week: number }) {
+function WeekStrip({ week, onOpen }: { week: number; onOpen?: () => void }) {
   // A week ahead follows the shared what-if, so a swap on Lineup moves the total and win % here right away
   const { m, err, wi } = useWeekWhatIf(week);
   const myTotal = m?.me.total ?? peekWeek(week)?.total;
@@ -509,6 +502,8 @@ function WeekStrip({ week }: { week: number }) {
       <Side t={YOU} pts={myTotal ?? 0} note={week < WEEK ? undefined : "projected"} />
       <Side t={null} pts={err ? null : 0} empty={{ title: err ? "Matchup unavailable" : "Loading" }} />
       <StripFoot week={week} msg={err ?? "Loading the matchup"} />
+      <FaceOff week={week} state={week < WEEK ? "final" : "pre"} chance={null} res={null} skel={!err} msg={err ? "Unavailable" : "Loading"}
+        you={{ t: YOU, pts: myTotal ?? 0, note: week < WEEK ? "final" : "projected" }} them={{ t: null, pts: err ? null : 0, empty: err ? "Matchup unavailable" : "Loading" }} />
     </section>
   );
   const past = m.kind === "past", opp = m.opp;
@@ -520,10 +515,13 @@ function WeekStrip({ week }: { week: number }) {
   const label = `${YOU.name}, ${YOU.record}. Week ${week}${opp ? ` vs ${opp.team.name}` : `, ${m.empty?.title ?? "no matchup"}`}. `
     + (res ? `Final, ${res.long}` : past ? `Final ${m.me.total.toFixed(1)}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
   return (
-    <section className="mw mwf" aria-label={label}>
+    <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open the Week ${week} matchup. ${label}`) : { "aria-label": label })}>
       <Side t={YOU} pts={m.me.total} note={past ? undefined : wi.changed ? "what-if" : "projected"} dim={wkTone === "trail"} />
       <Side t={opp?.team ?? null} pts={opp ? opp.total : null} note={opp && !past ? "projected" : undefined} dim={wkTone === "lead"} empty={{ title: m.empty?.title ?? "No matchup", body: m.empty?.body }} />
       <StripFoot week={week} res={res} chance={opp && !past ? chance : null} tip="Win chance from both projected lineups for that week, the same model as this week's." />
+      <FaceOff week={week} state={past ? "final" : "pre"} chance={opp && !past ? chance : null} res={res} msg={m.empty?.title ?? "No matchup"}
+        you={{ t: YOU, pts: m.me.total, note: past ? "final" : wi.changed ? "what-if" : "projected", dim: wkTone === "trail" }}
+        them={opp ? { t: opp.team, pts: opp.total, note: past ? "final" : "projected", dim: wkTone === "lead" } : { t: null, pts: null, empty: m.empty?.title ?? "No matchup" }} />
     </section>
   );
 }
@@ -544,15 +542,19 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   const chance = ms.chance ?? 0, res = ms.result, tone = chanceTone(ms);
   // Score tones (liveMath.scoreTone): ahead now or the winner stays bright, the other dims; pregame both bright
   const myTone = scoreTone(myNow ?? myTotal, oppNow ?? oppTotal, res ? "final" : inPlay ? "live" : "pre");
-  if (mineOnly && week !== WEEK) return <WeekStrip week={week} />;
+  if (mineOnly && week !== WEEK) return <WeekStrip week={week} onOpen={onOpen} />;
   if (mineOnly) {
     // Your week at a glance, like Sleeper's team card: you and them on one score column, then the win chance or the result
     const myPts = inPlay ? myNow! : myTotal, oppPts = opp ? (inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0) : null;
+    const label = `${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`;
     return (
-      <section className="mw mwf" aria-label={`${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`}>
+      <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open this week's matchup. ${label}`) : { "aria-label": label })}>
         <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `${wi.changed ? "what-if" : "proj"} ${myTotal.toFixed(1)}` : wi.changed ? "what-if" : "projected"} dim={myTone === "trail"} />
         <Side t={opp} pts={oppPts} live={inPlay} note={res || !opp ? undefined : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected"} dim={myTone === "lead"} empty={{ title: "No matchup", body: `You don't play anyone in Week ${WEEK}.` }} />
         <StripFoot week={WEEK} res={opp ? res : null} chance={opp && !res ? chance : null} live={inPlay && nowLive} msg="Bye week" />
+        <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
+          you={{ t: YOU, pts: myPts, live: inPlay, note: res ? "final" : inPlay ? `${wi.changed ? "what-if" : "proj"} ${myTotal.toFixed(1)}` : wi.changed ? "what-if" : "projected", dim: myTone === "trail" }}
+          them={opp ? { t: opp, pts: oppPts, live: inPlay, note: res ? "final" : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected", dim: myTone === "lead" } : { t: null, pts: null, empty: "No matchup" }} />
       </section>
     );
   }
@@ -587,9 +589,12 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
           </>}
         </div>}
       </>}
+      {!mineOnly && <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
+        you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: res ? "final" : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected", dim: myTone === "trail" }}
+        them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: res ? "final" : inPlay ? `proj ${oppTotal.toFixed(1)}` : "projected", dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />}
     </div>
   );
-  return onOpen ? <button className="lu-mx-open" onClick={onOpen} aria-label="Open this week's matchup">{body}</button> : body;
+  return onOpen ? <button type="button" className="lu-mx-open mc-press" onClick={onOpen} aria-label={`Open this week's matchup. ${res ? `Final, ${res.long}` : `You ${(inPlay ? myNow! : myTotal).toFixed(1)}${opp ? `, ${opp.name} ${(inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0).toFixed(1)}, ${chance} percent to win` : ""}`}`}>{body}</button> : body;
 }
 
 export interface Check { key: string; tone: "warn" | "bad" | "info"; icon: IconName; text: string; player?: Player }
@@ -648,6 +653,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const suggestions = level === "light" ? [] : suggestTags(lineup, myTags, tags);
   const kdef = specialLineup(YOU);
   const [week, setWeek] = useState(WEEK);
+  const [muWeek, setMuWeek] = useState<number | null>(null);
   useKickoffs(week);
   const [wv, setWv] = useState<WeekView | null>(null);
   const [wErr, setWErr] = useState<string | null>(null);
@@ -709,7 +715,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       <PageTabs value={view} onChange={setView} options={[{ v: "lineup", label: "Lineup", icon: "helmet" }, { v: "compare", label: "Compare", icon: "switch" }, { v: "tags", label: "Tags", icon: "roster" }, { v: "price", label: "Asking price", icon: "lock" }, { v: "slots", label: "Slot report", icon: "values" }]} />
 
       {/* Below the tabs, like every page's own content, so the header and tab row sit where they do everywhere else */}
-      <MatchupStrip mineOnly week={view === "lineup" ? week : WEEK} />
+      <MatchupStrip mineOnly week={view === "lineup" ? week : WEEK} onOpen={() => setMuWeek(view === "lineup" ? week : WEEK)} />
+      {muWeek !== null && <MatchupSheet week={muWeek} onClose={() => setMuWeek(null)} />}
 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">

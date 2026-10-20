@@ -29,7 +29,7 @@ html:root:not(#_):not(#_) {
 html:root:not(#_):not(#_) :is(
   .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .nav button, .nav-ix button, .league-pill, .lsw-btn, .top-league, .page-league,
   .linkish, .ibx-allread, .ibx-x, .ps-x, .st-back, .composer-btn, .qs-add, .qs-x, .qs-done, .qs-opts button, .wv-ta-list button, .tp-list button,
-  .partner-card, .tp-btn, .mu-mine, .mu-opt, .sb2, .sb2-open, .sb2-partner, .sb-stat-link, .lu-mx-open, .sr-main, .ld2-link, .ld2-again, .ld2-faq summary,
+  .partner-card, .tp-btn, .mu-mine, .mu-opt, .sb2-partner, .sb-stat-link, .sr-main, .ld2-link, .ld2-again, .ld2-faq summary,
   .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .ibx-item, .saved-x, .nudge-link, .ti-nope, .fb-opt, .set-link,
   .side-logo, .switch
 ) {
@@ -46,23 +46,13 @@ html:root:not(#_):not(#_) :focus:not(:focus-visible) { outline: none; }
 html:root:not(#_):not(#_) :is(.main, .ibx-title, [tabindex="-1"]):focus-visible { outline: none !important; }
 
 /* ---------- Clickable cards: tint and hairline, no glow ---------- */
-/* The scoreboard: the whole card lifts, not a grey slab inside a lime frame */
-html:root:not(#_):not(#_) button.sb2-open,
-html:root:not(#_):not(#_) button.sb2-open:is(:hover, :active, :focus-visible) { background: transparent !important; transform: none !important; outline: none !important; }
-html:root:not(#_):not(#_) .sb2:has(> .sb2-open) { transition-property: box-shadow, transform; }
-html:root:not(#_):not(#_) .sb2-more svg, html:root:not(#_):not(#_) .sb2-open .sb2-head + * svg:last-child { transition: transform var(--st-dur) var(--st-ease); }
-@media (hover: hover) and (pointer: fine) {
-  html:root:not(#_):not(#_) .sb2:has(> .sb2-open:hover) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--st-lift) !important; }
-  html:root:not(#_):not(#_) .sb2:has(> .sb2-open:hover) .sb2-more svg { transform: translateX(3px); }
-}
-html:root:not(#_):not(#_) .sb2:has(> .sb2-open:active) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--st-lift-press) !important; transform: scale(0.99); transition-duration: 100ms; }
-html:root:not(#_):not(#_) .sb2:has(> .sb2-open:focus-visible) { outline: 2px solid var(--lime); outline-offset: 2px; }
+/* The matchup cards (scoreboard, This week strip, Lineup strip) have their own states in matchup-card.css */
 
 /* Card-like buttons */
-html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main) { border-color: var(--line); }
+html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main) { border-color: var(--line); }
 html:root:not(#_):not(#_) .partner-card { border-radius: 12px; }
 @media (hover: hover) and (pointer: fine) {
-  html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main):hover {
+  html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main):hover {
     box-shadow: var(--st-lift) !important;
   }
   html:root:not(#_):not(#_) :is(.partner-card, .mu-mine, .sb2-partner):hover { border-color: transparent; }
@@ -70,7 +60,7 @@ html:root:not(#_):not(#_) .partner-card { border-radius: 12px; }
   html:root:not(#_):not(#_) .sb-stat-link:hover { background: var(--surface-2); }
   html:root:not(#_):not(#_) .league-pill.lsw-btn:hover { background: var(--surface-2) !important; }
 }
-html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main):active {
+html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main):active {
   box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: 100ms;
 }
 /* The open matchup row keeps its fill as the selected state */
@@ -95,7 +85,7 @@ html:root:not(#_):not(#_) .brief-row:hover .grow { text-decoration: none; }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row) > svg:last-child { transition: transform var(--st-dur) var(--st-ease); }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row):hover > svg:last-child { transform: translateX(3px); }
 }
-html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active { transform: scale(0.99) !important; transition-duration: 100ms; }
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):focus-visible { outline: none !important; }
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
@@ -207,11 +197,10 @@ html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) :is(
     .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link, .side-logo,
-    .partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main, .sb2,
+    .partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main,
     .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt
-  ):is(:active, :has(> .sb2-open:active)) { transform: none !important; }
+  ):active { transform: none !important; }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row):hover > svg:last-child,
-  html:root:not(#_):not(#_) .sb2 .sb2-more svg,
   html:root:not(#_):not(#_) .ld2-link:hover svg { transform: none !important; }
 }
 
@@ -291,7 +280,7 @@ html:root:not(#_):not(#_):not(#_) .sr-main:is(:hover, :active, :focus-visible) {
   html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):hover::after { opacity: 1; }
 }
 html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.99) !important; opacity: 1 !important; transition-duration: 100ms; }
-html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
 html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible { outline: none !important; }
 html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 @media (prefers-reduced-motion: reduce) {
@@ -399,19 +388,17 @@ html:root:not(#_):not(#_):not(#_) .ibx-item .ibx-dot { top: 22px; }
 html:root:not(#_):not(#_):not(#_) .ibx-item .ibx-x { top: 3px; }
 
 /* ---------- Hover never draws a ring ---------- */
-/* Card-like buttons (league pill, trade partner, matchup player, scoreboard and the rest) used to swap their border for a
+/* Card-like buttons (league pill, trade partner, matchup player and the rest) used to swap their border for a
    12% inset ring on hover. Hover is a fill now: the border stays exactly as it was at rest, a 5% ink tint goes in, and
    pressing deepens it to 8%. Rings are for keyboard focus only. */
 @media (hover: hover) and (pointer: fine) {
-  html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner, .sr-main):hover {
+  html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main):hover {
     box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 5%, transparent) !important; border-color: var(--line) !important;
   }
-  html:root:not(#_):not(#_):not(#_) .sb2:has(> .sb2-open:hover) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 4%, transparent) !important; }
 }
-html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .lu-mx-open, .sb-stat-link, .sb2-partner):active {
+html:root:not(#_):not(#_):not(#_) :is(.tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner):active {
   box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 8%, transparent) !important; border-color: var(--line) !important;
 }
-html:root:not(#_):not(#_):not(#_) .sb2:has(> .sb2-open:active) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 100vmax color-mix(in srgb, var(--ink) 7%, transparent) !important; }
 /* The slot report row is a list row with a pill, not a card */
 html:root:not(#_):not(#_):not(#_) .sr-main:is(:hover, :active) { box-shadow: none !important; }
 /* The open matchup row: its fill is the selected state, without the ring */
@@ -437,7 +424,7 @@ html:root:not(#_):not(#_):not(#_) .fb-opt::after {
 }
 html:root:not(#_):not(#_):not(#_) .fb-opt:is(:active, :focus-visible) { opacity: 1 !important; outline: none !important; }
 html:root:not(#_):not(#_):not(#_) .fb-opt:active { transform: scale(0.99); transition-duration: 100ms; }
-html:root:not(#_):not(#_):not(#_) .fb-opt:active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_):not(#_) .fb-opt:active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
 html:root:not(#_):not(#_):not(#_) .fb-opt:focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 html:root:not(#_):not(#_):not(#_) .fb-list > li { transition: border-color var(--st-dur) var(--st-ease); }
 html:root:not(#_):not(#_):not(#_) .fb-opt svg { transition: transform var(--st-dur) var(--st-ease); }
