@@ -5,6 +5,7 @@ import { WeekView, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, useWeekMatch } from "../weekMatch";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, teamOutlook, winChance, playCount, PlayCount as Counts } from "../live";
+import { playLabel } from "../liveMath";
 import { LEAGUE, OPPONENT_ID, Team, SpecialPlayer, gameLine, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, DEADLINES, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, isOut, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
@@ -155,7 +156,7 @@ export const playCls = (g: GameNow, bye?: boolean) => (bye || g.state === "compl
 export function PlayCount({ c, compact }: { c: Counts; compact?: boolean }) {
   if (compact) return (
     <span className="pc pc-compact" aria-label={`${c.left} to play, ${c.live} playing now`}>
-      <span className={c.live ? "pc-live" : "pc-left"}>{c.live > 0 && <i aria-hidden="true" />}{c.left + c.live} left{c.live > 0 ? `, ${c.live} live` : ""}</span>
+      <span className={c.live ? "pc-live" : "pc-left"}>{c.live > 0 && <i aria-hidden="true" />}{playLabel(c)}</span>
     </span>
   );
   return (

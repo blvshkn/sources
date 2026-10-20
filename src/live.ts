@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
 import { eff, isOut, lineupFor, scored, specialLineup, specialPts } from "./engine";
+import { countPlays, sleeperLiveProj, sleeperWinProb, type PlayCount } from "./liveMath";
+export type { PlayCount } from "./liveMath";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
 export interface Live {
@@ -9,6 +11,9 @@ export interface Live {
   teamPts: Record<string, number>;
   /** Share of each live game still to play, 0 to 1, by NFL team. From ESPN's public scoreboard (Sleeper has no clock). */
   left: Record<string, number>;
+  /** This week's projections, re-read from Sleeper while games are on (Sleeper revises them during games), scored
+   *  for this league. Falls back to the projections loaded with the league. */
+  proj?: Record<string, number>;
   at: number;
 }
 
@@ -46,8 +51,36 @@ async function clocks(games?: Record<string, GameState>): Promise<Record<string,
   return out;
 }
 
-/** Where a live player is on pace to finish: points so far plus his projection for the part of the game left. */
-export const onPace = (pts: number, proj: number, left: number | undefined) => (left === undefined ? null : pts + proj * left);
+/** Where a live player is projected to finish, the way Sleeper's matchup page projects him (see liveMath.ts). */
+export const onPace = (pts: number, proj: number, left: number | undefined) => (left === undefined ? null : sleeperLiveProj(pts, proj, left));
+
+/** This week's projection for a player or K/DEF: Sleeper's latest number when we have one, else the loaded one. */
+const projOf = (live: Live, id: string, loaded: number) => live.proj?.[id] ?? loaded;
+
+// Sleeper revises projections during games, so re-read them every few minutes while a game is live
+const PROJ_MS = 3 * 60 * 1000;
+let projAt = 0, projLeague = "", projCache: Record<string, number> | undefined;
+type SProjRow = { player_id: string; stats?: { pts_ppr?: number; pts_half_ppr?: number; pts_std?: number; rec?: number } };
+async function freshProj(): Promise<Record<string, number> | undefined> {
+  const key = `${LEAGUE.id}:${WEEK}`;
+  if (projLeague === key && Date.now() - projAt < PROJ_MS) return projCache;
+  try {
+    const q = ["QB", "RB", "WR", "TE", "K", "DEF"].map((p) => `position[]=${p}`).join("&");
+    const r = await fetch(`https://api.sleeper.app/projections/nfl/${LEAGUE.season}/${WEEK}?season_type=regular&${q}`);
+    if (!r.ok) return projCache;
+    const rows = await r.json() as SProjRow[];
+    const out: Record<string, number> = {};
+    for (const row of rows) {
+      const st = row.stats, id = row.player_id;
+      if (!st || st.pts_ppr === undefined) continue;
+      const p = PLAYERS[id], sp = LEAGUE.specials?.[id];
+      if (p) out[id] = isOut(p, true) ? 0 : scored({ pos: p.pos, proj: p.proj, pts: p.pts, wk: { ppr: st.pts_ppr ?? 0, half: st.pts_half_ppr ?? 0, std: st.pts_std ?? 0, rec: st.rec ?? 0 } }, true);
+      else if (sp) out[id] = sp.status === "O" ? 0 : st.pts_ppr ?? 0;
+    }
+    projAt = Date.now(); projLeague = key; projCache = out;
+  } catch { /* keep the last good read */ }
+  return projCache;
+}
 
 type SMatchup = { roster_id: number; players_points?: Record<string, number> | null; points?: number | null };
 type SGame = { week: number; home: string; away: string; status: string };
@@ -103,8 +136,8 @@ async function poll(): Promise<Live | null> {
     });
     const prevGames = current?.games ?? {};
     for (const [t, st] of Object.entries(games)) if (st === "in_game" && prevGames[t] !== "in_game" && !firstLive[t]) firstLive[t] = Date.now();
-    const clock = Object.keys(left).length ? left : await clocks(games);
-    return { points, games, teamPts, left: clock, at: Date.now() };
+    const [clock, proj] = await Promise.all([Object.keys(left).length ? left : clocks(games), anyLive(games) ? freshProj() : Promise.resolve(projCache)]);
+    return { points, games, teamPts, left: clock, proj, at: Date.now() };
   } catch { return null; }
 }
 
@@ -158,29 +191,20 @@ export function playerLive(l: Live, id: string, nfl: string): { state: GameState
  *  his projection before kickoff. Totals, edges and win chance all use this so they move with the games. */
 export const expect = (live: Live, id: string | null) => {
   if (!id) return 0;
-  const p = playerById(id), st = live.games[p.nfl], now = live.points[id] ?? 0, pr = eff(p, true);
+  const p = playerById(id), st = live.games[p.nfl], now = live.points[id] ?? 0, pr = projOf(live, id, eff(p, true));
   // Points not in yet (first refresh still loading): fall back to the projection rather than counting a zero
   if (live.points[id] === undefined) return pr;
   if (st === "complete") return now;
   if (st === "in_game") return onPace(now, pr, live.left?.[p.nfl]) ?? Math.max(now, pr);
   return pr;
 };
-/** Share of the projection still to be played, so the win chance tightens as games finish. */
-export interface PlayCount { done: number; live: number; left: number }
-/** How many starters are finished, playing right now, and still to play, by their NFL teams. Byes count as done. */
-export function playCount(live: Live, nfls: (string | null | undefined)[]): PlayCount {
-  const c = { done: 0, live: 0, left: 0 };
-  for (const t of nfls) {
-    if (!t) continue;
-    const st = live.games[t];
-    if (st === "complete" || (!st && onBye(t))) c.done++; else if (st === "in_game") c.live++; else c.left++;
-  }
-  return c;
-}
+/** How many starters are finished, playing right now, and yet to kick off, by their NFL teams. Byes count as done. */
+export const playCount = (live: Live, nfls: (string | null | undefined)[]): PlayCount => countPlays(live.games, onBye, nfls);
 
+/** Projected points still to come from these starters: Sleeper's live projection minus points so far. */
 export const stillToPlay = (live: Live, ids: (string | null)[]) => ids.reduce((a, id) => {
-  if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = eff(p, true);
-  return a + (st === "complete" ? 0 : st === "in_game" ? pr * (live.left?.[p.nfl] ?? 0.5) : pr);
+  if (!id) return a; const p = playerById(id), st = live.games[p.nfl], pr = projOf(live, id, eff(p, true)), now = live.points[id] ?? 0;
+  return a + (st === "complete" ? 0 : st === "in_game" ? Math.max(0, (onPace(now, pr, live.left?.[p.nfl]) ?? pr) - now) : pr);
 }, 0);
 
 /** The lineup a team actually set in Sleeper (skill players), falling back to the best projected lineup. */
@@ -191,15 +215,16 @@ export const startersOf = (t: Team): string[] => {
 };
 
 export interface Outlook { expected: number; scored: number; variance: number }
-/** One player's outcome spread: about 0.8 of his projection, shrinking with the share of his game left. */
-/** How much each starter's score can swing, as a share of his projection, by position. Fitted to 32 of Sleeper's
- *  pregame matchups (full lineups, weeks 7 to 14) plus a live one; it reproduces them within about half a point.
- *  A live player's swing shrinks with the share of his game left. */
+/** How much each starter's score can swing, as a share of his projection, by position. Used for the player spread
+ *  in PlayerDepth. Win chance no longer uses it: it follows Sleeper's own team-level formula (sleeperWinProb).
+ *  `variance` on an Outlook is kept as this per-player sum for those displays. */
 export const SWING: Record<string, number> = { QB: 0.472, RB: 0.85, WR: 0.978, TE: 0.603, K: 0, DEF: 2.126 };
 function addPlayer(o: Outlook, live: Live, id: string, nfl: string, pr: number, pos: string) {
   const st = live.games[nfl], pts = live.points[id], known = pts !== undefined;
+  pr = projOf(live, id, pr);
   const frac = st === "complete" ? 0 : st === "in_game" ? live.left?.[nfl] ?? 0.5 : 1;
-  o.expected += !known ? pr : st === "complete" ? pts : st === "in_game" ? pts + pr * frac : pr;
+  // Live players finish where Sleeper projects them; a finished game counts its points; otherwise the projection
+  o.expected += !known ? pr : st === "complete" ? pts : st === "in_game" ? sleeperLiveProj(pts, pr, frac) : pr;
   o.scored += known ? pts : 0;
   o.variance += ((SWING[pos] ?? 0.85) * pr * frac) ** 2;
 }
@@ -219,12 +244,8 @@ export function projOutlook(starters: { pos: string; pts: number | null }[]): Ou
   return o;
 }
 export const teamOutlook = (live: Live, t: Team) => outlookOf(live, startersOf(t), t.setSpecial ? t.setSpecial.map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[] : specialLineup(t).slots.map((x) => x.player));
-/** Chance team A beats team B: the gap in expected finishes over the combined swing still to be played,
- *  rounded the way Sleeper shows it (never below 1% or above 99% until it's decided). */
+/** Chance team A beats team B, as a percent, computed the way Sleeper's matchup page does it from each side's
+ *  points so far and projected finish (sleeperWinProb). 1 to 99 until both sides are final. */
 export function winChance(a: Outlook, b: Outlook): number {
-  const sd = Math.sqrt(a.variance + b.variance), d = a.expected - b.expected;
-  if (sd < 0.01) return d > 0 ? 99 : d < 0 ? 1 : 50;
-  const x = d / sd, t = 1 / (1 + 0.2316419 * Math.abs(x)), n = 0.3989423 * Math.exp(-x * x / 2);
-  const tail = n * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return Math.min(99, Math.max(1, (x > 0 ? 1 - tail : tail) * 100));
+  return Math.min(99, Math.max(1, sleeperWinProb(a.scored, a.expected, b.scored, b.expected) * 100));
 }
