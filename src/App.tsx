@@ -7,7 +7,7 @@ import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, ask, builderTip,
   counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidDollars,
-  irReport, irLabel, parseTag,
+  irReport, irLabel, parseTag, tendencies,
 } from "./engine";
 import { installIconTooltips } from "./tooltips";
 import { Tooltip } from "./components/Tooltip";
@@ -471,9 +471,17 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const newsPlayers = useMemo(() => yourPlayers(), [fkey, YOU.roster.join()]);
   const rosterNews = useRosterNews(newsPlayers);
   const urgent = useMemo(() => urgentNews(newsPlayers, rosterNews.byId), [rosterNews.byId, newsPlayers]);
-  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer })
+  // While a deal is in the builder, one plain line about the other team
+  const partnerNote = useMemo(() => {
+    if (!give.length && !get.length) return undefined;
+    const n = needs.find((x) => x.team.id === partnerId);
+    if (!n) return undefined;
+    const spare = n.surplusPlayer && n.surplus !== n.need ? ` Spare ${n.surplus}: ${n.surplusPlayer.name}.` : "";
+    return { id: partnerId, text: `${n.team.name} needs ${n.need}.${spare} ${tendencies(partnerId).summary}`.trim(), onNotes: () => go("trade:notes") };
+  }, [give.length, get.length, partnerId, needs]); // eslint-disable-line react-hooks/exhaustive-deps
+  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news: urgent, pass: passPlayer, partner: partnerNote })
     .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent]);
+  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent, partnerNote]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;

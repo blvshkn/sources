@@ -29,7 +29,7 @@ const lockShort = () => DEADLINES.lock.replace(/^Lineups lock\s*/i, "Locks ");
 
 /** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
  *  Lineup and Wire screens use, so nothing here is invented for the feed. */
-export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news = [], pass }: {
+export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news = [], pass, partner }: {
   nudges: Nudge[];
   checks: Check[];
   live: Live;
@@ -39,6 +39,8 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   /** Your starters with a status story in the last day. */
   news?: { p: Player; n: NewsItem }[];
   pass?: (p: { id: string; name: string }) => void;
+  /** The team in the deal you're building: what they need, as one plain line. */
+  partner?: { id: string; text: string; onNotes: () => void };
 }): InboxItem[] {
   const out: InboxItem[] = [];
   const lock = DEADLINES.lock ? lockShort() : "Before lock";
@@ -93,6 +95,9 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
       pass: n.pass && pass ? () => pass(n.pass!) : undefined, passName: n.pass?.name });
   });
 
+  // The team you're dealing with, as a plain row like everything else
+  if (partner) out.push({ id: `partner-${partner.id}`, icon: "trade", text: partner.text, meta: "Trading with", action: { label: "Open notes", run: partner.onNotes } });
+
   // Urgent first; otherwise the order above (live, then newest wire items) holds
   return [...out.filter((x) => x.urgent), ...out.filter((x) => !x.urgent)];
 }
@@ -106,6 +111,8 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   onDismiss: (it: InboxItem) => void;
   onAsk: (q: string) => void;
   onClose: () => void;
+  /** Reserved slot above the list for a designed card. Kept empty on purpose: the inbox is notifications only,
+   *  and this spot is held for a future sponsored placement. */
   context?: ReactNode;
   open: boolean;
   /** Goes up each time someone opens the inbox from the bell. A panel that's simply docked open never takes focus. */
