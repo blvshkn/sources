@@ -525,9 +525,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {/* An offer comes from one manager, so the switch is a two-team thing: the multi-team read never used it */}
           {view === "build" && !isMulti && (
             <Tooltip content={`Turn on when ${them.manager} sent you this deal. The read judges their offer instead of yours.`}>
-              <button type="button" role="switch" aria-checked={received} className={`btn ttb-offer${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`${them.manager} sent me this offer`}>
+              <button type="button" role="switch" aria-checked={received} className={`btn ttb-offer${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`Received this offer from ${them.manager}`}>
                 <span className="ttb-sw" aria-hidden="true"><span /></span>
-                <span className="ttb-long" aria-hidden="true">{them.manager} sent me this offer</span>
+                <span className="ttb-long" aria-hidden="true">Received this offer</span>
                 <span className="ttb-short" aria-hidden="true">Their offer</span>
               </button>
             </Tooltip>

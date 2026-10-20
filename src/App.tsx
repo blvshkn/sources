@@ -197,9 +197,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return () => { clearTimeout(t); clearTimeout(t2); };
   }, [toast]);
   useEffect(() => {
-    const onHash = () => { const h = location.hash.slice(1); if ((TAB_IDS as string[]).includes(h)) setTab(h as Tab); };
+    // Back and Forward: pushState doesn't fire hashchange, so listen to popstate too
+    const onHash = () => { const h = location.hash.slice(1) || "wire"; if ((TAB_IDS as string[]).includes(h)) { setTab(h as Tab); setInboxOpen(false); } };
     window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    window.addEventListener("popstate", onHash);
+    return () => { window.removeEventListener("hashchange", onHash); window.removeEventListener("popstate", onHash); };
   }, []);
 
   const active = useMemo(() => activeTags(tags, fade), [tags, fade]);
@@ -397,7 +399,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     setInboxOpen(false);
     if (t !== "ask") setAskSeed("");
     setTab(t as Tab);
-    try { history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
+    // A new screen is a new history entry, so the browser's Back steps back through the app (hashchange brings the
+    // tab back) instead of leaving it. Same screen, new section, just updates the entry.
+    try { if (location.hash.slice(1) !== t) history.pushState(null, "", `#${t}`); else history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     // A team deep link (League) is opened and scrolled to by the Needs list itself
   };
   // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
