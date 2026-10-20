@@ -217,7 +217,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
       {partner && partnerId ? (
         <button className="wk-row" onClick={() => onGo("trade", partnerId)}>
           <span className="imp-k">Trade partner</span>
-          <span className="wk-name imp-who">{pt && <TeamAvatar t={pt} size={28} />}<span>{partner}{pt && <Trophy teamId={pt.id} />}<small>Has what you need at {you.need}. Build a deal</small></span></span>
+          <span className="wk-name imp-who"><span className="imp-nm">{pt && <TeamAvatar t={pt} size={22} />}<span>{partner}</span>{pt && <Trophy teamId={pt.id} />}</span><small>Has what you need at {you.need}. Build a deal</small></span>
           <Icon name="chev" size={16} />
         </button>
       ) : <p className="small muted">No clear trade partner yet.</p>}
