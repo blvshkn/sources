@@ -69,6 +69,9 @@ html:root:not(#_):not(#_) .lu-list .lu-wi-txt b.lu-wi-up { color: var(--good); }
 html:root:not(#_):not(#_) .lu-list .lu-wi-txt b.lu-wi-down { color: var(--bad); }
 html:root:not(#_):not(#_) .lu-list .lu-wi-btns { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 html:root:not(#_):not(#_) .lu-list .lu-wi-btns > :is(a, button) { text-decoration: none; }
+/* Locked weeks only say so: one short line with Open Sleeper beside it, no room held for swap copy */
+html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 6px 6px 6px 12px; }
+html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked .lu-wi-txt { min-height: 0; }
 
 /* Use optimal lineup, in the Start / Sit head where "Lineup set" shows. The head keeps one height either way. */
 html:root:not(#_):not(#_) .lu-list .ss .ss-head { min-height: 32px; gap: 8px; }

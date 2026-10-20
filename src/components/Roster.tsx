@@ -263,7 +263,7 @@ const PickAt = ({ children }: { children: ReactNode }) => <div className="lu-pic
 /** Under the starters: swaps here are a what-if (Sources can't write to Sleeper), with the way back and the way there. */
 function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { changed: boolean; delta: number; locked: boolean; base: string; resetLabel: string; onReset: (el: Element) => void }) {
   return (
-    <div className="lu-wi">
+    <div className={!changed && locked ? "lu-wi is-locked" : "lu-wi"}>
       <p className="lu-wi-txt">{changed ? <><b>What-if lineup</b> <b className={delta >= 0 ? "lu-wi-up" : "lu-wi-down"}>{fmt(delta)} pts</b> vs {base}. Make the swap in Sleeper to lock it in.</>
         : locked ? "Lineups are locked for this week." : "Tap a player to try a swap. Swaps here are a what-if, so make them in Sleeper too."}</p>
       <div className="lu-wi-btns">
