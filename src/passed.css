@@ -56,6 +56,7 @@ html:root:not(#_):not(#_) .wv-row > .wv-stats > .ps-again-line { width: auto; wh
    text and the divider stops halfway */
 html:root:not(#_):not(#_) .ps-brief { display: block; width: 100%; }
 html:root:not(#_):not(#_) .ps-brief > .brief-row { width: 100%; box-sizing: border-box; }
-html:root:not(#_):not(#_) .ps-brief > .brief-row > svg:last-child { margin-right: 44px; }
+/* Only when the Not interested button is there: without it the chevron lines up with the rows above */
+html:root:not(#_):not(#_) .ps-brief:has(.ps-x) > .brief-row > svg:last-child { margin-right: 44px; }
 html:root:not(#_):not(#_) .ps-brief > .brief-row > .grow { margin-right: 0; }
 html:root:not(#_):not(#_) .ps-brief > .ps-x, html:root:not(#_):not(#_) .ps-brief > span > .ps-x { right: 0; }
