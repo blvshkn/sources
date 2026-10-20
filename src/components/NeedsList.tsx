@@ -16,7 +16,7 @@ function Bar({ label, diff, pct }: { label: string; diff: number; pct: number })
       <span className="bar-label">{label}</span>
       <span className="bar-track" role="img" aria-label={`${label} ${fmt(diff)} points vs league average`}>
         <span className="bar-mid" />
-        <span className={`bar-fill ${dir} seen`} style={{ width: `${w}%` }} />
+        <span className={`bar-fill ${dir}`} style={{ width: `${w}%` }} />
       </span>
       <span className={`bar-val ${dir}`}>{fmt(diff)}</span>
     </div>

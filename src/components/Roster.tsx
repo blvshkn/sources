@@ -21,6 +21,7 @@ import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatI
 import { deny } from "../deny";
 import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
+import { DetailSheet } from "./DetailSheet";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -424,8 +425,8 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
         {rows.map((r) => {
           const isOpen = openSlot === r.h.slot;
           return (
-            <div key={r.h.slot} className={`sr-row${isOpen ? " open" : ""}`}>
-              <button className="sr-main" onClick={() => setOpenSlot(isOpen ? null : r.h.slot)} aria-expanded={isOpen}>
+            <div key={r.h.slot} className="sr-row">
+              <button className="sr-main" onClick={() => setOpenSlot(r.h.slot)} aria-haspopup="dialog" aria-label={`${r.h.slot}: you ${r.you.toFixed(1)}, league ${r.lg.toFixed(1)}, beat average ${r.above} of ${r.n} weeks. Details`}>
                 <span className={`sr-slot${r.gap < 0 ? " down" : ""}`}>{r.h.slot}<small className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</small></span>
                 <span className="sr-num">{r.you.toFixed(1)}</span>
                 <span className="sr-num muted">{r.lg.toFixed(1)}</span>
@@ -433,6 +434,9 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
                 <Icon name="chev" size={14} />
               </button>
               {isOpen && (
+                <DetailSheet className="sr-sheet" label={`${r.h.slot} slot, week by week`} onClose={() => setOpenSlot(null)} title={
+                  <span className="srs-head"><b className="srs-slot">{r.h.slot}</b><span className="srs-who"><b>{r.h.slot} slot</b><small>You <span className="num">{r.you.toFixed(1)}</span> · League <span className="num">{r.lg.toFixed(1)}</span> · <span className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</span></small></span></span>
+                }>
                 <div className="sr-detail">
                   <div className="sr-weeks">
                     {r.h.you.map((v, i) => (
@@ -451,6 +455,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
                     <span className={`sr-now-vs ${r.nowProj >= r.lg ? "up" : "down"}`}>{r.nowProj.toFixed(1)} projected vs {r.lg.toFixed(1)} league average</span>
                   </div>}
                 </div>
+                </DetailSheet>
               )}
             </div>
           );

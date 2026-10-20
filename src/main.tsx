@@ -49,6 +49,7 @@ import "./partners-list.css";
 import "./detail-sheet.css";
 import "./needs-cards.css";
 import "./matchup-card.css";
+import "./player-modal.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

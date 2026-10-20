@@ -7,7 +7,7 @@ import { TeamAvatar, TeamLines, TeamSearchField, useTeamSearch } from "./TeamPic
 import { useKeyboardInset } from "./useKeyboardInset";
 import { PlatformName } from "./PlatformLogo";
 import { DealSchedule, scheduleLean } from "./Schedule";
-import { Fold } from "./Fold";
+import { DealDetails } from "./DealDetails";
 import { roomBelow, useEdgeFade } from "./edgeFade";
 import { Tooltip } from "./Tooltip";
 import { AcceptCell, DealRows, DealSide, DealVerdict, FlagLine, PtsCell, RosterPicker, lockMap, multiWhy, pillFlags, positionSummary, tagMaps } from "./Trade";
@@ -163,17 +163,10 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = []
           </div>
           <p className="tiny muted dv-foot">Propose the whole trade in <PlatformName size={12} />, then send each manager a pitch about their part of it.</p>
           </div>
-          <Fold id="trade.details" title="Details" auto={false} className="fold-details" summary="Position breakdown and schedules ahead">
-            <div className="dv-details">
-              <Fold id="trade.bars" title="Position breakdown" auto={false} className="fold-bars" summary={positionSummary(YOU.roster, youAfterRoster)}>
-                <PositionDeltas m={m} youAfter={youAfterRoster} />
-              </Fold>
-              <Fold id="trade.sched" title="Schedules ahead" auto={false} className="fold-sch"
-                summary={`You send ${scheduleLean(m.give.map(playerById))} · You get ${scheduleLean(m.get.map(playerById))}`}>
-                <DealSchedule bare give={m.give.map(playerById)} get={m.get.map(playerById)} />
-              </Fold>
-            </div>
-          </Fold>
+          <DealDetails
+            bars={<PositionDeltas m={m} youAfter={youAfterRoster} />} barsSummary={positionSummary(YOU.roster, youAfterRoster)}
+            schedule={<DealSchedule bare give={m.give.map(playerById)} get={m.get.map(playerById)} />}
+            scheduleSummary={`You send ${scheduleLean(m.give.map(playerById))} · You get ${scheduleLean(m.get.map(playerById))}`} />
         </div>
       )}
     </section>

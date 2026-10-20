@@ -10,7 +10,8 @@ import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { DealSchedule, scheduleLean } from "./Schedule";
-import { Fold } from "./Fold";
+import { DealDetails } from "./DealDetails";
+import { DetailSheet } from "./DetailSheet";
 import { AddTeam, LegState, MultiDeal, MultiRosters } from "./TradeMulti";
 import { TagCapture } from "./TagCapture";
 import { PartnerProfile } from "./PartnerProfile";
@@ -620,15 +621,17 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
               {/* Warnings about a player live on his pill; anything else still reads here */}
               {trade.warnings.filter((w) => ![...give, ...get].some((id) => w.includes(playerById(id).name))).map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
               <div className="dv-actions">
-                <button className="linkish small" onClick={() => setWhy((x) => !x)} aria-expanded={why}>{why ? "Hide the math" : "Show the math"}</button>
+                <button className="linkish small" onClick={() => setWhy(true)} aria-haspopup="dialog">Show the math</button>
                 <button className="btn btn-primary" onClick={() => onPitch(trade)}><Icon name="pen" size={16} />Write pitch</button>
               </div>
               {why && (
+                <DetailSheet className="dm-sheet" onClose={() => setWhy(false)} title={<h2 className="ds-h">The math</h2>}>
                 <div className="why">
-                  <div><span className="eyebrow">Your starters</span><Changes team={YOU} trade={trade} side="you" /></div>
-                  <div><span className="eyebrow">{them.manager}'s starters</span><Changes team={them} trade={trade} side="them" /></div>
-                  <p className="tiny muted">Two lenses. Points per week counts starting lineups only. Trade value is the plain sum of player values: <span className="num">{trade.marketGive.toLocaleString()}</span> you give, <span className="num">{trade.marketGet.toLocaleString()}</span> you get. {give.length !== get.length || give.length > 1 ? <>The verdict counts the best player on each side in full and each extra piece for less (85%, 72%, 61%). Adjusted for {give.length}-for-{get.length}: <span className="num">{trade.adjGive.toLocaleString()}</span> you give, <span className="num">{trade.adjGet.toLocaleString()}</span> you get. </> : null}Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
+                  <section className="dm-sec"><h3 className="dm-h">Your starters</h3><Changes team={YOU} trade={trade} side="you" /></section>
+                  <section className="dm-sec"><h3 className="dm-h">{them.manager}'s starters</h3><Changes team={them} trade={trade} side="them" /></section>
+                  <p className="small muted">Two lenses. Points per week counts starting lineups only. Trade value is the plain sum of player values: <span className="num">{trade.marketGive.toLocaleString()}</span> you give, <span className="num">{trade.marketGet.toLocaleString()}</span> you get. {give.length !== get.length || give.length > 1 ? <>The verdict counts the best player on each side in full and each extra piece for less (85%, 72%, 61%). Adjusted for {give.length}-for-{get.length}: <span className="num">{trade.adjGive.toLocaleString()}</span> you give, <span className="num">{trade.adjGet.toLocaleString()}</span> you get. </> : null}Net: you {fmt(trade.youDelta)}, {them.manager} {fmt(trade.themDelta)}.</p>
                 </div>
+                </DetailSheet>
               )}
               {tip && (
                 <div className="tip">
@@ -638,19 +641,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                 </div>
               )}
               </div>
-              <Fold id="trade.details" title="Details" auto={false} className="fold-details"
-                summary="Position breakdown and schedules ahead">
-                <div className="dv-details">
-                  <Fold id="trade.bars" title="Position breakdown" auto={false} className="fold-bars"
-                    summary={positionSummary(YOU.roster, rosterAfter(YOU, trade, "you"))}>
-                    <PositionBars trade={trade} them={them} />
-                  </Fold>
-                  <Fold id="trade.sched" title="Schedules ahead" auto={false} className="fold-sch"
-                    summary={`You send ${scheduleLean(give.map(playerById))} · You get ${scheduleLean(get.map(playerById))}`}>
-                    <DealSchedule bare give={give.map(playerById)} get={get.map(playerById)} />
-                  </Fold>
-                </div>
-              </Fold>
+              <DealDetails
+                bars={<PositionBars trade={trade} them={them} />} barsSummary={positionSummary(YOU.roster, rosterAfter(YOU, trade, "you"))}
+                schedule={<DealSchedule bare give={give.map(playerById)} get={get.map(playerById)} />}
+                scheduleSummary={`You send ${scheduleLean(give.map(playerById))} · You get ${scheduleLean(get.map(playerById))}`} />
             </div>
           )}
         </section>

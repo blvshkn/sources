@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { DetailSheet } from "./DetailSheet";
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
@@ -426,8 +427,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
             : `${e.fa.name} is ${e.avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           return (
-            <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${isOpen && !e.no ? " open" : ""}${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${e.no ? " ps-no" : ""}`}>
-              {r && !e.no ? <button className="wv-row" onClick={() => setOpen(isOpen ? null : e.fa.id)} aria-expanded={isOpen}>{inner}</button>
+            <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${e.no ? " ps-no" : ""}`}>
+              {r && !e.no ? <button className="wv-row" onClick={() => setOpen(e.fa.id)} aria-haspopup="dialog">{inner}</button>
                 : lockWhy ? <button className="wv-row wv-locked" aria-disabled="true" onClick={denyOn(lockWhy)}>{inner}</button>
                 : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
@@ -439,6 +440,9 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                 </Tooltip>
               </span>}
               {isOpen && r && !e.no && (
+                <DetailSheet className="wv-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
+                  <span className="wvs-head"><Avatar p={e.fa} size={40} /><span className="wvs-who"><b>{e.fa.name}</b><small>{e.fa.pos} · {e.fa.nfl}</small></span></span>
+                }>
                 <div className="wv-detail">
                   {e.fit && !kd && <p className="small ps-fit">{e.fit}</p>}
                   <p className="small">{kind === "current" ? (kd ? kd.line : r.fa.why)
@@ -459,6 +463,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
                   </div>
                 </div>
+                </DetailSheet>
               )}
             </div>
           );

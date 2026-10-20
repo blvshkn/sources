@@ -15,7 +15,10 @@ import { useFocusTrap } from "./focusTrap";
 import { useEdgeFade } from "./edgeFade";
 import { ScrollArea } from "./ScrollArea";
 
-/** Player details in a bottom sheet, so you stay on the page you were on. */
+/** Below this the player is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches player-modal.css. */
+const isSheet = () => typeof window !== "undefined" && window.innerWidth < 768;
+
+/** Player details in a bottom sheet on phones and a centered modal from 768px, so you stay on the page you were on. */
 export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
   const [shown, setShown] = useState(false);
   // Which week the sheet shows. The header and stepper stay put; the body below them swaps.
@@ -37,14 +40,17 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   const body = useRef<HTMLDivElement>(null);
   useEdgeFade(body);
   const scrim = useRef<HTMLDivElement>(null);
-  // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it
+  // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it.
+  // Phone sheet only: from 768px up it's a centered modal that stays put.
   useBackClose(close);
   usePullToDismiss(sheet,
     (y) => {
+      if (!isSheet()) return;
       if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }
       if (scrim.current) { scrim.current.style.transition = "none"; scrim.current.style.opacity = String(Math.max(0, 1 - y / 400)); }
     },
     (y, v) => {
+      if (!isSheet()) return;
       if (y > 120 || v > 700) close();
       else {
         if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
@@ -63,7 +69,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   // Portaled to body: rendered in place it inherited the page's stacking (Lineup's sticky side column made it a
   // z-index 0 layer), so the docked inbox and the desk bell painted over the sheet and its scrim.
   return createPortal(
-    <div className={`ps-wrap${shown ? " in" : ""}`}>
+    <div className={`ps-wrap pl-wrap${shown ? " in" : ""}`}>
       <div ref={scrim} className="ps-scrim" onClick={close} aria-hidden="true" />
       <section ref={sheet} className="ps ps-player" role="dialog" aria-modal="true" aria-labelledby="ps-name">
         <div className="pd-top">

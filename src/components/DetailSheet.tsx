@@ -6,6 +6,7 @@ import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { ScrollArea } from "./ScrollArea";
+import { chartReveal } from "../chartReveal";
 
 /** Below this the detail is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches detail-sheet.css. */
 const MODAL_FROM = 768;
@@ -47,6 +48,8 @@ export function DetailSheet({ title, label, className = "", onClose, children }:
 
   useEffect(() => {
     opener.current = document.activeElement as HTMLElement | null;
+    // The sheet renders outside #root, so its charts need their own reveal watcher to grow in
+    if (sheet.current) chartReveal(sheet.current);
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus({ preventScroll: true });
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
