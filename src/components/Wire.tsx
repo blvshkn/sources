@@ -1,19 +1,18 @@
 import { Fragment, useContext, useState } from "react";
 import { denyOn } from "../deny";
-import { scoreTone, flipTone, toneCls } from "../liveMath";
+import { scoreTone, flipTone } from "../liveMath";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs, LiveNum } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./PlayerSheet";
 import { TeamAvatar } from "./TeamPicker";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { useLive, onPace, startersOf, matchNow, chanceTone } from "../live";
-import { avatarSrc } from "../sleeper";
+import { useLive, onPace, startersOf, matchNow } from "../live";
 import { WeekPlayer } from "../weeks";
 import { useLineupWeek, useWeekMatch } from "../weekMatch";
 import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
@@ -105,19 +104,7 @@ const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
   need: { label: "Trade idea", icon: "trade" }, offer: { label: "Offer received", icon: "send" }, news: { label: "News", icon: "alert" },
   stale: { label: "Check in", icon: "clock" }, lineup: { label: "Lineup", icon: "roster" }, waiver: { label: "Waivers", icon: "waivers" }, slot: { label: "Pattern", icon: "spark" },
 };
-const initials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
-// Standard normal CDF (Abramowitz-Stegun), for a win chance from the two projections
-
-/** Manager avatar from Sleeper, or initials when they haven't set one or it fails to load. */
-function TeamBadge({ t, side }: { t: { name: string; avatar?: string }; side: "you" | "them" }) {
-  const src = avatarSrc(t.avatar);
-  const [bad, setBad] = useState<string | null>(null);
-  return src && src !== bad
-    ? <img className={`sb-badge ${side} sb-img`} src={src} alt="" referrerPolicy="no-referrer" onError={() => setBad(src)} />
-    : <span className={`sb-badge ${side}`}>{initials(t.name)}</span>;
-}
-
-/** Apple Sports style scoreboard: you vs this week's opponent, big numerals. */
+/** This week's matchup card: the shared face-off (FaceOff.tsx). The whole card opens the full matchup. */
 export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   // Expected finishes from the lineups actually set in Sleeper (K/DEF included); win chance from what's left to play
@@ -135,51 +122,15 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
   const nowLive = Object.values(live.games).some((x) => x === "in_game");
   const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
-  const res = ms.result, tone = chanceTone(ms);
+  const res = ms.result;
   // Score tones (liveMath.scoreTone): the side ahead now, or the winner once final, stays bright; pregame both do
   const myTone = scoreTone(myNow ?? mine, oppNow ?? theirs, res ? "final" : inPlay ? "live" : "pre");
-  const toneOf = (side: "you" | "them") => toneCls(side === "you" ? myTone : flipTone(myTone));
-  const Row = ({ t, pts, now, side }: { t: typeof YOU; pts: number; now?: number; side: "you" | "them" }) => (
-    <span className={`sb2-row ${side}`}>
-      <TeamBadge t={t} side={side} />
-      <span className="sb2-who"><b><NameWithTrophy name={t.name} teamId={t.id} /></b><small>{side === "you" ? "You" : t.manager} · {t.record}</small></span>
-      {inPlay && now !== undefined
-        ? <span className="sb2-pts sb2-now"><LiveNum v={now} className={toneOf(side)} /><small>proj {pts.toFixed(1)}</small></span>
-        : <span className={`sb2-pts ${toneOf(side)}`}>{pts.toFixed(1)}</span>}
-    </span>
-  );
   return (
     <section className="card sb2" aria-label="This week">
       <button className="sb2-rows sb2-open mc-press" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
-        <span className="sb2-head">
-          <span>Week {WEEK} matchup</span>
-          {res ? <span className={`sb2-final ${res.tone}`}>Final</span> : inPlay && nowLive ? <span className="lu-live"><i />Live</span> : <span>{inPlay ? "Scored" : "Projected"}</span>}
-        </span>
-        <Row t={YOU} pts={mine} now={myNow} side="you" />
-        {opp && theirs !== null && <>
-          <span className="sb2-div" aria-hidden="true"><span>vs</span></span>
-          <Row t={opp} pts={theirs} now={oppNow} side="them" />
-        </>}
-        {chance !== null && (
-          <span className={`sb2-chance${res ? ` is-final ${tone}` : ""}`} aria-hidden="true">
-            <span className="sb2-bar"><span style={{ width: `${chance}%` }} /></span>
-            {res ? (
-              <span className="sb2-chance-lbl">
-                <span>{res.long}</span>
-                <span className={res.tone === "even" ? undefined : res.tone}>{res.short}</span>
-              </span>
-            ) : (
-              <span className="sb2-chance-lbl">
-                <Tooltip content="Win chance from both projected totals. It firms up as points get played."><span><b>{chance}%</b> to win</span></Tooltip>
-                <Tooltip content={chance >= 55 ? "Favored: 55% or better to win" : chance <= 45 ? "Behind: 45% or less to win" : "Toss-up: between 45% and 55%"}><span className={chance >= 55 ? "up" : chance <= 45 ? "down" : undefined}>{chance >= 55 ? "Favored" : chance <= 45 ? "Behind" : "Toss-up"}</span></Tooltip>
-              </span>
-            )}
-          </span>
-        )}
         <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp ? chance : null} res={opp ? res : null} msg="Bye week"
-          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: res ? "final" : inPlay ? `proj ${mine.toFixed(1)}` : "projected", dim: myTone === "trail" }}
-          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: res ? "final" : inPlay ? `proj ${theirs.toFixed(1)}` : "projected", dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
-        {opp && <span className="sb2-more">See the full matchup<Icon name="chev" size={14} /></span>}
+          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: inPlay && !res ? mine.toFixed(1) : undefined, dim: myTone === "trail" }}
+          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: inPlay && !res ? theirs.toFixed(1) : undefined, dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
       </button>
       {extras && <>
       <dl className="ti-stats sb2-stats">
@@ -241,13 +192,6 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
   // Not started: the number is his projection, labelled like the live (pace) and final (proj) rows, so every row reads the same
   return <span className="wk-pts muted"><b>{proj.toFixed(1)}</b><small>proj</small></span>;
-}
-
-/** A team name with its trophy kept on the last word, so a two-line name never leaves the trophy alone on a line. */
-function NameWithTrophy({ name, teamId }: { name: string; teamId: string }) {
-  const cut = name.lastIndexOf(" ");
-  if (cut < 0) return <span className="sb2-nw">{name}<Trophy teamId={teamId} /></span>;
-  return <>{name.slice(0, cut + 1)}<span className="sb2-nw">{name.slice(cut + 1)}<Trophy teamId={teamId} /></span></>;
 }
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);

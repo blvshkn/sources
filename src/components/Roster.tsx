@@ -5,23 +5,21 @@ import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, gameIn } from "../weekMatch";
 import { kickWhen, lockLine, oppText, useKickoffs } from "../kickoff";
 import { WeekStepper } from "./WeekStepper";
-import { Live, useLive, onPace, matchNow, chanceTone, playCount, expect, PlayCount as Counts } from "../live";
-import { playLabel, resultOf, scoreTone, flipTone, toneCls, type Result } from "../liveMath";
-import { LEAGUE, OPPONENT_ID, PLAYERS, Team, SpecialPlayer, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, WEEK, sleeperUrl } from "../data";
+import { Live, useLive, onPace, matchNow, playCount, expect, PlayCount as Counts } from "../live";
+import { playLabel, resultOf, scoreTone, flipTone } from "../liveMath";
+import { LEAGUE, OPPONENT_ID, PLAYERS, SpecialPlayer, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, WEEK, sleeperUrl } from "../data";
 import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs, LiveNum } from "./ui";
+import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
-import { TeamAvatar } from "./TeamPicker";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
 import { PlayerSheet } from "./PlayerSheet";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
-import { Trophy } from "./Trophy";
 import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
-import { FaceOff, pressProps, standing } from "./FaceOff";
+import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
 
 const TAG_LABEL: Record<MyTag, string> = {
@@ -462,35 +460,6 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
   );
 }
 
-/** One side of the face-off: avatar, name, record line, and the score on the shared right column. */
-function Side({ t, pts, note, live, dim, empty }: { t: Team | null; pts: number | null; note?: string; live?: boolean; dim?: boolean; empty?: { title: string; body?: string } }) {
-  return (
-    <div className={`mwf-side${dim ? " is-dim" : ""}`}>
-      {t ? <TeamAvatar t={t} size={40} /> : <span className="mwf-av-none" aria-hidden="true" />}
-      <b className={`mwf-name${t ? "" : " muted"}`}>{t ? <><span>{t.name}</span>{t.id !== YOU.id && <Trophy teamId={t.id} />}</> : <span>{empty?.title ?? "No matchup"}</span>}</b>
-      <small className="mwf-sub">{t ? standing(t, t.id === YOU.id) : empty?.body ?? ""}</small>
-      {pts !== null && (live ? <LiveNum className="mwf-pts" v={pts} /> : <span className="mwf-pts">{pts.toFixed(1)}</span>)}
-      {pts !== null && note && <small className="mwf-note">{note}</small>}
-    </div>
-  );
-}
-
-/** The bottom line: the week, then a win chance bar (pregame and live) or the final result (no bar). */
-function StripFoot({ week, res, chance, live, tip, msg }: { week: number; res?: Result | null; chance?: number | null; live?: boolean; tip?: string; msg?: string }) {
-  const tone = res ? res.tone : chance == null ? "even" : chance >= 55 ? "up" : chance <= 45 ? "down" : "even";
-  return (
-    <div className={`mwf-foot ${tone}`} aria-hidden="true">
-      <span className="mwf-wk">Week {week}{res ? " · Final" : ""}</span>
-      {res ? <b className="mwf-res">{res.short}</b>
-        : chance != null ? <>
-          {live && <span className="lu-live"><i />Live</span>}
-          <span className="mwf-bar"><i style={{ width: `${chance}%` }} /></span>
-          <span className="mwf-chance"><Tooltip content={tip ?? "Win chance from both projected totals. It firms up as points get played."}><b>{chance}%</b></Tooltip> to win</span>
-        </> : <span className="mwf-msg">{msg}</span>}
-    </div>
-  );
-}
-
 /** The team strip for any week but this one: a past week's final and the result, or a future week's projected
  *  totals and win chance. Loading and empty weeks keep the same rows so nothing below moves. */
 function WeekStrip({ week, onOpen }: { week: number; onOpen?: () => void }) {
@@ -499,11 +468,8 @@ function WeekStrip({ week, onOpen }: { week: number; onOpen?: () => void }) {
   const myTotal = m?.me.total ?? peekWeek(week)?.total;
   if (!m) return (
     <section className={`mw mwf${err ? "" : " is-skel"}`} aria-label={err ?? `Loading Week ${week}`} aria-busy={!err}>
-      <Side t={YOU} pts={myTotal ?? 0} note={week < WEEK ? undefined : "projected"} />
-      <Side t={null} pts={err ? null : 0} empty={{ title: err ? "Matchup unavailable" : "Loading" }} />
-      <StripFoot week={week} msg={err ?? "Loading the matchup"} />
       <FaceOff week={week} state={week < WEEK ? "final" : "pre"} chance={null} res={null} skel={!err} msg={err ? "Unavailable" : "Loading"}
-        you={{ t: YOU, pts: myTotal ?? 0, note: week < WEEK ? "final" : "projected" }} them={{ t: null, pts: err ? null : 0, empty: err ? "Matchup unavailable" : "Loading" }} />
+        you={{ t: YOU, pts: myTotal ?? 0 }} them={{ t: null, pts: err ? null : 0, empty: err ? "Matchup unavailable" : "Loading" }} />
     </section>
   );
   const past = m.kind === "past", opp = m.opp;
@@ -516,17 +482,14 @@ function WeekStrip({ week, onOpen }: { week: number; onOpen?: () => void }) {
     + (res ? `Final, ${res.long}` : past ? `Final ${m.me.total.toFixed(1)}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
   return (
     <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open the Week ${week} matchup. ${label}`) : { "aria-label": label })}>
-      <Side t={YOU} pts={m.me.total} note={past ? undefined : wi.changed ? "what-if" : "projected"} dim={wkTone === "trail"} />
-      <Side t={opp?.team ?? null} pts={opp ? opp.total : null} note={opp && !past ? "projected" : undefined} dim={wkTone === "lead"} empty={{ title: m.empty?.title ?? "No matchup", body: m.empty?.body }} />
-      <StripFoot week={week} res={res} chance={opp && !past ? chance : null} tip="Win chance from both projected lineups for that week, the same model as this week's." />
       <FaceOff week={week} state={past ? "final" : "pre"} chance={opp && !past ? chance : null} res={res} msg={m.empty?.title ?? "No matchup"}
-        you={{ t: YOU, pts: m.me.total, note: past ? "final" : wi.changed ? "what-if" : "projected", dim: wkTone === "trail" }}
-        them={opp ? { t: opp.team, pts: opp.total, note: past ? "final" : "projected", dim: wkTone === "lead" } : { t: null, pts: null, empty: m.empty?.title ?? "No matchup" }} />
+        you={{ t: YOU, pts: m.me.total, note: !past && wi.changed ? "what-if" : undefined, dim: wkTone === "trail" }}
+        them={opp ? { t: opp.team, pts: opp.total, dim: wkTone === "lead" } : { t: null, pts: null, empty: m.empty?.title ?? "No matchup" }} />
     </section>
   );
 }
 
-/** You vs this week's opponent: points scored once games start (projection as a footnote), win chance, Live tag. */
+/** You vs this week's opponent in the shared face-off (FaceOff.tsx): points scored once games start, projection under them, win %. */
 export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen?: () => void; mineOnly?: boolean; week?: number }) {
   const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
@@ -539,7 +502,7 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
   const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
   const myTotal = ms.me.proj, oppTotal = ms.opp ? ms.opp.proj : null;
-  const chance = ms.chance ?? 0, res = ms.result, tone = chanceTone(ms);
+  const chance = ms.chance ?? 0, res = ms.result;
   // Score tones (liveMath.scoreTone): ahead now or the winner stays bright, the other dims; pregame both bright
   const myTone = scoreTone(myNow ?? myTotal, oppNow ?? oppTotal, res ? "final" : inPlay ? "live" : "pre");
   if (mineOnly && week !== WEEK) return <WeekStrip week={week} onOpen={onOpen} />;
@@ -549,49 +512,17 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
     const label = `${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`;
     return (
       <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open this week's matchup. ${label}`) : { "aria-label": label })}>
-        <Side t={YOU} pts={myPts} live={inPlay} note={res ? undefined : inPlay ? `${wi.changed ? "what-if" : "proj"} ${myTotal.toFixed(1)}` : wi.changed ? "what-if" : "projected"} dim={myTone === "trail"} />
-        <Side t={opp} pts={oppPts} live={inPlay} note={res || !opp ? undefined : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected"} dim={myTone === "lead"} empty={{ title: "No matchup", body: `You don't play anyone in Week ${WEEK}.` }} />
-        <StripFoot week={WEEK} res={opp ? res : null} chance={opp && !res ? chance : null} live={inPlay && nowLive} msg="Bye week" />
         <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
-          you={{ t: YOU, pts: myPts, live: inPlay, note: res ? "final" : inPlay ? `${wi.changed ? "what-if" : "proj"} ${myTotal.toFixed(1)}` : wi.changed ? "what-if" : "projected", dim: myTone === "trail" }}
-          them={opp ? { t: opp, pts: oppPts, live: inPlay, note: res ? "final" : inPlay ? `proj ${oppTotal!.toFixed(1)}` : "projected", dim: myTone === "lead" } : { t: null, pts: null, empty: "No matchup" }} />
+          you={{ t: YOU, pts: myPts, live: inPlay, note: res ? undefined : inPlay ? `${wi.changed ? "what-if " : ""}${myTotal.toFixed(1)}` : wi.changed ? "what-if" : undefined, dim: myTone === "trail" }}
+          them={opp ? { t: opp, pts: oppPts, live: inPlay, note: inPlay && !res ? oppTotal!.toFixed(1) : undefined, dim: myTone === "lead" } : { t: null, pts: null, empty: "No matchup" }} />
       </section>
     );
   }
   const body = (
-    <div className={`lu-mx${mineOnly ? " mine-only" : ""}`} aria-label={res ? `Final. ${res.long}` : `${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
-      <div className="lu-mx-side you">
-        <span className="lu-mx-who"><i /><span>{YOU.name}</span></span>
-        {inPlay ? <>
-          <LiveNum className={`lu-mx-pts ${toneCls(myTone)}`} v={myNow!} />
-          <span className="lu-mx-proj">{res ? "final" : `proj ${myTotal.toFixed(1)}`}</span>
-        </> : <>
-          <span className={`lu-mx-pts ${toneCls(myTone)}`}>{myTotal.toFixed(1)}</span>
-          {oppTotal !== null && !mineOnly && <span className={`margin-pill ${myTotal - oppTotal >= 0.05 ? "up" : myTotal - oppTotal <= -0.05 ? "down" : "flat"}`}>{Math.abs(myTotal - oppTotal) < 0.05 ? "even" : fmt(myTotal - oppTotal)}</span>}
-          <small>Your best lineup</small>
-        </>}
-      </div>
-      {opp && <>
-        <div className={`lu-mx-mid${res ? ` is-final ${tone}` : ""}`} aria-hidden="true">
-          {inPlay && nowLive && !res && <span className="lu-live"><i />Live</span>}
-          {res ? <><b>{res.letter}</b><small>{res.short}</small></>
-            : <><Tooltip content="Win chance from both projected totals. It firms up as points get played."><b>{chance}%</b></Tooltip><small>to win</small></>}
-          <span className="lu-mx-bar"><i style={{ width: `${chance}%` }} /></span>
-        </div>
-        {!mineOnly && <div className="lu-mx-side them">
-          <span className="lu-mx-who"><span>{opp.name}<Trophy teamId={opp.id} /></span><i /></span>
-          {inPlay ? <>
-            <LiveNum className={`lu-mx-pts ${toneCls(flipTone(myTone))}`} v={oppNow!} />
-            <span className="lu-mx-proj">{res ? "final" : `proj ${oppTotal!.toFixed(1)}`}</span>
-          </> : <>
-            <span className={`lu-mx-pts ${toneCls(flipTone(myTone))}`}>{oppTotal!.toFixed(1)}</span>
-            <small>{opp.manager}</small>
-          </>}
-        </div>}
-      </>}
-      {!mineOnly && <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
-        you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: res ? "final" : inPlay ? `proj ${myTotal.toFixed(1)}` : "projected", dim: myTone === "trail" }}
-        them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: res ? "final" : inPlay ? `proj ${oppTotal.toFixed(1)}` : "projected", dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />}
+    <div className="lu-mx" aria-label={res ? `Final. ${res.long}` : `${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
+      <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
+        you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: inPlay && !res ? myTotal.toFixed(1) : undefined, dim: myTone === "trail" }}
+        them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: inPlay && !res ? oppTotal.toFixed(1) : undefined, dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
     </div>
   );
   return onOpen ? <button type="button" className="lu-mx-open mc-press" onClick={onOpen} aria-label={`Open this week's matchup. ${res ? `Final, ${res.long}` : `You ${(inPlay ? myNow! : myTotal).toFixed(1)}${opp ? `, ${opp.name} ${(inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0).toFixed(1)}, ${chance} percent to win` : ""}`}`}>{body}</button> : body;
