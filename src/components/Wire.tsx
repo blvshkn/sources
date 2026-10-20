@@ -540,8 +540,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       </section>}
       {view === "matchup" && <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />}
       {view === "matchup" && <Threats onGo={onGo} />}
-      {view === "week" && <div className="wk-strip"><MatchupStrip onOpen={() => onGo("matchup")} /></div>}
-      {view === "week" && <WeekMore onGo={onGo} />}
+      {view === "week" && <div className="wk-strip"><MatchupStrip onOpen={() => setMatchupOpen(true)} /></div>}
+      {view === "week" && <WeekMore onGo={(t) => (t === "matchup" ? setMatchupOpen(true) : onGo(t))} />}
 
       {view === "intel" && <>
       <RosterNews />
