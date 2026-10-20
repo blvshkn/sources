@@ -360,6 +360,24 @@ export const isWinWin = (t: Trade) => t.youDelta >= 0.5 && t.themDelta >= 0.5;
 /** Within 10% on value: fair. */
 export const FAIR_GAP = 0.1;
 export const isFair = (t: Trade) => Math.abs(t.marketGap) <= FAIR_GAP;
+/** Points a week that count as a real change to a lineup, up or down. */
+export const MOVE = 0.5;
+
+/** Bigger side over smaller side. Infinity when the smaller side is worth nothing. */
+export const valueRatio = (give: number, get: number) => {
+  const lo = Math.min(give, get), hi = Math.max(give, get);
+  return lo > 0 ? hi / lo : hi > 0 ? Infinity : 1;
+};
+/** The same ratio from a marketGap, which is (get - give) / bigger side. */
+export const gapRatio = (gap: number) => (Math.abs(gap) >= 1 ? Infinity : 1 / (1 - Math.abs(gap)));
+/** How lopsided the value is, as a verb phrase. It follows "you" by default; pass `third` for a manager
+ *  ("Mike gives up..."). Past 4x it stops counting, and a side worth nothing (Infinity) reads the same way. */
+export function valueEdge(side: "give" | "get", r: number, noun = "value", third = false): string {
+  const giveUp = third ? "gives up" : "give up", get = third ? "gets" : "get", who = third ? "they" : "you";
+  if (!(r < 4)) return side === "give" ? `${giveUp} far more ${noun} than ${who} get back` : `${get} back far more ${noun} than ${who} give up`;
+  const size = r >= 2.5 ? `about ${Math.round(r)} times the ${noun}` : r >= 1.75 ? `about twice the ${noun}` : `${Math.max(1, Math.round((r - 1) * 100))}% more ${noun}`;
+  return side === "give" ? `${giveUp} ${size}` : `${get} ${size} back`;
+}
 
 // ---- Would they actually say yes? ------------------------------------------
 // A trade idea only shows if a reasonable manager would accept it. Real managers:
@@ -375,8 +393,8 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   const youRosterAfter = rosterAfter(you, t, "you");
   // 1. Value: they won't take a loss on market value. Neither should you.
   const theirGap = -t.marketGap; // positive = they receive more value
-  if (theirGap < -0.08) theirs(`${them.manager} gives up ${pct(theirGap).slice(1)} more value`);
-  if (t.marketGap < -0.15) blockers.push(`you overpay by ${pct(t.marketGap).slice(1)}`);
+  if (theirGap < -0.08) theirs(`${them.manager} ${valueEdge("give", gapRatio(theirGap), "value", true)}`);
+  if (t.marketGap < -0.15) blockers.push(`you ${valueEdge("give", gapRatio(t.marketGap))}`);
   // 2. Their lineup has to get meaningfully better.
   if (t.themDelta < 1) theirs(`${them.manager}'s lineup ${t.themDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.themDelta)}/wk)`);
   if (t.youDelta < 1) blockers.push(`your lineup ${t.youDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.youDelta)}/wk)`);
@@ -557,24 +575,41 @@ export const fmt = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.a
 
 export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
   const them = teamById(t.partnerId).manager;
-  const market = Math.abs(t.marketGap) <= FAIR_GAP ? "Fair by market value" : t.marketGap > 0 ? `You get ${pct(t.marketGap).slice(1)} more market value` : `You give up ${pct(t.marketGap).slice(1)} more market value`;
+  const market = isFair(t) ? "Fair by market value" : `You ${valueEdge(t.marketGap > 0 ? "get" : "give", gapRatio(t.marketGap), "market value")}`;
+  const theirs = t.themDelta >= MOVE ? `${them} gains ${fmt(t.themDelta)}` : t.themDelta <= -MOVE ? `${them}'s lineup drops ${Math.abs(t.themDelta).toFixed(1)}` : `${them}'s lineup barely moves (${fmt(t.themDelta)})`;
+  // You gain points
   if (isWinWin(t) && isFair(t))
     return { label: "Win-win", tone: "good", line: `${market}, and both lineups improve: you ${fmt(t.youDelta)} a week, ${them} ${fmt(t.themDelta)}. Both sides have a reason to say yes.` };
   if (isWinWin(t) && t.marketGap > 0)
     return { label: "Helps both, tilted your way", tone: "good", line: `${market}. Both lineups improve, but ${them} may want a little more before saying yes.` };
   if (isWinWin(t))
     return { label: "Helps both, you overpay", tone: "warn", line: `${market}. Both lineups improve, so it can still be worth it if you need the fit.` };
-  if (t.youDelta >= 0.5)
+  if (t.youDelta >= MOVE && t.marketGap < -FAIR_GAP)
+    return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} a week, but ${market.charAt(0).toLowerCase() + market.slice(1)}. Worth it if you're chasing a title this year.` };
+  if (t.youDelta >= MOVE)
     return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(t.youDelta)}), but ${them}'s lineup ${t.themDelta <= -0.05 ? `drops ${Math.abs(t.themDelta).toFixed(1)}` : `barely moves (${fmt(t.themDelta)})`}. ${market}. Expect a no unless you add something.` };
-  if (t.themDelta >= 0.5)
+  // You lose points
+  if (t.youDelta <= -MOVE && t.marketGap > FAIR_GAP)
+    return { label: "Value over points", tone: "warn", line: `Your lineup drops ${Math.abs(t.youDelta).toFixed(1)} a week. ${market}. Only worth it if you can spare the points now.` };
+  if (t.youDelta <= -MOVE && t.themDelta >= MOVE)
     return { label: "You're overpaying", tone: "bad", line: `${them} gains ${fmt(t.themDelta)} while you go ${fmt(t.youDelta)}. ${market}. Ask for a little more before you send it.` };
-  return { label: "Lateral", tone: "warn", line: `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)}). ${market}.` };
+  if (t.youDelta <= -MOVE)
+    return { label: "Hurts your lineup", tone: "bad", line: `Your lineup drops ${Math.abs(t.youDelta).toFixed(1)} a week and ${theirs}. ${market}. Start from a position you need instead.` };
+  // Your points barely move, so the value decides
+  const flat = Math.abs(t.themDelta) < MOVE ? `Neither lineup moves much (you ${fmt(t.youDelta)}, ${them} ${fmt(t.themDelta)})` : `Your lineup barely moves (${fmt(t.youDelta)}) and ${theirs}`;
+  if (t.marketGap > FAIR_GAP && t.themDelta >= MOVE)
+    return { label: "Value play", tone: "good", line: `${flat}. ${market}, and ${them} gets the points.` };
+  if (t.marketGap > FAIR_GAP)
+    return { label: "Tough sell", tone: "warn", line: `${flat}. ${market}. Expect a no unless you add something.` };
+  if (t.marketGap < -FAIR_GAP || t.themDelta >= MOVE)
+    return { label: "You're overpaying", tone: "bad", line: `${flat}. ${market}. Ask for a little more before you send it.` };
+  return { label: "Lateral", tone: "warn", line: `${flat}. ${market}.` };
 }
 
 /** Plain-English read on an offer someone sent you. */
 export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
   if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Smash accept. Your lineup gains ${fmt(t.youDelta)} pts a week and the value is ${t.marketGap >= 0 ? "in your favor" : "about even"}.` };
-  if (t.youDelta >= 0.5) return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} pts a week, but you give up ${pct(t.marketGap).slice(1)} more trade value.` };
+  if (t.youDelta >= 0.5) return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} pts a week, but you ${valueEdge("give", gapRatio(t.marketGap), "trade value")}.` };
   if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `About even (${fmt(t.youDelta)} pts a week). Ask for a small sweetener.` };
   return { label: "Lowball", tone: "bad", line: `Your lineup drops ${fmt(t.youDelta).replace("−", "")} pts a week.` };
 }
@@ -1229,6 +1264,8 @@ export function verdictMulti(m: MultiTrade): { label: string; tone: "good" | "wa
     return { label: `All ${n} teams improve`, tone: "good", line: `You ${fmt(m.youDelta)} a week, and every partner's lineup gets better. ${odds}` };
   if (m.youDelta >= 0.5)
     return { label: "Tough sell", tone: "warn", line: `Great for you (${fmt(m.youDelta)}), but ${list(losers)} ${losers.length > 1 ? "don't" : "doesn't"} gain enough to say yes. ${odds}` };
+  if (m.youDelta > -0.5 && m.marketGap < -FAIR_GAP)
+    return { label: "You're overpaying", tone: "bad", line: `Your lineup goes ${fmt(m.youDelta)} a week and you ${valueEdge("give", gapRatio(m.marketGap), "market value")}. Ask for a little more before you send it.` };
   if (m.youDelta > -0.5)
     return { label: "Barely moves you", tone: "warn", line: `Your lineup goes ${fmt(m.youDelta)} a week. A ${n}-team trade is a lot of work for that.` };
   const gainers = m.legs.filter((l) => l.trade.themDelta >= 0.5).map((l) => l.team.manager);

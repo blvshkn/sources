@@ -5,7 +5,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
 import { kickLine } from "../kickoff";
-import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue } from "../engine";
+import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue, valueEdge, valueRatio } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
@@ -332,9 +332,12 @@ function pointsClause(d: number) {
 function valueClause(give: number, get: number) {
   const gap = Math.max(give, get) > 0 ? (get - give) / Math.max(give, get) : 0;
   if (Math.abs(gap) <= FAIR_GAP) return "the value is about even";
-  const r = Math.max(give, get) / Math.max(1, Math.min(give, get));
-  const size = r >= 2.6 ? `about ${Math.round(r)} times the value` : r >= 1.75 ? "about twice the value" : `${pct(gap).slice(1)} more value`;
-  return give > get ? `give up ${size}` : `get ${size} back`;
+  return valueEdge(give > get ? "give" : "get", valueRatio(give, get));
+}
+/** "Your lineup barely moves" has its own subject, so the value half needs "you". */
+function pointsAndValue(d: number, give: number, get: number) {
+  const p = pointsClause(d), v = valueClause(give, get);
+  return `${p} and ${p.startsWith("Your") && !v.startsWith("the ") ? "you " : ""}${v}.`;
 }
 const NEXT: Record<string, (them: string) => string> = {
   "Win-win": () => "Both sides have a reason to say yes.",
@@ -342,6 +345,9 @@ const NEXT: Record<string, (them: string) => string> = {
   "Helps both, you overpay": () => "Only worth it if you need the fit.",
   "Tough sell": (t) => `${t} gets nothing out of it, so add something.`,
   "You're overpaying": () => "Ask for a little more before you send it.",
+  "Hurts your lineup": () => "Start from a position you need instead.",
+  "Value over points": () => "Only worth it if you can spare the points now.",
+  "Value play": () => "Worth sending as it stands.",
   "Lateral": () => "Not worth sending as it stands.",
   "Take it": () => "Accept it.",
   "Win-now move": () => "Worth it if you're chasing a title this year.",
@@ -349,7 +355,7 @@ const NEXT: Record<string, (them: string) => string> = {
   "Lowball": () => "Counter or decline.",
 };
 export function dealWhy(label: string, youDelta: number, give: number, get: number, them: string) {
-  return `${pointsClause(youDelta)} and ${valueClause(give, get)}. ${NEXT[label]?.(them) ?? ""}`.trim();
+  return `${pointsAndValue(youDelta, give, get)} ${NEXT[label]?.(them) ?? ""}`.trim();
 }
 const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 export function multiWhy(m: MultiTrade, label: string) {
@@ -360,7 +366,7 @@ export function multiWhy(m: MultiTrade, label: string) {
     : label === "Barely moves you" ? `A ${n}-team trade is a lot of work for that.`
     : label.startsWith("All") ? (holdouts.length ? "" : "Everyone gets better, so it has a real shot.") : "";
   const hold = holdouts.length ? `${list(holdouts)} won't say yes as it stands.` : "";
-  return [`${pointsClause(m.youDelta)} and ${valueClause(m.marketGive, m.marketGet)}.`, hold, end].filter(Boolean).join(" ");
+  return [pointsAndValue(m.youDelta, m.adjGive, m.adjGet), hold, end].filter(Boolean).join(" ");
 }
 
 /** Verdict colors only mean good or bad for you. Anything in between reads in plain chalk. */
@@ -383,7 +389,7 @@ function TradeRead({ them, give, get, tags, myTags, prices, received }: {
   return (
     <div className="dv-read">
       <ThinkingTrace trace={trace} compact verb={{ doing: "Reading the deal", done: "Read the deal in" }} />
-      {r ? <div className={trace.status === "done" ? undefined : "dv-stale"}><DealVerdict label={r.v.label} tone={r.v.tone} line={dealWhy(r.v.label, r.trade.youDelta, r.trade.marketGive, r.trade.marketGet, them.manager)} /></div>
+      {r ? <div className={trace.status === "done" ? undefined : "dv-stale"}><DealVerdict label={r.v.label} tone={r.v.tone} line={dealWhy(r.v.label, r.trade.youDelta, r.trade.adjGive, r.trade.adjGet, them.manager)} /></div>
         : <div className="dv-verdict dv-pending" aria-hidden="true"><b>&nbsp;</b><p>&nbsp;<br />&nbsp;</p></div>}
     </div>
   );

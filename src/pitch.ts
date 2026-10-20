@@ -48,7 +48,9 @@ export function reasonsFor(t: Trade): Reason[] {
     });
   });
   const amount = t.marketGive - t.marketGet, pct = t.marketGet > 0 ? (amount / t.marketGet) * 100 : 0;
-  if (amount > 0 && pct >= 3 && t.adjGive > t.adjGet) out.push({ big: `+${Math.round(pct)}%`, line: "more trade value than you send", detail: `${Math.round(t.marketGive).toLocaleString()} for ${Math.round(t.marketGet).toLocaleString()}` });
+  // Percent while it reads as one, then "2x" to "4x", and past 4x (or against nothing) it stops counting.
+  const r = t.marketGet > 0 ? t.marketGive / t.marketGet : Infinity;
+  if (amount > 0 && pct >= 3 && t.adjGive > t.adjGet) out.push({ big: r < 1.75 ? `+${Math.round(pct)}%` : r < 4 ? `${Math.round(r)}x` : "4x+", line: r < 1.75 ? "more trade value than you send" : "the trade value you send", detail: `${Math.round(t.marketGive).toLocaleString()} for ${Math.round(t.marketGet).toLocaleString()}` });
   return out;
 }
 
