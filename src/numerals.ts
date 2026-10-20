@@ -727,12 +727,12 @@ const font = (family: string, weight: number, cap: number, d: Metric[], o: Parti
 const OSWALD_500: Metric[] = [[534, 47, 484], [382, 16, 297], [497, 31, 469], [496, 31, 469], [504, 31, 500], [493, 31, 469], [521, 47, 484], [413, 16, 391], [510, 31, 469], [521, 31, 469]];
 const PATHWAY: Metric[] = [[411, 47, 375], [235, 0, 188], [400, 47, 359], [408, 47, 359], [379, 0, 359], [378, 31, 344], [404, 47, 375], [333, 16, 313], [417, 47, 375], [404, 31, 359]];
 const OSWALD_640: Metric[] = [[546, 47, 500], [384, 16, 313], [509, 31, 484], [509, 31, 484], [519, 16, 516], [505, 31, 484], [534, 47, 500], [432, 16, 406], [518, 31, 484], [533, 31, 484]];
-const ANTONIO_650: Metric[] = [[471, 47, 422], [355, 31, 281], [451, 63, 422], [454, 47, 422], [451, 31, 438], [451, 63, 406], [451, 47, 422], [451, 47, 422], [451, 31, 406], [451, 31, 406]];
 const CHAKRA_700: Metric[] = [[652, 47, 609], [382, 16, 313], [574, 31, 547], [603, 31, 563], [579, 0, 578], [606, 31, 563], [622, 47, 578], [522, 0, 500], [638, 47, 594], [627, 47, 578]];
 const CHAKRA_600: Metric[] = [[644, 47, 594], [374, 16, 313], [566, 31, 531], [595, 31, 547], [571, 0, 563], [598, 47, 563], [614, 47, 578], [514, 0, 484], [630, 47, 578], [619, 47, 563]];
 const TOMORROW_600: Metric[] = [[682, 47, 641], [455, 47, 422], [672, 47, 625], [668, 47, 625], [672, 16, 641], [666, 47, 625], [695, 47, 641], [569, 16, 547], [689, 47, 641], [699, 63, 656]];
 const TOMORROW_700: Metric[] = [[692, 47, 656], [478, 47, 453], [683, 47, 641], [695, 63, 656], [709, 16, 688], [708, 63, 672], [715, 47, 672], [603, 0, 578], [696, 47, 656], [730, 63, 688]];
 const BIG_SHOULDERS_700: Metric[] = [[467, 31, 438], [252, 31, 219], [451, 31, 422], [464, 31, 422], [474, 16, 453], [474, 31, 438], [459, 31, 438], [439, 16, 422], [460, 31, 422], [459, 31, 422]];
+const BIG_SHOULDERS_800: Metric[] = [[487, 31, 453], [263, 31, 234], [470, 31, 453], [484, 31, 453], [492, 16, 484], [494, 31, 453], [479, 31, 453], [462, 16, 438], [480, 31, 453], [479, 31, 438]];
 const LEAGUE_GOTHIC: Metric[] = [[354, 31, 328], [240, 16, 203], [363, 31, 328], [352, 16, 328], [351, 16, 344], [342, 16, 313], [342, 16, 313], [307, 16, 297], [340, 16, 328], [342, 16, 313]];
 const FJALLA: Metric[] = [[520, 47, 469], [403, 0, 406], [476, 31, 438], [489, 31, 453], [532, 31, 516], [498, 47, 453], [508, 47, 469], [409, 16, 406], [504, 31, 469], [508, 47, 469]];
 const RAJDHANI_700: Metric[] = [[536, 47, 484], [334, 16, 281], [493, 31, 453], [509, 31, 469], [541, 31, 531], [506, 31, 469], [525, 47, 484], [431, 16, 422], [542, 47, 500], [525, 31, 484]];
@@ -759,8 +759,8 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   NO: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.78 }),
   NYG: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.74 }),
   NYJ: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.82 }),
-  // Clipped corners, clipped counters, flag-only 1.
-  NE: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.84 }),
+  // Chamfered block with near-square counters and a flag-only 1; the lighter cut keeps the counters open.
+  NE: font("Chakra Petch", 600, 703, CHAKRA_600, { scaleX: 0.84 }),
   // Clipped corners and clipped counters, a footless 1 with a short flag.
   ARI: font("Chakra Petch", 600, 703, CHAKRA_600, { scaleX: 0.72 }),
   ATL: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.85 }),
@@ -769,12 +769,12 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   GB: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.78 }),
   // Condensed rounded rectangles, a 9 on a straight leg (opsz settles on the display cut at jersey sizes).
   DEN: font("Big Shoulders", 700, 813, BIG_SHOULDERS_700, { scaleX: 1.04 }),
-  // Narrow, rounded, light: oval counters and plain stroke ends.
-  BAL: font("Antonio", 650, 859, ANTONIO_650, { scaleX: 1.06 }),
+  // Tall and round with an angled flag and curved 2; heavier than the Bengals' set it resembles.
+  BAL: font("Oswald", 500, 813, OSWALD_500, { scaleX: 0.85 }),
   // Very tall and light, a long angled flag on the 1, straight diagonal 2 and 7.
   CIN: font("Pathway Gothic One", 400, 703, PATHWAY, { scaleX: 0.92 }),
-  // Condensed with clipped corners and square counters.
-  MIA: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.72 }),
+  // Condensed rounded rectangles with flat sides and long rectangular counters.
+  MIA: font("Big Shoulders", 800, 813, BIG_SHOULDERS_800, { scaleX: 1.1 }),
   // The 2026 trimmed set: round bowls and a curved 2 (the plain teal set is a clipped block).
   JAX: font("Oswald", 500, 813, OSWALD_500, { scaleX: 0.88 }),
   // Round bowls, a straight 7 and a 9 whose tail turns to a flat end; a touch wider than the face.
