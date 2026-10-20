@@ -215,8 +215,11 @@ export const dedupe = (items) => {
 
 export async function playerNews({ name, team, espn }, now = Date.now()) {
   const who = { ...nameForms(name), team: String(team ?? "").toUpperCase() };
+  // The league feeds and RotoBaller's search don't need his ESPN id, so they start before the id lookup, not after it.
+  // Neither can reject (each feed catches its own failure).
+  const feedsP = leagueFeeds(), rotoP = rotoballerFor(name);
   const id = espn && /^\d+$/.test(espn) ? espn : await espnIdFor(name, who.team);
-  const [feeds, [fantasy, site], roto] = await Promise.all([leagueFeeds(), espnFor(id), rotoballerFor(name)]);
+  const [feeds, [fantasy, site], roto] = await Promise.all([feedsP, espnFor(id), rotoP]);
   const counts = {};
   const tally = (list) => list.forEach((i) => (counts[i.source] = (counts[i.source] ?? 0) + 1));
   // ESPN's player feeds are already about him, but still check the name so a team story tagged to him reads right

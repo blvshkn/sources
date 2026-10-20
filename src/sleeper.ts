@@ -20,7 +20,8 @@ async function get<T>(path: string): Promise<T> {
 /** One week of a league's transactions (trades, waivers, adds). Read-only: Sleeper only lists what already happened,
  *  so a completed trade shows up here but a pending offer never does. Used to mark sent offers accepted. */
 export function leagueTransactions(leagueId: string, week: number): Promise<STxn[]> {
-  return get<STxn[]>(`/v1/league/${leagueId}/transactions/${week}`);
+  // The league load just fetched these weeks; for 30 seconds the sent-offers check reuses them instead of asking again
+  return cached(txnKey(leagueId, week), 30_000, () => get<STxn[]>(`/v1/league/${leagueId}/transactions/${week}`));
 }
 
 // ---- Raw shapes (only the fields we read) --------------------------------
@@ -130,6 +131,13 @@ function cached<T>(key: string, ttl: number, run: () => Promise<T>): Promise<T> 
   p.catch(() => { if (memo.get(key)?.p === p) memo.delete(key); });
   return p;
 }
+/** Store a request that was just made fresh (a league load) under `key`, so a lookup right after reuses it. */
+function prime<T>(key: string, p: Promise<T>): Promise<T> {
+  memo.set(key, { at: Date.now(), p });
+  p.catch(() => { if (memo.get(key)?.p === p) memo.delete(key); });
+  return p;
+}
+const txnKey = (leagueId: string, week: number) => `txn:${leagueId}:${week}`;
 
 export async function findUser(username: string): Promise<SUser | null> {
   const name = username.trim().replace(/^@/, "");
@@ -243,6 +251,18 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   const lastWeek = Math.min(18, playoffStart + 2);
   const futureWeeks = live ? Array.from({ length: Math.max(0, lastWeek - week) }, (_, i) => week + 1 + i) : [];
 
+  // The schedule, the week's drops and every week's moves and matchups only need the season, week and league, so
+  // they start now, alongside the projections. Each is still awaited in its own step below, so the trace shows the
+  // same steps and counts; it just isn't waiting on one request before asking for the next. Every one has its own
+  // catch, so a failure earlier in the load never leaves one of these unhandled.
+  const scheduleP = fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`).then((r) => (r.ok ? r.json() : [])).catch(() => []) as Promise<{ week: number; home: string; away: string; status: string }[]>;
+  const trendingDropsP = get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
+  const weeks = Array.from({ length: week }, (_, i) => i + 1);
+  const movesP = Promise.all([
+    Promise.all(weeks.map((w) => prime(txnKey(leagueId, w), get<STxn[]>(`/v1/league/${leagueId}/transactions/${w}`)).catch(() => [] as STxn[]))),
+    Promise.all(weeks.map((w) => get<SMatchup[]>(`/v1/league/${leagueId}/matchups/${w}`).catch(() => [] as SMatchup[]))),
+  ]);
+
   // Market values: FantasyCalc, built from real fantasy trades, matched to this league's settings
   const recSetting = league.scoring_settings.rec ?? 0;
   const sfLeague = league.roster_positions.includes("SUPER_FLEX");
@@ -266,7 +286,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   await tr?.n(market.length);
   // Which games have kicked off this week (Sleeper locks those players), and who is on bye
   await tr?.step(`Loading the ${season} NFL schedule`, `Loaded {n} games on the ${season} schedule`);
-  const schedule = await fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`).then((r) => (r.ok ? r.json() : [])).catch(() => []) as { week: number; home: string; away: string; status: string }[];
+  const schedule = await scheduleP;
   const games: Record<string, "pre_game" | "in_game" | "complete"> = {};
   for (const g of schedule.filter((x) => x.week === week)) {
     const st = g.status === "complete" ? "complete" : g.status === "in_game" ? "in_game" : "pre_game";
@@ -280,7 +300,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   [weekProj, ...futureProj].forEach((wp, i) => { const w = [week, ...futureWeeks][i]; wp.forEach((p) => { const v = ptsOf(p.stats); if (v && v[scoreKey] > 0) (slateProj[p.player_id] ??= {})[w] = Math.round(v[scoreKey] * 10) / 10; }); });
   await tr?.n(schedule.length);
   await tr?.step("Loading this week's adds and drops", "Loaded {n} trending adds and drops");
-  const trendingDrops = await get<{ player_id: string; count: number }[]>("/v1/players/nfl/trending/drop?lookback_hours=168&limit=200").catch(() => []);
+  const trendingDrops = await trendingDropsP;
   const valueBy = new Map(market.filter((m) => m.player?.sleeperId).map((m) => [String(m.player.sleeperId), m.value]));
   // Weekly projections for every remaining week, this week included
   const allWeeks = [weekProj, ...futureProj];
@@ -298,11 +318,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   await tr?.n(trending.length + trendingDrops.length);
   onStep?.("Loading trades, waivers and past weeks");
   await tr?.step(`Loading ${week} ${week === 1 ? "week" : "weeks"} of trades and matchups`, `Loaded {n} moves over ${week} ${week === 1 ? "week" : "weeks"}`);
-  const weeks = Array.from({ length: week }, (_, i) => i + 1);
-  const [txnsByWeek, allMatchups] = await Promise.all([
-    Promise.all(weeks.map((w) => get<STxn[]>(`/v1/league/${leagueId}/transactions/${w}`).catch(() => [] as STxn[]))),
-    Promise.all(weeks.map((w) => get<SMatchup[]>(`/v1/league/${leagueId}/matchups/${w}`).catch(() => [] as SMatchup[]))),
-  ]);
+  const [txnsByWeek, allMatchups] = await movesP;
   const matchupsByWeek = allMatchups.slice(0, -1);
   const slatePts: Record<string, Record<number, number>> = {};
   matchupsByWeek.forEach((ms, i) => ms.forEach((m) => Object.entries(m.players_points ?? {}).forEach(([pid, v]) => { (slatePts[pid] ??= {})[i + 1] = Math.round(v * 10) / 10; })));
