@@ -6,7 +6,7 @@ import { useEffect, useRef, type RefObject } from "react";
  * When the row gains a pill, it scrolls to the end so the new one is in view.
  */
 export function useHFade(ref: RefObject<HTMLElement | null>, count: number) {
-  const last = useRef(count);
+  const last = useRef(0);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -27,8 +27,9 @@ export function useHFade(ref: RefObject<HTMLElement | null>, count: number) {
   useEffect(() => {
     const el = ref.current;
     if (el && count > last.current) {
+      // After layout, so scrollWidth includes the new pill
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      el.scrollTo({ left: el.scrollWidth, behavior: reduce ? "auto" : "smooth" });
+      requestAnimationFrame(() => el.scrollTo({ left: el.scrollWidth - el.clientWidth, behavior: reduce ? "auto" : "smooth" }));
     }
     last.current = count;
     if (el) requestAnimationFrame(() => el.dispatchEvent(new Event("scroll")));

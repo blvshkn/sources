@@ -11,7 +11,7 @@ html:root:not(#_):not(#_) .wv3-list .wv .wv-row {
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-end { grid-area: end; width: 36px; height: 36px; }
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-proj { grid-area: proj; min-width: 0; width: 100%; justify-self: end; align-items: flex-end; }
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats {
-  display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 140px) 104px; gap: 0 12px; margin-top: 6px; flex-wrap: nowrap;
+  display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 140px) 104px; gap: 0 12px; min-height: 40px; margin-top: 6px; flex-wrap: nowrap;
 }
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > span { width: auto !important; min-width: 0; display: flex !important; }
 html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats i,
@@ -22,7 +22,8 @@ html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats .wv-l3 > b { color: var(
 /* Not interested (.ps-end) sits exactly over the reserved end column, so the row needs no extra right padding */
 html:root:not(#_):not(#_) .wv3-list .wv.ps-wv > .wv-row { padding-right: 16px !important; }
 html:root:not(#_):not(#_) .wv3-list .wv > .ps-end { right: 16px; }
-html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > .ps-again-line { grid-column: 1 / -1; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > .ps-again-line { grid-column: 1 / -1; flex-direction: row !important; flex-wrap: nowrap; align-items: center; align-self: center; min-width: 0; white-space: nowrap; }
+html:root:not(#_):not(#_) .wv3-list .wv-row > .wv-stats > .ps-again-line > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* Long names cut with an ellipsis; the trend arrow and tags stay whole */
 html:root:not(#_):not(#_) .wv3-list .wv-name > * { flex: none; }
@@ -111,7 +112,7 @@ html:root:not(#_):not(#_) :is(.wv3-head, .sx-head) > .lu-weeknav.lu-weeknav { fl
 html:root:not(#_):not(#_) .deal-tray .dt-side { height: 44px; }
 html:root:not(#_):not(#_) .deal-tray .dt-chips.dt-chips {
   display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; height: 44px; padding: 0; margin: 0;
-  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; touch-action: pan-x; scroll-snap-type: x proximity;
   scrollbar-width: none; animation: none;
   --hf-l: 0px; --hf-r: 0px;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--hf-l), #000 calc(100% - var(--hf-r)), transparent);
@@ -122,9 +123,21 @@ html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="end"] { --hf-r: 28px;
 html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="start"] { --hf-l: 28px; }
 html:root:not(#_):not(#_) .deal-tray .dt-chips[data-hfade="both"] { --hf-l: 28px; --hf-r: 28px; }
 html:root:not(#_):not(#_) .deal-tray .dt-chips > * { flex: none; scroll-snap-align: start; }
-/* The pill fills the row's height as its tap target; the visible pill stays 28px */
-html:root:not(#_):not(#_) .deal-tray .dt-chip { position: relative; }
-html:root:not(#_):not(#_) .deal-tray .dt-chip::after { content: ""; position: absolute; inset: auto 0; top: 50%; height: 44px; translate: 0 -50%; }
+/* Each pill is exactly the row's 44px (its tap target); the visible 28px pill is drawn behind it by ::before, so
+   nothing in the row is taller than the row and it can never scroll vertically */
+html:root:not(#_):not(#_) .deal-tray .dt-chip.dt-chip {
+  position: relative; isolation: isolate; height: 44px; margin: 0; padding: 0 6px 0 3px; border: 0; background: none; box-shadow: none;
+}
+html:root:not(#_):not(#_) .deal-tray .dt-chip.dt-chip::before {
+  content: ""; position: absolute; z-index: -1; inset: 8px 0; border-radius: 999px;
+  background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+html:root:not(#_):not(#_) .deal-tray .dt-side.give .dt-chip::before { background: rgba(var(--you-rgb), 0.12); box-shadow: inset 0 0 0 1px rgba(var(--you-rgb), 0.25); }
+html:root:not(#_):not(#_) .deal-tray .dt-side.get .dt-chip::before { background: rgba(var(--good-rgb), 0.12); box-shadow: inset 0 0 0 1px rgba(var(--good-rgb), 0.25); }
+html:root:not(#_):not(#_) .deal-tray .dt-chip.dt-chip::after { content: none; }
+html:root:not(#_):not(#_) .deal-tray .dt-chip.dt-chip:focus-visible { outline: none; }
+html:root:not(#_):not(#_) .deal-tray .dt-chip.dt-chip:focus-visible::before { box-shadow: inset 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_) .deal-tray .dt-empty { height: 28px; }
 html:root:not(#_):not(#_) .deal-tray .dt-chip > span { white-space: nowrap; }
 /* The page already pads its bottom by the tray and tab bar; the spacer, at zero height, only adds the column gap: 20px clear above the tray
    (it was 128px, a dead gap) */
