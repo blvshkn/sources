@@ -219,11 +219,18 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const yourLineup = useMemo(() => lineupFor(YOU.roster, true), [fkey]);
 
+  // The scan reads only tags, notes, prices and format. Hiding an idea, passing on a player or pausing a team filters
+  // its result, so those taps don't run the whole league's scan again.
+  const scannedByTeam = useMemo(() => {
+    const out: Record<string, Trade[]> = {};
+    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = findTrades(YOU, t, active, myTags, prices)));
+    return out;
+  }, [active, myTags, prices, fkey]); // eslint-disable-line react-hooks/exhaustive-deps
   const suggestionsByTeam = useMemo(() => {
     const out: Record<string, Trade[]> = {};
-    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : findTrades(YOU, t, active, myTags, prices).filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
+    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : scannedByTeam[t.id].filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
     return out;
-  }, [active, myTags, prices, fkey, hiddenIdeas, pausedTeams, passed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scannedByTeam, hiddenIdeas, pausedTeams, passed]);
 
   // Every team with a trade idea, best chance first. The top three are "best trade partners"; League Needs orders its cards by the whole list.
   const fits = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
@@ -387,12 +394,19 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", `What does ${mgr} need?`];
   }, [partners, youNeeds]);
 
-  const trade = !extra.length && give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null;
-  const legs: DealLeg[] = [{ teamId: partnerId, give, get }, ...extra];
+  // The deal in the builder, read only when the deal or what it's judged by changes, not on every render of the app
+  // (a toast or the inbox opening). The builder tip tries dozens of counters, so it's worth keeping.
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const trade = useMemo(() => (!extra.length && give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null),
+    [extra.length, give, get, partnerId, active, myTags, prices, fkey]);
   // A multi-team deal reads once every partner has a player moving and you both send and get someone
-  const multi = extra.length && legs.every((l) => l.give.length + l.get.length > 0) && legs.some((l) => l.give.length) && legs.some((l) => l.get.length)
-    ? evaluateMulti(YOU, legs, active, myTags, prices) : null;
-  const tip = trade && level !== "light" ? builderTip(trade, active, myTags, prices) : null;
+  const multi = useMemo(() => {
+    const legs: DealLeg[] = [{ teamId: partnerId, give, get }, ...extra];
+    return extra.length && legs.every((l) => l.give.length + l.get.length > 0) && legs.some((l) => l.give.length) && legs.some((l) => l.get.length)
+      ? evaluateMulti(YOU, legs, active, myTags, prices) : null;
+  }, [extra, give, get, partnerId, active, myTags, prices, fkey]);
+  const tip = useMemo(() => (trade && level !== "light" ? builderTip(trade, active, myTags, prices) : null), [trade, level, active, myTags, prices]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const go = (dest: string, teamId?: string) => {
     // "settings:nudges" opens a screen on a specific section tab

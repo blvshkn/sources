@@ -233,7 +233,6 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const go = () => setMu(true);
   const threats = opp ? startersOf(opp).map(playerById).sort((a, b) => eff(b, true) - eff(a, true)).slice(0, 3) : [];
-  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} them />;
   return (
     <section className="card wk thr" aria-label="Opponent threats">
       <div className="wk-head"><h2 className="section-title">Their threats</h2><span className="tiny muted thr-sub">{opp ? `${opp.manager}'s top projections` : `Week ${WEEK}`}</span></div>
@@ -241,7 +240,7 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
         <button key={p.id} className="wk-row" onClick={() => setOpen({ p, rank: threats.indexOf(p) })}>
           <Avatar p={p} size={40} />
           <span className="wk-name"><span className="thr-n">{p.name}<InjTag id={p.id} /></span><small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {onBye(p.nfl) ? "Bye" : oppAt(p.nfl, vsOf(p))}</small></span>
-          <Pts p={p} />
+          <WkPts p={p} live={live} them />
         </button>
       ))} />
       {open && opp && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
@@ -310,7 +309,6 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const detail = injuryDetail;
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [lockLine(), DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
-  const Pts = ({ p }: { p: Player }) => <WkPts p={p} live={live} />;
   return (
     <>
       <section className="card wk" aria-label="When your starters play">
@@ -322,7 +320,7 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
               <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
                 <Avatar p={p} size={40} />
                 <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {oppAt(p.nfl, vsOf(p))}</small></span>
-                <Pts p={p} />
+                <WkPts p={p} live={live} />
               </button>
             ))}
           </div>
