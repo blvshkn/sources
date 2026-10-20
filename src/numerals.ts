@@ -746,11 +746,11 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   CLE: NINERS_BLOCK,
   TB: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.72 }),
   // Tall, narrow and round, with a slight lean.
-  PIT: font("League Gothic", 400, 750, LEAGUE_GOTHIC, { skew: 5 }),
+  PIT: font("League Gothic", 400, 750, LEAGUE_GOTHIC, { scaleX: 1.04, skew: 8 }),
   // Tall, narrow and round, with a footed 1.
   PHI: font("Fjalla One", 400, 844, FJALLA, { scaleX: 0.76 }),
   // Squared bowls with softened corners and an angled flag.
-  SEA: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.78 }),
+  SEA: font("Rajdhani", 700, 656, RAJDHANI_700, { scaleX: 0.72 }),
   // Clipped wedge corners, an angled 7 and flag, a closed diagonal 4.
   HOU: font("Chakra Petch", 700, 703, CHAKRA_700, { scaleX: 0.8 }),
   // Clipped block, footed 1 and 4, a diagonal 2: the classic pro block in its current cut.
@@ -758,7 +758,7 @@ const FONT_TEAM: Record<string, FontNumerals> = {
   LV: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.72 }),
   NO: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.78 }),
   NYG: font("Tomorrow", 600, 750, TOMORROW_600, { scaleX: 0.74 }),
-  NYJ: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.82 }),
+  NYJ: font("Tomorrow", 700, 750, TOMORROW_700, { scaleX: 0.86 }),
   // Chamfered block with near-square counters and a flag-only 1; the lighter cut keeps the counters open.
   NE: font("Chakra Petch", 600, 703, CHAKRA_600, { scaleX: 0.84 }),
   // Clipped corners and clipped counters, a footless 1 with a short flag.
