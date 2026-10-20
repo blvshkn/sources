@@ -25,8 +25,7 @@ import { useLive } from "./live";
 import { useRosterNews } from "./news";
 import { yourPlayers } from "./impact";
 import { urgentNews } from "./components/News";
-import { League, MiniStandings } from "./components/League";
-import { PartnerContext, WaiverContext } from "./components/PanelContext";
+import { League } from "./components/League";
 import { TradeBuilder } from "./components/Trade";
 import { Roster, gameDayChecks } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
@@ -612,11 +611,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         onKeyDown={(e) => { if (e.key === "Escape" && docked && dockOpen) { e.stopPropagation(); closeInbox(); } }}>
         <InboxPanel items={inbox} read={readIds} open={panelOpen} focusTick={ibxFocus} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
           onDismiss={dismissItem} onClose={closeInbox}
-          onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }}
-          context={tab === "league" ? <MiniStandings onOpen={() => go("league:standings")} />
-            : tab === "waivers" ? <WaiverContext top={topRec} onToast={setToast} passed={passed} onPass={passPlayer} />
-            : tab === "trade" ? <>{[partnerId, ...extra.map((l) => l.teamId)].map((id) => <PartnerContext key={id} partnerId={id} needs={needs} tags={active} onNotes={() => { if (id !== partnerId) setPartner(id); go("trade:notes"); }} />)}</>
-            : null} />
+          onAsk={(q) => { setAskSeed(q); if (tab === "ask") setNavKey((k) => k + 1); go("ask"); }} />
       </aside>
 
       <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
