@@ -11,7 +11,9 @@
 const H = 1000;
 
 type Tag = "n" | "t" | "f"; // plain vertex, stroke end, flat base
-type V = [number, number, Tag?];
+/** A vertex: x, y, its role, and an optional corner size (fraction of cap height) that overrides the
+    set's size for that one corner. Big sizes turn a corner into a sweep (curved necks, curled tails). */
+type V = [number, number, Tag?, number?];
 interface Contour {
   p: V[];
   hole?: boolean;
@@ -55,13 +57,25 @@ export interface NumeralSet {
   gap: number;
   /** Stub-free stroke ends cut on an angle by this much instead of square. */
   cut?: number;
-  one: { w?: number; flag: number; ft?: number; fb: number; fj: number; foot?: number; footH?: number };
-  two: { neck: "square" | "diag"; stub: number; dy?: number };
+  /** Pointed stubs: the outer side of every hanging stub (2, 3, 5, 6) drops this much further than the
+      inner side, so the stub ends in a spur instead of a flat cut. */
+  spur?: number;
+  /** Per-digit corner sizes, for a digit that is rounder or squarer than the rest of its set. */
+  dig?: Partial<Record<string, { ro?: CornerSize; rc?: CornerSize; ri?: CornerSize }>>;
+  /** `flare`: the stem widens by this much on each side from mid height to the base. */
+  one: { w?: number; flag: number; ft?: number; fb: number; fj: number; foot?: number; footH?: number; flare?: number };
+  /** Necks: square (a bar across), diag (a straight diagonal), curve (a diagonal that sweeps out of the
+      bowl through big round elbows, sized by `curve`), or bevel (a square neck with 45 degree cuts of
+      `bevel` at both elbows). */
+  two: { neck: "square" | "diag" | "curve" | "bevel"; stub: number; dy?: number; curve?: number; bevel?: number };
   three: { stub: number; notch?: number; arm?: number };
   four: { type: "diag" | "open" | "closed"; cy?: number; xr?: number };
   five: { stub: number; flag?: number };
-  six: { type?: "block" | "diag"; stub: number; bowl?: number; foot?: number };
-  seven: { type?: "diag" | "bent"; stub: number; foot?: number; bend?: number };
+  /** `curl`: corner size at the tail side of the block 6 (its top left, the bottom right of the turned
+      9), so the tail rolls round into its end. */
+  six: { type?: "block" | "diag"; stub: number; bowl?: number; foot?: number; curl?: number };
+  /** `weight`: the diagonal's weight as a share of the stem. */
+  seven: { type?: "diag" | "bent"; stub: number; foot?: number; bend?: number; weight?: number };
   eight: { pinch?: number; top?: number };
 }
 
@@ -75,10 +89,11 @@ interface Dims {
   m: number;
   sd: number;
   cut: number;
+  sp: number;
 }
 
 function dims(n: NumeralSet): Dims {
-  return { W: n.w * H, s: n.stem * H, b: n.bar * H, m: (n.mid ?? 0.5) * H, sd: n.stem * H * 0.96, cut: (n.cut ?? 0) * H };
+  return { W: n.w * H, s: n.stem * H, b: n.bar * H, m: (n.mid ?? 0.5) * H, sd: n.stem * H * 0.96, cut: (n.cut ?? 0) * H, sp: (n.spur ?? 0) * H };
 }
 
 /** Horizontal thickness that gives a diagonal with run dxdy (x per unit y) a perpendicular weight of sd. */
@@ -104,22 +119,27 @@ function one(n: NumeralSet): Glyph {
     if ((o.ft ?? 0) > 0) p.push([xs, 0]);
   } else p.push([xs, 0]);
   p.push([xs + s1, 0]);
+  const fl = (o.flare ?? 0) * H;
   if (F > 0) p.push([xs + s1, H - fh], [xs + s1 + F, H - fh, "t"], [xs + s1 + F, H, "f"], [xs - F, H, "f"], [xs - F, H - fh, "t"], [xs, H - fh]);
+  else if (fl > 0) p.push([xs + s1, H * 0.55, "n", 0.4], [xs + s1 + fl, H, "f"], [xs - fl, H, "f"], [xs, H * 0.55, "n", 0.4]);
   else p.push([xs + s1, H, "f"], [xs, H, "f"]);
   if (fw > 0) p.push([xs, o.fj * H], [xs - fw, o.fb * H, "t"]);
-  return { w: xs + s1 + F, c: [{ p }] };
+  // A flared base can reach past the flag on the left: shift the digit so it starts at x = 0.
+  const shift = F > 0 ? 0 : Math.max(0, fl - xs);
+  const q = shift ? p.map(([x, y, t, r]) => [x + shift, y, t, r] as V) : p;
+  return { w: xs + s1 + Math.max(F, fl) + shift, c: [{ p: q }] };
 }
 
 /** Top-left stroke end shared by 2 and 3: a stub hanging down, or a plain end that may be cut. */
 function topLeft(d: Dims, stub: number): V[] {
-  const { s, b, cut } = d;
-  if (stub > 0) return [[s, b], [s, b + stub, "t"], [0, b + stub, "t"]];
+  const { s, b, cut, sp } = d;
+  if (stub > 0) return [[s, b], [s, b + stub, "t"], [0, b + stub + sp, "t"]];
   return [[cut, b, "t"], [0, 0, "t"]];
 }
 /** Bottom-left stroke end shared by 3 and 5, listed going up. */
 function bottomLeft(d: Dims, stub: number): V[] {
   const { s, b, cut } = d;
-  if (stub > 0) return [[0, H, "f"], [0, H - b - stub, "t"], [s, H - b - stub, "t"], [s, H - b]];
+  if (stub > 0) return [[0, H, "f"], [0, H - b - stub - d.sp, "t"], [s, H - b - stub, "t"], [s, H - b]];
   return [[0, H, "t"], [cut, H - b, "t"]];
 }
 
@@ -129,6 +149,11 @@ function two(n: NumeralSet): Glyph {
   const stub = n.two.stub * H;
   const tl = topLeft(d, stub);
   const head: V[] = stub > 0 ? [[0, 0]] : [];
+  if (n.two.neck === "bevel") {
+    const bv = Math.min((n.two.bevel ?? 0.06) * H, b * 0.9);
+    const p: V[] = [...head, [W, 0], [W, m + b / 2 - bv], [W - bv, m + b / 2], [s, m + b / 2], [s, H - b], [W, H - b, "t"], [W, H, "f"], [0, H, "f"], [0, m - b / 2 + bv], [bv, m - b / 2], [W - s, m - b / 2], [W - s, b], ...tl];
+    return { w: W, c: [{ p }] };
+  }
   if (n.two.neck === "square") {
     const p: V[] = [...head, [W, 0], [W, m + b / 2], [s, m + b / 2], [s, H - b], [W, H - b, "t"], [W, H, "f"], [0, H, "f"], [0, m - b / 2], [W - s, m - b / 2], [W - s, b], ...tl];
     return { w: W, c: [{ p }] };
@@ -138,7 +163,10 @@ function two(n: NumeralSet): Glyph {
   const dxdy = (W - s) / (di - (H - b));
   const hd = across(sd, dxdy);
   const yo = di + (hd - s) / Math.abs(dxdy);
-  const p: V[] = [...head, [W, 0], [W, yo], [hd, H - b], [W, H - b, "t"], [W, H, "f"], [0, H, "f"], [0, H - b], [W - s, di], [W - s, b], ...tl];
+  // A curved neck rounds both elbows of the diagonal with big corners, so the stroke sweeps out of the
+  // bowl and lands on the base in one curve.
+  const cv = n.two.neck === "curve" ? (n.two.curve ?? 0.3) : undefined;
+  const p: V[] = [...head, [W, 0], [W, yo, "n", cv], [hd, H - b, "n", cv && cv * 0.5], [W, H - b, "t"], [W, H, "f"], [0, H, "f"], [0, H - b], [W - s, di, "n", cv && cv * 0.75], [W - s, b], ...tl];
   return { w: W, c: [{ p }] };
 }
 
@@ -194,16 +222,17 @@ function five(n: NumeralSet): Glyph {
   const { W, s, b, m, cut } = d;
   const stub = n.five.stub * H;
   const fl = (n.five.flag ?? 0) * H;
-  const topRight: V[] = fl > 0 ? [[W, 0], [W, b + fl, "t"], [W - s, b + fl, "t"], [W - s, b]] : [[W, 0, "t"], [W - cut, b, "t"]];
+  const topRight: V[] = fl > 0 ? [[W, 0], [W, b + fl + d.sp, "t"], [W - s, b + fl, "t"], [W - s, b]] : [[W, 0, "t"], [W - cut, b, "t"]];
   const p: V[] = [[0, 0], ...topRight, [s, b], [s, m - b / 2], [W, m - b / 2], [W, H], ...bottomLeft(d, stub), [W - s, H - b], [W - s, m + b / 2], [0, m + b / 2]];
   return { w: W, c: [{ p: dedupe(p) }] };
 }
 
 function sixBlock(n: NumeralSet): Glyph {
-  const { W, s, b, m, cut } = dims(n);
+  const { W, s, b, m, cut, sp } = dims(n);
   const stub = n.six.stub * H;
-  const topRight: V[] = stub > 0 ? [[W, 0], [W, b + stub, "t"], [W - s, b + stub, "t"], [W - s, b]] : [[W, 0, "t"], [W - cut, b, "t"]];
-  return { w: W, c: [{ p: [[0, 0], ...topRight, [s, b], [s, m - b / 2], [W, m - b / 2], [W, H], [0, H]] }, rect(s, m + b / 2, W - s, H - b)] };
+  const cu = n.six.curl;
+  const topRight: V[] = stub > 0 ? [[W, 0], [W, b + stub + sp, "t"], [W - s, b + stub, "t"], [W - s, b]] : [[W, 0, "t"], [W - cut, b, "t"]];
+  return { w: W, c: [{ p: [[0, 0, "n", cu], ...topRight, [s, b, "n", cu && cu * 0.4], [s, m - b / 2], [W, m - b / 2], [W, H], [0, H]] }, rect(s, m + b / 2, W - s, H - b)] };
 }
 
 /** A 9 with a closed bowl on a straight diagonal leg. Turned over, it is the matching 6. */
@@ -224,8 +253,9 @@ function nineDiag(n: NumeralSet): Glyph {
 
 function seven(n: NumeralSet): Glyph {
   const d = dims(n);
-  const { W, s, b, sd } = d;
+  const { W, s, b } = d;
   const t7 = n.seven;
+  const sd = d.sd * (t7.weight ?? 1);
   const stub = t7.stub * H;
   const xb = (t7.foot ?? 0.16) * W;
   const left: V[] = stub > 0 ? [[s, b], [s, b + stub, "t"], [0, b + stub, "t"], [0, 0]] : [[d.cut, b, "t"], [0, 0, "t"]];
@@ -257,7 +287,7 @@ function eight(n: NumeralSet): Glyph {
 
 /** Turn a digit over (180 degrees): a 6 becomes a 9 and back. Winding is unchanged. */
 function turn(g: Glyph): Glyph {
-  return { w: g.w, c: g.c.map((c) => ({ hole: c.hole, p: c.p.map(([x, y, t]) => [g.w - x, H - y, t] as V) })) };
+  return { w: g.w, c: g.c.map((c) => ({ hole: c.hole, p: c.p.map(([x, y, t, r]) => [g.w - x, H - y, t, r] as V) })) };
 }
 
 function dedupe(p: V[]): V[] {
@@ -266,9 +296,10 @@ function dedupe(p: V[]): V[] {
     const last = out[out.length - 1];
     if (last && Math.abs(last[0] - v[0]) < 0.01 && Math.abs(last[1] - v[1]) < 0.01) {
       if (v[2] && !last[2]) last[2] = v[2];
+      if (v[3] !== undefined && last[3] === undefined) last[3] = v[3];
       continue;
     }
-    out.push([v[0], v[1], v[2]]);
+    out.push([v[0], v[1], v[2], v[3]]);
   }
   while (out.length > 1 && Math.abs(out[0][0] - out[out.length - 1][0]) < 0.01 && Math.abs(out[0][1] - out[out.length - 1][1]) < 0.01) out.pop();
   // Drop vertices that sit on a straight line between their neighbors.
@@ -313,7 +344,8 @@ interface Piece {
 
 /** Contours with their corners worked, as path data in digit units. Outer shapes wind one way and
     counters the other, so the nonzero fill opens the counters. */
-function outline(n: NumeralSet, g: Glyph): { c: Piece[][] } {
+function outline(base: NumeralSet, g: Glyph, digit: string): { c: Piece[][] } {
+  const n: NumeralSet = { ...base, ...base.dig?.[digit] };
   const k = n.k ?? 0.56;
   const out: Piece[][] = [];
   for (const c of g.c) {
@@ -346,6 +378,11 @@ function outline(n: NumeralSet, g: Glyph): { c: Piece[][] } {
       } else {
         kind = n.corner;
         cs = n.ro;
+      }
+      // A vertex with its own size is a sweep: always round, whatever the set's corners are.
+      if (v[3] !== undefined) {
+        cs = v[3];
+        kind = "round";
       }
       if (kind === "notch" && (!convex || c.hole)) kind = "chamfer";
       const lim = kind === "notch" ? 0.42 : 0.5;
@@ -385,7 +422,7 @@ function cached(id: string, n: NumeralSet, digit: string) {
   let hit = cache.get(key);
   if (!hit) {
     const g = glyph(n, digit);
-    hit = { g, o: outline(n, g).c };
+    hit = { g, o: outline(n, g, digit).c };
     cache.set(key, hit);
   }
   return hit;
@@ -536,38 +573,42 @@ export type FamilyId = keyof typeof FAMILIES;
 
 /** Per-team family and tuning. */
 const TEAM: Record<string, [FamilyId, Partial<NumeralSet>?]> = {
-  BUF: ["BLOCK", { w: 0.54, stem: 0.16, bar: 0.145, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.06 } }],
-  MIA: ["ROUNDED", { w: 0.5, ro: [0.08, 0.1], rc: [0.04, 0.05] }],
+  BUF: ["BLOCK", { w: 0.54, stem: 0.16, bar: 0.145, one: { flag: 0.14, fb: 0.12, fj: 0.21, foot: 0.12, footH: 0.8 }, seven: { stub: 0, foot: 0.18, weight: 0.8 } }],
+  MIA: ["ROUNDED", { w: 0.52, ro: [0.07, 0.08], rc: 0.012, ri: 0.012 }],
   NE: ["NARROW", { w: 0.5, stem: 0.175, ro: 0.025, one: { flag: 0.12, fb: 0.1, fj: 0.19, foot: 0.09 } }],
   NYJ: ["HEAVY", { w: 0.6, stem: 0.21, bar: 0.19 }],
-  BAL: ["CURVY", { w: 0.52, stem: 0.145, bar: 0.12, rc: [0.11, 0.19] }],
-  CIN: ["CURVY", { w: 0.44, stem: 0.135, bar: 0.125, ro: [0.17, 0.24], rc: [0.07, 0.15], one: { flag: 0.08, ft: 0.03, fb: 0.09, fj: 0.16 } }],
-  CLE: ["SOFT", { w: 0.62, stem: 0.19, ro: 0.085, rc: 0.05 }],
+  BAL: ["CURVY", { w: 0.54, stem: 0.14, bar: 0.12, ro: [0.26, 0.32], rc: [0.17, 0.27], dig: { "8": { ro: [0.24, 0.2], rc: [0.12, 0.11] } } }],
+  CIN: ["CURVY", { w: 0.44, stem: 0.135, bar: 0.125, ro: [0.17, 0.24], rc: [0.07, 0.15], spur: 0.04, one: { flag: 0.08, ft: 0.03, fb: 0.09, fj: 0.16 }, six: { stub: 0.05, curl: 0.3 } }],
+  CLE: ["BLOCK", { w: 0.5, stem: 0.165, bar: 0.15, ro: 0.03, rc: 0.006 }],
   PIT: ["OVAL", { w: 0.42, stem: 0.14, bar: 0.115, ro: [0.21, 0.25], rc: [0.07, 0.16], six: { type: "diag", stub: 0, bowl: 0.6, foot: 0.26 } }],
   HOU: ["CHAMFER", { w: 0.54, stem: 0.155, bar: 0.145 }],
-  IND: ["BLOCK", { w: 0.56, stem: 0.185, ro: 0.035, rc: 0.03 }],
-  JAX: ["SOFT", { w: 0.53, stem: 0.16, bar: 0.145, ro: 0.06, one: { flag: 0.12, fb: 0.11, fj: 0.2, foot: 0.08 }, six: { stub: 0.05 } }],
+  IND: ["BLOCK", { w: 0.58, stem: 0.185, ro: 0.06, rc: 0.03, ri: 0.01 }],
+  JAX: ["ROUNDED", { w: 0.5, stem: 0.145, bar: 0.13, ro: [0.09, 0.11], rc: [0.05, 0.07], one: { flag: 0.12, fb: 0.12, fj: 0.22, flare: 0.035 }, two: { neck: "diag", stub: 0.06, dy: 0.44 }, six: { stub: 0.05, curl: 0.22 } }],
   TEN: ["SOFT", { ro: 0.055, rc: 0.02 }],
   DEN: ["ROUNDED", { w: 0.5, stem: 0.14, bar: 0.13, one: { flag: 0.08, fb: 0.08, fj: 0.16 } }],
   KC: ["HEAVY", { w: 0.6, ro: 0.02 }],
-  LV: ["BLOCK", { w: 0.53, stem: 0.18, ro: 0.006 }],
-  LAC: ["ROUNDED", { w: 0.5, stem: 0.17, ro: [0.055, 0.065], rc: [0.03, 0.04], one: { flag: 0.13, fb: 0.11, fj: 0.21 } }],
-  DAL: ["NARROW", { w: 0.5, stem: 0.145, bar: 0.13, ro: 0.02 }],
-  NYG: ["BLOCK", { w: 0.54, stem: 0.165, bar: 0.15, ro: 0.02, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.07 } }],
-  PHI: ["SLAB"],
-  WAS: ["NARROW", { w: 0.49, stem: 0.155, ro: 0.03 }],
-  CHI: ["OVAL", { w: 0.42, stem: 0.125, bar: 0.105, two: { neck: "diag", stub: 0.04, dy: 0.46 }, six: { stub: 0.04 }, cut: 0 }],
+  LV: ["BLOCK", { w: 0.56, stem: 0.185, ro: 0.006 }],
+  // Wide, heavy and leaning (the slant is in jerseys.ts): softly rounded outside corners, narrow square
+  // counters, square 2 neck, short stubs, a flat-topped flag on the 1 and no foot.
+  LAC: ["ROUNDED", { w: 0.56, stem: 0.195, bar: 0.165, ro: [0.08, 0.09], rc: 0.012, ri: 0.015, one: { flag: 0.14, ft: 0, fb: 0.12, fj: 0.2 }, two: { neck: "square", stub: 0.075 }, three: { stub: 0.075, arm: 0.36 }, five: { stub: 0.075 }, six: { stub: 0.07 } }],
+  DAL: ["BLOCK", { w: 0.54, stem: 0.18, bar: 0.165, ro: 0.05, rc: 0.02 }],
+  NYG: ["BLOCK", { w: 0.52, stem: 0.165, bar: 0.15, ro: 0.02, one: { flag: 0.13, fb: 0.11, fj: 0.2, foot: 0.07 }, six: { stub: 0 }, four: { type: "diag", cy: 0.66, xr: 0.6 } }],
+  PHI: ["SLAB", { corner: "round", ro: 0.07, rc: 0.04 }],
+  WAS: ["NARROW", { w: 0.48, stem: 0.16, ro: 0.012, rc: 0.004 }],
+  CHI: ["OVAL", { w: 0.42, stem: 0.115, bar: 0.097, one: { flag: 0, fb: 0, fj: 0 }, two: { neck: "diag", stub: 0.04, dy: 0.46 }, six: { stub: 0.04 }, cut: 0 }],
   DET: ["ROUNDED", { w: 0.51, ro: [0.1, 0.13], rc: [0.07, 0.09] }],
-  GB: ["SOFT", { w: 0.62, stem: 0.19 }],
-  MIN: ["NOTCHED", { w: 0.55 }],
+  GB: ["SOFT", { w: 0.58, stem: 0.19, ro: 0.04, rc: 0.02, dig: { "8": { ro: 0.13, rc: 0.06 } } }],
+  // Heavy wide block with pointed stubs (the spur) and a long square flag on the 1.
+  MIN: ["HEAVY", { w: 0.6, stem: 0.2, bar: 0.18, ro: 0.03, rc: 0.006, spur: 0.05, one: { flag: 0.16, ft: 0, fb: 0.14, fj: 0.14 }, two: { neck: "square", stub: 0.1 }, three: { stub: 0.1, arm: 0.3 }, five: { stub: 0.1 }, six: { stub: 0.1 } }],
   ATL: ["NARROW", { w: 0.52, stem: 0.165, bar: 0.15 }],
   CAR: ["CHAMFER", { w: 0.54, stem: 0.17, ro: 0.035, rc: 0.02, cut: 0, two: { neck: "square", stub: 0.08 }, three: { stub: 0.08, arm: 0.3 }, six: { stub: 0.08 } }],
-  NO: ["HEAVY", { w: 0.58, stem: 0.2, four: { type: "closed", cy: 0.68, xr: 0.52 } }],
+  NO: ["HEAVY", { w: 0.56, stem: 0.185, bar: 0.165, two: { neck: "bevel", stub: 0.08, bevel: 0.08 }, six: { stub: 0.05 }, four: { type: "closed", cy: 0.68, xr: 0.52 } }],
   TB: ["OCTAGON", { stem: 0.17, bar: 0.155, mid: 0.46 }],
   ARI: ["BLOCK", { w: 0.54, rc: 0.04, ro: 0.018 }],
-  LAR: ["CURVY", { w: 0.5, stem: 0.18, bar: 0.15, one: { flag: 0.13, fb: 0.12, fj: 0.22, foot: 0.08 } }],
+  // Round bowls, a curved 2 neck, a 9 whose tail rolls round, a long sloped flag on the 1, no foot.
+  LAR: ["CURVY", { w: 0.52, stem: 0.17, bar: 0.15, ro: [0.2, 0.24], rc: [0.08, 0.14], one: { flag: 0.13, ft: 0, fb: 0.12, fj: 0.24 }, two: { neck: "curve", stub: 0.06, dy: 0.46, curve: 0.5 }, six: { stub: 0.06, curl: 0.3 } }],
   SF: ["HEAVY", { w: 0.58, stem: 0.2 }],
-  SEA: ["CHAMFER", { w: 0.5, stem: 0.16 }],
+  SEA: ["CHAMFER", { w: 0.5, stem: 0.16, one: { flag: 0.15, ft: 0.04, fb: 0.15, fj: 0.25 } }],
 };
 
 const resolved = new Map<string, NumeralSet>();

@@ -262,7 +262,7 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
     return { chest: at(CHEST, 300), left: at(SHOULDER, 112), right: at(SHOULDER, 488) };
   }, [setId, set, n, two]);
 
-  const num = (props: { d: string; x: number; y: number; strokeW: number; rotate?: number }) => {
+  const num = (props: { d: string; x: number; y: number; strokeW: number; rotate?: number; key: string }) => {
     if (!props.d) return null;
     const transforms = [props.rotate ? `rotate(${props.rotate} ${props.x} ${props.y})` : "", ns.slant ? `translate(${props.x} ${props.y}) skewX(${-ns.slant}) translate(${-props.x} ${-props.y})` : ""].filter(Boolean);
     const layer = (fill: string, w: number, dx = 0, dy = 0) => (
@@ -270,12 +270,27 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
     );
     const k = props.strokeW / stroke;
     const w2 = props.strokeW + 12 * k;
+    // Inline: a thin line of a lighter tone set just inside the number's edge, drawn as two strokes
+    // clipped to the number (the line, then the fill color over its outer part).
+    const clip = `${id}-ni${props.key}`;
+    const inl = ns.inline && (
+      <>
+        <clipPath id={clip}>
+          <path d={props.d} />
+        </clipPath>
+        <g clipPath={`url(#${clip})`} fill="none" strokeLinejoin="round">
+          <path d={props.d} stroke={ns.inline} strokeWidth={13 * k} />
+          <path d={props.d} stroke={c.number} strokeWidth={8 * k} />
+        </g>
+      </>
+    );
     return (
       <g transform={transforms.length ? transforms.join(" ") : undefined} aria-hidden="true">
         {ns.shadow && layer(ns.shadow, ns.outline2 ? w2 : props.strokeW, 9 * k, 9 * k)}
         {ns.outline2 && layer(ns.outline2, w2)}
         {!ns.plain && layer(outline, props.strokeW)}
         <path d={props.d} fill={c.number} />
+        {inl}
       </g>
     );
   };
@@ -421,8 +436,8 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
           </g>
         ))}
         {/* Shoulder-top numbers, cut by the shoulder line as they wrap over the top */}
-        {!ns.noShoulder && num({ d: paths.left, x: 112, y: SHOULDER.y, strokeW: 7, rotate: -5 })}
-        {!ns.noShoulder && num({ d: paths.right, x: 488, y: SHOULDER.y, strokeW: 7, rotate: 5 })}
+        {!ns.noShoulder && num({ d: paths.left, x: 112, y: SHOULDER.y, strokeW: 7, rotate: -5, key: "l" })}
+        {!ns.noShoulder && num({ d: paths.right, x: 488, y: SHOULDER.y, strokeW: 7, rotate: 5, key: "r" })}
         <g fill="none" strokeWidth="2.2" strokeLinecap="round">
           <path d={RAGLAN_L} stroke={seam} />
           <path d={mirror(RAGLAN_L)} stroke={seam} />
@@ -468,7 +483,7 @@ export function Jersey({ team, number = "", size = 120, away = false, light = 13
       <path d={cg.band} fill="none" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" />
 
       {/* Chest number */}
-      {num({ d: paths.chest, x: 300, y: CHEST.y, strokeW: stroke })}
+      {num({ d: paths.chest, x: 300, y: CHEST.y, strokeW: stroke, key: "c" })}
 
       {/* Shading over everything on the body, number and trim included, so they sit in the cloth */}
       <g clipPath={u("b")} style={{ pointerEvents: "none" }}>

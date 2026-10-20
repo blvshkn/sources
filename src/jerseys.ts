@@ -101,8 +101,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   BUF: { name: "Buffalo Bills", conf: "AFC", div: "East", body: "#00338D", number: W, outline: "#C60C30", collar: striped(W, [["", 9], ["#C60C30", 7], ["#0C2340", 6]], { w: 22 }), cuff: "#00338D", panel: "#00338D",
     away: { number: "#00338D", outline: "#C60C30", collar: striped("#00338D", [["", 9], ["#C60C30", 7], ["#0C2340", 6]], { w: 22 }), cuff: W } },
   // Plain aqua V and plain sleeves; white numbers trimmed orange.
-  MIA: { name: "Miami Dolphins", conf: "AFC", div: "East", body: "#008E97", number: W, outline: "#FC4C02", collar: plain(), cuff: "#008E97", panel: "#008E97",
-    away: { number: "#008E97", outline: "#FC4C02", collar: plain(), cuff: W } },
+  MIA: { name: "Miami Dolphins", conf: "AFC", div: "East", body: "#0095A2", number: W, outline: "#FC4C02", collar: plain(), cuff: "#0095A2", panel: "#0095A2",
+    away: { number: "#0095A2", outline: "#FC4C02", collar: plain(), cuff: W } },
   // Plain V, red and white stripes over the shoulders, white numbers trimmed red.
   NE: { name: "New England Patriots", conf: "AFC", div: "East", body: "#002244", number: W, outline: "#C60C30", collar: plain(), cuff: "#002244", panel: "#002244",
     away: { number: "#002244", outline: "#C60C30", collar: plain(), cuff: W } },
@@ -112,8 +112,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   // AFC North
   // 2026: midnight purple, black cuffs, white numbers with a thin black line. The feather collar is
   // logo-derived, so it reads as a plain black V here.
-  BAL: { name: "Baltimore Ravens", conf: "AFC", div: "North", body: "#1F1460", number: W, outline: "#000000", collar: solid("#000000", { w: 24 }), cuff: "#000000", panel: "#1F1460",
-    away: { number: "#1F1460", outline: "#000000", collar: solid("#1F1460", { w: 24 }), cuff: "#1F1460" } },
+  BAL: { name: "Baltimore Ravens", conf: "AFC", div: "North", body: "#2A1D78", number: W, outline: "#000000", collar: solid("#000000", { w: 24 }), cuff: "#000000", panel: "#2A1D78",
+    away: { number: "#2A1D78", outline: "#000000", collar: solid("#2A1D78", { w: 24 }), cuff: "#2A1D78" } },
   // Plain V, tiger stripes on the shoulders, white numbers trimmed orange.
   CIN: { name: "Cincinnati Bengals", conf: "AFC", div: "North", body: "#000000", number: W, outline: "#FB4F14", collar: plain(), cuff: "#000000", panel: "#000000",
     away: { number: "#000000", outline: "#FB4F14", collar: plain(), cuff: W } },
@@ -130,8 +130,8 @@ export const JERSEYS: Record<string, TeamJersey> = {
   // Plain V, two stripes over each shoulder, flat numbers.
   IND: { name: "Indianapolis Colts", conf: "AFC", div: "South", body: "#002C5F", number: W, outline: W, collar: plain(), cuff: "#002C5F", panel: "#002C5F",
     away: { number: "#002C5F", outline: "#002C5F", collar: plain(), cuff: W } },
-  // 2026: black V and wide black sleeve ends on both, flat numbers.
-  JAX: { name: "Jacksonville Jaguars", conf: "AFC", div: "South", body: "#006778", number: W, outline: W, collar: solid("#101820", { w: 24 }), cuff: "#101820", panel: "#006778",
+  // 2026: black V, a pale gold stripe over a black sleeve end; white numbers lined pale gold, then black.
+  JAX: { name: "Jacksonville Jaguars", conf: "AFC", div: "South", body: "#006778", number: W, outline: "#C9B074", collar: solid("#101820", { w: 24 }), cuff: "#101820", panel: "#006778",
     away: { number: "#101820", outline: "#101820", collar: solid("#101820", { w: 24 }), cuff: "#101820" } },
   // 2026: Titans blue, plain V, white numbers trimmed red. The collar monogram is a logo.
   TEN: { name: "Tennessee Titans", conf: "AFC", div: "South", body: "#4B92DB", number: W, outline: "#C8102E", collar: plain(), cuff: "#4B92DB", panel: "#4B92DB",
@@ -146,9 +146,11 @@ export const JERSEYS: Record<string, TeamJersey> = {
   // Plain black, flat silver numbers; black numbers with a thin silver line on the road.
   LV: { name: "Las Vegas Raiders", conf: "AFC", div: "West", body: "#000000", number: "#A5ACAF", outline: "#A5ACAF", collar: plain(), cuff: "#000000", panel: "#000000",
     away: { number: "#000000", outline: "#A5ACAF", collar: plain(), cuff: W } },
-  // Powder blue, plain V, white numbers trimmed gold. The shoulder bolt is a logo, so the sleeves are plain.
-  LAC: { name: "Los Angeles Chargers", conf: "AFC", div: "West", body: "#0080C6", number: W, outline: "#FFC20E", collar: plain(), cuff: "#0080C6", panel: "#0080C6",
-    away: { number: "#0080C6", outline: "#FFC20E", collar: plain(), cuff: W } },
+  // Powder blue (NFL Shop photos read a shade lighter than the published hex), a plain powder V, plain
+  // powder sleeves and cuffs, white numbers with a thin gold line, leaning right. The gold bolt over each
+  // shoulder is the logo, so that area stays body color. Road: white, powder numbers lined gold.
+  LAC: { name: "Los Angeles Chargers", conf: "AFC", div: "West", body: "#0B86CF", number: W, outline: "#FFC20E", collar: plain({ w: 28 }), cuff: "#0B86CF", panel: "#0B86CF",
+    away: { number: "#0B86CF", outline: "#FFC20E", collar: plain({ w: 28 }), cuff: W } },
   // NFC East
   // White at home: plain V, royal numbers with a thin navy line, two navy-edged royal sleeve stripes.
   // The navy jersey has a white, gray, white collar and sleeve stripe, and white numbers lined navy and white.
@@ -190,12 +192,15 @@ export const JERSEYS: Record<string, TeamJersey> = {
   TB: { name: "Tampa Bay Buccaneers", conf: "NFC", div: "South", body: "#D50A0A", number: W, outline: "#FF7900", collar: striped("#D50A0A", [["#0A0A08", 9]], { w: 22 }), cuff: "#34302B", panel: "#D50A0A",
     away: { number: "#D50A0A", outline: "#FF7900", collar: striped(W, [["#0A0A08", 9]], { w: 22 }), cuff: "#34302B" } },
   // NFC West
-  // Plain V, flat white numbers at home; red numbers outlined black and a sleeve band on the road.
-  ARI: { name: "Arizona Cardinals", conf: "NFC", div: "West", body: "#97233F", number: W, outline: W, collar: plain(), cuff: "#97233F", panel: "#97233F",
+  // Plain V, white numbers with a thin silver line at home; red numbers outlined black and a sleeve band on the road.
+  ARI: { name: "Arizona Cardinals", conf: "NFC", div: "West", body: "#97233F", number: W, outline: "#A5ACAF", collar: plain(), cuff: "#97233F", panel: "#97233F",
     away: { number: "#97233F", outline: "#000000", collar: plain(), cuff: W } },
-  // 2026: flat sol numbers, plain V. The shoulder horn is the Rams logo, so the sleeves are plain.
-  LAR: { name: "Los Angeles Rams", conf: "NFC", div: "West", body: "#003594", number: "#FFD100", outline: "#FFD100", collar: plain(), cuff: "#003594", panel: "#003594",
-    away: { number: "#003594", outline: "#003594", collar: plain(), cuff: W } },
+  // 2026 (NFL Shop photos): royal with a plain royal V and plain royal sleeves and cuffs; sol numbers with
+  // no outline and a pale sol inline. White road jersey: plain white V, sol sleeves and cuffs, royal
+  // numbers with a lighter royal inline. The horn over each shoulder is the Rams logo, so it is not
+  // drawn: the home shoulder stays royal and the road sleeve is sol right up to the seam.
+  LAR: { name: "Los Angeles Rams", conf: "NFC", div: "West", body: "#0A3BA6", number: "#FFD100", outline: "#FFD100", collar: plain({ w: 28 }), cuff: "#0A3BA6", panel: "#0A3BA6",
+    away: { number: "#0A3BA6", outline: "#0A3BA6", collar: plain({ w: 28 }), cuff: "#FFD100" } },
   // A solid scarlet V (a shade deeper, as the ribbed collar reads in photos), three equal sleeve stripes, flat numbers.
   SF: { name: "San Francisco 49ers", conf: "NFC", div: "West", body: "#AA0000", number: W, outline: W, collar: solid("#960000", { w: 24 }), cuff: "#AA0000", panel: "#AA0000",
     away: { number: "#AA0000", outline: "#AA0000", collar: solid(W, { w: 24 }), cuff: W } },
@@ -232,7 +237,7 @@ export const TRIMS: Record<string, TeamTrim> = {
   NYJ: { home: { sleeve: [st(6, [W, 11], ["", 8], [W, 11])] }, away: { sleeve: [st(6, ["#125740", 11], ["", 8], ["#125740", 11])] } },
   // AFC North
   // Black sleeve ends at home, purple on the road.
-  BAL: { home: { sleeve: [st(0, ["#000000", 14])] }, away: { sleeve: [st(0, ["#1F1460", 14])] } },
+  BAL: { home: { sleeve: [st(0, ["#000000", 14])] }, away: { sleeve: [st(0, ["#2A1D78", 14])] } },
   CIN: { home: { pattern: { id: "tiger", c: "#FB4F14" } }, away: { pattern: { id: "tiger", c: "#000000" } } },
   // Five equal stripes just above the cuff: white, orange, white, orange, white on brown; brown and orange on white.
   CLE: {
@@ -253,7 +258,7 @@ export const TRIMS: Record<string, TeamTrim> = {
     away: { bars: [{ a: [128, -14], b: [100, 82], s: [["#002C5F", 13], ["", 10], ["#002C5F", 13]] }] },
   },
   // Wide black sleeve ends on both.
-  JAX: { home: { sleeve: [st(0, ["#101820", 18])] }, away: { sleeve: [st(0, ["#101820", 18])] } },
+  JAX: { home: { sleeve: [st(0, ["#101820", 16], ["#C9B074", 7])] }, away: { sleeve: [st(0, ["#101820", 18])] } },
   // Six thin navy "strings" edged in white and red: on the Titans blue body at home, in a blue band on the road.
   TEN: {
     home: { sleeve: [st(10, ["#C8102E", 3], [W, 3], ["", 3], ...strings("#0C2340", ""), [W, 3], ["#C8102E", 3])] },
@@ -291,6 +296,8 @@ export const TRIMS: Record<string, TeamTrim> = {
   // NFC West
   // Road band: cardinal edged black, with a white gap where the wordmark sits on the real one.
   ARI: { away: { sleeve: [st(8, ["#000000", 2], ["#97233F", 5], ["", 12], ["#97233F", 5], ["#000000", 2])] } },
+  // Road: the sleeve is sol from the cuff to the seam (the royal horn on top of it is the logo).
+  LAR: { away: { sleeve: [st(0, ["#FFD100", 260])] } },
   // Three equal stripes: white on scarlet, scarlet on white.
   SF: { home: { sleeve: [st(6, [W, 12], ["", 9], [W, 12], ["", 9], [W, 12])] }, away: { sleeve: [st(6, ["#AA0000", 12], ["", 9], ["#AA0000", 12], ["", 9], ["#AA0000", 12])] } },
   // A band from the collar across the shoulder to the sleeve: wolf gray tipped action green; navy on the road.
@@ -323,6 +330,8 @@ export interface NumberTrim {
   plain?: boolean;
   /** No numbers on top of the shoulders (the real jersey has a logo or a pattern there). */
   noShoulder?: boolean;
+  /** A thin line of this color just inside the number's edge (a lighter tone of the fill). */
+  inline?: string;
 }
 
 export type NumberStyle = NumberTrim;
@@ -342,12 +351,12 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   PIT: { home: FLAT, away: FLAT },
   HOU: {},
   IND: { home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
-  JAX: { home: FLAT, away: FLAT },
+  JAX: { home: { outline2: "#101820" }, away: FLAT },
   TEN: {},
   DEN: { home: OFF, away: OFF },
   KC: {},
   LV: { home: FLAT },
-  LAC: { home: { slant: 6, noShoulder: true }, away: { slant: 6, noShoulder: true } },
+  LAC: { home: { slant: 5, noShoulder: true }, away: { slant: 5, noShoulder: true } },
   DAL: { away: { outline2: W } },
   NYG: { home: FLAT, away: FLAT },
   PHI: { home: { shadow: "#000000" }, away: { shadow: "#000000" } },
@@ -360,8 +369,8 @@ export const NUMBERS: Record<string, { home?: NumberTrim; away?: NumberTrim }> =
   CAR: {},
   NO: {},
   TB: { home: { outline2: "#34302B" }, away: { outline2: "#34302B" } },
-  ARI: { home: FLAT, away: OFF },
-  LAR: { home: { plain: true, noShoulder: true }, away: { plain: true, noShoulder: true } },
+  ARI: { away: OFF },
+  LAR: { home: { plain: true, noShoulder: true, inline: "#FFEB80" }, away: { plain: true, noShoulder: true, inline: "#5A82E0" } },
   SF: { home: FLAT, away: FLAT },
   SEA: {},
 };
