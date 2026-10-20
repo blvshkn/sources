@@ -7,7 +7,8 @@ import { AiDots } from "./AiDots";
 export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
-  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark";
+  | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
+  | "download" | "image" | "mail";
 
 const ICONS: Record<IconName, string> = {
   wire: "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3.5\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
@@ -42,6 +43,9 @@ const ICONS: Record<IconName, string> = {
   activity: "<path d=\"M3 12h4l2.5-6 5 12 2.5-6h4\"/>",
   copy: "<rect x=\"8.5\" y=\"8.5\" width=\"12\" height=\"12\" rx=\"3\"/><path d=\"M15.5 5.5A2.5 2.5 0 0 0 13 3.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 5.5 15.5\"/>",
   share: "<path d=\"M12 3.5v11M8 7.5l4-4 4 4\"/><path d=\"M5 12v5.5A3 3 0 0 0 8 20.5h8a3 3 0 0 0 3-3V12\"/>",
+  download: "<path d=\"M12 3.5v11M8 10.5l4 4 4-4\"/><path d=\"M5 15v2.5A3 3 0 0 0 8 20.5h8a3 3 0 0 0 3-3V15\"/>",
+  image: "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"3.5\"/><path d=\"M3.5 16l5-5 4.5 4.5 2.5-2.5 5 5\"/><circle cx=\"15.5\" cy=\"9\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>",
+  mail: "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"3.5\"/><path d=\"M3.5 7.5l8.5 6 8.5-6\"/>",
   trash: "<path d=\"M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 10.5v6M14 10.5v6\"/>",
   pen: "<path class=\"m1\" d=\"M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5z\"/><path class=\"m2\" pathLength=\"1\" d=\"M13 20.5h7\"/>",
   plug: "<path d=\"M9 3v4.5M15 3v4.5M6.5 7.5h11v4a5.5 5.5 0 0 1-11 0zM12 17v4\"/>",

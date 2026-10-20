@@ -1,0 +1,58 @@
+/* Share image, our own share view (ShareCard.tsx) for browsers that can't hand a file to the native share sheet.
+   Built on the shared detail surface (detail-sheet.css): a bottom sheet on phones, a centered modal from 768px.
+   Phones: the card on top, the actions in one list under it. 768px up: the card on the left, the actions on the right.
+   Hover, leave and press share one curve: 160ms cubic-bezier(0.23, 1, 0.32, 1), press scale 0.97.
+   Loads just before frame.css; every rule is scoped to .shr-sheet or a .shr-* class. */
+
+html:root:not(#_):not(#_) .shr-sheet .shr-body { display: grid; gap: 16px; }
+
+/* ---------- The card preview ---------- */
+html:root:not(#_):not(#_) .shr-sheet .shr-preview { margin: 0; display: grid; place-items: center; }
+html:root:not(#_):not(#_) .shr-sheet .shr-preview img {
+  display: block; width: auto; max-width: min(100%, 300px); max-height: 38vh; max-height: 38dvh; height: auto;
+  object-fit: contain; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
+}
+
+/* ---------- Actions: full width rows, the save first and filled ---------- */
+html:root:not(#_):not(#_) .shr-sheet .shr-acts { display: grid; gap: 8px; align-content: start; }
+html:root:not(#_):not(#_) .shr-sheet .shr-act {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 14px; margin: 0;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink);
+  font: 500 0.9375rem/1.2 "Geist", sans-serif; text-align: left; text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .shr-sheet .shr-act:hover,
+html:root:not(#_):not(#_) .shr-sheet .shr-act:focus,
+html:root:not(#_):not(#_) .shr-sheet .shr-act:active { text-decoration: none; }
+html:root:not(#_):not(#_) .shr-sheet .shr-act svg { flex: none; color: var(--muted); transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .shr-sheet .shr-act:hover { background: var(--surface-2); }
+  html:root:not(#_):not(#_) .shr-sheet .shr-act.shr-primary:hover { background: var(--action); opacity: 0.92; }
+}
+html:root:not(#_):not(#_) .shr-sheet .shr-act:active { transform: scale(0.97); }
+html:root:not(#_):not(#_) .shr-sheet .shr-act:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_) .shr-sheet .shr-act.shr-primary { background: var(--action); border-color: var(--action); color: var(--action-ink); font-weight: 600; }
+html:root:not(#_):not(#_) .shr-sheet .shr-act.shr-primary svg { color: inherit; }
+/* Done: a green check and a past tense label for a moment */
+html:root:not(#_):not(#_) .shr-sheet .shr-act.is-done svg { color: var(--good); }
+html:root:not(#_):not(#_) .shr-sheet .shr-act.shr-primary.is-done svg { color: inherit; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .shr-sheet .shr-act:active { transform: none; }
+}
+
+html:root:not(#_):not(#_) .shr-sheet .shr-note { margin: 0; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+
+/* ---------- 768px up: card left, actions right ---------- */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ps.ps-detail.shr-sheet { max-width: 640px; }
+  html:root:not(#_):not(#_) .shr-sheet .shr-body {
+    grid-template-columns: minmax(0, 240px) minmax(0, 1fr); grid-template-areas: "card acts" "card note";
+    grid-template-rows: auto 1fr; column-gap: 24px; row-gap: 12px; align-items: start;
+  }
+  html:root:not(#_):not(#_) .shr-sheet .shr-preview { grid-area: card; }
+  html:root:not(#_):not(#_) .shr-sheet .shr-preview img { max-width: 100%; max-height: 420px; }
+  html:root:not(#_):not(#_) .shr-sheet .shr-acts { grid-area: acts; }
+  html:root:not(#_):not(#_) .shr-sheet .shr-note { grid-area: note; }
+}

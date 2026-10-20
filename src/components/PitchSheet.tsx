@@ -9,6 +9,10 @@ import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../dat
 import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
+import { ShareCard, canShareFile } from "./ShareCard";
+
+/** Short tap on Android when the share goes through. iOS Safari ignores it. */
+const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
 
 // Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
 const project = (v: number, d = 0.998) => ((v / 1000) * d) / (1 - d);
@@ -196,19 +200,27 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const them = teamById(trade.partnerId);
   const [tone, setTone] = useState<Tone>("friendly");
   const [method, setMethod] = useState<Method>("text");
-  const [cardUrl, setCardUrl] = useState<string | null>(null);
+  // The card is drawn once when the sheet opens and kept as a Blob, so Share image can hand it to the share sheet
+  // inside the tap (iOS drops the share if anything async runs first)
+  const [card, setCard] = useState<{ blob: Blob; url: string; file: File } | null>(null);
+  const cardRef = useRef(card);
+  cardRef.current = card;
+  const fileName = `sources-trade-${them.manager.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
   useEffect(() => {
     let url: string | null = null, alive = true;
-    drawCard(trade).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    drawCard(trade).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCard({ blob: b, url, file: new File([b], fileName, { type: "image/png" }) }); } });
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
-  }, [trade]);
+  }, [trade]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cardUrl = card?.url ?? null;
+  const [shareOpen, setShareOpen] = useState(false);
   const [app, setApp] = useState<LeagueApp>("Sleeper");
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
   const [edited, setEdited] = useState(false);
   const drag = useRef<{ start: number; hist: { y: number; t: number }[] } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
-  useFocusTrap(sheet);
+  // Our own share view traps focus while it's up, so this sheet lets go
+  useFocusTrap(sheet, !shareOpen);
   const scrim = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   // Presentation state lives in refs so every frame writes straight to the DOM.
@@ -306,32 +318,34 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
   const copy = async (): Promise<boolean> => {
     try { await navigator.clipboard.writeText(text); return true; } catch { textRef.current?.select(); return false; }
   };
-  const share = async () => {
-    try {
-      const blob = await drawCard(trade);
-      const file = blob ? new File([blob], "sources-trade.png", { type: "image/png" }) : null;
-      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-      if (file && nav.canShare?.({ files: [file] })) await navigator.share({ text, files: [file] });
-      else if ("share" in navigator) await navigator.share({ text });
-      else { await copy(); onSent("Sharing isn't available here, so the pitch is copied. Paste it into WhatsApp, Discord or Slack.", "share sheet"); return; }
-      onSent("Shared. Sources will ask tomorrow if they replied.", "share sheet");
-    } catch { /* user cancelled */ }
-  };
-  const saveCard = async () => {
-    const blob = await drawCard(trade);
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `sources-trade-${them.manager.toLowerCase()}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  /**
+   * Share image. Where the browser can share a file (iOS, Android, Safari and Edge on some desktops) it opens the native
+   * share sheet with the card, the message and a title. The message is copied first, in the same tap, because most
+   * messaging apps keep only the image: whichever one he picks, the text is ready to paste. Everywhere else it opens
+   * our own share view (ShareCard). Nothing here awaits before share() is called, so the tap still counts as the gesture.
+   */
+  const shareImage = () => {
+    const c = cardRef.current;
+    if (!c) { onSent("The card is still drawing. Try again in a second."); return; }
+    if (!canShareFile(c.file)) { setShareOpen(true); return; }
+    let copied: Promise<boolean>;
+    try { copied = navigator.clipboard.writeText(text).then(() => true, () => false); } catch { copied = Promise.resolve(false); }
+    let shared: Promise<void>;
+    try { shared = navigator.share({ files: [c.file], text, title: `Trade offer for ${them.manager}` }); } catch (e) { shared = Promise.reject(e); }
+    copied.then((ok) => { if (ok) onSent("Message copied"); });
+    shared.then(
+      async () => { haptic(); onSent((await copied) ? "Shared. The message is copied too." : "Shared.", "share sheet"); },
+      (e: unknown) => {
+        if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet: nothing to say
+        setShareOpen(true); // the share sheet refused the file: fall back to ours
+      });
   };
 
   const primary = async () => {
     if (method === "text") { onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
     if (method === "group") { const ok = await copy(); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
     if (method === "app") { const ok = await copy(); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
-    if (method === "share") await share();
+    if (method === "share") shareImage();
   };
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share" }[method];
 
@@ -394,12 +408,16 @@ export function PitchSheet({ trade, onClose, onSent }: { trade: Trade; onClose: 
         <div className="sa2">
           <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>
           <div className="sa2-row">
-            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied." : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy text</button>
-            <button className="btn sa2-sub" onClick={saveCard}><Icon name="share" size={16} />Save card</button>
+            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); onSent(ok ? "Message copied" : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
+            <button className="btn sa2-sub" onClick={shareImage}><Icon name="share" size={16} />Share image</button>
           </div>
         </div>
         <p className="tiny muted">Nothing sends until you hit send in your messaging app.</p>
       </div>
+      {shareOpen && card && (
+        <ShareCard url={card.url} blob={card.blob} fileName={fileName} text={text} subject={`Trade offer for ${them.manager}`}
+          alt={`Trade offer card for ${them.manager}`} onToast={(m) => onSent(m)} onClose={() => setShareOpen(false)} />
+      )}
     </div>
   );
 }
