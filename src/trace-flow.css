@@ -1,0 +1,23 @@
+/* Every thinking trace (Lineup's Set optimal lineup, Trade, the pitch, Ask) lays a step out as plain text with its
+   dot hung in a 16px gutter, the same fix Ask got in 75a169e. A step used to be a grid row holding a wrapping flex
+   line; iOS Safari sized those rows from their narrowest, one-word-per-line layout and kept that height, so on
+   iPhone a lone dot sat on its own row with the label far below it and big gaps between steps.
+   The loading screen keeps its own grid (its rail joins the dots), restored at the bottom. Loads before frame.css. */
+
+html:root:not(#_):not(#_):not(#_) .thk-steps { gap: 4px; padding: 4px 0 6px; }
+html:root:not(#_):not(#_):not(#_) .thk-step { display: block; position: relative; padding: 0 0 0 22px; }
+html:root:not(#_):not(#_):not(#_) .thk-step > .thk-mark { position: absolute; left: 0; top: 0; }
+html:root:not(#_):not(#_):not(#_) .thk-line { display: block; min-height: 22px; line-height: 22px; text-wrap: pretty; }
+html:root:not(#_):not(#_):not(#_) .thk-chips { display: inline; }
+html:root:not(#_):not(#_):not(#_) .thk-chip { display: inline-flex; vertical-align: top; margin: 1px 0 1px 4px; }
+html:root:not(#_):not(#_):not(#_) .thk-chips > .thk-chip:first-child { margin-left: 8px; }
+html:root:not(#_):not(#_):not(#_) .thk-plan { margin: 0 0 2px; line-height: 18px; text-wrap: pretty; }
+html:root:not(#_):not(#_):not(#_) .thk-think { text-wrap: pretty; }
+
+/* Loading screen: back to its own grid and rail */
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-steps { gap: 10px; padding: 12px 0 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step { display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 8px; padding: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step > .thk-mark { position: static; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-height: 18px; line-height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chips { display: contents; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chip { margin: 0; }
