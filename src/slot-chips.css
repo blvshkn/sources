@@ -1,0 +1,32 @@
+/* Zach's Figma pass on the Lineup slot chips, initials avatars and the what-if note (file BdSnZFKoxtKwrP4Az0I6Kt,
+   page "Slot chips"). Mobile first: every rule here holds at every width unless a media query says otherwise.
+   Earlier chip rules in styles.css use !important, so the overrides that have to win carry it too. */
+
+/* Slot chip: a 44 x 20 pill, Geist Mono Medium 11 at 0.06em, no ring on any chip. */
+html:root:not(#_):not(#_) .lu-slot {
+  width: 44px; height: 20px !important; justify-self: start; align-self: center;
+  font-family: var(--font-mono); font-size: 11px !important; font-weight: 500 !important; line-height: 1; letter-spacing: 0.06em;
+  box-shadow: none !important;
+}
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt { letter-spacing: 0.18em; }
+html:root:not(#_):not(#_) .lu-slot.s-BN, html:root:not(#_):not(#_) .lu-slot.s-TX { background: transparent !important; }
+
+/* The chip column follows the chip. Phones under 360 keep their tighter gap. */
+html:root:not(#_):not(#_) .lu-row { grid-template-columns: 44px 44px minmax(0, 1fr) auto; }
+
+/* Points in Lineup rows: Geist Mono 16 at -0.05em. A bye reads at 17, -0.01em. */
+html:root:not(#_):not(#_) .lu-row > .lu-pts { font-size: 16px; letter-spacing: -0.05em; }
+html:root:not(#_):not(#_) .lu-row > .lu-pts.bye { font-size: 17px; line-height: 1; letter-spacing: -0.01em; }
+
+/* Initials avatar: Geist ExtraBold, no tracking, set solid so the initials sit dead center. */
+html:root:not(#_):not(#_) .av-initials { font-weight: 800; letter-spacing: 0; line-height: 1; }
+
+/* What-if note. Idle: Open Sleeper spans the note. Changed: Reset and Open Sleeper split the row.
+   Locked: the line and the button share the row, 16 apart. Buttons cap at 400 and center their label. */
+html:root:not(#_):not(#_) .lu-list .lu-wi-btns { justify-content: flex-end; flex-wrap: nowrap; }
+html:root:not(#_):not(#_) .lu-list .lu-wi-btns > .btn { flex: 1 1 0; min-width: 0; max-width: 400px; justify-content: center; }
+html:root:not(#_):not(#_) .lu-list .lu-wi:not(.is-locked) .lu-wi-btns:has(> .btn:only-child) { justify-content: flex-start; }
+/* Locked follows Figma's fill: each side keeps its own width (the line's is 110) and they split what's left. */
+html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked { display: flex; align-items: center; gap: 16px; }
+html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked > .lu-wi-txt { flex: 1 1 110px; min-width: 0; }
+html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked > .lu-wi-btns { flex: 1 1 auto; min-width: 0; }

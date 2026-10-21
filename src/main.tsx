@@ -108,6 +108,7 @@ import "./ask-skeleton.css";
 import "./miss-why.css";
 import "./player-hero.css";
 import "./meta-line.css";
+import "./slot-chips.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
