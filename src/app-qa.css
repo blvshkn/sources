@@ -1,14 +1,28 @@
 /* App field and app QA fixes. Owned by the app QA pass; loaded last. No CSS image functions in this file: it makes Vite run PostCSS. */
 
-/* The landing field, laid along the bottom of the app behind everything.
-   A real element inside .shell: body paints an opaque !important gradient, which hid
-   anything at z-index -1 on the root (the old body::before attempt, and the ambient glow). */
+/* The app background, from Zach's "Background" Figma frames (Phone 390, Desktop 1440).
+   One fixed layer inside .shell, over body's night gradient. A real element because body paints an
+   opaque !important gradient that hides anything on the root at z-index -1 (the old body::after glows).
+   Phone order, back to front: field, logo pattern, glow. Desktop: glow, field, logo pattern. */
 html:root:not(#_):not(#_) .shell { isolation: isolate; }
+html:root:not(#_):not(#_) body::after { content: none; }
+html:root:not(#_):not(#_) .app-bg {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; contain: strict; transform: translateZ(0);
+}
+
+/* Bottom glow, lime 6% to clear at 70%. Phone: centered on the bottom edge, ellipse 291 x 361px at 390 x 844, tipped 15.8deg */
+html:root:not(#_):not(#_) .app-glow {
+  position: absolute; z-index: 1; left: 50%; top: 100%; width: 149.5%; height: 85.44%;
+  transform: translate(-50%, -50%) rotate(15.83deg);
+  background: radial-gradient(closest-side, rgba(var(--lime-rgb), 0.06), rgba(var(--lime-rgb), 0) 70%);
+}
+
+/* The field: yard lines in perspective, faded by an ellipse that reaches 463px up from the bottom */
 html:root:not(#_):not(#_) .app-field {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; height: min(44vh, 440px); overflow: hidden; pointer-events: none;
+  position: absolute; left: 0; right: 0; bottom: 0; height: min(44vh, 440px); overflow: hidden;
   perspective: 900px; perspective-origin: 50% 0%;
-  mask-image: radial-gradient(ellipse 70% 100% at 50% 100%, #000 22%, transparent 74%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 100% at 50% 100%, #000 22%, transparent 74%);
+  mask-image: radial-gradient(ellipse 70% 463px at 50% 100%, #000 22%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 463px at 50% 100%, #000 22%, transparent 74%);
 }
 html:root:not(#_):not(#_) .app-turf {
   /* Taller than its box: tilted toward the viewer, a 100% plane stops ~100px short of the screen edge */
@@ -18,6 +32,36 @@ html:root:not(#_):not(#_) .app-turf {
     repeating-linear-gradient(90deg, transparent 0 158px, rgba(var(--lime-rgb), 0.09) 158px 160px),
     repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--ink) 7%, transparent) 22px 23px) 0 27% / 100% 18px no-repeat,
     repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--ink) 7%, transparent) 22px 23px) 0 37% / 100% 18px no-repeat;
+}
+
+/* Logo pattern: the graphite mark tiled from the top left at 5% black, fading out by 82% of the height.
+   --mark-scale is Figma's pattern scale: 1.6 on phone, 2.8 on desktop, 2.2 between. */
+html:root:not(#_):not(#_) .app-pattern {
+  --mark-scale: 1.6;
+  position: absolute; inset: 0; overflow: hidden;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.12%, rgba(0, 0, 0, 0.5) 59.58%, transparent 82.23%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.12%, rgba(0, 0, 0, 0.5) 59.58%, transparent 82.23%);
+}
+html:root:not(#_):not(#_) .app-pattern svg {
+  display: block; width: calc(100% / var(--mark-scale)); height: calc(100% / var(--mark-scale));
+  transform: scale(var(--mark-scale)); transform-origin: 0 0;
+}
+html:root:not(#_):not(#_) .app-pattern rect { opacity: 0.05; }
+
+/* Tablet: a bigger mark */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .app-pattern { --mark-scale: 2.2; }
+}
+/* Desktop: the glow sits flat under the field, 70% x 40% centered below the bottom edge; the fade reaches 467px */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .app-glow { z-index: auto; top: 110%; width: 140%; height: 80%; transform: translate(-50%, -50%); }
+  html:root:not(#_):not(#_) .app-field {
+    mask-image: radial-gradient(ellipse 70% 467px at 50% 100%, #000 22%, transparent 74%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 467px at 50% 100%, #000 22%, transparent 74%);
+  }
+}
+@media (min-width: 1241px) {
+  html:root:not(#_):not(#_) .app-pattern { --mark-scale: 2.8; }
 }
 
 /* Undo the earlier body::before attempt (it sat under body's opaque paint, and on phones it

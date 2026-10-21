@@ -44,6 +44,7 @@ import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } fr
 import { useOfferSync } from "./offerSync";
 import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
+import { AppBackdrop } from "./components/AppBackdrop";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -612,7 +613,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   return (
     <div className={`shell${inboxOpen ? " inbox-open" : ""}${dockOpen ? "" : " dock-off"}`}>
       <a className="skip-link" href="#main">Skip to content</a>
-      <div className="app-field" aria-hidden="true"><div className="app-turf" /></div>
+      <AppBackdrop />
       <aside className="side">
         <div className="brand">
           <button type="button" className="lockup side-logo" style={{ ["--lh" as string]: "30px" }} aria-label="Sources home" onClick={goHome}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></button>
