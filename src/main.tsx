@@ -68,6 +68,7 @@ import "./row-spacing.css";
 import "./icon-buttons.css";
 import "./landing-phone.css";
 import "./watch-icon.css";
+import "./icon-air-vent.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

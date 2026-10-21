@@ -8,7 +8,7 @@ export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
-  | "download" | "image" | "mail" | "star";
+  | "download" | "image" | "mail" | "star" | "airVent";
 
 const ICONS: Record<IconName, string> = {
   wire: "<path d=\"M20 17.5C20 19.433 18.433 21 16.5 21H7.5C5.567 21 4 19.433 4 17.5V14.75M20 13.5V6.5C20 4.567 18.433 3 16.5 3H7.5C5.567 3 4 4.567 4 6.5V9.25\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
@@ -36,6 +36,10 @@ const ICONS: Record<IconName, string> = {
   // left arm's upper edge open at one break. Lifted 0.3 so its mass sits on center (a star's weight is low). Watched
   // fills it; st-gap closes the break only then, so the filled star has no notch.
   star: "<g stroke-width=\"1.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.26 8.84L9.12 8.74Q9.57 8.71 9.74 8.29L11.51 3.71Q12 2.45 12.49 3.71L14.26 8.29Q14.43 8.71 14.88 8.74L19.78 9.01Q21.13 9.08 20.08 9.94L16.27 13.04Q15.93 13.33 16.04 13.76L17.3 18.51Q17.64 19.82 16.51 19.08L12.38 16.42Q12 16.18 11.62 16.42L7.49 19.08Q6.36 19.82 6.7 18.51L7.96 13.76Q8.07 13.33 7.73 13.04L3.92 9.94Q2.87 9.08 4.22 9.01L5.3 8.95\"/><path class=\"st-gap\" stroke-opacity=\"0\" d=\"M5.3 8.95L7.26 8.84\"/></g>",
+  // Air vent (unused for now): a wall unit open at one break on its top edge, a lip inside its bottom, three airflow
+  // lines (m1 to m3, pathLength 1) that draw and flow down on hover (icon-air-vent.css). Sits 0.5 low to pull its mass
+  // toward center; a vent is top-heavy, so mass 10.9 and ink box 12.75 split the difference.
+  airVent: "<g stroke-width=\"1.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13.75 4H6A2 2 0 0 0 4 6V8.5A2 2 0 0 0 6 10.5H18A2 2 0 0 0 20 8.5V6A2 2 0 0 0 18 4H16.5M7 8H17\"/><path class=\"m1\" pathLength=\"1\" d=\"M8.6 12.75C8.6 14.63 6.85 14.63 6.85 16.5S8.6 18.38 8.6 20.25\"/><path class=\"m2\" pathLength=\"1\" d=\"M12.85 12.75C12.85 14.94 11.1 14.94 11.1 17.13S12.85 19.31 12.85 21.5\"/><path class=\"m3\" pathLength=\"1\" d=\"M17.1 12.75C17.1 14.63 15.35 14.63 15.35 16.5S17.1 18.38 17.1 20.25\"/></g>",
   plus: "<path d=\"M12 5v14M5 12h14\"/>",
   alert: "<path d=\"M10.3 4.2a2 2 0 0 1 3.4 0l7.4 12.9a2 2 0 0 1-1.7 3H4.6a2 2 0 0 1-1.7-3z\"/><path d=\"M12 9.5v4\"/><circle cx=\"12\" cy=\"16.8\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>",
   eye: "<path d=\"M2.5 12c2.2-4.3 5.5-6.5 9.5-6.5s7.3 2.2 9.5 6.5c-2.2 4.3-5.5 6.5-9.5 6.5S4.7 16.3 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
@@ -63,7 +67,7 @@ const ICONS: Record<IconName, string> = {
 // the sidebar, tab bar or top bar. "any" ones are affordances that play on hover of whatever control holds them.
 const MOTION: Partial<Record<IconName, "nav" | "any">> = {
   helmet: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", gear: "nav",
-  search: "any", pen: "any", chev: "any",
+  search: "any", pen: "any", chev: "any", airVent: "any",
 };
 
 /** One icon. The active tab thickens the line a little. The helmet keeps its original drawing and round ends. */
