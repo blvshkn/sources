@@ -66,7 +66,7 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
   }
 
   /* Inbox bell: a short ring, damped. The clapper lags behind the shell. */
-  html:root:not(#_) .ic-bell[data-play] .m1 { transform-origin: 12px 4px; animation: bell-ring 650ms cubic-bezier(0.37, 0, 0.63, 1) both; }
+  html:root:not(#_) .ic-bell[data-play] .m1 { transform-origin: 12px 2px; animation: bell-ring 650ms cubic-bezier(0.37, 0, 0.63, 1) both; }
   html:root:not(#_) .ic-bell[data-play] .m2 { animation: bell-clap 650ms cubic-bezier(0.37, 0, 0.63, 1) both; }
   @keyframes bell-ring {
     0%, 100% { transform: rotate(0); }
@@ -84,23 +84,9 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
     68% { transform: translateX(0.3px); }
   }
 
-  /* Ask: the star gathers and flares, the small one twinkles a beat later. */
-  html:root:not(#_) :is([aria-current="page"] :is(.ic-spark, .ic-ask), :is(.ic-spark, .ic-ask)[data-play]) .m1 { transform-origin: 11px 11.5px; animation: sp-star 600ms both; }
-  html:root:not(#_) :is([aria-current="page"] :is(.ic-spark, .ic-ask), :is(.ic-spark, .ic-ask)[data-play]) .m2 { transform-origin: 18.5px 4.5px; animation: sp-twinkle 600ms both; }
-  @keyframes sp-star {
-    0%   { transform: scale(1) rotate(0); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    28%  { transform: scale(0.8) rotate(-10deg); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    64%  { transform: scale(1.1) rotate(4deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100% { transform: scale(1) rotate(0); }
-  }
-  @keyframes sp-twinkle {
-    0%, 22% { transform: scale(1) rotate(0); opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    38%  { transform: scale(0) rotate(45deg); opacity: 0; animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    72%  { transform: scale(1.35) rotate(90deg); opacity: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100% { transform: scale(1) rotate(90deg); opacity: 1; }
-  }
+  /* Ask is drawn by AskIcon (messages-square); its beat lives in icon-lucide.css. */
 
-  /* Settings gear: one tooth's turn (60deg, so the end matches the start), a hair past and back. */
+  /* Settings gear (Lucide settings, six lobes): one lobe's turn (60deg, so the end matches the start), a hair past and back. */
   html:root:not(#_) :is([aria-current="page"] .ic-gear, .ic-gear[data-play]) .m1 { transform-origin: 12px 12px; animation: gear-turn 640ms both; }
   @keyframes gear-turn {
     0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
@@ -109,7 +95,7 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
   }
 
   /* Search: the lens leans in from the handle, like taking a closer look. */
-  html:root:not(#_) .ic-search[data-play] .m1 { transform-origin: 20px 20px; animation: srch-lean 560ms both; }
+  html:root:not(#_) .ic-search[data-play] .m1 { transform-origin: 21px 21px; animation: srch-lean 560ms both; }
   @keyframes srch-lean {
     0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
     34%  { transform: rotate(-16deg) scale(1.04); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }

@@ -164,10 +164,10 @@ function Intel({ text }: { text: string }) {
   );
 }
 
-// Bar chart mark for the Stats button, drawn on the icon family's grid and line
+// Bar chart mark for the Stats button: Lucide chart-no-axes-column (ISC), on the icon family's line
 const StatsIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeFor(14)} strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 20.5h16M6.5 20.5v-6M12 20.5V5.5M17.5 20.5v-10" />
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeFor(14)} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 21v-6" /><path d="M12 21V3" /><path d="M19 21V9" />
   </svg>
 );
 

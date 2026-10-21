@@ -109,9 +109,10 @@ export const heatOf = (pts: number, proj: number, pace: number | null): "fire" |
 const HEAT_TIP = { fire: "Past his projection already", heating: "On pace to beat his projection", cold: "On pace to finish 15% or more under projection" };
 export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => <Tooltip content={HEAT_TIP[heat]}>{heatSvg(heat)}</Tooltip>;
 const WAVE = (x: number) => `M${x} 20c-1.5-2 1.5-4 0-6s1.5-4 0-6`;
-const ICE = ["M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9", "M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"];
+// Cold streak: Lucide snowflake (ISC)
+const ICE = ["m10 20-1.25-2.5L6 18", "M10 4 8.75 6.5 6 6", "m14 20 1.25-2.5L18 18", "m14 4 1.25 2.5L18 6", "m17 21-3-6h-4", "m17 3-3 6 1.5 3", "M2 12h6.5L10 9", "m20 10-1.5 2 1.5 2", "M22 12h-6.5L14 15", "m4 10 1.5 2L4 14", "m7 21 3-6-1.5-3", "m7 3 3 6h4"];
 const iceSvg = (stroke: string) => (
-  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth={strokeFor(14)} strokeLinecap="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth={strokeFor(14)} strokeLinecap="round" strokeLinejoin="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
 );
 const heatSvg = (heat: "fire" | "heating" | "cold") => heat === "fire" ? <Flame /> : heat === "heating" ? (
   <span className="heatwave" aria-hidden="true">

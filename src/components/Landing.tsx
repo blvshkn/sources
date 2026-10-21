@@ -542,12 +542,12 @@ function StatusGlyphs() {
   );
 }
 
-/** Video call, on the nav icons' line (set by drawn size, iconStroke.ts). */
+/** Video call: Lucide video (ISC), on the nav icons' line (set by drawn size, iconStroke.ts). */
 function VideoIcon() {
   const stroke = useIconStroke(24);
   return (
     <svg ref={stroke.ref} style={stroke.style} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2.75" y="6.25" width="13" height="11.5" rx="3" /><path d="M15.75 10.4l4.4-2.75a.75.75 0 0 1 1.1.64v7.42a.75.75 0 0 1-1.1.64l-4.4-2.75" />
+      <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" />
     </svg>
   );
 }

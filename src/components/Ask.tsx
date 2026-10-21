@@ -29,12 +29,12 @@ function topicOf(q: string): Topic {
   return "Trades";
 }
 
-/** The arrow on the send button. Drawn on the icon grid: 24 box, the line set by drawn size (iconStroke.ts), flat ends, round joins. */
+/** The arrow on the send button: Lucide arrow-up (ISC), 24 box, the line set by drawn size (iconStroke.ts), round ends and joins. */
 function ArrowUp({ size = 18 }: { size?: number }) {
   const stroke = useIconStroke(size);
   return (
-    <svg ref={stroke.ref} style={stroke.style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 19.5V5M5.5 11.2 12 4.8l6.5 6.4" />
+    <svg ref={stroke.ref} style={stroke.style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m5 12 7-7 7 7" /><path d="M12 19V5" />
     </svg>
   );
 }

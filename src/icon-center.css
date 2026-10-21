@@ -63,14 +63,14 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
 }
 
 /* ---------- Bell: rings on hover and on click ---------- */
-/* Two parts (icons.tsx): the dome (m1) swings from its hanger at (12, 3.6); the clapper (m2) rides inside it, hangs from
-   the lip at (12, 17.1) and swings the other way, 40ms behind and wider, so it reads as a clapper lagging. Hover rings
+/* Two parts (icons.tsx, Lucide bell): the dome (m1) swings from its crown at (12, 2); the clapper (m2) rides inside it, hangs from
+   the lip at (12, 17) and swings the other way, 40ms behind and wider, so it reads as a clapper lagging. Hover rings
    once per entry (icons.tsx sets data-play for a beat and never loops); a click rings 1.3x harder (data-strong) as the
    inbox opens or closes. Rotation on parts inside the svg only, after the centring nudge, so at rest the glyph is where
    it was measured and the button box never changes. */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 3.6px; }
-  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17.1px; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 2px; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17px; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m1 { animation: bell-dome 600ms both; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m2 { animation: bell-clapper 600ms 40ms both; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m1 { animation: bell-dome-strong 680ms both; }

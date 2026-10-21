@@ -52,7 +52,6 @@ html:root:not(#_):not(#_) .ld2-sync li + li { border-top: 1px solid var(--line);
 html:root:not(#_):not(#_) .ld2-sync-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(244, 246, 242, 0.07); color: var(--muted); }
 html:root:not(#_):not(#_) .ld2-sync-ic.on { color: var(--lime); }
 html:root:not(#_):not(#_) .ld2-sync-ic.on svg.ic-star path { fill: currentColor; }
-html:root:not(#_):not(#_) .ld2-sync-ic.on svg.ic-star .st-gap { stroke-opacity: 1; }
 html:root:not(#_):not(#_) .ld2-sync-t { display: grid; gap: 2px; min-width: 0; }
 html:root:not(#_):not(#_) .ld2-sync-t b { font-size: 0.9375rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html:root:not(#_):not(#_) .ld2-sync-t small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -25,30 +25,6 @@ html:root:not(#_):not(#_) .ask-send[aria-busy="true"] { cursor: progress; }
 html:root:not(#_):not(#_) :is(.boot3-trace, .boot3-loader) .wkl { --lb-ink: #F2F3EE; --lb-paper: #2A2D2C; }
 
 /* ---------- Ask icon ---------- */
-html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }
-html:root:not(#_):not(#_) svg.askic :is(.askic-back, .askic-front, .askic-dot) { transform-box: fill-box; transform-origin: center; }
-html:root:not(#_):not(#_) svg.askic .askic-front { transform-origin: 70% 60%; }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-back { animation: askic-nudge 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-front { animation: askic-pop 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot { animation: askic-dot 260ms cubic-bezier(0.23, 1, 0.32, 1) both; }
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot.d1 { animation-delay: 50ms; }
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot.d2 { animation-delay: 100ms; }
-}
-/* The back bubble steps up and left, the front one swells a little from its tail side, then both settle */
-@keyframes askic-nudge {
-  0%, 100% { transform: translate(0, 0); }
-  40% { transform: translate(-0.9px, -0.9px); }
-}
-@keyframes askic-pop {
-  0%, 100% { transform: scale(1); }
-  40% { transform: scale(1.08); }
-}
-/* Each typing dot lifts and dims once, left to right */
-@keyframes askic-dot {
-  0%, 100% { transform: translateY(0); opacity: 1; }
-  45% { transform: translateY(-1px); opacity: 0.45; }
-}
-
+/* Shape and hover beat live in icon-lucide.css (Lucide messages-square). */
 /* The inbox ask box keeps its accent on the icon */
 html:root:not(#_):not(#_) .ibx-ask > svg.askic { color: var(--lime); }

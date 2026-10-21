@@ -1,0 +1,19 @@
+/* Lucide icons (icons.tsx, AskIcon.tsx): motion rebuilt for the new shapes. Loads before frame.css.
+   Ask is Lucide's messages-square: the front bubble sits top left with its tail at bottom left, the back bubble bottom
+   right. On hover the back bubble steps away down and right while the front one swells a little from its tail, then
+   both settle. The typing dots are gone, and their pulse with them. Same 340ms beat as before. */
+html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }
+html:root:not(#_):not(#_) svg.askic :is(.askic-back, .askic-front) { transform-box: fill-box; transform-origin: center; }
+html:root:not(#_):not(#_) svg.askic .askic-front { transform-origin: 15% 90%; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-back { animation: askic-away 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-front { animation: askic-swell 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+}
+@keyframes askic-away {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(0.9px, 0.9px); }
+}
+@keyframes askic-swell {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+}
