@@ -71,7 +71,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
         <h2 className="section-title">League connection</h2>
         <div className="set-row acc-conn">
           <span className="set-ic"><PlatformLogo size={20} /></span>
-          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span>{refreshed && <span className="small muted set-when" style={{ display: "block" }}>{refreshed}</span>}</span>
+          <span className="grow" style={{ minWidth: 0 }}><span className="set-brandline"><b>Sleeper</b>{refreshed && <span className="small muted set-when">{refreshed}</span>}</span><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
           {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}><PlatformLogo size={16} />Connect Sleeper</button> : (
             <span className="row wrap">
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
