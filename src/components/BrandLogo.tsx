@@ -7,6 +7,7 @@
  *  Colors come from --brand-mark, --brand-word and --brand-tag so each surface (and the light theme) can set them. */
 import type { CSSProperties } from "react";
 import { Mark } from "./Logo";
+import { Tooltip } from "./Tooltip";
 
 /** The wordmark text, for places that draw it themselves (the share image's canvas). */
 export const WORDMARK = "SOURCES";
@@ -21,6 +22,7 @@ export function BrandWordmark({ size = 40, className = "" }: { size?: number; cl
 
 /** The release stage, shown as a small pill after the wordmark while Sources is in alpha */
 export const STAGE = "Alpha";
+const STAGE_TIP = "Sources is in alpha. Things may change or break while we build it out, and your feedback shapes what comes next.";
 
 export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Sources", className = "", stage = false }: {
   layout?: "stack" | "row";
@@ -47,7 +49,7 @@ export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = fa
     <span className={`bl bl-${layout} ${className}`.trim()} style={gaps as CSSProperties | undefined} role="img" aria-label={stage ? `${label}, ${STAGE}` : label}>
       <Mark size={mark} className="bl-mark" />
       <span className="bl-type" aria-hidden="true">
-        {stage ? <span className="bl-wordrow"><BrandWordmark size={word} /><span className="bl-stage">{STAGE}</span></span> : <BrandWordmark size={word} />}
+        {stage ? <span className="bl-wordrow"><BrandWordmark size={word} /><Tooltip content={STAGE_TIP} side="bottom"><span className="bl-stage"><span>{STAGE}</span></span></Tooltip></span> : <BrandWordmark size={word} />}
         {tagline && <span className="bl-tag" style={tag !== 13 ? { fontSize: tag } : undefined}>{TAGLINE}</span>}
       </span>
     </span>
