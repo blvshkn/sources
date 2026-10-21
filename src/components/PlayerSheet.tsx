@@ -2,14 +2,16 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useBackClose } from "../backClose";
 import { createPortal } from "react-dom";
 import { ScheduleStrip } from "./Schedule";
-import { LineupCall, OutcomeRange, WeekDepth, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
+import { LineupCall, OutcomeRange, WeekDepth, gameLog, lineupCall, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
 import { WeekStepper } from "./WeekStepper";
 import { useLive } from "../live";
-import { PLAYERS, Player, WEEK, onBye } from "../data";
+import { PLAYERS, Player, TEAMS, WEEK, onBye, sleeperUrl } from "../data";
 import { kickLine, useKickoffs } from "../kickoff";
 import { eff, fmt, round1, scored } from "../engine";
-import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
+import { PlatformLogo } from "./PlatformLogo";
+import { PlayerHero, WatchButton, holdHeader } from "./PlayerHero";
+import { toggleWatch, useWatchApi, waiverWeek } from "./watchCtx";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { useDismiss } from "./useDismiss";
@@ -29,7 +31,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const where = other ? undefined : firstWhere, note = other ? undefined : firstNote, onCompare = other ? undefined : firstCompare;
   // Overview, Game log, Depth chart. The tab row sits in the fixed top with the header, so neither moves on a switch.
   const [tab, setTab] = useSheetTab("player", ["main", "log", "depth"]);
-  const pick = (t: typeof tab) => { setTab(t); body.current?.scrollTo({ top: 0 }); };
+  const pick = (t: typeof tab) => { holdHeader(body.current); setTab(t); body.current?.scrollTo({ top: 0 }); };
   const openOther = (id: string) => { const n = PLAYERS[id]; if (!n) return; setP(n); setWeek(WEEK); setTab("main"); body.current?.scrollTo({ top: 0 }); };
   // Which week the sheet shows. The header and stepper stay put; the body below them swaps.
   const [week, setWeek] = useState(WEEK);
@@ -62,6 +64,21 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const max = Math.max(1, ...games.map((g) => g.pts), eff(p, true));
   const playoff = p.playoff ? round1(scored({ ...p, pts: p.playoff, wk: undefined })) : null;
 
+  // The header's actions: Watch (the Waivers watchlist), plus the one move that fits whose he is
+  const watchApi = useWatchApi();
+  const watchFor = waiverWeek();
+  const owner = TEAMS.find((t) => [...t.roster, ...(t.ir ?? []), ...(t.taxi ?? [])].includes(p.id));
+  // Swap in Sleeper only when the lineup call asks for a change in your Sleeper lineup (the same test LineupCall uses)
+  const call = owner?.you && !onCompare ? lineupCall(p, nowFor(live, p)) : null;
+  const swap = !!call && (/in Sleeper|Sleeper still has him/.test(call.line) || call.head === "Take him out of your lineup");
+  const primary = onCompare
+    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}><Icon name="switch" size={16} />Compare</button>
+    : swap
+      ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
+      : !owner && p.nfl !== "FA"
+        ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Claim</a>
+        : null;
+
   // Portaled to body: rendered in place it inherited the page's stacking (Lineup's sticky side column made it a
   // z-index 0 layer), so the docked inbox and the desk bell painted over the sheet and its scrim.
   return createPortal(
@@ -70,17 +87,16 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
       <section ref={sheet} className="ps ps-player" role="dialog" aria-modal="true" aria-labelledby="ps-name">
         <div className="pd-top">
         <span className="ps-handle" aria-hidden="true" />
-        <header className="ps-head">
-          <Avatar p={p} size={56} />
-          <span className="ps-who">
-            <b id="ps-name">{p.name}</b>
-            <small>{p.pos} · {p.nfl}{onBye(p.nfl) ? "" : kickLine(p) ? ` ${kickLine(p)}` : ""} <StatusPill p={p} /></small>
-            {where && <span className={`ps-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
-          </span>
-          <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
-        </header>
-        <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview" }, { v: "log", label: "Game log" }, { v: "depth", label: "Depth chart" }]} />
-        {tab === "main" && <WeekStepper week={week} onChange={(w) => { setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />}
+        <PlayerHero key={p.id} s={p} nameId="ps-name" where={where}
+          meta={onBye(p.nfl) ? undefined : kickLine(p) || undefined}
+          status={<StatusPill p={p} />}
+          actions={<>
+            {primary}
+            {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
+          </>} />
+        <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
+        <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview", icon: "overview" }, { v: "log", label: "Game log", icon: "table" }, { v: "depth", label: "Depth chart", icon: "listOrdered" }]} />
+        {tab === "main" && <WeekStepper week={week} onChange={(w) => { holdHeader(body.current); setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />}
         </div>
         {/* Only this scrolls; the shell clips it to the rounded corners and the header above stays put */}
         <ScrollArea ref={body} className={`ps-body${tab === "main" ? "" : " pt-body"}`} data-sheet-scroll>
@@ -151,7 +167,6 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
           <ScheduleStrip p={p} />
         </div>
 
-        {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
         </>}
         </ScrollArea>
       </section>

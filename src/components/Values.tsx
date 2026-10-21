@@ -9,7 +9,7 @@ import { Tooltip } from "./Tooltip";
 
 // Demo leagues have no market feed, so build the board from projection-based values.
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
-function demoBoard(): BoardRow[] {
+export function demoBoard(): BoardRow[] {
   const owner = new Map<string, string>();
   TEAMS.forEach((t) => [...t.roster, ...(t.ir ?? [])].forEach((id) => owner.set(id, t.id)));
   const ids = new Set([...Object.keys(PLAYERS), ...FREE_AGENTS.map((f) => f.id)]);
@@ -22,7 +22,7 @@ function demoBoard(): BoardRow[] {
 }
 
 /** Kickers and defenses, rostered and on the wire, valued from projections. They never enter trades, so their rows don't open the builder. */
-function specialBoard(): BoardRow[] {
+export function specialBoard(): BoardRow[] {
   const owner = new Map<string, string>();
   TEAMS.forEach((t) => (t.special ?? []).forEach((id) => owner.set(id, t.id)));
   const seen = new Map<string, BoardRow>();

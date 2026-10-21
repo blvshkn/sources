@@ -49,6 +49,7 @@ import { offerOfTag, pausesFromSent, tagsFromSent, valueAsks, whyEffect } from "
 import { useOfferSync } from "./offerSync";
 import { setAiUser } from "./aiClient";
 import { useWatchSync } from "./watchSync";
+import { WatchCtx } from "./components/watchCtx";
 import { forgetSync, knownLeagues } from "./syncKey";
 import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchSet } from "./watchMerge.js";
 import { leagueTransactions } from "./sleeper";
@@ -197,6 +198,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [pitch, setPitch] = useState<Trade | null>(null);
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
+  const watchApi = useMemo(() => ({ watch, onWatch: setWatch, onToast: (m: string) => setToast(m) }), [watch, setWatch, setToast]);
   useEffect(() => setDenySink(setToast), [setToast]);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
   // The inbox: a slide-over from the bell on phones, tablets and small laptops (inboxOpen). From 1241px it docks as the
@@ -734,6 +736,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
 
   return (
+    // The watchlist reaches every player sheet's Watch star, wherever the sheet opens (watchCtx.ts)
+    <WatchCtx.Provider value={watchApi}>
     <div className={`shell${inboxOpen ? " inbox-open" : ""}${dockOpen ? "" : " dock-off"}`}>
       <a className="skip-link" href="#main">Skip to content</a>
       <AppBackdrop />
@@ -883,6 +887,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         document.body,
       )}
     </div>
+    </WatchCtx.Provider>
   );
 }
 

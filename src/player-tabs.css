@@ -1,14 +1,15 @@
 /* Tabs in the player sheet and the waiver claim sheet (PlayerTabs.tsx): the tab row, the game log table and the depth
    chart. Mobile first. Loads just before frame.css. Every rule is scoped to .st-tabs, .gl, .dc, .pt-body or .pt-sheet. */
 
-/* ---------- Tab row: the app's segmented control, full width, in the sheet's fixed top ---------- */
-html:root:not(#_):not(#_) .st-tabs { min-width: 0; margin-top: 8px; }
-html:root:not(#_):not(#_) .st-tabs > .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; box-sizing: border-box; }
-html:root:not(#_):not(#_) .st-tabs > .seg button {
-  min-height: 36px; padding: 6px 8px; white-space: nowrap; justify-content: center;
-  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+/* ---------- Tab row: the League page's pills (PageTabs), edge to edge in the sheet's fixed top ---------- */
+html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs { min-width: 0; margin: 8px 0 0; }
+html:root:not(#_):not(#_):not(#_) :is(.page-tabs.st-tabs, .page-tabs.gl-years) > .seg {
+  margin: 0 calc(-1 * var(--pad-card-x, 16px)) !important; padding: 2px var(--pad-card-x, 16px) !important;
+  width: calc(100% + 2 * var(--pad-card-x, 16px)) !important; box-sizing: border-box; scroll-padding-inline: var(--pad-card-x, 16px);
 }
-html:root:not(#_):not(#_) .ps-detail > .ds-top > .st-tabs { margin-top: 2px; }
+html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs > .seg { gap: 6px !important; }
+html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs > .seg button { height: 36px; padding: 0 12px; }
+html:root:not(#_):not(#_) .ps-detail > .ds-top > .st-tabs { margin-top: 0; }
 /* The weeks stepper follows the tabs on Overview only */
 html:root:not(#_):not(#_) .ps.ps-player > .pd-top > .st-tabs + .pd-weeknav { margin-top: 4px; }
 
@@ -29,9 +30,12 @@ html:root:not(#_):not(#_) .gl-skel span:nth-child(3n) { width: 78%; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .gl-skel span { animation: none; } }
 
 /* ---------- Game log ---------- */
-html:root:not(#_):not(#_) .gl { display: grid; gap: 12px; min-width: 0; }
-html:root:not(#_):not(#_) .gl-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
-html:root:not(#_):not(#_) .gl-bar > .seg button { min-height: 32px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .gl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .gl-bar { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+/* Seasons: the same pills, side scrolling, years in Geist Mono; "More" opens the older ones */
+html:root:not(#_):not(#_):not(#_) .page-tabs.gl-years { flex: 1 1 100%; min-width: 0; margin: 0; }
+html:root:not(#_):not(#_):not(#_) .page-tabs.gl-years > .seg button { height: 32px; padding: 0 12px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_):not(#_) .page-tabs.gl-years > .seg button.gl-more { font-family: Geist, system-ui, sans-serif; color: var(--muted); }
 html:root:not(#_):not(#_) .gl-sum { display: flex; gap: 16px; margin: 0; }
 html:root:not(#_):not(#_) .gl-sum > div { display: grid; gap: 1px; }
 html:root:not(#_):not(#_) .gl-sum dt { font-size: 0.6875rem; color: var(--muted); }

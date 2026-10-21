@@ -53,7 +53,16 @@ export interface SeasonLog { season: string; rows: LogRow[]; demo: boolean; team
 
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return (h >>> 0) / 4294967295; };
 const NFL = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LAC", "LAR", "LV", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "SF", "TB", "TEN", "WAS"];
-export const seasonsFor = () => { const y = Number(LEAGUE.season); return Number.isFinite(y) ? [String(y), String(y - 1)] : [LEAGUE.season]; };
+/** Most seasons a game log offers: this one and 14 before it. */
+const MAX_SEASONS = 15;
+/** This season and every earlier one back to his rookie year (`exp`, his years in the league from Sleeper), newest
+ *  first. Without a bio, this season and last. Each one loads only when picked. */
+export const seasonsFor = (exp?: number) => {
+  const y = Number(LEAGUE.season);
+  if (!Number.isFinite(y)) return [LEAGUE.season];
+  const back = exp === undefined ? 1 : Math.max(0, Math.min(MAX_SEASONS - 1, Math.round(exp)));
+  return Array.from({ length: back + 1 }, (_, i) => String(y - i));
+};
 
 /** Points for a line, scored like the rest of the app: the league's scoring_settings (live), or the demo totals. */
 const score = (pos: string, s: Stats) => (pos === "K" || pos === "DEF") && LEAGUE.scoring ? scoreStats(s, LEAGUE.scoring, pos) : ptsOf(pos, s);
@@ -97,15 +106,21 @@ function demoCurrent(s: Subject): SeasonLog {
 }
 function demoLast(s: Subject, season: string): SeasonLog {
   if (s.rookie) return { season, rows: [], demo: true, empty: `${s.name} was still in college in ${season}.` };
-  const base = s.proj || 6, bye = Math.min(14, demoBye(s.nfl) + 1);
+  // Seasons back: last year is 1. Each one gets its own slate and its own level, a little lower the further back
+  const back = Math.max(1, Number(LEAGUE.season) - Number(season) || 1);
+  const tag = back === 1 ? "" : `:${season}`;
+  const level = back === 1 ? 0.92 : Math.max(0.55, 1 - 0.08 * back) * (0.92 + hash(`${s.id}${tag}:lvl`) * 0.16);
+  const base = s.proj || 6, bye = back === 1 ? Math.min(14, demoBye(s.nfl) + 1) : ((demoBye(s.nfl) + back * 3) % 10) + 5;
   const others = NFL.filter((t) => t !== s.nfl), ti = Math.max(0, NFL.indexOf(s.nfl));
-  const rows: LogRow[] = Array.from({ length: 18 }, (_, i) => i + 1).map((w) => {
+  // 17 weeks before the 2021 season, 18 since
+  const weeks = Number(season) < 2021 ? 17 : 18;
+  const rows: LogRow[] = Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
     if (w === bye) return { week: w, opp: null, bye: true, when: "past" };
-    const opp = (hash(`${s.nfl}${w}ly`) > 0.5 ? "v" : "@") + others[(ti * 5 + w * 13) % others.length];
-    // A couple of missed games for anyone banged up, so last season doesn't read perfect
-    if (hash(`${s.id}:${w}:out`) > 0.94) return { week: w, opp, bye: false, when: "past", miss: "out", missNote: "Ruled out" };
-    const pts = round1(base * 0.92 * (0.45 + hash(`${s.id}:${w}:ly`) * 1.1));
-    return { week: w, opp, bye: false, when: "past", proj: demoProj(s, w + 100, base * 0.92), ...demoRow(s, pts, w + 100) };
+    const opp = (hash(`${s.nfl}${w}ly${tag}`) > 0.5 ? "v" : "@") + others[(ti * 5 + w * 13 + (back === 1 ? 0 : back * 7)) % others.length];
+    // A couple of missed games for anyone banged up, so a season doesn't read perfect
+    if (hash(`${s.id}:${w}:out${tag}`) > 0.94) return { week: w, opp, bye: false, when: "past", miss: "out", missNote: "Ruled out" };
+    const pts = round1(base * level * (0.45 + hash(`${s.id}:${w}:ly${tag}`) * 1.1));
+    return { week: w, opp, bye: false, when: "past", proj: demoProj(s, w + 100 * back, base * level), ...demoRow(s, pts, w + 100 * back) };
   });
   return { season, rows, demo: true, team: s.nfl };
 }

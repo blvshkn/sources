@@ -416,7 +416,7 @@ const DEMO_SLOT_HISTORY: SlotHistory[] = [
 ];
 
 // ---- Waivers and FAAB ----------------------------------------------------
-export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean; /** Sleeper-wide adds in the last 24 hours. */ adds?: number }
+export interface FreeAgent { id: string; name: string; pos: Pos; nfl: string; proj: number; rostered?: number; why: string; trend: "up" | "flat"; rookie?: boolean; /** Sleeper-wide adds over the last 7 days (the trending feed's 168-hour lookback). */ adds?: number }
 /** Positions the Waivers screen lists. K and DEF stay out of `Pos` so trades and lineups never see them. */
 export type WaiverPos = Pos | "K" | "DEF";
 /** A kicker or defense on the wire. `proj` is the season per-week average; `wk` is this week (null = bye or not projected). */
@@ -426,12 +426,12 @@ export type WaiverFA = FreeAgent | SpecialFreeAgent;
 export const isSpecialFA = (fa: WaiverFA): fa is SpecialFreeAgent => fa.pos === "K" || fa.pos === "DEF";
 const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64, source: "Sources" };
 const DEMO_FREE_AGENTS: FreeAgent[] = [
-  { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
-  { id: "jalen-tolbert", name: "Jalen Tolbert", pos: "WR", nfl: "DAL", proj: 10.4, rostered: 18, trend: "up", why: "Runs every route with Lamb questionable. 9 targets last week." },
-  { id: "chig-okonkwo", name: "Chig Okonkwo", pos: "TE", nfl: "TEN", proj: 9.8, rostered: 31, trend: "up", why: "Top-12 TE in targets over the last three weeks. Solves a bye-week hole." },
-  { id: "tyjae-spears", name: "Tyjae Spears", pos: "RB", nfl: "TEN", proj: 8.9, rostered: 40, trend: "flat", why: "Steady passing-down work. Fine depth, not a priority bid." },
-  { id: "dont-e-thornton", name: "Dont'e Thornton", pos: "WR", nfl: "LV", proj: 8.1, rostered: 9, trend: "up", rookie: true, why: "Rookie deep threat whose snaps jumped to 81 percent. A stash with upside." },
-  { id: "mason-rudolph", name: "Mason Rudolph", pos: "QB", nfl: "PIT", proj: 0, rostered: 4, trend: "flat", why: "On bye this week. Only matters in Superflex." },
+  { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, adds: 48210, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
+  { id: "jalen-tolbert", name: "Jalen Tolbert", pos: "WR", nfl: "DAL", proj: 10.4, rostered: 18, adds: 21640, trend: "up", why: "Runs every route with Lamb questionable. 9 targets last week." },
+  { id: "chig-okonkwo", name: "Chig Okonkwo", pos: "TE", nfl: "TEN", proj: 9.8, rostered: 31, adds: 15380, trend: "up", why: "Top-12 TE in targets over the last three weeks. Solves a bye-week hole." },
+  { id: "tyjae-spears", name: "Tyjae Spears", pos: "RB", nfl: "TEN", proj: 8.9, rostered: 40, adds: 3120, trend: "flat", why: "Steady passing-down work. Fine depth, not a priority bid." },
+  { id: "dont-e-thornton", name: "Dont'e Thornton", pos: "WR", nfl: "LV", proj: 8.1, rostered: 9, adds: 9870, trend: "up", rookie: true, why: "Rookie deep threat whose snaps jumped to 81 percent. A stash with upside." },
+  { id: "mason-rudolph", name: "Mason Rudolph", pos: "QB", nfl: "PIT", proj: 0, rostered: 4, adds: 410, trend: "flat", why: "On bye this week. Only matters in Superflex." },
 ];
 /** Demo kickers and defenses on the wire: [name or DEF team, team, this week, season per week, rostered %]. */
 const DEMO_SPECIAL_FA: [string, string, number, number, number][] = [

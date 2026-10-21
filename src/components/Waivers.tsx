@@ -6,10 +6,10 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
 import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
 import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
-import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
+import { WeekView, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
-import { AiLabel, Icon, useSticky } from "./ui";
+import { AiLabel, Icon, StatusPill, useSticky, type IconName } from "./ui";
 import { Avatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
 import { PlatformLogo } from "./PlatformLogo";
@@ -19,6 +19,8 @@ import { useKeyboardInset } from "./useKeyboardInset";
 import { matchPlayer, pieces, rankPlayers } from "../search";
 import { DepthTab, GameLogTab, SheetTabs, useSheetTab, type SheetTab } from "./PlayerTabs";
 import { PlayerSheet } from "./lazy";
+import { waiverWeek } from "./watchCtx";
+import { PlayerHero, WatchButton, holdHeader } from "./PlayerHero";
 import type { Player } from "../data";
 
 /** Why a free agent can't help this week, or null when he can. */
@@ -76,14 +78,7 @@ function holeIn(v: WeekView, pos: string): string[] {
   return mine.map((p) => p.name.split(" ").slice(-1)[0]);
 }
 
-/** Default week: next week once most of the list has already played (or is on bye), or on Tuesday while waivers run. */
-function defaultWeek() {
-  if (WEEK >= lastWeek()) return WEEK;
-  const pool: WaiverFA[] = [...FREE_AGENTS, ...SPECIAL_FREE_AGENTS.filter((fa) => (LEAGUE.specialSlots ?? []).includes(fa.pos))];
-  const locked = pool.filter((fa) => lockedThisWeek(fa.nfl)).length;
-  const tuesday = new Date().getDay() === 2;
-  return (pool.length && locked / pool.length > 0.5) || tuesday ? WEEK + 1 : WEEK;
-}
+const defaultWeek = waiverWeek;
 
 /** Highlights the matched letters of a name in type-ahead results (search.ts: initials, word starts, substrings). */
 function Hit({ name, term }: { name: string; term: string }) {
@@ -460,11 +455,20 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                 </Tooltip>
               </span>}
               {isOpen && r && !shelved && (
-                <DetailSheet className="wv-sheet pt-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
-                  <span className="wvs-head"><Avatar p={e.fa} size={40} /><span className="wvs-who"><b>{e.fa.name}</b><small>{e.fa.pos} · {e.fa.nfl}</small></span></span>
+                <DetailSheet className="wv-sheet pt-sheet ph-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
+                  <PlayerHero s={e.fa}
+                    meta={kind === "current" ? (gameOf(e.fa) || undefined) : undefined}
+                    status={<StatusPill p={PLAYERS[e.fa.id] ?? { id: e.fa.id, name: e.fa.name, pos: "WR", nfl: e.fa.nfl, proj: e.fa.proj, status: isSpecialFA(e.fa) ? e.fa.status : undefined }} />}
+                    actions={<>
+                      <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
+                        <PlatformLogo size={16} />Claim
+                      </a>
+                      <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
+                      <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not right now</button>
+                    </>} />
                 } bar={(() => {
-                  const opts: { v: SheetTab; label: string }[] = [{ v: "main", label: "Claim" }, { v: "log", label: "Game log" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart" }])];
-                  return <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={opts} onChange={(t) => { setSheetTab(t); document.querySelector(".pt-sheet .ds-body")?.scrollTo({ top: 0 }); }} />;
+                  const opts: { v: SheetTab; label: string; icon: IconName }[] = [{ v: "main", label: "Claim", icon: "userPlus" }, { v: "log", label: "Game log", icon: "table" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart", icon: "listOrdered" as IconName }])];
+                  return <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={opts} onChange={(t) => { const b = document.querySelector<HTMLElement>(".pt-sheet .ds-body"); holdHeader(b); setSheetTab(t); b?.scrollTo({ top: 0 }); }} />;
                 })()}>
                 {(closeSheet) => {
                 const subj = { id: e.fa.id, name: e.fa.name, pos: e.fa.pos, nfl: e.fa.nfl, proj: e.fa.proj, rookie: "rookie" in e.fa ? e.fa.rookie : undefined };
@@ -484,13 +488,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                     <div><span className="eyebrow">{FAAB.enabled ? SUGG_BID : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b className="sugg-bid-amt">{bidText(r.bid, r.fa)}</b>. Kickers and defenses rarely draw real bids.</> : <><b className="sugg-bid-amt">{bidText(r.bid)}</b>. {bidSourceNote()}</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
-                  <div className="row wrap">
-                    <a className="btn btn-primary btn-sm" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
-                      <PlatformLogo size={16} />Open Sleeper
-                    </a>
-                    <button className="snooze-btn" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not right now</button>
-                    <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
-                  </div>
+                  <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. Claims are placed in your league app. Sources never bids for you.</p>
                 </div>
                 );
                 }}

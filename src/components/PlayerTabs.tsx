@@ -6,7 +6,8 @@ import { teamNick } from "../data";
 import { useLive } from "../live";
 import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, missWhy, peekDepth, peekLog, seasonsFor } from "../gamelog";
 import { Tooltip } from "./Tooltip";
-import { Seg, type IconName } from "./ui";
+import { PageTabs, type IconName } from "./ui";
+import { useBio } from "../playerBio";
 
 // ---- Tab row --------------------------------------------------------------------------
 export type SheetTab = "main" | "log" | "depth";
@@ -21,8 +22,9 @@ export function useSheetTab(kind: "player" | "waiver", allowed: SheetTab[]): [Sh
   const set = (n: SheetTab) => { setT(n); mem[kind] = n; try { sessionStorage.setItem(`sources.sheetTab.${kind}`, n); } catch { /* ignore */ } };
   return [allowed.includes(t) ? t : "main", set];
 }
+/** The League page's tabs (icon and label pills, no track behind the row), in the sheet's fixed top. */
 export function SheetTabs({ value, onChange, options }: { value: SheetTab; onChange: (t: SheetTab) => void; options: { v: SheetTab; label: string; icon?: IconName }[] }) {
-  return <div className="st-tabs"><Seg label="Sheet section" value={value} onChange={onChange} options={options} /></div>;
+  return <PageTabs inSheet className="st-tabs" label="Sheet section" value={value} onChange={onChange} options={options} />;
 }
 
 // ---- Shared bits ------------------------------------------------------------------------
@@ -55,9 +57,17 @@ const GROUPS: Record<Subject["pos"], { label: string; cols: Col[] }[]> = {
 const oppLabel = (o: string | null) => (o ? o.replace(/^(v|@)\s*/, "") : DASH);
 const away = (o: string | null) => !!o && o.startsWith("@");
 
+/** Seasons shown before "More" */
+const FIRST_YEARS = 6;
 export function GameLogTab({ s }: { s: Subject }) {
-  const seasons = seasonsFor();
+  // Back to his rookie season (years in the league from his bio), each one loaded when picked and cached
+  const bio = useBio(s);
+  const seasons = seasonsFor(s.pos === "DEF" ? 5 : bio === "loading" ? undefined : bio.exp);
   const [season, setSeason] = useState(seasons[0]);
+  const [allYears, setAllYears] = useState(false);
+  const shownYears = allYears || seasons.length <= FIRST_YEARS + 1 ? seasons : seasons.slice(0, FIRST_YEARS);
+  // A season picked from behind "More" keeps its pill visible
+  const years = shownYears.includes(season) ? shownYears : [...shownYears, season];
   const [log, setLog] = useState<Load<SeasonLog>>(() => { const v = peekLog(s, seasons[0]); return v ? { state: "ready", v } : { state: "loading" }; });
   useEffect(() => {
     let on = true;
@@ -116,7 +126,12 @@ export function GameLogTab({ s }: { s: Subject }) {
   return (
     <section className="gl" aria-label="Game log" aria-busy={log.state === "loading"}>
       <div className="gl-bar">
-        <Seg label="Season" value={season} onChange={setSeason} options={seasons.map((y) => ({ v: y, label: y }))} />
+        <div className="page-tabs gl-years">
+          <div className="seg" role="group" aria-label="Season">
+            {years.map((y) => <button key={y} aria-pressed={season === y} onClick={() => setSeason(y)}>{y}</button>)}
+            {years.length < seasons.length && <button className="gl-more" aria-pressed={false} onClick={() => setAllYears(true)} aria-label={`More seasons, back to ${seasons[seasons.length - 1]}`}>More</button>}
+          </div>
+        </div>
         {log.state === "ready" && played.length > 0 && (
           <dl className="gl-sum">
             <div><dt>Games</dt><dd>{played.length}</dd></div>

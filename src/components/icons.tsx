@@ -9,7 +9,8 @@ export type IconName =
   | "overview" | "headset" | "hatGlasses" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
-  | "download" | "image" | "mail" | "star" | "airVent";
+  | "download" | "image" | "mail" | "star" | "airVent"
+  | "userPlus" | "table" | "listOrdered";
 
 const ICONS: Record<IconName, string> = {
   // Overview: Lucide layout-panel-left. The tall panel (m1) opens out from its left edge, then the two cells (m2, m3)
@@ -49,6 +50,10 @@ const ICONS: Record<IconName, string> = {
   // lines (m1 to m3, pathLength 1) that draw and flow down on hover (icon-air-vent.css).
   airVent: "<path d=\"M6 4H18A2 2 0 0 1 20 6V8.5A2 2 0 0 1 18 10.5H6A2 2 0 0 1 4 8.5V6A2 2 0 0 1 6 4ZM7 8H17\"/><path class=\"m1\" pathLength=\"1\" d=\"M8.6 12.75C8.6 14.63 6.85 14.63 6.85 16.5S8.6 18.38 8.6 20.25\"/><path class=\"m2\" pathLength=\"1\" d=\"M12.85 12.75C12.85 14.94 11.1 14.94 11.1 17.13S12.85 19.31 12.85 21.5\"/><path class=\"m3\" pathLength=\"1\" d=\"M17.1 12.75C17.1 14.63 15.35 14.63 15.35 16.5S17.1 18.38 17.1 20.25\"/>",
   plus: "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", // plus
+  // Player sheet tabs: Claim, Game log, Depth chart
+  userPlus: "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M19 8v6\"/><path d=\"M22 11h-6\"/>", // user-plus
+  table: "<path d=\"M12 3v18\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M3 9h18\"/><path d=\"M3 15h18\"/>", // table
+  listOrdered: "<path d=\"M10 12h11\"/><path d=\"M10 18h11\"/><path d=\"M10 6h11\"/><path d=\"M4 10h2\"/><path d=\"M4 6h1v4\"/><path d=\"M6 18H4c0-1 2-2 2-3s-1-1.5-2-1\"/>", // list-ordered
   alert: "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", // triangle-alert
   eye: "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", // eye
   send: "<path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/>", // arrow-up

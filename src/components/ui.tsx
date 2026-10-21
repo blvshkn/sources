@@ -54,7 +54,11 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
  * Section tabs under a page title. Switching keeps the tab row exactly where it was on screen:
  * the page never jumps when the new section is shorter, and nothing animates in.
  */
-export function PageTabs<T extends string>({ value, options, onChange }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void }) {
+export function PageTabs<T extends string>({ value, options, onChange, inSheet = false, label = "Section", className = "" }: {
+  value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void;
+  /** In a sheet or modal: the sheet's own body scrolls, so the page isn't held in place on a switch */
+  inSheet?: boolean; label?: string; className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // Keep the selected tab visible in the scrolling row: jump there on open, glide there on change
   const first = useRef(true);
@@ -70,6 +74,7 @@ export function PageTabs<T extends string>({ value, options, onChange }: { value
   }, [value]);
   const pick = (v: T) => {
     if (v === value) return;
+    if (inSheet) { onChange(v); return; }
     const el = ref.current; const main = document.getElementById("main");
     if (!el || !main) { onChange(v); return; }
     const top = el.getBoundingClientRect().top;
@@ -83,7 +88,7 @@ export function PageTabs<T extends string>({ value, options, onChange }: { value
       window.scrollTo({ top: Math.max(0, target), behavior: "instant" as ScrollBehavior });
     });
   };
-  return <div ref={ref} className="page-tabs"><Seg label="Section" value={value} onChange={pick} options={options} /></div>;
+  return <div ref={ref} className={`page-tabs ${className}`.trim()}><Seg label={label} value={value} onChange={pick} options={options} /></div>;
 }
 
 /** useState that survives a reload. Per-device convenience only; falls back to the default if storage is blocked. */
