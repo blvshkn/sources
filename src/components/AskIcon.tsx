@@ -1,7 +1,8 @@
 // The Ask icon, and the mark for anything Sources writes: Lucide's messages-square (ISC), two chat bubbles, the back one
 // tucked behind the front one, no typing dots and no cut-outs, every outline closed. 24 grid, a line set by drawn size (iconStroke.ts), round
 // ends and joins. Still at rest. Hovering or focusing the control that holds it plays one short beat (icon-lucide.css):
-// the back bubble nudges away down and right, the front one pops from its tail. Reduced motion keeps it still.
+// the pair pops from the front bubble's tail, so the back bubble swings out down and right while the front one swells.
+// Both move as one shape, so the joins stay closed mid-beat. Reduced motion keeps it still.
 // currentColor throughout.
 
 /** Front bubble, top left, tail at bottom left (Lucide messages-square, first path). */
@@ -26,8 +27,11 @@ export function AskIcon({ size = 20, active = false, label }: { size?: number; a
       strokeLinecap="round" strokeLinejoin="round" className={`askic${active ? " is-on" : ""}`}
       role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <g transform={`translate(${ASK_OFFSET[0]} ${ASK_OFFSET[1]})`}>
+      {/* The hover beat moves this pair as one, so the back bubble's ends never leave the front's outline */}
+      <g className="askic-pair">
       <path className="askic-back" d={BACK} />
       <path className="askic-front" d={FRONT} />
+      </g>
       </g>
     </svg>
   );
