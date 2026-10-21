@@ -15,9 +15,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
 
 /* ---------- Safari's toolbar ---------- */
 /* iOS Safari tints the area around its toolbar from the page behind it and theme-color (index.html). The html box shows
-   in the overscroll and behind the toolbar, so it takes the bars' color: #191A19 at 90% over the #121413 ground, which
-   reads as #181918. */
-html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #181918; }
+   in the overscroll and behind the status bar, so it takes the top of the ground, #0D0E0D: the phone header is clear at
+   the top of the page, and a lighter tone would show as a band above it. The tab bar (#191A19 at 90%) still reads
+   #181918 over the darker ground and covers the bottom overscroll itself. */
+html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
 
 /* ---------- Phone header: logo, then when it was updated, then bell and settings ---------- */
 @media (max-width: 860px) {

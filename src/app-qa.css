@@ -1,7 +1,7 @@
 /* App field and app QA fixes. Owned by the app QA pass; loaded last. No CSS image functions in this file: it makes Vite run PostCSS. */
 
 /* The app background, from Zach's "Background" Figma frames (Phone 390, Desktop 1440).
-   One fixed layer inside .shell, over body's night gradient. A real element because body paints an
+   One fixed layer inside .shell, over body's night gradient (#0D0E0D, #0D0E0D at 50%, #0F1110, top to bottom; styles.css). A real element because body paints an
    opaque !important gradient that hides anything on the root at z-index -1 (the old body::after glows).
    Phone order, back to front: field, then glow. Desktop: glow, then field. */
 html:root:not(#_):not(#_) .shell { isolation: isolate; }
@@ -80,3 +80,45 @@ html:root:not(#_):not(#_) .side-logo {
 html:root:not(#_):not(#_) .side-logo:focus-visible,
 html:root:not(#_):not(#_) .top-logo:focus-visible { outline: 2px solid #D8F24A; outline-offset: 4px; border-radius: 8px; }
 html:root:not(#_):not(#_) .side-logo:active { transform: scale(0.98); }
+
+/* The landing sits on the same ground as the app (Zach's "Background" Figma): the darker night gradient, one lime glow
+   at the bottom, and the field with the same lines, hashes and fade. The base lives on the fixed environment so it
+   holds still on iOS too. Positions avoid `transform`, which the landing's reduced-motion rule clears on these layers. */
+html:root:not(#_):not(#_) .landing.ld2 { background: transparent; }
+html:root:not(#_):not(#_) .ld2-env { background: linear-gradient(180deg, #0D0E0D 0%, #0D0E0D 50%, #0F1110 100%); }
+html:root:not(#_):not(#_) .ld2-env .env-glow:is(.g2, .g3) { display: none; }
+/* Phone: centered on the bottom edge, 149.5% x 85.44% of the screen, tipped 15.83deg, over the field */
+html:root:not(#_):not(#_) .ld2-env .env-glow.g1 {
+  z-index: 1; left: -24.75%; right: auto; top: 57.28%; width: 149.5%; height: 85.44%; border-radius: 0; filter: none; will-change: auto;
+  transform: none; rotate: 15.83deg;
+  background: radial-gradient(closest-side, rgba(216, 242, 74, 0.06), rgba(216, 242, 74, 0) 70%);
+}
+html:root:not(#_):not(#_) .ld2-env .env-field {
+  left: 0; right: 0; bottom: 0; width: auto; margin-left: 0; height: min(44vh, 440px); overflow: hidden;
+  mask-image: radial-gradient(ellipse 70% 463px at 50% 100%, #000 22%, transparent 74%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 463px at 50% 100%, #000 22%, transparent 74%);
+}
+html:root:not(#_):not(#_) .ld2-env .env-turf {
+  inset: 0 auto auto 50%; width: 2400px; height: 170%; margin-left: -1200px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.09) 158px 160px),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 27% / 100% 18px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 37% / 100% 18px no-repeat;
+}
+/* The field under the closing call to action keeps its place, with the same line colors */
+html:root:not(#_):not(#_) .ld2-endfield .env-turf {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.09) 158px 160px),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 46% / 100% 18px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 62% / 100% 18px no-repeat;
+}
+/* The headshots' cut-out ring takes the new ground */
+html:root:not(#_):not(#_) .ld2-head .av { box-shadow: 0 0 0 3px #0D0E0D, 0 0 0 4px color-mix(in srgb, var(--ink) 14%, transparent), 0 16px 32px -12px rgba(0, 0, 0, 0.7); }
+/* Desktop: the glow lies flat, 140% x 80% centered 110% down, under the field */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .ld2-env .env-glow.g1 { z-index: auto; left: -20%; top: 70%; width: 140%; height: 80%; rotate: none; }
+  html:root:not(#_):not(#_) .ld2-env .env-field {
+    mask-image: radial-gradient(ellipse 70% 467px at 50% 100%, #000 22%, transparent 74%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 467px at 50% 100%, #000 22%, transparent 74%);
+  }
+}

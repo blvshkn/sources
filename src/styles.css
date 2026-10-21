@@ -2433,7 +2433,7 @@ html:root:not([data-nf]):not(#_) {
 html:root:not(#_)[data-tab] { --tab-rgb: 216, 242, 74; }
 
 /* The field: night gradient, a floodlight from the top right, yard lines every 120px */
-body { background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%) fixed var(--bg) !important; }
+body { background: linear-gradient(180deg, #0D0E0D 0%, #0D0E0D 50%, #0F1110 100%) fixed var(--bg) !important; }
 body::after {
   background:
     radial-gradient(70vw 46vh at 92% -8%, rgba(var(--lime-rgb), 0.17), transparent 68%),
@@ -2871,7 +2871,7 @@ html:root:not([data-nf]):not(#_) {
   --ink: #F2F4F1; --muted: #9BA09C; --faint: #656B67; --line: rgba(242, 244, 241, 0.07);
   --stamp-ink: #121413; --action-ink: #121413;
 }
-body { background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%) fixed var(--bg) !important; }
+body { background: linear-gradient(180deg, #0D0E0D 0%, #0D0E0D 50%, #0F1110 100%) fixed var(--bg) !important; }
 body::after {
   background:
     radial-gradient(70vw 40vh at 92% -10%, rgba(var(--lime-rgb), 0.05), transparent 70%),
@@ -3207,10 +3207,8 @@ html:root:not(#_) .page-meta::before { margin-left: 3px; }
    fades out (ease-in) once the league is ready. Nothing in the logo animates. ---- */
 html:root:not(#_):not(#_) .boot3 {
   position: fixed; inset: 0; z-index: 100; overflow: hidden; color: #F2F3EE;
-  background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%);
+  background: linear-gradient(180deg, #0D0E0D 0%, #0D0E0D 50%, #0F1110 100%);
   --boot-col: calc(100% - 48px); --boot-nudge: 5px; --boot-top: 13.27vh; --boot-top: 13.27dvh; --boot-gap: 19px; --boot-foot: 92px; --boot-trace: 272px;
-  /* The glow behind the logo: lime at 6%, gone 70% of the way out */
-  --boot-glow: 298px 356px at 50% 100%;
   /* The loader: the vendored Braille Flipwave draws at 30px at most, so it's scaled up as a whole to 40px (Figma 01:26) */
   --boot-loader: 40px; --boot-loader-k: calc(40 / 30);
 }
@@ -3220,9 +3218,12 @@ html:root:not(#_):not(#_) .boot3-field {
   -webkit-mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
   mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
 }
+/* The glow, lime at 6% gone 70% of the way out. Phone: over the field, centered on the bottom edge, an ellipse
+   583 x 721px at 390 x 844 tipped 15.83deg (the same glow as the app background) */
 html:root:not(#_):not(#_) .boot3-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(var(--boot-glow), rgba(216, 242, 74, 0.06) 0%, rgba(216, 242, 74, 0) 70%);
+  position: absolute; left: 50%; top: 100%; width: 149.5%; height: 85.44%; pointer-events: none;
+  transform: translate(-50%, -50%) rotate(15.83deg);
+  background: radial-gradient(closest-side, rgba(216, 242, 74, 0.06) 0%, rgba(216, 242, 74, 0) 70%);
 }
 html:root:not(#_):not(#_) .boot3-col { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--boot-foot); }
 html:root:not(#_):not(#_) .boot3-top { flex: 0 1 var(--boot-top); min-height: 24px; }
@@ -3235,6 +3236,8 @@ html:root:not(#_):not(#_) .boot3-loader { position: relative; display: block; fl
 html:root:not(#_):not(#_) .boot3-loader > .wkl { display: block; transform: scale(var(--boot-loader-k)); transform-origin: 0 0; }
 html:root:not(#_):not(#_) .boot3 .boot3-logo { flex: none; --brand-mark: #D8F24A; --brand-word: #FFFFFF; --brand-tag: #9A9C98; }
 @media (min-width: 768px) {
+  /* Tablet and desktop: the glow lies flat, under the field */
+  html:root:not(#_):not(#_) .boot3-glow { z-index: -1; left: 0; top: 0; width: 100%; height: 100%; transform: none; background: radial-gradient(var(--boot-glow), rgba(216, 242, 74, 0.06) 0%, rgba(216, 242, 74, 0) 70%); }
   html:root:not(#_):not(#_) .boot3 { --boot-col: 460px; --boot-nudge: 4px; --boot-top: 17.3vh; --boot-top: 17.3dvh; --boot-gap: 18px; --boot-foot: 112px; --boot-trace: 232px; --boot-glow: 640px 358px at 50% 105%; }
 }
 @media (min-width: 1024px) {
