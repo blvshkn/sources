@@ -1,10 +1,10 @@
 // The thinking trace: one line that says what Sources is doing and for how long, over a timeline of the real steps
 // (think.ts). While it thinks, the plan streams in under the line. While it works, the timeline is open and the
-// running step carries the braille loader. When it's done it folds to "Worked 1.4s" with a chevron that opens the
+// running step carries the working loader (Braille Flipwave). When it's done it folds to "Worked 1.4s" with a chevron that opens the
 // steps again. The head line is always there, so nothing below it jumps when the steps fold.
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AiDots } from "./AiDots";
+import { WorkingLoader } from "./WorkingLoader";
 import { Icon } from "./icons";
 import { MIN_STEP_MS, fillN, type Chip, type TraceState } from "../think";
 
@@ -146,7 +146,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
     <div className={`thk ${className}`} data-status={trace.status}>
       <button type="button" className="thk-head" aria-expanded={open} disabled={thinking && !compact}
         onClick={() => setManual(!open)}>
-        <span className="thk-ic" aria-hidden="true">{thinking || (compact && running && !open) ? <AiDots size={14} run /> : <Icon name="chev" size={14} />}</span>
+        <span className="thk-ic" aria-hidden="true">{thinking || (compact && running && !open) ? <WorkingLoader size={16} /> : <Icon name="chev" size={14} />}</span>
         <span className={`thk-word${running ? " shim" : ""}`}>{inline ? <Label text={active.doing} n={active.n} /> : word}</span>
         <span className="thk-sec">{secs(elapsed, !running)}</span>
         <span className="sr-only">{open ? ", hide steps" : ", show steps"}</span>
@@ -166,7 +166,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
               )}
               {trace.steps.map((s, i) => (
                 <li key={i} className={`thk-step ${s.state}`} aria-current={s.state === "active" ? "step" : undefined}>
-                  {s.state === "active" ? <span className="thk-mark run" aria-hidden="true"><AiDots size={12} run /></span> : <i className="thk-mark" aria-hidden="true" />}
+                  {s.state === "active" ? <span className="thk-mark run" aria-hidden="true"><WorkingLoader size={16} /></span> : <i className="thk-mark" aria-hidden="true" />}
                   <span className="thk-line">
                     <span className={`thk-label${s.state === "active" ? " shim" : ""}`}><Label text={s.state === "active" ? s.doing : s.done} n={s.n} /></span>
                     <Chips chips={s.chips} />

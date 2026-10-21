@@ -1,0 +1,44 @@
+/* The working loader (components/WorkingLoader.tsx, Braille Flipwave) and the Ask icon (components/AskIcon.tsx).
+   Loads before frame.css. Phone first: nothing here changes with width. */
+
+/* ---------- Working loader ---------- */
+/* The loader draws itself inside a closed shadow root and reads --lb-ink (dots) and --lb-paper (their flipped
+   faces) from here. By default those are the app's ink and surface, so it follows the light and dark themes. */
+html:root:not(#_):not(#_) .wkl { display: inline-block; flex: none; position: relative; vertical-align: middle; }
+html:root:not(#_):not(#_) .thk-ic .wkl, html:root:not(#_):not(#_) .thk-mark .wkl { display: block; }
+
+/* Ask send button: the loader takes the arrow's place while an answer is being built, in the button's own colors */
+html:root:not(#_):not(#_) .ask-send .wkl { --lb-ink: currentColor; --lb-paper: var(--action, var(--ink)); }
+html:root:not(#_):not(#_) .ask-send[aria-busy="true"] { cursor: progress; }
+
+/* League loading: that screen is always dark, so the loader takes dark ink and the screen's own ground */
+html:root:not(#_):not(#_) .boot3-trace .wkl { --lb-ink: #F2F3F5; --lb-paper: #15171C; }
+
+/* ---------- Ask icon ---------- */
+html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }
+html:root:not(#_):not(#_) svg.askic :is(.askic-back, .askic-front, .askic-dot) { transform-box: fill-box; transform-origin: center; }
+html:root:not(#_):not(#_) svg.askic .askic-front { transform-origin: 70% 60%; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-back { animation: askic-nudge 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-front { animation: askic-pop 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot { animation: askic-dot 260ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot.d1 { animation-delay: 50ms; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-dot.d2 { animation-delay: 100ms; }
+}
+/* The back bubble steps up and left, the front one swells a little from its tail side, then both settle */
+@keyframes askic-nudge {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(-0.9px, -0.9px); }
+}
+@keyframes askic-pop {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+}
+/* Each typing dot lifts and dims once, left to right */
+@keyframes askic-dot {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  45% { transform: translateY(-1px); opacity: 0.45; }
+}
+
+/* The inbox ask box keeps its accent on the icon */
+html:root:not(#_):not(#_) .ibx-ask > svg.askic { color: var(--lime); }

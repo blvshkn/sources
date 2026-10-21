@@ -7,7 +7,7 @@ import { eff, fmt, Trade } from "../engine";
 import { startersOf, matchNow, type Live } from "../live";
 import { Icon, IconName } from "./ui";
 import { Tooltip } from "./Tooltip";
-import { AiDots } from "./AiDots";
+import { AskIcon } from "./AskIcon";
 import type { Nudge } from "./Wire";
 import type { Check } from "./Roster";
 import { NewsItem, ago, requestPlayer } from "../news";
@@ -184,7 +184,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
       </ul>
       {/* Sends the question to Ask Sources, where the work shows as a thinking trace */}
       <form className="ibx-ask" onSubmit={(e) => { e.preventDefault(); onAsk(q.trim()); setQ(""); }}>
-        <AiDots size={18} />
+        <AskIcon size={18} />
         <label htmlFor="ibx-q" className="sr-only">Ask your league anything</label>
         <input id="ibx-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your league anything" autoComplete="off" />
         <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Sources"><Icon name="send" size={16} /></button>

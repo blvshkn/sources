@@ -51,6 +51,7 @@ import "./needs-cards.css";
 import "./matchup-card.css";
 import "./player-modal.css";
 import "./thinking.css";
+import "./ai-loader.css";
 import "./share.css";
 import "./sent.css";
 import "./sent-sync.css";

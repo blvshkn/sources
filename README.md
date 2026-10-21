@@ -73,3 +73,7 @@ src/
 ```
 
 In the demo league, player names are real NFL players with illustrative projections; teams, managers, trades and bids are fictional. Live leagues use Sleeper's data as is. Sleeper doesn't expose pending trade offers, so "offer received" verdicts in a live league come from the builder's "Judging an offer someone sent me" switch.
+
+## NOTICE
+
+The AI working loader (Braille Flipwave) is vendored from the npm package `loader-buttons` v0.1.0 by Jaimin Kataria (https://github.com/Appllama/25-unique-loaders), licensed Apache-2.0 per its package.json. The files live in `src/vendor/loader-buttons/`. They are unchanged except for colors in `designs/25-braille-flipwave.js`. `designs/index.js` and `loader.d.ts` are ours.
