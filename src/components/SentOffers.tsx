@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { TEAMS, playerById } from "../data";
-import { SentDeal, SentOffer, ago, sentDeals } from "../sentOffers";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pos, TEAMS, playerById } from "../data";
+import { DeclineWhy, SentDeal, SentOffer, WhyKind, ago, sentDeals } from "../sentOffers";
+import { WHY_PICKS, thinOptions, whyEffect, whyLabel } from "../declineWhy";
 import { TeamAvatar } from "./TeamPicker";
 import { PairPrompt } from "./SyncDevices";
 import { useSyncStatus } from "../syncKey";
@@ -32,8 +33,64 @@ function When({ o, now }: { o: SentOffer; now: number }) {
     : <span className="so-when">Sent {ago(o.sentAt, now)}</span>;
 }
 
-function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: number; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void }) {
+const last = (id: string) => nameOf(id).split(" ").slice(-1)[0];
+
+/**
+ * Why he passed: quick picks plus a note, inside the row. "Thin at" is one chip per position: the ones you asked
+ * him for, then his short spots. A pick that names a player asks which one when the deal has more than one.
+ */
+function WhyPanel({ o, onSave, onCancel }: { o: SentOffer; onSave: (w: DeclineWhy | null) => void; onCancel: () => void }) {
+  const thin = useMemo(() => thinOptions(o), [o.partnerId, o.get.join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [kind, setKind] = useState<WhyKind | null>(o.why?.kind ?? null);
+  const [pos, setPos] = useState<Pos | undefined>(o.why?.pos);
+  const [pid, setPid] = useState<string | undefined>(o.why?.playerId);
+  const [note, setNote] = useState(o.why?.note ?? "");
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => { box.current?.querySelector<HTMLElement>("[aria-pressed='true'], .so-why-chip")?.focus({ preventScroll: true }); }, []);
+  const needs = WHY_PICKS.find((p) => p.kind === kind)?.needs;
+  const side = needs === "give" ? o.give : needs === "get" ? o.get : [];
+  const playerId = side.length === 1 ? side[0] : pid && side.includes(pid) ? pid : undefined;
+  const ready = kind === "thin" ? !!pos : needs ? !!playerId : kind === "other" ? note.trim().length > 0 : !!kind;
+  const save = () => {
+    if (!ready || !kind) return;
+    const w: DeclineWhy = { kind, at: Date.now() };
+    if (kind === "thin" && pos) w.pos = pos;
+    if (needs && playerId) w.playerId = playerId;
+    if (note.trim()) w.note = note.trim().slice(0, 280);
+    onSave(w);
+  };
+  const chip = (on: boolean, label: string, pick: () => void, key = label) => (
+    <button key={key} type="button" className="so-why-chip" aria-pressed={on} onClick={pick}>{label}</button>
+  );
+  return (
+    <div ref={box} className="so-why-panel" role="group" aria-label={`Why ${managerOf(o.partnerId)} declined`}
+      onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); onCancel(); } }}>
+      <p className="so-why-q">Why did {managerOf(o.partnerId)} pass?</p>
+      <div className="so-why-chips">
+        {thin.map((p) => chip(kind === "thin" && pos === p, `Thin at ${p}`, () => { setKind("thin"); setPos(p); }, `thin-${p}`))}
+        {WHY_PICKS.map((p) => chip(kind === p.kind, p.label, () => setKind(p.kind)))}
+      </div>
+      {side.length > 1 && (
+        <div className="so-why-sub">
+          <span className="so-why-k">Which player?</span>
+          <div className="so-why-chips">{side.map((id) => chip(playerId === id, last(id), () => setPid(id), id))}</div>
+        </div>
+      )}
+      <input className="so-why-note" type="text" value={note} maxLength={280} onChange={(e) => setNote(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); save(); } }}
+        placeholder={kind === "other" ? "What did he say?" : "Add a note (optional)"} aria-label="Note" />
+      <div className="so-why-foot">
+        {o.why && <button type="button" className="so-act so-why-clear" onClick={() => onSave(null)}>Remove</button>}
+        <button type="button" className="so-act" onClick={onCancel}>Cancel</button>
+        <button type="button" className="so-act so-why-save" disabled={!ready} onClick={save}>Save</button>
+      </div>
+    </div>
+  );
+}
+
+function Row({ d, now, onReopen, onDecline, onClear, onWhy }: { d: SentDeal; now: number; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void; onWhy?: (o: SentOffer, w: DeclineWhy | null) => void }) {
   const [open, setOpen] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
   const { head, earlier } = d;
   const team = partnerOf(head.partnerId);
   const st = dealStatus(d);
@@ -50,7 +107,8 @@ function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: numbe
         <Icon name="chev" size={16} />
       </button>
       <div className="so-acts">
-        {st === "pending" && <button type="button" className="so-act" onClick={() => onDecline(head)}>Mark declined</button>}
+        {st === "pending" && <button type="button" className="so-act" onClick={() => { onDecline(head); if (onWhy) setWhyOpen(true); }}>Mark declined</button>}
+        {st === "declined" && onWhy && !head.why && !whyOpen && <button type="button" className="so-act" onClick={() => setWhyOpen(true)}>Why?</button>}
         <button type="button" className="so-act" onClick={() => onClear(head)}>Clear</button>
         {earlier.length > 0 && (
           <button type="button" className="so-act so-more" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
@@ -58,6 +116,15 @@ function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: numbe
           </button>
         )}
       </div>
+      {st === "declined" && onWhy && (whyOpen
+        ? <WhyPanel o={head} onCancel={() => setWhyOpen(false)} onSave={(w) => { onWhy(head, w); setWhyOpen(false); }} />
+        : head.why && (
+          <button type="button" className="so-why-line" onClick={() => setWhyOpen(true)} aria-label={`Why: ${whyLabel(head.why)}. Edit`}>
+            <span className="so-why-text"><span className="so-why-k">Why:</span> {whyLabel(head.why)}{head.why.note && head.why.kind !== "other" ? <span className="so-why-said"> “{head.why.note}”</span> : null}</span>
+            {whyEffect(head.why, head.partnerId) && <small className="so-why-fx">{whyEffect(head.why, head.partnerId)}</small>}
+            <Icon name="pen" size={14} />
+          </button>
+        ))}
       {open && earlier.length > 0 && (
         <ul className="so-earlier" aria-label="Earlier versions">
           {earlier.map((o) => (
@@ -76,8 +143,10 @@ function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: numbe
 }
 
 /** Trade's Sent tab: every deal you sent, newest first. Tapping one opens it in the builder, filled in. */
-export function SentOffers({ offers, synced = false, syncUser = "", onReopen, onDecline, onClear }: {
+export function SentOffers({ offers, synced = false, syncUser = "", onReopen, onDecline, onClear, onWhy }: {
   offers: SentOffer[]; synced?: boolean; syncUser?: string; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
+  /** Save or remove why a declined offer didn't go */
+  onWhy?: (o: SentOffer, w: DeclineWhy | null) => void;
 }) {
   const now = useNow();
   const deals = sentDeals(offers);
@@ -90,7 +159,7 @@ export function SentOffers({ offers, synced = false, syncUser = "", onReopen, on
       </div>
       {deals.length === 0
         ? <p className="so-empty">Nothing sent yet. When you share or copy a pitch, the deal lands here so you can follow up or send a new version.</p>
-        : <ul className="so-list">{deals.map((d) => <Row key={d.head.deal} d={d} now={now} onReopen={onReopen} onDecline={onDecline} onClear={onClear} />)}</ul>}
+        : <ul className="so-list">{deals.map((d) => <Row key={d.head.deal} d={d} now={now} onReopen={onReopen} onDecline={onDecline} onClear={onClear} onWhy={onWhy} />)}</ul>}
     </section>
   );
 }

@@ -18,6 +18,8 @@ const GONE_TTL = 90 * 864e5;
 const KEEP_BYTES = MAX_BYTES - 4 * 1024;
 
 const STATUS = new Set(["pending", "declined", "accepted", "replaced"]);
+const WHY = new Set(["thin", "value", "unwanted", "keeps", "notNow", "other"]);
+const POS = new Set(["QB", "RB", "WR", "TE"]);
 const ID = /^[A-Za-z0-9_-]{1,48}$/;
 const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : null);
 const num = (v) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
@@ -47,6 +49,16 @@ export function cleanOffer(o, leagueId) {
   };
   const statusAt = num(o.statusAt);
   if (statusAt != null) out.statusAt = statusAt;
+  // Why it was declined: a known pick, plus only the position, player and note that go with it
+  const w = o.why;
+  if (w && typeof w === "object" && !Array.isArray(w) && WHY.has(w.kind)) {
+    const why = { kind: w.kind, at: num(w.at) ?? statusAt ?? sentAt };
+    if (POS.has(w.pos)) why.pos = w.pos;
+    if (typeof w.playerId === "string" && ID.test(w.playerId)) why.playerId = w.playerId;
+    const note = str(w.note, 280)?.trim();
+    if (note) why.note = note;
+    out.why = why;
+  }
   out.updatedAt = stampOf({ ...out, updatedAt: o.updatedAt });
   return out;
 }

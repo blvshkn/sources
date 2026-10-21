@@ -42,7 +42,8 @@ import { Landing } from "./components/Landing";
 import { clearHandoff, peekHandoff } from "./demoHandoff";
 import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
-import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
+import { DeclineWhy, SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
+import { offerOfTag, tagsFromSent, whyEffect } from "./declineWhy";
 import { useOfferSync } from "./offerSync";
 import { setAiUser } from "./aiClient";
 import { useWatchSync } from "./watchSync";
@@ -243,7 +244,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return () => { window.removeEventListener("hashchange", onHash); window.removeEventListener("popstate", onHash); };
   }, []);
 
-  const active = useMemo(() => activeTags(tags, fade), [tags, fade]);
+  // Your notes plus what declined offers taught it ("Thin at RB" means he won't move a RB). See declineWhy.ts.
+  const allTags = useMemo(() => [...tags, ...tagsFromSent(sent, tags)], [tags, sent]);
+  const active = useMemo(() => activeTags(allTags, fade), [allTags, fade]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const needs = useMemo(() => allNeeds(), [fkey]);
   const youNeeds = needs.find((n) => n.team.you) ?? needsFor(YOU);
@@ -517,6 +520,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     setSent((c) => c.map((x) => (x.id === o.id ? { ...x, status: "declined", statusAt: Date.now() } : x)));
     setToast(`Marked declined by ${teamById(o.partnerId)?.manager ?? "them"}.`, () => setSent(prev));
   };
+  /** Why a declined offer didn't go. It steers ideas through the tag it implies, so say what changed. */
+  const whySent = (o: SentOffer, w: DeclineWhy | null) => {
+    const prev = sent;
+    setSent((c) => c.map((x) => { if (x.id !== o.id) return x; const { why: _old, ...rest } = x; return w ? { ...rest, why: w } : rest; }));
+    haptic();
+    const fx = w && whyEffect(w, o.partnerId, teamById(o.partnerId)?.manager);
+    setToast(!w ? "Reason removed." : fx ? `Saved. ${fx}.` : "Saved.", () => setSent(prev));
+  };
   const clearSent = (o: SentOffer) => {
     const prev = sent;
     setSent((c) => c.filter((x) => x.deal !== o.deal));
@@ -549,8 +560,19 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     haptic();
     setToast(`Tag saved. Trade ideas for ${teamById(t.teamId).manager} now follow it.`);
   };
-  const keepTag = (id: string) => { setTags((cur) => cur.map((t) => (t.id === id ? { ...t, weeksOld: 0 } : t))); setToast("Tag kept."); };
+  const keepTag = (id: string) => {
+    const from = offerOfTag(id);
+    if (from) { setSent((c) => c.map((x) => (x.id === from && x.why ? { ...x, why: { ...x.why, at: Date.now() } } : x))); setToast("Tag kept."); return; }
+    setTags((cur) => cur.map((t) => (t.id === id ? { ...t, weeksOld: 0 } : t))); setToast("Tag kept."); };
   const clearTag = (id: string) => {
+    // A tag from a declined offer goes with its reason
+    const from = offerOfTag(id);
+    if (from) {
+      const was = sent;
+      setSent((c) => c.map((x) => { if (x.id !== from) return x; const { why: _old, ...rest } = x; return rest; }));
+      setToast("Tag cleared, and the reason on that offer with it.", () => setSent(was));
+      return;
+    }
     const prev = tags;
     setTags((cur) => cur.filter((t) => t.id !== id));
     setToast("Tag cleared. That player is back in trade ideas.", () => setTags(prev));
@@ -727,13 +749,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "how" && <HowItWorks onBack={() => go("settings:about")} />}
           {tab === "legal" && <Legal onBack={() => go("settings:about")} />}
           {tab === "league" && (
-            <League needs={needs} tags={tags} fade={fade} focusId={focusTeam} onFocused={() => setFocusTeam(undefined)} partners={partners} fits={fits} onAddTag={addTag}
+            <League needs={needs} tags={allTags} fade={fade} focusId={focusTeam} onFocused={() => setFocusTeam(undefined)} partners={partners} fits={fits} onAddTag={addTag}
               onTrade={(id) => go("trade", id)} onOpen={loadTrade} onRemoveTag={clearTag} onKeepTag={keepTag} />
           )}
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
-              sent={sent} sentSynced={offerSync.state === "synced"} syncUser={syncUser} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent}
+              sent={sent} sentSynced={offerSync.state === "synced"} syncUser={syncUser} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent} onWhySent={whySent}
               extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []} ideasByTeam={suggestionsByTeam}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}

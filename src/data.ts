@@ -368,6 +368,8 @@ export interface ManagerTag {
   pos?: Pos;
   text: string;
   weeksOld: number;
+  /** Set when the tag comes from why an offer was declined (declineWhy.ts) rather than a note you wrote */
+  from?: "declined";
 }
 
 export const INITIAL_MANAGER_TAGS: ManagerTag[] = [

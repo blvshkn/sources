@@ -11,7 +11,7 @@ import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { SentOffers } from "./SentOffers";
-import type { SentOffer } from "../sentOffers";
+import type { DeclineWhy, SentOffer } from "../sentOffers";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { DealDetails } from "./DealDetails";
 import { DetailSheet } from "./DetailSheet";
@@ -470,7 +470,7 @@ export function lockMap(myTags: Record<string, MyTag>) {
 }
 
 const NO_IDEAS: Record<string, TradeT[]> = {};
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent, onWhySent }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -491,6 +491,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   onRemoveTag: (id: string) => void;
   /** Offers you sent, for the Sent tab. Tapping one puts it back in the builder. */
   sent?: SentOffer[]; sentSynced?: boolean; syncUser?: string; onReopenSent?: (o: SentOffer) => void; onDeclineSent?: (o: SentOffer) => void; onClearSent?: (o: SentOffer) => void;
+  onWhySent?: (o: SentOffer, w: DeclineWhy | null) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const isMulti = extra.length > 0;
@@ -608,7 +609,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
       {view === "sent" && (
         <SentOffers offers={sent} synced={sentSynced} syncUser={syncUser} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
-          onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} />
+          onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} onWhy={onWhySent} />
       )}
 
       {view === "ideas" && (
@@ -785,7 +786,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         {theirTags.length > 0 && (
           <div className="log-saved">
             <span className="tb-or">Saved</span>
-            <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i /><span>{t.text}</span><button className="saved-x" onClick={() => onRemoveTag(t.id)} aria-label={`Remove: ${t.text}`}><Icon name="x" size={14} /></button></li>)}</ul>
+            <ul>{theirTags.map((t) => <li key={t.id} className={`saved-tag ${t.kind}`}><i /><span>{t.text}{t.from === "declined" && <small className="tag-from">From a declined offer</small>}</span><button className="saved-x" onClick={() => onRemoveTag(t.id)} aria-label={`Remove: ${t.text}`}><Icon name="x" size={14} /></button></li>)}</ul>
           </div>
         )}
       </section>}

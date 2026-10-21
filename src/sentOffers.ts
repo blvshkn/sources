@@ -4,7 +4,23 @@
 // In a live league the list also syncs to the Sleeper user across devices (offerSync.ts, api/offers.js).
 // A deal can be sent again after a tweak: each send is a version, and earlier versions stay with the latest one.
 
+import type { Pos } from "./data";
+
 export type SentStatus = "pending" | "declined" | "accepted" | "replaced";
+
+/** Why a declined offer didn't go: the quick pick, the position or player it names, and any note in his words.
+ *  declineWhy.ts turns it into a tag on the manager, so ideas and Ask follow it. */
+export type WhyKind = "thin" | "value" | "unwanted" | "keeps" | "notNow" | "other";
+export interface DeclineWhy {
+  kind: WhyKind;
+  /** "thin": the position he's short at */
+  pos?: Pos;
+  /** "unwanted": your player he passed on. "keeps": his player he won't move */
+  playerId?: string;
+  note?: string;
+  /** ms since epoch, when it was set */
+  at: number;
+}
 
 export interface SentOffer {
   /** This version */
@@ -26,6 +42,8 @@ export interface SentOffer {
   week: number;
   status: SentStatus;
   statusAt?: number;
+  /** Why it was declined, once you say */
+  why?: DeclineWhy;
   /** ms since epoch, the last change to this record on any device. Sync's merge keeps the newest (see offerSync.ts) */
   updatedAt?: number;
 }

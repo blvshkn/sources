@@ -169,7 +169,7 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose }: {
               <button type="button" className="linkish" onClick={() => close(() => onNotes(id))}>{theirs.length ? "Open notes" : "Add a note"}</button>
             </div>
             {theirs.length ? (
-              <ul className="pp-tags">{theirs.map((x) => <li key={x.id}>{x.text}</li>)}</ul>
+              <ul className="pp-tags">{theirs.map((x) => <li key={x.id}>{x.text}{x.from === "declined" && <small className="tag-from">From a declined offer</small>}</li>)}</ul>
             ) : <p className="pp-none">Nothing noted on {t.manager} yet. Notes steer the trade ideas.</p>}
           </section>
         </ScrollArea>
