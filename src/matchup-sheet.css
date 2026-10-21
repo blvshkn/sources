@@ -59,3 +59,12 @@ html:root:not(#_):not(#_) .lu-mx-mid.is-final.down .lu-mx-bar { background: var(
 html:root:not(#_):not(#_) .lu-mx-mid.is-final.even .lu-mx-bar i { background: var(--muted); }
 
 html:root:not(#_):not(#_) .mu-bar.is-final.down { background: var(--bad-soft); }
+
+/* The sheet carries the same soft hero wash as the matchup cards, from its top left, so the score header opens on
+   the glow it has on Wire. The card inside stays transparent so the wash isn't drawn twice. */
+html:root:not(#_):not(#_) .ps.ps-matchup {
+  background:
+    linear-gradient(155deg, rgba(var(--lime-rgb), 0.14) 0, rgba(var(--lime-rgb), 0.04) 150px, transparent 280px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 160px),
+    var(--surface);
+}
