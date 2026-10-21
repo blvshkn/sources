@@ -11,19 +11,19 @@ export type IconName =
   | "download" | "image" | "mail";
 
 const ICONS: Record<IconName, string> = {
-  wire: "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3.5\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
-  league: "<rect class=\"m1\" x=\"3.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2.5\"/><rect class=\"m2\" x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2.5\"/><rect class=\"m4\" x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2.5\"/><rect class=\"m3\" x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2.5\"/>",
-  trade: "<path class=\"m1\" d=\"M4 8.5h14.5M15.5 5.5l3 3-3 3\"/><path class=\"m2\" d=\"M20 15.5H5.5M8.5 12.5l-3 3 3 3\"/>",
-  waivers: "<circle class=\"m2\" cx=\"12\" cy=\"12\" r=\"8.5\"/><path class=\"m1\" d=\"M12 8v8M8 12h8\"/>",
+  wire: "<path d=\"M20 17.5C20 19.433 18.433 21 16.5 21H7.5C5.567 21 4 19.433 4 17.5V14.75M20 13.5V6.5C20 4.567 18.433 3 16.5 3H7.5C5.567 3 4 4.567 4 6.5V9.25\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
+  league: "<path class=\"m1\" d=\"M10.5 6C10.5 4.61929 9.38071 3.5 8 3.5H6C4.61929 3.5 3.5 4.61929 3.5 6V8M10.5 8C10.5 9.38071 9.38071 10.5 8 10.5H6\"/><rect class=\"m2\" x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2.5\"/><rect class=\"m4\" x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2.5\"/><rect class=\"m3\" x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2.5\"/>",
+  trade: "<path class=\"m1\" d=\"M4 8.5H8M15.5 11.5L18.5 8.5L15.5 5.5M18.5 8.5H10.5\"/><path class=\"m2\" d=\"M20 15.5H14.5M8.5 18.5L5.5 15.5L8.5 12.5M5.5 15.5H11.5\"/>",
+  waivers: "<circle class=\"m2\" cx=\"12\" cy=\"12\" r=\"8.5\"/><path class=\"m1\" d=\"M12 8V16M8 12H10M16 12H14\"/>",
   spark: "", // drawn by AskIcon
   app: "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15\" rx=\"3.5\"/><path d=\"M3 9.5h18M7 13.5h6\"/>",
   clock: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
   // Bell: the dome (m1) swings from its hanger at (12, 3.6); the clapper (m2) hangs from the lip at (12, 17.1) and swings
   // against it. Drawn centred in the 24 box: dome top 3.6 to clapper bottom 20.4.
-  bell: "<g class=\"m1\"><path d=\"M6 15.1V9.6a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><g class=\"m2\"><path d=\"M10 19.1a2.2 2.2 0 0 0 4 0\"/></g></g>",
+  bell: "<g class=\"m1\"><path d=\"M6.5 7.20208C6.7972 6.52039 7.22133 5.89339 7.75736 5.35736C8.88258 4.23214 10.4087 3.6 12 3.6C13.5913 3.6 15.1174 4.23214 16.2426 5.35736C17.3679 6.48258 18 8.0087 18 9.6V15.1L19.5 17.1H4.5L6 15.1V11.5\"/><g class=\"m2\"><path d=\"M10 19.1C10.1755 19.483 10.4573 19.8075 10.8118 20.035C11.1663 20.2625 11.5787 20.3835 12 20.3835C12.4213 20.3835 12.8337 20.2625 13.1882 20.035C13.5427 19.8075 13.8245 19.483 14 19.1\"/></g></g>",
   search: "<g class=\"m1\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5\"/></g>",
-  gear: "<g class=\"m1\"><path d=\"M10.2 3.5h3.6l.6 2.4 1.8 1 2.3-.8 1.8 3.1-1.8 1.6v2.4l1.8 1.6-1.8 3.1-2.3-.8-1.8 1-.6 2.4h-3.6l-.6-2.4-1.8-1-2.3.8-1.8-3.1 1.8-1.6v-2.4L3.7 9.2l1.8-3.1 2.3.8 1.8-1z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/></g>",
-  helmet: "<g class=\"m1\"><path d=\"M 19.46 9.36C 18.14 4.74 14.4 1.66 10.22 1.66 5.05 1.66 1.2 5.95 1.2 11.12c 0 1.87 0.55 3.52 1.54 4.73 0.33 0.44 0.44 0.88 0.44 1.43v 0.88c 0 1.21 0.99 2.09 2.09 2.09h 4.73\"/><g class=\"m2\"><path d=\"M13.2 10.8h8.4M13.2 10.8l2.6 3.8h6.4l-1 5.2h-5.4M11.4 13.6l4.4 6.2M19.4 14.6l-.8 5.2\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
+  gear: "<g class=\"m1\"><path d=\"M10.2 3.5L9.6 5.9L7.8 6.9L5.5 6.1L3.7 9.2L5.5 10.8V13.2L3.7 14.8L4.6 16.35L5.5 17.9L6.65 17.5L7.8 17.1M9.9 19.3L10.2 20.5H13.8L14.4 18.1L16.2 17.1L18.5 17.9L20.3 14.8L18.5 13.2V10.8L20.3 9.2L18.5 6.1L16.2 6.9L14.4 5.9L13.8 3.5H12.9\"/><path d=\"M14.8 12C14.8 12.7629 14.4949 13.4546 14 13.9596C13.4918 14.4782 12.7835 14.8 12 14.8C11.2165 14.8 10.5082 14.4782 10 13.9596C9.50513 13.4546 9.2 12.7629 9.2 12C9.2 11.2371 9.50513 10.5454 10 10.0404C10.5082 9.52179 11.2165 9.2 12 9.2\"/></g>",
+  helmet: "<g class=\"m1\"><path d=\"M10 20.25H5.27C4.17 20.25 3.18 19.37 3.18 18.16V17.28C3.18 16.73 3.07 16.29 2.74 15.85C1.75 14.64 1.2 12.99 1.2 11.12C1.2 5.95 5.05 1.66 10.22 1.66C13.7273 1.66 16.9248 3.82843 18.6429 7.25555\"/><g class=\"m2\"><path d=\"M21.6 10.8H13.2L15.8 14.6H22.2L21.2 19.8H15.8L11.4 13.6M19.4 14.6L18.6 19.8\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
   group: "<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6\"/><path d=\"M15.5 4.8a3.5 3.5 0 0 1 0 6.4M17.5 14.4c2.4.6 4 2.6 4 5.6\"/>",
   values: "<path d=\"M3 17l6-6 4 4 7.5-7.5\"/><path d=\"M15 7.5h5.5V13\"/>",
   lock: "<rect x=\"4\" y=\"10.5\" width=\"16\" height=\"10.5\" rx=\"3.5\"/><path d=\"M8 10.5V7.5a4 4 0 0 1 8 0v3\"/>",
@@ -63,7 +63,7 @@ const MOTION: Partial<Record<IconName, "nav" | "any">> = {
 };
 
 /** One icon. The active tab thickens the line a little. The helmet keeps its original drawing and round ends. */
-/** The nav icons (Figma "Nav / Icon"): round line ends, and the same 1.6 line whether or not the tab is active
+/** The nav icons (Figma "Nav / Icon"): a 1.25 line with round ends, the same whether or not the tab is active
  *  (the active tab shows in color, not weight). */
 const NAV_ICONS = new Set<IconName>(["wire", "league", "trade", "waivers", "gear", "bell"]);
 
@@ -71,7 +71,7 @@ export function Icon({ name, size = 20, active = false }: { name: IconName; size
   // Ask, and the mark on anything Sources writes, is the chat bubbles icon with its own hover beat (AskIcon)
   if (name === "spark" || name === "ask") return <AskIcon size={size} active={active} />;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === "helmet" ? 1.8 : 1.6}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === "helmet" || NAV_ICONS.has(name) ? 1.25 : 1.6}
       strokeLinecap={name === "helmet" || NAV_ICONS.has(name) ? "round" : "butt"} strokeLinejoin="round" aria-hidden="true" className={`ic ic-${name}`} data-m={MOTION[name]}
       dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
   );
