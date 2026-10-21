@@ -24,10 +24,11 @@ html:root:not(#_):not(#_) {
   --pad-card: var(--pad-card-y) var(--pad-card-x);
   /* A list that ends on a row with 12px of its own room under the text: the card adds the rest */
   --pad-card-end: calc(var(--pad-card-y) - 12px);
-  /* Hover pills: 4px from the card edge, so they reach (padding - 4px) past the content */
-  --pad-pill-gap: 4px;
+  /* Hover pills sit halfway between the card edge and the content (Zach: not so close to the edge): 8px in on
+     phones, 13px on tablet, 14px on desktop, reaching the same distance past the text */
+  --pad-pill-gap: calc(var(--pad-card-x) / 2);
   --pad-pill-x: calc(var(--pad-pill-gap) - var(--pad-card-x));
-  --pad-pill-r: calc(var(--r, 12px) - var(--pad-pill-gap));
+  --pad-pill-r: 10px;
 }
 @media (min-width: 616px) {
   html:root:not(#_):not(#_) { --pad-card-y: 24px; --pad-card-x: 26px; }
