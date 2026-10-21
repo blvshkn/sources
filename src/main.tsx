@@ -84,6 +84,7 @@ import "./icon-lucide.css";
 import "./faq-side.css";
 import "./landing-steps.css";
 import "./num-tips.css";
+import "./hero-depth.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

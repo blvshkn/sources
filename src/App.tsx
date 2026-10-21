@@ -39,6 +39,7 @@ import { Settings, Level } from "./components/Settings";
 import { PlatformLogo } from "./components/PlatformLogo";
 import type { FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
+import { clearHandoff, peekHandoff } from "./demoHandoff";
 import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
@@ -583,6 +584,22 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       () => { setDismissedIds(prevIds); setDismissed(prevKinds); });
   };
   const onLink = (l: Answer["links"][number]) => { if (l.trade) loadTrade(l.trade); else go(l.tab, l.teamId); };
+  // The landing's trade idea buttons: the sample league opens on that deal in the builder, with its pitch over it
+  // for "Write pitch". Demo only (demoHandoff.ts); the deal is judged here, the same as any in the builder.
+  // The shell mounts twice as the demo starts, so each mount applies it and the one that stays up clears it.
+  useEffect(() => {
+    const h = demo ? peekHandoff() : null;
+    if (!h) return;
+    const done = window.setTimeout(clearHandoff, 1000);
+    if (!isPartner(h.partnerId)) { clearHandoff(); return; }
+    const give = h.give.filter((id) => YOU.roster.includes(id)), get = h.get.filter((id) => teamById(h.partnerId).roster.includes(id));
+    if (give.length && get.length) {
+      const t = evaluate(YOU, teamById(h.partnerId), give, get, active, myTags, prices);
+      loadTrade(t);
+      if (h.to === "pitch") setPitch(t);
+    }
+    return () => clearTimeout(done);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checks = useMemo(() => gameDayChecks(yourLineup), [yourLineup]);
   // Your roster's news feeds the Wire card and, for starters with a fresh status change, the inbox
@@ -875,7 +892,7 @@ export default function App() {
           onSwitchLeague={(leagueId, userId) => setSession((s) => (s.mode === "live" && s.accounts.some((a) => a.userId === userId) ? { ...s, leagueId, userId } : s))} />
       ) : <Landing onLive={(st) => setStart({ kind: "live", ...st })} onDemo={() => { setLeague(demoLeague()); setStart({ kind: "demo" }); }} />}
       {session.mode === "none" && start && (
-        <FirstRun start={start} onClose={() => { setStart(null); setLeague(demoLeague()); }}
+        <FirstRun start={start} onClose={() => { clearHandoff(); setStart(null); setLeague(demoLeague()); }}
           onLive={(s, myTags) => {
             setInitialMyTags(myTags); justLoaded.current = true;
             const added: Account = { username: s.username, userId: s.userId, name: start.kind === "live" ? start.user.name : undefined };

@@ -28,6 +28,13 @@ import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
+import { heroDepth } from "../heroDepth";
+import { clearHandoff, setHandoff } from "../demoHandoff";
+import { sampleWeek, matchNow } from "../live";
+import { LEAGUE, OPPONENT_ID } from "../data";
+import { Seg } from "./ui";
+import { Trophy, WinCup } from "./Trophy";
+import type { TeamNeeds } from "../engine";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -128,33 +135,15 @@ export function Landing({ onLive, onDemo }: {
     return () => { io.disconnect(); words.disconnect(); };
   }, []);
 
-  // Parallax: one rAF-throttled scroll and pointer read, written as CSS variables on the two layers that use them
+  // Hero depth: pointer tilt, scroll parallax and the exploded layers on the two hero cards (heroDepth.ts)
   const env = useRef<HTMLDivElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
-    let raf = 0, mx = 0, my = 0, tx = 0, ty = 0;
-    const tick = () => {
-      raf = 0;
-      // Ease the pointer toward its target so the layers drift instead of snapping
-      tx += (mx - tx) * 0.12; ty += (my - ty) * 0.12;
-      const y = Math.min(window.scrollY, 2400);
-      for (const el of [env.current, stage.current]) {
-        if (!el) continue;
-        el.style.setProperty("--sy", String(y));
-        el.style.setProperty("--mx", tx.toFixed(3));
-        el.style.setProperty("--my", ty.toFixed(3));
-      }
-      if (Math.abs(mx - tx) > 0.002 || Math.abs(my - ty) > 0.002) raf = requestAnimationFrame(tick);
-    };
-    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    const move = (e: PointerEvent) => { mx = e.clientX / innerWidth * 2 - 1; my = e.clientY / innerHeight * 2 - 1; kick(); };
-    addEventListener("scroll", kick, { passive: true });
-    if (fine) addEventListener("pointermove", move, { passive: true });
-    kick();
-    return () => { removeEventListener("scroll", kick); removeEventListener("pointermove", move); cancelAnimationFrame(raf); };
-  }, []);
+  const hero = useRef<HTMLElement>(null);
+  useEffect(() => (hero.current ? heroDepth(hero.current, env.current) : undefined), []);
+
+  // The trade idea's buttons start the sample league the way "Or explore a sample league" does, then the app opens
+  // this deal: in the builder, or with its pitch written (demoHandoff.ts). A handoff left from an earlier visit is dropped.
+  useEffect(() => clearHandoff(), []);
+  const openDeal = (to: "trade" | "pitch") => (t: Trade) => { setHandoff({ to, partnerId: t.partnerId, give: t.give, get: t.get }); onDemo(); };
 
   const form = (id: string) => (
     <>
@@ -202,20 +191,18 @@ export function Landing({ onLive, onDemo }: {
       </nav>
 
       <main id="ld-main" tabIndex={-1}>
-      <header className="ld-hero ld2-hero">
+      <header className="ld-hero ld2-hero" ref={hero}>
         <div className="ld2-copy">
           <span className="ld2-eyebrow ld2-in"><PlatformLogo size={14} />For Sleeper leagues</span>
           <h1 className="ld2-h1 ld2-typed"><TypedHeadline lines={HEADLINES} /></h1>
           <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
           <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
-          {/* This week's face-off from the sample league, live win bars and all: the same card as Wire */}
-          <div className="ld2-fo ld2-in" style={{ ["--i" as string]: 6 }} aria-hidden="true" {...{ inert: "" }}>
-            <Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} />
-          </div>
+          {/* This week's face-off from the sample league, the same card as Wire, before kickoff, live and final */}
+          <FaceOffStates you={demo.you} partner={demo.mike.manager} />
         </div>
 
-        <div className="ld2-stage" ref={stage}>
+        <div className="ld2-stage">
         <div className="ld2-heads" aria-hidden="true">
           {cast.map((p, i) => (
             <span key={p.id} className={`ld2-head h${i}`} style={{ ["--i" as string]: i }}>
@@ -223,14 +210,18 @@ export function Landing({ onLive, onDemo }: {
             </span>
           ))}
         </div>
-        <div className="ld-preview ld2-preview" aria-hidden="true" {...{ inert: "" }}>
+        <div className="hd-card hd-trade" data-hd-pin=".ti-actions">
+        <div className="hd-tilt"><div className="hd-pose">
+        <div className="ld-preview ld2-preview">
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
               <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
               <h3>{demo.mike.name} needs <em>a TE.</em></h3>
-              <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
+              <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
             </article>
           )}
+        </div>
+        </div></div>
         </div>
         </div>
       </header>
@@ -509,6 +500,85 @@ function TypedHeadline({ lines }: { lines: string[] }) {
       </span>
     </>
   );
+}
+
+type At = "pre" | "live" | "final";
+const AT: { v: At; label: string }[] = [{ v: "pre", label: "Projected" }, { v: "live", label: "Live" }, { v: "final", label: "Final" }];
+
+/**
+ * The hero face-off in each of its states: before kickoff, the sample Sunday live, and the same week final. Every
+ * number is the engine's on the sample league (live.sampleWeek). The three cards share one grid cell and crossfade, so
+ * switching never moves the page. It steps on every 4 seconds while it's on screen, and stops on hover, on focus,
+ * and for good once someone picks a state. The caption under it says what the state means and what the marks are:
+ * the crown is last season's champion, the cup is the week's winner once it's final.
+ */
+function FaceOffStates({ you, partner }: { you: TeamNeeds; partner: string }) {
+  const weeks = useMemo(() => ({ pre: sampleWeek("pre"), live: sampleWeek("live"), final: sampleWeek("final") }), []);
+  const [at, setAt] = useState<At>("pre");
+  const [picked, setPicked] = useState(false);
+  const [hold, setHold] = useState({ hover: false, focus: false });
+  const [seen, setSeen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = wrap.current; if (!el) return;
+    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (picked || hold.hover || hold.focus || !seen || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setTimeout(() => setAt((a) => AT[(AT.findIndex((x) => x.v === a) + 1) % AT.length].v), 4000);
+    return () => clearTimeout(id);
+  }, [at, picked, hold.hover, hold.focus, seen]);
+  return (
+    <div ref={wrap} className="hd-states ld2-in" style={{ ["--i" as string]: 6 }}
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") setHold((h) => ({ ...h, hover: true })); }}
+      onPointerLeave={() => setHold((h) => ({ ...h, hover: false }))}
+      onFocus={() => setHold((h) => ({ ...h, focus: true }))}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHold((h) => ({ ...h, focus: false })); }}>
+      <div className="ld2-fo hd-card hd-fo" aria-hidden="true" {...{ inert: "" }}>
+        <div className="hd-tilt"><div className="hd-pose">
+          {AT.map(({ v }) => (
+            <div key={v} className={`hd-face${at === v ? " on" : ""}`}>
+              <Scoreboard you={you} partner={partner} extras={false} at={weeks[v]} />
+            </div>
+          ))}
+        </div></div>
+      </div>
+      <div className="hd-seg"><Seg label="Show the face-off" value={at} options={AT} onChange={(v) => { setAt(v); setPicked(true); }} /></div>
+      <div className="hd-caps">
+        {AT.map(({ v }) => (
+          <p key={v} className={`hd-cap${at === v ? " on" : ""}`} aria-hidden={at !== v}><Caption at={v} live={weeks[v]} /></p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** One state's caption, from that state's own numbers. Names read the way the card writes them ("You", "Jake"). */
+function Caption({ at, live }: { at: At; live: ReturnType<typeof sampleWeek> }) {
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const ms = matchNow(live);
+  if (!opp || !ms.opp) return <>No matchup this week.</>;
+  const who = (mine: boolean) => (mine ? "You" : opp.manager);
+  const be = (mine: boolean) => (mine ? "are" : "is");
+  const n = (x: number) => <span className="num">{x.toFixed(1)}</span>;
+  if (at === "final" && ms.result) {
+    const r = ms.result, mine = r.letter === "W", margin = Math.abs(ms.me.scored - ms.opp.scored);
+    if (r.letter === "T") return <>Final: a tie at {n(ms.me.scored)}.</>;
+    return <>Final: {who(mine)} won by {n(margin)}. The <WinCup size={12} /> cup marks the winner.</>;
+  }
+  // The crown only shows on the card when last season's champion is in this matchup, so the caption names it only then
+  const champ = LEAGUE.champion?.teamId;
+  const champMine = champ === YOU.id ? true : champ === opp.id ? false : null;
+  const pct = ms.chance ?? 50, mineLeads = pct >= 50, lead = mineLeads ? pct : 100 - pct;
+  const an = /^(8\d?|11|18)$/.test(String(lead)) ? "an" : "a";
+  const odds = at === "pre"
+    ? <>{be(mineLeads)} projected to win, {n(mineLeads ? ms.me.proj : ms.opp.proj)} to {n(mineLeads ? ms.opp.proj : ms.me.proj)}</>
+    : <>{mineLeads ? "have" : "has"} {an} <span className="num">{lead}%</span> chance to win this week</>;
+  if (champMine === null) return <>{who(mineLeads)} {odds}.</>;
+  const crown = <>{who(champMine)} {be(champMine)} last season's champion (the <span aria-hidden="true"><Trophy teamId={champ!} size={12} /></span> crown)</>;
+  return champMine === mineLeads ? <>{crown} and {odds}.</> : <>{crown}. {who(mineLeads)} {odds}.</>;
 }
 
 /** The trade finder doing its thing: it runs through its steps when scrolled into view, then shows what it found. */

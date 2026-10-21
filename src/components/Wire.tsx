@@ -12,7 +12,7 @@ import { PlayerSheet } from "./lazy";
 import { TeamAvatar } from "./TeamPicker";
 import { NumTip, Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { useLive, onPace, startersOf, matchNow } from "../live";
+import { useLive, onPace, startersOf, matchNow, type Live } from "../live";
 import { WeekPlayer } from "../weeks";
 import { useLineupWeek, useWeekMatch } from "../weekMatch";
 import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
@@ -107,12 +107,15 @@ const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
   stale: { label: "Check in", icon: "clock" }, lineup: { label: "Lineup", icon: "roster" }, waiver: { label: "Waivers", icon: "waivers" }, slot: { label: "Pattern", icon: "spark" },
 };
 /** This week's matchup card: the shared face-off (FaceOff.tsx). The whole card opens the full matchup. */
-export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean }) {
+export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true, at }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean;
+  /** A fixed moment of the week to show instead of live scoring (the landing's Projected, Live and Final states) */
+  at?: Live }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   // Expected finishes from the lineups actually set in Sleeper (K/DEF included); win chance from what's left to play
   // One score per team, the same one the full matchup and the Lineup strip read (live.matchNow): Sleeper's team
   // score, projected finish, and win % that turns into the result once every starter is done
-  const live = useLive();
+  const shared = useLive();
+  const live = at ?? shared;
   const ms = matchNow(live);
   const mine = ms.me.proj;
   const theirs = ms.opp ? ms.opp.proj : null;

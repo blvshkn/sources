@@ -106,11 +106,10 @@ function seed(): Live {
 const finalFixture = () => { try { return localStorage.getItem("sources.fixture") === "final-week"; } catch { return false; } };
 
 /** Sample data so the demo league shows what a Sunday looks like: one game final, one in progress. */
-function demo(): Live {
+function demo(fin = finalFixture()): Live {
   const games: Record<string, GameState> = {};
   const points: Record<string, number> = {};
   const teamPts: Record<string, number> = {};
-  const fin = finalFixture();
   const done = ["MIA", "KC", "CAR", "BAL", "IND"]; const live = ["BUF", "CIN", "PHI", "TB"];
   done.forEach((t) => (games[t] = "complete")); live.forEach((t) => (games[t] = "in_game"));
   const left: Record<string, number> = fin ? {} : { BUF: 0.4, CIN: 0.55, PHI: 0.25, TB: 0.6 };
@@ -143,6 +142,17 @@ function demo(): Live {
   if (OPPONENT_ID) rows[fin ? "unshift" : "push"](row(teamById(OPPONENT_ID)));
   Object.assign(teamPts, fromMatchups(rows).teamPts);
   return { points, games, teamPts, left, at: Date.now() };
+}
+
+/** The sample league's week at one moment, for the landing's face-off: before kickoff (every game still to play, so
+ *  the projections and the model's pregame chance), the sample Sunday as the demo shows it, or the same week final
+ *  (the "final-week" fixture). Read only; it never touches the shared live state the app uses. */
+export function sampleWeek(at: "pre" | "live" | "final"): Live {
+  if (at !== "pre") return demo(at === "final");
+  const games: Record<string, GameState> = {};
+  const nfls = new Set([...Object.values(LEAGUE.players).map((p) => p.nfl), ...Object.values(LEAGUE.specials ?? {}).map((p) => p.nfl)]);
+  nfls.forEach((t) => { if (t && t !== "FA" && !onBye(t)) games[t] = "pre_game"; });
+  return { points: {}, games, teamPts: {}, left: {}, at: Date.now() };
 }
 
 async function poll(): Promise<Live | null> {
