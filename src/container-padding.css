@@ -1,0 +1,151 @@
+/* Container padding: every card, panel and boxed section takes the face-off card's inner padding.
+   Zach's Figma (Sources · Matchup face-off, "Face-off (built)" 14:1266, Context=Card, the same in Final, Live and
+   Projected):
+     Phone    350 wide  14px top and bottom, 16px sides, corners 16
+     Tablet   712 wide  24px top and bottom, 26px sides, corners 20
+     Desktop  988 wide  24px top and bottom, 28px sides, corners 20
+   Breakpoints are the face-off's own. Tablet is the 616px window matchup-card.css already uses for its corners (the
+   face-off reaches 560px wide there). Desktop is the face-off's @container fo (min-width: 900px); containers outside
+   the face-off can't read that container, so they use the window it maps to: 1192px, where the main column (and the
+   face-off in it) reaches 900px.
+   Rows that draw a hover pill keep it 4px from the card edge at every size, the same 4px it sits inside the dividers,
+   so the pill's corner is the card's corner less 4px (12 - 4 = 8, concentric). Their content keeps the token's inset.
+   Lists that run their rows edge to edge keep padding 0 on the card and put the token on the rows instead, so
+   dividers and fills still reach the edge.
+   Not here: controls (buttons, inputs, chips, the Ask composer, the sidebar league switcher), sheet and modal
+   surfaces (their own spec; the boxes inside them are covered), inbox rows, boxes nested inside a card (notes,
+   callouts, tag lines), and the landing page. Only padding changes: widths, gutters and gaps stay.
+   Loads just before frame.css. Every rule is scoped to a container's own classes; nothing here styles bare .ps,
+   .card, .btn or .row. Three :not(#_) because some of the rules it overrides use three. */
+
+html:root:not(#_):not(#_) {
+  --pad-card-y: 14px;
+  --pad-card-x: 16px;
+  --pad-card: var(--pad-card-y) var(--pad-card-x);
+  /* A list that ends on a row with 12px of its own room under the text: the card adds the rest */
+  --pad-card-end: calc(var(--pad-card-y) - 12px);
+  /* Hover pills: 4px from the card edge, so they reach (padding - 4px) past the content */
+  --pad-pill-gap: 4px;
+  --pad-pill-x: calc(var(--pad-pill-gap) - var(--pad-card-x));
+  --pad-pill-r: calc(var(--r, 12px) - var(--pad-pill-gap));
+}
+@media (min-width: 616px) {
+  html:root:not(#_):not(#_) { --pad-card-y: 24px; --pad-card-x: 26px; }
+}
+@media (min-width: 1192px) {
+  html:root:not(#_):not(#_) { --pad-card-x: 28px; }
+}
+
+/* ---------- The face-off itself: the Figma values at each size (it was fluid between them) ---------- */
+html:root:not(#_):not(#_):not(#_) .fo:not(.fo-flat) > .fo-in { padding: var(--pad-card); }
+
+/* ---------- Padded cards: the token on all four sides ---------- */
+html:root:not(#_):not(#_):not(#_) :is(
+  .card.nudge, .card.capture-card, .card.sx, .card.wt, .card.slot-report, .card.deal, .card.thk-card, .card.log-card,
+  .card.nc-card, .card.team-card, .card.topk, .card.settings-group, .card.wn-card, .card.mu-week-msg,
+  .main-inner .card.mu, .ask-group, .ask-card, .ibx-ctx,
+  /* Boxed sections in the player sheet's body */
+  .ps-body > .ps-why, .ps-hero, .pd-call
+) { padding: var(--pad-card) !important; }
+/* The matchup card inside the matchup sheet draws no box (matchup-sheet.css), so the sheet's own padding stands */
+html:root:not(#_):not(#_):not(#_) .ps-matchup .mus-body .card.mu { padding: 0 !important; }
+html:root:not(#_):not(#_):not(#_) .card.so-card { padding: var(--pad-card) !important; }
+/* Docs (How it works, Legal): each section brings 18px top and bottom as its spacing from the next. The card takes the
+   sides, and the first and last sections take the token at the card's top and bottom edges. */
+html:root:not(#_):not(#_):not(#_) .card.doc { padding: 0 var(--pad-card-x) !important; }
+html:root:not(#_):not(#_):not(#_) .card.doc > section:first-child { padding-top: var(--pad-card-y); }
+html:root:not(#_):not(#_):not(#_) .card.doc > section:last-child { padding-bottom: var(--pad-card-y); }
+
+/* ---------- Padded cards that end on a divided row list ----------
+   The last row (Quick moves, Your week, Their threats' footer link, Values movers, a Settings link) brings 12px of room
+   under its text, so the card's bottom is the token less 12: the text lands the token's distance from the edge. */
+html:root:not(#_):not(#_):not(#_) :is(.card.briefing, .card.wk, .card.vb-move) { padding: var(--pad-card) !important; }
+html:root:not(#_):not(#_):not(#_) .card.briefing,
+html:root:not(#_):not(#_):not(#_) .card.wk:has(> :last-child:is(.wk-row, .wk-more, .thr-body, .nxr-list, .nxr-g)),
+html:root:not(#_):not(#_):not(#_) .card.vb-move:has(> :last-child.vb-move-row),
+html:root:not(#_):not(#_):not(#_) .card.settings-group:has(> :last-child.set-link) { padding-bottom: var(--pad-card-end) !important; }
+/* Rows that bring a different amount of room under their text: 14px (Your week), 5px (Values movers), 17px (trade
+   partners on tablet and up, 13.2px on phones). The card's bottom is the token less that, never below 0. */
+html:root:not(#_):not(#_):not(#_) .card.wk:has(> :last-child.wk-row) { padding-bottom: max(0px, var(--pad-card-y) - 14px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.vb-move:has(> :last-child.vb-move-row) { padding-bottom: max(0px, var(--pad-card-y) - 5px) !important; }
+/* Trade partners: the row's room follows the list's own container query, which the card can't read, so the last
+   row's margin takes it back instead (never more than the card's padding, so its pill stays inside the card) */
+html:root:not(#_):not(#_):not(#_) .card.nudge > .partners:last-child > .ptn-row:last-child { margin-bottom: calc(-1 * min(13.2px, var(--pad-card-y))); }
+@container ptn (max-width: 419px) {
+  html:root:not(#_):not(#_):not(#_) .card.nudge > .partners:last-child > .ptn-row:last-child { margin-bottom: calc(-1 * min(17px, var(--pad-card-y))); }
+}
+/* Key dates (10px under the last date), day groups (13px under the last player row), Slot report (14px under its list) */
+html:root:not(#_):not(#_):not(#_) .card.wk:has(> :last-child.wk-date) { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.wk:has(> :last-child.wk-day) { padding-bottom: max(0px, var(--pad-card-y) - 13px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.slot-report:has(> :last-child.sr-list) { padding-bottom: max(0px, var(--pad-card-y) - 14px) !important; }
+
+/* ---------- Hover pills in padded cards: 4px from the card edge, corners concentric ---------- */
+html:root:not(#_):not(#_):not(#_) :is(.card.briefing .brief-row, .card.wk .wk-row, .card.settings-group .set-link, .card.wk > .wk-more, .card.slot-report .sr-main, .card .nxs)::after,
+html:root:not(#_):not(#_):not(#_) .card .nxr-tog::before,
+html:root:not(#_):not(#_):not(#_) .card .nxs-hit {
+  left: var(--pad-pill-x) !important; right: var(--pad-pill-x) !important; border-radius: var(--pad-pill-r) !important;
+}
+html:root:not(#_):not(#_):not(#_) .card.nudge .partner-card.ptn-row::before { left: var(--pad-pill-x); right: var(--pad-pill-x); border-radius: var(--pad-pill-r); }
+/* Intel: the story groups' clip box reaches the card edge, so the pills have room */
+html:root:not(#_):not(#_):not(#_) .card.wk .nxr-inner { margin: 0 calc(-1 * var(--pad-card-x)); padding: 0 var(--pad-card-x); }
+
+/* ---------- Lists that run edge to edge: the card stays at 0, its rows and heads take the token ---------- */
+/* Lineup */
+html:root:not(#_):not(#_):not(#_) .card.lu-list > :is(.lu-list-head, .lu-play, .lu-row) { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-list-head:not(.sub) { padding-top: var(--pad-card-y); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .ss { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > :is(.lu-weeknav, .lu-wi) { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-weeknav:first-child { margin-top: var(--pad-card-y); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-ai { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+/* Waivers and Values */
+html:root:not(#_):not(#_):not(#_) .card.wv-card > :is(.wv-head, .wv2-head, .wv3-head, .vb-head, .vb-row, .wv-hidden) { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; }
+html:root:not(#_):not(#_):not(#_) .card.wv-card > :is(.wv-head, .wv2-head, .wv3-head):first-child { padding-top: var(--pad-card-y) !important; }
+/* Position filters: a sideways strip of chips on phones (its padding is the inset), a segmented control from 521px
+   (a control: its 3px padding stays, its margin lines it up) */
+html:root:not(#_):not(#_):not(#_) .card.wv-card > .wv-pos { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; scroll-padding-inline: var(--pad-card-x); }
+@media (max-width: 520px) {
+  html:root:not(#_):not(#_):not(#_) .card.wv-card > .wv2-pos { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; scroll-padding-inline: var(--pad-card-x); }
+}
+@media (min-width: 521px) {
+  html:root:not(#_):not(#_):not(#_) .card.wv-card > .wv2-pos { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+}
+html:root:not(#_):not(#_):not(#_) .card.wv-card > .wv2-bar { margin-left: var(--pad-card-x) !important; margin-right: var(--pad-card-x) !important; }
+html:root:not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .wv-row { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; }
+/* The watch star (left gutter, 9px at the phone's 16) and Not interested (over the row's end column) move with the row */
+html:root:not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv .wv3-watch { left: calc(var(--pad-card-x) - 7px); }
+html:root:not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end { right: var(--pad-card-x); }
+/* Standings */
+html:root:not(#_):not(#_):not(#_) .card.st { padding-top: var(--pad-card-y) !important; padding-bottom: var(--pad-card-end) !important; }
+/* The footnote brings 8px under its text */
+html:root:not(#_):not(#_):not(#_) .card.st:has(> .st-note:last-child) { padding-bottom: calc(var(--pad-card-y) - 8px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.st > :is(.st-head, .st-note) { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_) .card.st .st-row { padding-left: var(--pad-card-x) !important; }
+@media (min-width: 521px) {
+  html:root:not(#_):not(#_):not(#_) .card.st .st-row { padding-right: var(--pad-card-x) !important; }
+}
+/* League activity */
+html:root:not(#_):not(#_):not(#_) .card.act-feed > .act-row { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+/* Rosters (Trade builder, Tags) */
+html:root:not(#_):not(#_):not(#_) .card > :is(.roster-head, .slot-label, .suggest, .prow.roster-row) { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_) .card > .roster-head:first-child { padding-top: var(--pad-card-y); }
+html:root:not(#_):not(#_):not(#_) .card > .pick { padding-left: var(--pad-card-x) !important; padding-right: var(--pad-card-x) !important; }
+
+/* Pills in those lists: 4px from the card edge, corners concentric */
+html:root:not(#_):not(#_):not(#_) :is(.card.st button.st-row, .card > .pick, .card.wv-card .vb-row:not(:disabled))::after { left: var(--pad-pill-gap) !important; right: var(--pad-pill-gap) !important; border-radius: var(--pad-pill-r) !important; }
+html:root:not(#_):not(#_):not(#_) :is(.card.lu-list .lu-row.tap, .card.wv-card .wv3-list .wv .wv-row)::after { left: var(--pad-pill-gap) !important; right: var(--pad-pill-gap) !important; border-radius: var(--pad-pill-r) !important; }
+
+/* ---------- Top pickup: its grid column sized to the action row's min-content (Claim + Not interested, 328px), so in
+   the 336px Waivers rail and on 360 phones the card's content ran past its own edge. The column now fits the card and
+   the row wraps: Not interested drops under Claim, full width, when the two can't sit side by side. ---------- */
+html:root:not(#_):not(#_):not(#_) .card.topk { grid-template-columns: minmax(0, 1fr); }
+html:root:not(#_):not(#_):not(#_) .card.topk .ps-actions { flex-wrap: wrap; }
+html:root:not(#_):not(#_):not(#_) .card.topk .ps-actions .ps-pass { flex: 1 0 auto; }
+
+/* ---------- Bottoms of the edge-to-edge lists: the last row's own room plus the card's bottom make the token ---------- */
+html:root:not(#_):not(#_):not(#_) .card.act-feed { padding-top: max(0px, var(--pad-card-y) - 14px); padding-bottom: max(0px, var(--pad-card-y) - 14px); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list:has(> :last-child.lu-row) { padding-bottom: max(0px, var(--pad-card-y) - 9.5px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.wv-card:has(.wv3-list:last-child) { padding-bottom: max(0px, var(--pad-card-y) - 11.25px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.wv-card.vb-list:has(> :last-child.vb-row) { padding-bottom: max(0px, var(--pad-card-y) - 9px) !important; }
+html:root:not(#_):not(#_):not(#_) .card:has(> .roster-head):has(> :last-child.roster-row) { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
+html:root:not(#_):not(#_):not(#_) .card:has(> .roster-head):has(> :last-child.pick) { padding-bottom: max(0px, var(--pad-card-y) - 9px) !important; }
+html:root:not(#_):not(#_):not(#_) .card.st:has(> :last-child.st-table) { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
