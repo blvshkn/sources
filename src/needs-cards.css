@@ -45,6 +45,8 @@ html:root:not(#_):not(#_) .nc-card .nc-pos.p-QB { color: var(--qb); }
 html:root:not(#_):not(#_) .nc-card .nc-pos.p-RB { color: var(--rb); }
 html:root:not(#_):not(#_) .nc-card .nc-pos.p-WR { color: var(--wr); }
 html:root:not(#_):not(#_) .nc-card .nc-pos.p-TE { color: var(--te); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-K { color: var(--k); }
+html:root:not(#_):not(#_) .nc-card .nc-pos.p-DEF { color: var(--def); }
 
 /* Your own team, marked like the Standings table */
 html:root:not(#_):not(#_) .card.nc-card.you { background: color-mix(in srgb, rgb(var(--you-rgb)) 10%, var(--surface)) !important; }

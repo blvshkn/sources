@@ -53,8 +53,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-name {
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; font: 500 0.8125rem/1.2 Geist, system-ui, sans-serif; color: var(--muted); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta .pos { flex: none; margin: 0; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta .pos.pos-K { background: color-mix(in srgb, var(--k, #B3A6DA) 18%, transparent); color: var(--k, #B3A6DA); }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta .pos.pos-DEF { background: color-mix(in srgb, var(--def) 18%, transparent); color: var(--def); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta .pos.pos-K { background: var(--k-bg); color: var(--k); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-meta .pos.pos-DEF { background: var(--def-bg); color: var(--def); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-team { display: inline-flex; align-items: baseline; gap: 6px; font: 600 0.8125rem/1 var(--font-mono); letter-spacing: 0.01em; color: var(--ink); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-num { font-weight: 500; color: var(--muted); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-game { white-space: nowrap; }

@@ -906,8 +906,8 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .pos-RB { background: color-mix(in srgb, var(--rb) 18%, transparent); color: var(--rb); }
 .pos-WR { background: color-mix(in srgb, var(--wr) 18%, transparent); color: var(--wr); }
 .pos-TE { background: color-mix(in srgb, var(--te) 18%, transparent); color: var(--te); }
-.pos-K { background: color-mix(in srgb, var(--k) 18%, transparent); color: var(--k); }
-.pos-DEF { background: color-mix(in srgb, var(--def) 18%, transparent); color: var(--def); }
+.pos-K { background: var(--k-bg); color: var(--k); }
+.pos-DEF { background: var(--def-bg); color: var(--def); }
 .pos-FLEX, .pos-SF { background: var(--surface-3); color: var(--muted); }
 .status { border-radius: 999px; }
 .delta { font-variant-numeric: tabular-nums; }
@@ -1278,9 +1278,9 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .lu-skel span { height: 52px; border-radius: 12px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
 @keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .lu-skel span { animation: none; } }
-.lu-slot.s-K { background: color-mix(in srgb, #a78bfa 60%, #fff); }
+.lu-slot.s-K { background: var(--k-bg); }
 .lu-slot.s-DEF { background: color-mix(in srgb, #94a3b8 60%, #fff); }
-.lu-pos.p-K { color: #a78bfa; } .lu-pos.p-DEF { color: #94a3b8; }
+.lu-pos.p-K { color: var(--k); } .lu-pos.p-DEF { color: #94a3b8; }
 
 /* ==== Press Box layer ====================================================== */
 body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
@@ -1310,11 +1310,11 @@ body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.006em; }
 .lu-slot.s-WR { background: color-mix(in srgb, var(--wr) 22%, var(--surface)); color: var(--wr); }
 .lu-slot.s-TE { background: color-mix(in srgb, var(--te) 22%, var(--surface)); color: var(--te); }
 .lu-slot.s-FLEX, .lu-slot.s-SF { background: linear-gradient(90deg, color-mix(in srgb, var(--wr) 22%, var(--surface)), color-mix(in srgb, var(--rb) 22%, var(--surface)) 50%, color-mix(in srgb, var(--te) 22%, var(--surface))); color: var(--ink); }
-.lu-slot.s-K { background: color-mix(in srgb, #9C8CE0 22%, var(--surface)); color: #9C8CE0; }
+.lu-slot.s-K { background: var(--k-bg); color: var(--k); }
 .lu-slot.s-DEF { background: color-mix(in srgb, var(--them) 22%, var(--surface)); color: var(--them); }
 .lu-slot.s-BN, .lu-slot.s-TX { background: var(--surface-2); color: var(--faint); }
 .lu-slot.s-IR { background: var(--bad-soft); color: var(--bad); }
-.lu-pos.p-K { color: #9C8CE0; } .lu-pos.p-DEF { color: var(--them); }
+.lu-pos.p-K { color: var(--k); } .lu-pos.p-DEF { color: var(--them); }
 
 /* Swap rows: an accent rail instead of a full wash */
 .lu-row.has-swap { background: linear-gradient(90deg, var(--stamp-soft), transparent 70%); box-shadow: inset 3px 0 0 var(--stamp); }
@@ -2427,8 +2427,8 @@ html:root:not([data-nf]):not(#_) {
   --good: #7BE08F; --good-soft: rgba(123, 224, 143, 0.12);
   --warn: #F2BE55; --warn-soft: rgba(242, 190, 85, 0.12);
   --bad: #FF8473; --bad-soft: rgba(255, 132, 115, 0.12);
-  --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #C2B3F0; --def: #3AA0AE;
-  --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(194, 179, 240, 0.13); --def-bg: rgba(58, 160, 174, 0.13);
+  --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #AB7AFF; --def: #3AA0AE;
+  --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(171, 122, 255, 0.13); --def-bg: rgba(58, 160, 174, 0.13);
   --you-rgb: var(--good-rgb); --good-rgb: 123, 224, 143; --warn-rgb: 242, 190, 85; --them-rgb: 152, 163, 155;
   --tab-rgb: 216, 242, 74; --glow-a: 0.15;
   color-scheme: dark;
