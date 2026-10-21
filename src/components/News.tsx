@@ -6,6 +6,7 @@ import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./lazy";
 import { Tooltip } from "./Tooltip";
 import { Icon, StatusPill } from "./ui";
+import { AiMark } from "./WorkingLoader";
 
 // Lettermarks stand in for source logos (we don't use third-party marks)
 const MARK: Record<string, string> = { RotoWire: "RW", RotoBaller: "RB", ESPN: "E" };
@@ -69,7 +70,7 @@ export function StoryCard({ n, impact }: { n: NewsItem; impact?: string | null }
           <div className="nx-imp-k">
             <i aria-hidden="true" />What it means for you
             <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
-              <span className="nx-imp-by"><Icon name="spark" size={11} />Sources</span>
+              <span className="nx-imp-by"><AiMark size={14} />Sources</span>
             </Tooltip>
           </div>
           <p>{impact}</p>
@@ -154,7 +155,7 @@ function Intel({ text }: { text: string }) {
       <div className="nx-imp-k">
         <i aria-hidden="true" />What it means for you
         <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
-          <span className="nx-imp-by"><Icon name="spark" size={11} />Sources</span>
+          <span className="nx-imp-by"><AiMark size={14} />Sources</span>
         </Tooltip>
       </div>
       <p>{text}</p>

@@ -5,6 +5,7 @@ import { fmt } from "../engine";
 
 import { Icon, type IconName } from "./icons";
 import { Tooltip } from "./Tooltip";
+import { AiMark } from "./WorkingLoader";
 export { Icon };
 export type { IconName } from "./icons";
 
@@ -32,7 +33,7 @@ export function Stamp({ children = "Per sources" }: { children?: ReactNode }) {
 export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: () => void; dataLabel?: string }) {
   return (
     <span className="ai-label">
-      <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ai-label-k"><Icon name="spark" size={12} />AI summary</span></Tooltip>
+      <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ai-label-k"><AiMark size={14} />AI summary</span></Tooltip>
       {onData && <button className="linkish" onClick={onData}>{dataLabel}</button>}
     </span>
   );

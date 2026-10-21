@@ -11,6 +11,7 @@ import { AskIcon } from "./AskIcon";
 import type { Nudge } from "./Wire";
 import type { Check } from "./Roster";
 import { NewsItem, ago, requestPlayer } from "../news";
+import { AiMark } from "./WorkingLoader";
 
 /** One thing Sources wants you to see: what happened, when, and the one move to make about it. */
 export interface InboxItem {
@@ -169,7 +170,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                   {!isRead && <span className="sr-only">Unread.</span>}
                   {it.urgent && <b className="ibx-flag">Before lock</b>}
                   <span>{it.meta}</span>
-                  {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><Icon name="spark" size={11} />AI</span></Tooltip>}
+                  {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><AiMark size={14} />AI</span></Tooltip>}
                 </span>
                 <p className="ibx-text">{it.text}</p>
                 <span className="ibx-acts">

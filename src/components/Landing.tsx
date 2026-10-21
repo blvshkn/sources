@@ -18,6 +18,7 @@ import { draftPitch } from "../pitch";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { useLive, startersOf, playCount } from "../live";
 import { eff } from "../engine";
+import { AiMark } from "./WorkingLoader";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -430,7 +431,7 @@ function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: Re
         <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{children}</div>
         {phase !== "done" && <IdeaScan run={run} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
       </div>
-      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>
+      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><AiMark size={14} />Run it again</button>
     </div>
   );
 }

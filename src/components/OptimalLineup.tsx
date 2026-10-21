@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { useTrace } from "../think";
 import { ThinkingTrace } from "./ThinkingTrace";
-import { WorkingLoader } from "./WorkingLoader";
+import { WorkingLoader, AiMark } from "./WorkingLoader";
 import { SwapRows } from "./SwapRows";
 import { PlatformLogo } from "./PlatformLogo";
-import { AiLabel, Icon } from "./ui";
+import { AiLabel } from "./ui";
 import { deny } from "../deny";
 import { lockLine } from "../kickoff";
 import { Player, sleeperUrl } from "../data";
@@ -56,7 +56,7 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
       <div className="lu-ai-bar">
         <p className="lu-ai-txt"><b>Sources AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
         <button type="button" className="btn btn-sm lu-ai-go" onClick={go} aria-busy={running || undefined} aria-disabled={locked || running || undefined}>
-          {running ? <WorkingLoader size={16} /> : <Icon name="spark" size={16} />}Set optimal lineup
+          {running ? <WorkingLoader size={16} /> : <AiMark size={16} />}Set optimal lineup
         </button>
       </div>
       {open && trace.status !== "idle" && <ThinkingTrace trace={trace} />}

@@ -8,6 +8,7 @@ import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { ScrollArea } from "./ScrollArea";
+import { AiMark } from "./WorkingLoader";
 
 /** Below this the profile is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches partner.css. */
 const MODAL_FROM = 768;
@@ -141,7 +142,7 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose }: {
               <div><dt>Closed</dt><dd>{td.offers ? <><span className="pp-num">{td.trades}</span> of <span className="pp-num">{td.offers}</span></> : <span className="pp-dash">n/a</span>}</dd></div>
               <div><dt>Usually buys</dt><dd>{td.buys.length ? td.buys.join(", ") : <span className="pp-dash">n/a</span>}</dd></div>
             </dl>
-            {tip && <p className="pp-tip"><Icon name="spark" size={14} /><span>{tip.replace(/-/g, "‑")}</span></p>}
+            {tip && <p className="pp-tip"><AiMark size={14} /><span>{tip.replace(/-/g, "‑")}</span></p>}
           </section>
 
           <section className="pp-sec" aria-labelledby="pp-recent">

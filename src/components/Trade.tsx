@@ -31,6 +31,7 @@ import type { Price, ScanDiag } from "../engine";
 import { useTrace } from "../think";
 import { ideaSteps, readSteps, type Read } from "../reads";
 import { Stream, ThinkingTrace } from "./ThinkingTrace";
+import { AiMark } from "./WorkingLoader";
 
 export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, wantIds, label, tone, noteIds }: {
   team: Team; lineup: Lineup; picked: string[]; onToggle: (id: string) => void;
@@ -602,7 +603,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         <div className="tr-scout" aria-label={`How ${them.manager} trades`}>
           <span className="eyebrow">How {them.manager} trades</span>
           <p>{scoutFacts.join(" · ")}</p>
-          {scoutTip && <p className="tr-tip"><Icon name="spark" size={14} /><span>{scoutTip}.</span></p>}
+          {scoutTip && <p className="tr-tip"><AiMark size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
       {view === "ideas" && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
@@ -613,7 +614,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         <section className="card nudge">
           <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>
           {fresh.length > 0
-            ? <p className="scan-new"><Icon name="spark" size={14} />{fresh.length} new {fresh.length > 1 ? "ideas" : "idea"} from your notes</p>
+            ? <p className="scan-new"><AiMark size={14} />{fresh.length} new {fresh.length > 1 ? "ideas" : "idea"} from your notes</p>
             : rescanned && <p className="scan-new muted"><Icon name="check" size={14} />Checked your latest notes. {suggestions.length > 1 ? `These ${suggestions.length} still fit.` : "This one still fits."}</p>}
           {suggestions.map((t) => <div key={t.key} className={fresh.includes(t.key) ? "idea-new" : undefined}><TradeIdea t={t} onOpen={loadIdea} onPitch={onPitch} /></div>)}
         </section>
@@ -749,7 +750,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <p>Private to you. Trade ideas use it.</p>
         </div>
         <TagCapture onSave={onAddTag} placeholder="wants a TE" compact teamId={partnerId} onTeam={setPartner} />
-        {last && stale && <button className="scan-cta" onClick={() => setView("ideas")}><Icon name="spark" size={14} /><span>Notes changed. Find new trade ideas with {them.manager}</span><Icon name="chev" size={14} /></button>}
+        {last && stale && <button className="scan-cta" onClick={() => setView("ideas")}><AiMark size={14} /><span>Notes changed. Find new trade ideas with {them.manager}</span><Icon name="chev" size={14} /></button>}
         <div className="tag-builder">
           <span className="tb-or">Or build it</span>
           <div className="tb-sentence">

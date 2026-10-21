@@ -6,6 +6,7 @@ import { fmt, newScanDiag, scanTrades, type Price, type ScanDiag, type Trade } f
 import { drain } from "../steps";
 import { whyNone } from "../scanWhy";
 import { Icon } from "./icons";
+import { AiMark } from "./WorkingLoader";
 
 const share = (x: number) => (x > 0 && x < 0.005 ? "<1%" : `${Math.round(x * 100)}%`);
 
@@ -67,7 +68,7 @@ export function WhyNone({ them, diag, tags, myTags, prices, ideasByTeam, onOpen,
 
       {w.tip && (
         <div className="wn-tip">
-          <p><Icon name="spark" size={14} /><span>{w.tip.text}</span></p>
+          <p><AiMark size={14} /><span>{w.tip.text}</span></p>
           {(w.tip.trade || w.tip.teams?.length) && (
             <div className="wn-acts">
               {w.tip.trade && <button type="button" className="wn-act" onClick={() => onOpen(w.tip!.trade!)}>Open in Build</button>}

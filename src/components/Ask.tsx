@@ -7,7 +7,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { Answer, AskShow, Trade, acceptance, fmt } from "../engine";
 import { Player, TEAMS, YOU, isSpecialFA, playerById, teamById } from "../data";
 import { AiLabel, Icon } from "./ui";
-import { WorkingLoader } from "./WorkingLoader";
+import { WorkingLoader, AiMark } from "./WorkingLoader";
 import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
 import { useLive, type Live } from "../live";
@@ -445,7 +445,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
         <div className="ask-dock">
           <form className="ask-composer" onSubmit={(e) => { e.preventDefault(); send(q); }}
             onPointerDown={(e) => { if (e.target === e.currentTarget) { e.preventDefault(); input.current?.focus(); } }}>
-            <span className="ask-composer-mark" aria-hidden="true"><Icon name="spark" size={16} /></span>
+            <span className="ask-composer-mark" aria-hidden="true"><AiMark size={16} /></span>
             <label htmlFor="ask" className="sr-only">Ask a question about your league</label>
             <input id="ask" ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your league anything"
               autoComplete="off" enterKeyHint="send" />
