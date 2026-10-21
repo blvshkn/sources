@@ -23,3 +23,6 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { border-color: var(--line
 
 /* Accounts: the dashed "Add another Sleeper account" row. Hover still turns it lime */
 html:root:not(#_):not(#_) .acc-addrow { border-color: var(--line); }
+
+/* Lineup: the dashed circle for an empty IR slot (Zach: dashed outlines are lines too) */
+html:root:not(#_):not(#_) .ir-empty { border-color: var(--line); }
