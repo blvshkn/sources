@@ -11,7 +11,7 @@ html:root:not(#_):not(#_) .ps.ps-matchup {
 }
 html:root:not(#_):not(#_) .ps-matchup > .mus-top {
   flex: none; position: relative; display: grid; justify-items: center; gap: 8px;
-  padding: 10px 20px 12px; border-bottom: 1px solid var(--line);
+  padding: 10px 20px 12px; border-bottom: 0;
 }
 html:root:not(#_):not(#_) .ps-matchup .mus-title { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 36px; }
 html:root:not(#_):not(#_) .ps-matchup .lu-weeknav.mus-weeks { width: 100%; max-width: 360px; margin: 0; }
