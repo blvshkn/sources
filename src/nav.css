@@ -36,7 +36,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
   /* Tablet (768 to 860px) keeps the earlier scrolled bar as it was */
   @media (min-width: 768px) {
     html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_) .topbar {
-      background: rgba(25, 26, 25, 0.9) !important;
+      background: rgba(13, 14, 13, 0.9) !important;  /* the ground's top tone, #0D0E0D */
       -webkit-backdrop-filter: blur(1px) !important; backdrop-filter: blur(1px) !important;
       box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15) !important;
     }
@@ -45,7 +45,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
 }
 @media (max-width: 767px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar { transition: none !important; }
-  /* Scrolled (Figma "Header · Phone" 29:1701; App sets data-scrolled past 4px): #191A19 at 90%, a drop shadow of
+  /* Scrolled (Figma "Header · Phone" 29:1701; App sets data-scrolled past 4px): the ground's own #0D0E0D at 90% (Zach: same darkness as the background, before and after scroll), a drop shadow of
      0 4 20 8 black at 15%, no border, and a progressive background blur, 48 at the top easing to 2 at 66% of the
      height. CSS blur is about half a Figma radius, so: 1px over the whole bar (::after, with the fill and shadow) and
      a 24px layer under it that a mask fades out by 66% (::before). Both reach up through the status bar strip, so
@@ -63,7 +63,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
     -webkit-mask-image: linear-gradient(#000, transparent 66.4%); mask-image: linear-gradient(#000, transparent 66.4%);
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after {
-    background: rgba(25, 26, 25, 0.9) !important;
+    background: rgba(13, 14, 13, 0.9) !important;  /* the ground's top tone, #0D0E0D */
     -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px);
     box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
   }
@@ -78,7 +78,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
   /* Transparency turned down: a solid bar, the 90% fill as it reads over the ground, and no blur */
   @media (prefers-reduced-transparency: reduce) {
     html:root:not(#_):not(#_):not(#_):not(#_) .topbar::before { display: none !important; }
-    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { background: #181918 !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { background: #0D0E0D !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
   }
 }
 @media (max-width: 860px) {
@@ -103,7 +103,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
        bar's own shadow alone. */
     overflow: clip;
     border: 0 !important; border-radius: 16px 16px 0 0 !important; box-shadow: 0 -4px 20px 8px rgba(0, 0, 0, 0.15) !important;
-    background: rgba(25, 26, 25, 0.9) !important;
+    background: rgba(15, 17, 16, 0.9) !important;  /* the ground's bottom tone, #0F1110 */
     -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button {
