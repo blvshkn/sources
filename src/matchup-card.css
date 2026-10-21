@@ -196,9 +196,9 @@ html:root:not(#_):not(#_) .fo-vs {
   background: transparent; border: 3px solid var(--fo-bg);
   font: 500 13px/1 var(--font-mono); letter-spacing: 0.08em; color: var(--muted);
 }
-/* The matchup header sits below the sheet's title and weeks, where the wash has faded to the bare surface, so a
-   surface-colored ring would vanish. A shade darker keeps it reading as the ring it is in Figma. */
-html:root:not(#_):not(#_) .fo-flat .fo-vs { border-color: color-mix(in srgb, var(--fo-bg) 70%, #000); }
+/* The card wash is soft now, so a ring in the bare surface color vanished on the cards too. A shade darker keeps it
+   reading as the ring it is in Figma, on the cards and in the sheet header alike. */
+html:root:not(#_):not(#_) :is(.fo, .fo-flat) .fo-vs { border-color: color-mix(in srgb, var(--fo-bg) 70%, #000); }
 html:root:not(#_):not(#_) .fo-tag { display: none; height: 11px; margin-top: 6px; white-space: nowrap; font: 400 11px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 html:root:not(#_):not(#_) .fo-line { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 13px; white-space: nowrap; font: 500 11px/1.1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
 html:root:not(#_):not(#_) .fo-mid .fo-line { display: none; }
