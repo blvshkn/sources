@@ -1,27 +1,54 @@
 /* You are green. Lime #D8F24A is the brand (logo, primary buttons, focus rings, the brand accent) and never
-   means "you" or "good". --you now points at --good in the Night Field tokens, so anything that marks your
-   side reads in the winning green.
-   Where your side sits next to a side that used to be green (what you get in the trade builder), the other
-   side goes neutral so the two never share a color: you in green, the rest in gray. */
+   means "you" or "good". --you points at --good in the Night Field tokens, so anything that marks you as a
+   person (your row, your card, your win bar, your side's position bars) reads in the winning green.
 
-/* Trade builder: "You send" keeps your green, "You get" goes neutral */
-html:root:not(#_):not(#_):not(#_) .deal-lists > div:last-child .eyebrow { color: var(--muted); }
-html:root:not(#_):not(#_):not(#_) .mt-col .qs-get .eyebrow { color: var(--muted); }
+   Gray give, green get. In a trade, green marks only what you receive, never what you give up. Every give/get
+   pair below puts what you send in neutral gray and what you get in green. */
 
-/* Picked players on their roster: a neutral wash and a gray check, not a second green */
-html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] {
+/* Trade builder side labels: "You send" in gray, "You get" in green (the toolbar card has 4 ids, so 5 here) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .deal-lists > .qs:nth-child(2) .eyebrow,
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .deal-lists > div:first-child .eyebrow { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .deal-lists > div:last-child .eyebrow { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs-give .eyebrow { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs-get .eyebrow { color: var(--good); }
+
+/* Picked players: yours to send get a neutral wash and a gray check, theirs to get the green */
+html:root:not(#_):not(#_):not(#_) .pick.tone-give[aria-pressed="true"] {
   background: linear-gradient(90deg, rgba(var(--them-rgb), 0.14), rgba(var(--them-rgb), 0.04)) !important;
 }
-html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] .check {
+html:root:not(#_):not(#_):not(#_) .pick.tone-give[aria-pressed="true"] .check {
   background: var(--muted) !important; border-color: var(--muted) !important; color: #121413 !important;
 }
+html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] {
+  background: linear-gradient(90deg, rgba(var(--good-rgb), 0.14), rgba(var(--good-rgb), 0.04)) !important;
+}
+html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] .check {
+  background: var(--good) !important; border-color: var(--good) !important; color: #121413 !important;
+}
 
-/* Deal tray: Send in green, Get in gray */
-html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-label { color: var(--muted); }
-html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip { border-color: rgba(var(--them-rgb), 0.25); }
-html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip::before {
+/* Deal tray: Send in gray, Get in green */
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.give .dt-label { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-label { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.give .dt-chip { border-color: rgba(var(--them-rgb), 0.25); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip { border-color: rgba(var(--good-rgb), 0.25); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.give .dt-chip::before {
   background: rgba(var(--them-rgb), 0.12); box-shadow: inset 0 0 0 1px rgba(var(--them-rgb), 0.25);
 }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip::before {
+  background: rgba(var(--good-rgb), 0.12); box-shadow: inset 0 0 0 1px rgba(var(--good-rgb), 0.25);
+}
+
+/* Trade read, Trade value bar: what you give in gray, what you get in green (trade-deal.css has 4 ids) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-bar i:first-child { background: color-mix(in srgb, var(--ink) 38%, transparent); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-bar i:last-child { background: var(--good); }
+
+/* Market value bar (trade card): same pair */
+html:root:not(#_):not(#_):not(#_) .tc-market-bar .give { background: var(--them); }
+html:root:not(#_):not(#_):not(#_) .tc-market-bar .get { background: var(--good); }
+
+/* Trade idea cards: "You send" stays gray, "You get" reads green (only the label, the cards stay neutral) */
+html:root:not(#_):not(#_):not(#_) .tx-side.send header span { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .tx-side.get header span { color: var(--good); }
 
 /* Waivers: "Rookie" borrowed the you color. It is a fact about the player, so it reads in plain ink. */
 html:root:not(#_):not(#_):not(#_) .wv-meta .wv-flag { color: var(--ink); }

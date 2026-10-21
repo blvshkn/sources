@@ -68,6 +68,7 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Ink #F4F6F2, muted #98A39B, faint #5E6A62.
 - Floodlight lime #D8F24A is the brand accent: the logo, primary actions, focus rings, your next move. It never means "you" or "good". Anything on lime uses dark ink #0D1311.
 - You are the winning green (--you points at --good, mint #7BE08F). Next to your side, the other side stays neutral gray.
+- Gray give, green get: in a trade, green marks only what you receive. What you send (builder label, picked players, deal tray, the give part of the value bar) reads in neutral gray; what you get reads in green. "You" as a person (your row, your card, your win bar, your position bars) stays green.
 - Gains mint #7BE08F, warnings #F2BE55, losses #FF8473. Turf #1F6B47 for brand moments.
 - Every tab shares the lime section light. The shareable trade card and the app always match.
 - Lime is rationed: the active tab and the one main action per screen. Repeated actions in lists use the tinted lime button. Labels, links and panels stay in chalk.
