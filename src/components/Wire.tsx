@@ -131,8 +131,8 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true }
     <section className="card sb2" aria-label="This week">
       <button className="sb2-rows sb2-open mc-press" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
         <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp ? chance : null} res={opp ? res : null} msg="Bye week"
-          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: inPlay && !res ? mine.toFixed(1) : undefined, dim: myTone === "trail" }}
-          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: inPlay && !res ? theirs.toFixed(1) : undefined, dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
+          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: inPlay && !res ? mine.toFixed(1) : undefined, dim: myTone === "trail", count: ms.me.count }}
+          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: inPlay && !res ? theirs.toFixed(1) : undefined, dim: flipTone(myTone) === "trail", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
       </button>
       {extras && <>
       <dl className="ti-stats sb2-stats">

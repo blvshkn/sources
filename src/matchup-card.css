@@ -28,179 +28,195 @@ html:root:not(#_):not(#_) .mc-press::after {
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):hover::after { opacity: var(--mc-hover); }
-  html:root:not(#_):not(#_) .mc-press:hover .fo-go svg { transform: translateX(3px); }
 }
 html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):active::after { opacity: 1; transition-duration: 100ms; }
-html:root:not(#_):not(#_) .mc-press .fo-go svg { transition: transform var(--st-dur) var(--st-ease); }
 html:root:not(#_):not(#_) .mc-press[aria-disabled="true"] { cursor: default; }
-@media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .mc-press .fo-go svg { transform: none !important; }
-}
+
 
 /* The scoreboard's button is the whole card, padding included, so a tap near the edge still opens it */
 html:root:not(#_):not(#_) .sb2:has(> .sb2-open:only-child) { padding: 0; }
-html:root:not(#_):not(#_) .sb2 > .sb2-open:only-child { margin: 0; width: 100%; padding: 18px; border-radius: inherit; }
+html:root:not(#_):not(#_) .sb2 > .sb2-open:only-child { margin: 0; width: 100%; border-radius: inherit; }
 /* The This week strip's surface is the hero inside the button: same corners, so the tint fits it */
 html:root:not(#_):not(#_) .lu-mx-open.mc-press { border-radius: var(--r); }
 html:root:not(#_):not(#_) .lu-mx-open.mc-press > .lu-mx { border-radius: inherit; }
 
-/* ---------- Face-off ---------- */
-/* Tablet and desktop: two mirrored containers with a round VS badge over the gap between them, like Sleeper's matchup
-   header in our tokens. Each container, from the outer edge in: avatar (ringed green for the side ahead, red for the
-   side behind, neutral pregame or tied), @handle over the team name, the score at the inner edge, a bar filled by win %,
-   then win % and record outside with the projected total inside. Type scales with each container (cqi), so a wide
-   card fills up and a tablet card truncates names instead of wrapping.
-   Phones (the page under 600px): one card with mirrored halves and a rounded-square VS badge between them.
-   Each half: avatar, trophy over % WIN, the score and projection at the inner edge, the bar, the name, then
-   @handle and record. The state line under both (Final with the result, Live, Projected) says it once.
-   Green and red are verdicts; lime is the brand and never means ahead or behind. */
+/* ---------- Face-off (Figma "Score header", node 1:173) ----------
+   One surface, two mirrored sides around a round VS badge. Laid out by the face-off's own width, phone first:
+   - Phone (Figma 358): each side stacks avatar and handle, team name, score, bar, meta. The badge sits between the
+     sides; the result or Live goes under both, with the to-play chips beside it.
+   - Tablet (from 560px wide, Figma 720): avatar beside handle over name, then a bigger score, bar and meta, with
+     the to-play chip at the inner end of the meta line. Final and the result, Live or Projected sit under the badge.
+   - Desktop (from 900px wide, Figma 1200): the score moves up beside the name at the inner edge, and the to-play
+     chip sits inline in the meta line with the projection or points per game pushed to the inner end.
+   Sizes, gaps and padding are fluid between the Figma values (cqi of the face-off's width). The big scores are Geist
+   with tight tracking; every number in the meta line is Geist Mono. Green is ahead or won, red behind or lost; lime
+   is the brand and never appears here. Every state draws the same rows at the same heights. */
 
-/* The cards around it: tight padding, the face-off fills the rest */
-html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo) { display: block; padding: 12px 12px 10px; }
-html:root:not(#_):not(#_) .lu-mx:has(> .fo) { display: block !important; padding: 12px 12px 10px !important; }
-html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { display: block; padding: 12px 12px 10px; }
-
-html:root:not(#_):not(#_) .fo {
-  --fo-bg: var(--surface-2);
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; row-gap: 10px;
-  width: 100%; text-align: left;
+/* The cards around it: the face-off brings its own padding, on a flat surface. The lime hero wash these cards get
+   elsewhere (styles.css, :is(.sb2, .mw, .lu-mx, .mu)) stays off: lime is the brand, not a matchup color. */
+html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo) { display: block; padding: 0; }
+html:root:not(#_):not(#_) .lu-mx:has(> .fo) { display: block !important; padding: 0 !important; }
+html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { display: block; padding: 0; }
+html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { background: var(--surface) !important; }
+html:root:not(#_):not(#_) .card.mu:has(> .fo) { background: var(--surface) !important; }
+@container pg (max-width: 599px) {
+  html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx-open:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { border-radius: 16px; }
 }
 
-/* One container. You: avatar | handle over name | score. Them: the mirror image. */
+html:root:not(#_):not(#_) .fo {
+  --fo-bg: var(--surface);
+  container: fo / inline-size;
+  display: block; width: 100%; text-align: left;
+}
+html:root:not(#_):not(#_) .fo-in {
+  /* Phone: 358 wide, 14px top and bottom, 16px sides, 16px either side of a 40px badge */
+  --fo-av: 22px; --fo-score: clamp(30px, 4.4px + 9.39cqi, 72px); --fo-name: clamp(13px, 8.06px + 1.381cqi, 18px);
+  --fo-handle: 11px; --fo-bar: 4px; --fo-cup: 11px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr); align-items: start;
+  column-gap: clamp(12px, 8.84cqi - 15.6px, 48px);
+  padding: clamp(12px, 4.1px + 2.76cqi, 24px) clamp(14px, 6.1px + 2.76cqi, 26px);
+}
+html:root:not(#_):not(#_) .fo-flat > .fo-in { padding: 0; }
+
+/* One side. You: avatar and handle, then name, score, bar, meta. Them: the mirror image. */
 html:root:not(#_):not(#_) .fo-side {
-  container: fos / inline-size;
-  grid-row: 1; display: grid; align-items: center; min-width: 0;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "av handle handle score" "av name name score" "av bar bar bar" "av win rec note";
-  column-gap: 14px; padding: 14px 18px 12px;
-  border-radius: calc(var(--r) - 4px); background: var(--fo-bg);
-  box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.06);
+  grid-row: 1; display: grid; min-width: 0; align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "av handle" "name name" "score score" "bar bar" "meta meta";
+  column-gap: 6px;
 }
 html:root:not(#_):not(#_) .fo-side.you { grid-column: 1; }
 html:root:not(#_):not(#_) .fo-side.them {
-  grid-column: 2; text-align: right;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "score handle handle av" "score name name av" "bar bar bar av" "note rec win av";
+  grid-column: 3; text-align: right; justify-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "handle av" "name name" "score score" "bar bar" "meta meta";
 }
 
-/* Avatar with its ring: a hairline of the container's own color, then the verdict color */
-html:root:not(#_):not(#_) .fo-av {
-  --fo-ring: color-mix(in srgb, var(--ink) 16%, transparent);
-  grid-area: av; display: block; width: clamp(44px, 11cqi, 60px); aspect-ratio: 1; border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--fo-bg), 0 0 0 4.5px var(--fo-ring);
-}
-html:root:not(#_):not(#_) .fo-side.ring-up .fo-av { --fo-ring: var(--good); }
-html:root:not(#_):not(#_) .fo-side.ring-down .fo-av { --fo-ring: var(--bad); }
-html:root:not(#_):not(#_) .fo-av > * { display: grid; width: 100% !important; height: 100% !important; border-radius: 50%; font-size: clamp(15px, 4cqi, 21px) !important; }
-html:root:not(#_):not(#_) .fo-av-none { box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_) .fo-av { grid-area: av; display: block; width: var(--fo-av); height: var(--fo-av); border-radius: 50%; }
+html:root:not(#_):not(#_) .fo-av > * { display: grid; width: 100% !important; height: 100% !important; border-radius: 50%; font-size: calc(var(--fo-av) * 0.357) !important; }
+html:root:not(#_):not(#_) .fo-av-none { background: var(--surface-3); }
 
-/* @handle, then the team name with the trophy on its outer side */
-html:root:not(#_):not(#_) .fo-handle { grid-area: handle; min-width: 0; height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 clamp(12px, 2.7cqi, 14px)/1.3 var(--font-body); color: var(--muted); }
-html:root:not(#_):not(#_) .fo-name { grid-area: name; display: flex; align-items: center; gap: 6px; min-width: 0; height: 1.2em; margin-top: 2px; font: 700 clamp(18px, 4.6cqi, 24px)/1.2 var(--font-body); letter-spacing: -0.015em; color: var(--ink); }
-html:root:not(#_):not(#_) .fo-side.them .fo-name { justify-content: flex-end; }
+/* "You" or the handle, with the cup before it */
+html:root:not(#_):not(#_) .fo-handle {
+  grid-area: handle; display: flex; align-items: flex-end; gap: 2px; min-width: 0; max-width: 100%;
+  font: 400 var(--fo-handle)/1 var(--font-body); color: var(--muted);
+}
+html:root:not(#_):not(#_) .fo-handle > span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .fo-handle .trophy { flex: none; margin: 0; vertical-align: 0; color: #F0C75E; }
+html:root:not(#_):not(#_) .fo-handle .trophy svg { width: var(--fo-cup); height: var(--fo-cup); filter: none; }
+html:root:not(#_):not(#_) .fo-handle [data-tooltip], html:root:not(#_):not(#_) .fo-handle > :not(span:last-child) { flex: none; display: inline-flex; }
+
+html:root:not(#_):not(#_) .fo-name {
+  grid-area: name; display: block; min-width: 0; max-width: 100%; margin-top: 6px;
+  font: 600 var(--fo-name)/1.1 var(--font-body); color: var(--ink);
+}
+html:root:not(#_):not(#_) .fo-name > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html:root:not(#_):not(#_) .fo-name.muted { color: var(--muted); font-weight: 500; }
-html:root:not(#_):not(#_) .fo-name-t { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html:root:not(#_):not(#_) .fo-name-cup { flex: none; display: flex; }
-/* The winner's cup: a small chip on the avatar's outer top corner, cut out of the container with its own color */
-html:root:not(#_):not(#_) .fo-cup {
-  grid-area: av; align-self: center; justify-self: start; z-index: 1; display: flex; margin: 0 0 0 -6px;
-  transform: translateY(calc(clamp(44px, 11cqi, 60px) / -2 + 2px));
-}
-html:root:not(#_):not(#_) .fo-side.them .fo-cup { justify-self: end; margin: -4px -6px 0 0; }
-html:root:not(#_):not(#_) .fo-cup:empty { display: none; }
-html:root:not(#_):not(#_) .fo-cup .fo-won { display: grid; place-items: center; width: 24px; height: 24px; margin: 0; border-radius: 50%; background: var(--surface-3); box-shadow: 0 0 0 2px var(--fo-bg); vertical-align: 0; }
-html:root:not(#_):not(#_) .fo-cup .fo-won svg { width: 14px; height: 14px; }
-html:root:not(#_):not(#_) .fo-meta { display: contents; }
-html:root:not(#_):not(#_) .fo-dot { display: none; }
 
-/* The score at the inner edge, spanning the handle and name rows. The trailer steps back to muted (scoreTone). */
-html:root:not(#_):not(#_) .fo-score { grid-area: score; display: flex; min-width: 0; padding-left: 8px; justify-content: flex-end; }
-html:root:not(#_):not(#_) .fo-side.them .fo-score { padding: 0 8px 0 0; justify-content: flex-start; }
-html:root:not(#_):not(#_) .fo-pts { white-space: nowrap; font: 600 clamp(28px, 7.6cqi, 40px)/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.035em; color: var(--ink); transition: color 150ms ease-out; }
+/* The big score: Geist, tight tracking. The trailer steps back to muted (scoreTone). */
+html:root:not(#_):not(#_) .fo-score { grid-area: score; display: flex; min-width: 0; margin-top: 6px; }
+html:root:not(#_):not(#_) .fo-pts {
+  white-space: nowrap; font: 500 var(--fo-score)/1 var(--font-body); letter-spacing: -0.04em; color: var(--ink);
+  transition: color 150ms ease-out;
+}
+/* The app sets any all-number element in mono (monoNumbers.ts); the big scores stay Geist, as in Figma */
+html:root:not(#_):not(#_) .fo .fo-pts[data-n] { font-family: var(--font-body) !important; font-variant-numeric: normal; }
 html:root:not(#_):not(#_) .fo-side.is-dim .fo-pts, html:root:not(#_):not(#_) .fo-pts.muted { color: var(--muted); }
 
-/* The bar, filled from the outer edge by that side's win %: green for the leader, a neutral fill for the trailer and when even */
-html:root:not(#_):not(#_) .fo-bar { grid-area: bar; display: flex; height: 4px; margin: 10px 0 9px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 8%, transparent); overflow: hidden; }
+/* The bar, filled from the outer edge by that side's win %: green for the leader, red for the trailer */
+html:root:not(#_):not(#_) .fo-bar {
+  grid-area: bar; display: flex; width: 100%; height: var(--fo-bar); margin-top: 6px;
+  border-radius: 2px; background: var(--surface-3); overflow: hidden;
+}
 html:root:not(#_):not(#_) .fo-side.them .fo-bar { justify-content: flex-end; }
-html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; min-width: 3px; border-radius: inherit; background: color-mix(in srgb, var(--ink) 30%, transparent); transition: width 600ms var(--ease-out); }
+html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: 9999px; background: color-mix(in srgb, var(--ink) 30%, transparent); transition: width 600ms var(--st-ease); }
 html:root:not(#_):not(#_) .fo-side.up .fo-bar i { background: var(--good); }
+html:root:not(#_):not(#_) .fo-side.down .fo-bar i { background: var(--bad); }
 
-/* Bottom row: win % and record outside, the projected total inside */
-html:root:not(#_):not(#_) .fo-win { grid-area: win; height: 14px; white-space: nowrap; font: 500 0.6875rem/14px var(--font-mono); letter-spacing: 0.04em; color: var(--muted); }
-html:root:not(#_):not(#_) .fo-win b { font: 700 0.8125rem/14px var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; color: var(--ink); }
-html:root:not(#_):not(#_) .fo-side.up .fo-win b { color: var(--good); }
-html:root:not(#_):not(#_) .fo-side.down .fo-win b { color: var(--bad); }
-html:root:not(#_):not(#_) .fo-rec { grid-area: rec; min-width: 0; height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 0.75rem/14px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
-html:root:not(#_):not(#_) .fo-side.them .fo-rec { justify-self: end; }
-html:root:not(#_):not(#_) .fo-note { grid-area: note; height: 14px; padding-left: 8px; white-space: nowrap; font: 500 0.75rem/14px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); justify-self: end; }
-html:root:not(#_):not(#_) .fo-side.them .fo-note { padding: 0 8px 0 0; justify-self: start; }
+/* Meta: win %, record, then the projection or points per game. Mono, 11px. */
+html:root:not(#_):not(#_) .fo-meta {
+  grid-area: meta; display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; height: 16px; margin-top: 12px;
+  white-space: nowrap; font: 400 11px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted);
+}
+html:root:not(#_):not(#_) .fo-side.them .fo-meta { flex-direction: row-reverse; }
+html:root:not(#_):not(#_) .fo-pct { font-weight: 400; color: var(--muted); }
+html:root:not(#_):not(#_) .fo-side.up .fo-pct { color: var(--good); }
+html:root:not(#_):not(#_) .fo-side.down .fo-pct { color: var(--bad); }
+html:root:not(#_):not(#_) .fo-dot { font-style: normal; font-weight: 200; font-size: 0.8em; }
+html:root:not(#_):not(#_) .fo-end { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .fo-end:empty { display: none; }
 
-/* The VS badge over the gap, centered on both containers; a ring of the card color cuts it into them */
-html:root:not(#_):not(#_) .fo-mid { grid-row: 1; grid-column: 1 / -1; justify-self: center; align-self: center; z-index: 1; pointer-events: none; }
+/* To-play chip */
+html:root:not(#_):not(#_) .fo-chip {
+  flex: none; padding: 2px 6px; border-radius: 9999px; background: var(--surface-3);
+  font: 400 10px/normal var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap;
+}
+html:root:not(#_):not(#_) .fo-chip:empty { visibility: hidden; padding: 0; }
+html:root:not(#_):not(#_) .fo-meta .fo-chip { display: none; }
+
+/* The VS badge, cut out of the surface by a ring of the surface's own color */
+html:root:not(#_):not(#_) .fo-mid {
+  grid-row: 1; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-top: 8px; min-width: 0;
+}
 html:root:not(#_):not(#_) .fo-vs {
-  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
-  background: var(--surface-3); box-shadow: 0 0 0 5px var(--surface), inset 0 0 0 1px var(--line);
-  font: 600 0.75rem/1 var(--font-mono); letter-spacing: 0.04em; color: var(--muted);
+  display: grid; place-items: center; box-sizing: border-box; width: 40px; height: 40px; padding-top: 1px; border-radius: 50%;
+  background: var(--surface-3); border: 3px solid var(--fo-bg);
+  font: 500 13px/1 var(--font-mono); letter-spacing: 0.08em; color: var(--muted);
+}
+html:root:not(#_):not(#_) .fo-tag { display: none; height: 11px; margin-top: 6px; white-space: nowrap; font: 400 11px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+html:root:not(#_):not(#_) .fo-line { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 13px; white-space: nowrap; font: 500 11px/1.1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
+html:root:not(#_):not(#_) .fo-mid .fo-line { display: none; }
+html:root:not(#_):not(#_) .fo-live { display: inline-flex; align-items: center; gap: 6px; }
+html:root:not(#_):not(#_) .fo-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--bad); }
+
+/* Phone: the result or Live under both sides, the to-play chips beside it */
+html:root:not(#_):not(#_) .fo-foot {
+  grid-row: 2; grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 8px;
+  height: 17px; margin-top: 8px;
+}
+html:root:not(#_):not(#_) .fo-foot > .fo-chip:first-child { justify-self: start; }
+html:root:not(#_):not(#_) .fo-foot > .fo-chip:last-child { justify-self: end; }
+html:root:not(#_):not(#_) .fo-foot > .fo-line:empty { visibility: hidden; }
+
+/* Tablet: avatar beside handle over name, a bigger score, Final and the result under the badge */
+@container fo (min-width: 560px) {
+  html:root:not(#_):not(#_) .fo-in { --fo-av: clamp(32px, 18px + 2.5cqi, 48px); --fo-bar: 5px; }
+  html:root:not(#_):not(#_) .fo-side { grid-template-areas: "av handle" "av name" "score score" "bar bar" "meta meta"; column-gap: 8px; }
+  html:root:not(#_):not(#_) .fo-side.them { grid-template-areas: "handle av" "name av" "score score" "bar bar" "meta meta"; }
+  html:root:not(#_):not(#_) .fo-handle { align-self: end; }
+  html:root:not(#_):not(#_) .fo-name { align-self: start; margin-top: 2px; }
+  html:root:not(#_):not(#_) .fo-score, html:root:not(#_):not(#_) .fo-bar, html:root:not(#_):not(#_) .fo-meta { margin-top: 10px; }
+  html:root:not(#_):not(#_) .fo-meta .fo-chip { display: block; order: 9; margin-left: auto; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-meta .fo-chip { margin: 0 auto 0 0; }
+  html:root:not(#_):not(#_) .fo-mid { padding-top: 20px; }
+  html:root:not(#_):not(#_) .fo-tag { display: block; }
+  html:root:not(#_):not(#_) .fo-mid .fo-line { display: inline-flex; margin-top: 24px; }
+  html:root:not(#_):not(#_) .fo-foot { display: none; }
 }
 
-/* The state, said once, with the chevron that says the card opens */
-html:root:not(#_):not(#_) .fo-line {
-  grid-row: 2; grid-column: 1 / -1; justify-self: center; display: inline-flex; align-items: center; gap: 6px; height: 16px;
-  white-space: nowrap; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
-}
-html:root:not(#_):not(#_) .fo-line > i { font-style: normal; }
-html:root:not(#_):not(#_) .fo-line b { font-weight: 600; color: var(--ink); }
-html:root:not(#_):not(#_) .fo-line b.up { color: var(--good); }
-html:root:not(#_):not(#_) .fo-line b.down { color: var(--bad); }
-html:root:not(#_):not(#_) .fo-line .lu-live { margin: 0; font-size: inherit; }
-html:root:not(#_):not(#_) .fo-go { display: flex; margin-left: -2px; color: var(--muted); }
-
-/* Phones: one card, mirrored halves, the badge between them */
-@container pg (max-width: 599px) {
-  html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo), html:root:not(#_):not(#_) .lu-mx:has(> .fo), html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { padding: 14px 14px 10px !important; }
-  html:root:not(#_):not(#_) .fo { --fo-bg: var(--surface); grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 10px; row-gap: 10px; }
-  html:root:not(#_):not(#_) .fo-side {
-    grid-template-columns: auto auto minmax(0, 1fr) auto;
-    grid-template-areas: "av cup cup score" "av win win note" "av bar bar bar" "name name name name" "meta meta meta meta";
-    column-gap: 6px; padding: 0; border-radius: 0; background: none; box-shadow: none;
+/* Desktop: the score beside the name at the inner edge, the to-play chip inline in the meta line */
+@container fo (min-width: 900px) {
+  html:root:not(#_):not(#_) .fo-in {
+    --fo-score: clamp(52px, 5.333cqi, 72px); --fo-name: 18px; --fo-handle: clamp(11px, 8px + 0.4167cqi, 13px);
+    --fo-bar: 6px; --fo-cup: 13px;
+    column-gap: clamp(40px, 12px + 5cqi, 72px);
+    padding: clamp(24px, 18px + 0.833cqi, 28px) clamp(26px, 17px + 1.25cqi, 32px);
   }
-  html:root:not(#_):not(#_) .fo-side.them {
-    grid-column: 3;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-template-areas: "score cup cup av" "note win win av" "bar bar bar av" "name name name name" "meta meta meta meta";
-  }
-  html:root:not(#_):not(#_) .fo-av { width: clamp(44px, 35cqi, 52px); align-self: end; margin-bottom: 1px; box-shadow: none; }
-  html:root:not(#_):not(#_) .fo-av > * { font-size: clamp(13px, 11cqi, 17px) !important; }
-  html:root:not(#_):not(#_) .fo-cup { align-self: start; margin: -3px 0 0 -5px; transform: none; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-cup { margin: -3px -5px 0 0; }
-  html:root:not(#_):not(#_) .fo-cup .fo-won { width: 22px; height: 22px; }
-  html:root:not(#_):not(#_) .fo-cup .fo-won svg { width: 13px; height: 13px; }
-  html:root:not(#_):not(#_) .fo-score { padding: 0; align-self: end; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-score { padding: 0; }
-  html:root:not(#_):not(#_) .fo-pts { font-size: clamp(24px, 19.5cqi, 28px); letter-spacing: -0.04em; }
-  html:root:not(#_):not(#_) .fo-win { align-self: end; font-size: 0.5625rem; }
-  html:root:not(#_):not(#_) .fo-win b { font-size: 0.75rem; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-win { justify-self: end; }
-  html:root:not(#_):not(#_) .fo-note { align-self: end; padding: 0; font-size: 0.6875rem; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-note { padding: 0; }
-  html:root:not(#_):not(#_) .fo-bar { margin: 6px 0 0; align-self: end; }
-  html:root:not(#_):not(#_) .fo-name { margin-top: 10px; font-size: clamp(16px, 13cqi, 18px); letter-spacing: -0.01em; }
-  html:root:not(#_):not(#_) .fo-meta { grid-area: meta; display: flex; align-items: center; gap: 5px; min-width: 0; height: 16px; margin-top: 2px; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-meta { flex-direction: row-reverse; }
-  html:root:not(#_):not(#_) .fo-dot { display: inline; flex: none; font-style: normal; font-size: 0.6875rem; color: var(--muted); }
-  html:root:not(#_):not(#_) .fo-handle { flex: 0 1 auto; height: 16px; font-size: 0.75rem; line-height: 16px; }
-  html:root:not(#_):not(#_) .fo-rec { flex: none; overflow: visible; height: 16px; font-size: 0.6875rem; line-height: 16px; }
-  html:root:not(#_):not(#_) .fo-mid { grid-column: 2; align-self: start; margin-top: clamp(16px, 9cqi, 24px); }
-  html:root:not(#_):not(#_) .fo-vs { width: 34px; height: 34px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); font-size: 0.6875rem; }
-  html:root:not(#_):not(#_) .fo-line { font-size: 0.625rem; }
-}
-/* The narrowest phones: the projected total gives way so % WIN never crowds it */
-@container fos (max-width: 131px) {
-  html:root:not(#_):not(#_) .fo-note { display: none; }
+  html:root:not(#_):not(#_) .fo-side { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "av handle score" "av name score" "bar bar bar" "meta meta meta"; column-gap: 12px; }
+  html:root:not(#_):not(#_) .fo-side.them { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "score handle av" "score name av" "bar bar bar" "meta meta meta"; }
+  html:root:not(#_):not(#_) .fo-name { margin-top: 6px; }
+  html:root:not(#_):not(#_) .fo-score { margin-top: 0; align-self: center; }
+  html:root:not(#_):not(#_) .fo-meta .fo-chip { order: 0; margin: 0; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-meta .fo-chip { margin: 0; }
+  html:root:not(#_):not(#_) .fo-meta:has(> .fo-chip) .fo-end { margin-left: auto; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-meta:has(> .fo-chip) .fo-end { margin: 0 auto 0 0; }
+  html:root:not(#_):not(#_) .fo-mid { padding-top: 0; }
+  html:root:not(#_):not(#_) .fo-mid .fo-line { margin-top: 16px; }
 }
 
 /* Loading: the same rows as placeholders */
-html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-win b, .fo-name-t) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
+html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name > span) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name-t) { animation: lw-pulse 1.2s ease-in-out infinite; }
+  html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name > span) { animation: lw-pulse 1.2s ease-in-out infinite; }
 }

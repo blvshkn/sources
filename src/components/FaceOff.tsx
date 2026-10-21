@@ -1,15 +1,9 @@
 import type { KeyboardEvent, MouseEvent } from "react";
-import { Team, TEAMS } from "../data";
-import type { Result } from "../liveMath";
-import { Icon, LiveNum } from "./ui";
+import type { Team } from "../data";
+import { playLabel, type PlayCount, type Result } from "../liveMath";
+import { LiveNum } from "./ui";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, WinCup, isChampion } from "./Trophy";
-
-/** A team's place in the standings: most wins first, points for breaking ties (Sleeper's order). */
-export function rankOf(t: Team) {
-  const wins = (x: Team) => Number(x.record.split("-")[0]) || 0;
-  return [...TEAMS].sort((x, y) => wins(y) - wins(x) || y.pf - x.pf).findIndex((x) => x.id === t.id) + 1;
-}
 
 /** Props that make a card a button: Enter and Space open it, and a click on a control inside it never opens it too. */
 export function pressProps(onPress: () => void, label: string) {
@@ -26,12 +20,15 @@ export function pressProps(onPress: () => void, label: string) {
 export interface FaceSide {
   t: Team | null;
   pts: number | null;
-  /** Small mono line under the score: the projected total while games are on ("123.8"), or "what-if" */
+  /** The number at the inner end of the meta line while there's a projection to show ("123.8", "what-if 123.8").
+   *  Without one the line ends on the team's season points per game. */
   note?: string;
   /** The score ticks (LiveNum) while games are on */
   live?: boolean;
   /** Trailing or losing side: the score steps back to muted */
   dim?: boolean;
+  /** Starters done, live and still to play: the to-play chip while games are on */
+  count?: PlayCount;
   /** Shown in place of a team on a bye or while loading */
   empty?: string;
 }
@@ -39,69 +36,88 @@ export interface FaceSide {
 /** Where the week stands: before kickoff, games on, games over with no one live, or final. */
 export type FaceState = "pre" | "live" | "scored" | "final";
 
+/** Season points per game from the team's record and points for: "113.73". Empty before a game is played. */
+function perGame(t: Team) {
+  const games = t.record.split("-").reduce((n, x) => n + (Number(x) || 0), 0);
+  return games && t.pf ? (t.pf / games).toFixed(2) : "";
+}
+
 /**
- * The matchup face-off. Phones get one card with mirrored halves and a rounded-square VS badge between them; tablet
- * and desktop get two mirrored containers with a round VS badge over the gap (matchup-card.css swaps the layout with a
- * container query; the markup is the same). Each half: avatar (ringed by who's ahead on wider cards), @handle, team
- * name, score, a bar filled by win %, then win %, record and the projected total. The winner of a final gets a cup. The week's state (Final with the result, Live, Projected) is said
- * once, centered under it, with a chevron: the whole card opens the full matchup. Every state draws the same rows at
- * the same heights, so switching weeks moves nothing. Hidden from assistive tech: the card's own label says it all.
+ * The matchup face-off (Figma "Score header", node 1:173), shared by the Wire Overview card, the Wire This week
+ * strip, the Lineup team strip and the header of the full matchup. One surface, two mirrored sides around a round
+ * VS badge. Each side: avatar, "You" or the handle over the team name, the big score, a bar filled by win %, then a
+ * mono meta line (win %, record, projection or points per game, and the to-play chip while games are on). The
+ * matchup winner's cup sits before the handle. Under the badge: Final and the result, Live, or Projected; phones put
+ * that line under both sides with the to-play chips beside it. matchup-card.css lays it out by the face-off's own
+ * width (phone, tablet, desktop), and every state draws the same rows at the same heights, so switching weeks moves
+ * nothing. Cards hide it from assistive tech (their own label says it all); the matchup header passes `label`.
  */
-export function FaceOff({ you, them, state, chance, res, skel = false, msg }: {
+export function FaceOff({ you, them, state, chance, res, skel = false, msg, label, flat = false }: {
   you: FaceSide; them: FaceSide; week?: number; state: FaceState; chance: number | null; res: Result | null; skel?: boolean; msg?: string;
+  /** Read as one image with this label, for a face-off that isn't inside a labelled button */
+  label?: string;
+  /** No padding of its own: the surface around it already has some (the matchup header) */
+  flat?: boolean;
 }) {
   // One win % per side. A final is 100 or 0 (50 each on a tie); before and during games it's the model's chance.
   const mine = res ? (res.letter === "W" ? 100 : res.letter === "L" ? 0 : 50) : chance;
   const theirs = mine === null || !them.t ? null : 100 - mine;
   const final = !!res || state === "final";
-  // Rings stay neutral until points are on the board
-  const rings = state !== "pre";
+  // What the week is (under the badge) and what happened (under that, or alone under both sides on a phone)
+  const tag = !them.t ? null : final ? "Final" : state === "pre" ? "Projected" : state === "scored" ? "Scored" : null;
+  const line = res ? (res.letter === "T" ? "Tied" : res.short)
+    : !them.t ? msg ?? "No matchup"
+    : state === "live" ? <span className="fo-live"><i />Live</span> : null;
+  const chips = !final && (state === "live" || state === "scored");
   return (
-    <span className={`fo${skel ? " is-skel" : ""}`} aria-hidden="true">
-      <Side s={you} side="you" pct={mine} other={theirs} ring={rings} won={res?.letter === "W"} />
-      <span className="fo-mid"><span className="fo-vs">VS</span></span>
-      <Side s={them} side="them" pct={theirs} other={mine} ring={rings} won={res?.letter === "L" && !!them.t} />
-      <span className="fo-line">
-        {res ? <>Final<i>·</i><b className={res.tone}>{res.letter === "T" ? "Tie" : res.short}</b></>
-          : final ? "Final"
-          : !them.t ? msg ?? "No matchup"
-          : state === "live" ? <span className="lu-live"><i />Live</span>
-          : state === "scored" ? "Scored" : "Projected"}
-        {them.t && !skel && <span className="fo-go"><Icon name="chev" size={14} /></span>}
+    <span className={`fo fo-st-${final ? "final" : state}${flat ? " fo-flat" : ""}${skel ? " is-skel" : ""}`} {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}>
+      <span className="fo-in">
+        <Side s={you} side="you" pct={mine} other={theirs} won={res?.letter === "W"} chip={chips} />
+        <span className="fo-mid">
+          <span className="fo-vs">VS</span>
+          <span className="fo-tag">{tag}</span>
+          <span className="fo-line">{line}</span>
+        </span>
+        <Side s={them} side="them" pct={theirs} other={mine} won={res?.letter === "L" && !!them.t} chip={chips} />
+        <span className="fo-foot">
+          <Chip c={chips ? you.count : undefined} />
+          <span className="fo-line">{line ?? tag}</span>
+          <Chip c={chips && them.t ? them.count : undefined} />
+        </span>
       </span>
     </span>
   );
 }
 
-function Side({ s, side, pct, other, ring, won }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; ring: boolean; won: boolean }) {
+const Chip = ({ c }: { c?: PlayCount }) => <span className="fo-chip">{c ? playLabel(c) : null}</span>;
+
+function Side({ s, side, pct, other, won, chip }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; chip: boolean }) {
   const t = s.t;
-  // Ahead or behind on win %: the leader's % and bar go green, the trailer's % goes red over a neutral bar. Even stays neutral.
+  // Ahead or behind on win %: the leader's % and bar go green, the trailer's go red. Even stays neutral.
   const tone = pct === null || other === null || pct === other ? "even" : pct > other ? "up" : "down";
-  const handle = !t ? null : t.manager === "You" ? "You" : t.manager === "Open team" ? "Open team" : `@${t.manager}`;
-  const rec = t ? `${t.record} (#${rankOf(t)})` : null;
-  // Two cups, two meanings. The winner of a final gets one on the outer side, by the avatar. Last season's champion
-  // keeps the league cup on the outside of the name: before yours, after theirs.
-  const champ = t && isChampion(t.id) ? <span className="fo-name-cup"><Trophy teamId={t.id} /></span> : null;
+  const handle = !t ? null : t.manager === "You" ? "You" : t.manager;
+  // One cup before the handle: the matchup winner's, or else last season's champion's (with its tooltip)
+  const cup = !t ? null : won ? <WinCup size={11} /> : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
+  const end = t ? s.note ?? perGame(t) : "";
+  const meta = [
+    pct === null ? null : <b key="w" className="fo-pct">{pct}%</b>,
+    t ? <span key="r">{t.record}</span> : null,
+  ].filter(Boolean);
   return (
-    <span className={`fo-side ${side} ${tone}${ring && tone !== "even" ? ` ring-${tone}` : ""}${s.dim ? " is-dim" : ""}`}>
-      <span className="fo-av">{t ? <TeamAvatar t={t} size={56} /> : <span className="fo-av-none" />}</span>
-      <span className="fo-cup">{won && <WinCup />}</span>
-      <b className={`fo-name${t ? "" : " muted"}`}>
-        {side === "you" && champ}
-        <span className="fo-name-t">{t ? t.name : s.empty ?? "No matchup"}</span>
-        {side === "them" && champ}
-      </b>
+    <span className={`fo-side ${side} ${tone}${s.dim ? " is-dim" : ""}`}>
+      <span className="fo-av">{t ? <TeamAvatar t={t} size={48} /> : <span className="fo-av-none" />}</span>
+      <span className="fo-handle">{cup}<span>{handle ?? ""}</span></span>
+      <b className={`fo-name${t ? "" : " muted"}`}><span>{t ? t.name : s.empty ?? "No matchup"}</span></b>
       <span className="fo-score">
         {s.pts === null ? <span className="fo-pts muted">--</span>
           : s.live ? <LiveNum className="fo-pts" v={s.pts} /> : <span className="fo-pts">{s.pts.toFixed(1)}</span>}
       </span>
       <span className="fo-bar"><i style={{ width: `${pct ?? 0}%` }} /></span>
-      <span className="fo-win"><b>{pct === null ? "--" : `${pct}%`}</b> WIN</span>
-      <small className="fo-note">{s.note ?? ""}</small>
       <span className="fo-meta">
-        <span className="fo-handle">{handle ?? ""}</span>
-        {handle && rec && <i className="fo-dot">•</i>}
-        <span className="fo-rec">{rec ?? ""}</span>
+        {meta.flatMap((x, i) => (i ? [<i key={`d${i}`} className="fo-dot">•</i>, x] : [x]))}
+        {meta.length > 0 && end && <i className="fo-dot fo-dot-end">•</i>}
+        {chip && t && s.count && <span className="fo-chip">{playLabel(s.count)}</span>}
+        <span className="fo-end">{end}</span>
       </span>
     </span>
   );

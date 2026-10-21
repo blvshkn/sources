@@ -518,16 +518,16 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
     return (
       <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open this week's matchup. ${label}`) : { "aria-label": label })}>
         <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
-          you={{ t: YOU, pts: myPts, live: inPlay, note: res ? undefined : inPlay ? `${wi.changed ? "what-if " : ""}${myTotal.toFixed(1)}` : wi.changed ? "what-if" : undefined, dim: myTone === "trail" }}
-          them={opp ? { t: opp, pts: oppPts, live: inPlay, note: inPlay && !res ? oppTotal!.toFixed(1) : undefined, dim: myTone === "lead" } : { t: null, pts: null, empty: "No matchup" }} />
+          you={{ t: YOU, pts: myPts, live: inPlay, note: res ? undefined : inPlay ? `${wi.changed ? "what-if " : ""}${myTotal.toFixed(1)}` : wi.changed ? "what-if" : undefined, dim: myTone === "trail", count: ms.me.count }}
+          them={opp ? { t: opp, pts: oppPts, live: inPlay, note: inPlay && !res ? oppTotal!.toFixed(1) : undefined, dim: myTone === "lead", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
       </section>
     );
   }
   const body = (
     <div className="lu-mx" aria-label={res ? `Final. ${res.long}` : `${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
       <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
-        you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: inPlay && !res ? myTotal.toFixed(1) : undefined, dim: myTone === "trail" }}
-        them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: inPlay && !res ? oppTotal.toFixed(1) : undefined, dim: flipTone(myTone) === "trail" } : { t: null, pts: null, empty: "No matchup" }} />
+        you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: inPlay && !res ? myTotal.toFixed(1) : undefined, dim: myTone === "trail", count: ms.me.count }}
+        them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: inPlay && !res ? oppTotal.toFixed(1) : undefined, dim: flipTone(myTone) === "trail", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
     </div>
   );
   return onOpen ? <button type="button" className="lu-mx-open mc-press" onClick={onOpen} aria-label={`Open this week's matchup. ${res ? `Final, ${res.long}` : `You ${(inPlay ? myNow! : myTotal).toFixed(1)}${opp ? `, ${opp.name} ${(inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0).toFixed(1)}, ${chance} percent to win` : ""}`}`}>{body}</button> : body;
