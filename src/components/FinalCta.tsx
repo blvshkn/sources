@@ -33,7 +33,11 @@ function Tiles({ className }: { className: string }) {
   );
 }
 
-const EASE = 0.12;
+/** Following: time-based smoothing, so it feels the same at 60 and 120Hz. Higher means a lazier, softer trail. */
+const FOLLOW_TAU = 0.28;
+/** Going home after the pointer leaves: one slow, eased glide instead of a fast catch-up that overshoots the eye. */
+const RETURN_MS = 1400;
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 export function FinalCtaPanel({ children }: { children: ReactNode }) {
   const card = useRef<HTMLDivElement>(null);
@@ -50,18 +54,25 @@ export function FinalCtaPanel({ children }: { children: ReactNode }) {
     let w = 0, ox = 0, oy = 0;
     const measure = () => { const r = el.getBoundingClientRect(); w = r.width; ox = r.left + scrollX; oy = r.top + scrollY; };
     let x = 0, y = 0, tx = 0, ty = 0, raf = 0, moving = false, inside = false, visible = true;
+    // The glide home: where it started, where home is, and when it began
+    let rx = 0, ry = 0, hx = 0, hy = 0, rt = 0, last = 0;
 
     const rest = () => { tx = w / 2; ty = 0; };
     const park = () => { cancelAnimationFrame(raf); raf = 0; moving = false; g.style.transform = ""; l.style.transform = ""; };
     const paint = () => { g.style.transform = `translate3d(${x}px,${y}px,0)`; l.style.transform = `translate3d(${-x}px,${-y}px,0)`; };
-    const frame = () => {
-      const dx = tx - x, dy = ty - y;
-      if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
-        x = tx; y = ty; raf = 0;
-        if (inside) paint(); else park(); // home again: CSS takes the rest position back
-        return;
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, last ? (now - last) / 1000 : 1 / 60); last = now;
+      if (inside) {
+        const k = 1 - Math.exp(-dt / FOLLOW_TAU);
+        x += (tx - x) * k; y += (ty - y) * k; paint();
+        if (Math.abs(tx - x) < 0.1 && Math.abs(ty - y) < 0.1) { x = tx; y = ty; paint(); raf = 0; last = 0; return; }
+      } else {
+        if (!rt) rt = now;
+        const p = Math.min(1, (now - rt) / RETURN_MS), e = easeInOut(p);
+        x = rx + (hx - rx) * e; y = ry + (hy - ry) * e;
+        if (p >= 1) { x = hx; y = hy; park(); last = 0; return; } // home again: CSS takes the rest position back
+        paint();
       }
-      x += dx * EASE; y += dy * EASE; paint();
       raf = requestAnimationFrame(frame);
     };
     const run = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
@@ -76,10 +87,10 @@ export function FinalCtaPanel({ children }: { children: ReactNode }) {
       if (!inside) { enter(e); return; }
       tx = e.pageX - ox; ty = e.pageY - oy; run();
     };
-    const leave = () => { if (!inside) return; inside = false; rest(); run(); };
+    const leave = () => { if (!inside) return; inside = false; rest(); rx = x; ry = y; hx = tx; hy = ty; rt = 0; run(); };
 
     // Size changes: re-measure, and if the glow is mid-flight keep its home in step with the new width
-    const ro = new ResizeObserver(() => { if (moving) { measure(); if (!inside) rest(); } });
+    const ro = new ResizeObserver(() => { if (moving) { measure(); if (!inside) { rest(); hx = tx; hy = ty; } } });
     ro.observe(el);
     // Offscreen: stop the loop and park at rest
     const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (!visible) { inside = false; park(); } });
