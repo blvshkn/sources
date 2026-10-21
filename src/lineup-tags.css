@@ -1,0 +1,14 @@
+/* Lineup rows: the Flex chip reads WRT with each letter in its position's color, and the injury reason sits right
+   next to the Q/D/OUT marker on the name line instead of a line below. No url references in this file. */
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt { display: inline-flex; letter-spacing: 0.02em; cursor: help; }
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt i { font-style: normal; }
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt .p-WR { color: var(--wr); }
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt .p-RB { color: var(--rb); }
+html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt .p-TE { color: var(--te); }
+html:root:not(#_):not(#_) .lu-name .lu-tagwrap { display: inline-flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+html:root:not(#_):not(#_) .lu-name .lu-tagwrap > :first-child { flex: none; }
+html:root:not(#_):not(#_) .lu-name .lu-tag { cursor: help; }
+html:root:not(#_):not(#_) .lu-name .lu-inj { font: 600 0.8125rem/1.2 var(--font-body); letter-spacing: 0; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* No room beside the name (phones): the marker and its reason drop to their own line together */
+html:root:not(#_):not(#_) .lu-row .lu-name:has(.lu-tagwrap) { flex-wrap: wrap; row-gap: 4px; }
+html:root:not(#_):not(#_) .lu-name .lu-tagwrap { max-width: 100%; }

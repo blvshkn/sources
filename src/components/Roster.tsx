@@ -87,7 +87,18 @@ function IrBlock({ onOpen }: { onOpen?: (p: Player, where: string) => void }) {
   );
 }
 
-const SLOT_LABEL: Record<string, string> = { FLEX: "W/R/T", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
+const SLOT_LABEL: Record<string, string> = { FLEX: "FLEX", SF: "SFLX", BN: "BN", IR: "IR", TX: "TAXI" };
+/** The slot chip. Flex reads WRT, each letter in its position's color, with a tip saying what it takes. */
+function SlotTag({ slot }: { slot: string }) {
+  if (slot === "FLEX") return (
+    <span className="lu-slot s-FLEX">
+      <Tooltip focusable content="Flex: start a WR, RB or TE here."><span className="lu-wrt" aria-label="Flex, WR, RB or TE"><i className="p-WR">W</i><i className="p-RB">R</i><i className="p-TE">T</i></span></Tooltip>
+    </span>
+  );
+  return <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>;
+}
+/** What the injury letter means, plus the reason when Sleeper gives one */
+const TAG_TIP: Record<string, string> = { Q: "Questionable: may not play. Check his status before lock.", D: "Doubtful: unlikely to play.", OUT: "Out: won't play this week.", IR: "Injured reserve: can move to an IR slot.", PUP: "PUP list: not eligible to play yet.", SUS: "Suspended.", NA: "Not active.", DNR: "Did not report.", COV: "On the COVID list." };
 
 /** One lineup row, Sleeper style: slot pill, jersey, name, projection. Shows the change to make if Sleeper differs. */
 type GameNow = { state: "pre_game" | "in_game" | "complete" | null; pts: number; left?: number };
@@ -227,12 +238,16 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai }: { p: Player;
     <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
       {...(tap ? tapProps(tap) : sheet ? { role: "button", tabIndex: 0, onClick: () => onOpen(p, where),
         onKeyDown: (e: { key: string; preventDefault: () => void }) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } } : {})}>
-      <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
+      <SlotTag slot={slot} />
       <Avatar p={p} size={44} />
       <span className="lu-who">
-        <span className="lu-name">{p.name}{st && st !== "Bye" && <b className={`lu-tag ${ringOf(p)}`}>{injuryTag(p)}</b>}</span>
+        <span className="lu-name">{p.name}{st && st !== "Bye" && (
+          <span className="lu-tagwrap">
+            <Tooltip focusable content={<>{TAG_TIP[injuryTag(p)] ?? "Injury designation from Sleeper."}{p.note && <small>{injuryDetail(p)}</small>}</>}><b className={`lu-tag ${ringOf(p)}`}>{injuryTag(p)}</b></Tooltip>
+            {(g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
+          </span>
+        )}</span>
         <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
-        {p.status && !onBye(p.nfl) && (g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
       </span>
       {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} />}
       {swap && (
@@ -306,7 +321,7 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
   const infoFor = (p: WeekPlayer, where: string) => (PLAYERS[p.id] ? { name: p.name, onOpen: () => { setOpen(null); onInfo(playerById(p.id), where); } } : undefined);
   const row = (p: WeekView["bench"][number], slot: string, tap: RowTap | undefined, bench?: boolean) => (
     <div key={`${slot}-${p.id}`} className={`lu-row${bench ? " bench" : ""}${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}>
-      <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
+      <SlotTag slot={slot} />
       <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
@@ -330,7 +345,7 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
         });
         return (
           <Fragment key={`s${i}`}>
-            {x.p ? row(x.p, x.slot, tap) : <div className={`lu-row${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
+            {x.p ? row(x.p, x.slot, tap) : <div className={`lu-row${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}><SlotTag slot={x.slot} /><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
             <PickAt show={open === key && future}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={x.p ? infoFor(x.p, `Starting at ${label} in Week ${v.week}`) : undefined} /></PickAt>
           </Fragment>
         );
@@ -711,7 +726,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 return (
                   <Fragment key={key}>
                     {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} ai={aiMarks?.[p.id]} />
-                      : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
+                      : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><SlotTag slot={x.slot} /><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
                     <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={p ? info(p, `Starting at ${label}`) : undefined} /></PickAt>
                   </Fragment>
                 );
