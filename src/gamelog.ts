@@ -4,7 +4,7 @@
 // season, so every number agrees with the rest of the demo. Nothing here is made up for a live league: a stat Sleeper
 // doesn't send is left out and the table shows "–".
 import { FREE_AGENTS, LEAGUE, PLAYERS, Player, SPECIAL_FREE_AGENTS, TEAMS, WEEK, isDemo } from "./data";
-import { round1 } from "./engine";
+import { eff, round1 } from "./engine";
 import { seasonFor } from "./schedule";
 import { DepthRow, StatRow, fetchDepthRows, fetchProjRows, fetchSchedule, fetchStatRows, scoreStats } from "./sleeper";
 import { demoLine, oppTeam, ptsOf } from "./usage";
@@ -55,6 +55,8 @@ function demoRow(s: Subject, pts: number, seed: number): { stats: Stats; pts: nu
   // Now and then a fumble he recovers, so the column isn't all zeros
   return { stats: { ...st, fum: hash(`${s.id}:${seed}:fum`) > 0.92 ? 1 : 0, fum_lost: 0 }, pts };
 }
+/** This week's number agrees with the sheet's Overview: the engine's projection (0 when he's out, on IR or on bye). */
+const nowProj = (s: Subject, fallback?: number) => { const p = PLAYERS[s.id]; if (!p) return fallback; const v = round1(eff(p, true)); return v > 0 ? v : undefined; };
 const demoProj = (s: Subject, w: number, base: number) => round1(base * (0.86 + hash(`${s.id}:${w}:proj`) * 0.28));
 
 function demoCurrent(s: Subject): SeasonLog {
@@ -62,7 +64,7 @@ function demoCurrent(s: Subject): SeasonLog {
   const rows: LogRow[] = seasonFor(p).map((c) => {
     if (!c.opp) return { week: c.week, opp: null, bye: true, when: c.week < WEEK ? "past" : c.week === WEEK ? "now" : "future" };
     if (c.week > WEEK) return { week: c.week, opp: c.opp, bye: false, when: "future", proj: c.proj };
-    if (c.week === WEEK) return { week: c.week, opp: c.opp, bye: false, when: "now", proj: c.proj ?? (p.proj || undefined) };
+    if (c.week === WEEK) return { week: c.week, opp: c.opp, bye: false, when: "now", proj: nowProj(s, c.proj ?? (p.proj || undefined)) };
     if (c.pts === undefined) return { week: c.week, opp: c.opp, bye: false, when: "past", miss: "dnp" };
     const r = demoRow(s, c.pts, c.week);
     return { week: c.week, opp: c.opp, bye: false, when: "past", proj: demoProj(s, c.week, p.proj || 6), ...r };
@@ -129,7 +131,7 @@ async function liveLog(s: Subject, season: string): Promise<SeasonLog> {
     const bye = !opp && knowsByes && !played(row?.stats);
     const when = !current || w < WEEK ? "past" : w === WEEK ? "now" : "future";
     if (bye) return { week: w, opp: null, bye: true, when };
-    if (when !== "past") return { week: w, opp, bye: false, when, proj: slate?.proj[s.id]?.[w] };
+    if (when !== "past") return { week: w, opp, bye: false, when, proj: when === "now" ? nowProj(s, slate?.proj[s.id]?.[w]) : slate?.proj[s.id]?.[w] };
     const pr = mine(proj[i]);
     const projPts = pr?.stats ? score(s.pos, pr.stats) : undefined;
     const projV = projPts !== undefined && projPts > 0 ? round1(projPts) : undefined;
