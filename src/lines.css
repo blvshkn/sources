@@ -18,11 +18,18 @@ html:root:not(#_):not(#_) {
 /* Trade picks: the empty check circle (the selected check keeps its stamp, gray or green fill) */
 html:root:not(#_):not(#_) .pick:not([aria-pressed="true"]) .check { border-color: var(--line); }
 
-/* Trade builder: the dashed "Add a player" slot. Hover still brightens it to ink 30% */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { border-color: var(--line); }
+/* Clickable dashed outlines read a step lighter than plain dividers so they look tappable (Zach). Hover still
+   brightens Add player to ink 30% and turns the Accounts row lime. */
+html:root:not(#_):not(#_) { --line-dash: color-mix(in srgb, var(--ink) 20%, transparent); }
 
-/* Accounts: the dashed "Add another Sleeper account" row. Hover still turns it lime */
-html:root:not(#_):not(#_) .acc-addrow { border-color: var(--line); }
+/* Trade builder: the dashed "Add a player" slot */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { border-color: var(--line-dash); }
+
+/* Accounts: the dashed "Add another Sleeper account" row */
+html:root:not(#_):not(#_) .acc-addrow { border-color: var(--line-dash); }
+
+/* Ask rail and the mobile deal tray's empty pill: also buttons */
+html:root:not(#_):not(#_) .rail-ask, html:root:not(#_):not(#_) .dt-empty:not(.deal-tray .dt-empty) { border-color: var(--line-dash); }
 
 /* Lineup: the dashed circle for an empty IR slot (Zach: dashed outlines are lines too) */
 html:root:not(#_):not(#_) .ir-empty { border-color: var(--line); }
