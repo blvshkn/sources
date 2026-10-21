@@ -163,10 +163,11 @@ export async function askServer(question: string, context: Record<string, unknow
 }
 
 /** The AI's reply over the engine's answer: the AI's words, the engine's inline content and links. */
-export function merge(ai: AiReply, base: Answer | null): Answer {
+export function merge(ai: AiReply, base: Answer | null, q = ""): Answer {
   const show = base?.show ?? (ai.playerIds?.length ? (ai.playerIds.length === 1 ? { kind: "player" as const, id: ai.playerIds[0] } : { kind: "players" as const, ids: ai.playerIds }) : undefined);
   let links = base?.links ?? [];
-  if (!links.length && ai.teamId) {
+  // A way out to Trade or Lineup only when the question was about a move; otherwise the answer stays in Ask
+  if (!links.length && ai.teamId && /\b(trade|deal|swap|offer|acquire|get|buy|sell|partner|start|sit|lineup)\b/i.test(q)) {
     const t = teamById(ai.teamId);
     links = t.you ? [{ label: "Open your lineup", tab: "roster" }] : [{ label: `Build a trade with ${t.manager}`, tab: "trade", teamId: t.id }];
   }
@@ -229,6 +230,6 @@ export function askJob(q: string, engine: (q: string) => Steps<Answer>, history:
       return { ...(base ?? { text: "", points: [], links: [] }), by: "off" };
     }
     await tr.finish();
-    return merge(ai, ruled ? base : null);
+    return merge(ai, ruled ? base : null, q);
   };
 }
