@@ -1,6 +1,7 @@
 // Sleeper's public, read-only API. No password or token: a username is enough.
 // Everything here runs in the user's browser; nothing is stored on a server.
 import type { Chip } from "./steps";
+import { byeTeamsFrom } from "./bye";
 import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
@@ -330,8 +331,10 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   // Players: names, teams and injuries come with the projections feed.
   const weekBy = new Map(weekProj.map((p) => [p.player_id, p]));
   const seasonBy = new Map(seasonProj.map((p) => [p.player_id, p]));
-  const teamsPlaying = new Set(weekProj.filter((p) => (p.stats?.pts_ppr ?? 0) > 0 && p.team).map((p) => p.team!));
-  const byeTeams = live && teamsPlaying.size >= 20 ? Array.from(new Set(seasonProj.map((p) => p.team).filter(Boolean) as string[])).filter((t) => !teamsPlaying.has(t)) : [];
+  // Bye comes only from the NFL schedule: a team on the schedule with no game this week. Never from projections or
+  // injuries (a player with no projection can still have a game). No schedule for the week means nobody is on bye.
+  const byeTeams = live ? byeTeamsFrom(schedule, week) : [];
+  const byeSet = new Set(byeTeams);
 
   // IR eligibility follows this league's reserve rules. IR and PUP always qualify.
   const ls = league.settings;
@@ -357,7 +360,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       id, pos, nfl: team,
       name: [info.first_name, info.last_name].filter(Boolean).join(" ") || `Player ${id}`,
       proj: pts.ppr, pts,
-      // null = bye or not projected this week; undefined (offseason) falls back to the season value
+      // null = no projection this week (a bye, or not projected yet); undefined (offseason) falls back to the season value.
+      // Whether he's on bye is the schedule's call (onBye), never this field's.
       wk: weekPts && weekPts.ppr > 0 ? round(weekPts) : live ? null : undefined,
       ...st,
       note: info.injury_status ? [info.injury_status, (w?.player ?? s?.player)?.injury_body_part].filter(Boolean).join(", ") : undefined,
@@ -584,7 +588,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     return {
       id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: p.proj, rookie: p.rookie, trend: t ? "up" : "flat", adds: t,
       why: t ? `Added in ${t.toLocaleString()} Sleeper leagues in the last day. Projects ${wk.toFixed(1)} this week.`
-        : p.wk === null ? `On bye this week, but projects ${p.proj.toFixed(1)} a week going forward.`
+        : byeSet.has(p.nfl) ? `On bye this week, but projects ${p.proj.toFixed(1)} a week going forward.`
+        : p.wk === null ? `No projection for this week yet. Projects ${p.proj.toFixed(1)} a week going forward.`
         : `Projects ${wk.toFixed(1)} this week and ${p.proj.toFixed(1)} a week going forward.`,
     };
   });

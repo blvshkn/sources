@@ -263,7 +263,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai }: { p: Player;
 
 /** Kicker or defense row. Same layout as a skill player. */
 function SpecialRow({ p, slot, bench, swapTo, live, tap }: { p: SpecialPlayer; slot: string; bench?: boolean; swapTo?: SpecialPlayer; live?: Live; tap?: RowTap }) {
-  const bye = p.wk === null;
+  const bye = onBye(p.nfl);
   useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";

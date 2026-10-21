@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
+import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
 import { lockLine, useKickoffs } from "./kickoff";
 import { loadLeague } from "./sleeper";
 import { TIER, playersInText, rankPlayers } from "./search";
@@ -12,6 +12,7 @@ import {
   counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
+import { lineupCard } from "./bye";
 import { installIconTooltips } from "./tooltips";
 import { Tooltip } from "./components/Tooltip";
 import { Boot } from "./components/Boot";
@@ -334,7 +335,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (diff.length) {
       const d = diff[0];
       list.push({
-        id: "lineup", kind: "lineup", headline: `${d.benched.name} is in your ${d.slot} in Sleeper`, emph: `and he's ${d.benched.status === "O" ? "out" : "on bye"}.`,
+        id: "lineup", kind: "lineup", ...lineupCard(d.benched, d.start, d.slot, onBye(d.benched.nfl)),
         why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before kickoff.`, trades: [], time: "Now", deadline: lockLine(),
         go: { label: "Review lineup", tab: "roster" },
       });

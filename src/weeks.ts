@@ -145,11 +145,12 @@ function demoWeek(week: number): WeekView {
 async function liveWeek(week: number): Promise<WeekView> {
   const past = week < WEEK;
   const rows = await weekFeed(week, past ? "stats" : "projections");
-  const playing = new Set([...rows.values()].filter((r) => r.team && Object.keys(r.stats ?? {}).length).map((r) => r.team!));
+  // Byes come from the NFL schedule only, never from who has stats or projections in the feed
+  const slate = LEAGUE.slate?.opp ?? {};
   const make = (id: string, scored?: number): WeekPlayer => {
     const row = rows.get(id);
     const i = info(id, row);
-    const teamOff = i.nfl && playing.size >= 20 && !playing.has(i.nfl);
+    const teamOff = !!i.nfl && !!slate[i.nfl] && !slate[i.nfl][week];
     if (teamOff) return { ...i, pts: null };
     if (past) return { ...i, pts: scored ?? (row ? weekPoints(i.pos, row.stats) : 0), line: row ? statLine(i.pos, row.stats) : "Did not play" };
     return { ...i, pts: row ? weekPoints(i.pos, row.stats) : 0 };

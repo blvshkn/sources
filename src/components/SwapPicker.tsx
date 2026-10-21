@@ -22,8 +22,8 @@ export const lockOf = (live: Live, p: { nfl: string } | null): "live" | "final" 
 /** Anyone in a lineup slot: a skill player, a kicker or a defense. Defenses read as "it", not "him". */
 export type Lockable = { id?: string; name: string; nfl: string; pos: string };
 const him = (p: Lockable) => (p.pos === "DEF" ? "it" : "him");
-/** On bye this week: a K/DEF carries wk null, a skill player's team is on the bye list. */
-const isBye = (p: Lockable) => ("wk" in p ? (p as { wk: unknown }).wk === null : onBye(p.nfl));
+/** On bye this week: his team has no game on the NFL schedule. A missing projection (wk null) is not a bye. */
+const isBye = (p: Lockable) => onBye(p.nfl);
 /** Swapping in someone on bye only scores 0, so bye candidates stay listed, dimmed and marked Bye, and a tap says why. */
 export const BYE_TAG = "Bye";
 export const byeWhy = (p: Lockable, week: number) => `${p.name} is on bye in Week ${week}, so ${him(p) === "it" ? "it" : "he"} won't score there.`;
@@ -188,7 +188,7 @@ export function SpecialWho({ p, side, suggested }: { p: SpecialPlayer | null; si
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{p.wk === null ? " · Bye" : p.opp ? ` ${oppAt(p.nfl, p.opp)}` : ""}{suggested && <span className="muted"> · Suggested</span>}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{onBye(p.nfl) ? " · Bye" : p.opp ? ` ${oppAt(p.nfl, p.opp)}` : ""}{suggested && <span className="muted"> · Suggested</span>}</small></span>
     </span>
   );
 }

@@ -6,6 +6,7 @@ import {
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
   SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
+import { sitsOut } from "./bye";
 import { nameWords, playersInText, teamsInText } from "./search";
 import { drain, type Steps, type TraceEv } from "./steps";
 
@@ -29,6 +30,8 @@ export const formatLabel = (f: Format = FORMAT) =>
 const REC_SHARE: Record<Pos, number> = { QB: 0, RB: 0.17, WR: 0.32, TE: 0.36 };
 export function scored(p: Pick<Player, "pos" | "proj" | "pts" | "wk">, thisWeek = false) {
   // Live players carry real projections for every scoring type.
+  // No projection this week yet: nothing to count, but he isn't out or on bye because of it
+  if (thisWeek && p.wk === null) return 0;
   const src = thisWeek && p.wk !== undefined ? p.wk : p.pts;
   if (src) {
     let v = FORMAT.scoring === "ppr" ? src.ppr : FORMAT.scoring === "half" ? src.half : src.std;
@@ -56,8 +59,8 @@ export const rosterMax = () => LEAGUE.rosterMax;
 
 // Trades and needs use rest-of-season weekly projections (a bye shouldn't sink a deal).
 // The lineup screen passes thisWeek = true so byes count as zero.
-export const isOut = (p: Player, thisWeek = false) =>
-  (p.status === "O" && (p.longTerm || thisWeek)) || (thisWeek && (onBye(p.nfl) || p.wk === null));
+// Bye is the schedule's call only (onBye). No projection is not a bye: it just scores 0 until one posts (see scored).
+export const isOut = (p: Player, thisWeek = false) => sitsOut(p, onBye(p.nfl), thisWeek);
 export const eff = (p: Player, thisWeek = false) => (isOut(p, thisWeek) ? 0 : round1(scored(p, thisWeek)));
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
@@ -972,7 +975,7 @@ export function fitScore(x: FitInput, gaps = slotGaps(), weak = weakSet(gaps)): 
 }
 /** Who to cut for a rec, and a short note on him, for copy shared by every waiver surface. */
 export const recDrop = (r: WaiverRec): { name: string; note: string } | null =>
-  r.kdef?.drop ? { name: r.kdef.drop.name, note: r.kdef.drop.wk === null ? "on bye" : r.kdef.drop.status === "O" ? "out" : `${specialPts(r.kdef.drop).toFixed(1)} projected` }
+  r.kdef?.drop ? { name: r.kdef.drop.name, note: onBye(r.kdef.drop.nfl) ? "on bye" : r.kdef.drop.status === "O" ? "out" : r.kdef.drop.wk === null ? "no projection yet" : `${specialPts(r.kdef.drop).toFixed(1)} projected` }
     : r.drop ? { name: r.drop.name, note: `${eff(r.drop).toFixed(1)} projected` } : null;
 /** "vs the Rams" / "at the 49ers", from "vs LAR", "@ SF" or a bare "LAR". */
 export const oppPhrase = (opp?: string) => {
@@ -1379,13 +1382,13 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     yield yourRoster();
     const lu = lineupFor(YOU.roster, true);
     const off = lu.bench.filter((p) => isOut(p, true));
-    yield { t: "step", doing: `Projecting ${YOU.roster.length} players for week ${WEEK}`, done: `Set the best lineup: ${lu.total.toFixed(1)} projected`, chips: off.map((p) => ({ label: `${p.name} ${p.status === "O" ? "out" : "bye"}`, kind: "player" as const })) };
+    yield { t: "step", doing: `Projecting ${YOU.roster.length} players for week ${WEEK}`, done: `Set the best lineup: ${lu.total.toFixed(1)} projected`, chips: off.map((p) => ({ label: `${p.name} ${onBye(p.nfl) ? "bye" : "out"}`, kind: "player" as const })) };
     const flex = lu.slots.find((x) => x.slot === "FLEX")?.player;
     const diff = sleeperDiff(lu);
     yield { t: "step", doing: "Checking your Sleeper lineup", done: diff.length ? `Found ${diff.length} better ${diff.length === 1 ? "swap" : "swaps"} than Sleeper` : "Your Sleeper lineup is already the best", chips: diff.map((d) => ({ label: d.start.name, kind: "player" as const })) };
     return {
       text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
-      points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
+      points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${onBye(p.nfl) ? "on bye" : "out"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
       show: diff.length ? { kind: "swaps", rows: diff.map((d) => ({ start: d.start.id, bench: d.benched.id, slot: d.slot, gain: d.gain })) } : undefined,
       lineup: true,

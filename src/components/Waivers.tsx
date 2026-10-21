@@ -24,7 +24,7 @@ const availOf = (fa: WaiverFA): Avail => {
   const s = gameState(fa.nfl);
   if (s === "bye") return "bye";
   if (s === "in_game" || s === "complete") return "played";
-  if (isSpecialFA(fa)) return fa.status === "O" ? "out" : fa.wk === null ? "bye" : null;
+  if (isSpecialFA(fa)) return fa.status === "O" ? "out" : null;
   const p = PLAYERS[fa.id];
   if (p?.injury === "IR") return "ir";
   if (p?.status === "O") return "out";

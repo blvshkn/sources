@@ -4,7 +4,7 @@
 // swaps, the waiver card, the links) stays on the answer. When the model can't be reached, the engine's answer is
 // the answer, so Ask never breaks.
 import {
-  COMPLETED_TRADES, FREE_AGENTS, LEAGUE, OPPONENT_ID, PLAYERS, TEAMS, WEEK, YOU, isDemo, playerById, teamById,
+  COMPLETED_TRADES, FREE_AGENTS, LEAGUE, OPPONENT_ID, PLAYERS, TEAMS, WEEK, YOU, isDemo, onBye, playerById, teamById,
   type Player, type Team,
 } from "./data";
 import { Answer, acceptance, currentFormat, eff, formatLabel, needsFor, round1, scored, tendencies } from "./engine";
@@ -20,7 +20,7 @@ export interface AskTurnLog { q: string; a: string }
 /** About this much JSON at most. Bigger leagues lose detail (bench rest-of-season numbers, then IR and taxi) first. */
 export const CONTEXT_BUDGET = 25_000;
 
-type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | string; ros?: number; status?: string; starter?: true; pts?: number };
+type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | string; ros?: number; status?: string; bye?: true; starter?: true; pts?: number };
 
 /** What Ask says for a player with no projection this week, in the context and in any reply. */
 export const NO_PROJ = "no projection this week";
@@ -34,9 +34,11 @@ const bytes = (o: unknown) => new TextEncoder().encode(JSON.stringify(o)).length
 
 function playerRow(p: Player, live: Live | undefined, starter: boolean, lean: boolean): CtxPlayer {
   const row: CtxPlayer = { id: p.id, name: p.name, pos: p.pos, nfl: p.nfl };
-  // This week's projection, and rest-of-season points a week. A player on a bye or without a projection says so in
-  // words: a bare null here once came back in the answer as "proj null".
-  row.proj = p.wk === null ? NO_PROJ : eff(p, true);
+  // This week's projection, and rest-of-season points a week. Bye comes from the NFL schedule only. A player with a
+  // game and no projection says so in words: he isn't on bye or out because of it, and a bare null once came back in
+  // the answer as "proj null".
+  if (onBye(p.nfl)) { row.bye = true; row.proj = 0; }
+  else row.proj = p.wk === null ? NO_PROJ : eff(p, true);
   if (!lean || starter) row.ros = round1(scored(p));
   const status = p.injury ?? (p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : undefined);
   if (status) row.status = p.note ? `${status} (${p.note})` : status;

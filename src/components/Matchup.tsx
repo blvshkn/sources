@@ -71,7 +71,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const myCount = meS.count, oppCount = oppS.count;
   // Score tones (liveMath.scoreTone): ahead now or the winner stays bright, the other side dims; pregame both bright
   const myTone = scoreTone(meS.scored, oppS.scored, res ? "final" : started ? "live" : "pre");
-  const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), p.wk === null) : "");
+  const spCls = (p: SpecialPlayer | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const rowCls = (p: Player | null) => (p ? playCls(gameNow(live, p.id, p.nfl), onBye(p.nfl)) : "");
   const bench = YOU.roster.filter((id) => !mine.some((s) => s.id === id)).map(playerById);
   // K and DEF on the roster that aren't in a K/DEF slot right now: the only ones a K or DEF row can swap in

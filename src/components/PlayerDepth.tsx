@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { kickWhen, kickWhenIn, useKickoffs } from "../kickoff";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, teamNick } from "../data";
+import { injuryWord } from "../bye";
 import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
 import { SWING, useLive, type Live } from "../live";
 import { seasonFor } from "../schedule";
@@ -206,7 +207,7 @@ export function lineupCall(p: Player, now: Now = nowFor(null, p)): Call {
       call = { tone: "good", head: `Would start for you at ${slotLabel}`, slot: slotLabel, line: `${tag}He projects ${f1(me)}${bumped ? `, ahead of ${bumped.name} at ${f1(eff(bumped, true))}` : ""}.` };
     } else call = { tone: "info", head: "Wouldn't start for you", slot: slotLabel, line: weakest ? `${tag}${weakest.player.name} holds ${slotLabel} at ${f1(eff(weakest.player, true))}. He projects ${f1(me)}, ${f1(eff(weakest.player, true) - me)} short.` : `${tag}No open slot fits a ${p.pos}.` };
   } else if (onBye(p.nfl) || !me) {
-    const why = onBye(p.nfl) ? "He's on bye" : p.status === "O" ? "He's out this week" : "He isn't projected to play";
+    const why = onBye(p.nfl) ? "He's on bye" : p.status === "O" ? "He's out this week" : p.status === "Q" ? `He's ${injuryWord(p)} with no projection yet` : p.wk === null ? "He has no projection yet" : "He isn't projected to play";
     const set = yours && Object.values(SLEEPER_SET).flat().includes(p.id);
     // The best lineup's replacement for him, from the same start/sit diff the Lineup page shows
     const swap = set ? sleeperDiff(lu).find((d) => d.benched?.id === p.id) : undefined;
@@ -219,7 +220,7 @@ export function lineupCall(p: Player, now: Now = nowFor(null, p)): Call {
     if (benchMe) call = { tone: "bad", head: `Swap him out for ${benchMe.start.name}`, slot: benchMe.slot, line: `${benchMe.start.name} projects ${f1(eff(benchMe.start, true))} to his ${f1(me)}. That's ${f1(benchMe.gain)} points you'd leave on the bench. Make the swap in Sleeper.` };
     else if (startMe) {
       const b = startMe.benched, bz = eff(b, true) === 0;
-      const why = onBye(b.nfl) ? "is on bye" : b.status === "O" ? "is out" : bz ? "isn't projected to play" : "";
+      const why = onBye(b.nfl) ? "is on bye" : b.status === "O" ? "is out" : bz && b.status === "Q" ? `is ${injuryWord(b)} with no projection yet,` : bz && b.wk === null ? "has no projection yet" : bz ? "isn't projected to play" : "";
       call = { tone: "good", head: `Start him over ${b.name}`, slot: slotLabel, line: why
         ? `${b.name} ${why} but is still in your ${startMe.slot} slot in Sleeper. He projects ${f1(me)}. Make the swap before lock.`
         : `Sleeper has ${b.name} in at ${startMe.slot} (${f1(eff(b, true))}). He projects ${f1(me)}, ${f1(startMe.gain)} more. Make the swap in Sleeper.` };
