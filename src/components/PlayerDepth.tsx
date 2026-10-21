@@ -2,7 +2,7 @@
 // plus the trimmed news row. Everything is computed from league data the app already has; the words are ours.
 import { useEffect, useState } from "react";
 import { kickWhen, kickWhenIn, useKickoffs } from "../kickoff";
-import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, teamNick } from "../data";
+import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, sleeperUrl, teamNick } from "../data";
 import { injuryWord } from "../bye";
 import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
 import { SWING, useLive, type Live } from "../live";
@@ -11,6 +11,7 @@ import { PosWeeks, Usage, defenseVs, loadPosWeeks, oppTeam, ptsOf, usageFor } fr
 import { statLine } from "../weeks";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./ui";
+import { PlatformLogo } from "./PlatformLogo";
 
 // ---- Small helpers ------------------------------------------------------------
 const f1 = (n: number) => n.toFixed(1);
@@ -273,6 +274,10 @@ export function LineupCall({ p }: { p: Player }) {
         <i aria-hidden="true"><Icon name={c.tone === "bad" ? "alert" : c.tone === "good" ? "check" : c.tone === "warn" ? "switch" : "helmet"} size={14} /></i>
         <span><b>{c.head}</b><span>{c.line}</span></span>
       </div>
+      {/* A change to make in your own lineup: one tap to Sleeper's team tab (the app opens it on phones that have it) */}
+      {c.owner === "you" && (/in Sleeper|Sleeper still has him/.test(c.line) || c.head === "Take him out of your lineup") && (
+        <a className="btn btn-sm pd-sleeper" href={sleeperUrl("/team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
+      )}
       {c.alts.length > 1 && (
         <div className="pd-alts">
           <span className="pd-k">{c.owner === "them" ? "Their options" : "Your options"}{c.slot ? ` at ${c.slot}` : ""}</span>
