@@ -42,12 +42,14 @@ html:root:not(#_):not(#_) .lu-mx-open.mc-press > .lu-mx { border-radius: inherit
 
 /* ---------- Face-off (Figma "Score header", node 1:173) ----------
    One surface, two mirrored sides around a round VS badge. Laid out by the face-off's own width, phone first:
-   - Phone (Figma 358): each side stacks avatar and handle, team name, score, bar, meta. The badge sits between the
-     sides; the result or Live goes under both, with the to-play chips beside it.
-   - Tablet (from 560px wide, Figma 720): avatar beside handle over name, then a bigger score, bar and meta, with
-     the to-play chip at the inner end of the meta line. Final and the result, Live or Projected sit under the badge.
-   - Desktop (from 900px wide, Figma 1200): the score moves up beside the name at the inner edge, and the to-play
-     chip sits inline in the meta line with the projection or points per game pushed to the inner end.
+   - Phone (Figma 350): each side stacks avatar and handle, team name, score, bar, meta. The badge sits between the
+     sides; the result or Live goes under both, with the "N to play" chips beside it.
+   - Tablet (from 560px wide, Figma 712): avatar beside handle over name, then a bigger score, bar and meta. The meta
+     line splits: win %, record and the to-play chip at the outer edge, the projection or points per game alone at
+     the inner end. Final and the result, Live or Projected sit under the badge.
+   - Desktop (from 900px wide, Figma 988): the score moves up beside the name at the inner edge; the meta line is
+     the tablet one.
+   The VS badge is an outline: no fill, just the ring of the surface's own color (Zach's Figma, Built: Face-off).
    Sizes, gaps and padding are fluid between the Figma values (cqi of the face-off's width). The big scores are Geist
    with tight tracking; every number in the meta line is Geist Mono. Green is ahead or won, red behind or lost; lime
    is the brand and never appears here. Every state draws the same rows at the same heights. */
@@ -121,10 +123,11 @@ html:root:not(#_):not(#_) .fo-pts {
 html:root:not(#_):not(#_) .fo .fo-pts[data-n] { font-family: var(--font-body) !important; font-variant-numeric: normal; }
 html:root:not(#_):not(#_) .fo-side.is-dim .fo-pts, html:root:not(#_):not(#_) .fo-pts.muted { color: var(--muted); }
 
-/* The bar, filled from the outer edge by that side's win %: green for the leader, red for the trailer */
+/* The bar, filled from the outer edge by that side's win %: green for the leader, red for the trailer. The track is
+   the page color, a step darker than the surface (Figma #121312). */
 html:root:not(#_):not(#_) .fo-bar {
   grid-area: bar; display: flex; width: 100%; height: var(--fo-bar); margin-top: 6px;
-  border-radius: 2px; background: var(--surface-3); overflow: hidden;
+  border-radius: 2px; background: var(--bg); overflow: hidden;
 }
 html:root:not(#_):not(#_) .fo-side.them .fo-bar { justify-content: flex-end; }
 html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: 9999px; background: color-mix(in srgb, var(--ink) 30%, transparent); transition: width 600ms var(--st-ease); }
@@ -150,18 +153,21 @@ html:root:not(#_):not(#_) .fo-chip {
   font: 400 10px/normal var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap;
 }
 html:root:not(#_):not(#_) .fo-chip:empty { visibility: hidden; padding: 0; }
-html:root:not(#_):not(#_) .fo-meta .fo-chip { display: none; }
+html:root:not(#_):not(#_) :is(.fo-meta .fo-chip, .fo-dot-chip) { display: none; }
 
-/* The VS badge, cut out of the surface by a ring of the surface's own color */
+/* The VS badge: an outline only, a ring of the surface's own color with no fill */
 html:root:not(#_):not(#_) .fo-mid {
   grid-row: 1; grid-column: 2; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding-top: 8px; min-width: 0;
 }
 html:root:not(#_):not(#_) .fo-vs {
   display: grid; place-items: center; box-sizing: border-box; width: 40px; height: 40px; padding-top: 1px; border-radius: 50%;
-  background: var(--surface-3); border: 3px solid var(--fo-bg);
+  background: transparent; border: 3px solid var(--fo-bg);
   font: 500 13px/1 var(--font-mono); letter-spacing: 0.08em; color: var(--muted);
 }
+/* The matchup header sits below the sheet's title and weeks, where the wash has faded to the bare surface, so a
+   surface-colored ring would vanish. A shade darker keeps it reading as the ring it is in Figma. */
+html:root:not(#_):not(#_) .fo-flat .fo-vs { border-color: color-mix(in srgb, var(--fo-bg) 70%, #000); }
 html:root:not(#_):not(#_) .fo-tag { display: none; height: 11px; margin-top: 6px; white-space: nowrap; font: 400 11px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 html:root:not(#_):not(#_) .fo-line { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 13px; white-space: nowrap; font: 500 11px/1.1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
 html:root:not(#_):not(#_) .fo-mid .fo-line { display: none; }
@@ -176,8 +182,10 @@ html:root:not(#_):not(#_) .fo-foot {
 html:root:not(#_):not(#_) .fo-foot > .fo-chip:first-child { justify-self: start; }
 html:root:not(#_):not(#_) .fo-foot > .fo-chip:last-child { justify-self: end; }
 html:root:not(#_):not(#_) .fo-foot > .fo-line:empty { visibility: hidden; }
+/* The matchup header before kickoff: Projected is a muted tag under both sides, as under the badge on wider screens */
+html:root:not(#_):not(#_) .fo-flat.fo-st-pre .fo-foot > .fo-line { font-weight: 400; color: var(--muted); }
 
-/* Tablet: avatar beside handle over name, a bigger score, Final and the result under the badge */
+/* Tablet: avatar beside handle over name, a bigger score, the split meta line, Final and the result under the badge */
 @container fo (min-width: 560px) {
   html:root:not(#_):not(#_) .fo-in { --fo-av: clamp(32px, 18px + 2.5cqi, 48px); --fo-bar: 5px; }
   html:root:not(#_):not(#_) .fo-side { grid-template-areas: "av handle" "av name" "score score" "bar bar" "meta meta"; column-gap: 8px; }
@@ -185,15 +193,18 @@ html:root:not(#_):not(#_) .fo-foot > .fo-line:empty { visibility: hidden; }
   html:root:not(#_):not(#_) .fo-handle { align-self: end; }
   html:root:not(#_):not(#_) .fo-name { align-self: start; margin-top: 2px; }
   html:root:not(#_):not(#_) .fo-score, html:root:not(#_):not(#_) .fo-bar, html:root:not(#_):not(#_) .fo-meta { margin-top: 10px; }
-  html:root:not(#_):not(#_) .fo-meta .fo-chip { display: block; order: 9; margin-left: auto; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-meta .fo-chip { margin: 0 auto 0 0; }
+  html:root:not(#_):not(#_) .fo-meta .fo-chip { display: block; }
+  html:root:not(#_):not(#_) .fo-meta .fo-dot-chip { display: inline; }
+  html:root:not(#_):not(#_) .fo-meta .fo-dot-end { display: none; }
+  html:root:not(#_):not(#_) .fo-meta .fo-end { margin-left: auto; }
+  html:root:not(#_):not(#_) .fo-side.them .fo-meta .fo-end { margin: 0 auto 0 0; }
   html:root:not(#_):not(#_) .fo-mid { padding-top: 20px; }
   html:root:not(#_):not(#_) .fo-tag { display: block; }
   html:root:not(#_):not(#_) .fo-mid .fo-line { display: inline-flex; margin-top: 24px; }
   html:root:not(#_):not(#_) .fo-foot { display: none; }
 }
 
-/* Desktop: the score beside the name at the inner edge, the to-play chip inline in the meta line */
+/* Desktop: the score beside the name at the inner edge */
 @container fo (min-width: 900px) {
   html:root:not(#_):not(#_) .fo-in {
     --fo-score: clamp(52px, 5.333cqi, 72px); --fo-name: 18px; --fo-handle: clamp(11px, 8px + 0.4167cqi, 13px);
@@ -205,10 +216,6 @@ html:root:not(#_):not(#_) .fo-foot > .fo-line:empty { visibility: hidden; }
   html:root:not(#_):not(#_) .fo-side.them { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "score handle av" "score name av" "bar bar bar" "meta meta meta"; }
   html:root:not(#_):not(#_) .fo-name { margin-top: 6px; }
   html:root:not(#_):not(#_) .fo-score { margin-top: 0; align-self: center; }
-  html:root:not(#_):not(#_) .fo-meta .fo-chip { order: 0; margin: 0; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-meta .fo-chip { margin: 0; }
-  html:root:not(#_):not(#_) .fo-meta:has(> .fo-chip) .fo-end { margin-left: auto; }
-  html:root:not(#_):not(#_) .fo-side.them .fo-meta:has(> .fo-chip) .fo-end { margin: 0 auto 0 0; }
   html:root:not(#_):not(#_) .fo-mid { padding-top: 0; }
   html:root:not(#_):not(#_) .fo-mid .fo-line { margin-top: 16px; }
 }

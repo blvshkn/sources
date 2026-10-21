@@ -6,9 +6,9 @@ import { LEAGUE, OPPONENT_ID, Player, SpecialPlayer, WEEK, YOU, onBye, playerByI
 import { eff, fits, fmt, round1, specialPts, startedSpecials, StartedSpecial } from "../engine";
 import { Icon } from "./ui";
 import { useLive, expect, sideScore, scoreMatch, startersOf } from "../live";
-import { finalPct, resultOf, scoreTone, flipTone, playLabel } from "../liveMath";
+import { finalPct, resultOf, scoreTone, flipTone } from "../liveMath";
 import { PtsCell, gameNow, playCls } from "./Roster";
-import { FaceOff } from "./FaceOff";
+import { FaceOff, toPlay } from "./FaceOff";
 import { PlatformLogo } from "./PlatformLogo";
 import { deny, denyOn } from "../deny";
 import { SwapPicker, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
@@ -111,7 +111,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
       {stepper}
       <section className="card mu" aria-label={`Week ${WEEK} matchup${res ? `, final. ${res.long}` : ""}`}>
         <FaceOff week={WEEK} state={res ? "final" : nowLive ? "live" : started ? "scored" : "pre"} chance={chance} res={res} flat
-          label={`${changed ? "Your what-if" : "You"} ${(started ? round1(meS.scored) : myTotal).toFixed(1)}, ${opp.name} ${(started ? round1(oppS.scored) : oppTotal).toFixed(1)}. ${res ? `Final, ${res.short}` : `${chance} percent to win`}${started && !res ? `. ${playLabel(myCount)} for you, ${playLabel(oppCount)} for them` : ""}`}
+          label={`${changed ? "Your what-if" : "You"} ${(started ? round1(meS.scored) : myTotal).toFixed(1)}, ${opp.name} ${(started ? round1(oppS.scored) : oppTotal).toFixed(1)}. ${res ? `Final, ${res.short}` : `${chance} percent to win`}${started && !res ? `. ${toPlay(myCount) || "0 to play"} for you, ${toPlay(oppCount) || "0 to play"} for them` : ""}`}
           you={{ t: YOU, pts: started ? round1(meS.scored) : myTotal, live: started, dim: myTone === "trail", count: myCount,
             note: res ? undefined : started ? `${changed ? "what-if " : ""}${myTotal.toFixed(1)}` : changed ? "what-if" : undefined }}
           them={{ t: opp, pts: started ? round1(oppS.scored) : oppTotal, live: started, dim: flipTone(myTone) === "trail", count: oppCount,

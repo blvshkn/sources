@@ -1,6 +1,6 @@
 import type { KeyboardEvent, MouseEvent } from "react";
 import type { Team } from "../data";
-import { playLabel, type PlayCount, type Result } from "../liveMath";
+import type { PlayCount, Result } from "../liveMath";
 import { LiveNum } from "./ui";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, WinCup, isChampion } from "./Trophy";
@@ -27,10 +27,15 @@ export interface FaceSide {
   live?: boolean;
   /** Trailing or losing side: the score steps back to muted */
   dim?: boolean;
-  /** Starters done, live and still to play: the to-play chip while games are on */
+  /** Starters done, live and still to play: the "N to play" chip while games are on (only `left` is shown) */
   count?: PlayCount;
   /** Shown in place of a team on a bye or while loading */
   empty?: string;
+}
+
+/** The to-play chip's words: starters still to kick off ("2 to play"). Empty once everyone has played or is playing. */
+export function toPlay(c: PlayCount | undefined) {
+  return c && c.left > 0 ? `${c.left} to play` : "";
 }
 
 /** Where the week stands: before kickoff, games on, games over with no one live, or final. */
@@ -45,10 +50,11 @@ function perGame(t: Team) {
 /**
  * The matchup face-off (Figma "Score header", node 1:173), shared by the Wire Overview card, the Wire This week
  * strip, the Lineup team strip and the header of the full matchup. One surface, two mirrored sides around a round
- * VS badge. Each side: avatar, "You" or the handle over the team name, the big score, a bar filled by win %, then a
- * mono meta line (win %, record, projection or points per game, and the to-play chip while games are on). The
- * matchup winner's cup sits before the handle. Under the badge: Final and the result, Live, or Projected; phones put
- * that line under both sides with the to-play chips beside it. matchup-card.css lays it out by the face-off's own
+ * VS ring. Each side: avatar, "You" or the handle over the team name, the big score, a bar filled by win %, then a
+ * mono meta line (win %, record, the "N to play" chip while games are on, then the projection or points per game,
+ * which tablet and desktop push to the inner end). The matchup winner's cup sits before the handle. Under the badge:
+ * Final and the result, Live, or Projected; phones put that line under both sides with the to-play chips beside it.
+ * Only starters still to play are counted: no live count. matchup-card.css lays it out by the face-off's own
  * width (phone, tablet, desktop), and every state draws the same rows at the same heights, so switching weeks moves
  * nothing. Cards hide it from assistive tech (their own label says it all); the matchup header passes `label`.
  */
@@ -89,7 +95,7 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
   );
 }
 
-const Chip = ({ c }: { c?: PlayCount }) => <span className="fo-chip">{c ? playLabel(c) : null}</span>;
+const Chip = ({ c }: { c?: PlayCount }) => <span className="fo-chip">{toPlay(c) || null}</span>;
 
 function Side({ s, side, pct, other, won, chip }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; chip: boolean }) {
   const t = s.t;
@@ -99,6 +105,7 @@ function Side({ s, side, pct, other, won, chip }: { s: FaceSide; side: "you" | "
   // One cup before the handle: the matchup winner's, or else last season's champion's (with its tooltip)
   const cup = !t ? null : won ? <WinCup size={11} /> : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
   const end = t ? s.note ?? perGame(t) : "";
+  const left = chip && t ? toPlay(s.count) : "";
   const meta = [
     pct === null ? null : <b key="w" className="fo-pct">{pct}%</b>,
     t ? <span key="r">{t.record}</span> : null,
@@ -115,8 +122,9 @@ function Side({ s, side, pct, other, won, chip }: { s: FaceSide; side: "you" | "
       <span className="fo-bar"><i style={{ width: `${pct ?? 0}%` }} /></span>
       <span className="fo-meta">
         {meta.flatMap((x, i) => (i ? [<i key={`d${i}`} className="fo-dot">•</i>, x] : [x]))}
+        {left && <i className="fo-dot fo-dot-chip">•</i>}
+        {left && <span className="fo-chip">{left}</span>}
         {meta.length > 0 && end && <i className="fo-dot fo-dot-end">•</i>}
-        {chip && t && s.count && <span className="fo-chip">{playLabel(s.count)}</span>}
         <span className="fo-end">{end}</span>
       </span>
     </span>
