@@ -71,6 +71,7 @@ import "./watch-icon.css";
 import "./icon-air-vent.css";
 import "./lines.css";
 import "./optimal-lineup.css";
+import "./landing-refresh.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

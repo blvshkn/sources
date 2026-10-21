@@ -90,7 +90,7 @@ function PRow({ p, k, v, tone = "", onOpen, live }: {
 
 /** What the answer is about, shown right in the card: the players each way in a deal, the player you asked about, the
  *  lineup swaps, or the waiver add. */
-function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: Trade; onPlayer: OpenPlayer; live: boolean }) {
+export function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: Trade; onPlayer: OpenPlayer; live: boolean }) {
   const row = (id: string, k?: string, v?: string, tone?: string) => {
     const p = playerById(id);
     return p ? <PRow key={`${k}-${id}`} p={p} k={k} v={v} tone={tone} live={live} onOpen={() => onPlayer(p)} /> : null;
@@ -121,7 +121,7 @@ function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: T
 }
 
 /** The key numbers for an answer that carries a deal: what each side gains a week and how likely they are to say yes. */
-function DealNumbers({ t }: { t: Trade }) {
+export function DealNumbers({ t }: { t: Trade }) {
   const them = teamById(t.partnerId);
   const acc = useMemo(() => t.accept ?? (them ? acceptance(t, YOU, them) : null), [t, them]);
   const tone = (n: number) => (n > 0 ? " good" : n < 0 ? " bad" : "");

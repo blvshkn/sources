@@ -1,0 +1,70 @@
+/* Landing refresh, after Zach's annotated hero: the face-off moves under the form so the left column isn't bare, the
+   trade idea takes its place on the right with room around it, and a compact section shows Ask, Set optimal lineup
+   and cross-device sync with the app's own components. Phone first, then tablet, then desktop. Loads before frame.css. */
+
+/* ==== Hero ==== */
+/* The face-off under "Or explore a sample league": a compact card on a phone, a measured column on desktop */
+html:root:not(#_):not(#_) .ld2-copy .ld2-fo { margin-top: 32px; width: 100%; max-width: 520px; }
+html:root:not(#_):not(#_) .ld2-copy .ld2-fo .sb2-open { cursor: default; }
+
+/* The trade idea is the only card on the stage now: no offset meant to stagger it against a second card */
+html:root:not(#_):not(#_) .ld2-stage .ld2-preview > .ld2-idea { display: flex; margin-right: 0; margin-left: 0; }
+
+@media (min-width: 600px) and (max-width: 959px) {
+  html:root:not(#_):not(#_) .ld2-copy .ld2-fo { max-width: 640px; }
+}
+@media (min-width: 960px) {
+  html:root:not(#_):not(#_) .ld2-copy .ld2-fo { margin-top: 40px; max-width: 480px; }
+  /* The players frame one card: two above, one beside, one below; the far ones stay out of the column gap */
+  html:root:not(#_):not(#_) .ld2-stage { margin-top: 64px; }
+}
+@media (min-width: 1100px) {
+  html:root:not(#_):not(#_) .ld2-stage { margin-top: 96px; }
+}
+
+/* ==== Ask, Set optimal lineup, every device ==== */
+html:root:not(#_):not(#_) .ld2-new-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 32px; }
+html:root:not(#_):not(#_) .ld2-new .ld-cell { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+html:root:not(#_):not(#_) .ld2-new .ld-cell > p { margin: 0 0 8px; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ld2-new-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:root:not(#_):not(#_) .ld2-new .ld2-ask-cell { grid-column: 1 / -1; }
+}
+@media (min-width: 1100px) {
+  html:root:not(#_):not(#_) .ld2-new-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto; }
+  html:root:not(#_):not(#_) .ld2-new .ld2-ask-cell { grid-column: 1; grid-row: 1 / span 2; }
+}
+
+/* Ask: the question bubble and answer card from the Ask tab, at rest, without the page around them */
+html:root:not(#_):not(#_) .ld2-ask { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+html:root:not(#_):not(#_) .ld2-ask .ask-you-row { display: flex; justify-content: flex-end; }
+html:root:not(#_):not(#_) .ld2-ask .ask-card { margin: 0; }
+html:root:not(#_):not(#_) .ld2-ask .ask-after { opacity: 1; visibility: visible; }
+
+/* Optimal lineup: Ask's swap rows with the reason under each */
+html:root:not(#_):not(#_) .ld2-opt-cell .ask-show { margin-top: auto; }
+html:root:not(#_):not(#_) .ld2-opt-none { margin: auto 0 0; font: 500 0.875rem/1.25rem var(--font-body); color: var(--muted); }
+
+/* Every device: a sent offer and a starred player, as they sit in the app on any screen */
+html:root:not(#_):not(#_) .ld2-sync { display: grid; gap: 0; margin: auto 0 0; padding: 0; list-style: none; }
+html:root:not(#_):not(#_) .ld2-sync li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; }
+html:root:not(#_):not(#_) .ld2-sync li + li { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .ld2-sync-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(244, 246, 242, 0.07); color: var(--muted); }
+html:root:not(#_):not(#_) .ld2-sync-ic.on { color: var(--lime); }
+html:root:not(#_):not(#_) .ld2-sync-ic.on svg.ic-star path { fill: currentColor; }
+html:root:not(#_):not(#_) .ld2-sync-ic.on svg.ic-star .st-gap { stroke-opacity: 1; }
+html:root:not(#_):not(#_) .ld2-sync-t { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_) .ld2-sync-t b { font-size: 0.9375rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .ld2-sync-t small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .ld2-sync-k { font: 500 0.6875rem/1rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* ==== Footer legal links ==== */
+html:root:not(#_):not(#_) .ld2-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+html:root:not(#_):not(#_) .ld2-legal button {
+  min-height: 44px; padding: 0; border: 0; background: none; font: inherit; color: var(--muted); text-decoration: none; cursor: pointer;
+  transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .ld2-legal button:hover { color: var(--ink); } }
+html:root:not(#_):not(#_) .ld2-legal button:active { color: var(--ink); }
+html:root:not(#_):not(#_) .ld2 main:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .ld2-legal button { transition: none; } }

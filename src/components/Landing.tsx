@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Logo } from "./Logo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
-import { activeTags, allNeeds, applyFormat, DEFAULT_FORMAT, findTrades, fmt, groupsFor } from "../engine";
+import { activeTags, allNeeds, applyFormat, ask, DEFAULT_FORMAT, findTrades, fmt, groupsFor, waiverRecs } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
@@ -12,13 +12,19 @@ import { drawCard } from "./lazy";
 import { loadJerseyNumbers } from "../jersey";
 import { IdeaScan } from "./IdeaScan";
 import { ideaSteps } from "../reads";
-import type { Trade } from "../engine";
+import type { Answer, Trade } from "../engine";
 import type { Steps } from "../steps";
 import { draftPitch } from "../pitch";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { useLive, startersOf, playCount } from "../live";
 import { eff } from "../engine";
 import { AiMark } from "./WorkingLoader";
+import { AskShowBlock, DealNumbers } from "./Ask";
+import { SwapRows } from "./SwapRows";
+import { lockedIn, resultFor } from "../optimalLineup";
+import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
+import { DetailSheet } from "./DetailSheet";
+import { HowItWorksDoc, LegalDoc } from "./About";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -54,6 +60,25 @@ export function Landing({ onLive, onDemo }: {
     const notes = INITIAL_MANAGER_TAGS.filter((t) => t.teamId === mike.id);
     return { needs, trade, mike, thin, notes, tags, you: needs.find((n) => n.team.you)! };
   }, []);
+
+  // Ask, answered by the engine on the sample league: one of the app's own starter questions and the same trade math.
+  // On a real league Sources AI writes the words around these numbers. Worked out after first paint, off the hero's path.
+  const [askDemo, setAskDemo] = useState<{ q: string; a: Answer; deal?: Trade } | null>(null);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const q = "Who should I trade with?";
+      const a = ask(q, demo.tags, INITIAL_MY_TAGS, {}, []);
+      setAskDemo({ q, a, deal: a.links.find((l) => l.trade)?.trade });
+    }, 600);
+    return () => clearTimeout(id);
+  }, [demo.tags]);
+  // Set optimal lineup without the network: the engine's lineup and its own reasons (out, bye, projection)
+  const optDemo = useMemo(() => {
+    const cur = sleeperNow().mine;
+    return resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off");
+  }, [live]);
+  const watched = useMemo(() => waiverRecs(YOU).find((r) => r.pick)?.fa ?? null, []);
+  const [doc, setDoc] = useState<"legal" | "how" | null>(null);
 
   // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
   const cast = useMemo(() => {
@@ -157,6 +182,7 @@ export function Landing({ onLive, onDemo }: {
   return (
     <AvatarPhotos.Provider value={false}>
     <div className="landing ld2" ref={root}>
+      <a className="skip-link" href="#ld-main">Skip to content</a>
       <div className="ld2-env" ref={env} aria-hidden="true">
         <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
         <div className="env-field"><div className="env-turf" /></div>
@@ -167,7 +193,7 @@ export function Landing({ onLive, onDemo }: {
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
       </nav>
 
-      <main>
+      <main id="ld-main" tabIndex={-1}>
       <header className="ld-hero ld2-hero">
         <div className="ld2-copy">
           <span className="ld2-eyebrow ld2-in"><PlatformLogo size={14} />For Sleeper leagues</span>
@@ -175,6 +201,10 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
           <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
+          {/* This week's face-off from the sample league, live win bars and all: the same card as Wire */}
+          <div className="ld2-fo ld2-in" style={{ ["--i" as string]: 6 }} aria-hidden="true" {...{ inert: "" }}>
+            <Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} />
+          </div>
         </div>
 
         <div className="ld2-stage" ref={stage}>
@@ -186,7 +216,6 @@ export function Landing({ onLive, onDemo }: {
           ))}
         </div>
         <div className="ld-preview ld2-preview" aria-hidden="true" {...{ inert: "" }}>
-          <div className="ld2-card c1"><Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} /></div>
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
               <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
@@ -271,6 +300,10 @@ export function Landing({ onLive, onDemo }: {
                     <span className="sms-meta">Delivered</span>
                     <span className="sms-typing" role="img" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
                   </div>
+                  <div className="sms-compose" aria-hidden="true">
+                    <span className="sms-plus"><Icon name="plus" size={20} /></span>
+                    <span className="sms-field"><span>Text Message</span><Icon name="mic" size={18} /></span>
+                  </div>
                   <span className="ph-home" aria-hidden="true" />
                 </div>
               </div>
@@ -311,6 +344,48 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </section>
 
+      <section className="ld-section ld2-new" aria-labelledby="ld-new">
+        <h2 id="ld-new" className="ld-h2 ld2-reveal">Ask it. Set it. Take it anywhere.</h2>
+        <div className="ld2-new-grid">
+          <article className="card ld-cell ld2-reveal ld2-ask-cell">
+            <h3>Ask anything about your league</h3>
+            <p>Sources AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
+            {askDemo && <div className="ld2-ask" {...{ inert: "" }}>
+              <div className="ask-you-row"><p className="ask-you">{askDemo.q}</p></div>
+              <div className="ask-card">
+                <p className="ask-head">{askDemo.a.text}</p>
+                {askDemo.a.points.length > 0 && <ul className={`ask-pts${askDemo.a.points.length > 1 ? " many" : ""}`}>{askDemo.a.points.map((p) => <li key={p}>{p}</li>)}</ul>}
+                {askDemo.deal && <div className="ask-after"><AskShowBlock deal={askDemo.deal} onPlayer={() => {}} live={false} /></div>}
+                {askDemo.deal && <div className="ask-after"><DealNumbers t={askDemo.deal} /></div>}
+              </div>
+            </div>}
+          </article>
+          <article className="card ld-cell ld2-reveal ld2-opt-cell">
+            <h3>Set optimal lineup</h3>
+            <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
+            {optDemo.swaps.length > 0
+              ? <div {...{ inert: "" }}><SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /></div>
+              : <p className="ld2-opt-none">{optDemo.summary}</p>}
+          </article>
+          <article className="card ld-cell ld2-reveal ld2-sync-cell">
+            <h3>Works on every device</h3>
+            <p>Offers you send and players you star follow your Sleeper account to your phone, tablet and desktop.</p>
+            <ul className="ld2-sync">
+              {demo.trade && (
+                <li><span className="ld2-sync-ic"><Icon name="send" size={16} /></span>
+                  <span className="ld2-sync-t"><b>Offer to {demo.mike.manager}</b><small>{demo.trade.give.map((id) => playerById(id).name.split(" ").slice(-1)[0]).join(" + ")} for {demo.trade.get.map((id) => playerById(id).name.split(" ").slice(-1)[0]).join(" + ")}</small></span>
+                  <span className="ld2-sync-k">Sent</span></li>
+              )}
+              {watched && (
+                <li><span className="ld2-sync-ic on"><Icon name="star" size={16} /></span>
+                  <span className="ld2-sync-t"><b>{watched.name}</b><small>{watched.pos} · {watched.nfl}</small></span>
+                  <span className="ld2-sync-k">Watching</span></li>
+              )}
+            </ul>
+          </article>
+        </div>
+      </section>
+
       <section className="ld-trust ld2-trust" aria-labelledby="ld-private">
         <h2 id="ld-private" className="ld-h2 ld2-reveal">Private by default.</h2>
         <ul className="ld-trust-list">
@@ -342,8 +417,17 @@ export function Landing({ onLive, onDemo }: {
 
       <footer className="ld-foot">
         <span>Sources. Your fantasy insider.</span>
+        <nav className="ld2-legal" aria-label="Legal">
+          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>Terms and privacy</button>
+          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Sources works</button>
+        </nav>
         <span>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</span>
       </footer>
+      {doc && (
+        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Sources works" : "Terms and legal"}</h2>}>
+          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
+        </DetailSheet>
+      )}
     </div>
     </AvatarPhotos.Provider>
   );
