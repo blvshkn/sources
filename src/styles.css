@@ -3208,11 +3208,11 @@ html:root:not(#_) .page-meta::before { margin-left: 3px; }
 html:root:not(#_):not(#_) .boot3 {
   position: fixed; inset: 0; z-index: 100; overflow: hidden; color: #F2F3EE;
   background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%);
-  --boot-col: calc(100% - 48px); --boot-top: 24.53vh; --boot-top: 24.53dvh; --boot-gap: 23px; --boot-foot: 76px; --boot-trace: 272px;
+  --boot-col: calc(100% - 48px); --boot-nudge: 5px; --boot-top: 13.27vh; --boot-top: 13.27dvh; --boot-gap: 19px; --boot-foot: 92px; --boot-trace: 272px;
   /* The glow behind the logo: lime at 6%, gone 70% of the way out */
   --boot-glow: 298px 356px at 50% 100%;
-  /* The large loader: the vendored Braille Flipwave draws at 30px at most, so it's scaled up as a whole to 64px */
-  --boot-loader: 64px; --boot-loader-k: calc(64 / 30);
+  /* The loader: the vendored Braille Flipwave draws at 30px at most, so it's scaled up as a whole to 40px (Figma 01:26) */
+  --boot-loader: 40px; --boot-loader-k: calc(40 / 30);
 }
 /* The field: the bottom 44% of the screen, fading out from the bottom center (an ellipse 70% of the width across) */
 html:root:not(#_):not(#_) .boot3-field {
@@ -3227,16 +3227,18 @@ html:root:not(#_):not(#_) .boot3-glow {
 html:root:not(#_):not(#_) .boot3-col { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--boot-foot); }
 html:root:not(#_):not(#_) .boot3-top { flex: 0 1 var(--boot-top); min-height: 24px; }
 html:root:not(#_):not(#_) .boot3-gap { flex: 1 1 24px; min-height: 24px; }
-html:root:not(#_):not(#_) .boot3-work { flex: none; width: var(--boot-col); display: flex; flex-direction: column; align-items: flex-start; gap: var(--boot-gap); }
-/* The loader's dots start 9px inside its 64px square (Figma); pulled left so they line up with the trace */
-html:root:not(#_):not(#_) .boot3-loader { position: relative; display: block; flex: none; width: var(--boot-loader); height: var(--boot-loader); margin-left: -10px; }
+/* Nudged right a few px so the trace's left edge lines up with the loader's first column of dots (Figma: 29px on the
+   phone, 3px right of center on desktop) */
+html:root:not(#_):not(#_) .boot3-work { position: relative; left: var(--boot-nudge); flex: none; width: var(--boot-col); display: flex; flex-direction: column; align-items: flex-start; gap: var(--boot-gap); }
+/* The loader's dots start 5.6px inside its 40px square (Figma); pulled left so they line up with the trace */
+html:root:not(#_):not(#_) .boot3-loader { position: relative; display: block; flex: none; width: var(--boot-loader); height: var(--boot-loader); margin-left: -5px; }
 html:root:not(#_):not(#_) .boot3-loader > .wkl { display: block; transform: scale(var(--boot-loader-k)); transform-origin: 0 0; }
 html:root:not(#_):not(#_) .boot3 .boot3-logo { flex: none; --brand-mark: #D8F24A; --brand-word: #FFFFFF; --brand-tag: #9A9C98; }
 @media (min-width: 768px) {
-  html:root:not(#_):not(#_) .boot3 { --boot-col: 460px; --boot-top: 25.6vh; --boot-top: 25.6dvh; --boot-gap: 20px; --boot-foot: 92px; --boot-trace: 232px; --boot-glow: 640px 358px at 50% 105%; }
+  html:root:not(#_):not(#_) .boot3 { --boot-col: 460px; --boot-nudge: 4px; --boot-top: 17.3vh; --boot-top: 17.3dvh; --boot-gap: 18px; --boot-foot: 112px; --boot-trace: 232px; --boot-glow: 640px 358px at 50% 105%; }
 }
 @media (min-width: 1024px) {
-  html:root:not(#_):not(#_) .boot3 { --boot-top: 26.67vh; --boot-top: 26.67dvh; --boot-gap: 16px; --boot-foot: 108px; --boot-glow: 70% 40% at 50% 110%; }
+  html:root:not(#_):not(#_) .boot3 { --boot-nudge: 3px; --boot-top: 21.33vh; --boot-top: 21.33dvh; --boot-gap: 16px; --boot-foot: 132px; --boot-glow: 70% 40% at 50% 110%; }
 }
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_) .boot3.leaving { animation: boot3-out 320ms cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }

@@ -1,4 +1,4 @@
-/** Loading screen, from Zach's Figma ("Loading screen", phone and desktop). The large Braille Flipwave loader sits
+/** Loading screen, from Zach's Figma ("Loading screen", phone and desktop). The Braille Flipwave loader sits
  *  above the trace of what the load has really fetched so far (sleeper.ts loadLeague), and the logo stands at the
  *  foot of the screen on a football field: mark, wordmark, tagline. The logo doesn't animate. */
 import { useEffect, useState } from "react";
