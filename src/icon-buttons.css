@@ -56,3 +56,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge {
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn) { transition: none !important; }
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):active { transform: none; }
 }
+
+/* The page's own bell is the desktop copy. Up to 860px the top bar has the bell, so the copy stays hidden there
+   (the shared button rule above sets display and would otherwise show it under the header) */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .main-inner > .desk-bell { display: none !important; }
+}
