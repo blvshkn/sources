@@ -6,6 +6,7 @@ import { currentFormat } from "./engine";
 import { scoreStats, WeekRow } from "./sleeper";
 import { weekFeed } from "./weekFeed";
 import { MISS_WORD, demoBye, demoCell } from "./schedule";
+import { demoKDefLine, isKDef } from "./demoKDef";
 export { demoBye };
 
 export interface WeekPlayer {
@@ -44,9 +45,11 @@ export function statLine(pos: string, s: Record<string, number | undefined>): st
     parts.push(`${n(s.rec)}${s.rec_tgt ? `/${n(s.rec_tgt)}` : ""} rec, ${n(s.rec_yd)} yd${s.rec_td ? `, ${n(s.rec_td)} TD` : ""}`);
     if (s.rush_att) parts.push(`${n(s.rush_att)} rush, ${n(s.rush_yd)} yd`);
   } else if (pos === "K") {
-    parts.push(`${n(s.fgm)}/${n(s.fga)} FG, ${n(s.xpm)}/${n(s.xpa)} XP`);
+    // Long field goals score more, so the line says how many came from 40 yards or more
+    const long = n(s.fgm_40_49) + n(s.fgm_50p);
+    parts.push(`${n(s.fgm)}/${n(s.fga)} FG${long ? ` (${long} from 40+)` : ""}, ${n(s.xpm)}/${n(s.xpa)} XP`);
   } else if (pos === "DEF") {
-    parts.push(`${n(s.pts_allow)} pts allowed${s.sack ? `, ${n(s.sack)} sack${n(s.sack) === 1 ? "" : "s"}` : ""}${s.int ? `, ${n(s.int)} INT` : ""}${s.def_td ? `, ${n(s.def_td)} TD` : ""}`);
+    parts.push(`${n(s.pts_allow)} pts allowed${s.sack ? `, ${n(s.sack)} sack${n(s.sack) === 1 ? "" : "s"}` : ""}${s.int ? `, ${n(s.int)} INT` : ""}${s.fum_rec ? `, ${n(s.fum_rec)} FR` : ""}${s.def_td ? `, ${n(s.def_td)} TD` : ""}`);
   }
   return parts.join(" · ");
 }
@@ -99,15 +102,14 @@ export function info(id: string, row?: WeekRow): Omit<WeekPlayer, "pts"> {
 
 // ---- Demo season ------------------------------------------------------------
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
+/** A demo stat line for a skill player, shaped around the points he scored. */
 export function demoStats(pos: string, pts: number, seed: number): Record<string, number> {
   const r = (a: number, b: number) => Math.round(a + (b - a) * hash(`${seed}${a}${b}`));
   if (pos === "QB") { const td = Math.max(0, Math.round(pts / 8)); return { pass_cmp: r(16, 27), pass_att: r(28, 40), pass_yd: Math.round(pts * 11 + 40), pass_td: td, pass_int: r(0, 1), rush_att: r(1, 7), rush_yd: r(2, 38) }; }
   if (pos === "RB") return { rush_att: r(9, 21), rush_yd: Math.round(pts * 4.2), rush_td: pts > 15 ? 1 : 0, rec: r(1, 5), rec_tgt: r(2, 6), rec_yd: r(4, 35) };
   if (pos === "WR" || pos === "TE") { const rec = Math.max(1, Math.round(pts / 3)); return { rec, rec_tgt: rec + r(1, 4), rec_yd: Math.round(pts * 6.5), rec_td: pts > 16 ? 1 : 0 }; }
-  if (pos === "K") { const fgm = r(1, 3), long = r(0, 1), fga = fgm + r(0, 1), xpa = r(2, 4); return { fgm, fga, fgmiss: fga - fgm, fgm_30_39: fgm - long, fgm_40_49: long, xpm: Math.max(0, xpa - r(0, 1)), xpa }; }
-  // Defenses carry Sleeper's points-allowed bucket flag, which is what scoring_settings scores
-  const pa = r(10, 31), bucket = pa === 0 ? "pts_allow_0" : pa <= 6 ? "pts_allow_1_6" : pa <= 13 ? "pts_allow_7_13" : pa <= 20 ? "pts_allow_14_20" : pa <= 27 ? "pts_allow_21_27" : pa <= 34 ? "pts_allow_28_34" : "pts_allow_35p";
-  return { pts_allow: pa, [bucket]: 1, sack: r(1, 5), int: r(0, 2) };
+  // Kickers and defenses get a full game line their points are scored from: demoKDef.ts
+  return {};
 }
 /** Demo schedule: one opponent per regular-season week, rotating through the league so this week's opponent is the
  *  one the rest of the app shows. No matchup once the fantasy playoffs start (the bracket isn't set). */
@@ -130,7 +132,9 @@ function demoPool(ids: string[], week: number): WeekPlayer[] {
     // A week he missed scores 0 and says why, the same reason his game log and Compare give
     if (past && c.miss) return { ...i, pts: 0, line: `${MISS_WORD[c.miss.kind].word}${c.miss.note ? ` (${c.miss.note})` : ""}` };
     const pts = (past ? c.pts : c.proj) ?? 0;
-    return { ...i, pts, line: past ? statLine(i.pos, demoStats(i.pos, pts, week * 97 + id.length)) : undefined };
+    // A kicker's or defense's line is the one its points were scored from (demoKDef.ts)
+    const st = !past ? undefined : isKDef(i.pos) ? demoKDefLine(id, i.pos, week, { proj: PLAYERS[id]?.proj ?? sp?.proj }) : demoStats(i.pos, pts, week * 97 + id.length);
+    return { ...i, pts, line: st ? statLine(i.pos, st) : undefined };
   });
 }
 const sumStarters = (st: { p: WeekPlayer | null }[]) => Math.round(st.reduce((s, x) => s + (x.p?.pts ?? 0), 0) * 10) / 10;

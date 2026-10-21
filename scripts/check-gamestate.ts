@@ -21,7 +21,11 @@ import { buildInbox } from "../src/components/Inbox";
 import { sampleWeek, type Live } from "../src/live";
 import { availOf, cantLabel, lockWhyText } from "../src/components/Waivers";
 import { waiverWeek } from "../src/components/watchCtx";
-import { lastWeek } from "../src/weeks";
+import { lastWeek, demoTeamWeek, teamIds } from "../src/weeks";
+import { peekLog } from "../src/gamelog";
+import { seasonFor, demoBye } from "../src/schedule";
+import { demoKDefLine, demoKDefPts } from "../src/demoKDef";
+import { TEAMS as LEAGUE_TEAMS } from "../src/data";
 
 let failed = 0;
 const ok = (label: string, cond: boolean, detail = "") => {
@@ -189,6 +193,58 @@ ok(`Rashid Shaheed (SEA, late Sunday) locks at his own kickoff: ${lockWhen(shahe
 ok("Josh Allen (BUF, live) has no lock time left", lockWhen(allen) === "");
 const p0 = sleeperDiff()[0] as { start: Player; benched: Player } | undefined;
 ok(`Sunday afternoon falls back to the best open move (${p0 ? `${p0.start.name} for ${p0.benched.name}` : "none"})`, !!p0 && p0.start.id === "rashid-shaheed" && p0.benched.id === "jaylen-warren");
+
+// Demo kickers and defenses (added Oct 21): every played week is the sum of its own stat line, as the game log's
+// columns show it (FG made / attempted with the 40-49 and 50+ makes, XP; PA, sacks, INT, FR, TD), and the season
+// grid, the game log, Lineup and Full matchup past weeks and the sample Sunday all show that number. They used to
+// share one line per week, so every DEF scored 3 in Week 5.
+setWeekGames(null);
+{
+  const subs = [...Object.values(LEAGUE.specials ?? {}), ...SPECIAL_FREE_AGENTS];
+  const paPts = (pa: number) => (pa === 0 ? 10 : pa <= 6 ? 7 : pa <= 13 ? 4 : pa <= 20 ? 1 : pa <= 27 ? 0 : pa <= 34 ? -1 : -4);
+  const n = (v: number | undefined) => v ?? 0;
+  const shown = (pos: string, s: Record<string, number | undefined>) => pos === "K"
+    ? 3 * (n(s.fgm) - n(s.fgm_40_49) - n(s.fgm_50p)) + 4 * n(s.fgm_40_49) + 5 * n(s.fgm_50p) - (n(s.fga) - n(s.fgm)) + n(s.xpm) - (n(s.xpa) - n(s.xpm))
+    : paPts(n(s.pts_allow)) + n(s.sack) + 2 * (n(s.int) + n(s.fum_rec)) + 6 * n(s.def_td);
+  const bad: string[] = [], grid: string[] = [], byes: string[] = [];
+  const byWeek: Record<string, Set<number>> = {};
+  for (const sp of subs) {
+    const log = peekLog({ id: sp.id, name: sp.name, pos: sp.pos, nfl: sp.nfl, proj: sp.proj }, LEAGUE.season)!;
+    const cells = seasonFor({ ...sp } as unknown as Player);
+    for (const r of log.rows.filter((x) => x.when === "past")) {
+      if (r.bye) { if (demoBye(sp.nfl) !== r.week) byes.push(`${sp.id} W${r.week}`); continue; }
+      if (!r.stats || r.pts === undefined || shown(sp.pos, r.stats) !== r.pts) bad.push(`${sp.id} W${r.week}: ${r.pts} vs line ${r.stats ? shown(sp.pos, r.stats) : "none"}`);
+      const c = cells.find((x) => x.week === r.week);
+      if (c?.pts !== r.pts) grid.push(`${sp.id} W${r.week}: grid ${c?.pts} log ${r.pts}`);
+      (byWeek[`${sp.pos} W${r.week}`] ??= new Set()).add(r.pts ?? 0);
+    }
+  }
+  ok("Demo K/DEF: each week's points add up from its game-log line", !bad.length, bad.slice(0, 4).join("; "));
+  ok("Demo K/DEF: the season grid (Compare, Lineup strip) matches the game log", !grid.length, grid.slice(0, 4).join("; "));
+  ok("Demo K/DEF: byes fall on each team's demo bye week", !byes.length, byes.join(", "));
+  const flat = Object.entries(byWeek).filter(([, v]) => v.size < 4).map(([k, v]) => `${k}: ${[...v].join("/")}`);
+  ok("Demo K/DEF: scores vary from team to team within a week", !flat.length, flat.join("; "));
+  // Lineup and Full matchup past weeks, every team
+  const off: string[] = [];
+  for (const t of LEAGUE_TEAMS) for (let w = 1; w < WEEK; w++) for (const x of demoTeamWeek(teamIds(t), w).starters) {
+    const p = x.p; if (!p || (p.pos !== "K" && p.pos !== "DEF") || p.pts === null) continue;
+    const r = peekLog({ id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: 0 }, LEAGUE.season)!.rows.find((y) => y.week === w);
+    if (r?.pts !== p.pts) off.push(`${t.id} ${p.id} W${w}: lineup ${p.pts} log ${r?.pts}`);
+  }
+  ok("Demo K/DEF: Lineup and Full matchup past weeks match the game log", !off.length, off.slice(0, 4).join("; "));
+  // This week on the sample Sunday and in the final-week fixture: each K/DEF scores its line so far
+  for (const at of ["live", "final"] as const) {
+    const l = sampleWeek(at), wrong: string[] = [];
+    for (const sp of subs) {
+      const g = l.games[sp.nfl], got = l.points[sp.id];
+      if (!g || g === "pre_game" || got === undefined) continue;
+      const want = demoKDefPts(sp.id, sp.pos, WEEK, { proj: sp.proj, share: g === "complete" ? 1 : 1 - (l.left[sp.nfl] ?? 0) });
+      if (got !== want) wrong.push(`${sp.id} ${got} vs ${want}`);
+      if (g === "complete" && shown(sp.pos, demoKDefLine(sp.id, sp.pos, WEEK, { proj: sp.proj })) !== got) wrong.push(`${sp.id} line`);
+    }
+    ok(`Demo ${at}: K/DEF points this week are their stat line so far`, !wrong.length, wrong.join("; "));
+  }
+}
 
 console.log(failed ? `\n${failed} failed` : "\nall ok");
 process.exit(failed ? 1 : 0);

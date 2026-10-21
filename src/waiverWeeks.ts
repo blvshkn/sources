@@ -7,7 +7,8 @@ import { LEAGUE, WEEK, isDemo, gameNow } from "./data";
 import { fetchWeekRows, WeekRow } from "./sleeper";
 import { demoStats, weekPoints } from "./weeks";
 import { peekLog, type Subject } from "./gamelog";
-import { livePointsNow } from "./live";
+import { liveLeftNow, livePointsNow } from "./live";
+import { demoKDefLine, isKDef } from "./demoKDef";
 import type { WaiverRec } from "./engine";
 
 /** One player in one week. `pts` null = bye. `played` = he has stats that week (past or in progress). */
@@ -26,7 +27,7 @@ export function shortLine(pos: string, s: Record<string, number | undefined>): s
   if (pos === "RB") return `${n(s.rush_att)}-${n(s.rush_yd)} rush · ${n(s.rec)}-${n(s.rec_yd)} rec${td(n(s.rush_td) + n(s.rec_td))}`;
   if (pos === "WR" || pos === "TE") return `${n(s.rec_tgt)} tgt · ${n(s.rec)}-${n(s.rec_yd)} rec${td(n(s.rec_td) + n(s.rush_td))}`;
   if (pos === "K") return `${n(s.fgm)}/${n(s.fga)} FG · ${n(s.xpm)}/${n(s.xpa)} XP`;
-  if (pos === "DEF") return `${n(s.pts_allow)} PA · ${n(s.sack)} sk · ${n(s.int) + n(s.fum_rec)} TO`;
+  if (pos === "DEF") return `${n(s.pts_allow)} PA · ${n(s.sack)} sk · ${n(s.int) + n(s.fum_rec)} TO${td(n(s.def_td))}`;
   return "";
 }
 
@@ -62,10 +63,12 @@ function demoCells(week: number, fas: FaLite[]): WkCells {
       out[fa.id] = row.pts === undefined ? { pts: 0, opp, played: false } : { pts: row.pts, opp, played: true, line: row.stats ? shortLine(fa.pos, row.stats) : undefined };
       continue;
     }
-    const st = week === WEEK ? gameNow(fa.nfl) : null;
-    if (st === "in_game" || st === "complete") {
+    const st0 = week === WEEK ? gameNow(fa.nfl) : null;
+    if (st0 === "in_game" || st0 === "complete") {
       const pts = livePointsNow()[fa.id] ?? 0;
-      out[fa.id] = { pts, opp, played: true, line: shortLine(fa.pos, demoStats(fa.pos, pts, week * 97 + fa.id.length)) };
+      // A kicker's or defense's line so far is the one its points were scored from (demoKDef.ts)
+      const st = isKDef(fa.pos) ? demoKDefLine(fa.id, fa.pos, week, { proj: fa.proj, share: st0 === "complete" ? 1 : 1 - (liveLeftNow()[fa.nfl] ?? 0) }) : demoStats(fa.pos, pts, week * 97 + fa.id.length);
+      out[fa.id] = { pts, opp, played: true, line: shortLine(fa.pos, st) };
     } else out[fa.id] = { pts: row.proj ?? fa.proj, opp, played: false };
   }
   return out;

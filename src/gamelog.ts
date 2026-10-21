@@ -8,7 +8,8 @@ import { eff, round1 } from "./engine";
 import { MISS_WORD, Miss, MissKind, seasonFor } from "./schedule";
 import { DepthRow, StatRow, fetchDepthRows, fetchProjRows, fetchSchedule, fetchStatRows, scoreStats } from "./sleeper";
 import { demoLine, oppTeam, ptsOf } from "./usage";
-import { demoBye, demoStats } from "./weeks";
+import { demoBye } from "./weeks";
+import { demoKDefLine, kdefPts } from "./demoKDef";
 
 export type Stats = Record<string, number | undefined>;
 /** Anyone a sheet can show: a rostered player, a free agent, a kicker or a defense. */
@@ -79,10 +80,12 @@ function asPlayer(s: Subject): Player {
 }
 /** Skill lines from the usage block's demo generator (so the sheet's usage and the log agree); kickers and defenses
  *  from the week browser's. Points always come from the line itself or the demo season, never both. */
-function demoRow(s: Subject, pts: number, seed: number): { stats: Stats; pts: number } {
+function demoRow(s: Subject, pts: number, seed: number, week = seed, tag = ""): { stats: Stats; pts: number } {
+  // A kicker's or defense's line is the same one its week's points were scored from (demoKDef.ts), so the line adds
+  // up to the points every other view shows. Earlier seasons draw their own lines (`tag`).
   if (s.pos === "K" || s.pos === "DEF") {
-    const st = demoStats(s.pos, pts, seed);
-    return { stats: st, pts: LEAGUE.scoring ? scoreStats(st, LEAGUE.scoring, s.pos) : pts };
+    const st = demoKDefLine(s.id, s.pos, week, { proj: s.proj, tag });
+    return { stats: st, pts: kdefPts(s.pos, st) };
   }
   const st = demoLine({ id: s.id, pos: s.pos, proj: s.proj }, seed, pts);
   // Now and then a fumble he recovers, so the column isn't all zeros
@@ -122,7 +125,7 @@ function demoLast(s: Subject, season: string): SeasonLog {
     // A couple of missed games for anyone banged up, so a season doesn't read perfect
     if (hash(`${s.id}:${w}:out${tag}`) > 0.94) return { week: w, opp, bye: false, when: "past", miss: "out", missNote: "Ruled out" };
     const pts = round1(base * level * (0.45 + hash(`${s.id}:${w}:ly${tag}`) * 1.1));
-    return { week: w, opp, bye: false, when: "past", proj: demoProj(s, w + 100 * back, base * level), ...demoRow(s, pts, w + 100 * back) };
+    return { week: w, opp, bye: false, when: "past", proj: demoProj(s, w + 100 * back, base * level), ...demoRow(s, pts, w + 100 * back, w, `:${season}`) };
   });
   return { season, rows, demo: true, team: s.nfl };
 }

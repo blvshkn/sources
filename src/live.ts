@@ -3,6 +3,7 @@ import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYER
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
 import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, weekPast, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
 import { getState } from "./sleeper";
+import { demoKDefPts } from "./demoKDef";
 export type { PlayCount, Result } from "./liveMath";
 
 /** Live scoring for this week: points so far per player and per team, and each NFL team's game state. */
@@ -140,13 +141,17 @@ function demo(fin = finalFixture()): Live {
   // Free agents whose game has started score too, so Waivers' "So far" and "Scored" and their game logs (the
   // final-week fixture reads these points) show the same number. They never count toward a team.
   for (const fa of FREE_AGENTS) { const g = games[fa.nfl]; if (g && g !== "pre_game") points[fa.id] = outcome(fa.id, fa.proj, g); }
-  for (const fa of SPECIAL_FREE_AGENTS) { const g = games[fa.nfl]; if (g && g !== "pre_game") points[fa.id] = Math.round((fa.wk ?? 0) * (g === "complete" ? 1.1 : 0.5) * 10) / 10; }
+  // A kicker or defense scores its own stat line so far (demoKDef.ts): the whole game once it's final, the part
+  // played so far while it's on. Its game log, Waivers line and Lineup row all read the same line.
+  const kdef = (x: { id: string; pos: "K" | "DEF"; nfl: string; proj: number }, g: GameState) =>
+    demoKDefPts(x.id, x.pos, WEEK, { proj: x.proj, share: g === "complete" ? 1 : 1 - (left[x.nfl] ?? 0) });
+  for (const fa of SPECIAL_FREE_AGENTS) { const g = games[fa.nfl]; if (g && g !== "pre_game") points[fa.id] = kdef(fa, g); }
   // Everyone on a roster gets points; only the starters set in Sleeper count toward the team score. Built as
   // Sleeper's matchup rows and read back through fromMatchups, the same path a live league takes.
   const row = (t: Team): SleeperMatchupRow => {
     sideTotal(t.roster);
     const sp = specialsOf(t).filter((x): x is SpecialPlayer => !!x);
-    sp.forEach((x) => { if (games[x.nfl] && games[x.nfl] !== "pre_game" && points[x.id] === undefined) points[x.id] = Math.round(specialPts(x) * (games[x.nfl] === "complete" ? 1.1 : 0.5) * 10) / 10; });
+    sp.forEach((x) => { if (games[x.nfl] && games[x.nfl] !== "pre_game" && points[x.id] === undefined) points[x.id] = x.status === "O" ? 0 : kdef(x, games[x.nfl]); });
     const starters = [...startersOf(t), ...sp.map((x) => x.id)];
     const starters_points = starters.map((id) => points[id] ?? 0);
     const players_points: Record<string, number> = {};
@@ -245,6 +250,8 @@ export function useLive(): Live {
 /** This week's game states as last read (live scoring once it has loaded, else the league's schedule). */
 /** This week's points as last read (live scoring), by player id. */
 export const livePointsNow = (): Record<string, number> => (LEAGUE ? ensure().points : {});
+/** Share of each game still to play on the sample Sunday (demo), keyed by NFL team. */
+export const liveLeftNow = (): Record<string, number> => (LEAGUE ? ensure().left : {});
 export const liveGamesNow = (): Record<string, GameState> => (LEAGUE ? ensure().games : {});
 
 /** A player's game right now: live with points so far, final, or not started. */

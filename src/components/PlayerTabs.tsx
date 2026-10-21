@@ -44,7 +44,10 @@ const RUSH_FULL: Col[] = [c("rush_att", "ATT"), c("rush_yd", "YD"), { k: "rypc",
 const RUSH: Col[] = [c("rush_att", "ATT"), c("rush_yd", "YD"), c("rush_td", "TD")];
 const REC: Col[] = [c("rec_tgt", "TAR"), c("rec", "REC"), c("rec_yd", "YD"), { k: "ypt", label: "YPT", tip: "Yards per target", v: (s) => per(s.rec_yd, s.rec_tgt) }, { k: "ypr", label: "YPC", tip: "Yards per catch", v: (s) => per(s.rec_yd, s.rec) }, c("rec_td", "TD")];
 const FUM: Col[] = [c("fum", "FUM"), c("fum_lost", "LOST")];
-const KICK: Col[] = [{ k: "fg", label: "FG", tip: "Field goals made / attempted", v: (s) => `${n0(s.fgm)}/${n0(s.fga)}` }, c("fgm_40_49", "40-49"), c("fgm_50p", "50+"), { k: "xp", label: "XP", tip: "Extra points made / attempted", v: (s) => `${n0(s.xpm)}/${n0(s.xpa)}` }];
+/** Field goals from one distance: made / attempted when the line carries the misses from there, else just made. */
+const fgFrom = (b: string, label: string): Col => ({ k: `fg_${b}`, label, tip: `Field goals from ${label} yards, made / attempted`,
+  v: (s) => (s[`fgmiss_${b}`] === undefined ? n0(s[`fgm_${b}`]) : `${n0(s[`fgm_${b}`])}/${n0((s[`fgm_${b}`] ?? 0) + (s[`fgmiss_${b}`] ?? 0))}`) });
+const KICK: Col[] = [{ k: "fg", label: "FG", tip: "Field goals made / attempted", v: (s) => `${n0(s.fgm)}/${n0(s.fga)}` }, fgFrom("40_49", "40-49"), fgFrom("50p", "50+"), { k: "xp", label: "XP", tip: "Extra points made / attempted", v: (s) => `${n0(s.xpm)}/${n0(s.xpa)}` }];
 const DEF: Col[] = [c("pts_allow", "PA", "Points allowed"), c("sack", "SACK"), c("int", "INT"), c("fum_rec", "FR", "Fumbles recovered"), c("def_td", "TD")];
 const GROUPS: Record<Subject["pos"], { label: string; cols: Col[] }[]> = {
   QB: [{ label: "Passing", cols: PASS }, { label: "Rushing", cols: RUSH }, { label: "Fumbles", cols: FUM }],

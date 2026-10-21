@@ -1,6 +1,7 @@
 import { LEAGUE, WEEK, Player, isDemo, onBye } from "./data";
 import { currentFormat } from "./engine";
 import { sampleWeek } from "./live";
+import { demoKDefPts, isKDef } from "./demoKDef";
 
 /** One week of a player's season: points if it's played, projection and matchup tone if it's ahead. */
 export interface WeekCell { week: number; opp: string | null; past: boolean; pts?: number; proj?: number; tone?: "good" | "ok" | "tough"; playoff: boolean; miss?: Miss }
@@ -58,6 +59,10 @@ export function demoCell(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">,
   const c = demoCellRaw(p, w), m = c.opp && c.pts !== undefined ? demoMiss(p.id, w) : undefined;
   return m ? { opp: c.opp, miss: m } : c;
 }
+/** A played week's points. A kicker's or defense's is the sum of its own stat line (demoKDef.ts), so the game log's
+ *  line adds up to it; everyone else's is drawn around his projection. */
+const playedPts = (p: Pick<Player, "id" | "pos" | "proj">, w: number) =>
+  isKDef(p.pos) ? demoKDefPts(p.id, p.pos, w, { proj: p.proj }) : Math.round((p.proj || 8) * (0.45 + mix(p.id + w) * 1.1) * 10) / 10;
 function demoCellRaw(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">, w: number): { opp: string | null; pts?: number; proj?: number } {
   const bye = w === WEEK ? onBye(p.nfl) : demoBye(p.nfl) === w;
   if (bye) return { opp: null };
@@ -65,12 +70,12 @@ function demoCellRaw(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">, w: 
   // This week's opponent comes from the demo slate, so the strip agrees with the header's game line
   const real = w === WEEK && p.opp ? /^(vs|@)\s*([A-Z]{2,3})$/.exec(p.opp) : null;
   // and its projection is his real one, so the strip, game log and outcome range show the same number
-  if (real && w === WEEK && demoFinal()) return { opp: (real[1] === "@" ? "@" : "v") + real[2], pts: finalPts()[p.id] ?? Math.round((p.proj || 8) * (0.45 + mix(p.id + w) * 1.1) * 10) / 10 };
+  if (real && w === WEEK && demoFinal()) return { opp: (real[1] === "@" ? "@" : "v") + real[2], pts: finalPts()[p.id] ?? playedPts(p, w) };
   if (real) return { opp: (real[1] === "@" ? "@" : "v") + real[2], proj: p.proj || undefined };
   const opp = others[((ti >= 0 ? ti : 0) * 7 + w * 11) % others.length];
   const base = p.proj || 8;
   const f = 0.72 + hash(opp + p.pos) * 0.56;
-  return w < WEEK || (w === WEEK && demoFinal()) ? { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, pts: Math.round(base * (0.45 + mix(p.id + w) * 1.1) * 10) / 10 }
+  return w < WEEK || (w === WEEK && demoFinal()) ? { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, pts: playedPts(p, w) }
     : { opp: (hash(p.nfl + w + "h") > 0.5 ? "v" : "@") + opp, proj: Math.round(base * f * 10) / 10 };
 }
 
