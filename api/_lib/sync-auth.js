@@ -4,7 +4,7 @@
 //     device to sync for a user with no key on file claims it. Every later GET, PUT and DELETE for that user's synced
 //     files must send it in X-Sync-Key; a missing or wrong key gets 401 and no data.
 //   - The server keeps only SHA-256(pepper + key) at sync-auth/<user>.json, compared in constant time. The pepper is
-//     SYNC_PEPPER; without it a fixed fallback is used (still a hash, just not one only this deploy can make).
+//     SYNC_PEPPER, or else one derived from BLOB_READ_WRITE_TOKEN; keys claimed under the old fixed fallback upgrade.
 //   - Another device joins with a one-time code (8 characters, shown XXXX-XXXX) that a device with the key asks for.
 //     The code lives 10 minutes and works once. The key waits at sync-pair/<user>.json encrypted under the code
 //     (scrypt + AES-256-GCM), so the Blob never holds it in the clear. Wrong codes are limited per IP and per user.
@@ -20,7 +20,12 @@ export const CODE_TTL = 10 * 60 * 1000;
 export const LIMIT = { tries: 5, window: 10 * 60 * 1000, lock: 15 * 60 * 1000 };
 const FALLBACK_PEPPER = "sources-sync-v1-fallback-pepper"; // used only when SYNC_PEPPER isn't set
 
-export const pepperOf = (env = process.env) => env.SYNC_PEPPER || FALLBACK_PEPPER;
+// SYNC_PEPPER when set; otherwise one derived from the Blob token, a secret Vercel already holds, so there's nothing
+// extra to configure and the pepper is still one only this deploy knows.
+export const pepperOf = (env = process.env) => env.SYNC_PEPPER
+  || (env.BLOB_READ_WRITE_TOKEN ? createHash("sha256").update(`sources-sync-pepper:${env.BLOB_READ_WRITE_TOKEN}`).digest("hex") : FALLBACK_PEPPER);
+/** A key claimed under the old fixed fallback still matches once, and is re-hashed under the current pepper */
+const legacyMatch = (key, hash, pepper) => pepper !== FALLBACK_PEPPER && !!key && sameHash(hashKey(key, FALLBACK_PEPPER), hash);
 export const authPath = (user) => `sync-auth/${user}.json`;
 export const pairPath = (user) => `sync-pair/${user}.json`;
 const sha = (s) => createHash("sha256").update(s).digest("hex");
@@ -67,7 +72,9 @@ export async function authorize(blob, req, user, env = process.env) {
   if (rec?.hash) {
     // Always hash and compare, even with no key, so a missing key and a wrong one take the same path
     const ok = sameHash(hashKey(key || "-", pepper), rec.hash) && !!key;
-    return ok ? { ok: true, gen: rec.gen } : { ok: false };
+    if (ok) return { ok: true, gen: rec.gen };
+    if (legacyMatch(key, rec.hash, pepper)) { await writeAuth(blob, user, hashKey(key, pepper), rec.gen ?? 0); return { ok: true, gen: rec.gen }; }
+    return { ok: false };
   }
   if (!key) return { ok: false };
   const hash = hashKey(key, pepper), gen = rec?.gen ?? 0;
@@ -154,7 +161,7 @@ export async function redeemCode(blob, req, user, input, env = process.env, now 
   await blob.remove(pairPath(user)); // single use
   // A reset since the code was made means it hands out a dead key: refuse it
   const auth = await readAuth(blob, user);
-  if (!auth?.hash || !sameHash(hashKey(key, pepperOf(env)), auth.hash)) return fail();
+  if (!auth?.hash || !(sameHash(hashKey(key, pepperOf(env)), auth.hash) || legacyMatch(key, auth.hash, pepperOf(env)))) return fail();
   return { key };
 }
 
