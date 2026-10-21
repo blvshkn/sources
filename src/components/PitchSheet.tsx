@@ -98,6 +98,9 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   const FM = (w: number, px: number) => `${w} ${px}px 'Geist Mono', ui-monospace, monospace`;
   const css = getComputedStyle(document.documentElement), RGB = accentRgb || css.getPropertyValue("--lime-rgb").trim() || "216, 242, 74", A = (o: number) => `rgba(${RGB},${o})`;
   const LIME = css.getPropertyValue("--lime").trim() || "#D8F24A", INK = "#F2F4F1", MUTED = "#9BA09C", FAINT = "#858B86";
+  // The panel's label and before/after lines are the smallest type on the card and it's usually seen shrunk in a thread,
+  // so they sit a step brighter than MUTED: 7.3:1 on the panel instead of 5.5:1
+  const SUB = "#B4B9B5";
   const GOOD = css.getPropertyValue("--good").trim() || "#7BE08F";
   const track = (txt: string, x: number, y: number, sp2: number) => { let cx = x; for (const ch of txt) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp2; } return cx; };
 
@@ -171,7 +174,7 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
     const py = y + 40, ph = PANEL - 40;
     g.beginPath(); g.roundRect?.(X, py, W - X * 2, ph, 24); if (!g.roundRect) g.rect(X, py, W - X * 2, ph);
     g.fillStyle = "#141716"; g.fill(); g.fillStyle = A(0.09); g.fill(); g.strokeStyle = A(0.35); g.lineWidth = 2; g.stroke();
-    g.fillStyle = MUTED; g.font = F(700, 20); track("WHY THIS WORKS FOR YOU", X + 32, py + 48, 4);
+    g.fillStyle = SUB; g.font = F(700, 20); track("WHY THIS WORKS FOR YOU", X + 32, py + 48, 4);
     // One line per reason: the number big and green, what it means beside it, the before/after under it
     // Text starts on one column, after the widest number
     // Every number at the same large size, text on one column after the widest
@@ -180,7 +183,7 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
       const ry = py + 128 + i * 96;
       g.fillStyle = GOOD; g.font = FM(700, 64); g.fillText(r.big, X + 30, ry);
       g.fillStyle = INK; g.font = F(600, 30); g.fillText(r.line, X + 56 + bw, r.detail ? ry - 16 : ry - 6, W - X * 2 - bw - 88);
-      if (r.detail) { g.fillStyle = MUTED; g.font = F(500, 24); g.fillText(r.detail, X + 56 + bw, ry + 16, W - X * 2 - bw - 88); }
+      if (r.detail) { g.fillStyle = SUB; g.font = F(500, 24); g.fillText(r.detail, X + 56 + bw, ry + 16, W - X * 2 - bw - 88); }
     });
   }
 

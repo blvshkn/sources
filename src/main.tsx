@@ -66,6 +66,7 @@ import "./motion.css";
 import "./headers.css";
 import "./row-spacing.css";
 import "./icon-buttons.css";
+import "./landing-phone.css";
 import "./watch-binoculars.css";
 import "./frame.css";
 import "./sheet.css";

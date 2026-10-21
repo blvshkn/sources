@@ -1,0 +1,163 @@
+/* Landing, "Pitch it where you talk": the message demo inside a phone.
+   Zach: "you can't read it and make it look color, the top part could have Mike avatar like you see on an iphone",
+   then "make it matte black and vertical".
+   - The phone is drawn here from scratch: a portrait 19.5:9 screen, a 3% bezel, a 64 outer radius with a concentric
+     52 on the screen, a matte body with a hairline edge and a faint top sheen, a darker band where the glass meets the
+     bezel, an island with a lens dot, slim side buttons, a minimal status bar and a home bar. No brand marks.
+   - Everything inside is sized in --u, 1/400 of the phone's width, so the whole device scales as one picture: it
+     never clips, it just gets smaller on a narrow phone.
+   - Header: Messages' layout in Sources' language. A centered avatar, the name in a pill with a small chevron, the
+     team under it, round back and video buttons in the icon button style (chalk 7%), and a soft blurred edge in place
+     of a divider. The conversation sits at the bottom like a real thread.
+   - The share card shows whole (it was cropped to 4:5 with object-fit: cover, which cut its top row and its rounded
+     ends), with its own corner radius, a hairline and a soft shadow.
+   Phone first: fills the column with a 16px gutter and keeps the whole device inside the viewport's height. From
+   560px up it's a fixed 380px, centered under the copy. Loads before frame.css. */
+
+html:root:not(#_):not(#_) .ld2-msg-cell {
+  background: linear-gradient(155deg, rgba(var(--lime-rgb), 0.1) 0, rgba(var(--lime-rgb), 0.02) 150px, transparent 280px), var(--surface);
+}
+
+html:root:not(#_):not(#_) .ld2-phone {
+  --u: calc(100cqi / 400);
+  --scr: #0A0B0B;
+  position: relative; isolation: isolate; container-type: inline-size;
+  --pw: min(calc(100% + 12px), calc((100svh - 96px) / 2.097));
+  flex: none; box-sizing: border-box;
+  width: var(--pw); aspect-ratio: 400 / 838.7;
+  margin: 8px calc((100% - var(--pw)) / 2) 12px;
+}
+@media (min-width: 560px) {
+  html:root:not(#_):not(#_) .ld2-phone { --pw: min(100%, 380px); margin-top: 12px; margin-bottom: 16px; }
+}
+/* The brand glow behind the device: ink overflow only (a blur), so it never widens the page */
+html:root:not(#_):not(#_) .ld2-phone::before {
+  content: ""; position: absolute; inset: 14% 4% 20%; z-index: -2; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(var(--lime-rgb), 0.16), rgba(var(--lime-rgb), 0.05) 60%, transparent);
+  filter: blur(40px); pointer-events: none;
+}
+
+/* Body: matte black, a hairline edge, a slight sheen at the top, a layered shadow so it sits on the page */
+html:root:not(#_):not(#_) .ld2-phone .ph-chrome {
+  position: absolute; inset: 0; z-index: -1; display: block;
+  border-radius: calc(64 * var(--u));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0) 20%), #131414;
+  box-shadow:
+    inset 0 0 0 calc(1 * var(--u)) rgba(255, 255, 255, 0.07),
+    inset 0 calc(1 * var(--u)) 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 12px 24px -8px rgba(0, 0, 0, 0.5),
+    0 36px 64px -20px rgba(0, 0, 0, 0.6),
+    0 64px 110px -40px rgba(0, 0, 0, 0.55);
+}
+html:root:not(#_):not(#_) .ld2-phone .ph-btn {
+  position: absolute; display: block; width: calc(3 * var(--u)); border-radius: calc(2 * var(--u));
+  background: linear-gradient(90deg, #191A1A, #101111);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.09);
+}
+html:root:not(#_):not(#_) .ld2-phone .ph-btn:not(.ph-power) { left: calc(-2.5 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-action { top: calc(118 * var(--u)); height: calc(30 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-vol-up { top: calc(170 * var(--u)); height: calc(56 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-vol-dn { top: calc(238 * var(--u)); height: calc(56 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-power { right: calc(-2.5 * var(--u)); top: calc(196 * var(--u)); height: calc(90 * var(--u)); }
+
+/* Screen: 376 x 814.7 of 400, a dark band where it meets the bezel */
+html:root:not(#_):not(#_) .ld2-phone .ld2-sms {
+  position: absolute; inset: calc(12 * var(--u)); display: flex; flex-direction: column;
+  overflow: clip; border-radius: calc(52 * var(--u));
+  background: var(--scr);
+  box-shadow: 0 0 0 calc(1.5 * var(--u)) #040404;
+  font-size: calc(15 * var(--u));
+}
+
+/* Status bar, clear of the island */
+html:root:not(#_):not(#_) .ld2-phone .ph-status {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3; height: calc(54 * var(--u));
+  display: flex; align-items: center; justify-content: space-between; padding: calc(4 * var(--u)) calc(30 * var(--u)) 0 calc(36 * var(--u));
+  color: var(--ink); pointer-events: none;
+}
+html:root:not(#_):not(#_) .ld2-phone .ph-time { font: 600 calc(15 * var(--u))/1 var(--font-mono); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .ld2-phone .ph-island {
+  position: absolute; left: 50%; top: calc(11 * var(--u)); width: calc(116 * var(--u)); height: calc(34 * var(--u));
+  transform: translateX(-50%); border-radius: calc(17 * var(--u)); background: #000;
+}
+html:root:not(#_):not(#_) .ld2-phone .ph-island i {
+  position: absolute; right: calc(11 * var(--u)); top: 50%; width: calc(11 * var(--u)); height: calc(11 * var(--u));
+  transform: translateY(-50%); border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2A3140 0, #121722 45%, #07090D 75%);
+  box-shadow: inset 0 0 0 calc(1 * var(--u)) #0C0E12;
+}
+html:root:not(#_):not(#_) .ld2-phone .ph-glyphs { display: inline-flex; align-items: center; gap: calc(6 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-glyphs svg { display: block; height: calc(12 * var(--u)); width: auto; }
+
+/* Header: centered avatar and name pill, round buttons either side, a soft blurred edge under it */
+html:root:not(#_):not(#_) .ld2-phone .sms-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  display: grid; grid-template-columns: calc(40 * var(--u)) 1fr calc(40 * var(--u)); align-items: start;
+  padding: calc(52 * var(--u)) calc(16 * var(--u)) calc(18 * var(--u)); gap: 0;
+  border: 0; background: linear-gradient(to bottom, var(--scr) 0, color-mix(in srgb, var(--scr) 88%, transparent) 62%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-ib {
+  display: inline-grid; place-items: center; width: calc(40 * var(--u)); height: calc(40 * var(--u));
+  margin-top: calc(12 * var(--u)); border-radius: 50%;
+  background: rgba(244, 246, 242, 0.07); color: #9A9C98; pointer-events: none;
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-ib svg { width: calc(24 * var(--u)); height: calc(24 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .sms-back svg { transform: scaleX(-1); }
+html:root:not(#_):not(#_) .ld2-phone .sms-id { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+html:root:not(#_):not(#_) .ld2-phone .sms-av {
+  display: grid; place-items: center; flex: none; border-radius: 50%; object-fit: cover;
+  width: calc(60 * var(--u)) !important; height: calc(60 * var(--u)) !important;
+  font: 600 calc(23 * var(--u))/1 var(--font-body) !important;
+  background: linear-gradient(180deg, #287A52, var(--turf, #1F6B47)); color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-pill {
+  position: relative; display: inline-flex; align-items: center; gap: calc(2 * var(--u));
+  margin-top: calc(-7 * var(--u)); padding: calc(5 * var(--u)) calc(8 * var(--u)) calc(5 * var(--u)) calc(12 * var(--u));
+  border-radius: 999px; background: color-mix(in srgb, #262928 86%, transparent);
+  box-shadow: 0 0 0 1px var(--line, rgba(242, 244, 241, 0.07));
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-pill b { font-size: calc(15 * var(--u)); font-weight: 600; line-height: 1.2; color: var(--ink); }
+html:root:not(#_):not(#_) .ld2-phone .sms-pill svg { width: calc(12 * var(--u)); height: calc(12 * var(--u)); color: var(--muted); }
+html:root:not(#_):not(#_) .ld2-phone .sms-team {
+  max-width: 100%; margin-top: calc(4 * var(--u)); font-size: calc(11.5 * var(--u)); line-height: 1.25; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* The thread, bottom aligned like Messages; the header's blur covers anything that rides up */
+html:root:not(#_):not(#_) .ld2-phone .sms-feed {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: calc(6 * var(--u));
+  padding: calc(166 * var(--u)) calc(12 * var(--u)) calc(28 * var(--u));
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-day { align-self: center; margin: 0 0 calc(4 * var(--u)); font-size: calc(11 * var(--u)); font-weight: 500; color: var(--muted); }
+/* The card whole, at its own aspect, with the canvas's own 56/1080 corner */
+html:root:not(#_):not(#_) .ld2-phone .sms-img {
+  --cw: 254;
+  align-self: flex-start; width: calc(var(--cw) * var(--u)); max-width: none; margin: 0; overflow: clip;
+  border-radius: calc(var(--cw) * 56 / 1080 * var(--u));
+  box-shadow: 0 0 0 1px var(--line, rgba(242, 244, 241, 0.07)), 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 28px -10px rgba(0, 0, 0, 0.7);
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-img :is(img, .tcard-skel) {
+  display: block; width: 100%; height: auto; aspect-ratio: auto; object-fit: fill; border: 0; border-radius: 0; box-shadow: none;
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-img .tcard-skel { aspect-ratio: 1080 / 1536; }
+html:root:not(#_):not(#_) .ld2-phone .sms-out {
+  max-width: 86%; margin: calc(6 * var(--u)) 0 0; padding: calc(8 * var(--u)) calc(13 * var(--u));
+  border-radius: calc(19 * var(--u)) calc(19 * var(--u)) calc(6 * var(--u)) calc(19 * var(--u));
+  font-size: calc(14.5 * var(--u)); line-height: 1.34;
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-meta { padding-right: calc(6 * var(--u)); font-size: calc(11 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .sms-typing {
+  gap: calc(4 * var(--u)); margin-top: calc(4 * var(--u)); padding: calc(12 * var(--u)) calc(14 * var(--u));
+  border-radius: calc(19 * var(--u)) calc(19 * var(--u)) calc(19 * var(--u)) calc(6 * var(--u));
+}
+html:root:not(#_):not(#_) .ld2-phone .sms-typing i { width: calc(7 * var(--u)); height: calc(7 * var(--u)); }
+html:root:not(#_):not(#_) .ld2-phone .ph-home {
+  position: absolute; left: 50%; bottom: calc(8 * var(--u)); width: calc(134 * var(--u)); height: calc(5 * var(--u));
+  transform: translateX(-50%); border-radius: 999px; background: rgba(242, 244, 241, 0.88);
+}

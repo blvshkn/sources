@@ -7,7 +7,7 @@ import { Icon, PosBadge } from "./ui";
 import { Scoreboard, TradeIdea } from "./Wire";
 import { TradeCompare } from "./Trade";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
-import { Avatar, AvatarPhotos } from "./Avatar";
+import { Avatar, AvatarPhotos, ManagerAvatar } from "./Avatar";
 import { drawCard } from "./lazy";
 import { loadJerseyNumbers } from "../jersey";
 import { IdeaScan } from "./IdeaScan";
@@ -243,20 +243,34 @@ export function Landing({ onLive, onDemo }: {
             </article>
           )}
           {demo.trade && (
-            <article className="card ld-cell ld2-reveal">
+            <article className="card ld-cell ld2-reveal ld2-msg-cell">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
-              <div className="ld2-sms">
-                <div className="sms-top">
-                  <span className="sms-av" aria-hidden="true">{demo.mike.manager.slice(0, 1)}</span>
-                  <span className="sms-who"><b>{demo.mike.manager}</b><span>{demo.mike.name}</span></span>
-                </div>
-                <div className="sms-feed">
-                  <span className="sms-day">Today</span>
-                  <figure className="sms-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
-                  <p className="sms-out">{draftPitch(demo.trade, "friendly")}</p>
-                  <span className="sms-meta">Delivered</span>
-                  <span className="sms-typing" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
+              <div className="ld2-phone">
+                <PhoneChrome />
+                <div className="ld2-sms">
+                  <div className="ph-status" aria-hidden="true">
+                    <span className="ph-time">12:41</span>
+                    <span className="ph-island"><i /></span>
+                    <StatusGlyphs />
+                  </div>
+                  <div className="sms-top">
+                    <span className="sms-ib sms-back" aria-hidden="true"><Icon name="chev" size={24} /></span>
+                    <span className="sms-id">
+                      <ManagerAvatar src={demo.mike.avatar} name={demo.mike.manager} size={64} className="sms-av" />
+                      <span className="sms-pill"><b>{demo.mike.manager}</b><Icon name="chev" size={12} /></span>
+                      <span className="sms-team">{demo.mike.name}</span>
+                    </span>
+                    <span className="sms-ib sms-video" aria-hidden="true"><VideoIcon /></span>
+                  </div>
+                  <div className="sms-feed">
+                    <span className="sms-day">Today</span>
+                    <figure className="sms-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
+                    <p className="sms-out">{draftPitch(demo.trade, "friendly")}</p>
+                    <span className="sms-meta">Delivered</span>
+                    <span className="sms-typing" role="img" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
+                  </div>
+                  <span className="ph-home" aria-hidden="true" />
                 </div>
               </div>
             </article>
@@ -418,5 +432,34 @@ function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: Re
       </div>
       <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="spark" size={14} />Run it again</button>
     </div>
+  );
+}
+
+/** The phone around the message demo: matte body, side buttons. Drawn in CSS (landing-phone.css), purely decorative. */
+function PhoneChrome() {
+  return (
+    <span className="ph-chrome" aria-hidden="true">
+      <i className="ph-btn ph-action" /><i className="ph-btn ph-vol-up" /><i className="ph-btn ph-vol-dn" /><i className="ph-btn ph-power" />
+    </span>
+  );
+}
+
+/** Signal, wifi and battery on the icon family's 1.25 line. */
+function StatusGlyphs() {
+  return (
+    <span className="ph-glyphs">
+      <svg viewBox="0 0 18 12" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"><path d="M1.6 10.4V8.6M6.2 10.4V6.6M10.8 10.4V4.4M15.4 10.4V1.6" /></svg>
+      <svg viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"><path d="M1.2 4.4a9.6 9.6 0 0 1 13.6 0M3.6 6.9a6.2 6.2 0 0 1 8.8 0M6 9.3a2.8 2.8 0 0 1 4 0" /></svg>
+      <svg viewBox="0 0 26 12" fill="none" stroke="currentColor" strokeWidth="1.25"><rect x="0.9" y="0.9" width="21.2" height="10.2" rx="3.2" opacity="0.55" /><rect x="2.9" y="2.9" width="14.6" height="6.2" rx="1.4" fill="currentColor" stroke="none" /><path d="M24.4 4.4v3.2" strokeLinecap="round" opacity="0.55" /></svg>
+    </span>
+  );
+}
+
+/** Video call, drawn to match the 1.25 line of the nav icons. */
+function VideoIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2.75" y="6.25" width="13" height="11.5" rx="3" /><path d="M15.75 10.4l4.4-2.75a.75.75 0 0 1 1.1.64v7.42a.75.75 0 0 1-1.1.64l-4.4-2.75" />
+    </svg>
   );
 }
