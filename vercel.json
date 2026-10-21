@@ -26,6 +26,10 @@
     {
       "source": "/(.*)\\.(png|jpg|jpeg|gif|webp|avif|svg|ico)",
       "headers": [{ "key": "Cross-Origin-Resource-Policy", "value": "same-site" }]
+    },
+    {
+      "source": "/og-image(.*)\\.png",
+      "headers": [{ "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }]
     }
   ]
 }
