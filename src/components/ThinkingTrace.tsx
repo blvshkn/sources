@@ -109,13 +109,16 @@ const secs = (ms: number, done: boolean) => {
 };
 
 /** The trace itself. `idle` draws nothing. `doneLabel` lets a surface say "Read" or "Loaded" instead of "Worked". */
-export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, children }: {
+export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, stayOpen = false, children }: {
   trace: TraceState;
   verb?: { doing: string; done: string };
   className?: string;
   /** One line only, for places where the trace sits above live controls: the running step shows in the head line
    *  instead of the timeline opening under it, so nothing below moves. The chevron still opens the steps. */
   compact?: boolean;
+  /** Keep the steps open once it's done instead of folding them, for a result that needs its working shown (the
+   *  trade finder when it finds nothing). The chevron still folds them. Off everywhere else. */
+  stayOpen?: boolean;
   /** Extra rows at the foot of the timeline (a surface's own detail). */
   children?: ReactNode;
 }) {
@@ -127,10 +130,10 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
     const id = window.setInterval(() => setT(performance.now()), 200);
     return () => window.clearInterval(id);
   }, [running]);
-  // Open while it runs, folded once it's done; the chevron overrides either
+  // Open while it runs, folded once it's done (unless stayOpen); the chevron overrides either
   const [manual, setManual] = useState<boolean | null>(null);
   useEffect(() => { setManual(null); }, [trace.status === "done"]); // eslint-disable-line react-hooks/exhaustive-deps
-  const open = manual ?? (running && !compact);
+  const open = manual ?? ((running && !compact) || (stayOpen && trace.status === "done"));
 
   const thinkWords = useMemo(() => wordCount(trace.think), [trace.think]);
   // The plan streams inside the thinking line's minimum time, so showing it never holds the work up

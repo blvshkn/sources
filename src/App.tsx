@@ -681,7 +681,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
               sent={sent} sentSynced={offerSync.state === "synced"} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent}
-              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []}
+              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []} ideasByTeam={suggestionsByTeam}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (

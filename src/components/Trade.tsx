@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { deny, denyOn } from "../deny";
 import { IdeaScan } from "./IdeaScan";
+import { WhyNone } from "./WhyNone";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
@@ -26,7 +27,7 @@ import { useHFade } from "./hFade";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
 import { rankPlayers } from "../search";
-import type { Price } from "../engine";
+import type { Price, ScanDiag } from "../engine";
 import { useTrace } from "../think";
 import { ideaSteps, readSteps, type Read } from "../reads";
 import { Stream, ThinkingTrace } from "./ThinkingTrace";
@@ -455,7 +456,8 @@ export function lockMap(myTags: Record<string, MyTag>) {
   return lockYou;
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, onReopenSent, onDeclineSent, onClearSent }: {
+const NO_IDEAS: Record<string, TradeT[]> = {};
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, onReopenSent, onDeclineSent, onClearSent }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -463,7 +465,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   /** Turns on the partner profile button. The profile opens in its own sheet (phones) or modal (768px up); the side
    *  panel keeps its partner card as is. profileOpen is no longer read. */
   onProfile?: () => void; profileOpen?: boolean;
-  trade: TradeT | null; suggestions: TradeT[]; tags: ManagerTag[]; myTags: Record<string, MyTag>;
+  trade: TradeT | null; suggestions: TradeT[];
+  /** Every team's ideas from the league scan, so an empty result can point at teams where deals work. */
+  ideasByTeam?: Record<string, TradeT[]>;
+  tags: ManagerTag[]; myTags: Record<string, MyTag>;
   /** Your asking prices, so the read and the idea finder score deals the same way the rest of the app does. */
   prices?: Record<string, Price>;
   tip: string | null;
@@ -502,7 +507,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const scanning = view === "ideas" && stale && scanned !== sig;
   const [fresh, setFresh] = useState<string[]>([]);
   const [rescanned, setRescanned] = useState(false);
-  const finishScan = () => {
+  // Each finished scan's own record of what it turned down, for the "why no trades" read
+  const diags = useRef<Record<string, ScanDiag>>({});
+  const finishScan = (_found: TradeT[], d: ScanDiag) => {
+    diags.current[sig] = d;
     const before = last?.keys ?? null;
     setFresh(before ? suggestions.map((t) => t.key).filter((k) => !before.includes(k)) : []);
     setRescanned(!!before);
@@ -597,8 +605,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {scoutTip && <p className="tr-tip"><Icon name="spark" size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
-      {view === "ideas" && (scanning || shownScan === sig) && <IdeaScan key={sig} run={() => ideaSteps(them, tags, myTags, prices)} onDone={finishScan} />}
-      {view === "ideas" && !scanning && suggestions.length === 0 && <p className="empty-deal">No win-win trades with {them.manager} right now. Try another team above, or build one yourself.</p>}
+      {view === "ideas" && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
+      {view === "ideas" && !scanning && suggestions.length === 0 && (
+        <WhyNone them={them} diag={diags.current[sig]} tags={tags} myTags={myTags} prices={prices} ideasByTeam={ideasByTeam} onOpen={loadIdea} onTeam={setPartner} />
+      )}
       {view === "ideas" && !scanning && suggestions.length > 0 && (
         <section className="card nudge">
           <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>

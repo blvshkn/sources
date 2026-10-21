@@ -417,6 +417,10 @@ export function valueEdge(side: "give" | "get", r: number, noun = "value", third
 // won't lose market value, want a starter back (not bench depth), want their weak
 // spot fixed, won't hand over their best player for two lesser ones without a
 // premium, and ignore deals that barely move their lineup.
+/** The most value each side will give up: past these shares of the bigger side, the value test blocks the deal. */
+const THEIR_VALUE_GIVE = 0.08, YOUR_VALUE_GIVE = 0.15;
+/** True when acceptance() blocks this deal on value alone, for either side. */
+const valueBlocked = (t: Trade) => t.marketGap > THEIR_VALUE_GIVE || t.marketGap < -YOUR_VALUE_GIVE;
 export interface Acceptance { p: number; label: "Likely yes" | "Worth a shot" | "Long shot"; reasons: string[]; blockers: string[]; theirBlockers: string[] }
 const starts = (ids: string[], roster: string[]) => { const l = lineupFor(roster); const set = new Set(l.slots.map((s) => s.player?.id)); return ids.filter((id) => set.has(id)); };
 export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
@@ -426,8 +430,8 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   const youRosterAfter = rosterAfter(you, t, "you");
   // 1. Value: they won't take a loss on market value. Neither should you.
   const theirGap = -t.marketGap; // positive = they receive more value
-  if (theirGap < -0.08) theirs(`${them.manager} ${valueEdge("give", gapRatio(theirGap), "value", true)}`);
-  if (t.marketGap < -0.15) blockers.push(`you ${valueEdge("give", gapRatio(t.marketGap))}`);
+  if (theirGap < -THEIR_VALUE_GIVE) theirs(`${them.manager} ${valueEdge("give", gapRatio(theirGap), "value", true)}`);
+  if (t.marketGap < -YOUR_VALUE_GIVE) blockers.push(`you ${valueEdge("give", gapRatio(t.marketGap))}`);
   // 2. Their lineup has to get meaningfully better.
   if (t.themDelta < 1) theirs(`${them.manager}'s lineup ${t.themDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.themDelta)}/wk)`);
   if (t.youDelta < 1) blockers.push(`your lineup ${t.youDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.youDelta)}/wk)`);
@@ -465,44 +469,125 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
 export function findTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Trade[] {
   return drain(scanTrades(you, them, tags, myTags, prices, limit));
 }
+
+// ---- Why a scan came up empty -----------------------------------------------
+/** Why each swap was turned down. Every swap counts once, at the first test it failed, in the order the scan runs
+ *  them: points (both lineups up a point a week), then your notes and tags, then the would-they-say-yes check. */
+export interface ScanRejects {
+  /** Your lineup gains less than a point a week; theirs gains at least one. */
+  you: number;
+  /** Theirs gains less than a point; yours gains at least one. */
+  them: number;
+  /** Neither lineup gains a point. */
+  both: number;
+  /** Both gain, but a note on them or a tag on your player rules it out. */
+  notes: number;
+  /** Both gain, but one side gives up too much market value. */
+  value: number;
+  /** Fails the rest of their yes check: nothing they get starts, lesser pieces for their best player, a gutted
+   *  position, or too low a chance of yes. */
+  theyPass: number;
+  /** Fails your side of it: nothing you get starts, or you hand over the best player for lesser pieces. */
+  youPass: number;
+}
+/** A deal that came close, with the full read on it. */
+export interface ScanMiss { trade: Trade; accept: Acceptance; fail: keyof ScanRejects; short: number }
+/** What a scan saw. Pass one to scanTrades and it fills in as the scan scores; nothing here is estimated. */
+export interface ScanDiag { scored: number; found: number; reject: ScanRejects; misses: ScanMiss[]; before: { you: number; them: number } }
+export const newScanDiag = (): ScanDiag => ({ scored: 0, found: 0, reject: { you: 0, them: 0, both: 0, notes: 0, value: 0, theyPass: 0, youPass: 0 }, misses: [], before: { you: 0, them: 0 } });
+/** How many near misses a scan holds on to while it scores, before reading them in full at the end. */
+const NEAR_KEEP = 40;
+/** How far a swap is from passing the points test: the points a week each side is short of +1. */
+const pointsShort = (yd: number, td: number) => Math.max(0, 1 - yd) + Math.max(0, 1 - td);
+const failOf = (yd: number, td: number): keyof ScanRejects => (yd < 1 && td < 1 ? "both" : yd < 1 ? "you" : "them");
+
+/** No repeat of the same headline pair, and no padded versions of a simpler deal. `strict` also skips any deal that
+ *  shares a player on each side with one already kept, so a short list doesn't show one swap three ways. */
+function varied<T extends { give: string[]; get: string[] }>(list: T[], limit: number, strict = false): T[] {
+  const seen = new Set<string>();
+  const kept: T[] = [];
+  for (const t of list) {
+    const k = t.get[0] + "|" + t.give[0];
+    if (seen.has(k)) continue;
+    if (kept.some((x) => x.give.every((id) => t.give.includes(id)) && x.get.every((id) => t.get.includes(id)))) continue;
+    if (strict && kept.some((x) => x.give.some((id) => t.give.includes(id)) && x.get.some((id) => t.get.includes(id)))) continue;
+    seen.add(k);
+    kept.push(t);
+    if (kept.length >= limit) break;
+  }
+  return kept;
+}
+
 /** findTrades as steps: after each package from your side it reports how many swaps it has scored. `scored` carries
- *  the count across several teams. */
-export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3, scored = { n: 0 }): Steps<Trade[]> {
+ *  the count across several teams. With a `diag`, it also counts why each swap was turned down and keeps the nearest
+ *  misses; without one, the scan is exactly as fast as before. */
+export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3, scored = { n: 0 }, diag?: ScanDiag): Steps<Trade[]> {
   const results: Trade[] = [];
+  // Near misses: swaps that failed the points test by the least, and swaps that passed it but failed later
+  const near: { give: string[]; get: string[]; short: number }[] = [];
+  const late: { t: Trade; a: Acceptance }[] = [];
+  const holdNear = (give: string[], get: string[], short: number) => {
+    if (near.length >= NEAR_KEEP && short >= near[near.length - 1].short) return;
+    let i = near.length;
+    while (i > 0 && near[i - 1].short > short) i--;
+    near.splice(i, 0, { give, get, short });
+    if (near.length > NEAR_KEEP) near.pop();
+  };
+  let before: Before = { you: 0, them: 0 };
   for (const give of combos(you.roster, 2)) {
     yield { t: "n", n: scored.n };
     // Both "before" lineups are the same for every swap below, so they're built once per package (after the yield,
     // so nothing that changed while the trace painted is missed).
-    const before: Before = { you: lineupTotal(you.roster), them: lineupTotal(them.roster) };
+    before = { you: lineupTotal(you.roster), them: lineupTotal(them.roster) };
     for (const get of combos(them.roster, 2)) {
       if (give.length + get.length > 3) continue;
       scored.n++;
+      if (diag) {
+        // The same points test as bothGain, but both sides are always scored so the miss can be named
+        diag.scored++;
+        const yd = round1(lineupTotal(you.roster.filter((id) => !give.includes(id)).concat(get)) - before.you);
+        const td = round1(lineupTotal(them.roster.filter((id) => !get.includes(id)).concat(give)) - before.them);
+        if (yd < 1 || td < 1) { diag.reject[failOf(yd, td)]++; holdNear(give, get, pointsShort(yd, td)); continue; }
       // Most swaps fail the points test below. Check it first with the same numbers evaluate() would get, and only
       // build the full trade (values, warnings, key) for the ones that pass. The filters and their results are unchanged.
-      if (!bothGain(you, them, give, get, before)) continue;
+      } else if (!bothGain(you, them, give, get, before)) continue;
       const t = evaluate(you, them, give, get, tags, myTags, prices, before);
-      if (t.warnings.length) continue;
+      if (t.warnings.length) { if (diag) diag.reject.notes++; continue; }
       if (t.youDelta < 1 || t.themDelta < 1) continue;
       const a = acceptance(t, you, them);
-      if (a.blockers.length || a.p < 0.5) continue;
+      if (a.blockers.length || a.p < 0.5) {
+        if (diag) {
+          diag.reject[valueBlocked(t) ? "value" : a.theirBlockers.length || a.p < 0.5 ? "theyPass" : "youPass"]++;
+          if (late.length < NEAR_KEEP) late.push({ t, a });
+        }
+        continue;
+      }
       t.accept = a;
       results.push(t);
     }
   }
+  // The last package's swaps are scored after its progress report, so report the final count once more
+  yield { t: "n", n: scored.n };
   // Rank by how likely they say yes, then by what it does for you
   const score = (t: Trade) => (t.accept?.p ?? 0) * 6 + Math.min(t.youDelta, 4) - (t.give.length + t.get.length - 2) * 0.5;
   results.sort((a, b) => score(b) - score(a));
-  // Keep variety: no repeat of the same headline pair, and no padded versions of a simpler deal.
-  const seen = new Set<string>();
-  const kept: Trade[] = [];
-  for (const t of results) {
-    const k = t.get[0] + "|" + t.give[0];
-    if (seen.has(k)) continue;
-    const padded = kept.some((x) => x.give.every((id) => t.give.includes(id)) && x.get.every((id) => t.get.includes(id)));
-    if (padded) continue;
-    seen.add(k);
-    kept.push(t);
-    if (kept.length >= limit) break;
+  const kept = varied(results, limit);
+  if (diag) {
+    diag.found = kept.length;
+    diag.before = before;
+    // Only an empty scan needs its misses read in full: a few dozen evaluations, once, at the end
+    if (!kept.length) {
+      const read: ScanMiss[] = late.map(({ t, a }) => ({ trade: t, accept: a, fail: valueBlocked(t) ? "value" : a.theirBlockers.length || a.p < 0.5 ? "theyPass" : "youPass", short: 0 }));
+      for (const x of near) {
+        const t = evaluate(you, them, x.give, x.get, tags, myTags, prices, before);
+        if (t.warnings.length) continue; // your own notes rule it out: not a deal to suggest
+        read.push({ trade: t, accept: acceptance(t, you, them), fail: failOf(t.youDelta, t.themDelta), short: x.short });
+      }
+      // Nearest: least short on points, then fewest blockers, then the best chance of a yes; simpler deals break ties
+      const gap = (m: ScanMiss) => m.short + m.accept.blockers.length * 0.6 + Math.max(0, 0.5 - m.accept.p) * 2 + (m.trade.give.length + m.trade.get.length - 2) * 0.1;
+      read.sort((a, b) => gap(a) - gap(b) || b.accept.p - a.accept.p);
+      diag.misses = varied(read.map((m) => ({ ...m, give: m.trade.give, get: m.trade.get })), 3, true).map(({ trade, accept, fail, short }) => ({ trade, accept, fail, short }));
+    }
   }
   return kept;
 }

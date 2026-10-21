@@ -1,7 +1,7 @@
 // The Trade page's AI work as real steps (steps.ts): the read on a deal, and the search for trade ideas with one
 // manager. Each step runs the engine call it names and reports what that call returned.
 import { YOU, Team, ManagerTag, MyTag, playerById } from "./data";
-import { Acceptance, Price, Trade, acceptance, evaluate, fmt, needsFor, offerRead, packageValue, scanTrades, sumValue, verdict } from "./engine";
+import { Acceptance, Price, ScanDiag, Trade, acceptance, evaluate, fmt, needsFor, offerRead, packageValue, scanTrades, sumValue, verdict } from "./engine";
 import type { Steps } from "./steps";
 
 const names = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
@@ -40,8 +40,9 @@ export function* readSteps(them: Team, give: string[], get: string[], tags: Mana
   return { trade: t, v: verdict(t), accept: a };
 }
 
-/** Trade ideas with one manager: reads your notes on them, both teams' needs, then scores every swap. */
-export function* ideaSteps(them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3): Steps<Trade[]> {
+/** Trade ideas with one manager: reads your notes on them, both teams' needs, then scores every swap. Pass a `diag`
+ *  to keep the scan's own record of why swaps were turned down (engine.ts ScanDiag). */
+export function* ideaSteps(them: Team, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, limit = 3, diag?: ScanDiag): Steps<Trade[]> {
   const notes = tags.filter((t) => t.teamId === them.id);
   yield { t: "think", text: `Looking for trades with ${them.manager}. I'll read your notes on them, line up what both teams need, score every one and two player swap between the rosters, and keep the ones where both lineups gain.` };
   yield { t: "step", doing: `Reading your notes on ${them.manager}`, done: notes.length ? `Read ${plural(notes.length, "note")} on ${them.manager}` : `No notes on ${them.manager} yet, so league needs lead`,
@@ -51,7 +52,7 @@ export function* ideaSteps(them: Team, tags: ManagerTag[], myTags: Record<string
   yield { t: "n", n: 0, chip: { label: `You need ${mine.need}`, kind: "pos" } };
   yield { t: "n", n: 0, chip: { label: `${them.manager} needs ${theirs.need}`, kind: "pos" } };
   yield { t: "step", doing: "Scoring {n} trade combos", done: "Scored {n} trade combos", n: 0 };
-  const found = yield* scanTrades(YOU, them, tags, myTags, prices, limit);
+  const found = yield* scanTrades(YOU, them, tags, myTags, prices, limit, { n: 0 }, diag);
   yield { t: "step", doing: "Keeping trades where both sides gain", done: found.length ? `Kept ${plural(found.length, "trade")} where both sides gain` : "No trade gains for both sides",
     chips: found.map((x) => ({ label: `${names(x.give)} for ${names(x.get)}`, kind: "player" as const })) };
   return found;
