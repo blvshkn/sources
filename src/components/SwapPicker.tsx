@@ -1,5 +1,6 @@
-// The swap picker: the "Swap in at <slot>" menu under (or above) a starter, shared by the full matchup and the
-// Lineup page so there is one implementation. Also the lock rules both use, and the player cells the menu lists.
+// The swap picker: the "Swap in at <slot>" menu under (or above) a starter, shared by the full matchup (this week and
+// any other week) and the Lineup page so there is one implementation. Open, the starter's box and the list attach into
+// one raised card (placeSwap sets data-sw; swap-card.css draws it). Also the lock rules both use, and the player cells the menu lists.
 import { Suspense, createContext, lazy, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ElementType, MutableRefObject, ReactNode, RefObject } from "react";
 import { PLAYERS, Player, SpecialPlayer, WEEK, onBye } from "../data";
@@ -9,8 +10,9 @@ import { Live, onPace } from "../live";
 import { WeekPlayer } from "../weeks";
 import { gameIn } from "../weekMatch";
 import { Avatar } from "./Avatar";
-import { Icon, StatusPill } from "./ui";
+import { StatusPill } from "./ui";
 import { deny } from "../deny";
+import type { CmpWho } from "./SwapCompare";
 
 // ---- Locks ------------------------------------------------------------------
 /** Sleeper locks a player at his game's kickoff: "live" while it's on, "final" once it's over, null before. Byes
@@ -107,11 +109,16 @@ export function placeSwap(menu: HTMLElement) {
   if (!row) return;
   if (prev) {
     host.style.setProperty("--sw-rowh", `${row.offsetHeight}px`);
-    // Line the menu up with the row's outlined box (its ::after pill), whatever inset that has at this size
+    // Line the menu up with the row's outlined box (its ::after pill), whatever inset that has at this size, and
+    // hang it off the box's bottom edge (or its top, when flipped) so the row and the list read as one card
     const pill = getComputedStyle(row, "::after");
     if (pill.content !== "none" && pill.left.endsWith("px") && pill.right.endsWith("px")) {
       host.style.setProperty("--sw-l", pill.left); host.style.setProperty("--sw-r", pill.right);
     }
+    if (pill.content !== "none" && pill.top.endsWith("px") && pill.bottom.endsWith("px")) {
+      host.style.setProperty("--sw-pt", pill.top); host.style.setProperty("--sw-pb", pill.bottom);
+    }
+    row.dataset.sw = "down"; menu.dataset.sw = "down";
   }
   // Matchup: the menu hangs straight off the starter it swaps, same left edge and width, so the two read as one
   // piece (CSS squares the touching corners through data-sw on the row)
@@ -119,7 +126,7 @@ export function placeSwap(menu: HTMLElement) {
   if (mine) {
     menu.style.left = `${mine.offsetLeft}px`; menu.style.right = "auto"; menu.style.width = `${mine.offsetWidth}px`;
     menu.style.top = `${mine.offsetTop + mine.offsetHeight - 1}px`; menu.style.bottom = "";
-    host.dataset.sw = "down";
+    host.dataset.sw = "down"; menu.dataset.sw = "down";
   }
   const sc = scrollerOf(row);
   const page = sc === document.scrollingElement || sc === document.documentElement;
@@ -146,6 +153,8 @@ export function placeSwap(menu: HTMLElement) {
   if (above > below) {
     menu.classList.add("is-up");
     if (mine) { menu.style.top = "auto"; menu.style.bottom = `${host.offsetHeight - mine.offsetTop - 1}px`; host.dataset.sw = "up"; }
+    if (prev) row.dataset.sw = "up";
+    if (mine || prev) menu.dataset.sw = "up";
   }
   const room = Math.max(above, below);
   if (h > room) menu.style.maxHeight = `${Math.max(120, Math.floor(room))}px`;
@@ -166,7 +175,10 @@ export function useSwapMenu<K extends string | number>() {
     setOpenState(k);
   };
   useLayoutEffect(() => {
-    document.querySelectorAll<HTMLElement>(".mu-row[data-sw]").forEach((r) => { if (!r.contains(menuRef.current)) delete r.dataset.sw; });
+    // The attached-card marks (data-sw) belong to the open row only: the matchup row that holds the menu, or the
+    // Lineup row right before the menu's anchor
+    const menu = menuRef.current, at = menu?.parentElement;
+    document.querySelectorAll<HTMLElement>(":is(.mu-row, .lu-row)[data-sw]").forEach((r) => { if (!menu || (!r.contains(menu) && r.nextElementSibling !== at)) delete r.dataset.sw; });
     if (menuRef.current) placeSwap(menuRef.current);
     const h = hold.current;
     hold.current = null;
@@ -176,12 +188,17 @@ export function useSwapMenu<K extends string | number>() {
   // anywhere else closes it, and so does Escape. The opener's own click still toggles it, so it's left alone here.
   useEffect(() => {
     if (open === null) return;
+    // A sheet opened from the list (Compare) sits on top: taps and Escape there are the sheet's, and the list stays
+    // open behind it. The matchup's own sheet holds its menu, so only a sheet the menu isn't in counts.
+    const over = () => [...document.querySelectorAll(".ps-wrap")].some((w) => !w.contains(menuRef.current));
     const down = (e: PointerEvent) => {
       const t = e.target as Element | null;
       if (!t || menuRef.current?.contains(t) || t.closest('[aria-expanded="true"]')) return;
+      const wrap = t.closest(".ps-wrap");
+      if (wrap && !wrap.contains(menuRef.current)) return;
       setOpen(null, t);
     };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(null); } };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape" && !over()) { e.stopPropagation(); setOpen(null); } };
     document.addEventListener("pointerdown", down, true);
     document.addEventListener("keydown", key, true);
     return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key, true); };
@@ -257,12 +274,12 @@ export interface SwapOption {
   /** The short label in place of the point change when locked; "Locked" unless set ("Bye"). */
   tag?: string;
   onPick: (from: Element) => void;
+  /** The player this option brings in (or replaces), for the Compare sheet. Options without one aren't comparable. */
+  cmp?: CmpWho;
 }
 
-export function SwapPicker({ title, options, empty, className = "", info, menuRef }: {
+export function SwapPicker({ title, options, empty, className = "", menuRef }: {
   title: string; options: SwapOption[]; empty: string; className?: string;
-  /** A "Player info" row at the top that opens the player sheet. */
-  info?: { name: string; onOpen: () => void };
   /** useSwapMenu's menuRef, so the menu gets placed and the scroll held. */
   menuRef: RefObject<HTMLDivElement>;
 }) {
@@ -277,11 +294,6 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
   }, [menuRef]);
   return (
     <Root {...(shell?.props ?? {})} className={`mu-swap${shell ? " sw-spring" : ""}${className ? ` ${className}` : ""}`} ref={setRef}>
-      {info && (
-        <button className="sw-info" onClick={info.onOpen} aria-label={`Player info for ${info.name}`}>
-          <Icon name="eye" size={16} /><span>Player info</span><Icon name="chev" size={14} />
-        </button>
-      )}
       <small>{title}</small>
       {options.length ? options.map((o) => (
         <button key={o.key} className={`mu-opt${o.lock ? " is-locked" : ""}`} aria-disabled={o.lock ? true : undefined}

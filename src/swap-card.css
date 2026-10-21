@@ -1,0 +1,153 @@
+/* The swap card (SwapPicker.tsx), one variant for the full matchup (this week and other weeks) and the Lineup page:
+   open, the starter's bordered box and its swap list read as a single raised card. placeSwap hangs the list off the
+   box's edge at the box's exact width and sets data-sw ("down" or "up") on the row and on the list; the touching
+   corners go square and the seam is a hairline in the same surface. Then the Compare button in the card's header row
+   and the Compare sheet (SwapCompare.tsx). Loads just before frame.css. Every rule is scoped to .mu-swap, .mu-row,
+   .lu-list .lu-row, .lu-pick-at, .sw-cmp or a .cmp-* class: nothing here styles bare .card, .btn or .row. */
+
+/* ---------- The list half of the card, both pages ---------- */
+html:root:not(#_):not(#_):not(#_) .mu-swap[data-sw] {
+  border: 1px solid var(--line); background: var(--surface-2); box-sizing: border-box; padding: 4px 6px 6px;
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 4px 8px -4px rgba(0, 0, 0, 0.35);
+}
+html:root:not(#_):not(#_):not(#_) .mu-swap[data-sw="down"] { border-top-color: color-mix(in srgb, var(--line) 60%, transparent); border-top-left-radius: 0; border-top-right-radius: 0; }
+html:root:not(#_):not(#_):not(#_) .mu-swap[data-sw="up"] { border-bottom-color: color-mix(in srgb, var(--line) 60%, transparent); border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 -12px 24px -8px rgba(0, 0, 0, 0.5); }
+
+/* ---------- The header half on the Lineup page: the row's outlined box (its ::after pill) ---------- */
+/* The list hangs off the box's bottom edge (or its top when flipped), overlapping its border by a pixel.
+   placeSwap puts the box's top and bottom insets on the anchor as --sw-pt / --sw-pb. */
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick[data-sw="down"] { top: calc(-1 * var(--sw-pb, 4px) - 1px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick[data-sw="up"] { top: auto; bottom: calc(var(--sw-rowh, 68px) - var(--sw-pt, 5px) - 1px); }
+/* The open row drops its full-bleed fill; the box itself becomes the card's header, filled and outlined */
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw] { background-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw]::after { opacity: 1; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw]:focus-visible::after { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 2px var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw="down"]::after { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw="up"]::after { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+
+/* ---------- Compare, in the card's header row ---------- */
+/* Narrow lists: under the player's name and game, inside the same box. Wide lists (tablet and desktop when the
+   lineup has the room): on the right of the header row, beside the points, in an extra column only this row gets.
+   Measured on the lineup column, since tablet puts the lineup beside its side cards. */
+html:root:not(#_):not(#_) .lu-grid > .lu-col:has(> .card.lu-list) { container: lucol / inline-size; }
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp {
+  grid-column: 3 / -1; justify-self: start; position: relative; z-index: 1; gap: 6px; margin: 2px 0 2px; text-decoration: none; white-space: nowrap;
+}
+@container lucol (min-width: 520px) {
+  html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { grid-row: 1; grid-column: 5; justify-self: end; margin: 0; }
+}
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > svg { flex: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { animation: sw-cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
+@keyframes sw-cmp-in { from { opacity: 0; transform: scale(0.96); } }
+
+/* ---------- The Compare sheet ---------- */
+/* Series colors by position in the comparison: blue, amber, magenta. Validated as a set (all pairs, both surfaces).
+   No lime, and no green or red, which mean good and bad. */
+html:root:not(#_):not(#_) .cmp-sheet { --cmp-1: #2a78d6; --cmp-2: #eda100; --cmp-3: #e87ba4; }
+@media (prefers-color-scheme: dark) {
+  html:root:not([data-theme="light"]):not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; }
+}
+html:root[data-theme="dark"]:not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; }
+@media (min-width: 768px) { html:root:not(#_):not(#_):not(#_) .ps.ps-detail.cmp-sheet { max-width: 680px; } }
+
+html:root:not(#_):not(#_) .cmp-sheet .cmp-head { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-head > small { font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-body { display: grid; gap: 22px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-sec { display: grid; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-h { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font: 600 0.9375rem/1.3 "Geist", sans-serif; color: var(--ink); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-h > small { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-none { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet :is(.cmp-num, .cmp-delta, .cmp-tr span[role="cell"], .cmp-tip em, .cmp-ax) { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .cmp-sheet .good { color: var(--good); }
+html:root:not(#_):not(#_) .cmp-sheet .bad { color: var(--bad); }
+html:root:not(#_):not(#_) .cmp-sheet .warn { color: var(--warn); }
+
+/* Add from the swap list: chips, wrapping */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-add { display: grid; gap: 8px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-lbl { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 10px; color: var(--ink); cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chip > svg { color: var(--muted); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:not(.is-full):hover { background: var(--surface-2); } }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:active { transform: scale(0.97); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chip.is-full { opacity: 0.5; cursor: default; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+/* Side by side: one column per player */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-cols { display: grid; gap: 8px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-col { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .cmp-sheet .cmp-col { animation: cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); } }
+@keyframes cmp-in { from { opacity: 0; transform: translateY(4px); } }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-who { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-info { flex: 1; min-width: 0; display: grid; justify-items: start; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; border-radius: 8px; }
+html:root:not(#_):not(#_) .cmp-sheet button.cmp-info { cursor: pointer; }
+html:root:not(#_):not(#_) .cmp-sheet button.cmp-info b { text-decoration: none; transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet button.cmp-info:hover b { color: var(--muted); } }
+html:root:not(#_):not(#_) .cmp-sheet button.cmp-info:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-n { display: grid; gap: 2px; min-width: 0; max-width: 100%; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-n > b { font-size: 0.875rem; font-weight: 600; line-height: 1.25; overflow-wrap: break-word; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-n > small { font-size: 0.75rem; color: var(--muted); }
+/* Remove sits in the column's corner, beside the headshot, so the name keeps the column's full width */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-x { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 32px; height: 32px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet .cmp-x:hover { background: var(--surface-3); color: var(--ink); } }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-x:active { transform: scale(0.94); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-x:focus-visible { outline: 2px solid var(--lime); outline-offset: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-key { display: inline-block; flex: none; width: 14px; height: 3px; border-radius: 2px; background: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-col > .cmp-key { width: 100%; height: 3px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s1 { background: var(--cmp-1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s2 { background: var(--cmp-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s3 { background: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats { display: grid; gap: 8px; margin: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats > div { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats dt { font-size: 0.6875rem; font-weight: 600; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats dd { margin: 0; display: grid; gap: 1px; font-size: 0.8125rem; color: var(--ink); overflow-wrap: break-word; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats dd.cmp-num { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-stats dd small { font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-delta { font-size: 0.75rem; font-weight: 600; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-delta.up { color: var(--good); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-delta.down { color: var(--bad); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-swap { width: 100%; justify-content: center; gap: 6px; padding-left: 8px; padding-right: 8px; text-decoration: none; white-space: nowrap; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-swap.is-locked { color: var(--muted) !important; cursor: default; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-role { align-self: end; min-height: 34px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: var(--muted); text-align: center; }
+
+/* Recent weeks: legend, the chart, then the same numbers as a table */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font-size: 0.75rem; color: var(--ink); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-legend li { display: inline-flex; align-items: center; gap: 6px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chart { position: relative; min-width: 0; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-chart > svg { display: block; overflow: visible; touch-action: pan-y; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-skel { height: 156px; border-radius: 10px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-grid-ln { stroke: var(--line); stroke-width: 1; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-cross { stroke: var(--muted); stroke-width: 1; opacity: 0.6; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-ax { fill: var(--muted); font-size: 10px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-dot { stroke: var(--surface); stroke-width: 2; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .cmp-sheet :is(.cmp-line, .cmp-dot) { animation: cmp-fade 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
+@keyframes cmp-fade { from { opacity: 0; } }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s1 { stroke: var(--cmp-1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s2 { stroke: var(--cmp-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s3 { stroke: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s1 { fill: var(--cmp-1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s2 { fill: var(--cmp-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s3 { fill: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tip {
+  position: absolute; top: 4px; z-index: 2; display: grid; gap: 4px; min-width: 140px; padding: 8px 10px; transform: translateX(10px);
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-sm); pointer-events: none; font-size: 0.75rem; color: var(--ink);
+}
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tip.left { transform: translateX(calc(-100% - 10px)); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tip > span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tip em { margin-left: auto; padding-left: 10px; font-style: normal; font-weight: 600; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-table { display: grid; font-size: 0.75rem; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tr { display: grid; align-items: center; column-gap: 4px; min-height: 30px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tr > span { text-align: right; color: var(--ink); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tr > span:first-child { display: flex; align-items: center; gap: 6px; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-th { border-top: 0; min-height: 24px; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-th > span { color: var(--muted); font-weight: 600; font-family: var(--font-mono); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-th > span:first-child { font-family: inherit; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-tr > span.cmp-gap { color: var(--muted); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-src { margin: 0; font-size: 0.75rem; line-height: 1.4; color: var(--muted); }

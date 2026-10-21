@@ -5,14 +5,14 @@ import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "
 import { SwapShell } from "./SwapPicker";
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
-// Critically damped (ratio 1), about 0.24s: k = (2π / 0.24)², c = 4π / 0.24
-const OPEN = { type: "spring", stiffness: 685, damping: 52, mass: 1 } as const;
+// The app's motion: 160ms on the shared ease-out curve
+const OPEN = { duration: 0.16, ease: EASE } as const;
 
 /**
  * Mounts the anchor while `show` is true and keeps it through the close. The menu grows out of its row: the
  * transform origin is the row's edge (top center below the row, bottom center when placeSwap flips it above, in
  * lineup-swap.css), so it scales from where it's attached. A full transform string keeps it on the compositor.
- * Tapping again mid-way reverses it from where it is. Reduced motion: opacity only.
+ * Tapping again mid-way reverses it from where it is. 160ms each way. Reduced motion: opacity only.
  */
 export function SwapSpring({ show, className, children }: { show: boolean; className: string; children: ReactNode }) {
   const reduce = useReducedMotion();
@@ -21,13 +21,13 @@ export function SwapSpring({ show, className, children }: { show: boolean; class
     props: reduce
       ? {
           initial: { opacity: 0 },
-          animate: { opacity: 1, transition: { duration: 0.16, ease: EASE } },
-          exit: { opacity: 0, transition: { duration: 0.12, ease: EASE } },
+          animate: { opacity: 1, transition: OPEN },
+          exit: { opacity: 0, transition: OPEN },
         }
       : {
           initial: { opacity: 0, transform: "translateY(0px) scale(0.94)" },
-          animate: { opacity: 1, transform: "translateY(0px) scale(1)", transition: { default: OPEN, opacity: { duration: 0.14, ease: EASE } } },
-          exit: { opacity: 0, transform: "translateY(0px) scale(0.96)", transition: { duration: 0.14, ease: EASE } },
+          animate: { opacity: 1, transform: "translateY(0px) scale(1)", transition: OPEN },
+          exit: { opacity: 0, transform: "translateY(0px) scale(0.96)", transition: OPEN },
         },
   }), [reduce]);
   return (

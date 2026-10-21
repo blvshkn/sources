@@ -15,10 +15,6 @@ html:root:not(#_):not(#_) .card.mu span.mu-mine:is(:hover, :active):not(#_) { ba
 html:root:not(#_):not(#_):not(#_) .mu-row[data-sw] > .mu-mine { background: var(--surface-2) !important; border-color: var(--line) !important; }
 html:root:not(#_):not(#_):not(#_) .mu-row[data-sw="down"] > .mu-mine { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
 html:root:not(#_):not(#_):not(#_) .mu-row[data-sw="up"] > .mu-mine { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
-html:root:not(#_):not(#_):not(#_) .mu-row[data-sw] > .mu-swap {
-  grid-row: auto !important; grid-column: auto !important; /* measure from the row, not a grid area */
-  border: 1px solid var(--line); background: var(--surface-2); box-sizing: border-box; padding: 4px 6px 6px;
-  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 4px 8px -4px rgba(0, 0, 0, 0.35);
-}
-html:root:not(#_):not(#_):not(#_) .mu-row[data-sw="down"] > .mu-swap { border-top-color: color-mix(in srgb, var(--line) 60%, transparent); border-top-left-radius: 0; border-top-right-radius: 0; }
-html:root:not(#_):not(#_):not(#_) .mu-row[data-sw="up"] > .mu-swap { border-bottom-color: color-mix(in srgb, var(--line) 60%, transparent); border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 -12px 24px -8px rgba(0, 0, 0, 0.5); }
+/* The list half (border, surface, squared corners, shadow) is the shared swap card in swap-card.css, the same one
+   the Lineup page uses. Here it only measures from the row, not a grid area. */
+html:root:not(#_):not(#_):not(#_) .mu-row[data-sw] > .mu-swap { grid-row: auto !important; grid-column: auto !important; }
