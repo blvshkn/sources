@@ -296,7 +296,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // only sees the ones you haven't passed on, and only recommends a real pick.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const allRecs = useMemo(() => waiverRecs(YOU), [fkey]);
-  const recs = useMemo(() => allRecs.filter((r) => !passed.includes(r.fa.id)), [allRecs, passed]);
+  // "Not right now": skip a suggested add for this week only. He comes back next week; Waivers still lists him.
+  const [snoozed, setSnoozed] = usePersist<Record<string, number>>(`${scope}.snoozed`, {});
+  const recs = useMemo(() => allRecs.filter((r) => !passed.includes(r.fa.id) && !((snoozed[r.fa.id] ?? -1) >= WEEK)), [allRecs, passed, snoozed]);
   const topRec = recs.find((r) => r.pick);
   /** "Not interested": one list per league, shared by trade ideas and every waiver suggestion. */
   const passPlayer = useCallback((p: { id: string; name: string }) => {
@@ -304,6 +306,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     haptic();
     setToast(`Got it. Sources won't suggest ${p.name} again.`, () => setPassed((c) => c.filter((x) => x !== p.id)));
   }, [setPassed, setToast]);
+  const snoozePlayer = useCallback((p: { id: string; name: string }) => {
+    setSnoozed((c) => ({ ...c, [p.id]: WEEK }));
+    haptic();
+    setToast(`Okay. Sources won't suggest ${p.name} again this week.`, () => setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; }));
+  }, [setSnoozed, setToast]);
   const unpassPlayer = useCallback((p: { id: string; name: string }) => {
     setPassed((c) => c.filter((x) => x !== p.id));
     setToast(`${p.name} is back in suggestions.`, () => setPassed((c) => [...c.filter((x) => x !== p.id), p.id]));
@@ -765,7 +772,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
-              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onPass={passPlayer}
+              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onPass={passPlayer} onSnooze={snoozePlayer}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")} sent={wireSent} onOpenSent={reopenSent}
               onKeepTag={keepTag} onClearTag={clearTag} />

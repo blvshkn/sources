@@ -434,7 +434,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass, sent, onOpenSent }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass, onSnooze, sent, onOpenSent }: {
   you: TeamNeeds;
   partner: string | null;
   partnerId: string | null;
@@ -454,6 +454,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   level: string;
   /** "Not interested" on a suggested player: one list shared by every suggestion. */
   onPass?: (p: { id: string; name: string }) => void;
+  /** "Not right now" on the briefing's waiver add: skip him this week only */
+  onSnooze?: (p: { id: string; name: string }) => void;
   /** Your newest offer still out (or just accepted), as one line in Quick moves that opens it */
   sent?: SentDeal | null; onOpenSent?: (o: SentOffer) => void;
 }) {
@@ -504,9 +506,9 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <button className="brief-row" onClick={() => onGo("waivers")}>
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
           </button>
-          {briefing.waiverPass && onPass && (
-            <Tooltip content="Not interested. Sources stops suggesting him">
-              <button className="ps-x" aria-label={`Not interested in ${briefing.waiverPass.name}`} onClick={() => onPass(briefing.waiverPass!)}><Icon name="x" size={16} /></button>
+          {briefing.waiverPass && onSnooze && (
+            <Tooltip content="Skips him this week. He can come back next week.">
+              <button className="brief-snooze" aria-label={`Not right now: skip ${briefing.waiverPass.name} this week`} onClick={() => onSnooze(briefing.waiverPass!)}>Not right now</button>
             </Tooltip>
           )}
         </div>
