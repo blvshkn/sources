@@ -204,6 +204,12 @@ html:root:not(#_):not(#_) .fo-flat.fo-st-pre .fo-foot > .fo-line { font-weight: 
   html:root:not(#_):not(#_) .fo-foot { display: none; }
 }
 
+/* Tablet only, Final: the opponent's meta line flips, record and win % at the inner end, the projection or points
+   per game at the outer edge (Zach's Figma, variants 14:670 and 14:1115). Same row, same height. */
+@container fo (min-width: 560px) and (max-width: 899.98px) {
+  html:root:not(#_):not(#_) .fo-st-final .fo-side.them .fo-meta .fo-end { order: -1; margin: 0 0 0 auto; }
+}
+
 /* Desktop: the score beside the name at the inner edge */
 @container fo (min-width: 900px) {
   html:root:not(#_):not(#_) .fo-in {
