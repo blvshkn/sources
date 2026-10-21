@@ -1,0 +1,110 @@
+/* Divided lists, one rule for the whole app: while a row is hovered, pressed, keyboard focused, selected or open, the
+   divider above it and the one below it fade out, so its fill never meets a line. Every other divider stays.
+   Covered here: Quick moves (with the Offer out line and the wrapped Waiver add row), Your week, This week, Their
+   threats and their footer links, standings, trade lists (selected players too), Settings links, waiver rows and the
+   line over the first one, lineup rows (the row with its swap menu open too), Values, the slot report, matchup rows
+   on the page and in the sheet (the open row too), trade partners, the inbox, news groups, sheet option lists (Why
+   won't this work, league switcher), player search results and Sent offers.
+   Dividers fade with a color change only: widths never change, so nothing moves. Hover lives under a fine pointer
+   only, so a tap never leaves a row stuck without its lines. The fade is 160ms cubic-bezier(0.23, 1, 0.32, 1), the
+   rows' own hover timing; with reduced motion the dividers change instantly.
+   Loads just before frame.css. Every rule is scoped to a list's own classes: nothing here styles bare .ps, .card,
+   .btn or .row. Three :not(#_) because some of the rules it overrides use three. */
+
+html:root:not(#_):not(#_):not(#_) { --dv-dur: var(--st-dur, 160ms); --dv-ease: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)); }
+
+/* ---------- The fade ---------- */
+/* Rows that already transition other things: the same list, with the divider properties on --dv-dur */
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .sr-row, .wv, .lu-row, .psr-row, .vb-row) {
+  transition-property: background-color, box-shadow, transform, opacity, color, border-color;
+  transition-duration: var(--st-dur, 160ms), var(--dv-dur), var(--st-dur, 160ms), var(--st-dur, 160ms), var(--st-dur, 160ms), var(--dv-dur);
+  transition-timing-function: var(--dv-ease);
+}
+html:root:not(#_):not(#_):not(#_) .card .partner-card {
+  transition-property: transform, border-color;
+  transition-duration: var(--st-dur, 160ms), var(--dv-dur);
+  transition-timing-function: var(--dv-ease);
+}
+/* Wrappers whose only change is the divider */
+html:root:not(#_):not(#_):not(#_) :is(.card.mu > .mu-row, .card.mu > .mu-foot, .lu-list .lu-list-head.sub, .fb-list > li, .psr-list > li, .so-card .so-row, .nxr-g, .wv3-list) {
+  transition: border-color var(--dv-dur) var(--dv-ease);
+}
+html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { transition: opacity var(--dv-dur) var(--dv-ease); }
+/* Reduced motion: styles.css keeps a 160ms fade on color and opacity everywhere (with !important); dividers go
+   instantly instead, and the rows' fills keep their fade */
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .sr-row, .wv, .lu-row, .psr-row, .vb-row, .card .partner-card) {
+    transition-property: opacity, background-color, color, border-color, box-shadow !important;
+    transition-duration: 160ms, 160ms, 160ms, 0s, 0s !important;
+  }
+  html:root:not(#_):not(#_):not(#_) :is(.card.mu > .mu-row, .card.mu > .mu-foot, .lu-list .lu-list-head.sub, .fb-list > li, .psr-list > li, .so-card .so-row, .nxr-g, .wv3-list),
+  html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { transition-duration: 0s !important; }
+}
+
+/* ---------- Hover: fine pointers only ---------- */
+@media (hover: hover) and (pointer: fine) {
+  /* Dividers drawn as the row's own top border */
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .card .partner-card):hover,
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .card .partner-card):hover + :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .partner-card),
+  /* Quick moves: Waiver add sits in a wrapper with its Not interested button */
+  html:root:not(#_):not(#_):not(#_) .card.briefing > .brief-row:hover + .ps-brief > .brief-row,
+  /* Their threats: the last row and the footer link under the list */
+  html:root:not(#_):not(#_):not(#_) .thr-body:has(> .wk-row:last-child:hover) + .wk-more,
+  /* Dividers drawn as the top border of a wrapper around the row */
+  html:root:not(#_):not(#_):not(#_) :is(
+    .wv:has(> .wv-row:hover), .wv:has(> .wv-row:hover) + .wv,
+    .sr-row:has(> .sr-main:hover), .sr-row:has(> .sr-main:hover) + .sr-row,
+    .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover), .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover) + li,
+    .psr-list > li:has(> .psr-row:hover), .psr-list > li:has(> .psr-row:hover) + li,
+    .so-card .so-row:has(> .so-open:hover), .so-card .so-row:has(> .so-open:hover) + .so-row,
+    .nxr-g:has(> .nxr-head .nxr-tog:hover), .nxr-g:has(> .nxr-head .nxr-tog:hover) + .nxr-g,
+    .card.mu > .mu-row:has(> .mu-mine:hover), .card.mu > .mu-row:has(> .mu-mine:hover) + :is(.mu-row, .mu-foot),
+    .wv3-list:has(> .wv:first-child > .wv-row:hover),
+    .lu-list .lu-row.tap:hover + .lu-list-head.sub
+  ) { border-top-color: transparent !important; }
+
+  /* Dividers drawn as a 1px inset shadow at the row's top */
+  html:root:not(#_):not(#_):not(#_) :is(.lu-list .lu-row.tap, .vb-row:not(:disabled)):hover,
+  html:root:not(#_):not(#_):not(#_) :is(.lu-list .lu-row.tap, .vb-row:not(:disabled)):hover + :is(.lu-row, .vb-row),
+  html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.tap:hover + .lu-pick-at + .lu-row,
+  html:root:not(#_):not(#_):not(#_) :is(.wv:has(> .wv-row:hover), .wv:has(> .wv-row:hover) + .wv) { box-shadow: inset 0 1px 0 transparent !important; }
+
+  /* Inbox: the hairline is the next item's ::before */
+  html:root:not(#_):not(#_):not(#_) .ibx-item:hover::before,
+  html:root:not(#_):not(#_):not(#_) .ibx-item:hover + .ibx-item::before { opacity: 0; }
+}
+
+/* ---------- Press, keyboard focus, selected and open: every pointer ---------- */
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .card .partner-card):is(:active, :focus-visible),
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .card .partner-card):is(:active, :focus-visible) + :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .partner-card),
+html:root:not(#_):not(#_):not(#_) .card.briefing > .brief-row:is(:active, :focus-visible) + .ps-brief > .brief-row,
+html:root:not(#_):not(#_):not(#_) .thr-body:has(> .wk-row:last-child:is(:active, :focus-visible)) + .wk-more,
+/* Selected trade players keep a full-width fill */
+html:root:not(#_):not(#_):not(#_) .pick[aria-pressed="true"],
+html:root:not(#_):not(#_):not(#_) .pick[aria-pressed="true"] + .pick,
+html:root:not(#_):not(#_):not(#_) :is(
+  .wv:has(> .wv-row:is(:active, :focus-visible)), .wv:has(> .wv-row:is(:active, :focus-visible)) + .wv,
+  .sr-row:has(> .sr-main:is(:active, :focus-visible)), .sr-row:has(> .sr-main:is(:active, :focus-visible)) + .sr-row,
+  .fb-list > li:has(> :is(.fb-opt, .lsw-row):is(:active, :focus-visible)), .fb-list > li:has(> :is(.fb-opt, .lsw-row):is(:active, :focus-visible)) + li,
+  .psr-list > li:has(> .psr-row:is(:active, :focus-visible)), .psr-list > li:has(> .psr-row:is(:active, :focus-visible)) + li,
+  .so-card .so-row:has(> .so-open:is(:active, :focus-visible)), .so-card .so-row:has(> .so-open:is(:active, :focus-visible)) + .so-row,
+  .nxr-g:has(> .nxr-head .nxr-tog:is(:active, :focus-visible)), .nxr-g:has(> .nxr-head .nxr-tog:is(:active, :focus-visible)) + .nxr-g,
+  .card.mu > .mu-row:has(> .mu-mine:is(:active, :focus-visible)), .card.mu > .mu-row:has(> .mu-mine:is(:active, :focus-visible)) + :is(.mu-row, .mu-foot),
+  /* The matchup row whose swap menu is open */
+  .card.mu > .mu-row.open, .card.mu > .mu-row.open + :is(.mu-row, .mu-foot),
+  .wv3-list:has(> .wv:first-child > .wv-row:is(:active, :focus-visible)),
+  .lu-list .lu-row.tap:is(:active, :focus-visible) + .lu-list-head.sub,
+  .lu-list .lu-row.is-open + .lu-list-head.sub, .lu-list .lu-row.is-open + .lu-pick-at + .lu-list-head.sub
+) { border-top-color: transparent !important; }
+
+html:root:not(#_):not(#_):not(#_) :is(.lu-list .lu-row.tap, .vb-row:not(:disabled)):is(:active, :focus-visible),
+html:root:not(#_):not(#_):not(#_) :is(.lu-list .lu-row.tap, .vb-row:not(:disabled)):is(:active, :focus-visible) + :is(.lu-row, .vb-row),
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.tap:is(:active, :focus-visible) + .lu-pick-at + .lu-row,
+/* The lineup row whose swap menu is open: its own line and the next row's, past the menu's anchor */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-open,
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-open + .lu-row,
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.is-open + .lu-pick-at + .lu-row,
+html:root:not(#_):not(#_):not(#_) :is(.wv:has(> .wv-row:is(:active, :focus-visible)), .wv:has(> .wv-row:is(:active, :focus-visible)) + .wv) { box-shadow: inset 0 1px 0 transparent !important; }
+
+html:root:not(#_):not(#_):not(#_) .ibx-item:is(:active, :focus-within)::before,
+html:root:not(#_):not(#_):not(#_) .ibx-item:is(:active, :focus-within) + .ibx-item::before { opacity: 0; }

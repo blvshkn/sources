@@ -59,6 +59,7 @@ import "./sent-sync.css";
 import "./you-color.css";
 import "./ask.css";
 import "./why-none.css";
+import "./dividers.css";
 import "./motion.css";
 import "./frame.css";
 import "./sheet.css";
