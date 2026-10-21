@@ -276,8 +276,8 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
   const input = useRef<HTMLInputElement>(null);
   // Scrolling the thread. Sending is an explicit action, so it always brings your question and the answer area into
   // view (smoothly, or at once under reduced motion), then the thread follows the bottom while the trace and the
-  // answer stream in. Following never scrolls past the top of the answer card, so on a short phone a long answer
-  // keeps its headline in view. Scrolling yourself (wheel, touch, scroll keys, the bar) stops the follow; if the
+  // answer stream in. Following never scrolls past the turn's trace line, right above the answer card, so on a short
+  // phone a long answer keeps "Worked" and its headline in view. Scrolling yourself (wheel, touch, scroll keys, the bar) stops the follow; if the
   // answer card then appears out of view, the thread brings its top into view once. Scroll back to the bottom and
   // the follow picks up again. The empty state starts at the top instead, so a short phone opens on the intro.
   const stick = useRef(!!initial?.trim());
@@ -294,9 +294,20 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     if (!t || !c) return;
     const reduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const now = () => performance.now();
+    const padTop = () => parseFloat(getComputedStyle(t).scrollPaddingTop) || 0;
     // Where the thread would sit to put an element's top at its scroll-padding line
-    const topOf = (el: Element) =>
-      t.scrollTop + el.getBoundingClientRect().top - t.getBoundingClientRect().top - (parseFloat(getComputedStyle(t).scrollPaddingTop) || 0);
+    const topOf = (el: Element) => t.scrollTop + el.getBoundingClientRect().top - t.getBoundingClientRect().top - padTop();
+    // The newest turn is always at least a screen of thread tall (ask-turn.css), so its question can sit at the top
+    // the moment it's sent, with the trace and the answer growing down under it. Without that room the thread
+    // starts at the bottom, next to the composer, and jumps up as the turn grows.
+    const room = () => {
+      const px = `${Math.max(0, Math.floor(t.clientHeight - padTop() - (parseFloat(getComputedStyle(c).paddingBottom) || 0)))}px`;
+      if (c.style.getPropertyValue("--ask-room") !== px) c.style.setProperty("--ask-room", px);
+    };
+    room();
+    // What the thread brings to its top line once an answer is in: the turn's trace line ("Worked 1.4s"), so it
+    // shows right above the card instead of scrolling out past the top edge with only the card in view
+    const anchorOf = (turn: Element, card: Element) => turn.querySelector(":scope > .thk") ?? card;
     const go = (top: number, smooth: boolean) => {
       const to = Math.round(Math.max(0, Math.min(top, t.scrollHeight - t.clientHeight)));
       if (Math.abs(t.scrollTop - to) < 1) return;
@@ -327,7 +338,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
       if (stick.current) {
         reveal = null;
         let top = t.scrollHeight - t.clientHeight;
-        if (card && cap.current) top = Math.min(top, topOf(card));
+        if (card && turn && cap.current) top = Math.min(top, topOf(anchorOf(turn, card)));
         if (smooth) { smoothSent = smoothUntil.current; land(); }
         go(top, smooth);
         return;
@@ -342,13 +353,13 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
         moving = true; revealAt = now();
         const smooth2 = !reduced();
         if (smooth2) { smoothUntil.current = smoothSent = now() + 600; land(); }
-        go(topOf(card), smooth2);
+        go(topOf(anchorOf(turn!, card)), smooth2);
         if (smooth2) return;
-      } else if (moving && away && userAt.current < revealAt) go(topOf(card), false);
+      } else if (moving && away && userAt.current < revealAt) go(topOf(anchorOf(turn!, card)), false);
       reveal = null;
     };
     follow.current();
-    const ro = new ResizeObserver(() => follow.current());
+    const ro = new ResizeObserver(() => { room(); follow.current(); });
     ro.observe(c);
     ro.observe(t);
     return () => { ro.disconnect(); window.clearTimeout(settle.current); window.clearTimeout(wait); };
