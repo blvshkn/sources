@@ -5,7 +5,7 @@
      Tablet   26px sides, 24px top and bottom (616px up)
      Desktop  28px sides, 24px top and bottom (1192px up)
    Anything that draws a box (a row card, the selected outline, a hover pill, a bar) sits inside that box, never in
-   the padding. Rows that bled their box past the text with negative margins keep the box at the edge of the content
+   the padding (the league switcher's and Why won't this work's hover pills reach into it, inside its width). Rows that bled their box past the text with negative margins keep the box at the edge of the content
    box instead and indent their text inside it. Full-width rules (the header's hairline, row dividers) still run edge
    to edge, as before.
    The close button sits in the content box's top right corner: its right edge on the sides' inset, its top on the
@@ -41,12 +41,13 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) {
 @media (min-width: 768px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) { padding-top: var(--pad-card-y); }
 }
-/* Their pills reached 12px (switcher) and 10px (Why won't this work) past the text, 8px from the edge: the pills now
-   fill the content box and the text moves in by the same 12px and 10px, so it keeps its place inside the pill */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw .lsw-row { padding-left: 12px; padding-right: 12px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.fb .fb-opt { padding-left: 10px; padding-right: 10px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) :is(.lsw-row, .fb-opt)::after { left: 0; right: 0; border-radius: var(--pad-pill-r); }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw :is(.lsw-load) { padding-left: 12px; padding-right: 12px; }
+/* Row text lines up with the header title, on the content box's edge. The hover pill reaches past the text by
+   12px (switcher) and 10px (Why won't this work), out into the padding, and never further than the padding itself
+   (min() with the sides' inset), so it can't touch the overlay's edge at any size. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw :is(.lsw-row, .lsw-load) { padding-left: 0; padding-right: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.fb .fb-opt { padding-left: 0; padding-right: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw .lsw-row::after { left: calc(-1 * min(12px, var(--pad-card-x))); right: calc(-1 * min(12px, var(--pad-card-x))); border-radius: var(--pad-pill-r); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.fb .fb-opt::after { left: calc(-1 * min(10px, var(--pad-card-x))); right: calc(-1 * min(10px, var(--pad-card-x))); border-radius: var(--pad-pill-r); }
 
 /* ---------- The close button: the content box's top right corner ---------- */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps > .ps-x,
