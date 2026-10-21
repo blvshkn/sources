@@ -189,7 +189,7 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
-    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? `pace ${pace.toFixed(1)}` : `proj ${proj.toFixed(1)}`}</small></span>;
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? `pace ${pace.toFixed(1)}` : `proj ${proj.toFixed(1)}`}</small></span>;
   }
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
   // Not started: the number is his projection, labelled like the live (pace) and final (proj) rows, so every row reads the same

@@ -99,10 +99,10 @@ export function useSticky<T extends string>(key: string, initial: T, allowed?: r
 }
 
 /** A live score. When it goes up, it ticks lime for a moment so you notice the change. Alternates two
- *  animation names so back to back updates restart the tick. */
+ *  animation names so back to back updates restart the tick. data-v feeds the lime copy that fades out on top. */
 export function LiveNum({ v, className }: { v: number; className?: string }) {
   const prev = useRef(v);
   const [bump, setBump] = useState(0);
   useEffect(() => { if (v > prev.current + 0.05) setBump((b) => b + 1); prev.current = v; }, [v]);
-  return <span className={className} data-bump={bump ? (bump % 2 ? "a" : "b") : undefined}>{v.toFixed(1)}</span>;
+  return <span className={className} data-bump={bump ? (bump % 2 ? "a" : "b") : undefined} data-v={v.toFixed(1)}>{v.toFixed(1)}</span>;
 }

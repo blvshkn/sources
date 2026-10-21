@@ -102,26 +102,37 @@ export const gameNow = (live: Live | undefined, id: string, nfl: string): GameNo
 export const heatOf = (pts: number, proj: number, pace: number | null): "fire" | "heating" | "cold" | null =>
   pts >= proj && proj > 0 ? "fire" : pace === null || proj <= 0 ? null : pace >= proj ? "heating" : pace < proj * 0.85 ? "cold" : null;
 
-/** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. */
+/** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. Each moving part is its own
+ *  HTML layer so the browser can animate it with transform and opacity alone, off the main thread. */
 const HEAT_TIP = { fire: "Past his projection already", heating: "On pace to beat his projection", cold: "On pace to finish 15% or more under projection" };
 export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => <Tooltip content={HEAT_TIP[heat]}>{heatSvg(heat)}</Tooltip>;
+const WAVE = (x: number) => `M${x} 20c-1.5-2 1.5-4 0-6s1.5-4 0-6`;
+const ICE = ["M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9", "M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"];
+const iceSvg = (stroke: string) => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth="1.8" strokeLinecap="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
+);
 const heatSvg = (heat: "fire" | "heating" | "cold") => heat === "fire" ? <Flame /> : heat === "heating" ? (
-  <svg className="heatwave" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#FFB547" strokeWidth="2" strokeLinecap="round">
-    <path d="M7 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M12 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" /><path d="M17 20c-1.5-2 1.5-4 0-6s1.5-4 0-6" />
-  </svg>
+  <span className="heatwave" aria-hidden="true">
+    {[7, 12, 17].map((x) => (
+      <span key={x} className="hw-line"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFB547" strokeWidth="2" strokeLinecap="round"><path d={WAVE(x)} /></svg></span>
+    ))}
+  </span>
 ) : (
-  <svg className="ice" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#9AD8FF" strokeWidth="1.8" strokeLinecap="round">
-    <path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5" />
-  </svg>
+  <span className="ice" aria-hidden="true"><span className="ice-glow">{iceSvg("#CFEFFF")}</span>{iceSvg("#9AD8FF")}</span>
 );
 
-/** A small flame, drawn in the logo's line family, that flickers while a player is heating up. */
+/** A small flame, drawn in the logo's line family, that flickers while a player is heating up. The bright core is
+ *  a separate layer on top so it can pulse on its own. */
 export const Flame = () => (
-  <svg className="flame" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-    <defs><linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#FF5A36" /><stop offset="0.6" stopColor="#FF9A3D" /><stop offset="1" stopColor="#FFD166" /></linearGradient></defs>
-    <path className="flame-outer" d="M12 22c-4.1 0-7-2.8-7-6.6 0-3.1 1.9-5.2 3.6-7 .4 1.7 1.3 2.8 2.4 3.3C11 7.6 12.6 4.6 15.4 2c-.3 3.4 1 5.6 2.4 7.6 1.1 1.6 1.7 3.4 1.2 5.8C18.4 19.5 15.5 22 12 22z" fill="url(#flame-g)" />
-    <path className="flame-inner" d="M12 20.5c-1.9 0-3.2-1.3-3.2-3 0-1.6 1.1-2.7 2.1-3.6.2 1 .7 1.6 1.4 1.8.1-1.6.9-3 2.1-4.1-.1 1.6.6 2.7 1.1 3.6.5.8.6 1.6.4 2.6-.3 1.6-1.9 2.7-3.9 2.7z" fill="#FFE8A3" />
-  </svg>
+  <span className="flame" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="14" height="14">
+      <defs><linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#FF5A36" /><stop offset="0.6" stopColor="#FF9A3D" /><stop offset="1" stopColor="#FFD166" /></linearGradient></defs>
+      <path className="flame-outer" d="M12 22c-4.1 0-7-2.8-7-6.6 0-3.1 1.9-5.2 3.6-7 .4 1.7 1.3 2.8 2.4 3.3C11 7.6 12.6 4.6 15.4 2c-.3 3.4 1 5.6 2.4 7.6 1.1 1.6 1.7 3.4 1.2 5.8C18.4 19.5 15.5 22 12 22z" fill="url(#flame-g)" />
+    </svg>
+    <span className="flame-inner">
+      <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 20.5c-1.9 0-3.2-1.3-3.2-3 0-1.6 1.1-2.7 2.1-3.6.2 1 .7 1.6 1.4 1.8.1-1.6.9-3 2.1-4.1-.1 1.6.6 2.7 1.1 3.6.5.8.6 1.6.4 2.6-.3 1.6-1.9 2.7-3.9 2.7z" fill="#FFE8A3" /></svg>
+    </span>
+  </span>
 );
 
 /** Players whose game was live while you had the app open, and finals that have already stamped. */
@@ -148,7 +159,7 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false }: { id: str
     const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
-        <b>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
+        <b data-pts={g.pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
         {pace !== null ? <small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );

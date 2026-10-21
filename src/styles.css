@@ -3142,8 +3142,13 @@ html:root:not(#_) .tr-tip svg { margin-top: 3px; color: var(--lime); }
 
 /* Live scoring: a pulsing lime "Live" tag replaces kickoff time; points so far lead, projection sits under */
 html:root:not(#_) .lu-live { display: inline-flex; align-items: center; gap: 5px; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--lime); }
-html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 0 rgba(var(--lime-rgb), 0.6); animation: live-dot 1.6s ease-out infinite; }
-@keyframes live-dot { 0% { box-shadow: 0 0 0 0 rgba(var(--lime-rgb), 0.55); } 80%, 100% { box-shadow: 0 0 0 6px rgba(var(--lime-rgb), 0); } }
+html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+/* The ring is the dot's own color drawn at its full 18px, scaled down to the dot and grown back out as it fades, so
+   only transform and opacity move and the compositor runs it */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_) .lu-live i::before, html:root:not(#_) .lu-mx-now i::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: inherit; opacity: 0; pointer-events: none; animation: live-dot 1.6s ease-out infinite; }
+  @keyframes live-dot { 0% { transform: scale(0.3333); opacity: 0.55; } 80%, 100% { transform: scale(1); opacity: 0; } }
+}
 html:root:not(#_) .lu-final { font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 html:root:not(#_) .lu-pts.live, html:root:not(#_) .lu-pts.final { display: grid; justify-items: end; gap: 3px; }
 html:root:not(#_) .lu-pts.live b { color: var(--lime); font-weight: 600; }
@@ -3151,11 +3156,9 @@ html:root:not(#_) .lu-pts.final b { color: var(--ink); font-weight: 600; }
 html:root:not(#_) .lu-pts.live small, html:root:not(#_) .lu-pts.final small { font: 400 0.6875rem/1 var(--font-mono); color: var(--faint); }
 html:root:not(#_) .lu-mx-now { display: inline-flex; align-items: center; gap: 6px; font: 500 0.75rem/1.2 var(--font-mono); color: var(--lime); text-transform: uppercase; letter-spacing: 0.04em; }
 html:root:not(#_) .lu-mx-side.them .lu-mx-now { justify-content: flex-end; }
-@media (prefers-reduced-motion: reduce) { html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { animation: none; } }
 /* Live: red dot, white text */
 html:root:not(#_) .lu-live, html:root:not(#_) .lu-mx-now { color: var(--ink); }
-html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { background: #FF4D3D; animation-name: live-dot-red; }
-@keyframes live-dot-red { 0% { box-shadow: 0 0 0 0 rgba(255, 77, 61, 0.55); } 80%, 100% { box-shadow: 0 0 0 6px rgba(255, 77, 61, 0); } }
+html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { background: #FF4D3D; }
 /* Live hero: scored is the headline, projection a mono footnote, Live tag sits over the odds */
 html:root:not(#_) .lu-mx-proj { font: 500 0.75rem/1.2 var(--font-mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; }
 html:root:not(#_) .lu-mx-mid .lu-live { margin-bottom: 6px; }
@@ -3431,10 +3434,16 @@ html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border:
   @keyframes toast-in { from { opacity: 0; translate: 0 16px; scale: 0.97; } }
   @keyframes toast-out { to { opacity: 0; translate: 0 12px; scale: 0.98; } }
   /* Live score went up: a short lime tick, then back to normal */
+  /* The number lifts back into place while a lime copy on top holds, then fades, so only transform and opacity move */
   html:root:not(#_) [data-bump="a"] { animation: live-tick-a 900ms var(--ease-out); }
   html:root:not(#_) [data-bump="b"] { animation: live-tick-b 900ms var(--ease-out); }
-  @keyframes live-tick-a { 0% { color: var(--lime); transform: translateY(-3px); } 60% { color: var(--lime); transform: none; } }
-  @keyframes live-tick-b { 0% { color: var(--lime); transform: translateY(-3px); } 60% { color: var(--lime); transform: none; } }
+  html:root:not(#_) [data-bump]::after { content: attr(data-v); position: absolute; inset: 0; white-space: nowrap; color: var(--lime); -webkit-text-fill-color: var(--lime); opacity: 0; pointer-events: none; }
+  html:root:not(#_) [data-bump="a"]::after { animation: live-tick-lime-a 900ms var(--ease-out); }
+  html:root:not(#_) [data-bump="b"]::after { animation: live-tick-lime-b 900ms var(--ease-out); }
+  @keyframes live-tick-a { 0% { transform: translateY(-3px); } 60% { transform: none; } }
+  @keyframes live-tick-b { 0% { transform: translateY(-3px); } 60% { transform: none; } }
+  @keyframes live-tick-lime-a { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes live-tick-lime-b { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
   /* Win chance bars glide to a new value instead of snapping */
   html:root:not(#_) .sb2-bar span, html:root:not(#_) .lu-mx-bar i { transition: width 600ms var(--ease-out); }
   /* Waiver row details open with a short lift so the expansion reads */
@@ -3450,7 +3459,7 @@ html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border:
   @keyframes toast-fade { from { opacity: 0; } }
   @keyframes toast-fade-out { to { opacity: 0; } }
 }
-html:root:not(#_) [data-bump] { display: inline-block; }
+html:root:not(#_) [data-bump] { display: inline-block; position: relative; }
 /* The dot by "PPR · Week" is a label, not a live signal. Hold it still. */
 html:root:not(#_) .page-meta::before { animation: none !important; }
 /* Logo lockup: tagline in Geist Mono, starting under the "s" of the wordmark (wordmark begins 1.42x the logo height in) */
@@ -3545,11 +3554,19 @@ html:root:not(#_) .lu-pts.heat-cold b { color: #FF7A66; }
 html:root:not(#_) .lu-pts.heat-heating b { color: #FFC43D; }
 html:root:not(#_) .lu-pts.heat-fire b { color: #FFB04A; background: linear-gradient(180deg, #FFD166, #FF8A3D 55%, #FF5A36); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 6px rgba(255, 122, 61, 0.45)); }
 html:root:not(#_) .lu-pts.heat-fire .flame { flex: none; overflow: visible; -webkit-text-fill-color: initial; }
+/* The flame is two HTML layers (body, then the bright core on top) so each moves by transform and opacity alone */
+html:root:not(#_) .flame { position: relative; display: block; flex: none; width: 14px; height: 14px; }
+html:root:not(#_) .flame svg { display: block; overflow: visible; }
+html:root:not(#_) .flame-inner { position: absolute; inset: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) .lu-pts.heat-fire b { animation: heat-glow 1.6s ease-in-out infinite; }
+  /* Glow: the low drop-shadow stays put, and a copy of the number carrying the high glow fades in and out on top.
+     24px at 0.6 matches the old 9px drop-shadow peak frame for frame: text-shadow blurs tighter, and it adds to the low glow. */
+  html:root:not(#_) :is(.lu-pts, .wk-pts).heat-fire b { position: relative; filter: drop-shadow(0 0 4px rgba(255, 122, 61, 0.35)); }
+  html:root:not(#_) :is(.lu-pts, .wk-pts).heat-fire b::after { content: attr(data-pts); position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; white-space: nowrap; -webkit-text-fill-color: transparent; text-shadow: 0 0 24px rgba(255, 140, 61, 0.6); opacity: 0; pointer-events: none; animation: heat-glow 1.6s ease-in-out infinite; }
   html:root:not(#_) .flame { transform-origin: 50% 90%; animation: flame-flicker 900ms ease-in-out infinite alternate; }
-  html:root:not(#_) .flame-inner { transform-origin: 50% 90%; transform-box: fill-box; animation: flame-core 600ms ease-in-out infinite alternate; }
-  @keyframes heat-glow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 122, 61, 0.35)); } 50% { filter: drop-shadow(0 0 9px rgba(255, 140, 61, 0.7)); } }
+  /* 50% 90% of the core's own shape (its fill box), in the 14px mark's pixels */
+  html:root:not(#_) .flame-inner { transform-origin: 7.232px 11.439px; animation: flame-core 600ms ease-in-out infinite alternate; }
+  @keyframes heat-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
   @keyframes flame-flicker { 0% { transform: scale(1, 1) rotate(-3deg); } 50% { transform: scale(0.94, 1.08) rotate(2deg); } 100% { transform: scale(1.04, 0.96) rotate(-1deg); } }
   @keyframes flame-core { from { transform: scale(0.9, 0.95); opacity: 0.85; } to { transform: scale(1.05, 1.1); opacity: 1; } }
 }
@@ -3563,18 +3580,27 @@ html:root:not(#_) .wk-pts.live b { color: var(--lime); }
 html:root:not(#_) .wk-pts.heat-cold b { color: #FF7A66; }
 html:root:not(#_) .wk-pts.heat-heating b { color: #FFC43D; }
 html:root:not(#_) .wk-pts.heat-fire b { background: linear-gradient(180deg, #FFD166, #FF8A3D 55%, #FF5A36); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 6px rgba(255, 122, 61, 0.45)); }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .wk-pts.heat-fire b { animation: heat-glow 1.6s ease-in-out infinite; } }
 
 /* Cold: icy blue with a faint frost glow. Heating up: amber with lines that rise. */
 html:root:not(#_) :is(.lu-pts, .wk-pts).heat-cold b { color: #9AD8FF; filter: drop-shadow(0 0 5px rgba(122, 196, 255, 0.35)); }
 html:root:not(#_) :is(.lu-pts, .wk-pts).heat-heating b { color: #FFB547; }
 html:root:not(#_) .heatwave, html:root:not(#_) .ice { flex: none; overflow: visible; }
+/* Each heat line and the frost glow are their own HTML layer, stacked in the 14px mark */
+html:root:not(#_) :is(.heatwave, .ice) { position: relative; display: block; width: 14px; height: 14px; }
+html:root:not(#_) .heatwave { contain: paint; }
+html:root:not(#_) :is(.hw-line, .ice-glow) { position: absolute; inset: 0; }
+html:root:not(#_) :is(.heatwave, .ice) svg { position: absolute; inset: 0; display: block; overflow: visible; }
+html:root:not(#_) .ice-glow { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) .heatwave path { animation: heat-rise 1.2s ease-in-out infinite; }
-  html:root:not(#_) .heatwave path:nth-child(2) { animation-delay: 200ms; } html:root:not(#_) .heatwave path:nth-child(3) { animation-delay: 400ms; }
-  @keyframes heat-rise { 0% { transform: translateY(2px); opacity: 0.35; } 50% { opacity: 1; } 100% { transform: translateY(-2px); opacity: 0.35; } }
+  /* 2 units of the 24-unit drawing is 7/6px at 14px */
+  html:root:not(#_) .hw-line { animation: heat-rise 1.2s ease-in-out infinite; }
+  html:root:not(#_) .hw-line:nth-child(2) { animation-delay: 200ms; } html:root:not(#_) .hw-line:nth-child(3) { animation-delay: 400ms; }
+  @keyframes heat-rise { 0% { transform: translateY(1.1667px); opacity: 0.35; } 50% { opacity: 1; } 100% { transform: translateY(-1.1667px); opacity: 0.35; } }
+  /* Frost: the crystal brightens and a pre-blurred light copy beneath it fades up, peaking at 80% */
   html:root:not(#_) .ice { animation: ice-glint 2.8s ease-in-out infinite; }
-  @keyframes ice-glint { 0%, 70%, 100% { opacity: 0.75; } 80% { opacity: 1; filter: drop-shadow(0 0 3px #CFEFFF); } }
+  html:root:not(#_) .ice-glow { display: block; filter: blur(1.5px); opacity: 0; animation: ice-frost 2.8s ease-in-out infinite; }
+  @keyframes ice-glint { 0%, 70%, 100% { opacity: 0.75; } 80% { opacity: 1; } }
+  @keyframes ice-frost { 0%, 100% { opacity: 0; } 80% { opacity: 1; } }
 }
 /* Live second line is the on-pace finish, colored against projection like Sleeper; finals stay plain */
 html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace { font-weight: 600; }
