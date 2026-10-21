@@ -645,10 +645,16 @@ export function verdict(t: Trade): { label: string; tone: "good" | "warn" | "bad
   return { label: "Lateral", tone: "warn", line: `${flat}. ${market}.` };
 }
 
+/** Past this value gap a received offer that's even on points is no longer "Close": you'd give up more than a third
+ *  more value than you get back (gap -0.25 is a 1.33x ratio). A small sweetener is a bench piece, worth 10 to 20% of
+ *  a deal, so it can't close a gap that size. It sits above the 10% fair band and the 15% gap where acceptance()
+ *  already says you overpay. */
+export const CLOSE_VALUE_GIVE = 0.25;
 /** Plain-English read on an offer someone sent you. */
 export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "bad"; line: string } {
   if (t.youDelta >= 0.5 && t.marketGap >= -FAIR_GAP) return { label: "Take it", tone: "good", line: `Smash accept. Your lineup gains ${fmt(t.youDelta)} pts a week and the value is ${t.marketGap >= 0 ? "in your favor" : "about even"}.` };
   if (t.youDelta >= 0.5) return { label: "Win-now move", tone: "warn", line: `Your lineup gains ${fmt(t.youDelta)} pts a week, but you ${valueEdge("give", gapRatio(t.marketGap), "trade value")}.` };
+  if (t.youDelta > -1 && t.marketGap < -CLOSE_VALUE_GIVE) return { label: "Lowball", tone: "bad", line: `The points are about even (${fmt(t.youDelta)} a week), but you ${valueEdge("give", gapRatio(t.marketGap), "trade value")}. Counter for more value or pass.` };
   if (t.youDelta > -1) return { label: "Close", tone: "warn", line: `About even (${fmt(t.youDelta)} pts a week). Ask for a small sweetener.` };
   return { label: "Lowball", tone: "bad", line: `Your lineup drops ${fmt(t.youDelta).replace("−", "")} pts a week.` };
 }
