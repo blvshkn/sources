@@ -1,7 +1,7 @@
 // The swap picker: the "Swap in at <slot>" menu under (or above) a starter, shared by the full matchup and the
 // Lineup page so there is one implementation. Also the lock rules both use, and the player cells the menu lists.
-import { useLayoutEffect, useRef, useState } from "react";
-import type { ReactNode, RefObject } from "react";
+import { Suspense, createContext, lazy, useCallback, useContext, useLayoutEffect, useRef, useState } from "react";
+import type { ElementType, MutableRefObject, ReactNode, RefObject } from "react";
 import { PLAYERS, Player, SpecialPlayer, WEEK, onBye } from "../data";
 import { gameInAt, kickLine, oppAt, useKickoffs } from "../kickoff";
 import { fmt, specialPts } from "../engine";
@@ -116,6 +116,9 @@ export function placeSwap(menu: HTMLElement) {
   }
   const sc = scrollerOf(row);
   const page = sc === document.scrollingElement || sc === document.documentElement;
+  // Measure the menu at full size, not mid-way through its opening spring
+  const tf = menu.style.transform;
+  menu.style.transform = "none";
   menu.classList.remove("is-up");
   menu.style.maxHeight = "";
   const m = menu.getBoundingClientRect();
@@ -125,6 +128,7 @@ export function placeSwap(menu: HTMLElement) {
   const floor = top + sc.scrollHeight - sc.scrollTop, ceil = top - sc.scrollTop;
   const r = row.getBoundingClientRect();
   menu.style.display = shown;
+  menu.style.transform = tf;
   const h = m.height;
   const view = page ? pageView() : sc.getBoundingClientRect();
   const below = Math.min(floor, view.bottom) - m.top - 8, above = r.top + 4 - Math.max(ceil, view.top) - 8;
@@ -203,6 +207,21 @@ export function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; si
 }
 
 // ---- The menu ---------------------------------------------------------------
+/** What the menu's root renders as. SwapSpring provides Motion's m.div and its spring props; without it, a plain div. */
+export const SwapShell = createContext<{ Root: ElementType; props: object } | null>(null);
+const SwapSpring = lazy(() => import("./SwapSpring").then((m) => ({ default: m.SwapSpring })));
+/** Fetch the menu's spring early (preloadOverlays), so the first tap already has it. */
+export const preloadSwapSpring = () => import("./SwapSpring");
+
+/**
+ * The anchor a menu hangs from (Lineup's zero-height .lu-pick-at), mounted while `show` is true. The menu springs open
+ * from its row and closes back into it, and a tap mid-way turns it around from where it is (Motion's AnimatePresence,
+ * loaded in its own chunk). Until that chunk is here the menu opens the way it always has, with the CSS fade.
+ */
+export function SwapAnchor({ show, className, children }: { show: boolean; className: string; children: ReactNode }) {
+  const plain = show ? <div className={className} data-swap-row="prev">{children}</div> : null;
+  return <Suspense fallback={plain}><SwapSpring show={show} className={className}>{children}</SwapSpring></Suspense>;
+}
 export interface SwapOption {
   key: string;
   who: ReactNode;
@@ -226,8 +245,17 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
   /** useSwapMenu's menuRef, so the menu gets placed and the scroll held. */
   menuRef: RefObject<HTMLDivElement>;
 }) {
+  const shell = useContext(SwapShell);
+  const Root = (shell?.Root ?? "div") as "div";
+  // A closing menu stays mounted while it springs shut, next to the one opening. It only lets go of menuRef if it
+  // still holds it, so the new menu keeps the ref.
+  const own = useRef<HTMLDivElement | null>(null);
+  const setRef = useCallback((el: HTMLDivElement | null) => {
+    const r = menuRef as MutableRefObject<HTMLDivElement | null>;
+    if (el) { own.current = el; r.current = el; } else if (r.current === own.current) r.current = null;
+  }, [menuRef]);
   return (
-    <div className={`mu-swap${className ? ` ${className}` : ""}`} ref={menuRef}>
+    <Root {...(shell?.props ?? {})} className={`mu-swap${shell ? " sw-spring" : ""}${className ? ` ${className}` : ""}`} ref={setRef}>
       {info && (
         <button className="sw-info" onClick={info.onOpen} aria-label={`Player info for ${info.name}`}>
           <Icon name="eye" size={16} /><span>Player info</span><Icon name="chev" size={14} />
@@ -242,6 +270,6 @@ export function SwapPicker({ title, options, empty, className = "", info, menuRe
           {o.lock ? <span className="mu-delta mu-locked">{o.tag ?? tagOf(o.lock)}</span> : <span className={`mu-delta ${o.up ? "up" : "down"}`}>{fmt(o.delta)}</span>}
         </button>
       )) : <p className="small muted">{empty}</p>}
-    </div>
+    </Root>
   );
 }

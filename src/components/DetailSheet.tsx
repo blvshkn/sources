@@ -66,20 +66,7 @@ export function DetailSheet({ title, label, className = "", onClose, children }:
 
   useBackClose(() => close());
   // Pull down to dismiss, on the phone sheet only; the modal stays put
-  usePullToDismiss(sheet,
-    (y) => {
-      if (!isSheet()) return;
-      if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }
-      if (scrim.current) { scrim.current.style.transition = "none"; scrim.current.style.opacity = String(Math.max(0, 1 - y / 400)); }
-    },
-    (y, v) => {
-      if (!isSheet()) return;
-      if (y > 120 || v > 700) close();
-      else {
-        if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
-        if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
-      }
-    });
+  usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });
 
   return createPortal(
     <div className={`ps-wrap ds-wrap${shown ? " in" : ""}`}>

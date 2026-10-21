@@ -1,0 +1,4 @@
+/* Motion (motion.dev) drives the Lineup swap menu's open and close (SwapSpring.tsx). Its root gets .sw-spring, and
+   the CSS keyframe that used to fade it in steps aside so the two never fight over transform. Loads just before
+   frame.css. Every rule is scoped to .mu-swap.sw-spring. */
+html:root:not(#_):not(#_) .mu-swap.sw-spring { animation: none !important; will-change: transform, opacity; }

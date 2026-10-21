@@ -43,20 +43,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it.
   // Phone sheet only: from 768px up it's a centered modal that stays put.
   useBackClose(close);
-  usePullToDismiss(sheet,
-    (y) => {
-      if (!isSheet()) return;
-      if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }
-      if (scrim.current) { scrim.current.style.transition = "none"; scrim.current.style.opacity = String(Math.max(0, 1 - y / 400)); }
-    },
-    (y, v) => {
-      if (!isSheet()) return;
-      if (y > 120 || v > 700) close();
-      else {
-        if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
-        if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
-      }
-    });
+  usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });
 
   const { games } = gameLog(p);
   const live = useLive();

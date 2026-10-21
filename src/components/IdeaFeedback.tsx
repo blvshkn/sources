@@ -47,18 +47,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useBackClose(close);
-  usePullToDismiss(sheet,
-    (y) => {
-      if (sheet.current) { sheet.current.style.transition = "none"; sheet.current.style.transform = `translateY(${y}px)`; }
-      if (scrim.current) { scrim.current.style.transition = "none"; scrim.current.style.opacity = String(Math.max(0, 1 - y / 400)); }
-    },
-    (y, v) => {
-      if (y > 120 || v > 700) close();
-      else {
-        if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
-        if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
-      }
-    });
+  usePullToDismiss(sheet, { scrim, onDismiss: () => close() });
 
   const first = (id: string) => playerById(id).name;
   const options: { label: string; r: IdeaReason }[] = [

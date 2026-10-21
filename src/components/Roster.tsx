@@ -16,7 +16,7 @@ import { Select } from "./Select";
 import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
 import { Tooltip } from "./Tooltip";
-import { SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
+import { SwapAnchor, SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
 import { FaceOff, pressProps } from "./FaceOff";
@@ -268,7 +268,7 @@ type SwapMenu = ReturnType<typeof useSwapMenu<string>>;
 /** A slot pill in front of the player a bench player would replace, in a bench row's swap menu. */
 const SlotAt = ({ slot, children }: { slot: string; children: ReactNode }) => <span className="sw-at"><b className="sw-slot">{slot}</b>{children}</span>;
 /** The menu sits in a zero-height anchor right after its row, so rows stay siblings and keep their dividers. */
-const PickAt = ({ children }: { children: ReactNode }) => <div className="lu-pick-at" data-swap-row="prev">{children}</div>;
+const PickAt = ({ show, children }: { show: boolean; children: ReactNode }) => <SwapAnchor show={show} className="lu-pick-at">{children}</SwapAnchor>;
 
 /** Under the starters: swaps here are a what-if (Sources can't write to Sleeper), with the way back and the way there. */
 function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { changed: boolean; delta: number; locked: boolean; base: string; resetLabel: string; onReset: (el: Element) => void }) {
@@ -323,7 +323,7 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
         return (
           <Fragment key={`s${i}`}>
             {x.p ? row(x.p, x.slot, tap) : <div className={`lu-row${tapCls(tap)}`} {...(tap ? tapProps(tap) : {})}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
-            {open === key && future && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={x.p ? infoFor(x.p, `Starting at ${label} in Week ${v.week}`) : undefined} /></PickAt>}
+            <PickAt show={open === key && future}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={x.p ? infoFor(x.p, `Starting at ${label} in Week ${v.week}`) : undefined} /></PickAt>
           </Fragment>
         );
       })}
@@ -341,7 +341,7 @@ function WeekPanel({ v, menu, onInfo }: { v: WeekView; menu: SwapMenu; onInfo: (
         return (
           <Fragment key={p.id}>
             {row(p, "BN", tap, true)}
-            {open === key && future && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={infoFor(p, `On your bench in Week ${v.week}`)} /></PickAt>}
+            <PickAt show={open === key && future}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={infoFor(p, `On your bench in Week ${v.week}`)} /></PickAt>
           </Fragment>
         );
       })}
@@ -701,7 +701,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   <Fragment key={key}>
                     {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} />
                       : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
-                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={p ? info(p, `Starting at ${label}`) : undefined} /></PickAt>}
+                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={p ? info(p, `Starting at ${label}`) : undefined} /></PickAt>
                   </Fragment>
                 );
               })}
@@ -716,7 +716,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 return (
                   <Fragment key={key}>
                     <SpecialRow p={p} slot={sk.slot} swapTo={kHint(p, sk.slot)} live={live} tap={tap} />
-                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${sk.slot}`} empty={`No other ${sk.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} /></PickAt>}
+                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${sk.slot}`} empty={`No other ${sk.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} /></PickAt>
                   </Fragment>
                 );
               })}
@@ -732,7 +732,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 return (
                   <Fragment key={key}>
                     <LineupRow p={p} slot="BN" bench live={live} tap={tap} />
-                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={info(p, "On your bench")} /></PickAt>}
+                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={info(p, "On your bench")} /></PickAt>
                   </Fragment>
                 );
               })}
@@ -746,7 +746,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 return (
                   <Fragment key={key}>
                     <SpecialRow p={p} slot="BN" bench live={live} tap={tap} />
-                    {open === key && <PickAt><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`No ${p.pos} slot to start ${p.name} in.`} options={options} /></PickAt>}
+                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`No ${p.pos} slot to start ${p.name} in.`} options={options} /></PickAt>
                   </Fragment>
                 );
               })}

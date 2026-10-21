@@ -2,7 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPE,
 import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { useBackClose } from "../backClose";
+import { useReducedMotion } from "motion/react";
 import { usePullToDismiss } from "./sheetDrag";
+import { spring, type SpringRun } from "./sheetSpring";
 import { useFocusTrap } from "./focusTrap";
 import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
@@ -234,10 +236,10 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const textRef = useRef<HTMLTextAreaElement>(null);
   // Presentation state lives in refs so every frame writes straight to the DOM.
   const yRef = useRef(0);
-  const vRef = useRef(0);
-  const raf = useRef(0);
+  const run = useRef<SpringRun | null>(null);
+  const stop = () => { run.current?.stop(); run.current = null; };
   const closing = useRef(false);
-  const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = useReducedMotion() ?? false;
 
   const height = () => (sheet.current?.offsetHeight ?? 600) + 40;
   const apply = (y: number) => {
@@ -245,25 +247,11 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
     if (sheet.current) sheet.current.style.transform = `translate3d(0, ${y}px, 0)`;
     if (scrim.current) scrim.current.style.opacity = String(Math.min(1, Math.max(0, 1 - y / height())));
   };
-  /** Spring in Apple's terms: damping ratio + response (s). Starts from the live value and carries velocity. */
+  /** Spring in Apple's terms: damping ratio + response (s). Motion runs it from the live value and carries velocity. */
   const springTo = (target: number, damping: number, response: number, velocity: number, done?: () => void) => {
-    cancelAnimationFrame(raf.current);
-    if (reduce) { apply(target); vRef.current = 0; done?.(); return; }
-    const k = (2 * Math.PI / response) ** 2;
-    const c = (4 * Math.PI * damping) / response;
-    let v = velocity;
-    let y = yRef.current;
-    let last = performance.now();
-    const step = (now: number) => {
-      const dt = Math.min(0.032, (now - last) / 1000);
-      last = now;
-      for (let i = 0; i < 4; i++) { const a = -k * (y - target) - c * v; v += (a * dt) / 4; y += (v * dt) / 4; }
-      vRef.current = v;
-      if (Math.abs(v) < 4 && Math.abs(y - target) < 0.5) { apply(target); vRef.current = 0; done?.(); return; }
-      apply(y);
-      raf.current = requestAnimationFrame(step);
-    };
-    raf.current = requestAnimationFrame(step);
+    stop();
+    if (reduce) { apply(target); done?.(); return; }
+    run.current = spring(yRef.current, target, velocity, damping, response, apply, () => { run.current = null; apply(target); done?.(); });
   };
   const dismiss = (velocity = 0) => {
     if (closing.current) return;
@@ -277,7 +265,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   useEffect(() => {
     apply(reduce ? 0 : height());
     if (!reduce) springTo(0, 1, 0.35, 0);
-    return () => cancelAnimationFrame(raf.current);
+    return stop;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Each draft is written as real steps (pitch.ts draftPitchSteps), then streams into the box
@@ -297,7 +285,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
 
   const down = (e: RPE) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    cancelAnimationFrame(raf.current); // grab it mid-flight: continue from where it is on screen
+    stop(); // grab it mid-flight: continue from where it is on screen
     closing.current = false;
     drag.current = { start: e.clientY - yRef.current, hist: [{ y: e.clientY, t: performance.now() }] };
   };
@@ -321,7 +309,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   // Pull down from anywhere on the sheet once it's scrolled to the top
   useBackClose(() => dismiss());
   usePullToDismiss(sheet,
-    (y) => { cancelAnimationFrame(raf.current); closing.current = false; apply(y); },
+    (y) => { stop(); closing.current = false; apply(y); },
     (y, v) => { if (y + project(v) > Math.min(height() * 0.35, 240)) dismiss(v); else springTo(0, 0.8, 0.3, v); });
 
   const copy = async (): Promise<boolean> => {

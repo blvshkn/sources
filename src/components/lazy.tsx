@@ -1,15 +1,20 @@
 // Sheets and overlays that only open on a tap: the pitch sheet (with the share card), the player sheet (with its
-// depth and usage detail), the league switcher and first-run setup. They load in their own chunks so the first paint
-// doesn't parse them, and preloadOverlays() fetches every one of them once the app is idle after its first render, so
-// by the time anyone taps they're already here. Until a chunk has arrived the overlay renders nothing (no spinner,
-// no placeholder), then opens exactly as it always has.
+// depth and usage detail), the league switcher and first-run setup, plus Motion's springs (sheetSpring, SwapSpring).
+// They load in their own chunks so the first paint doesn't parse them, and preloadOverlays() fetches every one of them
+// once the app is idle after its first render, so by the time anyone taps they're already here. Until a chunk has
+// arrived the overlay renders nothing (no spinner, no placeholder), then opens exactly as it always has.
 import { Suspense, lazy, type ComponentProps, type ComponentType } from "react";
+import { loadSheetSpring } from "./sheetDrag";
+import { preloadSwapSpring } from "./SwapPicker";
 
 const loaders = {
   pitch: () => import("./PitchSheet"),
   player: () => import("./PlayerSheet"),
   switcher: () => import("./LeagueSwitcher"),
   firstRun: () => import("./FirstRun"),
+  // Motion's springs: the sheets' pull to dismiss and the Lineup swap menu
+  sheetSpring: () => loadSheetSpring(),
+  swapSpring: () => preloadSwapSpring(),
 };
 
 /** A named export as a lazy component with its own invisible Suspense boundary. */
