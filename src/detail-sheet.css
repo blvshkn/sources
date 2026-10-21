@@ -10,7 +10,7 @@ html:root:not(#_):not(#_) .ps.ps-detail {
 }
 html:root:not(#_):not(#_) .ps-detail > .ds-top {
   flex: none; position: relative; display: grid; gap: 10px;
-  padding: 10px 20px 14px; border-bottom: 1px solid var(--line);
+  padding: 10px 20px 14px;
 }
 html:root:not(#_):not(#_) .ps-detail .ps-handle { justify-self: center; }
 /* Clear of the corner close button (11px inset + 36px circle + 8px air) */

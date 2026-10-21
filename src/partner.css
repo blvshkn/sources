@@ -7,7 +7,7 @@ html:root:not(#_):not(#_) .ps.ps-partner {
   display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden;
   max-height: 88vh; max-height: 88dvh; grid-template-columns: none;
 }
-html:root:not(#_):not(#_) .ps-partner > .pp-top { flex: none; display: grid; gap: 12px; padding: 10px 20px 14px; border-bottom: 1px solid var(--line); }
+html:root:not(#_):not(#_) .ps-partner > .pp-top { flex: none; display: grid; gap: 12px; padding: 10px 20px 14px; }
 html:root:not(#_):not(#_) .ps-partner .ps-handle { justify-self: center; }
 html:root:not(#_):not(#_) .ps-partner .pp-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;

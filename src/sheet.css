@@ -99,7 +99,7 @@ html:root:not(#_):not(#_) .pd-blk .ps-sub { align-items: center; }
 /* The shell keeps the radius and clips; the header (name, week switcher) never moves; only the body scrolls, so
    the scrollbar stays inside the corners. Fixed height, so stepping weeks never resizes the sheet. */
 html:root:not(#_):not(#_) .ps.ps-player { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden; height: 88vh; height: 88dvh; }
-html:root:not(#_):not(#_) .pd-top { flex: none; display: grid; gap: 4px; padding: 10px 20px 8px; border-bottom: 1px solid var(--line); }
+html:root:not(#_):not(#_) .pd-top { flex: none; display: grid; gap: 4px; padding: 10px 20px 8px; }
 html:root:not(#_):not(#_) .ps-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 20px; align-content: start; padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
 html:root:not(#_):not(#_) .pd-weeknav { padding: 4px 0 0; grid-template-columns: 36px 1fr 36px; }
 html:root:not(#_):not(#_) .pd-weeknav .lu-weeknav-lbl b { font-size: 0.9375rem; }
