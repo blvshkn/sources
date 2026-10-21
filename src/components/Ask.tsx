@@ -4,10 +4,11 @@ import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { deny } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { Answer, Trade, acceptance, fmt } from "../engine";
-import { YOU, teamById } from "../data";
+import { Answer, AskShow, Trade, acceptance, fmt } from "../engine";
+import { Player, TEAMS, YOU, isSpecialFA, playerById, teamById } from "../data";
 import { AiLabel, Icon } from "./ui";
 import { WorkingLoader } from "./WorkingLoader";
+import { PlayerSheet } from "./lazy";
 
 type Msg = { id: number; q: string };
 type Topic = "Trades" | "Lineup" | "Waivers";
@@ -31,6 +32,99 @@ function ArrowUp({ size = 18 }: { size?: number }) {
   );
 }
 
+/** The way out of Ask for each answer, by the tab it opens. Only this link (or a "take me there" question) leaves. */
+const OUT: Record<string, string> = { trade: "View in Trade", roster: "Open in Lineup", waivers: "Open in Waivers", league: "Open in League", wire: "Open in Wire" };
+
+/** "Take me to the trade builder", "open my lineup", "go to waivers": a question that asks to go somewhere goes there.
+ *  It has to start with the ask to go and name a place, so "open the top deal" is still answered here. */
+const GO_ASK = /^(?:please\s+|can you\s+|could you\s+)?(?:take me(?: back)? to|bring me to|go(?: back)? to|navigate to|jump to|switch to|open(?: up)?)\s+(?:the\s+|my\s+)?(.+?)[.!?\s]*$/i;
+const GO_TO: [RegExp, string][] = [
+  [/^(trade builder|trade|trades|builder)$/, "trade"],
+  [/^(lineup|roster|team|start\/sit)$/, "roster"],
+  [/^(waivers?|waiver wire|free agents)$/, "waivers"],
+  [/^(league|league needs|needs|needs map)$/, "league"],
+  [/^(wire|the wire)$/, "wire"],
+  [/^settings$/, "settings"],
+];
+function goTarget(q: string): string | null {
+  const m = GO_ASK.exec(q.trim());
+  if (!m) return null;
+  const place = m[1].toLowerCase().replace(/\s+(tab|page|screen)$/, "");
+  return GO_TO.find(([re]) => re.test(place))?.[1] ?? null;
+}
+
+/** Where a player sits, for the player sheet's line under the name */
+function whereOf(p: { id: string; pos: string }) {
+  const t = TEAMS.find((x) => x.roster.includes(p.id) || x.ir?.includes(p.id));
+  return t ? (t.you ? `Your ${p.pos}` : `${t.manager}'s ${p.pos}`) : `Free agent ${p.pos}`;
+}
+
+type OpenPlayer = (p: Player) => void;
+
+/** A player in an answer. Tapping opens the player sheet over Ask. */
+function PRow({ p, k, v, tone = "", onOpen, live }: {
+  p: { id: string; name: string; pos: string; nfl: string };
+  k?: string; v?: string; tone?: string; onOpen?: () => void; live: boolean;
+}) {
+  const body = (
+    <>
+      {k && <span className="ask-prow-k">{k}</span>}
+      <span className="ask-prow-name">{p.name}</span>
+      <span className="ask-prow-meta">{p.pos} · {p.nfl}</span>
+      {v && <span className={`ask-prow-v${tone}`}>{v}</span>}
+      {onOpen && <Icon name="chev" size={14} />}
+    </>
+  );
+  return (
+    <li>
+      {onOpen ? <button type="button" className="ask-prow" tabIndex={live ? undefined : -1} onClick={onOpen}
+        aria-label={`${p.name}, ${p.pos}, ${p.nfl}${k ? `, ${k}` : ""}. Player details`}>{body}</button>
+        : <div className="ask-prow">{body}</div>}
+    </li>
+  );
+}
+
+/** What the answer is about, shown right in the card: the players each way in a deal, the player you asked about, the
+ *  lineup swaps, or the waiver add. */
+function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: Trade; onPlayer: OpenPlayer; live: boolean }) {
+  const row = (id: string, k?: string, v?: string, tone?: string) => {
+    const p = playerById(id);
+    return p ? <PRow key={`${k}-${id}`} p={p} k={k} v={v} tone={tone} live={live} onOpen={() => onPlayer(p)} /> : null;
+  };
+  if (deal) {
+    const them = teamById(deal.partnerId);
+    return (
+      <div className="ask-show ask-show-deal">
+        <div className="ask-show-g"><p className="ask-k">You give</p><ul className="ask-prows">{deal.give.map((id) => row(id))}</ul></div>
+        <div className="ask-show-g"><p className="ask-k">You get{them ? ` from ${them.manager}` : ""}</p><ul className="ask-prows">{deal.get.map((id) => row(id))}</ul></div>
+      </div>
+    );
+  }
+  if (!show) return null;
+  if (show.kind === "player") return <div className="ask-show"><ul className="ask-prows">{row(show.id)}</ul></div>;
+  if (show.kind === "swaps") {
+    return (
+      <div className="ask-show">
+        {show.rows.map((r) => (
+          <div key={r.start} className="ask-show-g">
+            <p className="ask-k">{r.slot} swap</p>
+            <ul className="ask-prows">{row(r.start, "Start", fmt(r.gain), r.gain > 0 ? " good" : "")}{row(r.bench, "Bench")}</ul>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  const fa = show.fa;
+  return (
+    <div className="ask-show">
+      <ul className="ask-prows">
+        <PRow p={fa} k="Add" v={fmt(show.gain)} tone={show.gain > 0 ? " good" : ""} live={live}
+          onOpen={isSpecialFA(fa) ? undefined : () => onPlayer(fa as Player)} />
+      </ul>
+    </div>
+  );
+}
+
 /** The key numbers for an answer that carries a deal: what each side gains a week and how likely they are to say yes. */
 function DealNumbers({ t }: { t: Trade }) {
   const them = teamById(t.partnerId);
@@ -46,11 +140,12 @@ function DealNumbers({ t }: { t: Trade }) {
 }
 
 /** One answer: the trace of the work, then the answer card streaming in as it's written out. */
-function AskTurn({ q, answer, onLink, onPitch, onDone, follow, onFollow }: {
+function AskTurn({ q, answer, onLink, onPitch, onPlayer, onDone, follow, onFollow }: {
   q: string;
   answer: (q: string) => Steps<Answer>;
   onLink: (l: Answer["links"][number]) => void;
   onPitch?: (t: Trade) => void;
+  onPlayer: OpenPlayer;
   onDone: () => void;
   follow: string[];
   onFollow: (q: string) => void;
@@ -78,18 +173,26 @@ function AskTurn({ q, answer, onLink, onPitch, onDone, follow, onFollow }: {
               {a.points.map((p, i) => { const b = base; base += counts[i + 1]; return <li key={p} className={k > b ? undefined : "thk-wait"}><Words text={p} k={k} base={b} /></li>; })}
             </ul>
           )}
-          {/* Numbers and actions hold their space from the start and fade in when the text is written, so nothing moves */}
+          {/* What it's about, the numbers and the actions hold their space from the start and fade in when the text is
+              written, so nothing moves. Everything here stays in Ask (players and the pitch open as sheets over it);
+              only the "View in" link at the end goes to another tab. */}
+          {(deal || a.show) && (
+            <div className={`ask-after${done ? "" : " wait"}`} aria-hidden={!done || undefined}>
+              <AskShowBlock show={a.show} deal={deal} onPlayer={onPlayer} live={done} />
+            </div>
+          )}
           {deal && <div className={`ask-after${done ? "" : " wait"}`} aria-hidden={!done || undefined}><DealNumbers t={deal} /></div>}
-          {(a.links.length > 0 || (deal && onPitch)) && (
+          {(a.links.length > 0 || (deal && onPitch && deal.themDelta > 0)) && (
             <div className={`ask-acts ask-after${done ? "" : " wait"}`}>
-              {a.links.map((l) => (
-                <button key={l.label} type="button" className="ask-act" tabIndex={done ? undefined : -1} onClick={() => onLink(l)}>
-                  {l.label}<Icon name="chev" size={14} />
-                </button>
-              ))}
               {deal && onPitch && deal.themDelta > 0 && (
                 <button type="button" className="ask-act" tabIndex={done ? undefined : -1} onClick={() => onPitch(deal)}>Write pitch</button>
               )}
+              {a.links.map((l) => (
+                <button key={l.label} type="button" className="ask-out" tabIndex={done ? undefined : -1} onClick={() => onLink(l)}
+                  title={l.label}>
+                  {l.tab === "trade" && !l.trade ? "Open in Trade" : OUT[l.tab] ?? l.label}<Icon name="chev" size={14} />
+                </button>
+              ))}
             </div>
           )}
           <AiLabel />
@@ -144,9 +247,12 @@ function useFitHeight(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
-export function Ask({ answer, onLink, onPitch, starters, initial }: {
+export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
   answer: (q: string) => Steps<Answer>;
+  /** The explicit way out on an answer: opens that tab (a deal goes into the builder) */
   onLink: (l: Answer["links"][number]) => void;
+  /** A "take me there" question */
+  onGo?: (tab: string) => void;
   onPitch?: (t: Trade) => void;
   starters: string[];
   initial?: string;
@@ -155,6 +261,8 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
   const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, q: initial.trim() }] : []));
   const [busy, setBusy] = useState<number[]>(() => (initial?.trim() ? [1] : []));
   const [q, setQ] = useState("");
+  // A player tapped in an answer opens over Ask; the thread and its scroll stay as they are underneath
+  const [sheet, setSheet] = useState<Player | null>(null);
   const busyRef = useRef(false);
   const page = useRef<HTMLElement>(null);
   const thread = useRef<HTMLDivElement>(null);
@@ -269,6 +377,9 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
     const t = text.trim();
     // One answer at a time: Enter while one is being built keeps what you typed
     if (!t || busyRef.current) return;
+    // "Take me to the trade builder": the one kind of question that leaves Ask
+    const dest = onGo && goTarget(t);
+    if (dest) { setQ(""); onGo(dest); return; }
     busyRef.current = true;
     const id = Date.now();
     stick.current = true;
@@ -320,7 +431,7 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
                 </div>
               </div>
             ) : msgs.map((m, i) => (
-              <AskTurn key={m.id} q={m.q} answer={answer} onLink={onLink} onPitch={onPitch}
+              <AskTurn key={m.id} q={m.q} answer={answer} onLink={onLink} onPitch={onPitch} onPlayer={setSheet}
                 onDone={() => setBusy((b) => b.filter((x) => x !== m.id))}
                 follow={i === msgs.length - 1 ? followFor(m.q) : []} onFollow={send} />
             ))}
@@ -345,6 +456,7 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
           <p className="ask-note">Sources only reads your league's public rosters and the tags you log.<span className="ask-wide"> It never scans private group chats.</span></p>
         </div>
       </section>
+      {sheet && <PlayerSheet p={sheet} where={whereOf(sheet)} onClose={() => setSheet(null)} />}
     </>
   );
 }

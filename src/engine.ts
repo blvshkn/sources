@@ -1177,7 +1177,13 @@ export function playerInText(text: string, skip?: [number, number][]) {
 
 // ---- Ask your league ------------------------------------------------------
 
-export interface Answer { text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[] }
+/** What an answer shows inline in Ask, so you can see it (and open a player) without leaving. A deal comes from the
+ *  trade on its link. `links` are the ways out to another tab, which Ask only takes when you tap one. */
+export type AskShow =
+  | { kind: "player"; id: string }
+  | { kind: "swaps"; rows: { start: string; bench: string; slot: string; gain: number }[] }
+  | { kind: "waiver"; fa: WaiverFA; gain: number; bid?: string; drop?: string };
+export interface Answer { text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[]; show?: AskShow }
 
 export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
   return drain(askSteps(q, tags, myTags, prices, passed));
@@ -1209,12 +1215,13 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
       if (x.roster.includes(named.id) || x.ir?.includes(named.id)) { owner = x; yield { t: "n", n, chip: { label: x.name, kind: "team" } }; break; }
       yield { t: "n", n };
     }
-    if (!owner) return { text: `${named.name} isn't on a roster. He's a free agent.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open waivers", tab: "waivers" }] };
-    if (owner.you) return { text: `${named.name} is on your team.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open your lineup", tab: "roster" }] };
+    if (!owner) return { text: `${named.name} isn't on a roster. He's a free agent.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open waivers", tab: "waivers" }], show: { kind: "player", id: named.id } };
+    if (owner.you) return { text: `${named.name} is on your team.`, points: [`${named.pos} · ${named.nfl}`], links: [{ label: "Open your lineup", tab: "roster" }], show: { kind: "player", id: named.id } };
     return {
       text: `${owner.manager} has ${named.name}.`,
       points: [`${owner.name} · ${owner.record}`, `${named.pos} · ${named.nfl}`],
       links: [{ label: `Build a trade with ${owner.manager}`, tab: "trade", teamId: owner.id }],
+      show: { kind: "player", id: named.id },
     };
   }
 
@@ -1234,7 +1241,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
       };
     }
     const t = r?.trade;
-    if (!t) return { text: `Nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }] };
+    if (!t) return { text: `Nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }], show: { kind: "player", id: named.id } };
     return {
       text: `${names(t.give)} gets it done with ${owner.manager}.`,
       points: [`${owner.manager}'s starters gain ${fmt(t.themDelta)} a week.`, `Your starters go ${fmt(t.youDelta)} a week.`, ...(t.youDrop.length ? [`You'd drop ${t.youDrop.map((id) => playerById(id).name).join(", ")} to make room.`] : [])],
@@ -1266,6 +1273,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
       text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
       points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
+      show: diff.length ? { kind: "swaps", rows: diff.map((d) => ({ start: d.start.id, bench: d.benched.id, slot: d.slot, gain: d.gain })) } : undefined,
     };
   }
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {
@@ -1286,6 +1294,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
         r.kdef ? (r.estimated ? `Kickers and defenses usually go for ${bidRange(r.bid)}, so bid low.` : `Based on ${SPECIAL_BIDS.length} winning K/DEF bids in your league this season.`)
         : bidSourceNote()],
       links: [{ label: "Open waivers", tab: "waivers" }],
+      show: { kind: "waiver", fa: r.fa, gain: r.gain, bid: FAAB.enabled ? bidRange(r.bid) : undefined, drop: recDrop(r)?.name },
     };
   }
   if (/(trade with|partner|who should i trade|best trade|deal)/.test(s)) {

@@ -94,6 +94,55 @@ html:root:not(#_):not(#_) .ask-act:last-child:not(:has(svg)) { padding-right: 16
   html:root:not(#_):not(#_) .ask-act:hover { background: color-mix(in srgb, var(--surface-3) 80%, var(--ink) 20%); }
 }
 html:root:not(#_):not(#_) .ask-act:active { transform: scale(0.97); }
+/* The way out: a plain secondary link at the end of the actions, the only control in an answer that leaves Ask */
+html:root:not(#_):not(#_) .ask-out {
+  appearance: none; margin: 0; display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 9px 6px;
+  border: 0; border-radius: 999px; background: none; color: var(--muted);
+  font: 500 0.875rem/1.4 var(--font-body); cursor: pointer;
+  transition: color 160ms var(--ask-ease), background-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+}
+html:root:not(#_):not(#_) .ask-out svg { flex: none; }
+html:root:not(#_):not(#_) .ask-act + .ask-out { margin-left: 4px; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .ask-out:hover { color: var(--ink); }
+}
+html:root:not(#_):not(#_) .ask-out:active { transform: scale(0.97); }
+
+/* What an answer is about, inside the card: players each way, the player asked about, lineup swaps, the waiver add.
+   Each player opens the player sheet over Ask. */
+html:root:not(#_):not(#_) .ask-show { display: flex; flex-direction: column; gap: 12px; }
+html:root:not(#_):not(#_) .ask-show-g { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_) .ask-prows { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+html:root:not(#_):not(#_) .ask-prows > li { margin: 0; padding: 0; min-width: 0; }
+html:root:not(#_):not(#_) .ask-prow {
+  appearance: none; box-sizing: border-box; width: 100%; margin: 0; display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 8px 10px 8px 14px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface-2); color: var(--ink); font: 400 0.9375rem/1.3 var(--font-body); text-align: left;
+}
+html:root:not(#_):not(#_) button.ask-prow {
+  cursor: pointer;
+  transition: background-color 160ms var(--ask-ease), border-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) button.ask-prow:hover { background: var(--surface-3); border-color: color-mix(in srgb, var(--ink) 14%, transparent); }
+}
+html:root:not(#_):not(#_) button.ask-prow:active { transform: scale(0.99); }
+html:root:not(#_):not(#_) .ask-prow-k {
+  flex: none; min-width: 3.5em; font-family: var(--font-mono); font-size: 0.6875rem; line-height: 1.4;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+html:root:not(#_):not(#_) .ask-prow-name { min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .ask-prow-meta { flex: none; font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .ask-prow-v { flex: none; margin-left: auto; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink); }
+html:root:not(#_):not(#_) .ask-prow-v.good { color: var(--good); }
+html:root:not(#_):not(#_) .ask-prow > svg { flex: none; margin-left: auto; color: var(--muted); }
+html:root:not(#_):not(#_) .ask-prow-v + svg { margin-left: 0; }
+/* A deal's two sides sit side by side once there's room */
+@media (min-width: 600px) {
+  html:root:not(#_):not(#_) .ask-show-deal { flex-direction: row; gap: 12px; }
+  html:root:not(#_):not(#_) .ask-show-deal > .ask-show-g { flex: 1 1 0; }
+}
+
 /* Held in place while the text streams, faded in once it's written */
 html:root:not(#_):not(#_) .ask-after { transition: opacity 220ms var(--ask-ease); }
 html:root:not(#_):not(#_) .ask-after.wait { opacity: 0; pointer-events: none; }
@@ -171,8 +220,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask:active { tran
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-send, .ask-after, .ask-composer, .topbar .top-ask) { transition: none; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-send, .topbar .top-ask):active { transform: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-out, .ask-prow, .ask-send, .ask-after, .ask-composer, .topbar .top-ask) { transition: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-out, button.ask-prow, .ask-send, .topbar .top-ask):active { transform: none; }
 }
 
 /* The Ask button makes the phone top bar one control wider; on narrow phones the icon buttons sit edge to edge

@@ -694,7 +694,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
-          {tab === "ask" && <Ask initial={askSeed} answer={(q) => askSteps(q, active, myTags, prices, passed)} onLink={onLink} onPitch={setPitch} starters={askStarters} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q) => askSteps(q, active, myTags, prices, passed)} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
