@@ -52,13 +52,11 @@ html:root:not(#_):not(#_) .lu-mx-open.mc-press > .lu-mx { border-radius: inherit
    with tight tracking; every number in the meta line is Geist Mono. Green is ahead or won, red behind or lost; lime
    is the brand and never appears here. Every state draws the same rows at the same heights. */
 
-/* The cards around it: the face-off brings its own padding, on a flat surface. The lime hero wash these cards get
-   elsewhere (styles.css, :is(.sb2, .mw, .lu-mx, .mu)) stays off: lime is the brand, not a matchup color. */
+/* The cards around it: the face-off brings its own padding and sits on the cards' usual hero wash (the soft brand
+   gradient from styles.css, :is(.sb2, .mw, .lu-mx, .mu)). The wash is decoration, never a verdict. */
 html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo) { display: block; padding: 0; }
 html:root:not(#_):not(#_) .lu-mx:has(> .fo) { display: block !important; padding: 0 !important; }
 html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { display: block; padding: 0; }
-html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { background: var(--surface) !important; }
-html:root:not(#_):not(#_) .card.mu:has(> .fo) { background: var(--surface) !important; }
 @container pg (max-width: 599px) {
   html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx-open:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { border-radius: 16px; }
 }
