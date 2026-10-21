@@ -175,7 +175,12 @@ export function Landing({ onLive, onDemo }: {
     ["Do you need my Sleeper password?", "No. Sources only needs your Sleeper username. League data comes from Sleeper's public API, so there's no password and nothing to sign into."],
     ["Can Sources make moves in my league?", "No. Sources is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
     ["Where do trade values come from?", "Sources blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
+    ["How does Ask work?", "Sources AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Sources' own engine, and once in a while the AI cracks a joke. There's a daily limit, and past it Ask gives the built-in answer."],
+    ["What does Set optimal lineup check?", "It starts from your best projected lineup, then reads player news, injury and practice reports, Vegas lines and kickoff weather. Every suggested move comes with its reason. You make the moves in Sleeper."],
+    ["Does a pitch send on its own?", "No. Sources writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
+    ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers follow your Sleeper account to your phone, tablet and desktop. The sample league stays on one device."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Sources never shows them to other managers."],
+    ["What data does Sources keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved under your Sleeper user and league ids so they can sync. Delete my data in Settings clears this browser and the synced copy for the league you have open."],
     ["Does the win chance match Sleeper?", "Closely. Sources uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Sources works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
@@ -398,7 +403,19 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld-section ld2-faq" aria-labelledby="ld-faq">
-        <h2 id="ld-faq" className="ld-h2 ld2-reveal">Questions, answered.</h2>
+        {/* Heading and the Ask card stick together on tablet and desktop. On phones this wrapper drops out of the box
+            tree, so the card can sit after the questions. */}
+        <div className="ld2-faq-side">
+          <h2 id="ld-faq" className="ld-h2 ld2-reveal">Questions, answered.</h2>
+          {/* The sample league path, opened on Ask: Shell reads its first tab from the hash */}
+          <div className="ld2-faq-askwrap ld2-reveal">
+            <button type="button" className="ld2-faq-ask" onClick={() => { try { history.replaceState(null, "", "#ask"); } catch { /* ignore */ } onDemo(); }}>
+              <AiMark size={20} className="ld2-faq-ask-mark" />
+              <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask Sources about the sample league and see how it answers.</span></span>
+              <Icon name="chev" size={16} />
+            </button>
+          </div>
+        </div>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqLd }} />
         <div className="ld2-faq-list ld2-reveal">
           {faqs.map(([q, a]) => (

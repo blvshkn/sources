@@ -81,6 +81,7 @@ import "./live-dot.css";
 import "./image-guard.css";
 import "./trace-flow.css";
 import "./icon-lucide.css";
+import "./faq-side.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
