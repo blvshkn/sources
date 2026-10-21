@@ -202,6 +202,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const dockWide = useMedia("(min-width: 1241px)");
   const [ibxFocus, setIbxFocus] = useState(0);
   const [readIds, setReadIds] = usePersist<string[]>(`${scope}.inboxRead`, []);
+  // Inbox "Not right now": hidden for the rest of this week, then back if it still applies
+  const [ibxSkipped, setIbxSkipped] = usePersist<Record<string, number>>(`${scope}.inboxSkipped`, {});
   const [askSeed, setAskSeed] = useState("");
   const [navKey, setNavKey] = useState(0);
   const live = useLive();
@@ -677,9 +679,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // "Open matchup" from the inbox closes it and opens the matchup sheet over whatever page you're on
   const [matchupSheet, setMatchupSheet] = useState(false);
   const inboxGo = (dest: string) => { if (dest === "matchup") { setInboxOpen(false); setMatchupSheet(true); } else go(dest); };
-  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, partner: partnerNote })
-    .filter((x) => x.nudge || !dismissedIds.includes(x.id)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, tab, urgent, partnerNote, kick]);
+  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote })
+    .filter((x) => (x.nudge || !dismissedIds.includes(x.id)) && !((ibxSkipped[x.id] ?? -1) >= WEEK)), // eslint-disable-next-line react-hooks/exhaustive-deps
+  [nudges, checks, yourLineup, live, dismissedIds, ibxSkipped, tab, urgent, partnerNote, kick]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;
@@ -702,12 +704,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   };
   const bellLabel = `Inbox${unread ? `, ${unread} unread` : ""}`;
   const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
+  // "Not right now" skips an item for this week only. It never teaches Sources to show fewer like it.
   const dismissItem = (it: InboxItem) => {
     markRead(it.id);
-    if (it.nudge) { dismiss(it.nudge); return; }
-    const prev = dismissedIds;
-    setDismissedIds((c) => [...c, it.id]);
-    setToast("Dismissed.", () => setDismissedIds(prev));
+    setIbxSkipped((c) => ({ ...c, [it.id]: WEEK }));
+    haptic();
+    setToast("Hidden for now. It comes back next week if it still applies.", () => setIbxSkipped((c) => { const n = { ...c }; delete n[it.id]; return n; }));
   };
 
   return (

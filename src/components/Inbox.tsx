@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
-import { Player, YOU, playerById } from "../data";
+import { DEADLINES, Player, YOU, playerById } from "../data";
 import { lockLine } from "../kickoff";
 import { eff, fmt, Trade } from "../engine";
 import { startersOf, matchNow, type Live } from "../live";
@@ -13,27 +13,51 @@ import type { Check } from "./Roster";
 import { NewsItem, ago, requestPlayer } from "../news";
 import { AiMark } from "./WorkingLoader";
 
-/** One thing Sources wants you to see: what happened, when, and the one move to make about it. */
+/** One thing Sources wants you to see. Every item has the same parts: an icon, a short title, when it happened, an
+ *  optional line of context (a deadline or a source), the body, and one move to make about it. */
 export interface InboxItem {
   id: string;
   icon: IconName;
+  /** Two or three words: what kind of thing this is ("Before lock", "Trade offer", "Waiver add") */
+  title: string;
+  /** When: "Now", "12 min ago", "Today". Sorts the item into Now, Today or Earlier this week. */
+  time: string;
+  /** Context under the title: a deadline ("Locks Sun 1:00 PM ET") or a source. Optional. */
+  meta?: string;
   text: string;
-  meta: string;
+  /** Time-sensitive: before lock, or waivers about to run. The only items that get the warm accent. */
   urgent?: boolean;
   ai?: boolean;
   action: { label: string; run: () => void };
   /** Nudges teach Sources what you don't want; game-day items just leave the list. */
   nudge?: Nudge;
+  /** "Not right now" for a suggested player: skips him in suggestions this week only (the Overview briefing's pattern) */
+  skip?: () => void;
   /** A suggested player: "Not interested" takes him out of every suggestion. */
   pass?: () => void;
   passName?: string;
 }
 
-const lockShort = () => lockLine().replace(/^Lineups lock\s*/i, "Locks ");
+export type InboxGroup = "now" | "today" | "week";
+export const GROUPS: { id: InboxGroup; label: string }[] = [{ id: "now", label: "Now" }, { id: "today", label: "Today" }, { id: "week", label: "Earlier this week" }];
+/** "Now", "Live", "12 min ago" and "5m" are now; "This week", "2d" and "Yesterday" are earlier; the rest is today. */
+export const groupOf = (time: string): InboxGroup =>
+  /^(now|live)$|^\d+\s*(m|min)\b/i.test(time.trim()) ? "now" : /this week|yesterday|^\d+\s*d\b|days? ago/i.test(time) ? "week" : "today";
 
-/** Game-day alerts, live moments and the wire's nudges in one list, urgent first. Built from the same data the
- *  Lineup and Wire screens use, so nothing here is invented for the feed. */
-export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news = [], pass, partner }: {
+const lockShort = () => lockLine().replace(/^Lineups lock\s*/i, "Locks ");
+const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+/** Waivers run within the next day: the day before the run, or the run day itself before 3 AM */
+function waiversSoon(): boolean {
+  const m = /\b(sun|mon|tue|wed|thu|fri|sat)[a-z]*/i.exec(DEADLINES.waivers || "");
+  if (!m) return false;
+  const run = DAYS.indexOf(m[1].toLowerCase()), now = new Date(), d = now.getDay();
+  return d === (run + 6) % 7 || (d === run && now.getHours() < 3);
+}
+const kindTitle: Record<Nudge["kind"], string> = { ir: "Injured reserve", need: "Trade idea", offer: "Trade offer", news: "League news", stale: "Tag check", lineup: "Before lock", waiver: "Waiver add", slot: "Slot report" };
+
+/** Game-day alerts, live moments and the wire's nudges in one list, grouped by time and urgent first in each group.
+ *  Built from the same data the Lineup and Wire screens use, so nothing here is invented for the feed. */
+export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news = [], pass, skip, partner }: {
   nudges: Nudge[];
   checks: Check[];
   live: Live;
@@ -43,19 +67,23 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   /** Your starters with a status story in the last day. */
   news?: { p: Player; n: NewsItem }[];
   pass?: (p: { id: string; name: string }) => void;
+  /** "Not right now" on a suggested player: this week only */
+  skip?: (p: { id: string; name: string }) => void;
   /** The team in the deal you're building: what they need, as one plain line. */
   partner?: { id: string; text: string; onNotes: () => void };
 }): InboxItem[] {
   const out: InboxItem[] = [];
-  const lock = lockLine() ? lockShort() : "Before lock";
+  const lock = lockLine() ? lockShort() : undefined;
 
   // Game day: anything that still needs a move before lock. IR and the Sleeper swap come from the nudges below.
   checks.filter((c) => !c.key.startsWith("ir")).forEach((c) => {
     const p = c.player;
     const state = p ? live.games[p.nfl] : undefined;
     if (p && (state === "in_game" || state === "complete")) return;
+    const urgent = c.tone !== "info";
     out.push({
-      id: `chk-${c.key}`, icon: c.icon, text: c.text, meta: lock, urgent: c.tone !== "info", ai: c.key === "flex",
+      id: `chk-${c.key}`, icon: c.icon, title: urgent ? "Before lock" : c.key === "flex" ? "Flex call" : c.key === "bench" ? "Bench" : "Lineup",
+      time: "Now", meta: lock, text: c.text, urgent, ai: c.key === "flex",
       action: c.key === "flex" ? { label: "Compare them", run: () => go("roster:compare") }
         : c.key === "bench" ? { label: "Open waivers", run: () => go("waivers") }
         : { label: "Fix lineup", run: () => go("roster") },
@@ -67,31 +95,33 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   starters.forEach((p) => {
     const pts = live.points[p.id], proj = eff(p, true);
     if (live.games[p.nfl] === "in_game" && pts !== undefined && proj > 0 && pts >= proj)
-      out.push({ id: `fire-${p.id}`, icon: "activity", text: `${p.name} is on fire: ${pts.toFixed(1)} already, past his ${proj.toFixed(1)} projection.`, meta: "Live", action: { label: "Open matchup", run: () => go("matchup") } });
+      out.push({ id: `fire-${p.id}`, icon: "activity", title: "On fire", time: "Live", text: `${p.name} has ${pts.toFixed(1)} already, past his ${proj.toFixed(1)} projection.`, action: { label: "Open matchup", run: () => go("matchup") } });
   });
   const done = starters.filter((p) => live.games[p.nfl] === "complete" && live.points[p.id] !== undefined);
   // Once both sides are done, one line with the result, the same one the Wire card and the matchup show
   const ms = matchNow(live);
   if (ms.result) {
-    out.push({ id: `final-week`, icon: "check", meta: "Final", text: `Final: ${ms.result.long.charAt(0).toLowerCase()}${ms.result.long.slice(1)}.`,
+    out.push({ id: `final-week`, icon: "check", title: "Final score", time: "Today", text: `${ms.result.long.charAt(0).toUpperCase()}${ms.result.long.slice(1)}.`,
       action: { label: "Open matchup", run: () => go("matchup") } });
   } else if (done.length) {
     const got = done.reduce((a, p) => a + (live.points[p.id] ?? 0), 0), want = done.reduce((a, p) => a + eff(p, true), 0);
-    out.push({ id: `final-${done.length}`, icon: "check", meta: "Final",
+    out.push({ id: `final-${done.length}`, icon: "check", title: "Games final", time: "Today",
       text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final with ${got.toFixed(1)} pts, ${fmt(got - want)} against their projections.`,
       action: { label: "Open matchup", run: () => go("matchup") } });
   }
 
   // News: a starter's status changed. Opens his sheet on the Wire's news card.
   news.forEach(({ p, n }) => {
-    out.push({ id: `pnews-${n.id}`, icon: "alert", text: n.title.toLowerCase().includes(p.name.split(" ").slice(-1)[0].toLowerCase()) ? n.title : `${p.name}: ${n.title}`, meta: `${n.source}${n.at ? ` · ${ago(n.at)}` : ""}`,
+    out.push({ id: `pnews-${n.id}`, icon: "alert", title: "Player news", time: n.at ? ago(n.at) : "Today", meta: n.source,
+      text: n.title.toLowerCase().includes(p.name.split(" ").slice(-1)[0].toLowerCase()) ? n.title : `${p.name}: ${n.title}`,
       action: { label: "Open player", run: () => { requestPlayer(p.id); go("wire:intel"); } } });
   });
 
   // The wire: offers, trade ideas, news, waivers, stale tags, patterns
+  const soon = waiversSoon();
   nudges.forEach((n) => {
     const text = `${n.headline.charAt(0).toUpperCase()}${n.headline.slice(1)}${n.emph ? ` ${n.emph}` : ""}`;
-    const meta = n.deadline ? `${n.time} · ${n.deadline.replace(/^Trade deadline\s*/i, "Deadline ")}` : n.time;
+    const meta = n.deadline ? n.deadline.replace(/^Trade deadline\s*/i, "Deadline ").replace(/^Lineups lock\s*/i, "Locks ") : undefined;
     const action = n.kind === "offer" && n.offer ? { label: "Review offer", run: () => loadTrade(n.offer!) }
       : n.trades[0] ? { label: "Open in builder", run: () => loadTrade(n.trades[0]) }
       : n.kind === "stale" && n.tagId ? { label: "Still true", run: () => keepTag(n.tagId!) }
@@ -100,23 +130,37 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
       : n.go ? { label: n.go.label, run: () => go(n.go!.tab) }
       : { label: "Open Overview", run: () => go("wire:intel") };
     const icon: IconName = n.kind === "offer" ? "send" : n.kind === "need" ? "trade" : n.kind === "waiver" ? "waivers" : n.kind === "stale" ? "clock" : n.kind === "slot" ? "values" : n.kind === "lineup" ? "helmet" : "alert";
-    out.push({ id: n.id, icon, text, meta, urgent: n.kind === "ir" || n.kind === "lineup", ai: n.kind === "need" || n.kind === "news" || n.kind === "slot" || n.kind === "waiver", action, nudge: n,
+    const closing = n.kind === "waiver" && soon;
+    out.push({ id: n.id, icon, title: closing ? "Waivers close soon" : kindTitle[n.kind], time: n.time, meta, text,
+      urgent: n.kind === "lineup" || closing, ai: n.kind === "need" || n.kind === "news" || n.kind === "slot" || n.kind === "waiver", action, nudge: n,
+      skip: n.pass && skip ? () => skip(n.pass!) : undefined,
       pass: n.pass && pass ? () => pass(n.pass!) : undefined, passName: n.pass?.name });
   });
 
   // The team you're dealing with, as a plain row like everything else
-  if (partner) out.push({ id: `partner-${partner.id}`, icon: "trade", text: partner.text, meta: "Trading with", action: { label: "Open notes", run: partner.onNotes } });
+  if (partner) out.push({ id: `partner-${partner.id}`, icon: "trade", title: "Trading with", time: "Now", text: partner.text, action: { label: "Open notes", run: partner.onNotes } });
 
-  // Urgent first; otherwise the order above (live, then newest wire items) holds
-  return [...out.filter((x) => x.urgent), ...out.filter((x) => !x.urgent)];
+  // By time (Now, Today, Earlier this week), urgent first in each; otherwise the order above holds
+  return GROUPS.flatMap((g) => {
+    const xs = out.filter((x) => groupOf(x.time) === g.id);
+    return [...xs.filter((x) => x.urgent), ...xs.filter((x) => !x.urgent)];
+  });
 }
 
-/** The feed itself. Docked as the right panel on wide screens (open or closed from the bell), a slide-over everywhere else. */
+/** "Locks Sun 1:00 PM ET" -> "Locks " + mono "Sun 1:00 PM ET". Dates and times are data, so they read in Geist Mono. */
+function Meta({ s }: { s: string }) {
+  const m = /^(.*?)((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Week)\b.*|\d.*)$/.exec(s);
+  if (!m) return <>{s}</>;
+  return <>{m[1]}<span className="ibx-mono">{m[2]}</span></>;
+}
+
+/** The feed itself, grouped Now, Today and Earlier this week. Docked as the right panel on wide screens (open or closed from the bell), a slide-over everywhere else. */
 export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, onClose, context, open, focusTick = 0 }: {
   items: InboxItem[];
   read: string[];
   onRead: (id: string) => void;
   onReadAll: () => void;
+  /** "Not right now": hides the item for this week, with an undo. Nothing is learned from it. */
   onDismiss: (it: InboxItem) => void;
   onAsk: (q: string) => void;
   onClose: () => void;
@@ -157,32 +201,55 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
         <button className="btn btn-icon btn-ghost ibx-close" aria-label="Close inbox" onClick={onClose}><Icon name="x" size={20} /></button>
       </div>
       {context}
-      <ul className="ibx-list" aria-label="Inbox">
-        {items.length === 0 && <li className="ibx-empty">You're caught up. Sources will post here when something changes.</li>}
-        {items.map((it) => {
-          const isRead = read.includes(it.id);
+      <div className="ibx-list" role="region" aria-label="Notifications">
+        {items.length === 0 && (
+          <div className="ibx-empty">
+            <span className="ibx-empty-ic" aria-hidden="true"><Icon name="check" size={18} /></span>
+            <b>You're all caught up.</b>
+            <span>Lineup alerts, offers and waiver picks land here.</span>
+          </div>
+        )}
+        {GROUPS.map((g) => {
+          const xs = items.filter((x) => groupOf(x.time) === g.id);
+          if (!xs.length) return null;
           return (
-            <li key={it.id} className={`ibx-item${isRead ? " read" : ""}${it.urgent ? " urgent" : ""}${seen.current!.has(it.id) ? "" : " fresh"}`}>
-              <i className="ibx-dot" aria-hidden="true" />
-              <span className="ibx-ic" aria-hidden="true"><Icon name={it.icon} size={16} /></span>
-              <div className="ibx-body">
-                <span className="ibx-meta">
-                  {!isRead && <span className="sr-only">Unread.</span>}
-                  {it.urgent && <b className="ibx-flag">Before lock</b>}
-                  <span>{it.meta}</span>
-                  {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><AiMark size={14} />AI</span></Tooltip>}
-                </span>
-                <p className="ibx-text">{it.text}</p>
-                <span className="ibx-acts">
-                  <button className="btn btn-sm ibx-go" onClick={() => { onRead(it.id); it.action.run(); }}>{it.action.label}</button>
-                  {it.pass && <button className="linkish ps-ibx-pass" onClick={() => { onRead(it.id); it.pass!(); }} aria-label={`Not interested in ${it.passName}`}>Not interested</button>}
-                  <button className="ibx-x" onClick={() => onDismiss(it)} aria-label={`Dismiss: ${it.text}`}><Icon name="x" size={14} /></button>
-                </span>
-              </div>
-            </li>
+            <section key={g.id} className="ibx-sec" aria-labelledby={`ibx-sec-${g.id}`}>
+              <h3 className="ibx-sec-h" id={`ibx-sec-${g.id}`}>{g.label}</h3>
+              <ul className="ibx-sub">
+                {xs.map((it) => {
+                  const isRead = read.includes(it.id);
+                  return (
+                    <li key={it.id} className={`ibx-n${isRead ? " is-read" : ""}${it.urgent ? " is-urgent" : ""}${seen.current!.has(it.id) ? "" : " fresh"}`}>
+                      <span className="ibx-n-ic" aria-hidden="true"><Icon name={it.icon} size={16} /></span>
+                      <div className="ibx-n-main">
+                        <div className="ibx-n-top">
+                          <b className="ibx-n-title">{!isRead && <span className="sr-only">Unread: </span>}{it.title}</b>
+                          {/* The group heading already says "Now", "Today" or "this week"; the time shows when it says more ("12 min ago", "Live") */}
+                          {!/^(now|today|this week)$/i.test(it.time) && <span className="ibx-n-time">{it.time}</span>}
+                          <i className="ibx-n-dot" aria-hidden="true" />
+                        </div>
+                        {(it.meta || it.ai) && (
+                          <div className="ibx-n-meta">
+                            {it.meta && <span><Meta s={it.meta} /></span>}
+                            {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><AiMark size={12} />AI</span></Tooltip>}
+                          </div>
+                        )}
+                        <p className="ibx-n-text">{it.text}</p>
+                        <div className="ibx-n-acts">
+                          <button className="btn btn-sm ibx-cta" onClick={() => { onRead(it.id); it.action.run(); }}>{it.action.label}</button>
+                          <button className="ibx-later" onClick={() => { onRead(it.id); if (it.skip) it.skip(); else onDismiss(it); }}
+                            aria-label={`Not right now: ${it.title}`}>Not right now</button>
+                          {it.pass && <button className="ibx-later" onClick={() => { onRead(it.id); it.pass!(); }} aria-label={`Not interested in ${it.passName}`}>Not interested</button>}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           );
         })}
-      </ul>
+      </div>
       {/* Sends the question to Ask Sources, where the work shows as a thinking trace */}
       <form className="ibx-ask" onSubmit={(e) => { e.preventDefault(); onAsk(q.trim()); setQ(""); }}>
         <AskIcon size={18} />

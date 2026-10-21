@@ -1,0 +1,127 @@
+/* Inbox notifications (Inbox.tsx): one anatomy for every item, grouped Now, Today and Earlier this week.
+   Icon, title with its time, an optional line of context, the body, then one small primary action and small text
+   buttons for "Not right now" and "Not interested". Unread is a 6px lime dot beside the time (the bell's dot) and a
+   brighter title and body; read items step back to muted. Only time-sensitive items (before lock, waivers about to run)
+   get the warm accent, on the title and the icon tile. No side bar, no tinted slab.
+   Mobile first: phone spacing is the base, tablet and desktop come from the container padding tokens.
+   Items use new classes (.ibx-n*), so the older .ibx-item layers in desktop.css, states-qa.css, row-spacing.css,
+   dividers.css and inbox-toggle.css no longer apply to them. Loads just before frame.css. */
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx {
+  --ibx-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ibx-dur: 160ms;
+}
+
+/* Header and list share the container padding at every size, docked or sliding over */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-head {
+  padding: max(var(--pad-card-y), env(safe-area-inset-top, 0px)) var(--pad-card-x) 4px;
+  padding-right: calc(var(--pad-card-x) - 8px);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-list {
+  display: block; padding: 0 var(--pad-card-x) var(--pad-card-y); gap: 0;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx :is(.ibx-ctx, .ibx-ask) { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-ask { margin-bottom: max(var(--pad-card-y), env(safe-area-inset-bottom, 0px)); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-count { font-family: var(--font-mono); }
+
+/* ---------- Groups ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-sec + .ibx-sec { margin-top: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-sec-h {
+  margin: 0; padding: 14px 0 6px; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-sub { list-style: none; margin: 0; padding: 0; }
+
+/* ---------- One item ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n {
+  position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px;
+  padding: 14px 0; margin: 0; border: 0; border-radius: 0; background: none;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n + .ibx-n { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n::before, html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n::after { content: none; }
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-ic {
+  width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--muted);
+  transition: opacity var(--ibx-dur) var(--ibx-ease);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-main { min-width: 0; }
+
+/* Title row: title, time, unread dot */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-top { display: flex; align-items: center; gap: 8px; min-height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-title {
+  flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font: 600 0.8125rem/1.3 var(--font-body); color: var(--ink);
+  transition: color var(--ibx-dur) var(--ibx-ease);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-time { flex: none; font: 500 0.6875rem/1 var(--font-mono); color: var(--faint); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-dot {
+  flex: none; width: 6px; height: 6px; border-radius: 50%; background: #D8F24A;
+  transition: opacity var(--ibx-dur) var(--ibx-ease), transform var(--ibx-dur) var(--ibx-ease);
+}
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin-top: 3px;
+  font: 400 0.75rem/1.35 var(--font-body); color: var(--muted);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-meta .ibx-mono { font-family: var(--font-mono); font-size: 0.6875rem; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-meta .ibx-ai { display: inline-flex; align-items: center; gap: 3px; color: var(--faint); }
+
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-text {
+  margin: 6px 0 0; font: 400 0.875rem/1.45 var(--font-body); color: var(--ink); text-wrap: pretty;
+  transition: color var(--ibx-dur) var(--ibx-ease);
+}
+
+/* Actions: one small primary, then small text buttons */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; margin-top: 10px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n .ibx-cta {
+  height: 30px; min-height: 30px; padding: 0 12px; border-radius: 999px; font: 600 0.8125rem/1 var(--font-body);
+  transition: background-color var(--ibx-dur) var(--ibx-ease), box-shadow var(--ibx-dur) var(--ibx-ease), transform var(--ibx-dur) var(--ibx-ease);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-later {
+  height: 30px; padding: 0 8px; border: 0; border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 0.75rem/1 var(--font-body); text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--ibx-dur) var(--ibx-ease), color var(--ibx-dur) var(--ibx-ease), transform var(--ibx-dur) var(--ibx-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-later:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ibx-later, .ibx-n .ibx-cta):active { transform: scale(0.97); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-later:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+/* Touch: the text buttons keep a 44px hit area without looking bigger */
+@media (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-later { position: relative; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-later::after { content: ""; position: absolute; inset: -7px 0; }
+}
+
+/* ---------- Time-sensitive: warm title and icon tile, nothing else ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-urgent .ibx-n-title { color: var(--warn); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-urgent .ibx-n-ic { background: var(--warn-soft); color: var(--warn); }
+
+/* ---------- Read: everything steps back, the dot goes ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read .ibx-n-dot { opacity: 0; transform: scale(0.4); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read .ibx-n-title { color: var(--muted); font-weight: 500; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read.is-urgent .ibx-n-title { color: color-mix(in srgb, var(--warn) 70%, var(--muted)); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read .ibx-n-text { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read .ibx-n-ic { opacity: 0.6; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.is-read .ibx-cta { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* ---------- Empty ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 48px 16px; text-align: center;
+  font: 400 0.8125rem/1.45 var(--font-body); color: var(--muted);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-empty b { font: 600 0.9375rem/1.3 var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-empty-ic {
+  width: 36px; height: 36px; margin-bottom: 8px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--muted);
+}
+
+/* ---------- Motion: new items settle in; reduced motion skips it ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n.fresh { animation: ibx-n-in var(--ibx-dur) var(--ibx-ease) both; }
+  @keyframes ibx-n-in { from { opacity: 0; transform: translateY(-4px); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ibx-n-dot, .ibx-n-ic, .ibx-n-title, .ibx-n-text, .ibx-later, .ibx-n .ibx-cta) { transition-duration: 0s !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ibx-later, .ibx-n .ibx-cta):active { transform: none; }
+}
