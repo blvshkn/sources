@@ -41,6 +41,7 @@ import { Landing } from "./components/Landing";
 import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
+import { useOfferSync } from "./offerSync";
 import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
 
@@ -140,6 +141,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [watch, setWatch] = usePersist<Record<string, number>>(`${scope}.watch`, {});
   // Offers you sent (Sleeper can't see pending offers), per league on this device. See sentOffers.ts.
   const [sent, setSent] = usePersist<SentOffer[]>(`${scope}.${SENT_KEY}`, [], readSent);
+  // In a live league they also sync to this Sleeper user, so a phone and a laptop see the same list. See offerSync.ts.
+  const offerSync = useOfferSync({ enabled: !demo && session.mode === "live", league: LEAGUE.id ?? "", user: session.mode === "live" ? session.userId : "", sent, setSent });
   // The sent deal open in the builder, so sending it again after a tweak makes the next version of it
   const [reopened, setReopened] = useState<{ deal: string; partnerId: string } | null>(null);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
@@ -677,7 +680,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "trade" && (
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
-              sent={sent} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent}
+              sent={sent} sentSynced={offerSync.state === "synced"} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent}
               extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
@@ -695,7 +698,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               onDisconnect={onDisconnect}
               accounts={accounts} activeUserId={session.mode === "live" ? session.userId : ""} onRemoveAccount={removeAccount}
               onAddAccount={() => setSwitching("add")} onSwitchLeague={() => setSwitching("list")}
-              onDelete={onDeleteAll}
+              onDelete={() => { offerSync.forget(); onDeleteAll(); }}
               onGo={(t) => go(t as Tab)}
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
               hiddenCount={hiddenIdeas.length} onUnhide={() => { const prev = hiddenIdeas; setHiddenIdeas([]); setToast("Hidden trade ideas are back.", () => setHiddenIdeas(prev)); }}

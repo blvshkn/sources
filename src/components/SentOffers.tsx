@@ -74,8 +74,8 @@ function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: numbe
 }
 
 /** Trade's Sent tab: every deal you sent, newest first. Tapping one opens it in the builder, filled in. */
-export function SentOffers({ offers, onReopen, onDecline, onClear }: {
-  offers: SentOffer[]; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
+export function SentOffers({ offers, synced = false, onReopen, onDecline, onClear }: {
+  offers: SentOffer[]; synced?: boolean; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
 }) {
   const now = useNow();
   const deals = sentDeals(offers);
@@ -83,7 +83,7 @@ export function SentOffers({ offers, onReopen, onDecline, onClear }: {
     <section className="card so-card" aria-label="Sent offers">
       <div className="so-head">
         <h2 className="section-title">Sent offers</h2>
-        <p className="so-note">Saved on this device</p>
+        <p className="so-note">{synced ? "Synced to your Sleeper account" : "Saved on this device"}</p>
       </div>
       {deals.length === 0
         ? <p className="so-empty">Nothing sent yet. When you share or copy a pitch, the deal lands here so you can follow up or send a new version.</p>

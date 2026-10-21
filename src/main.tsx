@@ -53,6 +53,7 @@ import "./player-modal.css";
 import "./thinking.css";
 import "./share.css";
 import "./sent.css";
+import "./sent-sync.css";
 import "./you-color.css";
 import "./frame.css";
 import "./sheet.css";

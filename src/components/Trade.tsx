@@ -455,7 +455,7 @@ export function lockMap(myTags: Record<string, MyTag>) {
   return lockYou;
 }
 
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], onReopenSent, onDeclineSent, onClearSent }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, onReopenSent, onDeclineSent, onClearSent }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -472,7 +472,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   onAddTag: (t: Omit<ManagerTag, "id">) => void;
   onRemoveTag: (id: string) => void;
   /** Offers you sent, for the Sent tab. Tapping one puts it back in the builder. */
-  sent?: SentOffer[]; onReopenSent?: (o: SentOffer) => void; onDeclineSent?: (o: SentOffer) => void; onClearSent?: (o: SentOffer) => void;
+  sent?: SentOffer[]; sentSynced?: boolean; onReopenSent?: (o: SentOffer) => void; onDeclineSent?: (o: SentOffer) => void; onClearSent?: (o: SentOffer) => void;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const isMulti = extra.length > 0;
@@ -586,7 +586,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }, { v: "sent", label: sentCount ? `Sent (${sentCount})` : "Sent", icon: "send" }]} />
 
       {view === "sent" && (
-        <SentOffers offers={sent} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
+        <SentOffers offers={sent} synced={sentSynced} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
           onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} />
       )}
 

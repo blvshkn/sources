@@ -1,6 +1,7 @@
 // Sent offers. Sleeper's public API can't see pending trade offers, so Sources keeps its own list: every time a pitch
-// is shared or copied (or marked as sent), the deal is saved here. Kept per league in this browser only, under a
+// is shared or copied (or marked as sent), the deal is saved here. Kept per league in this browser under a
 // versioned key (App.tsx persists it as `sources.<league>.sentOffers.v1`, wrapped in try/catch like every other key).
+// In a live league the list also syncs to the Sleeper user across devices (offerSync.ts, api/offers.js).
 // A deal can be sent again after a tweak: each send is a version, and earlier versions stay with the latest one.
 
 export type SentStatus = "pending" | "declined" | "accepted" | "replaced";
@@ -25,6 +26,8 @@ export interface SentOffer {
   week: number;
   status: SentStatus;
   statusAt?: number;
+  /** ms since epoch, the last change to this record on any device. Sync's merge keeps the newest (see offerSync.ts) */
+  updatedAt?: number;
 }
 
 export const SENT_KEY = "sentOffers.v1";
