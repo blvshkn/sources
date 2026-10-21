@@ -20,6 +20,11 @@ export interface DeclineWhy {
   note?: string;
   /** ms since epoch, when it was set */
   at: number;
+  /** "notNow": the league week it was saved in. Ideas with him pause through the week after (declineWhy.ts pauseOf).
+   *  Unset when the week wasn't known, and then the pause runs 14 days from `at`. */
+  week?: number;
+  /** "notNow": ms since epoch, when you resumed ideas with him early. The reason stays; the pause ends. */
+  resumedAt?: number;
 }
 
 export interface SentOffer {

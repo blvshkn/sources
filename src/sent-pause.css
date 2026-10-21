@@ -1,0 +1,45 @@
+/* "Not trading now" and "Wanted more value" (declineWhy.ts): the paused line with Resume now, on the Sent offer row,
+   Trade's Ideas tab and the partner profile, plus the profile's "Wants more value" line. Phones first: the line wraps
+   and Resume drops under the text when it has to. Resume is a small outlined button like the row actions; it never
+   underlines, and press scales it to 0.97 over 160ms (not with reduced motion). */
+
+html:root:not(#_):not(#_) .why-paused {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0;
+  font: 400 0.875rem/1.45 "Geist", sans-serif; color: var(--ink); text-wrap: pretty;
+}
+html:root:not(#_):not(#_) .why-paused .why-paused-text { flex: 1 1 200px; min-width: 0; }
+html:root:not(#_):not(#_) .why-paused .num { font-family: var(--font-mono); font-size: 0.8125rem; }
+html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume {
+  display: inline-flex; align-items: center; flex: none; height: 32px; padding: 0 12px; margin: 0;
+  border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink);
+  font: 500 0.8125rem/1 "Geist", sans-serif; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, border-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:is(:hover, :focus, :active) { text-decoration: none; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:hover { background: var(--surface-2); border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
+}
+html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:active { transform: scale(0.97); }
+html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+/* Trade's Ideas tab: the line in its own card where the ideas would be */
+html:root:not(#_):not(#_) .card.why-paused-card { padding: 14px 16px; }
+
+/* Sent offer row: the Why line with Resume now beside it. The wrap takes the line's old indent and full width. */
+html:root:not(#_):not(#_) .so-card .so-why-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-left: 40px; min-width: 0; }
+html:root:not(#_):not(#_) .so-card .so-why-wrap .so-why-line { flex: 1 1 220px; min-width: 0; margin: 0; }
+html:root:not(#_):not(#_) .so-card .so-why-wrap .so-why-resume { margin-left: 8px; }
+
+/* Partner profile: "Wants more value" reads like the other facts on how he trades */
+html:root:not(#_):not(#_) .ps-partner .pp-trait { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ps-partner .pp-trait b { font-weight: 600; color: var(--ink); }
+html:root:not(#_):not(#_) .ps-partner .why-paused { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:active { transform: none; }
+}
+
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .so-card .so-why-wrap { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_) .so-card .so-why-wrap .so-why-resume { margin-left: 0; }
+}

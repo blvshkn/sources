@@ -1,7 +1,7 @@
 // Why a trade scan with one manager found nothing, in plain words. Everything here is read off the scan's own record
 // (engine.ts ScanDiag) and the two rosters: a reason only shows when the numbers behind it are true.
 import { TEAMS, YOU, Team, ManagerTag, MyTag, Pos, playerById } from "./data";
-import { Price, ScanDiag, ScanMiss, ScanRejects, Trade, acceptance, evaluate, fmt, lineupFor, lineupTotal, marketValue, needsFor, round1, scored } from "./engine";
+import { Price, ScanDiag, ScanMiss, ScanRejects, Trade, acceptance, evaluate, fmt, lineupFor, lineupTotal, marketValue, needsFor, round1, scored, wantsMoreValue, MORE_VALUE_EDGE } from "./engine";
 
 export interface WhyRow { key: keyof ScanRejects; label: string; n: number; share: number }
 export interface WhyMiss { trade: Trade; title: string; nums: string; reason: string }
@@ -42,8 +42,10 @@ function smallPiece(misses: ScanMiss[], them: Team, tags: ManagerTag[], myTags: 
   for (const m of misses) {
     const t = m.trade;
     if (t.give.length + t.get.length >= 4) continue;
-    const theirsShort = m.fail === "them" || m.fail === "theyPass" || (m.fail === "value" && t.marketGap > 0);
-    const yoursShort = m.fail === "you" || m.fail === "youPass" || (m.fail === "value" && t.marketGap < 0);
+    // A manager who asked for more value is short on value until he comes out ahead, not just when you do
+    const theirValueShort = t.marketGap > 0 || (wantsMoreValue(them.id) && -t.marketGap < MORE_VALUE_EDGE);
+    const theirsShort = m.fail === "them" || m.fail === "theyPass" || (m.fail === "value" && theirValueShort);
+    const yoursShort = m.fail === "you" || m.fail === "youPass" || (m.fail === "value" && !theirValueShort && t.marketGap < 0);
     if (theirsShort) {
       for (const id of cheap(YOU.roster.filter((id) => !yourStart.has(id) && !t.give.includes(id)))) {
         const x = evaluate(YOU, them, [...t.give, id], t.get, tags, myTags, prices);

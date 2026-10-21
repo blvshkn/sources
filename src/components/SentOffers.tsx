@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pos, TEAMS, playerById } from "../data";
 import { DeclineWhy, SentDeal, SentOffer, WhyKind, ago, sentDeals } from "../sentOffers";
-import { WHY_PICKS, thinOptions, whyEffect, whyLabel } from "../declineWhy";
+import { WHY_PICKS, WhyPause, thinOptions, whyEffect, whyLabel } from "../declineWhy";
 import { TeamAvatar } from "./TeamPicker";
 import { PairPrompt } from "./SyncDevices";
 import { useSyncStatus } from "../syncKey";
@@ -34,6 +34,20 @@ function When({ o, now }: { o: SentOffer; now: number }) {
 }
 
 const last = (id: string) => nameOf(id).split(" ").slice(-1)[0];
+
+/**
+ * "Paused until Week 9. Not trading right now." with Resume now beside it. Shown wherever his ideas would have been:
+ * Trade's Ideas tab and his partner profile. No confirm: Resume is undoable from the toast.
+ */
+export function PausedLine({ until, onResume }: { until: string; onResume?: () => void }) {
+  const m = /^(.*?)(\d+)$/.exec(until);
+  return (
+    <p className="why-paused">
+      <span className="why-paused-text">Paused until {m ? <>{m[1]}<span className="num">{m[2]}</span></> : until}. Not trading right now.</span>
+      {onResume && <button type="button" className="why-resume" onClick={onResume}>Resume now</button>}
+    </p>
+  );
+}
 
 /**
  * Why he passed: quick picks plus a note, inside the row. "Thin at" is one chip per position: the ones you asked
@@ -88,12 +102,15 @@ function WhyPanel({ o, onSave, onCancel }: { o: SentOffer; onSave: (w: DeclineWh
   );
 }
 
-function Row({ d, now, onReopen, onDecline, onClear, onWhy }: { d: SentDeal; now: number; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void; onWhy?: (o: SentOffer, w: DeclineWhy | null) => void }) {
+function Row({ d, now, onReopen, onDecline, onClear, onWhy, pause, onResume }: { d: SentDeal; now: number; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void; onWhy?: (o: SentOffer, w: DeclineWhy | null) => void; pause?: WhyPause; onResume?: () => void }) {
   const [open, setOpen] = useState(false);
   const [whyOpen, setWhyOpen] = useState(false);
   const { head, earlier } = d;
   const team = partnerOf(head.partnerId);
   const st = dealStatus(d);
+  // The pause shows on the offer whose reason started it
+  const myPause = pause && pause.offerId === head.id ? pause : null;
+  const fx = head.why ? whyEffect(head.why, head.partnerId, "him", myPause) : null;
   return (
     <li className={`so-row is-${st}`}>
       <button type="button" className="so-open" onClick={() => onReopen(head)} aria-label={`Open your offer to ${managerOf(head.partnerId)} in the builder`}>
@@ -119,11 +136,14 @@ function Row({ d, now, onReopen, onDecline, onClear, onWhy }: { d: SentDeal; now
       {st === "declined" && onWhy && (whyOpen
         ? <WhyPanel o={head} onCancel={() => setWhyOpen(false)} onSave={(w) => { onWhy(head, w); setWhyOpen(false); }} />
         : head.why && (
-          <button type="button" className="so-why-line" onClick={() => setWhyOpen(true)} aria-label={`Why: ${whyLabel(head.why)}. Edit`}>
-            <span className="so-why-text"><span className="so-why-k">Why:</span> {whyLabel(head.why)}{head.why.note && head.why.kind !== "other" ? <span className="so-why-said"> “{head.why.note}”</span> : null}</span>
-            {whyEffect(head.why, head.partnerId) && <small className="so-why-fx">{whyEffect(head.why, head.partnerId)}</small>}
-            <Icon name="pen" size={14} />
-          </button>
+          <div className="so-why-wrap">
+            <button type="button" className="so-why-line" onClick={() => setWhyOpen(true)} aria-label={`Why: ${whyLabel(head.why)}. ${fx ? `${fx}. ` : ""}Edit`}>
+              <span className="so-why-text"><span className="so-why-k">Why:</span> {whyLabel(head.why)}{head.why.note && head.why.kind !== "other" ? <span className="so-why-said"> “{head.why.note}”</span> : null}</span>
+              {fx && <small className="so-why-fx">{fx}</small>}
+              <Icon name="pen" size={14} />
+            </button>
+            {myPause && onResume && <button type="button" className="why-resume so-why-resume" onClick={onResume}>Resume now</button>}
+          </div>
         ))}
       {open && earlier.length > 0 && (
         <ul className="so-earlier" aria-label="Earlier versions">
@@ -143,10 +163,12 @@ function Row({ d, now, onReopen, onDecline, onClear, onWhy }: { d: SentDeal; now
 }
 
 /** Trade's Sent tab: every deal you sent, newest first. Tapping one opens it in the builder, filled in. */
-export function SentOffers({ offers, synced = false, syncUser = "", onReopen, onDecline, onClear, onWhy }: {
+export function SentOffers({ offers, synced = false, syncUser = "", onReopen, onDecline, onClear, onWhy, pauses = {}, onResume }: {
   offers: SentOffer[]; synced?: boolean; syncUser?: string; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
   /** Save or remove why a declined offer didn't go */
   onWhy?: (o: SentOffer, w: DeclineWhy | null) => void;
+  /** Paused managers by team id ("Not trading now"), and how to resume ideas with one early */
+  pauses?: Record<string, WhyPause>; onResume?: (teamId: string) => void;
 }) {
   const now = useNow();
   const deals = sentDeals(offers);
@@ -159,7 +181,8 @@ export function SentOffers({ offers, synced = false, syncUser = "", onReopen, on
       </div>
       {deals.length === 0
         ? <p className="so-empty">Nothing sent yet. When you share or copy a pitch, the deal lands here so you can follow up or send a new version.</p>
-        : <ul className="so-list">{deals.map((d) => <Row key={d.head.deal} d={d} now={now} onReopen={onReopen} onDecline={onDecline} onClear={onClear} onWhy={onWhy} />)}</ul>}
+        : <ul className="so-list">{deals.map((d) => <Row key={d.head.deal} d={d} now={now} onReopen={onReopen} onDecline={onDecline} onClear={onClear} onWhy={onWhy}
+          pause={pauses[d.head.partnerId]} onResume={onResume ? () => onResume(d.head.partnerId) : undefined} />)}</ul>}
     </section>
   );
 }

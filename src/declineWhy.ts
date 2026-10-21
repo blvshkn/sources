@@ -5,9 +5,12 @@
 //   - "Won't trade that player": he refuses to move that player
 //   - "Didn't want the player I sent": he isn't interested in that player of yours
 //   - "Other": the note is read like any typed note (parseTag), and tags only when it names a player or position
-// "Wanted more value" and "Not trading now" are kept on the offer but don't tag anyone.
+// Two reasons don't tag anyone, and steer ideas another way:
+//   - "Wanted more value": ideas with him lean his way. The engine's value test needs him to come out ahead
+//     (valueAsks here, engine.ts applyValueAsks), and it fades like a tag does
+//   - "Not trading now": ideas with him pause for two league weeks (pauseOf). Resume ends it early and keeps the reason
 import { ManagerTag, POS_ORDER, Pos, TEAMS, playerById } from "./data";
-import { needsFor, parseTag } from "./engine";
+import { FadeWeeks, needsFor, parseTag } from "./engine";
 import type { DeclineWhy, SentOffer, WhyKind } from "./sentOffers";
 
 const WEEK_MS = 7 * 864e5;
@@ -61,8 +64,10 @@ export function whyTag(w: DeclineWhy, partnerId: string): Omit<ManagerTag, "id" 
   return null;
 }
 
-/** What a reason does to trade ideas, for the line under the row */
-export function whyEffect(w: DeclineWhy, partnerId: string, who = "him"): string | null {
+/** What a reason does to trade ideas, for the line under the row. A pause reads its end from `pause`. */
+export function whyEffect(w: DeclineWhy, partnerId: string, who = "him", pause?: WhyPause | null): string | null {
+  if (w.kind === "value") return `Ideas with ${who} now offer more value`;
+  if (w.kind === "notNow") return pause ? `Ideas with ${who} paused until ${pause.until}` : w.resumedAt ? `Ideas with ${who} are back on` : null;
   const t = whyTag(w, partnerId);
   if (!t) return null;
   if (t.kind === "refuses") return t.playerId ? `Ideas leave ${lastName(t.playerId)} out` : `Ideas won't ask ${who} for his ${t.pos}s`;
@@ -90,3 +95,44 @@ export function tagsFromSent(list: SentOffer[], skip: ManagerTag[] = [], now = D
 
 /** The offer id behind a tag from a reason, or null for a tag you wrote */
 export const offerOfTag = (id: string) => (id.startsWith("why-") ? id.slice(4) : null);
+
+// ---- Not trading now: a two week pause ---------------------------------------
+
+/** A pause on ideas with one manager, from a "Not trading now" reason */
+export interface WhyPause {
+  teamId: string;
+  /** The offer the reason is on, for Resume */
+  offerId: string;
+  /** When ideas come back, as shown: "Week 9", or a date like "Nov 4" when the week wasn't known */
+  until: string;
+}
+const DAY_MS = 864e5;
+/** How long a pause runs when the league week can't be read */
+const PAUSE_DAYS = 14;
+
+/**
+ * Whether a reason pauses ideas right now. Saved in week 7, ideas stay paused through week 8 and come back in week 9.
+ * Without a week (or a league week to compare it with) it runs 14 days from when it was saved. Resume ends it.
+ */
+export function pauseOf(o: SentOffer, week: number, now = Date.now()): WhyPause | null {
+  const w = o.why;
+  if (o.status !== "declined" || !w || w.kind !== "notNow" || w.resumedAt) return null;
+  if (w.week && w.week >= 1 && week >= 1) {
+    const back = w.week + 2;
+    return week < back ? { teamId: o.partnerId, offerId: o.id, until: `Week ${back}` } : null;
+  }
+  const end = w.at + PAUSE_DAYS * DAY_MS;
+  return now < end ? { teamId: o.partnerId, offerId: o.id, until: new Date(end).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } : null;
+}
+
+/** Every manager paused right now, by team id. The newest reason wins when there's more than one. */
+export function pausesFromSent(list: SentOffer[], week: number, now = Date.now()): Record<string, WhyPause> {
+  const out: Record<string, WhyPause> = {};
+  [...list].sort((a, b) => (a.why?.at ?? 0) - (b.why?.at ?? 0)).forEach((o) => { const p = pauseOf(o, week, now); if (p) out[p.teamId] = p; });
+  return out;
+}
+
+/** Managers who passed for wanting more value, while the reason is inside the tag fade window */
+export function valueAsks(list: SentOffer[], fade: FadeWeeks, now = Date.now()): string[] {
+  return [...new Set(list.filter((o) => o.status === "declined" && o.why?.kind === "value" && Math.floor((now - o.why.at) / WEEK_MS) < fade).map((o) => o.partnerId))];
+}

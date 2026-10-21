@@ -9,6 +9,8 @@ import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { ScrollArea } from "./ScrollArea";
 import { AiMark } from "./WorkingLoader";
+import { PausedLine } from "./SentOffers";
+import type { WhyPause } from "../declineWhy";
 
 /** Below this the profile is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches partner.css. */
 const MODAL_FROM = 768;
@@ -27,8 +29,12 @@ const names = (xs: PastTrade["aGot"]) => xs.map((x) => x.name).join(" and ");
  * panel's partner card. A bottom sheet below 768px, a centered modal from 768px up. With more than one
  * partner in the deal, pills at the top switch between them.
  */
-export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose }: {
+export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose, pauses = {}, onResume, valueAsks = [] }: {
   teamIds: string[]; initial?: string; tags: ManagerTag[];
+  /** Managers who said they're not trading now (ideas paused), and how to resume early */
+  pauses?: Record<string, WhyPause>; onResume?: (teamId: string) => void;
+  /** Managers who passed on an offer for wanting more value */
+  valueAsks?: string[];
   /** Opens Trade's Notes tab for this team */
   onNotes: (teamId: string) => void;
   onClose: () => void;
@@ -137,11 +143,13 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose }: {
 
           <section className="pp-sec" aria-labelledby="pp-how">
             <h3 id="pp-how" className="pp-h">How they trade</h3>
+            {pauses[id] && <PausedLine until={pauses[id].until} onResume={onResume ? () => onResume(id) : undefined} />}
             <dl className="pp-stats">
               <div><dt>Trades</dt><dd className="pp-num">{td.trades}</dd></div>
               <div><dt>Closed</dt><dd>{td.offers ? <><span className="pp-num">{td.trades}</span> of <span className="pp-num">{td.offers}</span></> : <span className="pp-dash">n/a</span>}</dd></div>
               <div><dt>Usually buys</dt><dd>{td.buys.length ? td.buys.join(", ") : <span className="pp-dash">n/a</span>}</dd></div>
             </dl>
+            {valueAsks.includes(id) && <p className="pp-trait"><b>Wants more value:</b> from a declined offer. Ideas with {t.manager} give him more.</p>}
             {tip && <p className="pp-tip"><AiMark size={14} /><span>{tip.replace(/-/g, "‑")}</span></p>}
           </section>
 

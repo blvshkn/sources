@@ -422,8 +422,25 @@ export function valueEdge(side: "give" | "get", r: number, noun = "value", third
 // premium, and ignore deals that barely move their lineup.
 /** The most value each side will give up: past these shares of the bigger side, the value test blocks the deal. */
 const THEIR_VALUE_GIVE = 0.08, YOUR_VALUE_GIVE = 0.15;
-/** True when acceptance() blocks this deal on value alone, for either side. */
-const valueBlocked = (t: Trade) => t.marketGap > THEIR_VALUE_GIVE || t.marketGap < -YOUR_VALUE_GIVE;
+/**
+ * Managers who turned down an offer for wanting more value (declineWhy.ts). With them the value test moves 18 points
+ * their way: instead of giving up as much as 8%, he has to come out at least 10% ahead. Your side can stretch to 20%
+ * instead of 15% to get there, and a scan tops a deal that falls short with your cheapest bench player (scanTrades).
+ * So an idea with him gives him between 10% and 20% more value than he sends back. Set by the app like the league
+ * format, before any engine call reads it.
+ */
+export const MORE_VALUE_EDGE = 0.1;
+const MORE_VALUE_YOUR_GIVE = 0.2;
+let VALUE_ASKS = new Set<string>();
+export function applyValueAsks(teamIds: string[]) {
+  if (teamIds.length !== VALUE_ASKS.size || teamIds.some((id) => !VALUE_ASKS.has(id))) VALUE_ASKS = new Set(teamIds);
+}
+export const wantsMoreValue = (teamId: string) => VALUE_ASKS.has(teamId);
+/** The least value a partner takes, as a share of the bigger side: negative means he'll give some up. */
+const theirFloor = (teamId: string) => (VALUE_ASKS.has(teamId) ? MORE_VALUE_EDGE : -THEIR_VALUE_GIVE);
+/** The most value you give up with this partner */
+const yourCap = (teamId: string) => (VALUE_ASKS.has(teamId) ? MORE_VALUE_YOUR_GIVE : YOUR_VALUE_GIVE);
+const valueBlocked = (t: Trade) => -t.marketGap < theirFloor(t.partnerId) || t.marketGap < -yourCap(t.partnerId);
 export interface Acceptance { p: number; label: "Likely yes" | "Worth a shot" | "Long shot"; reasons: string[]; blockers: string[]; theirBlockers: string[] }
 const starts = (ids: string[], roster: string[]) => { const l = lineupFor(roster); const set = new Set(l.slots.map((s) => s.player?.id)); return ids.filter((id) => set.has(id)); };
 export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
@@ -433,8 +450,12 @@ export function acceptance(t: Trade, you: Team, them: Team): Acceptance {
   const youRosterAfter = rosterAfter(you, t, "you");
   // 1. Value: they won't take a loss on market value. Neither should you.
   const theirGap = -t.marketGap; // positive = they receive more value
-  if (theirGap < -THEIR_VALUE_GIVE) theirs(`${them.manager} ${valueEdge("give", gapRatio(theirGap), "value", true)}`);
-  if (t.marketGap < -YOUR_VALUE_GIVE) blockers.push(`you ${valueEdge("give", gapRatio(t.marketGap))}`);
+  if (VALUE_ASKS.has(them.id)) {
+    // He passed on an offer for wanting more value, so he needs to come out ahead, not just close
+    if (theirGap < MORE_VALUE_EDGE) theirs(`${them.manager} wants more value back. ${theirGap >= 0.01 ? `He gets only ${Math.round(theirGap * 100)}% more` : theirGap > -0.01 ? "This is about even" : `He ${valueEdge("give", gapRatio(theirGap), "value", true)}`}`);
+    else reasons.push("gives him the extra value he asked for");
+  } else if (theirGap < -THEIR_VALUE_GIVE) theirs(`${them.manager} ${valueEdge("give", gapRatio(theirGap), "value", true)}`);
+  if (t.marketGap < -yourCap(them.id)) blockers.push(`you ${valueEdge("give", gapRatio(t.marketGap))}`);
   // 2. Their lineup has to get meaningfully better.
   if (t.themDelta < 1) theirs(`${them.manager}'s lineup ${t.themDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.themDelta)}/wk)`);
   if (t.youDelta < 1) blockers.push(`your lineup ${t.youDelta <= -0.05 ? "gets worse" : "barely moves"} (${fmt(t.youDelta)}/wk)`);
@@ -537,6 +558,11 @@ export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: R
     if (near.length > NEAR_KEEP) near.pop();
   };
   let before: Before = { you: 0, them: 0 };
+  // With a manager who wants more value: your bench, cheapest first, to top up a deal that falls short of his edge
+  const yourStarters = VALUE_ASKS.has(them.id) ? new Set(lineupFor(you.roster).slots.map((s) => s.player?.id)) : null;
+  const sweeteners = yourStarters
+    ? you.roster.filter((id) => !yourStarters.has(id)).sort((a, b) => marketValue(playerById(a)) - marketValue(playerById(b)))
+    : null;
   for (const give of combos(you.roster, 2)) {
     yield { t: "n", n: scored.n };
     // Both "before" lineups are the same for every swap below, so they're built once per package (after the yield,
@@ -554,9 +580,18 @@ export function* scanTrades(you: Team, them: Team, tags: ManagerTag[], myTags: R
       // Most swaps fail the points test below. Check it first with the same numbers evaluate() would get, and only
       // build the full trade (values, warnings, key) for the ones that pass. The filters and their results are unchanged.
       } else if (!bothGain(you, them, give, get, before)) continue;
-      const t = evaluate(you, them, give, get, tags, myTags, prices, before);
+      let t = evaluate(you, them, give, get, tags, myTags, prices, before);
       if (t.warnings.length) { if (diag) diag.reject.notes++; continue; }
       if (t.youDelta < 1 || t.themDelta < 1) continue;
+      // He asked for more value: a deal short of his edge gets your cheapest bench player that gets it there
+      if (sweeteners && -t.marketGap < MORE_VALUE_EDGE) {
+        for (const id of sweeteners) {
+          if (give.includes(id)) continue;
+          const s = evaluate(you, them, [...give, id], get, tags, myTags, prices, before);
+          if (s.warnings.length || s.youDelta < 1 || s.themDelta < 1) continue;
+          if (-s.marketGap >= MORE_VALUE_EDGE) { t = s; break; }
+        }
+      }
       const a = acceptance(t, you, them);
       if (a.blockers.length || a.p < 0.5) {
         if (diag) {
@@ -1263,11 +1298,14 @@ export interface Answer {
   offers?: AcquireOption[];
   /** The player being chased and the players you've said you'll keep, carried to the next question in the thread. */
   acq?: AskAcq;
+  /** A heads up that stays first in the points whoever words the answer, like a manager who isn't trading right now */
+  notice?: string;
 }
 /** What Ask remembers between turns about a player you're trying to get. */
 export interface AskAcq { target: string; exclude: string[] }
-/** Thread state Ask hands back to the engine with a follow-up. */
-export interface AskCtx { acq?: AskAcq }
+/** Thread state Ask hands back to the engine with a follow-up. `paused` is set by the app, not the thread: managers
+ *  whose ideas are paused, with the line Ask adds when you ask about a deal with one of them anyway. */
+export interface AskCtx { acq?: AskAcq; paused?: Record<string, string> }
 
 export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = [], ctx?: AskCtx): Answer {
   return drain(askSteps(q, tags, myTags, prices, passed, ctx));
@@ -1279,7 +1317,14 @@ const yourRoster = (): TraceEv => ({ t: "step", doing: "Reading your roster", do
 
 /** The answer to "how can I get X": two or three distinct offers from the engine, each its own card in Ask, and a
  *  plain line on how many work. `keepNow` is who this question just took off the table, for the plan line. */
-function* acquireAnswer(target: string, exclude: string[], keepNow: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Steps<Answer> {
+function* acquireAnswer(target: string, exclude: string[], keepNow: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, paused: Record<string, string> = {}): Steps<Answer> {
+  const answer = yield* acquireOffers(target, exclude, keepNow, tags, myTags, prices);
+  // Asking about him directly still works while ideas with him are paused; it just says so first
+  const owner = TEAMS.find((x) => x.roster.includes(target));
+  const note = owner && paused[owner.id] ? paused[owner.id] : "";
+  return note ? { ...answer, points: [note, ...answer.points], notice: note } : answer;
+}
+function* acquireOffers(target: string, exclude: string[], keepNow: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Steps<Answer> {
   const p = playerById(target);
   const owner = TEAMS.find((x) => x.roster.includes(target))!;
   const without = exclude.length ? ` without ${names(exclude).replace(/ \+ /g, " or ")}` : "";
@@ -1342,7 +1387,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
   if (wantsTarget || (prev && yours.length && keepWords && !target)) {
     const keepNow = keepWords ? yours : [];
     const exclude = [...new Set([...(prev?.exclude ?? []), ...keepNow])].filter((id) => YOU.roster.includes(id));
-    return yield* acquireAnswer(wantsTarget ? target! : prev!.target, exclude, keepNow, tags, myTags, prices);
+    return yield* acquireAnswer(wantsTarget ? target! : prev!.target, exclude, keepNow, tags, myTags, prices, ctx?.paused);
   }
 
   if (/(who has|who owns|who'?s got|who got|whose team|where is|which team)/.test(s) && named) {
@@ -1423,18 +1468,27 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     yield { t: "step", doing: "Scoring {n} trade combos", done: "Scored {n} trade combos", n: 0 };
     const scored = { n: 0 };
     const found: { n: TeamNeeds; t: Trade }[] = [];
-    for (const n of needs.filter((x) => !x.team.you)) {
+    // Paused managers sit this out: they said they're not trading, or you paused ideas with them
+    // unless the question names one, which still gets an answer with a heads up
+    const asked = said?.item.id;
+    const paused = { ...(ctx?.paused ?? {}) };
+    const notice = asked && paused[asked] ? paused[asked] : "";
+    if (asked) delete paused[asked];
+    const skipped = needs.filter((x) => !x.team.you && paused[x.team.id]).map((x) => x.team.manager);
+    const skipLine = [...(notice ? [notice] : []), ...(skipped.length ? [`Skipped ${skipped.join(" and ")}: ideas paused for now.`] : [])];
+    for (const n of needs.filter((x) => !x.team.you && !paused[x.team.id])) {
       const t = (yield* scanTrades(YOU, n.team, activeTags(tags, 4), myTags, prices, 1, scored))[0];
       yield { t: "n", n: scored.n, chip: { label: n.team.name, kind: "team" } };
       if (t) found.push({ n, t });
     }
     const top = found.sort((a, b) => Math.min(b.t.youDelta, b.t.themDelta) - Math.min(a.t.youDelta, a.t.themDelta)).slice(0, 3);
     yield { t: "step", doing: "Picking the best deals", done: !top.length ? "No deal works for both sides" : found.length === 1 ? "Kept the one deal both sides would take" : `Kept the best ${top.length} of ${found.length} deals both sides would take`, chips: top.map((x) => ({ label: x.n.team.name, kind: "team" as const })) };
-    if (!top.length) return { text: "No clean win-win trades right now.", points: [], links: [{ label: "See the needs map", tab: "league" }] };
+    if (!top.length) return { text: "No clean win-win trades right now.", points: skipLine, links: [{ label: "See the needs map", tab: "league" }], ...(notice ? { notice } : {}) };
     return {
       text: `${top[0].n.team.name} is your best trade partner this week.`,
-      points: top.map((x) => `${x.n.team.name}: your ${names(x.t.give)} for ${names(x.t.get)} (you ${fmt(x.t.youDelta)}, them ${fmt(x.t.themDelta)}).`),
+      points: [...top.map((x) => `${x.n.team.name}: your ${names(x.t.give)} for ${names(x.t.get)} (you ${fmt(x.t.youDelta)}, them ${fmt(x.t.themDelta)}).`), ...skipLine],
       links: [{ label: "Open the top deal", tab: "trade", trade: top[0].t }],
+      ...(notice ? { notice } : {}),
     };
   }
   const team = said?.item;
@@ -1446,7 +1500,9 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     yield { t: "step", doing: `Reading ${poss(team.manager)} trades`, done: `Read ${poss(team.manager)} trades (${td.trades})`, chips: td.buys.map((p) => ({ label: `Buys ${p}`, kind: "pos" as const })) };
     return {
       text: `${team.name} is a ${n.mode.toLowerCase()} that needs a ${n.need}.`,
-      points: [`${fmt(n.groups[n.need].diff)} pts a week vs league average at ${n.need}.`, n.surplusPlayer ? `Has a spare ${n.surplus}: ${n.surplusPlayer.name}.` : "No obvious spare starter on the bench.", td.summary],
+      ...(ctx?.paused?.[team.id] ? { notice: ctx.paused[team.id] } : {}),
+      points: [...(ctx?.paused?.[team.id] ? [ctx.paused[team.id]] : []), `${fmt(n.groups[n.need].diff)} pts a week vs league average at ${n.need}.`, n.surplusPlayer ? `Has a spare ${n.surplus}: ${n.surplusPlayer.name}.` : "No obvious spare starter on the bench.", td.summary,
+        ...(VALUE_ASKS.has(team.id) ? [`${team.manager} passed on an offer for wanting more value, so ideas with him give him more.`] : [])],
       links: [{ label: `Build a trade with ${team.manager}`, tab: "trade", teamId: team.id }],
     };
   }

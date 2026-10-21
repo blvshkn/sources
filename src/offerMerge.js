@@ -57,6 +57,11 @@ export function cleanOffer(o, leagueId) {
     if (typeof w.playerId === "string" && ID.test(w.playerId)) why.playerId = w.playerId;
     const note = str(w.note, 280)?.trim();
     if (note) why.note = note;
+    // "Not trading now": the league week it was saved in, and when ideas were resumed early
+    const wk = num(w.week);
+    if (w.kind === "notNow" && wk != null && wk >= 1 && wk <= 30) why.week = Math.floor(wk);
+    const resumed = num(w.resumedAt);
+    if (w.kind === "notNow" && resumed != null) why.resumedAt = resumed;
     out.why = why;
   }
   out.updatedAt = stampOf({ ...out, updatedAt: o.updatedAt });

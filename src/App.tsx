@@ -8,7 +8,7 @@ import { Matchup } from "./components/Matchup";
 import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
-  Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, askSteps, builderTip,
+  Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, applyValueAsks, askSteps, builderTip,
   counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
@@ -43,7 +43,7 @@ import { clearHandoff, peekHandoff } from "./demoHandoff";
 import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { DeclineWhy, SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
-import { offerOfTag, tagsFromSent, whyEffect } from "./declineWhy";
+import { offerOfTag, pausesFromSent, tagsFromSent, valueAsks, whyEffect } from "./declineWhy";
 import { useOfferSync } from "./offerSync";
 import { setAiUser } from "./aiClient";
 import { useWatchSync } from "./watchSync";
@@ -246,6 +246,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   // Your notes plus what declined offers taught it ("Thin at RB" means he won't move a RB). See declineWhy.ts.
   const allTags = useMemo(() => [...tags, ...tagsFromSent(sent, tags)], [tags, sent]);
+  // Two reasons steer ideas without a tag: "Wanted more value" makes the engine's value test lean his way, and
+  // "Not trading now" pauses ideas with him for two league weeks
+  const asks = useMemo(() => valueAsks(sent, fade), [sent, fade]);
+  applyValueAsks(asks);
+  const vkey = asks.join();
+  const whyPauses = useMemo(() => pausesFromSent(sent, WEEK), [sent]);
   const active = useMemo(() => activeTags(allTags, fade), [allTags, fade]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const needs = useMemo(() => allNeeds(), [fkey]);
@@ -259,12 +265,19 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     const out: Record<string, Trade[]> = {};
     TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = findTrades(YOU, t, active, myTags, prices)));
     return out;
-  }, [active, myTags, prices, fkey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, myTags, prices, fkey, vkey]); // eslint-disable-line react-hooks/exhaustive-deps
   const suggestionsByTeam = useMemo(() => {
     const out: Record<string, Trade[]> = {};
-    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) ? [] : scannedByTeam[t.id].filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
+    TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) || whyPauses[t.id] ? [] : scannedByTeam[t.id].filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
     return out;
-  }, [scannedByTeam, hiddenIdeas, pausedTeams, passed]);
+  }, [scannedByTeam, hiddenIdeas, pausedTeams, whyPauses, passed]);
+  // What Ask says about a paused manager: it skips him when picking partners, and answers about him with a heads up
+  const askPaused = useMemo(() => {
+    const out: Record<string, string> = {};
+    pausedTeams.forEach((id) => (out[id] = `You paused trade ideas with ${teamById(id).manager}.`));
+    Object.values(whyPauses).forEach((p) => (out[p.teamId] = `${teamById(p.teamId).manager} said he's not trading right now. Ideas with him are paused until ${p.until}.`));
+    return out;
+  }, [pausedTeams, whyPauses]);
 
   // Every team with a trade idea, best chance first. The top three are "best trade partners"; League Needs orders its cards by the whole list.
   const fits = useMemo(() => needs.filter((n) => !n.team.you && suggestionsByTeam[n.team.id]?.[0])
@@ -433,7 +446,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // (a toast or the inbox opening). The builder tip tries dozens of counters, so it's worth keeping.
   /* eslint-disable react-hooks/exhaustive-deps */
   const trade = useMemo(() => (!extra.length && give.length && get.length ? evaluate(YOU, teamById(partnerId), give, get, active, myTags, prices) : null),
-    [extra.length, give, get, partnerId, active, myTags, prices, fkey]);
+    [extra.length, give, get, partnerId, active, myTags, prices, fkey, vkey]);
   // A multi-team deal reads once every partner has a player moving and you both send and get someone
   const multi = useMemo(() => {
     const legs: DealLeg[] = [{ teamId: partnerId, give, get }, ...extra];
@@ -523,10 +536,23 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   /** Why a declined offer didn't go. It steers ideas through the tag it implies, so say what changed. */
   const whySent = (o: SentOffer, w: DeclineWhy | null) => {
     const prev = sent;
-    setSent((c) => c.map((x) => { if (x.id !== o.id) return x; const { why: _old, ...rest } = x; return w ? { ...rest, why: w } : rest; }));
+    // "Not trading now" pauses from the week it's saved in (declineWhy.ts pauseOf). Editing it keeps the first week.
+    const why = w && w.kind === "notNow" ? { ...w, at: o.why?.kind === "notNow" ? o.why.at : w.at, ...(o.why?.kind === "notNow" && o.why.week ? { week: o.why.week } : WEEK >= 1 ? { week: WEEK } : {}) } : w;
+    const next = sent.map((x) => { if (x.id !== o.id) return x; const { why: _old, ...rest } = x; return why ? { ...rest, why } : rest; });
+    setSent(next);
     haptic();
-    const fx = w && whyEffect(w, o.partnerId, teamById(o.partnerId)?.manager);
-    setToast(!w ? "Reason removed." : fx ? `Saved. ${fx}.` : "Saved.", () => setSent(prev));
+    const mgr = teamById(o.partnerId)?.manager;
+    const fx = why && whyEffect(why, o.partnerId, mgr, pausesFromSent(next, WEEK)[o.partnerId]);
+    setToast(!why ? (o.why?.kind === "notNow" ? `Reason removed. Trade ideas with ${mgr ?? "him"} are back.` : "Reason removed.") : fx ? `Saved. ${fx}.` : "Saved.", () => setSent(prev));
+  };
+  /** Ends a "Not trading now" pause early. The reason stays on the offer. */
+  const resumeWhy = (teamId: string) => {
+    const p = whyPauses[teamId];
+    if (!p) return;
+    const prev = sent;
+    setSent((c) => c.map((x) => (x.id === p.offerId && x.why ? { ...x, why: { ...x.why, resumedAt: Date.now() } } : x)));
+    haptic();
+    setToast(`Trade ideas with ${teamById(teamId)?.manager ?? "him"} are back.`, () => setSent(prev));
   };
   const clearSent = (o: SentOffer) => {
     const prev = sent;
@@ -755,6 +781,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             <TradeBuilder partnerId={partnerId} setPartner={setPartner} give={give} get={get} toggle={toggle}
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
               sent={sent} sentSynced={offerSync.state === "synced"} syncUser={syncUser} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent} onWhySent={whySent}
+              pauses={whyPauses} onResumePause={resumeWhy} valueAsks={asks}
               extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []} ideasByTeam={suggestionsByTeam}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
@@ -764,7 +791,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
-          {tab === "ask" && <Ask initial={askSeed} answer={(q, ctx) => askSteps(q, active, myTags, prices, passed, ctx)} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q, ctx) => askSteps(q, active, myTags, prices, passed, { ...ctx, paused: askPaused })} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} refreshed={refreshed} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}

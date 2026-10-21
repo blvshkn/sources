@@ -10,7 +10,8 @@ import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, group
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
-import { SentOffers } from "./SentOffers";
+import { PausedLine, SentOffers } from "./SentOffers";
+import type { WhyPause } from "../declineWhy";
 import type { DeclineWhy, SentOffer } from "../sentOffers";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { DealDetails } from "./DealDetails";
@@ -470,7 +471,8 @@ export function lockMap(myTags: Record<string, MyTag>) {
 }
 
 const NO_IDEAS: Record<string, TradeT[]> = {};
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent, onWhySent }: {
+const NO_PAUSES: Record<string, WhyPause> = {};
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent, onWhySent, pauses = NO_PAUSES, onResumePause, valueAsks = [] }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -492,6 +494,10 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   /** Offers you sent, for the Sent tab. Tapping one puts it back in the builder. */
   sent?: SentOffer[]; sentSynced?: boolean; syncUser?: string; onReopenSent?: (o: SentOffer) => void; onDeclineSent?: (o: SentOffer) => void; onClearSent?: (o: SentOffer) => void;
   onWhySent?: (o: SentOffer, w: DeclineWhy | null) => void;
+  /** Managers whose ideas are paused because they said they're not trading now, and how to resume early */
+  pauses?: Record<string, WhyPause>; onResumePause?: (teamId: string) => void;
+  /** Managers who passed for wanting more value, so ideas with them lean their way */
+  valueAsks?: string[];
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const isMulti = extra.length > 0;
@@ -518,7 +524,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const last = seen.current[partnerId];
   const stale = !last || last.sig !== sig;
   const [scanned, setScanned] = useState<string | null>(null);
-  const scanning = view === "ideas" && stale && scanned !== sig;
+  const pause = pauses[partnerId];
+  const scanning = view === "ideas" && !pause && stale && scanned !== sig;
   const [fresh, setFresh] = useState<string[]>([]);
   const [rescanned, setRescanned] = useState(false);
   // Each finished scan's own record of what it turned down, for the "why no trades" read
@@ -543,7 +550,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
     .map((x) => x.startsWith(them.manager + " ") ? x.slice(them.manager.length + 1) : x)
     .map((x) => x.charAt(0).toUpperCase() + x.slice(1));
   const scoutTip = scoutParts.length > 1 ? scoutParts[scoutParts.length - 1] : null;
-  const scoutFacts = scoutTip ? scoutParts.slice(0, -1) : scoutParts;
+  const scoutFacts = [...(scoutTip ? scoutParts.slice(0, -1) : scoutParts), ...(valueAsks.includes(them.id) ? ["Wants more value, from a declined offer"] : [])];
 
   const [kind, setKind] = useState<ManagerTagKind>("wants");
   const [target, setTarget] = useState<string>("pos:RB");
@@ -591,6 +598,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
           {onProfile && <button type="button" className="btn tr-profile" onClick={() => setProfile(true)} aria-haspopup="dialog" aria-expanded={profile} title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner profiles" : `${them.manager}'s profile`}</span></button>}
           {profile && <PartnerProfile teamIds={legs.map((l) => l.team.id)} initial={partnerId} tags={tags} onClose={() => setProfile(false)}
+            pauses={pauses} onResume={onResumePause} valueAsks={valueAsks}
             onNotes={(id) => { if (id !== partnerId) setPartner(id); setView("notes"); }} />}
           {/* An offer comes from one manager, so the switch is a two-team thing: the multi-team read never used it */}
           {view === "build" && !isMulti && (
@@ -609,7 +617,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
 
       {view === "sent" && (
         <SentOffers offers={sent} synced={sentSynced} syncUser={syncUser} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
-          onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} onWhy={onWhySent} />
+          onDecline={(o) => onDeclineSent?.(o)} onClear={(o) => onClearSent?.(o)} onWhy={onWhySent} pauses={pauses} onResume={onResumePause} />
       )}
 
       {view === "ideas" && (
@@ -619,8 +627,13 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           {scoutTip && <p className="tr-tip"><AiMark size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
-      {view === "ideas" && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
-      {view === "ideas" && !scanning && suggestions.length === 0 && (
+      {view === "ideas" && pause && (
+        <section className="card why-paused-card" aria-label={`Trade ideas with ${them.manager}`}>
+          <PausedLine until={pause.until} onResume={onResumePause ? () => onResumePause(them.id) : undefined} />
+        </section>
+      )}
+      {view === "ideas" && !pause && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
+      {view === "ideas" && !pause && !scanning && suggestions.length === 0 && (
         <WhyNone them={them} diag={diags.current[sig]} tags={tags} myTags={myTags} prices={prices} ideasByTeam={ideasByTeam} onOpen={loadIdea} onTeam={setPartner} />
       )}
       {view === "ideas" && !scanning && suggestions.length > 0 && (

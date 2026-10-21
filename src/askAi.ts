@@ -193,6 +193,9 @@ export async function askServer(question: string, context: Record<string, unknow
 
 /** The AI's reply over the engine's answer: the AI's words, the engine's inline content and links. */
 export function merge(ai: AiReply, base: Answer | null, q = ""): Answer {
+  // A heads up from the engine (he isn't trading right now) stays first, whatever the AI wrote
+  const n = base?.notice;
+  if (n && !ai.points.includes(n)) ai = { ...ai, points: [n, ...ai.points].slice(0, 4) };
   // Offers carry their own players, numbers and ways out: the AI's words sit above them with nothing else added
   if (base?.offers?.length) return { text: ai.text, points: ai.points, links: base.links, offers: base.offers, acq: base.acq, quip: ai.quip, by: "ai" };
   const show = base?.show ?? (ai.playerIds?.length ? (ai.playerIds.length === 1 ? { kind: "player" as const, id: ai.playerIds[0] } : { kind: "players" as const, ids: ai.playerIds }) : undefined);
