@@ -7,7 +7,7 @@ import { useWeekPick } from "../waiverWeeks";
 
 /** Waivers, in the docked panel: what you can spend, when claims run, and the one add worth making.
  *  Same numbers and wording as the Waivers screen's top pickup card. */
-export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: { top?: WaiverRec; onToast: (m: string) => void; passed?: string[]; onPass?: (p: { id: string; name: string }) => void }) {
+export function WaiverContext({ top: thisWeek, onToast, passed = [], onSnooze }: { top?: WaiverRec; onToast: (m: string) => void; passed?: string[]; onSnooze?: (p: { id: string; name: string }) => void }) {
   const run = DEADLINES.waivers.replace(/^Waivers run\s*/i, "") || "Weekly";
   const ir = irReport(YOU);
   const irMove = ir.open > 0 ? ir.moveIn[0] : undefined;
@@ -59,7 +59,7 @@ export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: {
               onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
               Claim in Sleeper
             </a>
-            {onPass && <button className="linkish ps-ctx-pass" onClick={() => onPass({ id: top.fa.id, name: top.fa.name })} aria-label={`Not interested in ${top.fa.name}`}>Not interested</button>}
+            {onSnooze && <button className="snooze-btn" onClick={() => onSnooze({ id: top.fa.id, name: top.fa.name })} aria-label={`Not right now: skip ${top.fa.name} this week`}>Not right now</button>}
           </span>
         </div>
       ) : <p className="pctx-note">Nothing on the wire fixes a weak spot this week.</p>}

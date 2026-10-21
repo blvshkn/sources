@@ -102,6 +102,7 @@ import "./inbox-items.css";
 import "./player-tabs.css";
 import "./loadin.css";
 import "./swap-card.css";
+import "./snooze.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

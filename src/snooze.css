@@ -1,0 +1,16 @@
+/* "Not right now" on a suggested player (Overview nudges, Waivers top pickup and claim sheet, the docked panel): the
+   same small text pill as the briefing's waiver add (passed.css .brief-snooze), sitting in the flow instead of pinned.
+   It skips the player this week only. A 44px tap area hangs off the 26px pill. */
+html:root:not(#_):not(#_):not(#_) .snooze-btn {
+  position: relative; display: inline-flex; align-items: center; align-self: center; flex: none; height: 26px; padding: 0 10px;
+  border: 0; border-radius: 999px; white-space: nowrap; text-decoration: none;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font: 500 0.75rem/1 var(--font-body); cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_):not(#_) .snooze-btn::before { content: ""; position: absolute; inset: -9px -4px; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) .snooze-btn:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
+}
+html:root:not(#_):not(#_):not(#_) .snooze-btn:active { transform: scale(0.97); }
+html:root:not(#_):not(#_):not(#_) .snooze-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .snooze-btn { transition: none; } html:root:not(#_):not(#_):not(#_) .snooze-btn:active { transform: none; } }

@@ -316,6 +316,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     haptic();
     setToast(`Okay. Sources won't suggest ${p.name} again this week.`, () => setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; }));
   }, [setSnoozed, setToast]);
+  const unsnoozePlayer = useCallback((p: { id: string; name: string }) => {
+    setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; });
+    setToast(`${p.name} is back in suggestions.`, () => setSnoozed((c) => ({ ...c, [p.id]: WEEK })));
+  }, [setSnoozed, setToast]);
+  /** Skipped this week, for Waivers: still listed there, but out of its top pickup */
+  const snoozedNow = useMemo(() => Object.keys(snoozed).filter((id) => snoozed[id] >= WEEK), [snoozed]);
   const unpassPlayer = useCallback((p: { id: string; name: string }) => {
     setPassed((c) => c.filter((x) => x !== p.id));
     setToast(`${p.name} is back in suggestions.`, () => setPassed((c) => [...c.filter((x) => x !== p.id), p.id]));
@@ -777,7 +783,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
             <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
-              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onPass={passPlayer} onSnooze={snoozePlayer}
+              onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onSnooze={snoozePlayer}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")} sent={wireSent} onOpenSent={reopenSent}
               onKeepTag={keepTag} onClearTag={clearTag} />
@@ -802,7 +808,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setPrice={(id, p) => setPrices((c) => { const n = { ...c }; if (p) n[id] = p; else delete n[id]; return n; })}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
-          {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
+          {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onUnpass={unpassPlayer} snoozed={snoozedNow} onSnooze={snoozePlayer} onUnsnooze={unsnoozePlayer} />}
           {tab === "ask" && <Ask initial={askSeed} answer={(q, ctx) => askSteps(q, active, myTags, prices, passed, { ...ctx, paused: askPaused })} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} refreshed={refreshed} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}

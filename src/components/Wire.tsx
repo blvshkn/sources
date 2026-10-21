@@ -39,7 +39,7 @@ export interface Nudge {
   impact?: { label: string; text: string }[];
   tagId?: string;
   go?: { label: string; tab: string };
-  /** The player this nudge suggests adding, so "Not interested" can take him out of every suggestion. */
+  /** The player this nudge suggests adding, so "Not right now" can skip him this week. */
   pass?: { id: string; name: string };
 }
 
@@ -434,7 +434,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onPass, onSnooze, sent, onOpenSent }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onSnooze, sent, onOpenSent }: {
   you: TeamNeeds;
   partner: string | null;
   partnerId: string | null;
@@ -452,9 +452,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   onClearTag: (id: string) => void;
   onCapture: () => void;
   level: string;
-  /** "Not interested" on a suggested player: one list shared by every suggestion. */
-  onPass?: (p: { id: string; name: string }) => void;
-  /** "Not right now" on the briefing's waiver add: skip him this week only */
+  /** "Not right now" on a suggested player (the briefing's waiver add, a waiver nudge): skip him this week only */
   onSnooze?: (p: { id: string; name: string }) => void;
   /** Your newest offer still out (or just accepted), as one line in Quick moves that opens it */
   sent?: SentDeal | null; onOpenSent?: (o: SentOffer) => void;
@@ -564,7 +562,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
             )}
             {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
             {n.kind === "need" && n.teamId && <button className="nudge-link" onClick={() => onGo("league", n.teamId)}><span>See {teamById(n.teamId).manager}'s needs</span><Icon name="chev" size={14} /></button>}
-            {n.pass && onPass && <button className="nudge-link dismiss ps-nudge-pass" onClick={() => onPass(n.pass!)} aria-label={`Not interested in ${n.pass.name}`}>Not interested</button>}
+            {n.pass && onSnooze && <button className="snooze-btn ps-nudge-pass" onClick={() => onSnooze(n.pass!)} aria-label={`Not right now: skip ${n.pass.name} this week`}>Not right now</button>}
             <button className="nudge-link dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
           </div>
         </article>
