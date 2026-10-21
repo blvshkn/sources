@@ -26,6 +26,7 @@ import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
+import { FinalCtaPanel } from "./FinalCta";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -408,11 +409,11 @@ export function Landing({ onLive, onDemo }: {
 
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
         <div className="ld2-endfield" aria-hidden="true"><div className="env-turf" /></div>
-        <div className="ld2-final-panel">
+        <FinalCtaPanel>
           <h2 id="ld-final" className="ld2-h1 ld2-final-h">See your first trade<br />in under a minute.</h2>
           <div className="ld2-final-form">{form("ld-user-2")}</div>
           <button className="ld2-link" onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
-        </div>
+        </FinalCtaPanel>
       </section>
       </main>
 

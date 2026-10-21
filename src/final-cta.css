@@ -1,0 +1,63 @@
+/* Final call to action card (FinalCta.tsx): a lime glow that follows the pointer, over the tiled logo mark.
+   Mobile first. The glow wrapper is 120% x 160% of the card and centered on the card's top left corner, so the
+   wash below is exactly the old radial-gradient(60% 80% at 50% 0%) once the wrapper is moved to top center.
+   The resting spot is a % transform here; JS only writes px transforms while the glow travels. */
+
+html:root:not(#_):not(#_) .ld2-final-panel.ld2-cta {
+  --cta-k: 1.2;
+  --cta-lens: 180px;
+  position: relative; isolation: isolate;
+  padding: 48px 20px; border-radius: 24px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 200px), var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html:root:not(#_):not(#_) .ld2-final-panel.ld2-cta > :not(.ld2-cta-bg) { position: relative; z-index: 1; }
+
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: inherit; pointer-events: none;
+}
+
+/* The tiles. Scaled up as one layer on wider cards, like the old background did. */
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-tiles {
+  position: absolute; left: 0; top: 0; display: block;
+  width: calc(100% / var(--cta-k)); height: calc(100% / var(--cta-k));
+  transform: scale(var(--cta-k)); transform-origin: 0 0;
+}
+/* Resting tiles: faint ink, strongest under the glow's home at top center, gone toward the edges */
+html:root:not(#_):not(#_) .ld2-cta-bg > .ld2-cta-tiles {
+  opacity: 0.035;
+  -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, #000 5%, rgba(0, 0, 0, 0.4) 45%, transparent 90%);
+  mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, #000 5%, rgba(0, 0, 0, 0.4) 45%, transparent 90%);
+}
+html:root:not(#_):not(#_) .ld2-cta-bg > .ld2-cta-tiles g { stroke: var(--ink); }
+
+/* The moving glow */
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-glow {
+  position: absolute; left: -60%; top: -80%; width: 120%; height: 160%;
+  transform: translate3d(41.6667%, 0, 0); will-change: transform;
+}
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-wash {
+  position: absolute; inset: 0;
+  background: radial-gradient(closest-side, rgba(var(--lime-rgb), 0.16), transparent 70%);
+}
+/* The lens: a round window that rides with the glow, showing a lime copy of the tiles that holds still */
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-window {
+  position: absolute; inset: 0;
+  -webkit-mask-image: radial-gradient(circle var(--cta-lens) at 50% 50%, #000, transparent);
+  mask-image: radial-gradient(circle var(--cta-lens) at 50% 50%, #000, transparent);
+}
+html:root:not(#_):not(#_) .ld2-cta .ld2-cta-lit {
+  position: absolute; left: 50%; top: 50%; width: 83.3333%; height: 62.5%;
+  transform: translate3d(-50%, 0, 0); will-change: transform;
+}
+html:root:not(#_):not(#_) .ld2-cta-lit .ld2-cta-tiles { opacity: 0.08; }
+html:root:not(#_):not(#_) .ld2-cta-lit .ld2-cta-tiles g { stroke: var(--lime); }
+
+/* Tablet */
+@media (min-width: 600px) {
+  html:root:not(#_):not(#_) .ld2-final-panel.ld2-cta { --cta-k: 1.6; --cta-lens: 240px; padding: 64px 32px; border-radius: 32px; }
+}
+/* Desktop */
+@media (min-width: 960px) {
+  html:root:not(#_):not(#_) .ld2-final-panel.ld2-cta { --cta-k: 2; --cta-lens: 300px; padding: 96px 48px; }
+}
