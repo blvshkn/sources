@@ -1,0 +1,18 @@
+/* Waivers "Watching": the star on the filter button and on every row's toggle.
+   Watched reads the way the bookmark did: the row toggle turns lime and both stars go solid (the fill rule in
+   waivers-weeks.css), the filter button's in ink with its lime ring and count. The outline's break is closed only
+   when filled (st-gap), so the solid star has no notch.
+   Hover and press move at 160ms on the house curve. Loads before frame.css. */
+
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-star path {
+  transition: fill 160ms cubic-bezier(0.23, 1, 0.32, 1), stroke-opacity 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching):not([aria-pressed="true"]) svg.ic-star path { fill: transparent; }
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching)[aria-pressed="true"] svg.ic-star .st-gap { stroke-opacity: 1; }
+
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) {
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching), html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-star path { transition: none; }
+}
