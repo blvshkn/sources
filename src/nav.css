@@ -29,18 +29,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar .top-upd::before {
     content: "Updated"; display: block; margin-bottom: 4px; font: 500 0.5625rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--nav-muted); opacity: 1;
   }
-  /* Bell and settings: 40px rounds */
-  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon {
-    width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; border: 0 !important; border-radius: 20px !important;
-    background: var(--nav-line) !important; color: var(--nav-ink) !important; box-shadow: none !important;
-    transition: background-color var(--nav-ease), transform var(--nav-ease);
-  }
-  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon svg { width: 20px; height: 20px; color: var(--nav-ink); }
-  @media (hover: hover) and (pointer: fine) {
-    html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon:hover { background: var(--nav-chip) !important; }
-  }
-  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon:active { transform: scale(0.96); }
-  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon[aria-current="page"] { background: var(--nav-chip) !important; }
+  /* Bell and settings are icon buttons (icon-buttons.css) */
 }
 
 /* ---------- Phone tab bar: Wire, League, Trade, Lineup, Waivers, Ask ---------- */
@@ -153,6 +142,6 @@ html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix > button + button { margin-top
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .tabbar.ix .ix-ic, .topbar > .top-acts > .btn.btn-icon, .side > .league-pill.lsw-btn) { transition: none !important; }
-  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .topbar > .top-acts > .btn.btn-icon, .side > .league-pill.lsw-btn):active { transform: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .tabbar.ix .ix-ic, .side > .league-pill.lsw-btn) { transition: none !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .side > .league-pill.lsw-btn):active { transform: none; }
 }

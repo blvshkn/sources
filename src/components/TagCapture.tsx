@@ -64,7 +64,7 @@ export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { o
           </button>
         )}
         <button className="composer-btn send" onClick={(e) => (parsed?.tag ? save() : deny(e.currentTarget, text.trim() ? "Sources can't read a tag from that yet. Name a player or position." : "Type what they said first, like \"won't move his RB\"."))} aria-disabled={!parsed?.tag || undefined} aria-label="Save tag">
-          <Icon name="send" size={16} />
+          <Icon name="check" size={16} />
         </button>
       </div>
       {parsed && (

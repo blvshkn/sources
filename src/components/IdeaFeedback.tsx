@@ -81,7 +81,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
           <div className="composer">
             <input id="fb-text" className="composer-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={`${them.manager} only wants youth`} />
             <button type="submit" className="composer-btn send" aria-disabled={!note.trim() || undefined} aria-label="Save reason"
-              onClick={(e) => { if (!note.trim()) { e.preventDefault(); deny(e.currentTarget, "Type a reason first, or pick one above."); } }}><Icon name="send" size={18} /></button>
+              onClick={(e) => { if (!note.trim()) { e.preventDefault(); deny(e.currentTarget, "Type a reason first, or pick one above."); } }}><Icon name="check" size={18} /></button>
           </div>
         </form>
       </section>

@@ -45,17 +45,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .sheet > .ps-x {
 html:root:not(#_):not(#_) .sheet > .sheet-grab { padding-right: 33px; }
 
 /* ---------- Glyph nudges ---------- */
-/* Bell: the drawing is centred in its 24 box (icons.tsx). The dome carries the weight and the badge sits up and to
-   the right, so it read high and left: 0.75px right and 1px down at 22px. */
-html:root:not(#_):not(#_) .top-bell > svg.ic-bell > .m1 { translate: 0.82px 1.09px; }
-/* Chevrons in circles (the week stepper): the open side carries the weight, so a box-centred chevron reads pushed
-   back. Shift it about 1.5px toward its point at 18px (the drawing already leans 0.5 that way). The back arrow is the
-   same glyph turned round, so it moves toward its own point: left arrows sit left, right arrows sit right. */
-html:root:not(#_):not(#_) .btn-icon svg.ic-chev > .m1 { translate: 1.5px 0; }
-/* Send: the plane points up and right, so it reads high and right: about 1px left and 1px down at 16 to 18px */
-html:root:not(#_):not(#_) :is(.btn-icon, .composer-btn, .ibx-send) > svg.ic-send > * { translate: -1.4px 1.6px; }
-/* Search: the handle pulls it right and down */
-html:root:not(#_):not(#_) .btn-icon svg.ic-search > .m1 { translate: -0.25px -0.25px; }
+/* Each glyph is now centred optically in icons.tsx and AskIcon.tsx (centred by mass, the ink box kept within half a
+   unit), so it sits right in every button and nav item without a per-button nudge here. */
 
 /* ---------- Unread badge on the bell: on the circle's rim at 45 degrees, clear of the glyph ---------- */
 /* Its centre sits at (cx + r cos45, cy - r sin45): 85.36% across and 14.64% down the button, pulled back by half its own

@@ -1,0 +1,58 @@
+/* Icon buttons, from Zach's Figma ("Icon buttons": the Icon button set and "Every icon button in the app").
+   One round button for every icon-only control in the list: the inbox bell (phone header and desktop), settings,
+   Ask Sources (the inbox's ask box), close on sheets, modals and the inbox, dismiss, search a player, previous and
+   next week, save tag or reason, and voice note.
+   - 40px round, a 24px icon on a 1.5 line. Each glyph is centered optically by its own offset (icons.tsx), so the
+     button itself centers the 24px box exactly.
+   - Fill: chalk at 7%, 11% on hover, 14% pressed. Icon: gray, chalk on hover and press, lime when the control is
+     on (inbox open, on Settings, dictating).
+   - Disabled at 40%. Unread is an 8px lime dot with a ring in the button's own fill and a soft shadow.
+   Hover, leave and press move at 160ms. Phone first: nothing here changes with width (40px is the phone minimum).
+   Loads before frame.css; nav.css only lays the header out. */
+
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn) {
+  --ib-fill: rgba(244, 246, 242, 0.07); --ib-ring: #282928;
+  display: inline-grid; place-items: center; flex: none;
+  width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0;
+  border: 0 !important; border-radius: 20px !important; outline: 0;
+  background: var(--ib-fill) !important; color: #9A9C98 !important; box-shadow: none !important;
+  text-decoration: none !important; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 160ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn) > svg {
+  width: 24px !important; height: 24px !important; stroke-width: 1.5; color: inherit !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):hover:not([aria-disabled="true"]):not(:disabled) {
+    --ib-fill: rgba(244, 246, 242, 0.11); --ib-ring: #313231; color: #F2F3EE !important;
+  }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):active:not([aria-disabled="true"]):not(:disabled) {
+  --ib-fill: rgba(244, 246, 242, 0.14); --ib-ring: #383937; color: #F2F3EE !important; transform: scale(0.96);
+}
+/* On: the inbox is open, you're on Settings, or dictation is running */
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell[aria-expanded="true"], .topbar .top-acts > .btn-icon[aria-current="page"], .composer-btn[aria-pressed="true"]) {
+  --ib-fill: rgba(244, 246, 242, 0.07); color: #D8F24A !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):is([aria-disabled="true"], :disabled) {
+  opacity: 0.4; cursor: default;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):focus-visible {
+  outline: 2px solid #F2F3EE !important; outline-offset: 2px;
+}
+/* Sheet and modal close: 40px like every other icon button; icon-center.css keeps it in the sheet's corner */
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.ps, .sheet) { --x-size: 40px; }
+
+/* Unread: an 8px lime dot at the top right, ringed in the button's fill. The count stays in the button's label. */
+html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge {
+  position: absolute; top: 10px; left: 22px; right: auto; bottom: auto; width: 8px; height: 8px; min-width: 8px; padding: 0; margin: 0; border-radius: 50%;
+  display: block; box-sizing: border-box; transform: none;
+  background: #D8F24A; font-size: 0; line-height: 0; color: transparent; overflow: hidden;
+  box-shadow: 0 0 0 2px var(--ib-ring), 0 2px 4px rgba(0, 0, 0, 0.25) !important; animation: none;
+  transition: box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn) { transition: none !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):active { transform: none; }
+}

@@ -65,6 +65,7 @@ import "./dividers.css";
 import "./motion.css";
 import "./headers.css";
 import "./row-spacing.css";
+import "./icon-buttons.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

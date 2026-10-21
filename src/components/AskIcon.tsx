@@ -10,6 +10,8 @@ const BACK = "M3 7.5V9.5C3 10.0238 3.11743 10.5356 3.33772 11C3.50779 11.3586 3.
 /** Front bubble, tail at bottom right. */
 const FRONT = "M21.5 14.5C21.5 15.2956 21.1313 16.0587 20.4749 16.6213C19.8185 17.1839 17.7956 17.5 17 17.5V20L14 17.5H13C12.2044 17.5 11.4413 17.1839 10.8787 16.6213C10.3161 16.0587 10 15.2956 10 14.5V12C10 11.2044 10.3161 10.4413 10.8787 9.87868C11.4413 9.31607 12.2044 9 13 9H18C18.9283 9 19.8185 9.31607 20.4749 9.87868C20.8475 10.1981 21.1274 10.5821 21.2998 11";
 const DOTS = [13.25, 15.75, 18.25];
+/** Optical centering: the bubbles' mass sits right of and above the grid center, so the glyph moves left and down. */
+const ASK_OFFSET = [-0.4, 0.35];
 
 /** Length of the hover beat, longest delay included (ai-loader.css uses the same numbers). */
 const PLAY_MS = 380;
@@ -19,10 +21,12 @@ export function AskIcon({ size = 20, active = false, label }: { size?: number; a
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.25}
       strokeLinecap="round" strokeLinejoin="round" className={`askic${active ? " is-on" : ""}`}
       role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+      <g transform={`translate(${ASK_OFFSET[0]} ${ASK_OFFSET[1]})`}>
       <path className="askic-back" d={BACK} />
       <g className="askic-front">
         <path d={FRONT} />
         {DOTS.map((x, i) => <circle key={x} className={`askic-dot d${i}`} cx={x} cy={13.25} r={0.75} fill="currentColor" stroke="none" />)}
+      </g>
       </g>
     </svg>
   );
