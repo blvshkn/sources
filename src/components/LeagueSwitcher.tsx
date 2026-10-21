@@ -6,6 +6,7 @@ import { Account, accountLabel } from "../accounts";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { PlatformLogo } from "./PlatformLogo";
 import { ManagerAvatar } from "./Avatar";
 import { Marked } from "./Marked";
@@ -59,14 +60,12 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     if (formOpen) input.current?.focus(); else closeBtn.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
-    document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
     if (!demo) accounts.forEach((a) => {
       load(a.userId);
       findUser(a.username).then((u) => setPics((p) => ({ ...p, [a.userId]: managerAvatar(u) }))).catch(() => {});
     });
-    return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Bring a just-added account's leagues into view so the next step is obvious.
@@ -76,6 +75,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
     el?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
   }, [added, accounts.length]);
 
+  useDismiss(sheet, () => close(), { outside: false });
   useBackClose(close);
   usePullToDismiss(sheet, { scrim, onDismiss: () => close() });
 

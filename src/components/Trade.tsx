@@ -16,6 +16,7 @@ import type { DeclineWhy, SentOffer } from "../sentOffers";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { DealDetails } from "./DealDetails";
 import { DetailSheet } from "./DetailSheet";
+import { useDismiss } from "./useDismiss";
 import { AddTeam, LegState, MultiDeal, MultiRosters } from "./TradeMulti";
 import { TagCapture } from "./TagCapture";
 import { PartnerProfile } from "./PartnerProfile";
@@ -230,10 +231,10 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
       const dy = phone || a.top < top ? a.top - top : below > 0 ? Math.min(below, a.top - top) : 0;
       if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: "instant" as ScrollBehavior });
     });
-    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) close(); };
-    document.addEventListener("pointerdown", away);
-    return () => document.removeEventListener("pointerdown", away);
   }, [adding]);
+  // A tap outside the field and its results closes the picker; Escape closes it and focus goes back to + Add player.
+  // restoreFocus is off because close(true) already puts it there, after the row has turned back into the button.
+  useDismiss(wrap, (why) => close(why === "escape"), { open: adding, restoreFocus: false });
   // The tenth player fills the side, so the list closes
   useEffect(() => { if (adding && ids.length >= 10) close(); }, [ids.length]);
   return (
@@ -262,7 +263,7 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
               <div className="qs-field">
                 <label className="qs-search" ref={field}><span className="qs-plus" aria-hidden="true"><Icon name="search" size={16} /></span><span className="sr-only">Search {team}</span>
                   <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${team}…`} autoComplete="off" spellCheck={false}
-                    onKeyDown={(e) => { if (e.key === "Escape") close(true); if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
+                    onKeyDown={(e) => { if (e.key === "Enter" && options[0]) { onToggle(options[0].id); setQ(""); } }} /></label>
                 <button className="qs-done" onClick={() => close(true)}>Done</button>
               </div>
             )}

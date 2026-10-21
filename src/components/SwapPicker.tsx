@@ -1,7 +1,8 @@
 // The swap picker: the "Swap in at <slot>" menu under (or above) a starter, shared by the full matchup (this week and
 // any other week) and the Lineup page so there is one implementation. Open, the starter's box and the list attach into
 // one raised card (placeSwap sets data-sw; swap-card.css draws it). Also the lock rules both use, and the player cells the menu lists.
-import { Suspense, createContext, lazy, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, createContext, lazy, useCallback, useContext, useLayoutEffect, useRef, useState } from "react";
+import { useDismiss } from "./useDismiss";
 import type { ElementType, MutableRefObject, ReactNode, RefObject } from "react";
 import { PLAYERS, Player, SpecialPlayer, WEEK, onBye } from "../data";
 import { gameInAt, kickLine, oppAt, useKickoffs } from "../kickoff";
@@ -185,24 +186,9 @@ export function useSwapMenu<K extends string | number>() {
     if (h && Math.abs(h.el.scrollTop - h.top) > 0.5) h.el.scrollTop = h.top;
   }, [open]);
   // Only the bordered box that opened the list (aria-expanded) and the list itself keep it open. A tap or click
-  // anywhere else closes it, and so does Escape. The opener's own click still toggles it, so it's left alone here.
-  useEffect(() => {
-    if (open === null) return;
-    // A sheet opened from the list (Compare) sits on top: taps and Escape there are the sheet's, and the list stays
-    // open behind it. The matchup's own sheet holds its menu, so only a sheet the menu isn't in counts.
-    const over = () => [...document.querySelectorAll(".ps-wrap")].some((w) => !w.contains(menuRef.current));
-    const down = (e: PointerEvent) => {
-      const t = e.target as Element | null;
-      if (!t || menuRef.current?.contains(t) || t.closest('[aria-expanded="true"]')) return;
-      const wrap = t.closest(".ps-wrap");
-      if (wrap && !wrap.contains(menuRef.current)) return;
-      setOpen(null, t);
-    };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape" && !over()) { e.stopPropagation(); setOpen(null); } };
-    document.addEventListener("pointerdown", down, true);
-    document.addEventListener("keydown", key, true);
-    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key, true); };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  // anywhere else closes it, and so does Escape (useDismiss). A sheet opened from the list (Compare) stacks on top, so taps
+  // and Escape there are the sheet's and the list stays open behind it. The opener's own click still toggles it.
+  useDismiss(menuRef, (_why, t) => setOpen(null, t), { open: open !== null, keep: '[aria-expanded="true"]' });
   return { open, setOpen, menuRef };
 }
 

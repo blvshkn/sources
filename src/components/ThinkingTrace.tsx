@@ -152,7 +152,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   const inline = compact && running && !open && active?.state === "active";
   return (
     <div className={`thk ${className}`} data-status={trace.status}>
-      <button type="button" className="thk-head" aria-expanded={open} disabled={thinking && !compact}
+      <button /* dismiss-exempt: inline accordion, not an overlay */ type="button" className="thk-head" aria-expanded={open} disabled={thinking && !compact}
         onClick={() => setManual(!open)}>
         <span className="thk-ic" aria-hidden="true">{thinking || (compact && running && !open) ? <WorkingLoader size={16} /> : <Icon name="chev" size={14} />}</span>
         <span className={`thk-word${running ? " shim" : ""}`}>{inline ? <Label text={active.doing} n={active.n} /> : word}</span>

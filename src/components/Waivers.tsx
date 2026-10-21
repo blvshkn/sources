@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DetailSheet } from "./DetailSheet";
+import { useDismiss } from "./useDismiss";
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
@@ -247,6 +248,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   const taField = useRef<HTMLLabelElement>(null);
   const taList = useRef<HTMLUListElement>(null);
   const taMax = useKeyboardInset(taField, taList);
+  // The suggestions close on a tap outside the field and the list, and on Escape. Focus stays in the field.
+  useDismiss(taList, () => setSuggest(false), { open: suggest && hits.length > 0, keep: (t) => !!taField.current?.contains(t), restoreFocus: false });
   const pick = (e: Entry) => {
     setQ(e.fa.name); setSuggest(false); setPos("ALL"); setOnlyWatch(false); setOpen(e.rec || (week !== WEEK && e.later) ? e.fa.id : null);
     requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
@@ -256,7 +259,6 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
     if (ev.key === "ArrowDown") { ev.preventDefault(); setHi((h) => (h + 1) % hits.length); }
     else if (ev.key === "ArrowUp") { ev.preventDefault(); setHi((h) => (h - 1 + hits.length) % hits.length); }
     else if (ev.key === "Enter") { ev.preventDefault(); pick(hits[hi]); }
-    else if (ev.key === "Escape") setSuggest(false);
   };
   const loading = kind !== "current" && (sel.loading || !myView);
   const ready = shown.filter((e) => e.help).length;

@@ -6,6 +6,7 @@ import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
+import { useDismiss } from "./useDismiss";
 import { rankPlayers } from "../search";
 
 /** Find any rostered player in the league and see whose fantasy team he's on. */
@@ -21,7 +22,12 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
   const list = useRef<HTMLUListElement>(null);
   const field = useRef<HTMLLabelElement>(null);
   const [room, setRoom] = useState<number>();
-  const showing = term.length >= 2;
+  // The results float over the page. A tap outside the search or Escape puts them away, and typing or focusing the
+  // field brings them back with the same query. The phone's full-width search (onClose) closes instead.
+  const [away, setAway] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const showing = term.length >= 2 && !away;
+  useDismiss(box, () => { if (onClose) onClose(); else setAway(true); }, { open: onClose ? true : showing, restoreFocus: !!onClose });
   useEdgeFade(list, showing);
   // Phones: the results fit above the keyboard (useKeyboardInset.ts)
   const kbMax = useKeyboardInset(field, list);
@@ -34,15 +40,15 @@ export function PlayerSearch({ onPick, picked, onClose }: { onPick: (id: string,
   }, [showing]);
 
   return (
-    <div className="psr">
+    <div className="psr" ref={box}>
       <label className="psr-field" ref={field}>
         <Icon name="search" size={18} />
         <span className="sr-only">Search players in your league</span>
-        <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key !== "Escape") return; if (onClose) onClose(); else if (q) setQ(""); else input.current?.blur(); }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
+        <input ref={input} autoFocus={!!onClose} onKeyDown={(e) => { if (e.key !== "Escape" || showing || onClose) return; if (q) setQ(""); else input.current?.blur(); }} onFocus={() => setAway(false)} value={q} onChange={(e) => { setQ(e.target.value); setAway(false); }} placeholder="Search any player in your league" autoComplete="off" spellCheck={false} />
         {q && !onClose && <button className="psr-clear" onClick={() => { setQ(""); input.current?.focus(); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
         {onClose && <button className="psr-clear" onClick={onClose} aria-label="Close search"><Icon name="x" size={16} /></button>}
       </label>
-      {term.length >= 2 && (
+      {showing && (
         <ul className="psr-list" aria-label="Search results" ref={list} style={kbMax || room ? { maxHeight: kbMax ?? room } : undefined}>
           {hits.length ? hits.map(({ item: { p, team }, match }) => {
             const on = picked.includes(p.id);

@@ -568,7 +568,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </article>
       ))}
       {nudges.length > 2 && (
-        <button className="btn more-intel" onClick={() => setShowAll((x) => !x)} aria-expanded={showAll}>
+        <button /* dismiss-exempt: inline show-more list toggle, not an overlay */ className="btn more-intel" onClick={() => setShowAll((x) => !x)} aria-expanded={showAll}>
           {showAll ? "Show less" : `More intel (${nudges.length - 2})`}
         </button>
       )}

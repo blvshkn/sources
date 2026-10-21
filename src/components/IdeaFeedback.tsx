@@ -6,6 +6,7 @@ import type { Trade } from "../engine";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 
 /** Anything that renders a trade idea can offer "Won't work" when this is provided. */
 export const IdeaFeedbackCtx = createContext<((t: Trade) => void) | null>(null);
@@ -40,12 +41,11 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
-    document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useDismiss(sheet, () => close(), { outside: false });
   useBackClose(close);
   usePullToDismiss(sheet, { scrim, onDismiss: () => close() });
 

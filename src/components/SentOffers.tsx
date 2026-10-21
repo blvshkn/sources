@@ -128,7 +128,7 @@ function Row({ d, now, onReopen, onDecline, onClear, onWhy, pause, onResume }: {
         {st === "declined" && onWhy && !head.why && !whyOpen && <button type="button" className="so-act" onClick={() => setWhyOpen(true)}>Why?</button>}
         <button type="button" className="so-act" onClick={() => onClear(head)}>Clear</button>
         {earlier.length > 0 && (
-          <button type="button" className="so-act so-more" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
+          <button /* dismiss-exempt: inline accordion of earlier versions, not an overlay */ type="button" className="so-act so-more" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
             <span><span className="num">{earlier.length}</span> earlier {earlier.length > 1 ? "versions" : "version"}</span><Icon name="chev" size={14} />
           </button>
         )}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useFocusTrap } from "./focusTrap";
+import { backdropClose, useDismiss } from "./useDismiss";
 import { MyTag, TEAMS, YOU, playerById, LEAGUE_NAME, setLeague, teamById } from "../data";
 import { Trade, TeamNeeds, allNeeds, applyFormat, eff, findTrades, fmt, formatLabel, lineupFor } from "../engine";
 import { SLeague, SleeperError, leagueType, loadLeague } from "../sleeper";
@@ -61,14 +62,12 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
   const idx = STEPS.indexOf(step);
   // Focus moves into the dialog when it opens; Escape backs out to the landing, as the Back button does
   useEffect(() => { dialog.current?.focus({ preventScroll: true }); }, []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy && !e.defaultPrevented) onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [busy, onClose]);
+  // Escape or a tap on the backdrop around the card backs out too, unless a lookup is in flight
+  useDismiss(dialog, () => { if (!busy) onClose(); }, { outside: false, escape: !busy });
+  const backdrop = backdropClose(() => { if (!busy) onClose(); });
 
   return (
-    <div ref={dialog} tabIndex={-1} className="onboard" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+    <div ref={dialog} tabIndex={-1} className="onboard" role="dialog" aria-modal="true" aria-labelledby="ob-title" {...backdrop}>
       <div className="onboard-card">
         <div className="ob-progress" aria-label={`Step ${idx + 1} of ${STEPS.length}`}>
           {STEPS.map((s, i) => <span key={s} className={i <= idx ? "on" : ""} />)}

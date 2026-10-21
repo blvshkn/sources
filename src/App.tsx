@@ -54,6 +54,7 @@ import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
 import { useSectionEnter } from "./sectionEnter";
 import { seedDemo } from "./demoFixtures";
+import { useDismiss } from "./components/useDismiss";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -229,12 +230,6 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
-  useEffect(() => {
-    if (!inboxOpen) return;
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setInboxOpen(false); };
-    window.addEventListener("keydown", esc);
-    return () => window.removeEventListener("keydown", esc);
-  }, [inboxOpen]);
   useEffect(() => { document.documentElement.dataset.platform = LEAGUE.platform ?? "sleeper"; }, []);
   // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
   const [toastOut, setToastOut] = useState(false);
@@ -707,6 +702,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (opening) setIbxFocus((n) => n + 1);
   };
   const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
+  // The slide-over inbox (below 1241px): Escape closes it and focus goes back to the bell; its scrim takes the outside
+  // tap. Docked, it's a column of the page and stays until the bell closes it.
+  const ibxRef = useRef<HTMLElement>(null);
+  useDismiss(ibxRef, () => setInboxOpen(false), { open: inboxOpen && !docked, outside: false });
   // Trade's Partner profile button: one click opens the panel (docked from 1241px like every page, a slide-over below) on the partner card
   const openProfile = () => {
     if (docked) setDockPref(true); else setInboxOpen(true);
@@ -838,7 +837,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </main>
 
       <div className="ibx-scrim" aria-hidden="true" onClick={() => setInboxOpen(false)} />
-      <aside className="rail ibx" id="inbox" aria-label="Inbox"
+      <aside ref={ibxRef} className="rail ibx" id="inbox" aria-label="Inbox"
         onKeyDown={(e) => { if (e.key === "Escape" && docked && dockOpen) { e.stopPropagation(); closeInbox(); } }}>
         <InboxPanel items={inbox} read={readIds} open={panelOpen} focusTick={ibxFocus} onRead={markRead} onReadAll={() => setReadIds((c) => [...new Set([...c, ...inbox.map((x) => x.id)])].slice(-200))}
           onDismiss={dismissItem} onClose={closeInbox}

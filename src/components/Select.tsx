@@ -5,6 +5,7 @@ import { Icon, type IconName } from "./icons";
 import { useEdgeFade } from "./edgeFade";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
+import { useDismiss } from "./useDismiss";
 import { matchPlayer, type Match } from "../search";
 
 export type SelectOption<T extends string = string> = {
@@ -176,23 +177,18 @@ export function Select<T extends string>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, placed]);
 
+  // A tap outside the menu and its trigger closes it (and still lands); Escape closes it and focus goes back to the trigger
+  useDismiss(menu, (why) => close(why === "escape"), { open: mounted, opener: trigger });
   useEffect(() => {
     if (!mounted) return;
-    const onDown = (e: PointerEvent) => {
-      const n = e.target as Node;
-      if (trigger.current?.contains(n) || menu.current?.contains(n)) return;
-      close(false);
-    };
     const onMove = () => position();
-    document.addEventListener("pointerdown", onDown, true);
     window.addEventListener("resize", onMove);
     window.addEventListener("scroll", onMove, true);
     return () => {
-      document.removeEventListener("pointerdown", onDown, true);
       window.removeEventListener("resize", onMove);
       window.removeEventListener("scroll", onMove, true);
     };
-  }, [mounted, close, position]);
+  }, [mounted, position]);
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 

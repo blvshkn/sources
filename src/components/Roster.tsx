@@ -221,6 +221,7 @@ function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
 /** What a tappable lineup row needs to open its swap menu (or deny when locked). */
 type RowTap = { onTap: (el: Element) => void; lock: boolean; expanded: boolean; label: string };
 /** Props that make a lineup row a button: a tap opens its swap menu, or shakes and says why when it's locked. */
+// dismiss-exempt: opener props only; the swap menu they open closes through useSwapMenu in Roster
 const tapProps = (t: RowTap) => ({
   role: "button", tabIndex: 0, "aria-disabled": t.lock ? true : undefined, "aria-expanded": t.lock ? undefined : t.expanded, "aria-label": t.label,
   onClick: (e: { currentTarget: Element }) => t.onTap(e.currentTarget),

@@ -5,6 +5,7 @@ import { WEEK } from "../data";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { ScrollArea } from "./ScrollArea";
 import { WeekStepper } from "./WeekStepper";
 import { MatchupWeek, useMatchupWeek } from "./Matchup";
@@ -26,7 +27,6 @@ export function MatchupSheet({ week: start = WEEK, onClose }: { week?: number; o
   const sheet = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
-  const opener = useRef<HTMLElement | null>(null);
   const closing = useRef(false);
   useFocusTrap(sheet);
 
@@ -41,19 +41,13 @@ export function MatchupSheet({ week: start = WEEK, onClose }: { week?: number; o
   };
 
   useEffect(() => {
-    opener.current = document.activeElement as HTMLElement | null;
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus({ preventScroll: true });
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
-    document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", key);
-      document.body.style.overflow = prev;
-      const back = opener.current;
-      if (back && document.contains(back)) back.focus({ preventScroll: true });
-    };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useDismiss(sheet, close, { outside: false });
 
   useBackClose(close);
   usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });

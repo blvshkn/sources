@@ -5,6 +5,7 @@ import { FAIR_GAP, MultiTrade, Trade as TradeT, fmt, groupPoints, groupsFor, lin
 import { Icon } from "./ui";
 import { TeamAvatar, TeamLines, TeamSearchField, useTeamSearch } from "./TeamPicker";
 import { useKeyboardInset } from "./useKeyboardInset";
+import { useDismiss } from "./useDismiss";
 import { PlatformName } from "./PlatformLogo";
 import { DealSchedule, scheduleLean } from "./Schedule";
 import { DealDetails } from "./DealDetails";
@@ -33,21 +34,19 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
   useEffect(() => {
     if (!open) return;
     setHi(0);
-    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("pointerdown", away);
     // The menu stops above the viewport bottom (and the phone tab bar); the team list scrolls inside it
     const fit = () => { const b = wrap.current?.querySelector(".mt-add"); if (b) setRoom(Math.max(160, roomBelow(b) - 12 - 52)); };
     fit();
     window.addEventListener("resize", fit);
     requestAnimationFrame(() => (searching ? input.current : list.current)?.focus({ preventScroll: true }));
-    return () => { document.removeEventListener("pointerdown", away); window.removeEventListener("resize", fit); };
+    return () => { window.removeEventListener("resize", fit); };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEdgeFade(list, open);
   useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: "nearest" }); }, [hi, open]);
-  const refocus = () => wrap.current?.querySelector<HTMLButtonElement>(".mt-add")?.focus({ preventScroll: true });
   const pick = (t: Team) => { onAdd(t.id); setOpen(false); };
+  // A tap anywhere outside closes the menu, and so does Escape; focus goes back to + Add a team
+  useDismiss(wrap, () => setOpen(false), { open, opener: () => wrap.current?.querySelector<HTMLElement>(".mt-add") });
   const onKey = (e: { key: string; preventDefault(): void; stopPropagation(): void }) => {
-    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setOpen(false); refocus(); return; }
     if (e.key === "Tab") { setOpen(false); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(shown.length - 1, h + 1)); }
     if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }

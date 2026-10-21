@@ -32,7 +32,7 @@ function Excerpt({ text }: { text: string }) {
   return (
     <>
       <p ref={ref} className={`nx-ex${open ? " open" : ""}`}>{text}</p>
-      {(over || open) && <button type="button" className="nx-exp" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? "Less" : "More"}</button>}
+      {(over || open) && <button /* dismiss-exempt: inline "More" on a story excerpt, not an overlay */ type="button" className="nx-exp" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? "Less" : "More"}</button>}
     </>
   );
 }
@@ -122,7 +122,7 @@ export function PlayerNews({ p }: { p: Player }) {
       {loading ? <Skeleton n={2} />
         : list.length ? <div className="nx-list">{shown.map((n, i) => <StoryCard key={n.id ?? n.url} n={n} impact={lines[i]} />)}</div>
         : <p className="nx-empty">No recent news on {p.name}. We check {sourcesLine()} every 10 minutes.</p>}
-      {list.length > 3 && <button type="button" className="nx-more" aria-expanded={more} onClick={() => setMore((m) => !m)}>{more ? "Show less" : `Show ${list.length - 3} more`}<Icon name="chev" size={14} /></button>}
+      {list.length > 3 && <button /* dismiss-exempt: inline show-more list toggle, not an overlay */ type="button" className="nx-more" aria-expanded={more} onClick={() => setMore((m) => !m)}>{more ? "Show less" : `Show ${list.length - 3} more`}<Icon name="chev" size={14} /></button>}
     </section>
   );
 }
@@ -255,7 +255,7 @@ function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerConte
   return (
     <div className={`nxr-g${open ? " open" : ""}`}>
       <div className="nxr-head">
-        <button type="button" className="nxr-tog" aria-expanded={open} aria-controls={bodyId} onClick={toggle}>
+        <button /* dismiss-exempt: inline accordion, not an overlay */ type="button" className="nxr-tog" aria-expanded={open} aria-controls={bodyId} onClick={toggle}>
           <Avatar p={p} size={36} />
           <span className="nxr-name">
             <span className="nxr-line"><b>{p.name}</b><span className="nxr-pill nxr-pill-n"><StatusPill p={p} /></span></span>
@@ -275,7 +275,7 @@ function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerConte
             {shown.map((n) => <StoryRow key={n.id ?? n.url} n={n} />)}
           </div>
           {items.length > STEP && (
-            <button type="button" className="nxs-more" aria-controls={listId} aria-expanded={left === 0} onClick={left > 0 ? more : fewer}>
+            <button /* dismiss-exempt: inline show-more list toggle, not an overlay */ type="button" className="nxs-more" aria-controls={listId} aria-expanded={left === 0} onClick={left > 0 ? more : fewer}>
               {left > 0
                 ? <span>Show <b>{Math.min(STEP, left)}</b> more{left > STEP && <span className="nxs-left"> · <b>{left}</b> left</span>}</span>
                 : <span>Show less</span>}

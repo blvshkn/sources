@@ -7,6 +7,7 @@ import { TeamAvatar } from "./TeamPicker";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { ScrollArea } from "./ScrollArea";
 import { AiMark } from "./WorkingLoader";
 import { PausedLine } from "./SentOffers";
@@ -45,7 +46,6 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose, pause
   const scrim = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
-  const opener = useRef<HTMLElement | null>(null);
   const closing = useRef(false);
   useFocusTrap(sheet);
 
@@ -60,20 +60,14 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose, pause
   };
 
   useEffect(() => {
-    opener.current = document.activeElement as HTMLElement | null;
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus({ preventScroll: true });
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
-    document.addEventListener("keydown", key);
     // The root keeps a stable scrollbar gutter (frame.css), so locking the page moves nothing behind
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", key);
-      document.body.style.overflow = prev;
-      const back = opener.current;
-      if (back && document.contains(back)) back.focus({ preventScroll: true });
-    };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useDismiss(sheet, () => close(), { outside: false });
 
   // Pull down to dismiss, on the phone sheet only; the modal stays put
   useBackClose(() => close());

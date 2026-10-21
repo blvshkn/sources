@@ -5,6 +5,7 @@ import { useBackClose } from "../backClose";
 import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { ScrollArea } from "./ScrollArea";
 import { chartReveal } from "../chartReveal";
 
@@ -33,7 +34,6 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
   const sheet = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
-  const opener = useRef<HTMLElement | null>(null);
   const closing = useRef(false);
   const titleId = useId();
   useFocusTrap(sheet);
@@ -49,23 +49,17 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
   };
 
   useEffect(() => {
-    opener.current = document.activeElement as HTMLElement | null;
     // The sheet renders outside #root, so its charts need their own reveal watcher to grow in
     if (sheet.current) chartReveal(sheet.current);
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus({ preventScroll: true });
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
-    document.addEventListener("keydown", key);
     // The root keeps a stable scrollbar gutter (frame.css), so locking the page moves nothing behind
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", key);
-      document.body.style.overflow = prev;
-      const back = opener.current;
-      if (back && document.contains(back)) back.focus({ preventScroll: true });
-    };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Escape (topmost layer only) and focus back to the opener; the scrim takes the outside tap
+  useDismiss(sheet, () => close(), { outside: false });
   useBackClose(() => close());
   // Pull down to dismiss, on the phone sheet only; the modal stays put
   usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });

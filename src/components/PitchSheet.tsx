@@ -6,6 +6,7 @@ import { useReducedMotion } from "motion/react";
 import { usePullToDismiss } from "./sheetDrag";
 import { spring, type SpringRun } from "./sheetSpring";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
@@ -291,12 +292,12 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const writing = trace.status === "thinking" || trace.status === "working";
   const covered = writing || streaming !== null;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
-    window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+    return () => { document.body.style.overflow = prev; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Escape closes it (the share view first, when that's up on top) and focus goes back to the opener
+  useDismiss(sheet, () => dismiss(), { outside: false });
 
   const down = (e: RPE) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -419,7 +420,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
 
   return (
     <div className="scrim-wrap">
-      <div ref={scrim} className="scrim" onPointerDown={() => dismiss()} aria-hidden="true" />
+      <div ref={scrim} className="scrim" onClick={() => dismiss()} aria-hidden="true" />
       <div ref={sheet} className="sheet" role="dialog" aria-modal="true" aria-labelledby="pitch-title"
         style={{ transform: reduce ? undefined : "translate3d(0, 100vh, 0)" }}>
         <div className="sheet-handle" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />

@@ -12,6 +12,7 @@ import { Avatar } from "./Avatar";
 import { Icon, StatusPill } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
+import { useDismiss } from "./useDismiss";
 import { useEdgeFade } from "./edgeFade";
 import { ScrollArea } from "./ScrollArea";
 import { DepthTab, GameLogTab, SheetTabs, useSheetTab } from "./PlayerTabs";
@@ -38,10 +39,8 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     closeBtn.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
-    document.addEventListener("keydown", key);
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; };
+    return () => { document.body.style.overflow = prev; };
   }, []);
   const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setShown(false); window.setTimeout(onClose, 220); };
   const sheet = useRef<HTMLElement>(null);
@@ -51,6 +50,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const scrim = useRef<HTMLDivElement>(null);
   // Pull down from anywhere once the sheet is scrolled to the top; a flick or a long pull closes it.
   // Phone sheet only: from 768px up it's a centered modal that stays put.
+  useDismiss(sheet, () => close(), { outside: false });
   useBackClose(close);
   usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });
 
