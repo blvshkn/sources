@@ -14,7 +14,7 @@ export function LeagueSwitch({ title, meta }: { title: string; meta?: ReactNode 
       <h1 className="sr-only">{title}</h1>
       {l && (
         <button className="page-league" onClick={l.open} aria-haspopup="dialog">
-          <ManagerAvatar src={l.avatar} name={l.who || l.name} size={24} className="tp-av lsw-me" />
+          <ManagerAvatar src={l.avatar} name={l.who || l.name} size={24} className="tp-av lsw-me" alt={l.who || ""} />
           <b>{l.name}</b><span className="sr-only"> (switch league)</span>
           <Icon name="switch" size={16} />
         </button>

@@ -639,7 +639,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Sources" /></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
-          <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" />
+          <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" alt={meName} />
           <span className="grow"><b>{LEAGUE_NAME}</b><span className="lsw-line">{formatLabel(format)} · Week {WEEK}</span></span>
           <Icon name="switch" size={16} />
         </button>

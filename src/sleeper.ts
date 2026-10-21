@@ -39,7 +39,7 @@ const isUrl = (s: string) => /^https?:\/\//i.test(s);
 export function avatarSrc(v: string | null | undefined, size: "thumb" | "full" = "thumb"): string | null {
   const s = typeof v === "string" ? v.trim() : "";
   if (!s) return null;
-  if (isUrl(s)) return s;
+  if (isUrl(s) || (s.startsWith("/") && !s.startsWith("//"))) return s; // a full URL, or one of our own files (the demo league's pictures)
   return size === "thumb" ? `${AVATAR_CDN}/thumbs/${encodeURIComponent(s)}` : `${AVATAR_CDN}/${encodeURIComponent(s)}`;
 }
 

@@ -80,9 +80,11 @@ type Row = [string, Pos, string, number, Status?, string?];
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-const rosters: Record<string, { name: string; manager: string; record: string; pf: number; you?: boolean; rows: Row[]; ir?: Row[] }> = {
+// Sample managers' pictures (public/demo). Same-origin files, so they show on the public landing too, where Sleeper images are off.
+const rosters: Record<string, { name: string; manager: string; record: string; pf: number; you?: boolean; avatar?: string; rows: Row[]; ir?: Row[] }> = {
   you: {
     name: "Third & Long",
+    avatar: "/demo/you.webp",
     manager: "You",
     record: "4-2",
     pf: 742.6,
@@ -106,6 +108,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
   },
   mike: {
     name: "Mike's Mistakes",
+    avatar: "/demo/mike.webp",
     manager: "Mike",
     record: "3-3",
     pf: 701.2,
@@ -127,6 +130,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
   },
   jake: {
     name: "Jake from State Farm",
+    avatar: "/demo/jake.webp",
     manager: "Jake",
     record: "5-1",
     pf: 811.9,
@@ -348,7 +352,7 @@ function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
   };
   const teams = Object.entries(rosters).map(([id, t]) => {
     const ids = t.rows.map((r) => toId(r));
-    return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, roster: ids, ir: (t.ir ?? []).map((r) => toId(r, true)) };
+    return { id, name: t.name, manager: t.manager, record: t.record, pf: t.pf, you: t.you, avatar: t.avatar, roster: ids, ir: (t.ir ?? []).map((r) => toId(r, true)) };
   });
   return { teams, players };
 }
@@ -665,6 +669,7 @@ export function demoLeague(): LeagueData {
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), specialBids: [0, 1, 0, 0, 2, 1],
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
+    userAvatar: teams.find((t) => t.you)?.avatar,
     champion: { teamId: "jake", season: "2025" },
     valueSource: "Demo estimate from projections",
     scoring: DEMO_SCORING,

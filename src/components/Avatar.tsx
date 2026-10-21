@@ -44,13 +44,15 @@ export function Avatar({ p, size = 40, ring, badge = true }: { p: Pick<Player, "
 const nameInitials = (s: string) => s.replace(/[^A-Za-z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
 
 /** A manager, account or league picture from Sleeper (a URL or an avatar id, or a list to try in order).
- *  Initials when there's none, when photos are off, or when every image fails, so a broken URL never leaves an empty circle. */
-export function ManagerAvatar({ src, name, size = 40, className = "tp-av" }: { src?: string | null | (string | null | undefined)[]; name: string; size?: number; className?: string }) {
+ *  Initials when there's none, when photos are off, or when every image fails, so a broken URL never leaves an empty circle.
+ *  Photos off only drops Sleeper's images: our own files (the demo league's managers, under /demo/) still show.
+ *  alt stays empty when the name is printed beside the picture; pass the manager's name when it isn't. */
+export function ManagerAvatar({ src, name, size = 40, className = "tp-av", alt = "" }: { src?: string | null | (string | null | undefined)[]; name: string; size?: number; className?: string; alt?: string }) {
   const photos = useContext(AvatarPhotos);
   const [failed, setFailed] = useState<string[]>([]);
-  const url = photos ? (Array.isArray(src) ? src : [src]).map((v) => avatarSrc(v)).find((u): u is string => !!u && !failed.includes(u)) : undefined;
+  const url = (Array.isArray(src) ? src : [src]).map((v) => avatarSrc(v)).find((u): u is string => !!u && !failed.includes(u) && (photos || (u.startsWith("/") && !u.startsWith("//"))));
   const style = { width: size, height: size };
   return url
-    ? <img className={className} style={style} src={url} alt="" width={size} height={size} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed((f) => [...f, url])} />
+    ? <img className={className} style={style} src={url} alt={alt} width={size} height={size} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed((f) => [...f, url])} />
     : <span className={`${className} tp-av-ini`} style={{ ...style, fontSize: size * 0.36 }} aria-hidden="true">{nameInitials(name)}</span>;
 }

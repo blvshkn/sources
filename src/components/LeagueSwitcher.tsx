@@ -145,7 +145,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
 
         {demo ? (
           <ul className="fb-list">
-            <li><span className="lsw-row on"><span className="lsw-av">DL</span><span className="lsw-n"><b>{LEAGUE_NAME}</b><small>Sample data</small></span><Icon name="check" size={18} /></span></li>
+            <li><span className="lsw-row on"><ManagerAvatar src={LEAGUE.userAvatar} name={LEAGUE_NAME} size={40} className="lsw-av" alt="You" /><span className="lsw-n"><b>{LEAGUE_NAME}</b><small>Sample data</small></span><Icon name="check" size={18} /></span></li>
           </ul>
         ) : (
           <div className="acc-groups">
