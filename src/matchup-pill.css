@@ -1,0 +1,12 @@
+/* Matchup page rows: the hover and open pill (.mu-mine) reached 8px past its content at every width, so it sat 8, 18
+   and 20px from the card edge at 390, 834 and 1440. Every other card keeps its pills --pad-pill-gap from the edge
+   (8 / 13 / 14, container-padding.css), so the pill now reaches the same distance past the content on both sides.
+   The content doesn't move. The Full matchup sheet keeps its own rule (overlay-padding.css). Loads just before
+   frame.css. */
+html:root:not(#_):not(#_):not(#_) .card.mu:not(:where(.ps-matchup *)) > .mu-row > .mu-mine {
+  padding-left: calc(0px - var(--pad-pill-x));
+  padding-right: calc(0px - var(--pad-pill-x));
+  margin-left: var(--pad-pill-x);
+  margin-right: var(--pad-pill-x);
+  width: calc(100% - 2 * var(--pad-pill-x));
+}
