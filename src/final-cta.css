@@ -38,7 +38,7 @@ html:root:not(#_):not(#_) .ld2-cta .ld2-cta-glow {
 }
 html:root:not(#_):not(#_) .ld2-cta .ld2-cta-wash {
   position: absolute; inset: 0;
-  background: radial-gradient(closest-side, rgba(var(--lime-rgb), 0.16), transparent 70%);
+  background: radial-gradient(closest-side, rgba(var(--lime-rgb), 0.11), transparent 70%);
 }
 /* The lens: a round window that rides with the glow, showing a lime copy of the tiles that holds still */
 html:root:not(#_):not(#_) .ld2-cta .ld2-cta-window {
@@ -50,7 +50,7 @@ html:root:not(#_):not(#_) .ld2-cta .ld2-cta-lit {
   position: absolute; left: 50%; top: 50%; width: 83.3333%; height: 62.5%;
   transform: translate3d(-50%, 0, 0); will-change: transform;
 }
-html:root:not(#_):not(#_) .ld2-cta-lit .ld2-cta-tiles { opacity: 0.08; }
+html:root:not(#_):not(#_) .ld2-cta-lit .ld2-cta-tiles { opacity: 0.06; }
 html:root:not(#_):not(#_) .ld2-cta-lit .ld2-cta-tiles g { stroke: var(--lime); }
 
 /* Tablet */

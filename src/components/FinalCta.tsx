@@ -77,32 +77,42 @@ export function FinalCtaPanel({ children }: { children: ReactNode }) {
     };
     const run = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
 
+    // The glow follows the pointer anywhere on the page while the card is on screen, so it leans toward a cursor that's
+    // outside the card too. Targets are held within a margin around the card so some of the wash always stays inside.
+    const target = (e: PointerEvent) => {
+      const m = w * 0.25, h = el.offsetHeight;
+      tx = Math.max(-m, Math.min(w + m, e.pageX - ox));
+      ty = Math.max(-m, Math.min(h + m, e.pageY - oy));
+    };
     const enter = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" || !fine.matches || still.matches) return;
+      if (e.pointerType !== "mouse" || !fine.matches || still.matches || !visible) return;
       measure(); inside = true;
       if (!moving) { x = w / 2; y = 0; moving = true; } // start from where CSS has it parked
-      tx = e.pageX - ox; ty = e.pageY - oy; run();
+      target(e); run();
     };
     const move = (e: PointerEvent) => {
+      if (!visible) return;
       if (!inside) { enter(e); return; }
-      tx = e.pageX - ox; ty = e.pageY - oy; run();
+      target(e); run();
     };
     const leave = () => { if (!inside) return; inside = false; rest(); rx = x; ry = y; hx = tx; hy = ty; rt = 0; run(); };
+    // The pointer leaving the window counts as leaving
+    const out = (e: PointerEvent) => { if (!e.relatedTarget) leave(); };
 
     // Size changes: re-measure, and if the glow is mid-flight keep its home in step with the new width
     const ro = new ResizeObserver(() => { if (moving) { measure(); if (!inside) { rest(); hx = tx; hy = ty; } } });
     ro.observe(el);
     // Offscreen: stop the loop and park at rest
-    const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (!visible) { inside = false; park(); } });
+    const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (!visible) { inside = false; park(); } else measure(); });
     io.observe(el);
 
-    el.addEventListener("pointerenter", enter);
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerleave", leave);
+    window.addEventListener("pointermove", move, { capture: true, passive: true });
+    document.addEventListener("pointerout", out);
+    window.addEventListener("blur", leave);
     return () => {
-      el.removeEventListener("pointerenter", enter);
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerleave", leave);
+      window.removeEventListener("pointermove", move, { capture: true });
+      document.removeEventListener("pointerout", out);
+      window.removeEventListener("blur", leave);
       ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf);
     };
   }, []);
