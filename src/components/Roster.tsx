@@ -248,7 +248,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
             {(g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
           </span>
         )}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
+        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
       </span>
       {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} />}
       {swap && (
@@ -275,7 +275,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}{p.status === "Q" && <b className="lu-tag warn">Q</b>}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
+        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
       </span>
       {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
       {swapTo && (
@@ -334,7 +334,7 @@ function WeekPanel({ v, menu, onInfo, onCompare }: { v: WeekView; menu: SwapMenu
       <Avatar p={p} size={40} text={p.pos === "DEF" ? p.nfl : undefined} />
       <span className="lu-who">
         <span className="lu-name">{p.name}</span>
-        <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.pos === "DEF" ? "Team defense" : p.nfl}</span></span>
+        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<span>{p.pos === "DEF" ? "Team defense" : p.nfl}</span></span>
         {v.kind === "past" && (p.line && p.pts !== null ? <span className="lu-line">{p.line}</span> : <span className="lu-line" aria-hidden="true">&nbsp;</span>)}
       </span>
       {p.pts === null ? <span className="lu-pts bye">BYE</span> : <span className={`lu-pts${v.kind === "past" ? " actual" : ""}`}>{p.pts.toFixed(1)}</span>}
