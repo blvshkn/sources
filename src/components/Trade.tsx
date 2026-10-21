@@ -6,7 +6,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
 import { kickLine } from "../kickoff";
-import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue, valueEdge, valueRatio } from "../engine";
+import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue, sumValue, valueEdge, valueRatio } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
@@ -27,6 +27,7 @@ import { useHFade } from "./hFade";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
 import { rankPlayers } from "../search";
+import { setRosterMetric, useRosterMetric } from "../rosterMetric";
 import type { Price, ScanDiag } from "../engine";
 import { useTrace } from "../think";
 import { ideaSteps, readSteps, type Read } from "../reads";
@@ -39,6 +40,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
   noteIds?: Record<string, string>;
 }) {
   // Live leagues: show the lineup exactly as it's set in Sleeper right now. Demo falls back to the best lineup.
+  const metric = useRosterMetric();
   const current = team.starters?.length ? (() => {
     const starters = team.starters!.filter((id) => team.roster.includes(id));
     return { starters, bench: team.roster.filter((id) => !starters.includes(id)) };
@@ -62,7 +64,9 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
             {note && <span className="to-tag">{note}</span>}
           </span>
         </span>
-        <NumTip label="Projected points a week" note="Rest of season"><span className="pproj">{eff(p).toFixed(1)}</span></NumTip>
+        {metric === "value"
+          ? <NumTip label="Market value" note="What the deal's trade value adds up"><span className="pproj">{packageValue([id]).toLocaleString()}</span></NumTip>
+          : <NumTip label="Projected points a week" note="Rest of season"><span className="pproj">{eff(p).toFixed(1)}</span></NumTip>}
         <span className="check">{on && <Icon name="check" size={13} />}</span>
       </button>
     );
@@ -71,9 +75,17 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
     <section className="card" aria-label={label} style={{ overflow: "hidden" }}>
       <div className="roster-head">
         <div className="rp-id"><TeamAvatar t={team} size={32} /><div className="rp-t"><span>{label}</span><b>{team.name}<Trophy teamId={team.id} /></b></div></div>
-        <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><Tooltip focusable content="Points a week from the starting lineup only. Bench players don't count."><small className="tt-term">starters pts/wk</small></Tooltip></span>
+        {metric === "value"
+          ? <span className="rp-total"><b>{Math.round(sumValue(current ? current.starters : lineup.slots.flatMap((s) => (s.player ? [s.player.id] : [])))).toLocaleString()}</b><Tooltip focusable content="Market value of the starting lineup. The same scale the deal's trade value uses."><small className="tt-term">starters value</small></Tooltip></span>
+          : <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><Tooltip focusable content="Points a week from the starting lineup only. Bench players don't count."><small className="tt-term">starters pts/wk</small></Tooltip></span>}
       </div>
-      <div className="slot-label">Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</div>
+      <div className="slot-label rp-label"><span>Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</span>
+        <span className="rp-metric" role="radiogroup" aria-label="Show for each player">
+          {(["value", "proj"] as const).map((k) => (
+            <button key={k} type="button" role="radio" aria-checked={metric === k} onClick={() => setRosterMetric(k)}>{k === "value" ? "Value" : "Proj"}</button>
+          ))}
+        </span>
+      </div>
       {current
         ? current.starters.map((id) => row(id, "ST"))
         : lineup.slots.filter((s) => s.player).map((s) => row(s.player!.id, s.slot))}
