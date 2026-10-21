@@ -646,6 +646,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <button type="button" className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} aria-label="Sources home" onClick={goHome}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
+          {/* Ask on phones and tablets: the shared Ask icon, next to the bell (desktop has it in the sidebar) */}
+          <button type="button" className="btn btn-icon btn-ghost top-ask" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}>
+            <Icon name="spark" size={18} />
+          </button>
           <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
             <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
           </button>
@@ -690,7 +694,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
           {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
-          {tab === "ask" && <Ask initial={askSeed} answer={(q) => askSteps(q, active, myTags, prices, passed)} onLink={onLink} starters={askStarters} />}
+          {tab === "ask" && <Ask initial={askSeed} answer={(q) => askSteps(q, active, myTags, prices, passed)} onLink={onLink} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}

@@ -1,0 +1,182 @@
+/* ---------- Ask: chat first, full height ----------
+   The thread fills the room between the status line and the composer, which sits pinned at the bottom of the screen
+   (above the tab bar on phones, above the keyboard while you type). Ask.tsx sizes .ask-page to the space left on
+   screen with visualViewport. Phone first, then tablet, then desktop (a 760px column centred next to the sidebar). */
+
+html:root[data-tab="ask"]:not(#_):not(#_) .main { padding-bottom: 0 !important; }
+html:root[data-tab="ask"]:not(#_):not(#_) { overflow-anchor: none; }
+@media (max-width: 860px) {
+  /* While the keyboard is up the tab bar would sit on it; the composer takes its place */
+  html[data-ask-kb]:root:not(#_):not(#_):not(#_) .tabbar { display: none !important; }
+}
+
+html:root:not(#_):not(#_) .ask-page {
+  --ask-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex; flex-direction: column; min-height: 0; height: calc(100dvh - 220px);
+  margin: 0; padding: 0; background: none; border: 0;
+}
+html:root:not(#_):not(#_) .ask-thread {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; scrollbar-width: thin; overflow-anchor: none;
+  /* Room for focus rings at the edges */
+  margin-inline: -4px; padding-inline: 4px;
+}
+html:root:not(#_):not(#_) .ask-col {
+  margin-top: auto; width: 100%; max-width: 760px; margin-inline: auto;
+  display: flex; flex-direction: column; gap: 16px; padding: 8px 0 8px;
+}
+
+/* ---------- Empty state ---------- */
+html:root:not(#_):not(#_) .ask-empty { display: flex; flex-direction: column; gap: 20px; padding-bottom: 4px; }
+html:root:not(#_):not(#_) .ask-intro { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+html:root:not(#_):not(#_) .ask-mark { display: inline-flex; color: var(--ink); line-height: 0; }
+html:root:not(#_):not(#_) .ask-mark svg { width: 32px; height: 32px; }
+html:root:not(#_):not(#_) .ask-title { margin: 0; font-family: var(--font-display); font-size: 1.75rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+html:root:not(#_):not(#_) .ask-sub { margin: 0; max-width: 34ch; font-size: 0.9375rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ask-groups { display: flex; flex-direction: column; gap: 14px; }
+html:root:not(#_):not(#_) .ask-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+html:root:not(#_):not(#_) .ask-k { margin: 0; font-family: var(--font-mono); font-size: 0.6875rem; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- Suggestion and follow-up chips ---------- */
+html:root:not(#_):not(#_) .ask-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+html:root:not(#_):not(#_) .ask-chip {
+  appearance: none; margin: 0; min-height: 40px; padding: 9px 14px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+  font: 400 0.875rem/1.4 var(--font-body); text-align: left; cursor: pointer; max-width: 100%;
+  transition: background-color 160ms var(--ask-ease), border-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .ask-chip:hover { background: var(--surface-3); border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
+}
+html:root:not(#_):not(#_) .ask-chip:active { transform: scale(0.97); }
+
+/* ---------- A turn: your bubble, the trace, the answer card, follow-ups ---------- */
+html:root:not(#_):not(#_) .ask-turn { display: flex; flex-direction: column; gap: 16px; }
+html:root:not(#_):not(#_) .ask-turn + .ask-turn { margin-top: 12px; }
+html:root:not(#_):not(#_) .ask-you-row { display: flex; justify-content: flex-end; }
+html:root:not(#_):not(#_) .ask-you {
+  margin: 0; max-width: min(85%, 520px); padding: 10px 14px; border-radius: 18px 18px 6px 18px;
+  background: var(--surface-3); color: var(--ink); font-size: 0.9375rem; line-height: 1.4; overflow-wrap: anywhere;
+}
+html:root:not(#_):not(#_) .ask-turn > .thk { margin: 0; }
+
+html:root:not(#_):not(#_) .ask-card {
+  display: flex; flex-direction: column; gap: 12px; padding: 16px; margin: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: none;
+}
+html:root:not(#_):not(#_) .ask-head { margin: 0; font-size: 1.0625rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ask-pts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 0.9375rem; line-height: 1.4; }
+html:root:not(#_):not(#_) .ask-pts.many li { position: relative; padding-left: 14px; }
+html:root:not(#_):not(#_) .ask-pts.many li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+
+html:root:not(#_):not(#_) .ask-nums { margin: 0; display: flex; gap: 16px; flex-wrap: wrap; }
+html:root:not(#_):not(#_) .ask-nums > div { display: flex; flex-direction: column-reverse; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_) .ask-nums dt { font-size: 0.75rem; line-height: 1.4; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .ask-mgr { display: inline-block; vertical-align: bottom; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_) .ask-nums dd { margin: 0; font-family: var(--font-mono); font-weight: 500; font-size: 1.125rem; line-height: 1.4; color: var(--ink); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .ask-nums dd.good { color: var(--good); }
+html:root:not(#_):not(#_) .ask-nums dd.bad { color: var(--bad); }
+
+html:root:not(#_):not(#_) .ask-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+html:root:not(#_):not(#_) .ask-act {
+  appearance: none; margin: 0; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 9px 14px 9px 16px;
+  border-radius: 999px; border: 0; background: var(--surface-3); color: var(--ink);
+  font: 500 0.875rem/1.4 var(--font-body); cursor: pointer;
+  transition: background-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+}
+html:root:not(#_):not(#_) .ask-act svg { flex: none; margin-right: -2px; }
+html:root:not(#_):not(#_) .ask-act:last-child:not(:has(svg)) { padding-right: 16px; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .ask-act:hover { background: color-mix(in srgb, var(--surface-3) 80%, var(--ink) 20%); }
+}
+html:root:not(#_):not(#_) .ask-act:active { transform: scale(0.97); }
+/* Held in place while the text streams, faded in once it's written */
+html:root:not(#_):not(#_) .ask-after { transition: opacity 220ms var(--ask-ease); }
+html:root:not(#_):not(#_) .ask-after.wait { opacity: 0; pointer-events: none; }
+html:root:not(#_):not(#_) .ask-card .ai-label { margin: 0; }
+
+/* ---------- Composer, pinned at the bottom ---------- */
+html:root:not(#_):not(#_) .ask-dock { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 0 10px; width: 100%; max-width: 760px; margin-inline: auto; }
+html:root:not(#_):not(#_) .ask-composer {
+  display: flex; align-items: center; gap: 10px; height: 56px; margin: 0; padding: 6px 6px 6px 16px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 28px; cursor: text;
+  transition: border-color 160ms var(--ask-ease);
+}
+html:root:not(#_):not(#_) .ask-composer:focus-within { border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+html:root:not(#_):not(#_) .ask-composer:has(input:focus-visible) { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
+html:root:not(#_):not(#_) .ask-composer-mark { flex: none; display: inline-flex; color: var(--ink); line-height: 0; }
+html:root:not(#_):not(#_) .ask-composer input {
+  flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none;
+  color: var(--ink); font: 400 1rem/1.4 var(--font-body); outline: none;
+}
+html:root:not(#_):not(#_) .ask-composer input::placeholder { color: var(--muted); opacity: 1; }
+html:root:not(#_):not(#_) .ask-composer input:focus-visible { outline: none; }
+html:root:not(#_):not(#_) .ask-send {
+  appearance: none; flex: none; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: var(--action); color: var(--action-ink);
+  transition: opacity 160ms var(--ask-ease), transform 160ms var(--ask-ease), filter 160ms var(--ask-ease);
+}
+html:root:not(#_):not(#_) .ask-send[aria-disabled] { opacity: 0.4; cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_) .ask-send:not([aria-disabled]):hover { filter: brightness(1.06); }
+}
+html:root:not(#_):not(#_) .ask-send:not([aria-disabled]):active { transform: scale(0.97); }
+html:root:not(#_):not(#_) .ask-note { margin: 0; max-width: none; text-align: center; font-size: 0.6875rem; line-height: 1.4; color: var(--muted); text-wrap: balance; }
+html:root:not(#_):not(#_) .ask-wide { display: none; }
+
+/* ---------- Phone header: Ask next to the bell ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask {
+  border: 1px solid transparent; border-radius: 50%;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask[aria-current="page"] { background: var(--surface-3) !important; border-color: var(--ink) !important; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask:active { transform: scale(0.97); }
+
+/* ---------- Wider phones and tablets: three follow-ups fit ---------- */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_) .ask-follow .ask-chip:nth-child(n + 3) { display: none; }
+}
+@media (min-width: 600px) {
+  html:root:not(#_):not(#_) .ask-sub { max-width: 46ch; }
+  html:root:not(#_):not(#_) .ask-wide { display: inline; }
+  html:root:not(#_):not(#_) .ask-narrow { display: none; }
+  html:root:not(#_):not(#_) .ask-note { font-size: 0.75rem; }
+}
+
+/* ---------- Desktop: the 760 column, bigger type, topic cards side by side ---------- */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_) .ask-col { gap: 22px; padding-top: 12px; padding-bottom: 12px; }
+  html:root:not(#_):not(#_) .ask-turn { gap: 22px; }
+  html:root:not(#_):not(#_) .ask-empty { gap: 22px; }
+  html:root:not(#_):not(#_) .ask-intro { gap: 12px; }
+  html:root:not(#_):not(#_) .ask-mark svg { width: 40px; height: 40px; }
+  html:root:not(#_):not(#_) .ask-title { font-size: 2.5rem; line-height: 1.05; letter-spacing: -0.025em; }
+  html:root:not(#_):not(#_) .ask-sub { font-size: 1.0625rem; max-width: 560px; }
+  html:root:not(#_):not(#_) .ask-groups { flex-direction: row; gap: 16px; align-items: stretch; }
+  html:root:not(#_):not(#_) .ask-group { flex: 1 1 0; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  html:root:not(#_):not(#_) .ask-group .ask-chips { flex-direction: column; gap: 10px; }
+  html:root:not(#_):not(#_) .ask-you { padding: 11px 16px; }
+  html:root:not(#_):not(#_) .ask-card { gap: 14px; padding: 20px; border-radius: 20px; }
+  html:root:not(#_):not(#_) .ask-head { font-size: 1.25rem; line-height: 1.25; }
+  html:root:not(#_):not(#_) .ask-pts { font-size: 1rem; }
+  html:root:not(#_):not(#_) .ask-nums { gap: 24px; }
+  html:root:not(#_):not(#_) .ask-nums dd { font-size: 1.375rem; }
+  html:root:not(#_):not(#_) .ask-mgr { max-width: 18ch; }
+  html:root:not(#_):not(#_) .ask-dock { gap: 10px; padding: 8px 0 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-send, .ask-after, .ask-composer, .topbar .top-ask) { transition: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ask-chip, .ask-act, .ask-send, .topbar .top-ask):active { transform: none; }
+}
+
+/* The Ask button makes the phone top bar one control wider; on narrow phones the icon buttons sit edge to edge
+   (their glyphs keep 20px between them) so the logo, the update stamp and all three still fit */
+@media (max-width: 420px) {
+  html:root:not(#_):not(#_) .topbar { gap: 4px; }
+  html:root:not(#_):not(#_) .topbar > .row { gap: 0 !important; }
+}
+
+/* While an answer is being built the button can't send, but the loader inside it shows at full strength */
+html:root:not(#_):not(#_):not(#_) .ask-send[aria-busy="true"] { opacity: 1; cursor: progress; }
