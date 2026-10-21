@@ -461,7 +461,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
         </div>
       </header>
 
-      <section className="ask-page" ref={page} aria-label="Ask your league">
+      <section className="ask-page" ref={page} aria-label="Ask Sources">
         <div className="ask-thread" ref={thread} onScroll={onScroll} aria-live="polite"
           onWheel={mine} onTouchMove={mine} onKeyDown={onKeyDown} onPointerDown={(e) => { if (e.target === e.currentTarget) mine(); }}>
           <div className="ask-col" ref={col}>
@@ -469,7 +469,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
               <div className="ask-empty">
                 <div className="ask-intro">
                   <span className="ask-mark"><Icon name="spark" size={32} /></span>
-                  <h2 className="ask-title">Ask your league</h2>
+                  <h2 className="ask-title">Ask Sources</h2>
                   <p className="ask-sub">Trades, lineups, waivers, or anything else about your league. I run the numbers on your real rosters and show my work.</p>
                 </div>
                 <div className="ask-groups">
