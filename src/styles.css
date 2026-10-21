@@ -3221,13 +3221,6 @@ html:root:not(#_):not(#_) .boot3-field {
   -webkit-mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
   mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
 }
-/* The tiled mark at 5%, strongest at the top and gone 82% of the way down */
-html:root:not(#_):not(#_) .boot3-tiles {
-  position: absolute; left: 0; top: 0; display: block; pointer-events: none; opacity: 0.05;
-  width: calc(100% / var(--boot-tile-k)); height: calc(100% / var(--boot-tile-k)); transform: scale(var(--boot-tile-k)); transform-origin: 0 0;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.1%, rgba(0, 0, 0, 0.5) 59.6%, transparent 82.2%);
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.1%, rgba(0, 0, 0, 0.5) 59.6%, transparent 82.2%);
-}
 html:root:not(#_):not(#_) .boot3-glow {
   position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(var(--boot-glow), rgba(216, 242, 74, 0.06) 0%, rgba(216, 242, 74, 0) 70%);

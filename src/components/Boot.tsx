@@ -1,40 +1,15 @@
 /** Loading screen, from Zach's Figma ("Loading screen", phone and desktop). The large Braille Flipwave loader sits
  *  above the trace of what the load has really fetched so far (sleeper.ts loadLeague), and the logo stands at the
  *  foot of the screen on a football field: mark, wordmark, tagline. The logo doesn't animate. */
-import { useEffect, useId, useState } from "react";
-import { MARK } from "./Logo";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "./BrandLogo";
 import { ThinkingTrace } from "./ThinkingTrace";
 import { WorkingLoader } from "./WorkingLoader";
 import type { TraceState } from "../think";
 
 /** The ground, in Figma's layer order: a dark vertical gradient (CSS), a football field in perspective rising from
- *  the foot of the screen, the graphite mark tiled at 5% and fading out down the screen, and a faint lime glow
- *  behind the logo (CSS). The field and the tiles are inline SVG; their fades are CSS mask gradients. */
-
-/** The tiled mark. Figma's pattern: the 96px mark component at 1.6x on the phone, each tile overlapping the next by
- *  45% across and 40% down. One tile step holds the four tiles that reach into it. CSS scales the layer up for wider
- *  screens (2.8x on desktop), so the numbers here are the phone's. */
-const TILE = 96 * 1.6, STEP_X = TILE * 0.55, STEP_Y = TILE * 0.6;
-function Tiles() {
-  const id = useId().replace(/:/g, "");
-  return (
-    <svg className="boot3-tiles" aria-hidden="true" focusable="false">
-      <defs>
-        {/* The mark as Figma draws it: its -50..50 artwork in a 96px square */}
-        <g id={`${id}m`} fill="none" stroke="#3A3F3C" strokeWidth="5.26" strokeLinejoin="round">
-          {MARK.map((d) => <path key={d.slice(0, 12)} d={d} />)}
-        </g>
-        <pattern id={`${id}p`} width={STEP_X} height={STEP_Y} patternUnits="userSpaceOnUse">
-          {[[0, 0], [-STEP_X, 0], [0, -STEP_Y], [-STEP_X, -STEP_Y]].map(([x, y]) => (
-            <use key={`${x},${y}`} href={`#${id}m`} transform={`translate(${x} ${y}) scale(${1.6 * 0.96}) translate(50 50)`} />
-          ))}
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id}p)`} />
-    </svg>
-  );
-}
+ *  the foot of the screen, and a faint lime glow behind the logo (CSS). The field is inline SVG; its fade is a CSS
+ *  mask gradient. */
 
 /** The field, drawn for the screen it's on. Measured from both Figma frames, which agree once scaled: the field is
  *  the bottom 44% of the screen; at its top edge the yard lines are 2px wide and 160px apart, 80px either side of
@@ -82,7 +57,6 @@ export function Boot({ step, leaving = false, trace }: { step: string; leaving?:
     <div className={`boot3${leaving ? " leaving" : ""}`} role="status" aria-live="polite">
       <span className="sr-only">{step}…</span>
       <Field />
-      <Tiles />
       <span className="boot3-glow" aria-hidden="true" />
       <div className="boot3-col">
         <div className="boot3-top" />
