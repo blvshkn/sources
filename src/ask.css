@@ -1,7 +1,7 @@
 /* ---------- Ask: chat first, full height ----------
    The thread fills the room between the status line and the composer, which sits pinned at the bottom of the screen
    (above the tab bar on phones, above the keyboard while you type). Ask.tsx sizes .ask-page to the space left on
-   screen with visualViewport. Phone first, then tablet, then desktop (a 760px column centred next to the sidebar). */
+   screen with visualViewport. Phone first, then tablet, then desktop (the same page width as every other tab). */
 
 html:root[data-tab="ask"]:not(#_):not(#_) .main { padding-bottom: 0 !important; }
 html:root[data-tab="ask"]:not(#_):not(#_) { overflow-anchor: none; }
@@ -22,7 +22,7 @@ html:root:not(#_):not(#_) .ask-thread {
   margin-inline: -4px; padding-inline: 4px;
 }
 html:root:not(#_):not(#_) .ask-col {
-  margin-top: auto; width: 100%; max-width: 760px; margin-inline: auto;
+  margin-top: auto; width: 100%; max-width: none; margin-inline: 0;
   display: flex; flex-direction: column; gap: 16px; padding: 8px 0 8px;
 }
 
@@ -96,7 +96,7 @@ html:root:not(#_):not(#_) .ask-after.wait { opacity: 0; pointer-events: none; }
 html:root:not(#_):not(#_) .ask-card .ai-label { margin: 0; }
 
 /* ---------- Composer, pinned at the bottom ---------- */
-html:root:not(#_):not(#_) .ask-dock { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 0 10px; width: 100%; max-width: 760px; margin-inline: auto; }
+html:root:not(#_):not(#_) .ask-dock { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 0 10px; width: 100%; max-width: none; margin-inline: 0; }
 html:root:not(#_):not(#_) .ask-composer {
   display: flex; align-items: center; gap: 10px; height: 56px; margin: 0; padding: 6px 6px 6px 16px;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 28px; cursor: text;
@@ -144,7 +144,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask:active { tran
   html:root:not(#_):not(#_) .ask-note { font-size: 0.75rem; }
 }
 
-/* ---------- Desktop: the 760 column, bigger type, topic cards side by side ---------- */
+/* ---------- Desktop: full page width like the other tabs, bigger type, topic cards side by side ---------- */
 @media (min-width: 861px) {
   html:root:not(#_):not(#_) .ask-col { gap: 22px; padding-top: 12px; padding-bottom: 12px; }
   html:root:not(#_):not(#_) .ask-turn { gap: 22px; }
