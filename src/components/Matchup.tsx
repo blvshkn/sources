@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { WeekStepper } from "./WeekStepper";
 import { Slot, pendingMatchupWeek, clearMatchupWeek } from "../weekMatch";
-import { LEAGUE, OPPONENT_ID, Player, SpecialPlayer, WEEK, YOU, onBye, playerById, sleeperUrl, teamById } from "../data";
+import { LEAGUE, OPPONENT_ID, PLAYERS, Player, SpecialPlayer, WEEK, YOU, onBye, playerById, sleeperUrl, teamById } from "../data";
 import { eff, fits, fmt, round1, specialPts, startedSpecials, StartedSpecial } from "../engine";
 import { Icon } from "./ui";
 import { useLive, expect, sideScore, scoreMatch, startersOf } from "../live";
@@ -12,10 +12,35 @@ import { FaceOff, toPlay } from "./FaceOff";
 import { PlatformLogo } from "./PlatformLogo";
 import { deny, denyOn } from "../deny";
 import { SwapPicker, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
+import type { SwapOption } from "./SwapPicker";
+import { CompareBtn, SwapCompare, cmpNow, cmpWeek } from "./SwapCompare";
+import type { CmpOpen } from "./SwapCompare";
+import { PlayerSheet } from "./lazy";
+import type { WeekPlayer } from "../weeks";
 import { bestNow, slotted, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { order, SLOT_NAME } from "../weeks";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
+
+/** The Compare button for the open row's swap card: a sibling of the row's tap target (never inside it), drawn in the
+ *  same box under the player's info (swap-card.css). Only when the list has someone to compare. */
+const cmpBtn = (show: boolean, name: string | undefined, options: SwapOption[], open: (from: Element | null) => void) =>
+  show && name && options.some((o) => o.cmp) ? <CompareBtn name={name} onOpen={(el) => open(el.closest(".mu-row"))} /> : null;
+
+/** Compare and player info from the matchup: the Compare sheet stacks over the matchup and its open swap list, and a
+ *  name or headshot there opens the player sheet over the matchup. Escape and outside taps close one layer at a time. */
+function useMatchupCompare(closeList: () => void) {
+  const [cmp, setCmp] = useState<CmpOpen | null>(null);
+  const [info, setInfo] = useState<{ p: Player; where: string } | null>(null);
+  const infoFor = (id: string, where: string) => (PLAYERS[id] ? () => { closeList(); setInfo({ p: playerById(id), where }); } : undefined);
+  const layers = (
+    <>
+      {cmp && <SwapCompare {...cmp} onClose={() => setCmp(null)} />}
+      {info && <PlayerSheet p={info.p} where={info.where} onClose={() => setInfo(null)} />}
+    </>
+  );
+  return { setCmp, infoFor, layers };
+}
 
 /** The full matchup for any week. This week is the live, interactive one (try swaps); other weeks are read-only:
  *  a past week's final, slot for slot, or a future week's projected lineups. "See the full matchup" picks the week. */
@@ -49,6 +74,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const { open, setOpen, menuRef: swapEl } = useSwapMenu<number>();
   const live = useLive();
   const pts = (id: string | null) => expect(live, id);
+  const { setCmp, infoFor, layers } = useMatchupCompare(() => setOpen(null));
 
   if (!opp) return (
     <><BackBtn onBack={onBack} />{stepper}<section className="card card-pad"><p className="small muted">No matchup this week.</p></section></>
@@ -139,28 +165,29 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           const me = s.id ? playerById(s.id) : null;
           const them = theirs[i]?.id ? playerById(theirs[i].id!) : null;
           const e = edges[i];
-          const options = bench.filter((p) => fits(s.slot, p.pos)).sort((a, b) => eff(b, true) - eff(a, true));
           const lock = starterLock(me);
+          const options: SwapOption[] = bench.filter((p) => fits(s.slot, p.pos)).sort((a, b) => eff(b, true) - eff(a, true)).map((p) => {
+            // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
+            const d = eff(p, true) - pts(s.id);
+            return { key: p.id, who: <Who p={p} side="you" />, name: p.name, pts: eff(p, true), delta: round1(d), up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swap(i, p.id, from),
+              cmp: cmpNow(p, eff(p, true), infoFor(p.id, "On your bench")) };
+          });
+          const title = `Swap in at ${s.slot}`, role = `Starting at ${s.slot}`;
+          const cmp = cmpBtn(open === i && !!me, me?.name, options, (from) => me && setCmp({ subject: cmpNow(me, pts(me.id), infoFor(me.id, role)), role, options, title, swapLabel: "Swap in", from }));
           return (
             <div key={i} className={`mu-row${open === i ? " open" : ""}`}>
               <span className="mu-slot">{s.slot}</span>
               <button className={`mu-mine${rowCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined}
                 onClick={tapStarter(i, lock)}
                 aria-expanded={lock ? undefined : open === i} aria-label={lock ? `${me?.name ?? "Empty"} at ${s.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${s.slot}`}>
-                <Who p={me} side="you" />
+                <Who p={me} side="you" slot={s.slot} />
                 {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
                 {lock && <span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span>}
               </button>
+              {cmp}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
-              {open === i && (
-                <SwapPicker menuRef={swapEl} title={`Swap in at ${s.slot}`} empty={`No bench player can play ${s.slot}.`}
-                  options={options.map((p) => {
-                    // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
-                    const d = eff(p, true) - pts(s.id);
-                    return { key: p.id, who: <Who p={p} side="you" />, name: p.name, pts: eff(p, true), delta: round1(d), up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swap(i, p.id, from) };
-                  })} />
-              )}
+              <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" slot={s.slot} />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+              {open === i && <SwapPicker menuRef={swapEl} title={title} empty={`No bench player can play ${s.slot}.`} options={options} />}
             </div>
           );
         })}
@@ -169,24 +196,24 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           // or DEF on your roster, through the same menu
           const them = oppK[i] ?? null, e = kEdges[i], idx = mine.length + i, me = x.player;
           const lock = starterLock(me);
-          const options = benchK.filter((p) => p.pos === x.slot).sort((a, b) => spPts(live, b) - spPts(live, a));
+          const options: SwapOption[] = benchK.filter((p) => p.pos === x.slot).sort((a, b) => spPts(live, b) - spPts(live, a)).map((p) => {
+            const d = round1(spPts(live, p) - spPts(live, me));
+            return { key: p.id, who: <SpecialWho p={p} side="you" />, name: p.name, pts: spPts(live, p), delta: d, up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swapK(i, p, from), cmp: cmpNow(p, spPts(live, p)) };
+          });
+          const title = `Swap in at ${x.slot}`, role = `Starting at ${x.slot}`;
+          const cmp = cmpBtn(open === idx && !!me, me?.name, options, (from) => me && setCmp({ subject: cmpNow(me, spPts(live, me)), role, options, title, swapLabel: "Swap in", from }));
           return (
             <div key={`k-${i}`} className={`mu-row${open === idx ? " open" : ""}`}>
               <span className="mu-slot">{x.slot}</span>
               <button className={`mu-mine${spCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined} onClick={tapStarter(idx, lock)}
                 aria-expanded={lock ? undefined : open === idx} aria-label={lock ? `${me?.name ?? "Empty"} at ${x.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${x.slot}`}>
-                <SpecialWho p={x.player} suggested={x.suggested} side="you" />{me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={specialPts(me)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
+                <SpecialWho p={x.player} suggested={x.suggested} side="you" slot={x.slot} />{me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={specialPts(me)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
                 {lock && <span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span>}
               </button>
+              {cmp}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho p={them?.player ?? null} suggested={them?.suggested} side="them" />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
-              {open === idx && (
-                <SwapPicker menuRef={swapEl} title={`Swap in at ${x.slot}`} empty={`No other ${x.slot === "DEF" ? "defense" : "kicker"} on your roster.`}
-                  options={options.map((p) => {
-                    const d = round1(spPts(live, p) - spPts(live, me));
-                    return { key: p.id, who: <SpecialWho p={p} side="you" />, name: p.name, pts: spPts(live, p), delta: d, up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swapK(i, p, from) };
-                  })} />
-              )}
+              <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho p={them?.player ?? null} suggested={them?.suggested} side="them" slot={x.slot} />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+              {open === idx && <SwapPicker menuRef={swapEl} title={title} empty={`No other ${x.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} />}
             </div>
           );
         })}
@@ -195,6 +222,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           {bestGain > 0 && !allLocked && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(bestGain)}</button>}
         </div>
       </section>
+      {layers}
     </>
   );
 }
@@ -234,6 +262,7 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   const future = m?.kind === "future";
   const { open, setOpen, menuRef } = useSwapMenu<number>();
   useEffect(() => setOpen(null), [week]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { setCmp, infoFor, layers } = useMatchupCompare(() => setOpen(null));
   const back = <BackBtn onBack={onBack} />;
   if (!m && !err) return <>{back}{stepper}<MatchSkel week={week} /></>;
   if (!m || !m.opp) return (
@@ -277,29 +306,31 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
         <div className="mu-th"><span>Slot</span><span>You, then {opp.team.manager}</span><span className="mu-th-you">You</span><span className="mu-th-them">{opp.team.manager}</span></div>
         {Array.from({ length: n }, (_, i) => {
           const a = at(m.me.starters, i), b = at(opp.starters, i), e = edges[i];
-          const options = future && i < wi.starters.length ? wi.bench.filter((p) => wi.fitsAt(i, p.pos)) : [];
+          const cmpOf = (p: WeekPlayer, where: string) => cmpWeek(p, week, infoFor(p.id, `${where} in Week ${week}`));
+          const options: SwapOption[] = (future && i < wi.starters.length ? wi.bench.filter((p) => wi.fitsAt(i, p.pos)) : []).map((p) => {
+            const d = (p.pts ?? 0) - pts(a);
+            return { key: p.id, who: <WeekWho p={p} side="you" week={week} />, name: p.name, pts: p.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, ...weekBye(p, week),
+              onPick: (from: Element) => { wi.swap(i, p.id); setOpen(null, from); }, cmp: cmpOf(p, "On your bench") };
+          });
+          const title = `Swap in at ${a.slot}`, role = `Starting at ${a.slot}`;
+          const cmp = cmpBtn(open === i && future && !!a.p, a.p?.name, options, (from) => a.p && setCmp({ subject: cmpOf(a.p, role), role, options, title, swapLabel: "Swap in", from }));
           return (
             <div key={i} className={`mu-row${open === i ? " open" : ""}`}>
               <span className="mu-slot">{a.slot || b.slot}</span>
-              {past ? <button className="mu-mine is-locked mu-past" aria-disabled="true" aria-label={`${a.p?.name ?? "Empty"} at ${a.slot || b.slot}, locked`} onClick={denyOn(`Week ${week} is over. Lineups can't change.`)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} past={past} /><span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span></button>
+              {past ? <button className="mu-mine is-locked mu-past" aria-disabled="true" aria-label={`${a.p?.name ?? "Empty"} at ${a.slot || b.slot}, locked`} onClick={denyOn(`Week ${week} is over. Lineups can't change.`)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} slot={a.slot || b.slot} /><Num x={a} past={past} /><span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span></button>
                 : future && i < wi.starters.length ? <button className="mu-mine" aria-expanded={open === i} aria-label={`Swap ${a.p?.name ?? "empty"} at ${a.slot}`}
-                  onClick={(ev: { currentTarget: Element }) => setOpen(open === i ? null : i, ev.currentTarget)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} past={past} /></button>
-                : <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} /><Num x={a} past={past} /></span>}
+                  onClick={(ev: { currentTarget: Element }) => setOpen(open === i ? null : i, ev.currentTarget)}><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} slot={a.slot || b.slot} /><Num x={a} past={past} /></button>
+                : <span className="mu-mine"><WeekWho p={a.p} side="you" week={week} suggested={a.suggested} slot={a.slot || b.slot} /><Num x={a} past={past} /></span>}
+              {cmp}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} /><Num x={b} past={past} /></span>
-              {open === i && (
-                <SwapPicker menuRef={menuRef} title={`Swap in at ${a.slot}`} empty={`No bench player can play ${a.slot}.`}
-                  options={options.map((p) => {
-                    const d = (p.pts ?? 0) - pts(a);
-                    return { key: p.id, who: <WeekWho p={p} side="you" week={week} />, name: p.name, pts: p.pts ?? 0, delta: round1(d), up: d >= 0, lock: null, ...weekBye(p, week),
-                      onPick: (from: Element) => { wi.swap(i, p.id); setOpen(null, from); } };
-                  })} />
-              )}
+              <span className="mu-theirs"><WeekWho p={b.p} side="them" week={week} suggested={b.suggested} slot={a.slot || b.slot} /><Num x={b} past={past} /></span>
+              {open === i && <SwapPicker menuRef={menuRef} title={title} empty={`No bench player can play ${a.slot}.`} options={options} />}
             </div>
           );
         })}
         <div className="mu-foot"><span>{past ? `Week ${week} final, from Sleeper.` : wi.changed ? `Your what-if against ${opp.team.manager}'s best projected starters for Week ${week}.` : `Lineups set to each side's best projected starters for Week ${week}. Tap yours to try a swap.`}</span></div>
       </section>
+      {layers}
     </>
   );
 }

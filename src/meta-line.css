@@ -1,0 +1,51 @@
+/* A player's info line (Meta.tsx): Lineup rows (.lu-meta) and the matchup's player cells (.mu-n > .mu-meta), the
+   swap lists included. Loads just before frame.css. Every rule is scoped to .lu-meta, .mu-meta, .lu-who, .mu-n or
+   .lu-name: nothing here styles bare .card, .btn or .row.
+   1. One line wherever it fits. When the cell is tight the kickoff shortens ("Mon 8:15p"); the full time stays for
+      screen readers.
+   2. Only when it still can't fit does a part move down, and a wrapped line never starts with a dot or an indent.
+      Every part carries its dot in front (a fixed --sep wide), and the line is pulled left by --sep and clipped there,
+      so the dot of whichever part starts a line falls in the clipped strip. The opponent's side of the wide matchup
+      is right-aligned, so there the dots go after each part and the strip is on the right. */
+
+html:root:not(#_):not(#_) .lu-list .lu-row > .lu-who { container: luwho / inline-size; }
+html:root:not(#_):not(#_) .mu-n { container: mun / inline-size; }
+
+/* ---------- Kickoff, full or short ---------- */
+html:root:not(#_):not(#_) :is(.lu-meta, .mu-meta) .kt-s { display: none; }
+@container luwho (max-width: 189.98px) {
+  html:root:not(#_):not(#_) .lu-meta .kt-l { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  html:root:not(#_):not(#_) .lu-meta .kt-s { display: inline; }
+}
+@container mun (max-width: 209.98px) {
+  html:root:not(#_):not(#_) .mu-meta .kt-l { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  html:root:not(#_):not(#_) .mu-meta .kt-s { display: inline; }
+}
+
+/* ---------- Dots that drop at a wrap ---------- */
+html:root:not(#_):not(#_):not(#_) :is(.lu-meta, .mu-n > small.mu-meta) {
+  --sep: 13px;
+  display: flex; flex-wrap: wrap; align-items: center; column-gap: 0; row-gap: 2px; min-width: 0;
+  margin-left: calc(-1 * var(--sep)); clip-path: inset(-8px -8px -8px var(--sep));
+}
+html:root:not(#_):not(#_):not(#_) :is(.lu-meta, .mu-meta) > * { white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) :is(.lu-meta > *, .mu-meta > .mp)::before {
+  content: "·"; display: inline-block; width: var(--sep); margin: 0; text-align: center; color: var(--faint); font-weight: 400;
+}
+/* Parts that sit on their own line (the injury note, a status word) or a pill: no dot, and they start at the edge */
+html:root:not(#_):not(#_):not(#_) .lu-meta > :is(.lu-inj, .lu-st)::before { content: none; }
+html:root:not(#_):not(#_):not(#_) .lu-meta > :is(.lu-inj, .lu-st) { margin-left: var(--sep); white-space: normal; }
+html:root:not(#_):not(#_):not(#_) .mu-meta .status { margin-left: var(--sep); }
+
+@container mu (min-width: 680px) {
+  html:root:not(#_):not(#_):not(#_) .mu-theirs > .mu-p .mu-n > small.mu-meta { margin-left: 0; margin-right: calc(-1 * var(--sep)); clip-path: inset(-8px var(--sep) -8px -8px); }
+  html:root:not(#_):not(#_):not(#_) .mu-theirs > .mu-p .mu-meta > .mp::before { content: none; }
+  html:root:not(#_):not(#_):not(#_) .mu-theirs > .mu-p .mu-meta > .mp::after {
+    content: "·"; display: inline-block; width: var(--sep); text-align: center; color: var(--faint); font-weight: 400;
+  }
+  html:root:not(#_):not(#_):not(#_) .mu-theirs > .mu-p .mu-meta .status { margin-left: 0; margin-right: var(--sep); }
+}
+
+/* ---------- The injury note under a Lineup name wraps instead of cutting off ---------- */
+html:root:not(#_):not(#_):not(#_) .lu-name .lu-tagwrap { overflow: visible; align-items: flex-start; }
+html:root:not(#_):not(#_):not(#_) .lu-name .lu-inj { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }

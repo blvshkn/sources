@@ -14,6 +14,7 @@ import { Avatar } from "./Avatar";
 import { StatusPill } from "./ui";
 import { deny } from "../deny";
 import type { CmpWho } from "./SwapCompare";
+import { MetaParts, gameParts } from "./Meta";
 
 // ---- Locks ------------------------------------------------------------------
 /** Sleeper locks a player at his game's kickoff: "live" while it's on, "final" once it's over, null before. Byes
@@ -101,14 +102,18 @@ function pageView() {
  * menu's height is capped to that room, so all of it shows without scrolling the list.
  * The row is the menu's parent (matchup), or the row just before it when the parent is a zero-height anchor
  * (data-swap-row="prev", Lineup); then the row's height goes on the anchor as --sw-rowh for the "above" position.
+ * Lineup's card pushes the rows instead of covering them, so no part of a row (a suggestion's last line) peeks out
+ * from under it: below the row the anchor takes the list's height; above it the row takes it as a top margin, and the
+ * returned number is how far that moved the row down, for the scroll hold to take back so the row stays put.
  */
-export function placeSwap(menu: HTMLElement) {
+export function placeSwap(menu: HTMLElement): number {
   const host = menu.parentElement;
-  if (!host) return;
+  if (!host) return 0;
   const prev = host.dataset.swapRow === "prev";
   const row = prev ? host.previousElementSibling as HTMLElement | null : host;
-  if (!row) return;
+  if (!row) return 0;
   if (prev) {
+    host.style.height = ""; row.style.marginTop = "";
     host.style.setProperty("--sw-rowh", `${row.offsetHeight}px`);
     // Line the menu up with the row's outlined box (its ::after pill), whatever inset that has at this size, and
     // hang it off the box's bottom edge (or its top, when flipped) so the row and the list read as one card
@@ -149,7 +154,9 @@ export function placeSwap(menu: HTMLElement) {
   const below = Math.min(floor, view.bottom) - m.top - 8, above = r.top + 4 - Math.max(ceil, view.top) - 8;
   // The matchup only flips at the content's end. Lineup rows (prev) also flip when the menu would open below the
   // screen but fits above it, since the page doesn't scroll to show it.
-  if (prev ? h <= below || (h <= floor - m.top - 8 && h > above) : h <= floor - m.top - 8) return;
+  // Lineup: the anchor holds the list's height below the row (it hangs pb + 1px into the row), plus a 4px gap
+  const push = () => { if (prev) host.style.height = `${Math.max(0, menu.offsetHeight - parseFloat(host.style.getPropertyValue("--sw-pb") || "4") - 1 + 4)}px`; return 0; };
+  if (prev ? h <= below || (h <= floor - m.top - 8 && h > above) : h <= floor - m.top - 8) return push();
   // Doesn't fit below: take the side with more room on screen, never past the content's top or end
   if (above > below) {
     menu.classList.add("is-up");
@@ -159,6 +166,12 @@ export function placeSwap(menu: HTMLElement) {
   }
   const room = Math.max(above, below);
   if (h > room) menu.style.maxHeight = `${Math.max(120, Math.floor(room))}px`;
+  if (!prev) return 0;
+  if (!menu.classList.contains("is-up")) return push();
+  // Above: the list ends pt + 1px inside the row's top, so the row moves down by the rest of it, plus the gap
+  const shift = Math.max(0, menu.offsetHeight - parseFloat(host.style.getPropertyValue("--sw-pt") || "5") - 1 + 4);
+  row.style.marginTop = `${shift}px`;
+  return shift;
 }
 
 /**
@@ -178,54 +191,72 @@ export function useSwapMenu<K extends string | number>() {
   useLayoutEffect(() => {
     // The attached-card marks (data-sw) belong to the open row only: the matchup row that holds the menu, or the
     // Lineup row right before the menu's anchor
+    // A Lineup row that was pushed down for a list above it gives the room back, and so does an anchor whose list is
+    // closing (it fades over the rows for its 160ms instead of holding them apart). shift keeps the rows in view still.
     const menu = menuRef.current, at = menu?.parentElement;
-    document.querySelectorAll<HTMLElement>(":is(.mu-row, .lu-row)[data-sw]").forEach((r) => { if (!menu || (!r.contains(menu) && r.nextElementSibling !== at)) delete r.dataset.sw; });
-    if (menuRef.current) placeSwap(menuRef.current);
+    let shift = 0;
+    document.querySelectorAll<HTMLElement>(":is(.mu-row, .lu-row)[data-sw]").forEach((r) => {
+      if (menu && (r.contains(menu) || r.nextElementSibling === at)) return;
+      delete r.dataset.sw;
+      if (r.style.marginTop) { shift -= parseFloat(r.style.marginTop) || 0; r.style.marginTop = ""; }
+    });
+    document.querySelectorAll<HTMLElement>(".lu-pick-at").forEach((a) => { if (a !== at) a.style.height = ""; });
+    if (menuRef.current) shift += placeSwap(menuRef.current);
     const h = hold.current;
     hold.current = null;
-    if (h && Math.abs(h.el.scrollTop - h.top) > 0.5) h.el.scrollTop = h.top;
+    if (h && Math.abs(h.el.scrollTop - (h.top + shift)) > 0.5) h.el.scrollTop = h.top + shift;
   }, [open]);
   // Only the bordered box that opened the list (aria-expanded) and the list itself keep it open. A tap or click
   // anywhere else closes it, and so does Escape (useDismiss). A sheet opened from the list (Compare) stacks on top, so taps
   // and Escape there are the sheet's and the list stays open behind it. The opener's own click still toggles it.
-  useDismiss(menuRef, (_why, t) => setOpen(null, t), { open: open !== null, keep: '[aria-expanded="true"]' });
+  // The matchup's Compare button sits beside its row's tap target, not inside it, so it's kept by class.
+  useDismiss(menuRef, (_why, t) => setOpen(null, t), { open: open !== null, keep: '[aria-expanded="true"], .sw-cmp' });
   return { open, setOpen, menuRef };
 }
 
 // ---- Cells ------------------------------------------------------------------
+/** "WR · " in front of the team, unless the row's slot chip already says WR. Flex, superflex and the swap list (no
+ *  slot shown) keep it. */
+const posOf = (pos: string, slot?: string) => (slot === pos ? null : pos);
+/** "SEA vs LAR · Sun 4:05 PM" as parts: the team with its opponent, then the kickoff. */
+const teamGame = (nfl: string, game: string | null | undefined): ReactNode[] => {
+  if (!game) return [nfl];
+  const [opp, ...rest] = gameParts(game);
+  return [<>{nfl} {opp}</>, ...rest];
+};
 /** One side of a row this week: headshot, name, position, team and game. Module level, so a re-render (a toast, a
  *  live update) keeps the same rows instead of mounting every one of them again. */
-export function Who({ p, side }: { p: Player | null; side: "you" | "them" }) {
+export function Who({ p, side, slot }: { p: Player | null; side: "you" | "them"; slot?: string }) {
   useKickoffs();
   return p ? (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{!onBye(p.nfl) && kickLine(p) ? ` ${kickLine(p)}` : ""} <StatusPill p={p} /></small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...teamGame(p.nfl, onBye(p.nfl) ? null : kickLine(p))]} /><StatusPill p={p} /></small></span>
     </span>
   ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
 }
 
 /** A K/DEF. One Sleeper left empty shows our best-projected pick, labeled Suggested. */
-export function SpecialWho({ p, side, suggested }: { p: SpecialPlayer | null; side: "you" | "them"; suggested?: boolean }) {
+export function SpecialWho({ p, side, suggested, slot }: { p: SpecialPlayer | null; side: "you" | "them"; suggested?: boolean; slot?: string }) {
   useKickoffs();
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{onBye(p.nfl) ? " · Bye" : p.opp ? ` ${oppAt(p.nfl, p.opp)}` : ""}{suggested && <span className="muted"> · Suggested</span>}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...(onBye(p.nfl) ? [p.nfl, "Bye"] : teamGame(p.nfl, p.opp ? oppAt(p.nfl, p.opp) : null)), suggested && <span className="muted">Suggested</span>]} /></small></span>
     </span>
   );
 }
 
 /** One side of a row in a week other than this one: name, position, team and that week's game. */
-export function WeekWho({ p, side, week, suggested }: { p: WeekPlayer | null; side: "you" | "them"; week: number; suggested?: boolean }) {
+export function WeekWho({ p, side, week, suggested, slot }: { p: WeekPlayer | null; side: "you" | "them"; week: number; suggested?: boolean; slot?: string }) {
   useKickoffs(week);
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
   const game = gameInAt(p, week);
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} text={p.pos === "DEF" ? p.nfl : undefined} />
-      <span className="mu-n"><b>{p.name}</b><small>{p.pos} · {p.nfl}{game ? ` ${game}` : " · Bye"}{suggested && <span className="muted"> · Suggested</span>}</small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...(game ? teamGame(p.nfl, game) : [p.nfl, "Bye"]), suggested && <span className="muted">Suggested</span>]} /></small></span>
     </span>
   );
 }

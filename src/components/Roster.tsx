@@ -15,6 +15,7 @@ import { AiLabel, Delta, Icon, Seg, Stamp, StatusPill, useSticky, PageTabs } fro
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
+import { Kick } from "./Meta";
 import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
 import { NumTip, Tooltip } from "./Tooltip";
@@ -214,7 +215,7 @@ const TeamOpp = ({ nfl, opp }: { nfl: string; opp?: string }) => <span>{nfl}{opp
 function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
   if (g.state === "in_game") return <span className="lu-live"><i aria-hidden="true" />Live</span>;
   if (g.state === "complete") return <span className="lu-final">Final</span>;
-  return fallback ? <span className="lu-game">{fallback}</span> : null;
+  return fallback ? <span className="lu-game"><Kick when={fallback} /></span> : null;
 }
 
 /** What a tappable lineup row needs to open its swap menu (or deny when locked). */

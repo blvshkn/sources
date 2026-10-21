@@ -37,19 +37,63 @@ html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp {
   html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { grid-row: 1; grid-column: 5; justify-self: end; margin: 0; }
 }
 html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > svg { flex: none; }
+/* The button's parts (CompareBtn): the small icon and the label, or on a tablet the 24px columns-2 icon alone */
+html:root:not(#_):not(#_):not(#_) .sw-cmp > :is(.sw-cmp-ic, .sw-cmp-ic2) { display: inline-grid; place-items: center; flex: none; }
+html:root:not(#_):not(#_):not(#_) .sw-cmp > .sw-cmp-ic2 { display: none; }
+html:root:not(#_):not(#_):not(#_) .sw-cmp svg { display: block; }
+/* Tablet (Zach, Q1 B): where the lineup column is too narrow for the label beside the points, Compare is a 40px round
+   icon button there, in the app's icon-button style (icon-buttons.css), with the tip "Compare with the swap list". */
+@media (min-width: 768px) {
+  @container lucol (max-width: 519.98px) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp {
+      grid-row: 1; grid-column: 5; justify-self: end; align-self: center; margin: 0;
+      display: inline-grid; place-items: center; width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; gap: 0;
+      border: 0 !important; border-radius: 20px !important; background: rgba(244, 246, 242, 0.07) !important; color: #9A9C98 !important; box-shadow: none !important;
+      transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > :is(.sw-cmp-ic, .sw-cmp-t) { display: none; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > .sw-cmp-ic2 { display: inline-grid; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp svg { width: 24px; height: 24px; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp:active { background: rgba(244, 246, 242, 0.14) !important; color: #F2F3EE !important; transform: scale(0.96); }
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp:focus-visible { outline: 2px solid #F2F3EE !important; outline-offset: 2px; }
+  }
+}
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  @container lucol (max-width: 519.98px) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp:hover { background: rgba(244, 246, 242, 0.11) !important; color: #F2F3EE !important; }
+  }
+}
+
+/* ---------- Compare in the full matchup ---------- */
+/* The button is the row's own child, beside the starter's tap target (a button can't hold another), and shares its
+   grid cell: under the player's name and game, inside the same box, the way a narrow Lineup row has it. The box grows
+   by the button's height, so the list still hangs off its bottom edge (placeSwap measures the box). */
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp {
+  grid-column: 2; grid-row: 1; align-self: end; justify-self: start; position: relative; z-index: 1;
+  margin: 0 0 8px 42px; gap: 6px; text-decoration: none; white-space: nowrap;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-row:has(> .sw-cmp) > .mu-mine { padding-bottom: 58px; }
+@container mu (min-width: 680px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp { grid-column: 1; grid-row: 1 / span 2; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_) .mu-row > .sw-cmp { animation: sw-cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+}
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { animation: sw-cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 }
 @keyframes sw-cmp-in { from { opacity: 0; transform: scale(0.96); } }
 
 /* ---------- The Compare sheet ---------- */
-/* Series colors by position in the comparison: blue, amber, magenta. Validated as a set (all pairs, both surfaces).
-   No lime, and no green or red, which mean good and bad. */
-html:root:not(#_):not(#_) .cmp-sheet { --cmp-1: #2a78d6; --cmp-2: #eda100; --cmp-3: #e87ba4; }
+/* Series colors by position in the comparison: blue, amber, magenta, lavender. Validated as a set (all pairs, both
+   palettes, on the sheet's #202322 and #191C1B): CVD and normal-vision separation pass and every color clears 3:1.
+   Lavender sits above the dark lightness band, so it reads a touch brighter than the others. No lime, and no green or
+   red, which mean good and bad. */
+html:root:not(#_):not(#_) .cmp-sheet { --cmp-1: #2a78d6; --cmp-2: #eda100; --cmp-3: #e87ba4; --cmp-4: #c4b5fd; }
 @media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]):not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; }
+  html:root:not([data-theme="light"]):not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; --cmp-4: #c4b5fd; }
 }
-html:root[data-theme="dark"]:not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; }
+html:root[data-theme="dark"]:not(#_):not(#_) .cmp-sheet { --cmp-1: #3987e5; --cmp-2: #c98500; --cmp-3: #d55181; --cmp-4: #c4b5fd; }
 @media (min-width: 768px) { html:root:not(#_):not(#_):not(#_) .ps.ps-detail.cmp-sheet { max-width: 680px; } }
 
 html:root:not(#_):not(#_) .cmp-sheet .cmp-head { display: grid; gap: 2px; min-width: 0; }
@@ -76,8 +120,13 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:active { transform: scale(0.97); 
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chip.is-full { opacity: 0.5; cursor: default; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 
-/* Side by side: one column per player */
-html:root:not(#_):not(#_) .cmp-sheet .cmp-cols { display: grid; gap: 8px; }
+/* Side by side: one column per player while they fit (a column needs about 150px). Three or four on a phone wrap to
+   two columns, so names, Swap in and "This week" keep their room. */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-sec { container: cmpsec / inline-size; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-cols { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
+@container cmpsec (min-width: 470px) { html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container cmpsec (min-width: 620px) { html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-col { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .cmp-sheet .cmp-col { animation: cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); } }
 @keyframes cmp-in { from { opacity: 0; transform: translateY(4px); } }
@@ -101,6 +150,7 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-col > .cmp-key { width: 100%; height: 
 html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s1 { background: var(--cmp-1); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s2 { background: var(--cmp-2); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s3 { background: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-key.s4 { background: var(--cmp-4); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-stats { display: grid; gap: 8px; margin: 0; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-stats > div { display: grid; gap: 2px; min-width: 0; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-stats dt { font-size: 0.6875rem; font-weight: 600; color: var(--muted); }
@@ -132,9 +182,11 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-dot { stroke: var(--surface); stroke-w
 html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s1 { stroke: var(--cmp-1); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s2 { stroke: var(--cmp-2); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s3 { stroke: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s4 { stroke: var(--cmp-4); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s1 { fill: var(--cmp-1); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s2 { fill: var(--cmp-2); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s3 { fill: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-dot.s4 { fill: var(--cmp-4); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-tip {
   position: absolute; top: 4px; z-index: 2; display: grid; gap: 4px; min-width: 140px; padding: 8px 10px; transform: translateX(10px);
   border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-sm); pointer-events: none; font-size: 0.75rem; color: var(--ink);

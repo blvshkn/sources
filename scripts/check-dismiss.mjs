@@ -77,6 +77,12 @@ const O = [
   { name: "Tooltip (hover)", kind: "menu", tab: "trade", at: [1440], tab: "waivers", hover: ".ps-end .tt-wrap", open: q(".tt:not([data-closing])"), focusOk: true },
   { name: "Swap menu inside matchup sheet (topmost)", kind: "nested", tab: "wire", opener: ".sb2-open", inner: ".mus-body .mu-mine[aria-expanded=false]:not(.is-locked)",
     open: q(".mus-body .mu-mine[aria-expanded=true]"), outer: q(".ps-matchup") },
+  // A sheet over a menu: Compare from an open swap card. Its scrim takes the tap and Escape closes it alone; the swap
+  // list under it (and the matchup sheet under that) stay open.
+  { name: "Compare sheet over Lineup swap list", kind: "stack", tab: "roster", opener: ".lu-list .lu-row.tap[aria-expanded=false]", steps: [".lu-list .lu-row[aria-expanded=true] > .sw-cmp"],
+    open: q(".cmp-sheet"), outer: q(".lu-list .lu-row[aria-expanded=true]") },
+  { name: "Compare sheet over matchup swap list", kind: "stack", tab: "wire", opener: ".sb2-open", steps: [".mus-body .mu-mine[aria-expanded=false]:not(.is-locked)", ".mu-row[data-sw] > .sw-cmp"],
+    open: q(".cmp-sheet"), outer: (p) => p.evaluate(() => !!document.querySelector(".ps-matchup .mu-mine[aria-expanded=true]")) },
   { name: "Delete my data confirm", kind: "exempt", tab: "settings", pre: (p) => p.click("button:has-text('Privacy')"), opener: ".danger-row .btn-danger-ghost", open: q(".danger-row .btn-danger"),
     note: "Destructive: removes data. Inline confirm, stays until Delete or Cancel" },
 ];
@@ -118,6 +124,8 @@ async function openIt(p, o, touch) {
   if (!(await mark(p, o.opener))) return false;
   await press(p, touch, "[data-dz-opener]"); await settle(p, 600);
   if (o.inner) { if (!(await mark(p, o.inner))) return false; await press(p, touch, "[data-dz-opener]"); await settle(p); }
+  // A stack: each step opens the next layer; the last one opened is the overlay under test, and focus should go back to it
+  for (const st of o.steps ?? []) { if (!(await mark(p, st))) return false; await press(p, touch, "[data-dz-opener]"); await settle(p, 600); }
   return o.open(p);
 }
 /** A point outside the overlay: on the scrim for a modal, on plain page content (nothing tappable) for a menu. */
@@ -133,7 +141,7 @@ async function outsidePoint(p, o) {
     for (let y = 60; y < H - 90; y += 19) for (let x = 12; x < W - 12; x += 23) {
       const el = document.elementFromPoint(x, y);
       if (!el || (kind !== "nested" && near(x, y))) continue;
-      if (kind === "modal") { if (el.matches(SCRIM)) return { x, y }; continue; }
+      if (kind === "modal" || kind === "stack") { if (el.matches(SCRIM)) return { x, y }; continue; }
       if (kind === "nested") {
         // Inside the sheet, outside the open menu and its row, on nothing tappable
         if (el.closest(".mus-body") && !el.closest(".mu-row.open, [data-dz-opener]") && !el.closest(interactive)) return { x, y };
@@ -184,6 +192,7 @@ for (const w of widths) {
         const closed = !(await o.open(p));
         if (o.kind === "exempt") r.outside = closed ? "FAIL (closed)" : "stays";
         else if (o.kind === "nested") r.outside = closed && (await o.outer(p)) ? "ok" : closed ? "FAIL (sheet closed too)" : "FAIL";
+        else if (o.kind === "stack") r.outside = !closed ? "FAIL" : hit && !/scrim/.test(hit) ? `FAIL (tap reached ${hit})` : (await o.outer(p)) ? "ok" : "FAIL (layer under closed too)";
         else if (!closed) { r.outside = "FAIL"; r.note = `still open after a tap at ${pt.x},${pt.y} on ${hit}`; }
         else if (o.kind === "modal" && hit && !/scrim|onboard/.test(hit)) r.outside = `FAIL (tap reached ${hit})`;
         else r.outside = "ok";
@@ -194,6 +203,9 @@ for (const w of widths) {
         // Reopen the menu inside the still-open sheet; Escape closes the menu only
         if (!(await o.outer(p))) { await fresh(p, o); await openIt(p, o, touch); }
         else if (!(await o.open(p))) { await mark(p, o.inner); await press(p, touch, "[data-dz-opener]"); await settle(p); }
+      } else if (o.kind === "stack" && (await o.outer(p))) {
+        // The layer under it is still up: open the top one again from its own button
+        if (!(await o.open(p))) { await mark(p, o.steps[o.steps.length - 1]); await press(p, touch, "[data-dz-opener]"); await settle(p, 600); }
       } else if (!(await o.open(p))) {
         await fresh(p, o);
         if (!(await openIt(p, o, touch))) { r.escape = r.focus = "FAIL"; r.note ||= "couldn't reopen"; continue; }
@@ -201,7 +213,7 @@ for (const w of widths) {
       await p.keyboard.press("Escape"); await settle(p);
       const closed = !(await o.open(p));
       if (o.kind === "exempt") { r.escape = closed ? "FAIL (closed)" : "stays"; r.focus = "n/a"; continue; }
-      r.escape = o.kind === "nested" ? (closed && (await o.outer(p)) ? "ok (sheet stays)" : "FAIL") : closed ? "ok" : "FAIL";
+      r.escape = o.kind === "nested" || o.kind === "stack" ? (closed && (await o.outer(p)) ? "ok (under stays)" : "FAIL") : closed ? "ok" : "FAIL";
       r.focus = o.focusOk ? "n/a" : (await focusBack(p)) ? "ok" : "FAIL";
     } catch (e) {
       r.outside ||= "FAIL"; r.escape ||= "FAIL"; r.focus ||= "FAIL"; r.note = String(e.message).split("\n")[0].slice(0, 80);

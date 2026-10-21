@@ -6,13 +6,21 @@ import { useEffect, useRef } from "react";
  * longer ours the sheet closes with its own animation. Closing any other way (the X, the scrim, a swipe, Escape) takes
  * our entry back off, so Back after that still goes to the previous screen. Nested sheets each hold their own entry,
  * so Back closes the top one first. If a screen change already replaced our entry, nothing is popped.
+ * A sheet that remounts at once (React's dev double mount) takes over the entry it just left instead of pushing a
+ * second one: an orphaned entry under a nested sheet would read as "ours is gone" to the sheet below when the top one
+ * closes, and close both on one Escape.
  */
+const left = new Set<string>();
 export function useBackClose(close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
   useEffect(() => {
     const id = Math.random().toString(36).slice(2);
-    try { history.pushState({ ...(history.state ?? {}), sheet: id }, ""); } catch { /* ignore */ }
+    const cur = (history.state as { sheet?: string } | null)?.sheet;
+    try {
+      if (cur && left.has(cur)) history.replaceState({ ...(history.state ?? {}), sheet: id }, "");
+      else history.pushState({ ...(history.state ?? {}), sheet: id }, "");
+    } catch { /* ignore */ }
     let popped = false;
     const onPop = () => {
       if ((history.state as { sheet?: string } | null)?.sheet === id) return;
@@ -24,7 +32,9 @@ export function useBackClose(close: () => void) {
       window.removeEventListener("popstate", onPop);
       // Checked a tick later: a sheet that's remounting (React's dev double mount) has pushed its new entry by then, so
       // the old one isn't popped out from under it
-      if (!popped) window.setTimeout(() => { if ((history.state as { sheet?: string } | null)?.sheet === id) { try { history.back(); } catch { /* ignore */ } } }, 0);
+      if (popped) return;
+      left.add(id);
+      window.setTimeout(() => { left.delete(id); if ((history.state as { sheet?: string } | null)?.sheet === id) { try { history.back(); } catch { /* ignore */ } } }, 0);
     };
   }, []);
 }

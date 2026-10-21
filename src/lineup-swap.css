@@ -2,8 +2,10 @@
    the what-if note and Use optimal lineup. Loads just before frame.css. Every rule is scoped to
    .lu-list, .lu-pick, .lu-wi, .ss or .mu-swap children: nothing here styles bare .card, .btn or .row. */
 
-/* The menu's anchor sits right after its row with no height, so rows stay siblings and keep their dividers.
-   placeSwap (SwapPicker.tsx) puts the row's height on it as --sw-rowh for the "above" position. */
+/* The menu's anchor sits right after its row, so rows stay siblings and keep their dividers. It has no height of its
+   own: placeSwap (SwapPicker.tsx) gives it the open list's height so the rows below move down instead of showing under
+   the card (or, for a list above its row, a top margin on the row), and puts the row's height on it as --sw-rowh for
+   the "above" position. */
 html:root:not(#_):not(#_) .lu-list .lu-pick-at { position: relative; height: 0; z-index: 30; }
 html:root:not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick {
   position: absolute; z-index: 30; top: -4px; bottom: auto; left: 62px; right: 12px; width: auto; margin: 0;

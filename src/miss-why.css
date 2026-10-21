@@ -16,9 +16,11 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm text { font: 600 8.5px var(--font
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s1 rect { stroke: var(--cmp-1); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s2 rect { stroke: var(--cmp-2); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s3 rect { stroke: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s4 rect { stroke: var(--cmp-4); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s1 text { fill: var(--cmp-1); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s2 text { fill: var(--cmp-2); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s3 text { fill: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s4 text { fill: var(--cmp-4); }
 
 /* A player with no points anywhere in the range: one line under the legend */
 html:root:not(#_):not(#_) .cmp-sheet .cmp-nogames { display: flex; align-items: center; gap: 6px; margin: -4px 0 0; font-size: 0.75rem; line-height: 1.4; color: var(--muted); }

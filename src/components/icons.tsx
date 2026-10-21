@@ -10,7 +10,7 @@ export type IconName =
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
   | "download" | "image" | "mail" | "star" | "airVent"
-  | "userPlus" | "table" | "listOrdered";
+  | "userPlus" | "table" | "listOrdered" | "columns2";
 
 const ICONS: Record<IconName, string> = {
   // Overview: Lucide layout-panel-left. The tall panel (m1) opens out from its left edge, then the two cells (m2, m3)
@@ -42,6 +42,7 @@ const ICONS: Record<IconName, string> = {
   switch: "<path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/>", // chevrons-up-down
   chev: "<path class=\"m1\" d=\"m9 18 6-6-6-6\"/>", // chevron-right
   x: "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", // x
+  columns2: "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M12 3v18\"/>", // columns-2
   check: "<path d=\"M20 6 9 17l-5-5\"/>", // check
   bookmark: "<path d=\"M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z\"/>", // bookmark
   // Star (Waivers "Watching"): Lucide star, one closed outline, so the watched fill has no notch.

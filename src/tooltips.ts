@@ -4,6 +4,8 @@ import { placeTip, tipClosed, tipDelay, tipOpened } from "./components/Tooltip";
  * Text tooltips for icon-only buttons. Each icon button gets a role="tooltip" label linked with
  * aria-describedby, and one floating tip (the same branded chip as <Tooltip>) shows that label on
  * hover and keyboard focus. Buttons already wrapped in <Tooltip> (data-tt) are left alone.
+ * A button whose label shows only at some sizes (Lineup's Compare) sets data-tip to the tip's text: it gets the tip
+ * only while its text is hidden, and its aria-label stays its name.
  */
 export function installIconTooltips(root: HTMLElement = document.body) {
   let n = 0;
@@ -15,8 +17,11 @@ export function installIconTooltips(root: HTMLElement = document.body) {
   tip.appendChild(inner);
 
   const hasText = (b: Element) => /[\p{L}\p{N}]/u.test((b.textContent || "").trim());
+  /** Text the button shows right now (innerText skips what CSS hides). */
+  const hasShown = (b: HTMLElement) => /[\p{L}\p{N}]/u.test((b.innerText || "").trim());
   const tag = (b: HTMLElement) => {
     if (b.dataset.tipDone || b.hasAttribute("data-tt")) return;
+    if (b.dataset.tip) { b.dataset.tipDone = "1"; return; }
     const label = b.getAttribute("aria-label");
     if (!label || hasText(b)) return;
     const id = `tip-${++n}`;
@@ -26,7 +31,7 @@ export function installIconTooltips(root: HTMLElement = document.body) {
     b.setAttribute("aria-describedby", [b.getAttribute("aria-describedby"), id].filter(Boolean).join(" "));
     b.dataset.tipDone = "1";
   };
-  const scan = () => root.querySelectorAll<HTMLElement>("button[aria-label], [role=button][aria-label]").forEach(tag);
+  const scan = () => root.querySelectorAll<HTMLElement>("button[aria-label], [role=button][aria-label], button[data-tip]").forEach(tag);
   scan();
   const mo = new MutationObserver(() => scan());
   mo.observe(root, { childList: true, subtree: true });
@@ -52,8 +57,9 @@ export function installIconTooltips(root: HTMLElement = document.body) {
     tipOpened(hide);
   };
   const show = (b: HTMLElement, now: boolean) => {
-    const label = b.getAttribute("aria-label");
+    const label = b.dataset.tip ?? b.getAttribute("aria-label");
     if (!label || !b.dataset.tipDone || b === current) return;
+    if (b.dataset.tip && hasShown(b)) return;
     window.clearTimeout(timer);
     const d = now ? 0 : tipDelay();
     if (d) timer = window.setTimeout(() => open(b, label, false), d);

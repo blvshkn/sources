@@ -1,4 +1,4 @@
-// Compare, from a Lineup swap card: the player in the row against the players in his swap list. Opens in the shared
+// Compare, from a swap card on Lineup or in the full matchup: the player in the row against the players in his swap list. Opens in the shared
 // DetailSheet (a sheet on phones, a modal from 768px up). It starts with the first option in the list; more can be
 // added from that same list only. Each compared option can be swapped in from here, the same swap the list makes.
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -31,6 +31,9 @@ export interface CmpWho {
   /** Opens his player sheet. */
   onInfo?: () => void;
 }
+
+/** An open Compare sheet: the row's player, its swap list as shown, and the row that opened it. */
+export type CmpOpen = { subject: CmpWho; role: string; options: SwapOption[]; title: string; swapLabel: string; from: Element | null };
 
 // ---- Building a player ---------------------------------------------------------
 const LONG: Record<string, string> = { IR: "IR", PUP: "PUP", Sus: "Suspended", NA: "Not active" };
@@ -130,9 +133,9 @@ function noneLine(name: string, r: Recent, weeks: number[]): string {
 /** What each gap label means, for the note under the table. */
 const KEY: Record<MissWhy["kind"], string> = { bye: "bye week", out: "ruled out", ir: "injured reserve", inactive: "inactive", dnp: "did not play", sus: "suspended", noteam: "not on a team", na: "no data" };
 
-/** Series colors, by position in the comparison (never by rank): blue, amber, magenta. Validated as a set for
- *  colorblind separation on both surfaces (dataviz validate_palette, all pairs). No lime, no green or red. */
-const MAX = 3;
+/** Up to four players: the row's player and three from his list. Series colors go by position in the comparison
+ *  (never by rank): blue, amber, magenta, lavender (swap-card.css). No lime, no green or red. */
+const MAX = 4;
 
 function RecentChart({ names, weeks, rows, why, hide }: {
   names: string[]; weeks: number[]; rows: (number | undefined)[][];
@@ -257,7 +260,8 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
 
           <section className="cmp-sec" aria-label="Side by side this week">
             <h3 className="cmp-h">Side by side, {subject.week === WEEK ? "this week" : `Week ${subject.week}`}</h3>
-            <div className="cmp-cols" style={{ gridTemplateColumns: `repeat(${all.length}, minmax(0, 1fr))` }}>
+            {/* One row while the columns fit; three or four wrap to two columns on a phone (swap-card.css) */}
+            <div className="cmp-cols" data-count={all.length}>
               {all.map((c, s) => {
                 const o = s ? shown[s - 1] : null, bye = byeWeek(c);
                 const who = (
@@ -332,13 +336,20 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
   );
 }
 
-/** The Compare button in an open swap card's header row. Its own tap never toggles the row. */
+/**
+ * The Compare button in an open swap card's header row. Its own tap never toggles the row (Lineup's row only takes
+ * keys aimed at itself, so Enter and Escape on the button pass through as usual). Labeled ("Compare") under
+ * the player's info on phones and beside the points on desktop; on a tablet, where the lineup column is too narrow for
+ * the label beside the points, a 40px round icon button there (Lucide columns-2) with a tip. swap-card.css picks.
+ * data-tip is the tip's text; it only shows while the label is hidden (tooltips.ts).
+ */
 export function CompareBtn({ name, onOpen }: { name: string; onOpen: (el: Element) => void }) {
   return (
-    <button type="button" className="btn btn-sm sw-cmp" aria-label={`Compare ${name} with the swap options`}
-      onClick={(e) => { e.stopPropagation(); onOpen(e.currentTarget); }}
-      onKeyDown={(e) => e.stopPropagation()}>
-      <Icon name="switch" size={14} />Compare
+    <button type="button" className="btn btn-sm sw-cmp" aria-label={`Compare ${name} with the swap list`} data-tip="Compare with the swap list"
+      onClick={(e) => { e.stopPropagation(); onOpen(e.currentTarget); }}>
+      <span className="sw-cmp-ic" aria-hidden="true"><Icon name="switch" size={14} /></span>
+      <span className="sw-cmp-ic2" aria-hidden="true"><Icon name="columns2" size={24} /></span>
+      <span className="sw-cmp-t">Compare</span>
     </button>
   );
 }
