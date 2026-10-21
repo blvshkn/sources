@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { TEAMS, playerById } from "../data";
 import { SentDeal, SentOffer, ago, sentDeals } from "../sentOffers";
 import { TeamAvatar } from "./TeamPicker";
+import { PairPrompt } from "./SyncDevices";
+import { useSyncStatus } from "../syncKey";
 import { Icon } from "./ui";
 
 /** The clock for "sent 2h ago": ticks once a minute while something shows it. */
@@ -74,16 +76,17 @@ function Row({ d, now, onReopen, onDecline, onClear }: { d: SentDeal; now: numbe
 }
 
 /** Trade's Sent tab: every deal you sent, newest first. Tapping one opens it in the builder, filled in. */
-export function SentOffers({ offers, synced = false, onReopen, onDecline, onClear }: {
-  offers: SentOffer[]; synced?: boolean; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
+export function SentOffers({ offers, synced = false, syncUser = "", onReopen, onDecline, onClear }: {
+  offers: SentOffer[]; synced?: boolean; syncUser?: string; onReopen: (o: SentOffer) => void; onDecline: (o: SentOffer) => void; onClear: (o: SentOffer) => void;
 }) {
   const now = useNow();
   const deals = sentDeals(offers);
+  const { needsPair } = useSyncStatus(syncUser);
   return (
     <section className="card so-card" aria-label="Sent offers">
       <div className="so-head">
         <h2 className="section-title">Sent offers</h2>
-        <p className="so-note">{synced ? "Synced to your Sleeper account" : "Saved on this device"}</p>
+        {needsPair ? <PairPrompt user={syncUser} /> : <p className="so-note">{synced ? "Synced to your paired devices" : "Saved on this device"}</p>}
       </div>
       {deals.length === 0
         ? <p className="so-empty">Nothing sent yet. When you share or copy a pitch, the deal lands here so you can follow up or send a new version.</p>

@@ -7,8 +7,11 @@
 //   - an un-watch is a tombstone in the set itself, so other devices drop the player too
 // Merge rules are shared with the server (watchMerge.js). Demo leagues never sync. Nothing about syncing shows on
 // screen: when it fails the list just stays on this device until the next try.
+// Every call carries this device's sync key (syncKey.ts). A 401 stops syncing quietly and asks Settings to show the
+// pair prompt; pairing wakes this hook again.
 import { useCallback, useEffect, useRef } from "react";
 import { mergeWatch, sameWatch, type WatchSet } from "./watchMerge.js";
+import { ensureKey, markNeedsPair, useSyncStatus } from "./syncKey";
 
 const PUSH_DELAY = 800;
 
@@ -17,6 +20,11 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
 }): { forget: () => void } {
   const on = enabled && /^\d+$/.test(league) && /^\d+$/.test(user);
   const url = `/api/watch?league=${encodeURIComponent(league)}&user=${encodeURIComponent(user)}`;
+
+  const { needsPair, wake } = useSyncStatus(on ? user : "");
+  const needsRef = useRef(needsPair);
+  needsRef.current = needsPair;
+  const key = () => ensureKey(user);
 
   const setRef = useRef(set);
   setRef.current = set;
@@ -39,19 +47,21 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
 
   /** A refused request or no store waits for the next focus; anything else retries with backoff */
   const failed = useCallback((status: number, retry: () => void) => {
-    if (status === 503 || (status >= 400 && status < 500)) { stopped.current = true; return; }
+    if (status === 401) { stopped.current = true; window.clearTimeout(timer.current); markNeedsPair(user); return; }
+    if (status === -1 || status === 503 || (status >= 400 && status < 500)) { stopped.current = true; return; }
     const wait = Math.min(60000, 2000 * 2 ** tries.current++);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(retry, wait);
-  }, []);
+  }, [user]);
 
   const send = (keepalive = false) => fetch(url, {
-    method: "PUT", headers: { "content-type": "application/json" }, cache: "no-store", keepalive,
+    method: "PUT", headers: { "content-type": "application/json", "X-Sync-Key": key() }, cache: "no-store", keepalive,
     body: JSON.stringify({ watch: mergeWatch(setRef.current) }),
   });
 
   const push = useCallback(async (): Promise<void> => {
     if (!on || stopped.current) return;
+    if (!key()) { failed(-1, () => {}); return; }
     if (busy.current) { dirty.current = true; return; }
     busy.current = true;
     dirty.current = false;
@@ -77,11 +87,13 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
   }, [push]);
 
   const pull = useCallback(async () => {
-    if (!on || busy.current) return;
+    if (!on || busy.current || needsRef.current) return;
+    const k = key();
+    if (!k) { failed(-1, () => {}); return; }
     stopped.current = false;
     busy.current = true;
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await fetch(url, { cache: "no-store", headers: { "X-Sync-Key": k } });
       if (!r.ok) { failed(r.status, () => void pull()); return; }
       const server = (await r.json() as { watch?: WatchSet }).watch ?? {};
       const merged = mergeWatch(setRef.current, server);
@@ -102,7 +114,7 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
     void pull();
     const wake = () => { if (document.visibilityState !== "hidden") void pull(); };
     // Leaving with a change not sent yet: one last try that outlives the page
-    const leave = () => { if (dirty.current && !stopped.current) { try { void send(true).catch(() => {}); } catch { /* best effort */ } } };
+    const leave = () => { if (dirty.current && !stopped.current && key()) { try { void send(true).catch(() => {}); } catch { /* best effort */ } } };
     window.addEventListener("focus", wake);
     document.addEventListener("visibilitychange", wake);
     window.addEventListener("pagehide", leave);
@@ -114,6 +126,13 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
     };
   }, [on, url, pull]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Paired, reset or started fresh on this device: sync again from where the set stands
+  useEffect(() => {
+    if (!on) return;
+    if (needsPair) { stopped.current = true; window.clearTimeout(timer.current); return; }
+    if (wake > 0) { stopped.current = false; dirty.current = true; void pull(); }
+  }, [on, needsPair, wake]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Every edit here (anything but a set this hook just merged in) goes up after a short pause
   const seen = useRef(set);
   useEffect(() => {
@@ -123,13 +142,12 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
     schedule();
   }, [set, on]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Delete my data: remove this league's synced copy too */
+  /** Delete my data: stop here. The synced files, the code and the key go through syncKey.ts (forgetSync). */
   const forget = useCallback(() => {
-    if (!on) return;
     stopped.current = true;
+    dirty.current = false;
     window.clearTimeout(timer.current);
-    try { void fetch(url, { method: "DELETE", keepalive: true }).catch(() => {}); } catch { /* best effort */ }
-  }, [on, url]);
+  }, []);
 
   return { forget };
 }

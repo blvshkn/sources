@@ -7,6 +7,7 @@ import { PlatformLogo } from "./PlatformLogo";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
 import { Account, accountLabel } from "../accounts";
+import { SyncDevicesRow } from "./SyncDevices";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -27,7 +28,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague, syncUser = "" }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
@@ -45,6 +46,8 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
   passed?: { id: string; name: string }[]; onBringBack?: (p: { id: string; name: string }) => void; onClearPassed?: () => void;
   accounts?: Account[]; activeUserId?: string;
   onRemoveAccount?: (userId: string) => void; onAddAccount?: () => void; onSwitchLeague?: () => void;
+  /** The Sleeper user whose offers and watchlist sync, or "" in the demo */
+  syncUser?: string;
 }) {
   const [view, setView] = useSticky<"league" | "nudges" | "privacy" | "about">("settings.view", "league", ["league", "nudges", "privacy", "about"]);
   // How it works and the terms open over Settings (sheet on phones, modal from 768px) instead of replacing it
@@ -107,6 +110,11 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Sources connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
         <p className="tiny muted">Next up: {PLATFORMS.filter((p) => p.when === "v1").map((p) => p.name).join(" and ")}. Later: {PLATFORMS.filter((p) => p.when !== "v1" && p.when !== "MVP" && p.when !== "n/a").map((p) => p.name).join(" and ")}.</p>
         <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={demo || !onSwitchLeague ? onReplay : onSwitchLeague}>{demo ? "Run setup again" : "Switch league"}</button>
+      </section>
+
+      <section className="card settings-group">
+        <h2 className="section-title">Devices</h2>
+        <SyncDevicesRow user={syncUser} demo={demo} />
       </section>
 
       <section className="card settings-group">
@@ -186,6 +194,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <li><b>No passwords, ever.</b> Your Sleeper username is all it takes.</li>
           <li><b>Tags are private.</b> What you note about a league mate is never shown to them.</li>
           <li><b>Collect the minimum.</b> No email, no account. Rosters are public on Sleeper already.</li>
+          <li><b>Synced lists stay yours.</b> Sent offers and starred players only sync to devices you pair with a one-time code. Knowing your Sleeper ids isn't enough to read them.</li>
           <li><b>AI sees the league, not your notes.</b> Ask and Set optimal lineup send league data to Anthropic. Tags stay here.</li>
           <li><b>One tap to leave.</b> Disconnect, or delete your data, any time.</li>
           <li><b>No selling data.</b> Said plainly in the privacy policy.</li>
@@ -193,7 +202,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
           <li><b>Nothing sends on its own.</b> Sources preps the message. You tap send.</li>
         </ul>
         <div className="set-row danger-row">
-          <span className="grow"><b>Delete your data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device, plus the offers and watchlist synced for this league. This can't be undone.</span></span>
+          <span className="grow"><b>Delete your data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device, plus your synced offers, watchlist and sync key. Paired devices stop syncing. This can't be undone.</span></span>
           {confirm === "delete" ? (
             <span className="row"><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete my data</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
           ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete my data</button>}

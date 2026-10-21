@@ -1,0 +1,65 @@
+/* Sync your devices (SyncDevices.tsx): the Settings row, the pairing sheet (a DetailSheet: bottom sheet on phones,
+   modal from 768px) and the "Pair this device to sync" line in Sent offers. The code reads big in Geist Mono with a
+   countdown under it. Hover, leave and press share 160ms cubic-bezier(0.23, 1, 0.32, 1). Only opacity changes on the
+   expired code. Loads just before frame.css; every rule is scoped to a .sync-* class or .so-pair. */
+
+/* Phones: the words take the full width and the buttons wrap under them. Wider: buttons sit on the right. */
+html:root:not(#_):not(#_) .settings-group .set-row.sync-row > .grow { flex: 1 1 100%; min-width: 0; }
+html:root:not(#_):not(#_) .sync-row .sync-acts { gap: 8px; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .settings-group .set-row.sync-row > .grow { flex: 1 1 320px; }
+}
+html:root:not(#_):not(#_) .settings-group .sync-note,
+html:root:not(#_):not(#_) .settings-group .sync-msg { margin: 0; }
+html:root:not(#_):not(#_) .settings-group .sync-msg { color: var(--ink); }
+
+html:root:not(#_):not(#_) .sync-sheet .sync-body { display: grid; gap: 14px; }
+html:root:not(#_):not(#_) .sync-sheet .sync-lede { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--ink); }
+html:root:not(#_):not(#_) .sync-sheet .sync-fine { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+html:root:not(#_):not(#_) .sync-sheet .sync-err { margin: 0; font-size: 0.8125rem; line-height: 1.45; color: var(--bad); }
+html:root:not(#_):not(#_) .sync-sheet .sync-ok { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--good); }
+
+/* The code */
+html:root:not(#_):not(#_) .sync-sheet .sync-code {
+  display: grid; justify-items: center; gap: 8px; padding: 24px 16px; border: 1px solid var(--line); border-radius: 20px;
+  background: var(--surface-2);
+}
+html:root:not(#_):not(#_) .sync-sheet .sync-code-v {
+  font-family: var(--font-mono); font-weight: 600; font-size: clamp(2rem, 11vw, 3rem); line-height: 1.1;
+  letter-spacing: 0.08em; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap;
+  user-select: all; -webkit-user-select: all;
+  transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .sync-sheet .sync-code.is-expired .sync-code-v { opacity: 0.35; text-decoration: line-through; }
+html:root:not(#_):not(#_) .sync-sheet .sync-code-t { min-height: 1.25em; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .sync-sheet .sync-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Entering a code */
+html:root:not(#_):not(#_) .sync-sheet .sync-label { font-size: 0.8125rem; font-weight: 600; color: var(--ink); margin-bottom: -6px; }
+html:root:not(#_):not(#_) .sync-sheet .sync-in {
+  width: 100%; box-sizing: border-box; min-height: 56px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--surface-2); color: var(--ink); text-align: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: 1.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+  transition: border-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .sync-sheet .sync-in::placeholder { color: var(--muted); opacity: 0.5; }
+html:root:not(#_):not(#_) .sync-sheet .sync-in:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+html:root:not(#_):not(#_) .sync-sheet .sync-in[aria-invalid="true"] { border-color: var(--bad); }
+html:root:not(#_):not(#_) .sync-sheet .sync-body > .btn { justify-self: stretch; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ps.ps-detail.sync-sheet { max-width: 460px; }
+  html:root:not(#_):not(#_) .sync-sheet .sync-body > .btn { justify-self: start; }
+}
+
+/* Sent offers: the gentle prompt in the header */
+html:root:not(#_):not(#_) .so-card .so-pair {
+  margin: 0; padding: 4px 0; border: 0; background: transparent; cursor: pointer; text-decoration: none;
+  font: inherit; font-size: 0.75rem; font-weight: 600; line-height: 1.3; color: var(--ink); white-space: nowrap;
+  transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) { html:root:not(#_):not(#_) .so-card .so-pair:hover { opacity: 0.7; } }
+html:root:not(#_):not(#_) .so-card .so-pair:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.sync-sheet .sync-code-v, .sync-sheet .sync-in, .so-card .so-pair) { transition: none; }
+  html:root:not(#_):not(#_) .so-card .so-pair:active { transform: none; }
+}

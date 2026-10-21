@@ -6,11 +6,14 @@
 //   - offers saved before sync existed have no stamp yet; the first sync uploads them
 // Merge rules are shared with the server (offerMerge.js). Demo leagues never sync. When the server has no store
 // (503) or can't be reached, nothing changes on screen: the list stays on this device and the note says so.
+// Every call carries this device's sync key (syncKey.ts). A 401 means another device holds the key: syncing stops
+// quietly, the list here keeps working, and the state reads "pair" until this device is paired.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SentOffer } from "./sentOffers";
 import { mergeOffers, stampOf, type OfferSet } from "./offerMerge.js";
+import { ensureKey, markNeedsPair, useSyncStatus } from "./syncKey";
 
-export type SyncState = "off" | "syncing" | "synced" | "unavailable" | "offline";
+export type SyncState = "off" | "syncing" | "synced" | "unavailable" | "offline" | "pair";
 
 const PUSH_DELAY = 800;
 const sig = ({ updatedAt: _u, ...o }: SentOffer) => JSON.stringify(o);
@@ -32,6 +35,14 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
   const url = `/api/offers?league=${encodeURIComponent(league)}&user=${encodeURIComponent(user)}`;
   const goneKey = `sources.${league}.sentOffers.gone.v1`;
   const [state, setState] = useState<SyncState>(on ? "syncing" : "off");
+  const { needsPair, wake } = useSyncStatus(on ? user : "");
+  const needsRef = useRef(needsPair);
+  needsRef.current = needsPair;
+  /** Headers with this device's key, or null when storage can't keep one (then this device doesn't sync) */
+  const auth = (json = false): Record<string, string> | null => {
+    const key = ensureKey(user);
+    return key ? { ...(json ? { "content-type": "application/json" } : {}), "X-Sync-Key": key } : null;
+  };
 
   const sentRef = useRef(sent);
   sentRef.current = sent;
@@ -67,12 +78,13 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
 
   /** What a failed request means: no store or a refused body stops syncing; anything else retries */
   const failed = useCallback((status: number, retry: () => void) => {
-    if (status === 503 || (status >= 400 && status < 500)) { stopped.current = true; setState("unavailable"); return; }
+    if (status === 401) { stopped.current = true; window.clearTimeout(timer.current); markNeedsPair(user); setState("pair"); return; }
+    if (status === -1 || status === 503 || (status >= 400 && status < 500)) { stopped.current = true; setState("unavailable"); return; }
     setState("offline");
     const wait = Math.min(60000, 2000 * 2 ** tries.current++);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(retry, wait);
-  }, []);
+  }, [user]);
 
   const push = useCallback(async (): Promise<void> => {
     if (!on || stopped.current) return;
@@ -80,8 +92,10 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
     busy.current = true;
     dirty.current = false;
     const body = mergeOffers(local());
+    const headers = auth(true);
     try {
-      const r = await fetch(url, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body), cache: "no-store" });
+      if (!headers) { failed(-1, () => {}); return; }
+      const r = await fetch(url, { method: "PUT", headers, body: JSON.stringify(body), cache: "no-store" });
       if (!r.ok) { dirty.current = true; failed(r.status, () => void push()); return; }
       apply(mergeOffers(local(), await r.json() as OfferSet));
       tries.current = 0;
@@ -102,11 +116,13 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
   }, [push]);
 
   const pull = useCallback(async () => {
-    if (!on || busy.current) return;
+    if (!on || busy.current || needsRef.current) return;
+    const headers = auth();
+    if (!headers) { failed(-1, () => {}); return; }
     stopped.current = false;
     busy.current = true;
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await fetch(url, { cache: "no-store", headers });
       if (!r.ok) { failed(r.status, () => void pull()); return; }
       const server = await r.json() as OfferSet;
       const merged = mergeOffers(local(), server);
@@ -130,7 +146,8 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
     // Leaving with a change not sent yet: one last try that outlives the page
     const leave = () => {
       if (!dirty.current || stopped.current) return;
-      try { void fetch(url, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(mergeOffers(local())), keepalive: true }); } catch { /* best effort */ }
+      const headers = auth(true);
+      if (headers) try { void fetch(url, { method: "PUT", headers, body: JSON.stringify(mergeOffers(local())), keepalive: true }).catch(() => {}); } catch { /* best effort */ }
     };
     window.addEventListener("focus", wake);
     document.addEventListener("visibilitychange", wake);
@@ -142,6 +159,13 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
       window.clearTimeout(timer.current);
     };
   }, [on, url, pull]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Paired, reset or started fresh on this device: sync again from where the list stands
+  useEffect(() => {
+    if (!on) return;
+    if (needsPair) { stopped.current = true; window.clearTimeout(timer.current); setState("pair"); return; }
+    if (wake > 0) { stopped.current = false; dirty.current = true; void pull(); }
+  }, [on, needsPair, wake]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every edit here: stamp what changed, tombstone what went, then push
   useEffect(() => {
@@ -166,13 +190,12 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
     schedule();
   }, [sent, on]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Delete my data: remove this league's synced copy too */
+  /** Delete my data: stop here. The synced files, the code and the key go through syncKey.ts (forgetSync). */
   const forget = useCallback(() => {
-    if (!on) return;
     stopped.current = true;
+    dirty.current = false;
     window.clearTimeout(timer.current);
-    try { void fetch(url, { method: "DELETE", keepalive: true }); } catch { /* best effort */ }
-  }, [on, url]);
+  }, []);
 
   return { state, forget };
 }
