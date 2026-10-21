@@ -93,6 +93,8 @@ import "./lineup-tags.css";
 import "./ask-options.css";
 import "./sent-why.css";
 import "./overlay-padding.css";
+import "./avatar-badge.css";
+import "./alpha-badge.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

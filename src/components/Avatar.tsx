@@ -33,7 +33,7 @@ export function Avatar({ p, size = 40, ring, badge = true }: { p: Pick<Player, "
         <span className="av-initials" style={{ background: c1, color: c2, fontSize: size * 0.36 }}>{team ? p.nfl : initials(p.name)}</span>
       )}
       {photos && badge && !team && p.nfl && p.nfl !== "FA" && (
-        <span className="av-badge" style={{ width: size * 0.42, height: size * 0.42 }}>
+        <span className="av-badge" style={{ width: size * 0.5, height: size * 0.5 }}>
           <img src={teamLogo(p.nfl)} alt="" loading="lazy" decoding="async" onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }} />
         </span>
       )}

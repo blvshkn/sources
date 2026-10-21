@@ -1,0 +1,5 @@
+/* Player avatars: the team logo sits on the photo by itself, a bit bigger, with no disc behind it. A soft shadow
+   keeps dark logos readable against the headshot and the card. No url references in this file. */
+html:root:not(#_):not(#_) .av-badge { background: none; box-shadow: none; border-radius: 0; right: -4px; bottom: -4px; }
+html:root:not(#_):not(#_) .av-badge img { width: 100%; height: 100%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.55)); }
+

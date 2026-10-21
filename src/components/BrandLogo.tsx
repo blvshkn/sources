@@ -19,7 +19,10 @@ export function BrandWordmark({ size = 40, className = "" }: { size?: number; cl
   return <span className={`bl-word ${className}`.trim()} style={{ fontSize: size }} aria-hidden="true">{WORDMARK}</span>;
 }
 
-export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Sources", className = "" }: {
+/** The release stage, shown as a small pill after the wordmark while Sources is in alpha */
+export const STAGE = "Alpha";
+
+export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Sources", className = "", stage = false }: {
   layout?: "stack" | "row";
   /** Mark size in px (the square it's drawn in, as in Figma) */
   mark?: number;
@@ -33,16 +36,18 @@ export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = fa
   lineGap?: number;
   label?: string;
   className?: string;
+  /** Show the Alpha pill after the wordmark */
+  stage?: boolean;
 }) {
   // Figma's spacing scales with the lockup: in a row, 4px after a 56px mark and 2px between the lines
   const gaps = layout === "row"
     ? { ["--bl-gap" as string]: `${+(mark * 4 / 56).toFixed(2)}px`, ["--bl-line" as string]: `${lineGap ?? +(mark * 2 / 56).toFixed(2)}px` }
     : undefined;
   return (
-    <span className={`bl bl-${layout} ${className}`.trim()} style={gaps as CSSProperties | undefined} role="img" aria-label={label}>
+    <span className={`bl bl-${layout} ${className}`.trim()} style={gaps as CSSProperties | undefined} role="img" aria-label={stage ? `${label}, ${STAGE}` : label}>
       <Mark size={mark} className="bl-mark" />
       <span className="bl-type" aria-hidden="true">
-        <BrandWordmark size={word} />
+        {stage ? <span className="bl-wordrow"><BrandWordmark size={word} /><span className="bl-stage">{STAGE}</span></span> : <BrandWordmark size={word} />}
         {tagline && <span className="bl-tag" style={tag !== 13 ? { fontSize: tag } : undefined}>{TAGLINE}</span>}
       </span>
     </span>

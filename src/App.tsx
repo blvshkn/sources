@@ -684,7 +684,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <AppBackdrop />
       <aside className="side">
         <div className="brand">
-          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Sources" /></button>
+          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Sources" stage /></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
           <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" alt={meName} />
@@ -719,7 +719,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" /></button>
+        <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" stage /></button>
         <div className="row top-acts">
           {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
           <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
