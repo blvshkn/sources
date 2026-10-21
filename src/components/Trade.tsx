@@ -21,7 +21,7 @@ import { PartnerProfile } from "./PartnerProfile";
 import { TeamAvatar, TeamPicker } from "./TeamPicker";
 import { PlatformName } from "./PlatformLogo";
 import { Select } from "./Select";
-import { Tooltip } from "./Tooltip";
+import { NumTip, Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useHFade } from "./hFade";
 import { Marked } from "./Marked";
@@ -62,7 +62,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
             {note && <span className="to-tag">{note}</span>}
           </span>
         </span>
-        <span className="pproj">{eff(p).toFixed(1)}</span>
+        <NumTip label="Projected points a week" note="Rest of season"><span className="pproj">{eff(p).toFixed(1)}</span></NumTip>
         <span className="check">{on && <Icon name="check" size={13} />}</span>
       </button>
     );

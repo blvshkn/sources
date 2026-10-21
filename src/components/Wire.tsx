@@ -10,7 +10,7 @@ import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } fro
 import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./lazy";
 import { TeamAvatar } from "./TeamPicker";
-import { Tooltip } from "./Tooltip";
+import { NumTip, Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
 import { useLive, onPace, startersOf, matchNow } from "../live";
 import { WeekPlayer } from "../weeks";
@@ -19,7 +19,7 @@ import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { FaceOff } from "./FaceOff";
-import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag } from "./Roster";
+import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag, PROJ_TIP, soFarTip, paceTip } from "./Roster";
 import { SentLine } from "./SentOffers";
 import type { SentDeal, SentOffer } from "../sentOffers";
 
@@ -189,11 +189,13 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
-    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}{pts.toFixed(1)}</b><small className={pace !== null ? `lu-pace ${(pace >= proj) !== them ? "up" : "down"}` : undefined}>{pace !== null ? `pace ${pace.toFixed(1)}` : `proj ${proj.toFixed(1)}`}</small></span>;
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{pts.toFixed(1)}</span></NumTip></b>{pace !== null
+      ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip>
+      : <small>proj {proj.toFixed(1)}</small>}</span>;
   }
   if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
   // Not started: the number is his projection, labelled like the live (pace) and final (proj) rows, so every row reads the same
-  return <span className="wk-pts muted"><b>{proj.toFixed(1)}</b><small>proj</small></span>;
+  return <span className="wk-pts muted"><NumTip {...PROJ_TIP}><b>{proj.toFixed(1)}</b></NumTip><small>proj</small></span>;
 }
 
 const vsOf = (p: Player) => (!p.opp ? "" : /^(vs|@)\s/.test(p.opp) ? p.opp : `v ${p.opp}`);

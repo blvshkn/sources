@@ -15,7 +15,7 @@ import { StartSit } from "./StartSit";
 import { Select } from "./Select";
 import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
-import { Tooltip } from "./Tooltip";
+import { NumTip, Tooltip } from "./Tooltip";
 import { SwapAnchor, SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
@@ -149,7 +149,7 @@ export function FinalPts({ id, pts, proj, cls }: { id: string; pts: number; proj
   if (stamp.current) stamped.add(id);
   return (
     <span className={`${cls} final cemented${stamp.current ? " stamp" : ""}`} aria-label={`Final, ${pts.toFixed(1)} points, projected ${proj.toFixed(1)}`}>
-      <b>{pts.toFixed(1)}</b><small>proj {proj.toFixed(1)}</small>
+      <b><NumTip label="Points scored" note="Final"><span>{pts.toFixed(1)}</span></NumTip></b><small>proj {proj.toFixed(1)}</small>
     </span>
   );
 }
@@ -162,14 +162,19 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false }: { id: str
     const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
-        <b data-pts={g.pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}{g.pts.toFixed(1)}</b>
-        {pace !== null ? <small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small> : <small>proj {proj.toFixed(1)}</small>}
+        <b data-pts={g.pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{g.pts.toFixed(1)}</span></NumTip></b>
+        {pace !== null ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
   }
   if (g.state === "complete") return <FinalPts id={id} pts={g.pts} proj={proj} cls={cls} />;
-  return <span className={cls}>{proj.toFixed(1)}</span>;
+  return <span className={cls}><NumTip {...PROJ_TIP}><span>{proj.toFixed(1)}</span></NumTip></span>;
 }
+
+/* Number tips for a player's points, shared with the Wire cards: what the big number is in each game state. */
+export const PROJ_TIP = { label: "Projected points", note: "This week, from Sleeper" };
+export const soFarTip = (proj: number) => ({ label: "Points so far", note: `Projected ${proj.toFixed(1)} before kickoff` });
+export const paceTip = (pace: number) => ({ label: `On pace for ${pace.toFixed(1)}`, note: "His points so far at the rate he's scoring" });
 /** Row state for scanning on game day: finished rows fade back, live rows get an accent edge. */
 export const playCls = (g: GameNow, bye?: boolean) => (bye || g.state === "complete" ? " is-done" : g.state === "in_game" ? " is-live" : "");
 
@@ -686,8 +691,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 {moves.length > 0 ? <>
                   {moves.map((d) => (
                     <div key={d.start.id} className="ss-move">
-                      <div className="ss-p start"><span className="ss-tag">Start</span><Avatar p={d.start} size={32} /><span className="ss-n"><b>{d.start.name}</b><small>{d.start.pos} · {d.start.nfl}</small></span><span className="ss-pts">{eff(d.start, true).toFixed(1)}</span></div>
-                      <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></div>
+                      <div className="ss-p start"><span className="ss-tag">Start</span><Avatar p={d.start} size={32} /><span className="ss-n"><b>{d.start.name}</b><small>{d.start.pos} · {d.start.nfl}</small></span><NumTip focusable {...PROJ_TIP}><span className="ss-pts">{eff(d.start, true).toFixed(1)}</span></NumTip></div>
+                      <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><NumTip focusable {...PROJ_TIP}><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></NumTip></div>
                     </div>
                   ))}
                   <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {lockLine()}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>

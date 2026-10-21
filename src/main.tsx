@@ -83,6 +83,7 @@ import "./trace-flow.css";
 import "./icon-lucide.css";
 import "./faq-side.css";
 import "./landing-steps.css";
+import "./num-tips.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

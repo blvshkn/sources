@@ -4,7 +4,7 @@ import { FadeWeeks, TeamNeeds, Trade, fmt, groupsFor, isFaded, tagStrength } fro
 import { Icon, PosBadge } from "./ui";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, championLabel } from "./Trophy";
-import { Tooltip } from "./Tooltip";
+import { NumTip, Tooltip } from "./Tooltip";
 import { DetailSheet } from "./DetailSheet";
 
 /** One position vs the league average: fill grows from the middle line, green when stronger, red when weaker. */
@@ -100,7 +100,7 @@ export function NeedsList({ needs, tags, fade, focusId, fits, onFocused, onTrade
               <TeamAvatar t={t} size={36} />
               <b className="nc-name">{t.name}<Trophy teamId={t.id} size={13} /></b>
               <small className="nc-sub">{t.you ? "You" : t.manager} · {t.record}</small>
-              <span className="nc-proj">{n.lineup.total.toFixed(1)}<small>/wk</small></span>
+              <NumTip label="Projected points a week" note="Their best starting lineup, rest of season"><span className="nc-proj">{n.lineup.total.toFixed(1)}<small>/wk</small></span></NumTip>
               <span className="nc-fit">
                 <span className="nc-chip"><small>Needs</small><PosBadge pos={n.need} /></span>
                 {extra && <span className="nc-chip"><small>Has extra</small><PosBadge pos={extra} /></span>}

@@ -1,9 +1,10 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import type { Team } from "../data";
 import type { PlayCount, Result } from "../liveMath";
 import { LiveNum } from "./ui";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, WinCup, isChampion } from "./Trophy";
+import { NumTip as Tip, Tooltip } from "./Tooltip";
 
 /** Props that make a card a button: Enter and Space open it, and a click on a control inside it never opens it too. */
 export function pressProps(onPress: () => void, label: string) {
@@ -78,16 +79,16 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
   return (
     <span className={`fo fo-st-${final ? "final" : state}${flat ? " fo-flat" : ""}${skel ? " is-skel" : ""}`} {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}>
       <span className="fo-in">
-        <Side s={you} side="you" pct={mine} other={theirs} won={res?.letter === "W"} chip={chips} />
+        <Side s={you} side="you" pct={mine} other={theirs} won={res?.letter === "W"} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} />
         <span className="fo-mid">
           <span className="fo-vs">VS</span>
           <span className="fo-tag">{tag}</span>
-          <span className="fo-line">{line}</span>
+          <span className="fo-line">{res ? <ResultTip res={res} focus={!!label}>{line}</ResultTip> : line}</span>
         </span>
-        <Side s={them} side="them" pct={theirs} other={mine} won={res?.letter === "L" && !!them.t} chip={chips} />
+        <Side s={them} side="them" pct={theirs} other={mine} won={res?.letter === "L" && !!them.t} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} />
         <span className="fo-foot">
           <Chip c={chips ? you.count : undefined} />
-          <span className="fo-line">{line ?? tag}</span>
+          <span className="fo-line">{res ? <ResultTip res={res}>{line}</ResultTip> : line ?? tag}</span>
           <Chip c={chips && them.t ? them.count : undefined} />
         </span>
       </span>
@@ -97,35 +98,74 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
 
 const Chip = ({ c }: { c?: PlayCount }) => <span className="fo-chip">{toPlay(c) || null}</span>;
 
-function Side({ s, side, pct, other, won, chip }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; chip: boolean }) {
+/* Number tips. Inside a card that is one button, none of these are tab stops (the card's own label says it all):
+   hover or a long press shows them, and the tap still opens the card. The matchup header (`label`, not a button)
+   makes each number a tab stop, so keyboard focus shows its tip. */
+
+/** "Lost by 1.4" under the badge: the final margin, with the full score from your side. */
+const ResultTip = ({ res, focus = false, children }: { res: Result; focus?: boolean; children: ReactNode }) => (
+  <Tip focusable={focus} label={res.letter === "T" ? "Final result" : "Final margin"} note={res.long}><span>{children}</span></Tip>
+);
+
+const NoTip = ({ children }: { label: ReactNode; note?: ReactNode; focusable?: boolean; children: ReactNode }) => <>{children}</>;
+
+/** What the win % (and the bar it fills) means in each state: the result once final, the model's chance before that. */
+function winTip(pct: number, state: FaceState, bar: boolean) {
+  if (state === "final") return { label: pct === 100 ? "Won" : pct === 0 ? "Lost" : "Tied", note: "Final result" };
+  const note = state === "pre" ? "From projections" : "From points so far and projections";
+  return bar ? { label: `${pct}% chance to win`, note } : { label: "Chance to win", note };
+}
+
+/** The big score: points scored, so far, or projected, by state. `note` is the meta line's projection, if any. */
+function scoreTip(state: FaceState, note: string | undefined) {
+  if (state === "final") return { label: "Points scored" };
+  if (state === "pre") return { label: "Projected points", note: note === "what-if" ? "With your lineup changes" : "From the starters' projections" };
+  const proj = note?.replace("what-if ", "");
+  return { label: "Points so far", note: proj ? `Projected to finish at ${proj}` : undefined };
+}
+
+/** The number at the inner end of the meta line: the projected finish while games are on, else points per game. */
+function endTip(note: string | undefined) {
+  if (note === "what-if") return { label: "What-if", note: "Projected with your lineup changes" };
+  if (note?.startsWith("what-if ")) return { label: "Projected finish", note: "With your lineup changes" };
+  if (note) return { label: "Projected finish", note: "Points so far plus projections for starters still to play" };
+  return { label: "Season average", note: "Points per game" };
+}
+
+function Side({ s, side, pct, other, won, chip, state, tips = true, focus = false }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; chip: boolean; state?: FaceState; tips?: boolean; focus?: boolean }) {
   const t = s.t;
   // Ahead or behind on win %: the leader's % and bar go green, the trailer's go red. Even stays neutral.
   const tone = pct === null || other === null || pct === other ? "even" : pct > other ? "up" : "down";
   const handle = !t ? null : t.manager === "You" ? "You" : t.manager;
   // One cup before the handle: the matchup winner's, or else last season's champion's (with its tooltip)
-  const cup = !t ? null : won ? <WinCup size={11} /> : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
+  const cup = !t ? null : won ? <Tooltip content="Won this matchup"><WinCup size={11} /></Tooltip> : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
   const end = t ? s.note ?? perGame(t) : "";
   const left = chip && t ? toPlay(s.count) : "";
+  const st = state ?? "pre";
+  // No tips on a loading skeleton: its numbers are placeholders
+  const NumTip = tips ? Tip : NoTip;
+  const parts = t ? t.record.split("-").length : 0;
   const meta = [
-    pct === null ? null : <b key="w" className="fo-pct">{pct}%</b>,
-    t ? <span key="r">{t.record}</span> : null,
+    pct === null ? null : <NumTip key="w" focusable={focus} {...winTip(pct, st, false)}><b className="fo-pct">{pct}%</b></NumTip>,
+    t ? <NumTip key="r" focusable={focus} label="Season record" note={parts > 2 ? "Wins, losses and ties" : "Wins and losses"}><span>{t.record}</span></NumTip> : null,
   ].filter(Boolean);
+  const pts = s.pts === null ? null : s.live ? <LiveNum className="fo-pts" v={s.pts} /> : <span className="fo-pts">{s.pts.toFixed(1)}</span>;
   return (
     <span className={`fo-side ${side} ${tone}${s.dim ? " is-dim" : ""}`}>
       <span className="fo-av">{t ? <TeamAvatar t={t} size={48} /> : <span className="fo-av-none" />}</span>
       <span className="fo-handle">{cup}<span>{handle ?? ""}</span></span>
       <b className={`fo-name${t ? "" : " muted"}`}><span>{t ? t.name : s.empty ?? "No matchup"}</span></b>
       <span className="fo-score">
-        {s.pts === null ? <span className="fo-pts muted">--</span>
-          : s.live ? <LiveNum className="fo-pts" v={s.pts} /> : <span className="fo-pts">{s.pts.toFixed(1)}</span>}
+        {pts === null ? <span className="fo-pts muted">--</span> : t ? <NumTip focusable={focus} {...scoreTip(st, s.note)}>{pts}</NumTip> : pts}
       </span>
-      <span className="fo-bar"><i style={{ width: `${pct ?? 0}%` }} /></span>
+      {pct === null ? <span className="fo-bar"><i style={{ width: "0%" }} /></span>
+        : <NumTip focusable={focus} {...winTip(pct, st, true)}><span className="fo-bar"><i style={{ width: `${pct}%` }} /></span></NumTip>}
       <span className="fo-meta">
         {meta.flatMap((x, i) => (i ? [<i key={`d${i}`} className="fo-dot">•</i>, x] : [x]))}
         {left && <i className="fo-dot fo-dot-chip">•</i>}
         {left && <span className="fo-chip">{left}</span>}
         {meta.length > 0 && end && <i className="fo-dot fo-dot-end">•</i>}
-        <span className="fo-end">{end}</span>
+        {end ? <NumTip focusable={focus} {...endTip(s.note)}><span className="fo-end">{end}</span></NumTip> : <span className="fo-end" />}
       </span>
     </span>
   );
