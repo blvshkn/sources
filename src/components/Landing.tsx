@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Logo } from "./Logo";
+import { BrandLogo } from "./BrandLogo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
 import { activeTags, allNeeds, applyFormat, ask, DEFAULT_FORMAT, findTrades, fmt, groupsFor, waiverRecs } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
@@ -186,7 +186,7 @@ export function Landing({ onLive, onDemo }: {
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
       <nav className="ld-nav ld2-nav" aria-label="Sources">
-        <div className="brand" style={{ padding: 0 }}><Logo height={28} /></div>
+        <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={40} word={22} tagline tag={9.5} label="Sources" /></div>
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
       </nav>
 
