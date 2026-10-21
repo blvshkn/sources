@@ -43,6 +43,8 @@ import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./compone
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
 import { useOfferSync } from "./offerSync";
+import { useWatchSync } from "./watchSync";
+import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchSet } from "./watchMerge.js";
 import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
@@ -148,12 +150,19 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [pausedTeams, setPausedTeams] = usePersist<string[]>(`${scope}.pausedTeams`, []);
   // Players you said you don't want, so no idea asks you to take them
   const [passed, setPassed] = usePersist<string[]>(`${scope}.passed`, []);
-  // Free agents you're watching on Waivers, with the week you marked each one for
-  const [watch, setWatch] = usePersist<Record<string, number>>(`${scope}.watch`, {});
+  // Free agents you're watching on Waivers, with the week you marked each one for. Kept as a set of stamped changes
+  // (un-watches leave a tombstone) so it can sync; the first load folds in the old per-device list (id -> week).
+  const [watchSet, setWatchSet] = usePersist<WatchSet>(`${scope}.watchlist`, {}, () =>
+    mergeWatch(looseWatch(store.get<unknown>(`${scope}.watchlist`, null)), migrateWatch(store.get<unknown>(`${scope}.watch`, null))));
+  const watch = useMemo(() => liveWatch(watchSet), [watchSet]);
+  const setWatch = useCallback((next: (w: Record<string, number>) => Record<string, number>) =>
+    setWatchSet((s) => editWatch(s, next(liveWatch(s)))), [setWatchSet]);
   // Offers you sent (Sleeper can't see pending offers), per league on this device. See sentOffers.ts.
   const [sent, setSent] = usePersist<SentOffer[]>(`${scope}.${SENT_KEY}`, [], readSent);
   // In a live league they also sync to this Sleeper user, so a phone and a laptop see the same list. See offerSync.ts.
   const offerSync = useOfferSync({ enabled: !demo && session.mode === "live", league: LEAGUE.id ?? "", user: session.mode === "live" ? session.userId : "", sent, setSent });
+  // The watchlist follows the same Sleeper user to every device. See watchSync.ts.
+  const watchSync = useWatchSync({ enabled: !demo && session.mode === "live", league: LEAGUE.id ?? "", user: session.mode === "live" ? session.userId : "", set: watchSet, setSet: setWatchSet });
   // The sent deal open in the builder, so sending it again after a tweak makes the next version of it
   const [reopened, setReopened] = useState<{ deal: string; partnerId: string } | null>(null);
   const [feedbackFor, setFeedbackFor] = useState<Trade | null>(null);
@@ -717,7 +726,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               onDisconnect={onDisconnect}
               accounts={accounts} activeUserId={session.mode === "live" ? session.userId : ""} onRemoveAccount={removeAccount}
               onAddAccount={() => setSwitching("add")} onSwitchLeague={() => setSwitching("list")}
-              onDelete={() => { offerSync.forget(); onDeleteAll(); }}
+              onDelete={() => { offerSync.forget(); watchSync.forget(); onDeleteAll(); }}
               onGo={(t) => go(t as Tab)}
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
               hiddenCount={hiddenIdeas.length} onUnhide={() => { const prev = hiddenIdeas; setHiddenIdeas([]); setToast("Hidden trade ideas are back.", () => setHiddenIdeas(prev)); }}

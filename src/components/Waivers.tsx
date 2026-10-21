@@ -339,8 +339,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
               placeholder="Search players…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
             {q && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); }} aria-label="Clear search"><Icon name="x" size={16} /></button>}
           </label>
-          <button className="wv3-watching" aria-pressed={onlyWatch} onClick={() => setOnlyWatch(!onlyWatch)}>
-            <Icon name="bookmark" size={16} /><span className="wv3-watching-l">Watching</span><small>{watchCount}</small>
+          <button className="wv3-watching" aria-pressed={onlyWatch} aria-label={`Show only players you're watching (${watchCount})`} onClick={() => setOnlyWatch(!onlyWatch)}>
+            <Icon name="binoculars" size={16} /><span className="wv3-watching-l">Watching</span><small>{watchCount}</small>
           </button>
           <Select className="wv2-sort" size="pill" chevron="switch" aria-label="Sort" header="Sort by" value={sort} onChange={setSort}
             options={[
@@ -369,7 +369,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
           })}
         </div>
         <div ref={listRef} className={`wv3-list k-${kind}`} aria-busy={loading}>
-        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos}`} yet. Tap the bookmark on a player to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos} available right now. Check back after waivers run.`}</p>}
+        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos}`} yet. Tap the binoculars on a player to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos} available right now. Check back after waivers run.`}</p>}
         {shown.map((e) => {
           const r = e.r;
           const isOpen = !!r && open === e.fa.id;
@@ -432,7 +432,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                 : lockWhy ? <button className="wv-row wv-locked" aria-disabled="true" onClick={denyOn(lockWhy)}>{inner}</button>
                 : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
-                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="bookmark" size={16} /></button>
+                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="binoculars" size={16} /></button>
               </Tooltip>
               {!e.no && <span className="ps-end">
                 <Tooltip content="Not interested. Sources stops suggesting him">

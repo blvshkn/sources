@@ -7,6 +7,7 @@
 // Keyed by Sleeper ids only: anyone who knows them can read the list. Never cached.
 // Without BLOB_READ_WRITE_TOKEN (no store connected yet) every call answers 503 and the app stays on this device.
 // Talks to the Blob REST API with fetch (the @vercel/blob package isn't installed). Blob paths: offers/<league>/<user>.json
+// The request handling (createSyncHandler) is shared with the Waivers watchlist, api/watch.js.
 import { MAX_BYTES, MAX_GONE, MAX_OFFERS, cleanOffer, mergeOffers } from "../src/offerMerge.js";
 
 const SLEEPER_ID = /^\d{1,24}$/;
@@ -47,47 +48,59 @@ export function blobFromEnv(env = process.env) {
 }
 
 /** The request body as an object, or a status code when it's too big or not JSON. */
-function bodyOf(req) {
-  if (Number(req.headers?.["content-length"] ?? 0) > MAX_BYTES) return 413;
+export function bodyOf(req, maxBytes = MAX_BYTES) {
+  if (Number(req.headers?.["content-length"] ?? 0) > maxBytes) return 413;
   let b = req.body;
   if (b == null || b === "") return 400;
   if (typeof b === "string" || b instanceof Uint8Array) {
-    if (b.length > MAX_BYTES) return 413;
+    if (b.length > maxBytes) return 413;
     try { b = JSON.parse(typeof b === "string" ? b : new TextDecoder().decode(b)); } catch { return 400; }
-  } else if (JSON.stringify(b).length > MAX_BYTES) return 413;
+  } else if (JSON.stringify(b).length > maxBytes) return 413;
   return b && typeof b === "object" && !Array.isArray(b) ? b : 400;
 }
 
 const fail = (res, status, error) => res.status(status).json({ error });
 
-export function createHandler(blob) {
+/**
+ * One synced list per Sleeper user per league at <dir>/<league>/<user>.json, with GET, PUT (merge and save) and
+ * DELETE. Shared by offers and the Waivers watchlist (api/watch.js), so both get the same id checks, size cap, Blob
+ * calls and errors. `load(stored, league)` turns what's in the Blob into the list; `put(body, current, league)` merges
+ * a request into it and returns the new list, or { status, error } to refuse the request.
+ */
+export function createSyncHandler(blob, { dir, maxBytes = MAX_BYTES, load, put }) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     const league = String(req.query?.league ?? ""), user = String(req.query?.user ?? "");
     if (!SLEEPER_ID.test(league) || !SLEEPER_ID.test(user)) return fail(res, 400, "league and user must be Sleeper ids");
     if (!["GET", "PUT", "DELETE"].includes(req.method)) { res.setHeader("Allow", "GET, PUT, DELETE"); return fail(res, 405, "method not allowed"); }
     if (!blob.ready()) return fail(res, 503, "sync unavailable");
-    const path = `offers/${league}/${user}.json`;
-    const stored = async () => {
-      const s = await blob.read(path);
-      return { offers: (Array.isArray(s?.offers) ? s.offers : []).map((o) => cleanOffer(o, league)).filter(Boolean), gone: s?.gone && typeof s.gone === "object" ? s.gone : {} };
-    };
+    const path = `${dir}/${league}/${user}.json`;
     try {
-      if (req.method === "GET") return res.status(200).json({ ...mergeOffers(await stored()), at: Date.now() });
+      if (req.method === "GET") return res.status(200).json({ ...load(await blob.read(path), league), at: Date.now() });
       if (req.method === "DELETE") { await blob.remove(path); return res.status(200).json({ ok: true }); }
-      const body = bodyOf(req);
-      if (typeof body === "number") return fail(res, body, body === 413 ? `body over ${MAX_BYTES} bytes` : "body must be a JSON object");
-      const offers = body.offers ?? [], gone = body.gone ?? {};
-      if (!Array.isArray(offers) || !gone || typeof gone !== "object" || Array.isArray(gone)) return fail(res, 400, "body must be { offers, gone }");
-      if (offers.length > MAX_OFFERS || Object.keys(gone).length > MAX_GONE) return fail(res, 413, `at most ${MAX_OFFERS} offers`);
-      const incoming = { offers: offers.map((o) => cleanOffer(o, league)).filter(Boolean), gone };
-      const merged = mergeOffers(await stored(), incoming);
-      await blob.write(path, merged);
-      return res.status(200).json({ ...merged, at: Date.now() });
+      const body = bodyOf(req, maxBytes);
+      if (typeof body === "number") return fail(res, body, body === 413 ? `body over ${maxBytes} bytes` : "body must be a JSON object");
+      const out = await put(body, async () => load(await blob.read(path), league), league);
+      if (out && typeof out.status === "number") return fail(res, out.status, out.error);
+      await blob.write(path, out);
+      return res.status(200).json({ ...out, at: Date.now() });
     } catch {
       return fail(res, 502, "storage error");
     }
   };
+}
+
+export function createHandler(blob) {
+  return createSyncHandler(blob, {
+    dir: "offers",
+    load: (s, league) => mergeOffers({ offers: (Array.isArray(s?.offers) ? s.offers : []).map((o) => cleanOffer(o, league)).filter(Boolean), gone: s?.gone && typeof s.gone === "object" ? s.gone : {} }),
+    async put(body, current, league) {
+      const offers = body.offers ?? [], gone = body.gone ?? {};
+      if (!Array.isArray(offers) || !gone || typeof gone !== "object" || Array.isArray(gone)) return { status: 400, error: "body must be { offers, gone }" };
+      if (offers.length > MAX_OFFERS || Object.keys(gone).length > MAX_GONE) return { status: 413, error: `at most ${MAX_OFFERS} offers` };
+      return mergeOffers(await current(), { offers: offers.map((o) => cleanOffer(o, league)).filter(Boolean), gone });
+    },
+  });
 }
 
 export default createHandler(blobFromEnv());

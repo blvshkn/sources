@@ -8,7 +8,7 @@ export type IconName =
   | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
-  | "download" | "image" | "mail";
+  | "download" | "image" | "mail" | "binoculars";
 
 const ICONS: Record<IconName, string> = {
   wire: "<path d=\"M20 17.5C20 19.433 18.433 21 16.5 21H7.5C5.567 21 4 19.433 4 17.5V14.75M20 13.5V6.5C20 4.567 18.433 3 16.5 3H7.5C5.567 3 4 4.567 4 6.5V9.25\"/><path class=\"m1\" pathLength=\"1\" d=\"M8 8.5h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M8 12h8\"/><path class=\"m3\" pathLength=\"1\" d=\"M8 15.5h4.5\"/>",
@@ -32,6 +32,9 @@ const ICONS: Record<IconName, string> = {
   x: "<path d=\"M6 6L18 18M18 6L6 18\"/>",
   check: "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>",
   bookmark: "<path d=\"M6.5 6A2.5 2.5 0 0 1 9 3.5h6A2.5 2.5 0 0 1 17.5 6v14.5L12 16.8l-5.5 3.7z\"/>",
+  // Binoculars (Waivers "Watching"): the Nav / Icon line (1.25, round ends) set on its own group, each barrel open at one
+  // break. The glass (bn-glass) fills when a player is watched. Lifted 0.1 so its mass sits on center (ink box 11.53).
+  binoculars: "<g stroke-width=\"1.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.25 10.15V8.4A2.5 2.5 0 0 1 5.75 5.9H7.75A2.5 2.5 0 0 1 10.25 8.4V15.65A3.5 3.5 0 0 1 3.25 15.65V12.15M20.697 16.258A3.5 3.5 0 0 0 20.75 15.65V8.4A2.5 2.5 0 0 0 18.25 5.9H16.25A2.5 2.5 0 0 0 13.75 8.4V15.65A3.5 3.5 0 0 0 19.258 18.517M5.25 5.9V4.9A1 1 0 0 1 6.25 3.9H7.25A1 1 0 0 1 8.25 4.9V5.9M15.75 5.9V4.9A1 1 0 0 1 16.75 3.9H17.75A1 1 0 0 1 18.75 4.9V5.9M10.25 9.4H13.75M10.25 12.4H13.75\"/><circle class=\"bn-glass\" cx=\"6.75\" cy=\"15.65\" r=\"1.75\"/><circle class=\"bn-glass\" cx=\"17.25\" cy=\"15.65\" r=\"1.75\"/></g>",
   plus: "<path d=\"M12 5v14M5 12h14\"/>",
   alert: "<path d=\"M10.3 4.2a2 2 0 0 1 3.4 0l7.4 12.9a2 2 0 0 1-1.7 3H4.6a2 2 0 0 1-1.7-3z\"/><path d=\"M12 9.5v4\"/><circle cx=\"12\" cy=\"16.8\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>",
   eye: "<path d=\"M2.5 12c2.2-4.3 5.5-6.5 9.5-6.5s7.3 2.2 9.5 6.5c-2.2 4.3-5.5 6.5-9.5 6.5S4.7 16.3 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",

@@ -1,0 +1,18 @@
+/* Waivers "Watching": the binoculars on the filter button and on every row's toggle.
+   Watched reads the way the bookmark did: the row toggle turns lime (waivers-weeks.css) and the filter button's
+   glyph goes solid, here by filling the two glasses (bn-glass) instead of the whole outline, so the barrels stay a
+   clean line. The old "fill every path" rule is turned off for this glyph.
+   Hover and press move at 160ms on the house curve. Loads before frame.css. */
+
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-binoculars path { fill: none; }
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-binoculars .bn-glass {
+  fill: transparent; transition: fill 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching)[aria-pressed="true"] svg.ic-binoculars .bn-glass { fill: currentColor; }
+
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) {
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching), html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-binoculars .bn-glass { transition: none; }
+}
