@@ -77,3 +77,6 @@ html:root:not(#_):not(#_) .lu-list .lu-wi.is-locked .lu-wi-txt { min-height: 0; 
 html:root:not(#_):not(#_) .lu-list .ss .ss-head { min-height: 32px; gap: 8px; }
 html:root:not(#_):not(#_) .lu-list .ss .ss-best { gap: 6px; text-decoration: none; white-space: nowrap; }
 html:root:not(#_):not(#_) .lu-list .ss .ss-best .ss-best-gain { color: var(--good); font-size: inherit; font-variant-numeric: tabular-nums; }
+/* The menu spans the open row's outlined box edge to edge, on every size (Zach: it should flex and fill). placeSwap
+   puts the box's left and right insets on the anchor as --sw-l / --sw-r. */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick { left: var(--sw-l, 12px); right: var(--sw-r, 12px); width: auto; }

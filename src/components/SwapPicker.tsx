@@ -105,7 +105,14 @@ export function placeSwap(menu: HTMLElement) {
   const prev = host.dataset.swapRow === "prev";
   const row = prev ? host.previousElementSibling as HTMLElement | null : host;
   if (!row) return;
-  if (prev) host.style.setProperty("--sw-rowh", `${row.offsetHeight}px`);
+  if (prev) {
+    host.style.setProperty("--sw-rowh", `${row.offsetHeight}px`);
+    // Line the menu up with the row's outlined box (its ::after pill), whatever inset that has at this size
+    const pill = getComputedStyle(row, "::after");
+    if (pill.content !== "none" && pill.left.endsWith("px") && pill.right.endsWith("px")) {
+      host.style.setProperty("--sw-l", pill.left); host.style.setProperty("--sw-r", pill.right);
+    }
+  }
   // Matchup: the menu hangs straight off the starter it swaps, same left edge and width, so the two read as one
   // piece (CSS squares the touching corners through data-sw on the row)
   const mine = prev ? null : host.querySelector<HTMLElement>(":scope > .mu-mine");
