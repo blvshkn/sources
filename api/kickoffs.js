@@ -18,6 +18,27 @@ function fromEspnEvents(events) {
   return { teams, opp };
 }
 
+/** Each game once, with who's home and where it's played, for the lineup weather check (api/lineup-signals.js). */
+export function gamesFrom(events) {
+  const out = [];
+  for (const e of events ?? []) for (const c of e.competitions ?? []) {
+    const at = c.date ?? e.date;
+    const home = team((c.competitors ?? []).find((t) => t.homeAway === "home")?.team?.abbreviation);
+    const away = team((c.competitors ?? []).find((t) => t.homeAway === "away")?.team?.abbreviation);
+    if (!home || !away || !at || Number.isNaN(Date.parse(at))) continue;
+    out.push({ home, away, at: new Date(at).toISOString(), neutral: !!c.neutralSite, ...(typeof c.venue?.indoor === "boolean" ? { indoor: c.venue.indoor } : {}) });
+  }
+  return out;
+}
+
+/** This week's games from ESPN's scoreboard, or [] when ESPN can't be reached. */
+export async function weekGames(season, week) {
+  try {
+    const d = await get(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&dates=${season}`);
+    return gamesFrom(d.events);
+  } catch { return []; }
+}
+
 export default async function handler(req, res) {
   const season = String(req.query?.season ?? new Date().getFullYear()).replace(/\D/g, "").slice(0, 4);
   const week = Math.max(1, Math.min(18, Number(req.query?.week ?? 1) || 1));

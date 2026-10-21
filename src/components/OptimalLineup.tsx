@@ -1,0 +1,80 @@
+// Set optimal lineup, inline under the Starters header: the button, the real thinking trace while it works, then the
+// moves to make in Sleeper with what each adds and why, and the way into Sleeper. Nothing here changes the Sleeper
+// lineup or claims it's set. The rows it recommends are marked on the lineup until dismissed (Roster.tsx draws the
+// marks), and nothing moves.
+import { useEffect, useState } from "react";
+import type { MouseEvent } from "react";
+import { useTrace } from "../think";
+import { ThinkingTrace } from "./ThinkingTrace";
+import { WorkingLoader } from "./WorkingLoader";
+import { SwapRows } from "./SwapRows";
+import { PlatformLogo } from "./PlatformLogo";
+import { AiLabel, Icon } from "./ui";
+import { deny } from "../deny";
+import { lockLine } from "../kickoff";
+import { Player, sleeperUrl } from "../data";
+import type { Live } from "../live";
+import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
+import { keepOptimal, lastOptimal, lockedIn, optimalJob, resultFor, type OptimalResult } from "../optimalLineup";
+
+export type AiMarks = Record<string, "start" | "sit">;
+const marksOf = (r: OptimalResult): AiMarks => Object.fromEntries(r.swaps.flatMap((w) => [[w.start, "start"], [w.bench, "sit"]]));
+
+export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
+  live: Live;
+  /** Every starter is locked (or the week is over): a tap says so instead of running. */
+  locked: boolean;
+  onPlayer: (p: Player, where: string) => void;
+  onMarks: (m: AiMarks | null) => void;
+}) {
+  const { trace, result, start } = useTrace<OptimalResult>();
+  // The last result for this week comes back when you return to the tab, without its trace
+  const [kept, setKept] = useState<OptimalResult | null>(() => lastOptimal());
+  const [open, setOpen] = useState(() => !!lastOptimal());
+  const running = trace.status === "thinking" || trace.status === "working";
+  const res = running ? null : result ?? kept;
+  useEffect(() => { if (result) { keepOptimal(result); setKept(result); } }, [result]);
+  useEffect(() => { onMarks(open && res && res.swaps.length ? marksOf(res) : null); }, [open, res]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => onMarks(null), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = (e: MouseEvent<HTMLButtonElement>) => {
+    if (running) { deny(e.currentTarget, "Still working on your lineup. One moment."); return; }
+    if (locked) { deny(e.currentTarget, "Lineups are locked for this week."); return; }
+    setOpen(true); setKept(null); keepOptimal(null);
+    start(optimalJob(live)).catch(() => {
+      // Something broke mid-run: the engine's lineup is still the answer, never an error
+      const cur = sleeperNow().mine;
+      const r = resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off", null, "Sources AI couldn't finish, so this is your best lineup by projection.");
+      keepOptimal(r); setKept(r);
+    });
+  };
+  const dismiss = () => { setOpen(false); setKept(null); keepOptimal(null); onMarks(null); };
+  const where = (id: string) => (res?.swaps.some((w) => w.start === id) ? "Sources AI says start" : "Sources AI says bench");
+
+  return (
+    <div className={`lu-ai${open ? " is-open" : ""}`} aria-label="Set optimal lineup">
+      <div className="lu-ai-bar">
+        <p className="lu-ai-txt"><b>Sources AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
+        <button type="button" className="btn btn-sm lu-ai-go" onClick={go} aria-busy={running || undefined} aria-disabled={locked || running || undefined}>
+          {running ? <WorkingLoader size={16} /> : <Icon name="spark" size={16} />}Set optimal lineup
+        </button>
+      </div>
+      {open && trace.status !== "idle" && <ThinkingTrace trace={trace} />}
+      {open && res && (
+        <div className="lu-ai-res" aria-live="polite">
+          <p className="lu-ai-head">{res.swaps.length ? res.summary : `Your Sleeper lineup is already optimal at ${res.total.toFixed(1)} projected.`}</p>
+          {res.swaps.length > 0 && <SwapRows rows={res.swaps} onPlayer={(p) => onPlayer(p, where(p.id))} />}
+          {res.by === "off" && res.note && <p className="lu-ai-off">{res.note}</p>}
+          <div className="lu-ai-foot">
+            {res.swaps.length > 0 && <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper. {lockLine()}.</span>}
+            <div className="lu-ai-btns">
+              <button type="button" className="btn btn-sm lu-ai-x" onClick={dismiss}>Dismiss</button>
+              {res.swaps.length > 0 && <a className="btn btn-sm lu-ai-open" href={sleeperUrl("/team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open in Sleeper</a>}
+            </div>
+          </div>
+          {res.by === "ai" && <AiLabel />}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,61 @@
+/* Set optimal lineup (OptimalLineup.tsx): the Sources AI block under the Starters header on the Lineup tab, its trace,
+   the swaps with their reasons (SwapRows.tsx, shared with Ask), the way into Sleeper, and the marks it leaves on the
+   lineup rows until dismissed. Loads just before frame.css. Every rule is scoped to .lu-ai, .lu-list rows or the
+   reason line inside .ask-show: nothing here styles bare .card, .btn or .row. Mobile first, then by the block's own width. */
+
+html:root:not(#_):not(#_) .lu-list .lu-ai {
+  --lu-ai-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  margin: 2px 12px 10px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0;
+  container: lu-ai / inline-size;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2);
+}
+html:root:not(#_):not(#_) .lu-ai .lu-ai-bar { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-txt { margin: 0; display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-txt > b { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+
+/* The button: the app's secondary button, full width and thumb height on a phone */
+html:root:not(#_):not(#_) .lu-ai .lu-ai-go,
+html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .btn {
+  height: 44px; gap: 8px; justify-content: center; white-space: nowrap; text-decoration: none;
+  transition: background-color 160ms var(--lu-ai-ease), border-color 160ms var(--lu-ai-ease), transform 160ms var(--lu-ai-ease);
+}
+html:root:not(#_):not(#_) .lu-ai .lu-ai-go { width: 100%; }
+html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn):is(:hover, :focus-visible, :active) { text-decoration: none; }
+html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn):active { transform: scale(0.97); }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-go[aria-busy="true"] { cursor: progress; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-go > :is(svg, .wkl, .ic) { flex: none; }
+
+/* The answer */
+html:root:not(#_):not(#_) .lu-ai .lu-ai-res { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-res, .ask-show, .ask-show-g) > * { min-width: 0; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-head { margin: 0; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); text-wrap: pretty; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-off { margin: 0; font-size: 0.75rem; line-height: 1.4; color: var(--muted); }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-foot { display: flex; flex-direction: column; gap: 10px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-btns { display: flex; gap: 8px; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .btn { flex: 1 1 0; }
+html:root:not(#_):not(#_) .lu-ai .ask-prow { background: var(--surface); }
+
+/* A swap's reason, under its two rows, in Ask and here */
+html:root:not(#_):not(#_) .ask-show .ask-why { margin: 0; padding: 0 2px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ask-show .ask-prow-v.bad { color: var(--bad); }
+
+/* The rows it recommends, marked in place until dismissed: a tint and an inside outline, so nothing moves */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.ai-start { background-color: color-mix(in srgb, var(--good) 9%, transparent); outline: 1px solid color-mix(in srgb, var(--good) 45%, transparent); outline-offset: -1px; }
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.ai-sit { background-color: color-mix(in srgb, var(--warn) 8%, transparent); outline: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); outline-offset: -1px; }
+
+@media (min-width: 600px) {
+  html:root:not(#_):not(#_) .lu-list .lu-ai { padding: 14px 16px; }
+}
+/* By the block's own width, so the narrow lineup column on a tablet keeps the stacked layout */
+@container lu-ai (min-width: 520px) {
+  html:root:not(#_):not(#_) .lu-ai .lu-ai-bar { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+  html:root:not(#_):not(#_) .lu-ai .lu-ai-go,
+  html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .btn { width: auto; height: 36px; flex: none; }
+  html:root:not(#_):not(#_) .lu-ai .lu-ai-foot { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+  html:root:not(#_):not(#_) .lu-ai .lu-ai-btns { flex: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn) { transition: none; }
+  html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn):active { transform: none; }
+}

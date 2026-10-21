@@ -11,6 +11,7 @@ import { WorkingLoader } from "./WorkingLoader";
 import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
 import { useLive, type Live } from "../live";
+import { SwapRows } from "./SwapRows";
 
 type Msg = { id: number; q: string; history: AskTurnLog[] };
 type Topic = "Trades" | "Lineup" | "Waivers" | "League";
@@ -106,18 +107,8 @@ function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: T
   if (!show) return null;
   if (show.kind === "player") return <div className="ask-show"><ul className="ask-prows">{row(show.id)}</ul></div>;
   if (show.kind === "players") return <div className="ask-show"><ul className="ask-prows">{show.ids.map((id) => row(id))}</ul></div>;
-  if (show.kind === "swaps") {
-    return (
-      <div className="ask-show">
-        {show.rows.map((r) => (
-          <div key={r.start} className="ask-show-g">
-            <p className="ask-k">{r.slot} swap</p>
-            <ul className="ask-prows">{row(r.start, "Start", fmt(r.gain), r.gain > 0 ? " good" : "")}{row(r.bench, "Bench")}</ul>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  // Swaps, with the reason for each when Set optimal lineup's check gave one (the same rows the Lineup tab shows)
+  if (show.kind === "swaps") return <SwapRows rows={show.rows} onPlayer={onPlayer} live={live} />;
   const fa = show.fa;
   return (
     <div className="ask-show">

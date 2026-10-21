@@ -1182,7 +1182,7 @@ export function playerInText(text: string, skip?: [number, number][]) {
 export type AskShow =
   | { kind: "player"; id: string }
   | { kind: "players"; ids: string[] }
-  | { kind: "swaps"; rows: { start: string; bench: string; slot: string; gain: number }[] }
+  | { kind: "swaps"; rows: { start: string; bench: string; slot: string; gain: number; why?: string }[] }
   | { kind: "waiver"; fa: WaiverFA; gain: number; bid?: string; drop?: string };
 export interface Answer {
   text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[]; show?: AskShow;
@@ -1192,6 +1192,8 @@ export interface Answer {
   by?: "ai" | "off";
   /** The engine had no rule for this question (its catch-all reply). */
   generic?: boolean;
+  /** A start/sit question: Ask runs Set optimal lineup's signals and AI check on it (optimalLineup.ts). */
+  lineup?: boolean;
 }
 
 export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
@@ -1283,6 +1285,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
       points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${p.status === "O" ? "out" : "on bye"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
       show: diff.length ? { kind: "swaps", rows: diff.map((d) => ({ start: d.start.id, bench: d.benched.id, slot: d.slot, gain: d.gain })) } : undefined,
+      lineup: true,
     };
   }
   if (/(waiver|pick ?up|add|faab|bid|free agent)/.test(s)) {

@@ -22,6 +22,7 @@ import { deny } from "../deny";
 import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
 import { DetailSheet } from "./DetailSheet";
+import { OptimalLineup, type AiMarks } from "./OptimalLineup";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -209,14 +210,14 @@ const tapProps = (t: RowTap) => ({
 const tapCls = (t?: RowTap) => (!t ? "" : t.lock ? " is-locked" : ` tap${t.expanded ? " is-open" : ""}`);
 const LockIc = ({ t }: { t?: RowTap }) => (t?.lock ? <span className="lu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span> : null);
 
-function LineupRow({ p, slot, bench, swap, onOpen, live, tap }: { p: Player; slot: string; bench?: boolean; swap?: { to: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live; tap?: RowTap }) {
+function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai }: { p: Player; slot: string; bench?: boolean; swap?: { to: Player; gain: number }; onOpen?: (p: Player, where: string) => void; live?: Live; tap?: RowTap; ai?: "start" | "sit" }) {
   const st = statusWord(p);
   useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   const sheet = !tap && onOpen;
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}`}
+    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
       {...(tap ? tapProps(tap) : sheet ? { role: "button", tabIndex: 0, onClick: () => onOpen(p, where),
         onKeyDown: (e: { key: string; preventDefault: () => void }) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } } : {})}>
       <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>
@@ -632,6 +633,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const allLocked = pastWeek || (now.mine.every((x) => !!starterLock(x.id ? playerById(x.id) : null)) && now.mineK.every((p) => !!starterLock(p)));
   const menu = useSwapMenu<string>();
   const { open, setOpen, menuRef } = menu;
+  // Set optimal lineup marks the rows it recommends until you dismiss it
+  const [aiMarks, setAiMarks] = useState<AiMarks | null>(null);
   // Switching weeks or tabs closes any open menu, holding the scroll where it is
   useEffect(() => { if (open !== null) setOpen(null); }, [week, view]); // eslint-disable-line react-hooks/exhaustive-deps
   const shownIds = now.mine.map((x) => x.id);
@@ -689,6 +692,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
+              <OptimalLineup live={live} locked={allLocked} onPlayer={openPlayer} onMarks={setAiMarks} />
               {started && <div className="lu-play"><PlayCount c={playCount(live, [...now.mine.map((x) => (x.id ? playerById(x.id).nfl : undefined)), ...now.mineK.map((p) => p?.nfl)])} /></div>}
               {now.mine.map((x, i) => {
                 const p = x.id ? playerById(x.id) : null, key = `s${i}`, label = lbl(x.slot);
@@ -699,7 +703,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 });
                 return (
                   <Fragment key={key}>
-                    {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} />
+                    {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} ai={aiMarks?.[p.id]} />
                       : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><span className={`lu-slot s-${x.slot}`}>{label}</span><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
                     <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Swap in at ${label}`} empty={`No bench player can play ${label}.`} options={options} info={p ? info(p, `Starting at ${label}`) : undefined} /></PickAt>
                   </Fragment>
@@ -731,7 +735,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 });
                 return (
                   <Fragment key={key}>
-                    <LineupRow p={p} slot="BN" bench live={live} tap={tap} />
+                    <LineupRow p={p} slot="BN" bench live={live} tap={tap} ai={aiMarks?.[p.id]} />
                     <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={`Start ${p.name} over`} empty={`${p.name} can't play any of your starting slots.`} options={options} info={info(p, "On your bench")} /></PickAt>
                   </Fragment>
                 );

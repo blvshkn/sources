@@ -101,18 +101,24 @@ function idsIn(league) {
 
 // ---- Rate limit (per instance, in memory) ------------------------------------
 
-const hits = new Map();
-export function limited(ip, now = Date.now()) {
-  const list = (hits.get(ip) ?? []).filter((t) => now - t < 3_600_000);
-  const lastMin = list.filter((t) => now - t < 60_000).length;
-  if (lastMin >= RATE.perMin || list.length >= RATE.perHour) { hits.set(ip, list); return true; }
-  list.push(now);
-  hits.set(ip, list);
-  if (hits.size > 5_000) for (const [k, v] of hits) if (!v.length || now - v[v.length - 1] > 3_600_000) hits.delete(k);
-  return false;
+/** A per-IP limiter with its own memory. api/lineup.js and api/lineup-signals.js make their own with their own rates. */
+export function rateLimiter(rate) {
+  const hits = new Map();
+  const limited = (ip, now = Date.now()) => {
+    const list = (hits.get(ip) ?? []).filter((t) => now - t < 3_600_000);
+    const lastMin = list.filter((t) => now - t < 60_000).length;
+    if (lastMin >= rate.perMin || list.length >= rate.perHour) { hits.set(ip, list); return true; }
+    list.push(now);
+    hits.set(ip, list);
+    if (hits.size > 5_000) for (const [k, v] of hits) if (!v.length || now - v[v.length - 1] > 3_600_000) hits.delete(k);
+    return false;
+  };
+  return { limited, reset: () => hits.clear() };
 }
-export const resetLimits = () => hits.clear();
-const ipOf = (req) => String(req.headers?.["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket?.remoteAddress || "unknown";
+const askLimit = rateLimiter(RATE);
+export const limited = askLimit.limited;
+export const resetLimits = askLimit.reset;
+export const ipOf = (req) => String(req.headers?.["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket?.remoteAddress || "unknown";
 
 // ---- Output ----------------------------------------------------------------
 
@@ -187,30 +193,40 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     if (limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many questions, try again in a minute" }); }
 
     const quip = ROAST.test(input.question) || rand() < 0.25;
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeoutMs);
-    try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify(buildRequest(input, quip)),
-        signal: ctl.signal,
-      });
-      if (!r.ok) {
-        // An auth or billing problem reads as "unavailable" so the app falls back the same way it does with no key
-        const status = r.status === 401 || r.status === 403 ? 503 : r.status === 429 ? 429 : 502;
-        return res.status(status).json({ error: status === 503 ? "ai_unavailable" : "upstream error", upstream: r.status });
-      }
-      const answer = answerFrom(await r.json(), input.ids);
-      if (!answer) return res.status(502).json({ error: "bad model reply" });
-      return res.status(200).json({ answer });
-    } catch (e) {
-      if (e?.name === "AbortError" || ctl.signal.aborted) return res.status(504).json({ error: "timed out" });
-      return res.status(502).json({ error: "upstream error" });
-    } finally {
-      clearTimeout(timer);
-    }
+    const r = await callModel(key, buildRequest(input, quip), timeoutMs);
+    if (!r.ok) return res.status(r.status).json(r.body);
+    const answer = answerFrom(r.msg, input.ids);
+    if (!answer) return res.status(502).json({ error: "bad model reply" });
+    return res.status(200).json({ answer });
   };
+}
+
+/**
+ * One Messages API call with a timeout. Resolves { ok: true, msg } or { ok: false, status, body } already mapped to
+ * what the app expects: an auth or billing problem reads as 503 "unavailable", so the app falls back the same way it
+ * does with no key; a timeout is 504; anything else upstream is 502 (429 passes through). Shared by api/lineup.js.
+ */
+export async function callModel(key, request, timeoutMs = TIMEOUT_MS) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(request),
+      signal: ctl.signal,
+    });
+    if (!r.ok) {
+      const status = r.status === 401 || r.status === 403 ? 503 : r.status === 429 ? 429 : 502;
+      return { ok: false, status, body: { error: status === 503 ? "ai_unavailable" : "upstream error", upstream: r.status } };
+    }
+    return { ok: true, msg: await r.json() };
+  } catch (e) {
+    if (e?.name === "AbortError" || ctl.signal.aborted) return { ok: false, status: 504, body: { error: "timed out" } };
+    return { ok: false, status: 502, body: { error: "upstream error" } };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export default createHandler();

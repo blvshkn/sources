@@ -1,0 +1,25 @@
+/* Lines: every structural border and divider is one color, the Figma variable color/surface-2 (#202322, Sources
+   tokens). --line already drives almost every hairline in the app (card and sheet edges, row dividers drawn as
+   borders, inset shadows or ::before rules, inputs, chips, the composer), so it now points at --surface-2 and those
+   follow. --surface-2 itself is untouched because it is also a background.
+   Below that, the few neutral lines that hard-code their own color get pointed at --line. Each override matches the
+   id count of the rule it replaces and loads after it, so hover, press and selected rules (more classes, or
+   !important) still win, and the divider hide-on-hover rules in dividers.css (!important) still clear them.
+   Left alone on purpose: lime focus rings, the lime nav bar, good/bad, you/them, live and position colors, selected
+   outlines, charts, the loader and the logo, the white top-light bevels (inset 0 1px 0) on cards and sheets, and the
+   lime-tinted rings on featured cards. Loads just before frame.css. */
+
+html:root:not(#_):not(#_) {
+  --line: var(--surface-2);
+  /* Elevation edge for sheets, popovers, the deal tray and the lineup swap menu: keep the top light, the ring is a line */
+  --shadow-edge: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px var(--line);
+}
+
+/* Trade picks: the empty check circle (the selected check keeps its stamp, gray or green fill) */
+html:root:not(#_):not(#_) .pick:not([aria-pressed="true"]) .check { border-color: var(--line); }
+
+/* Trade builder: the dashed "Add a player" slot. Hover still brightens it to ink 30% */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { border-color: var(--line); }
+
+/* Accounts: the dashed "Add another Sleeper account" row. Hover still turns it lime */
+html:root:not(#_):not(#_) .acc-addrow { border-color: var(--line); }

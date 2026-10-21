@@ -11,6 +11,7 @@ import { Answer, acceptance, currentFormat, eff, formatLabel, needsFor, round1, 
 import { scoreMatch, sideScore, startersOf, type Live } from "./live";
 import type { Steps, TraceEv } from "./steps";
 import type { Tracer } from "./think";
+import { optimalJob, type OptimalResult } from "./optimalLineup";
 
 /** One finished turn, sent back with the next question so "what about him?" works. */
 export interface AskTurnLog { q: string; a: string }
@@ -172,6 +173,22 @@ export function merge(ai: AiReply, base: Answer | null): Answer {
   return { text: ai.text, points: ai.points, links, show, quip: ai.quip, by: "ai" };
 }
 
+/** A start/sit answer from Set optimal lineup's result: its moves (with reasons) as Ask's inline swaps. */
+export function lineupAnswer(r: OptimalResult, base: Answer): Answer {
+  const nm = (id: string) => playerById(id)?.name ?? id;
+  const first = r.swaps[0];
+  const text = !first ? `Your lineup in Sleeper is already optimal at ${r.total.toFixed(1)} projected.`
+    : r.by === "ai" && r.summary ? r.summary
+      : `Swap ${nm(first.start)} in for ${nm(first.bench)}. ${first.why}.`;
+  return {
+    text,
+    points: first ? [`Make ${r.swaps.length > 1 ? "these moves" : "this move"} in Sleeper. Your lineup projects ${r.total.toFixed(1)} after.`] : base.points,
+    links: base.links,
+    show: first ? { kind: "swaps", rows: r.swaps.map((w) => ({ start: w.start, bench: w.bench, slot: w.slot, gain: w.gain, why: w.why })) } : undefined,
+    by: r.by,
+  };
+}
+
 /** Runs the engine's generator through the tracer, starting from an event already read. */
 async function play(g: Steps<Answer>, first: IteratorResult<TraceEv, Answer>, tr: Tracer): Promise<Answer> {
   let r = first;
@@ -202,6 +219,8 @@ export function askJob(q: string, engine: (q: string) => Steps<Answer>, history:
     await tr.step("Reading your league", `Read your league (${TEAMS.length} teams, ${playerCount} players)`, { chips: [{ label: LEAGUE.name, kind: "team" }] });
     const league = leagueContext(live);
     const base = ruled ? await play(g, second, tr) : (second.done ? second.value : null);
+    // Start/sit: the same signals and AI check as Set optimal lineup, so both give the same moves and reasons
+    if (base?.lineup && live) return lineupAnswer(await optimalJob(live, { intro: false })(tr), base);
     await tr.step("Asking Sources AI", "Asked Sources AI");
     const ai = await askServer(q, ruled && base ? { league, facts: factsOf(base) } : { league }, history);
     if (!ai) {
