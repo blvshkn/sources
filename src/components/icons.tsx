@@ -23,9 +23,9 @@ const ICONS: Record<IconName, string> = {
   bell: "<g class=\"m1\"><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"/><g class=\"m2\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/></g></g>", // bell
   search: "<g class=\"m1\"><path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/></g>", // search
   gear: "<g class=\"m1\"><path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></g>", // settings
-  // Lineup helmet (ours, no Lucide helmet fits): the shell runs on into the facemask at the top and at the chin, so the
+  // Lineup helmet: Zach's Figma glyph (Nav / Icon, Icon=Lineup 27:2204), path for path. Was: the shell runs on into the facemask at the top and at the chin, so the
   // outline is continuous. m1 charges, m2 (the mask) snaps, m3 are speed lines hidden at rest.
-  helmet: "<g class=\"m1\"><path d=\"M15.8 20.25H5.27C4.17 20.25 3.18 19.37 3.18 18.16V17.28C3.18 16.73 3.07 16.29 2.74 15.85C1.75 14.64 1.2 12.99 1.2 11.12C1.2 5.95 5.05 1.66 10.22 1.66C13.7273 1.66 16.9248 3.82843 18.6429 7.25555A9.07 9.07 0 0 1 19.335 10.8\"/><g class=\"m2\"><path d=\"M21.6 10.8H13.2L15.8 14.6H22.2L21.11 20.25H15.8L11.4 13.6M19.4 14.6L18.53 20.25\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
+  helmet: "<g class=\"m1\"><path d=\"M10 20.25H5.27C4.17 20.25 3.18 19.37 3.18 18.16V17.28C3.18 16.73 3.07 16.29 2.74 15.85C1.75 14.64 1.2 12.99 1.2 11.12C1.2 5.95 5.05 1.66 10.22 1.66C13.7273 1.66 16.9248 3.82843 18.6429 7.25555\"/><g class=\"m2\"><path d=\"M21.6 10.8H13.2L15.8 14.6H22.2L21.2 19.8H15.8L11.4 13.6M19.4 14.6L18.6 19.8\"/></g></g><path class=\"m3\" opacity=\"0\" d=\"M-1.8 8.6h-2.4M-1.2 12.2h-3.6M-1.8 15.8h-2.4\"/>",
   group: "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><path d=\"M16 3.128a4 4 0 0 1 0 7.744\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/>", // users
   values: "<path d=\"M16 7h6v6\"/><path d=\"m22 7-8.5 8.5-5-5L2 17\"/>", // trending-up
   lock: "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", // lock
@@ -73,7 +73,7 @@ const MOTION: Partial<Record<IconName, "nav" | "any">> = {
  *  about half a unit of center. Most Lucide glyphs already sit centered. The square-text lines and the chevron lean
  *  left, the up arrow's head weights it high, the star's weight sits low (lifted 0.35, the same split of mass and box
  *  as the old star), and the closed helmet carries more ink low and right than the open one did. */
-const OFFSET: Partial<Record<IconName, [number, number]>> = { wire: [0.1, 0], chev: [0.1, 0], send: [0, 0.5], star: [0, -0.35], helmet: [-0.15, 0.2] };
+const OFFSET: Partial<Record<IconName, [number, number]>> = { wire: [0.1, 0], chev: [0.1, 0], send: [0, 0.5], star: [0, -0.35], helmet: [-0.05, 0.35] };
 const inked = (name: IconName) => { const o = OFFSET[name]; return o ? `<g transform="translate(${o[0]} ${o[1]})">${ICONS[name]}</g>` : ICONS[name]; };
 
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
