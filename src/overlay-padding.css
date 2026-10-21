@@ -1,0 +1,92 @@
+/* Overlay padding: every modal and sheet takes the container padding (container-padding.css), the same inset the
+   face-off card uses. Zach (the Full matchup modal): content ran to within 4px of the modal's edge, and the row boxes
+   and the lime outline poked out past the text. Content lives in one box, inset the same on the left and the right:
+     Phone    16px sides, 14px top and bottom
+     Tablet   26px sides, 24px top and bottom (616px up)
+     Desktop  28px sides, 24px top and bottom (1192px up)
+   Anything that draws a box (a row card, the selected outline, a hover pill, a bar) sits inside that box, never in
+   the padding. Rows that bled their box past the text with negative margins keep the box at the edge of the content
+   box instead and indent their text inside it. Full-width rules (the header's hairline, row dividers) still run edge
+   to edge, as before.
+   The close button sits in the content box's top right corner: its right edge on the sides' inset, its top on the
+   top inset, level with the title row.
+   Covers: DetailSheet (Deal details, The math, Standings, Needs, Waivers, Slot report, docs, Share image, Pairing
+   code), the Full matchup, the player sheet, the partner profile, the league switcher, Why won't this work, the pitch
+   sheet, the inbox when it slides over the page, and the first-run card.
+   Only padding, margins and the close button's position change. Loads just before frame.css. Every rule is scoped to
+   an overlay's own classes; nothing here styles bare .ps, .card, .btn or .row. Five :not(#_) because the shells'
+   own rules use up to four. */
+
+/* ---------- Headers: the sides' inset; the top inset on the modal (the phone sheet keeps its grab handle on top) ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps-detail > .ds-top, .ps-matchup > .mus-top, .ps-player > .pd-top, .ps-partner > .pp-top) {
+  padding-left: var(--pad-card-x); padding-right: var(--pad-card-x);
+}
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps-detail > .ds-top, .ps-matchup > .mus-top, .ps-player > .pd-top, .ps-partner > .pp-top) {
+    padding-top: var(--pad-card-y);
+  }
+}
+
+/* ---------- Bodies: the sides' inset, and the bottom inset under the last block ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps-detail > .ds-body, .ps-matchup > .mus-body, .ps-player > .ps-body, .ps-partner > .pp-body) {
+  padding-left: var(--pad-card-x); padding-right: var(--pad-card-x);
+  padding-bottom: calc(var(--pad-card-y) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- Sheets padded on the shell itself: the league switcher and Why won't this work ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) {
+  padding-left: var(--pad-card-x); padding-right: var(--pad-card-x);
+  padding-bottom: calc(var(--pad-card-y) + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) { padding-top: var(--pad-card-y); }
+}
+/* Their pills reached 12px (switcher) and 10px (Why won't this work) past the text, 8px from the edge: the pills now
+   fill the content box and the text moves in by the same 12px and 10px, so it keeps its place inside the pill */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw .lsw-row { padding-left: 12px; padding-right: 12px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.fb .fb-opt { padding-left: 10px; padding-right: 10px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) :is(.lsw-row, .fb-opt)::after { left: 0; right: 0; border-radius: var(--pad-pill-r); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.lsw :is(.lsw-load) { padding-left: 12px; padding-right: 12px; }
+
+/* ---------- The close button: the content box's top right corner ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps > .ps-x,
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps > :is(.ds-top, .mus-top, .pd-top, .pp-top) > .ps-x,
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps.ps-player > .pd-top > .ps-head > .ps-x,
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps:is(.lsw, .fb) > .fb-head > .ps-x {
+  top: var(--pad-card-y); right: var(--pad-card-x);
+}
+/* The headers next to it keep clear of it: the 36px circle plus 8px air */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-player > .pd-top > .ps-head, .ps:is(.lsw, .fb) > .fb-head) { padding-right: 44px; }
+
+/* ---------- Pitch sheet (.sheet): padded on the shell; its close is sticky in the column, so it lands on the
+   padding's corner with no offset, and its margins cancel its space (36px circle plus the 16px column gap) ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .scrim-wrap > .sheet {
+  padding: var(--pad-card-y) var(--pad-card-x) calc(var(--pad-card-y) + env(safe-area-inset-bottom, 0px));
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .scrim-wrap > .sheet > .ps-x {
+  top: 0; right: auto; margin: 0 0 calc(-1 * (var(--x-size, 36px) + 16px)) 0;
+}
+/* Its title row keeps clear of the close: 36px circle plus 8px air */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .scrim-wrap > .sheet > .sheet-grab { padding-right: 44px; }
+
+/* ---------- Full matchup: the rows' boxes sit inside the content box ----------
+   Your side's box bled 8px past the text on both sides (margin -8px), so in the sheet it reached 4px from the edge
+   and poked past it on phones. It now fills its column and the text sits inside it; their side takes the same 9px
+   (8px padding and the 1px border) so the two names still line up. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mus-body .mu-row > .mu-mine { margin-left: 0; margin-right: 0; width: 100%; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mus-body .mu-row > .mu-theirs { padding-left: 9px; padding-right: 9px; }
+
+/* ---------- Inbox, when it slides over the page (below 1241px, and on Trade at every size) ---------- */
+@media (max-width: 1240px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-head { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); padding-top: max(var(--pad-card-y), env(safe-area-inset-top, 0px)); }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-list { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx :is(.ibx-ctx, .ibx-ask) { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-ask { margin-bottom: max(var(--pad-card-y), env(safe-area-inset-bottom, 0px)); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .shell.wide .rail.ibx .ibx-head { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); padding-top: max(var(--pad-card-y), env(safe-area-inset-top, 0px)); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .shell.wide .rail.ibx .ibx-list { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .shell.wide .rail.ibx :is(.ibx-ctx, .ibx-ask) { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .shell.wide .rail.ibx .ibx-ask { margin-bottom: max(var(--pad-card-y), env(safe-area-inset-bottom, 0px)); }
+
+/* ---------- First run: the card over the landing ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .onboard .onboard-card { padding: var(--pad-card-y) var(--pad-card-x); }
