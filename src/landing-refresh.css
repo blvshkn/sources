@@ -59,7 +59,9 @@ html:root:not(#_):not(#_) .ld2-sync-t small { font-size: 0.8125rem; color: var(-
 html:root:not(#_):not(#_) .ld2-sync-k { font: 500 0.6875rem/1rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 
 /* ==== Footer legal links ==== */
-html:root:not(#_):not(#_) .ld2-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+/* The links keep a 44px tap height, so the footer centers its three parts on one line instead of top-aligning them */
+html:root:not(#_):not(#_) .ld2 .ld-foot { align-items: center; }
+html:root:not(#_):not(#_) .ld2-legal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
 html:root:not(#_):not(#_) .ld2-legal button {
   min-height: 44px; padding: 0; border: 0; background: none; font: inherit; color: var(--muted); text-decoration: none; cursor: pointer;
   transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1);
