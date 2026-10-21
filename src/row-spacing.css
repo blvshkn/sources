@@ -1,0 +1,72 @@
+/* Row spacing: even room inside every hover, press and selected fill.
+   The standard is 12px between the fill and the content on all four sides, the same room the text rows (Quick moves,
+   Your week, footers, Settings links) already had. Measured with getBoundingClientRect against the fill, not
+   eyeballed. Nothing here changes on hover: every value is the row's resting box, so a fill never moves a list, and
+   the dividers keep fading as dividers.css says. Loads just before frame.css. Every rule is scoped to a list's own
+   classes: nothing here styles bare .ps, .card, .btn or .row. */
+
+/* ---------- Player rows with a 40px headshot: Their threats (Wire and Lineup), This week, league switcher ----------
+   The fill sat 6.7px above and below the headshot but 12px left of it. The row now gives the headshot 12px top and
+   bottom too: 4px fill inset + 12 + 40 + 12 + 4 = 72px. Skeleton rows match, so the card is one height in every state. */
+html:root:not(#_):not(#_):not(#_) .card.wk .wk-row:is(:has(> .av), .thr-ghost) { min-height: 72px; }
+html:root:not(#_):not(#_):not(#_) .ps .lsw-row { min-height: 72px; padding-left: 0; padding-right: 0; }
+
+/* ---------- Your week (Wire): wrapped reasons on phones ----------
+   On phones the reason wraps to two lines and the 8px row padding left the text 6px under the fill's top edge, while
+   desktop had 12. Padding that gives 12 at every width; desktop's height is unchanged (14 + 45.4 + 14). */
+html:root:not(#_):not(#_):not(#_) .card.wk.imp .wk-row { padding-top: 14px; padding-bottom: 14px; }
+
+/* ---------- Trade player lists: the left side matches the right ----------
+   The headshot sat 8px inside the fill and the check circle 12px. The row's left padding goes from 14 to 18. */
+html:root:not(#_):not(#_):not(#_) .card .pick { padding-left: 18px; }
+
+/* ---------- Lineup rows: even top and bottom, 12px each side ----------
+   The divider is a 1px inset shadow inside the row, so the fill starts 5px down and stops 4px up; content now sits
+   half a pixel lower to match. The fill comes 2px closer to the card edge so it reaches 12px past the slot chip and
+   the points, which stay on the list's 16px edge with its headers. */
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row { padding-top: 10.5px; padding-bottom: 9.5px; }
+html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.tap::after { left: 4px; right: 4px; }
+
+/* ---------- Waivers rows: 12px each side, headshot and stats even ----------
+   Same 16px list edge as the header, so the fill moves out to 4px from the card edge. Vertically the headshot was
+   9.9px under the fill and the last stats line 11.4px over it: content moves down 0.75px. */
+html:root:not(#_):not(#_):not(#_) .wv3-list .wv .wv-row { padding-top: 12.75px; padding-bottom: 11.25px; }
+html:root:not(#_):not(#_):not(#_) .wv3-list .wv .wv-row::after { left: 4px; right: 4px; }
+
+/* ---------- Standings: the last number column ends 12px inside the fill, like the rank starts ----------
+   Number columns were centered, so the projected points sat 30px from the fill's right edge on desktop. The last
+   column (and its header) now ends on the row's right padding, which matches the left at 18px.
+   Phones keep their 12px right padding and centered columns: they already land 12 to 13px, and 6px less would cut
+   two-line team names short. */
+@media (min-width: 521px) {
+  html:root:not(#_):not(#_):not(#_) .st-row.st-po { padding-right: 18px; }
+  html:root:not(#_):not(#_):not(#_) .st-row.st-po > :last-child { justify-self: end; justify-items: end; text-align: right; }
+}
+html:root:not(#_):not(#_):not(#_) .st-row.st-pos { padding-left: 18px; padding-right: 18px; }
+html:root:not(#_):not(#_):not(#_) .st-row.st-pos > :last-child { justify-self: end; text-align: right; }
+
+/* ---------- Slot report: the chevron ends on the column edge ----------
+   The 14px chevron sat in a 16px column, so the fill reached 14px past it and 12px past the slot name. */
+html:root:not(#_):not(#_):not(#_) .sr-main > svg { justify-self: end; }
+
+/* ---------- League trade partners: even top and bottom ----------
+   Wide rows: 11px over the name, 12.8 under the reason. Narrow rows put the deltas under the reason: 11 over, 9 under. */
+html:root:not(#_):not(#_):not(#_) .card .partner-card.ptn-row { padding: 15px 0 13.2px !important; }
+@container ptn (max-width: 419px) {
+  html:root:not(#_):not(#_):not(#_) .card .partner-card.ptn-row { padding: 15px 0 17px !important; }
+}
+
+/* ---------- Lineup swap menu options ----------
+   The headshot sat 6px inside the fill on the left and the delta 6px on the right, against 10px above and below. */
+html:root:not(#_):not(#_):not(#_) .mu-opt { padding-left: 12px; padding-right: 12px; }
+
+/* ---------- Inbox items ----------
+   The fill had 7px over the icon and 12px under the action button. Now 12 over and under. The dot and the dismiss X
+   move down with the content. The sides stay: the 16px left holds the unread dot, and a wider right would rewrap text. */
+html:root:not(#_):not(#_):not(#_) .ibx-list .ibx-item { padding-top: 12px; }
+html:root:not(#_):not(#_):not(#_) .ibx-list .ibx-item .ibx-dot { top: 27px; }
+html:root:not(#_):not(#_):not(#_) .ibx-list .ibx-item .ibx-x { top: 8px; }
+
+/* ---------- Dropdown menu options ----------
+   10px before the label, 8px after the check mark. Both sides 10 now. */
+html:root:not(#_):not(#_):not(#_) .sel-list .sel-opt { padding-right: 10px; }

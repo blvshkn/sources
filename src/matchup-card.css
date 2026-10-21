@@ -50,17 +50,25 @@ html:root:not(#_):not(#_) .lu-mx-open.mc-press > .lu-mx { border-radius: inherit
    - Desktop (from 900px wide, Figma 988): the score moves up beside the name at the inner edge; the meta line is
      the tablet one.
    The VS badge is an outline: no fill, just the ring of the surface's own color (Zach's Figma, Built: Face-off).
-   Sizes, gaps and padding are fluid between the Figma values (cqi of the face-off's width). The big scores are Geist
-   with tight tracking; every number in the meta line is Geist Mono. Green is ahead or won, red behind or lost; lime
-   is the brand and never appears here. Every state draws the same rows at the same heights. */
+   Sizes, gaps and padding are fluid between the Figma values (cqi of the face-off's width). Team names are Clash
+   Grotesk Medium; the big scores are Geist with tight tracking; every number in the meta line is Geist Mono. Green
+   is ahead or won, red behind or lost; lime is the brand and never appears here. Every state draws the same rows at the same heights. */
 
-/* The cards around it: the face-off brings its own padding and sits on the cards' usual hero wash (the soft brand
-   gradient from styles.css, :is(.sb2, .mw, .lu-mx, .mu)). The wash is decoration, never a verdict. */
+/* The cards around it: the face-off brings its own padding and sits on a soft brand wash from the top left. The wash
+   is decoration, never a verdict. As drawn in Zach's Figma (Face-off (built), Context=Card): the lime wash alone, at
+   0.10 fading to 0.02 by 150px and gone by 280px along 155deg, on the bare surface. No white sheen, no edge or
+   hairline. Corners are 16px on a phone and 20px from tablet up (the face-off goes tablet at 560px wide, which is
+   about a 616px window). The matchup sheet keeps its own wash (matchup-sheet.css). */
 html:root:not(#_):not(#_) .sb2 > .sb2-open:has(> .fo) { display: block; padding: 0; }
 html:root:not(#_):not(#_) .lu-mx:has(> .fo) { display: block !important; padding: 0 !important; }
 html:root:not(#_):not(#_) .mw.mwf:has(> .fo) { display: block; padding: 0; }
-@container pg (max-width: 599px) {
-  html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx-open:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { border-radius: 16px; }
+html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) {
+  background: linear-gradient(155deg, rgba(var(--lime-rgb), 0.1) 0, rgba(var(--lime-rgb), 0.02) 150px, transparent 280px), var(--surface) !important;
+  box-shadow: none !important;
+}
+html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx-open:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { border-radius: 16px !important; }
+@media (min-width: 616px) {
+  html:root:not(#_):not(#_) :is(.sb2:has(.fo), .lu-mx-open:has(.fo), .lu-mx:has(> .fo), .mw.mwf:has(> .fo)) { border-radius: 20px !important; }
 }
 
 html:root:not(#_):not(#_) .fo {
@@ -108,7 +116,8 @@ html:root:not(#_):not(#_) .fo-handle [data-tooltip], html:root:not(#_):not(#_) .
 
 html:root:not(#_):not(#_) .fo-name {
   grid-area: name; display: block; min-width: 0; max-width: 100%; margin-top: 6px;
-  font: 600 var(--fo-name)/1.1 var(--font-body); color: var(--ink);
+  /* Clash Grotesk Medium, as in Figma (Geist until the Clash file has loaded) */
+  font: 500 var(--fo-name)/1.1 "Clash Grotesk", var(--font-body); letter-spacing: 0; color: var(--ink);
 }
 html:root:not(#_):not(#_) .fo-name > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html:root:not(#_):not(#_) .fo-name.muted { color: var(--muted); font-weight: 500; }
@@ -124,15 +133,37 @@ html:root:not(#_):not(#_) .fo .fo-pts[data-n] { font-family: var(--font-body) !i
 html:root:not(#_):not(#_) .fo-side.is-dim .fo-pts, html:root:not(#_):not(#_) .fo-pts.muted { color: var(--muted); }
 
 /* The bar, filled from the outer edge by that side's win %: green for the leader, red for the trailer. The track is
-   the page color, a step darker than the surface (Figma #121312). */
+   the page color, a step darker than the surface (Figma #121312); track and fill are both pills. */
 html:root:not(#_):not(#_) .fo-bar {
   grid-area: bar; display: flex; width: 100%; height: var(--fo-bar); margin-top: 6px;
-  border-radius: 2px; background: var(--bg); overflow: hidden;
+  border-radius: 9999px; background: var(--bg); overflow: hidden;
 }
 html:root:not(#_):not(#_) .fo-side.them .fo-bar { justify-content: flex-end; }
-html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: 9999px; background: color-mix(in srgb, var(--ink) 30%, transparent); transition: width 600ms var(--st-ease); }
-html:root:not(#_):not(#_) .fo-side.up .fo-bar i { background: var(--good); }
-html:root:not(#_):not(#_) .fo-side.down .fo-bar i { background: var(--bad); }
+html:root:not(#_):not(#_) .fo-side { --fo-fill: color-mix(in srgb, var(--ink) 30%, transparent); }
+html:root:not(#_):not(#_) .fo-side.up { --fo-fill: var(--good); }
+html:root:not(#_):not(#_) .fo-side.down { --fo-fill: var(--bad); }
+html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: 9999px; background: var(--fo-fill); transition: width 600ms var(--st-ease); }
+
+/* Live (Figma State=Live): the fill keeps its color at the tip and fades to the surface by 88.5% of the way back to
+   the outer edge. While games are on, a soft lighter band sweeps along it from the outer end to the tip, then rests,
+   so the bar reads as one that can still move. Final, Projected and Scored bars stay solid and still.
+   The band is the fill's own ::after, clipped by the fill's pill, and only its transform animates: no layout, paint
+   or style work per frame, so the compositor runs it alone (the app drops React's animationiteration listener, see
+   animationIteration.ts). 2.8s a loop: 1.8s to cross on ease-in-out, 1s at rest. No band with reduced motion. */
+html:root:not(#_):not(#_) .fo-st-live .fo-bar i { position: relative; overflow: hidden; background: linear-gradient(90deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
+html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background: linear-gradient(270deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .fo-st-live .fo-bar i::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 60%; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2) 50%, transparent);
+    transform: translateX(-100%); animation: fo-sweep 2.8s ease-in-out infinite;
+  }
+  html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::after { left: auto; right: 0; transform: translateX(100%); animation-name: fo-sweep-back; }
+  html:root:not(#_):not(#_) .fo.is-skel .fo-bar i::after { animation: none; display: none; }
+  /* -100% to 166.67% of the band's own width carries it from just off the outer end to just past the tip */
+  @keyframes fo-sweep { 0% { transform: translateX(-100%); } 64.29%, 100% { transform: translateX(166.67%); } }
+  @keyframes fo-sweep-back { 0% { transform: translateX(100%); } 64.29%, 100% { transform: translateX(-166.67%); } }
+}
 
 /* Meta: win %, record, then the projection or points per game. Mono, 11px. */
 html:root:not(#_):not(#_) .fo-meta {
@@ -143,7 +174,7 @@ html:root:not(#_):not(#_) .fo-side.them .fo-meta { flex-direction: row-reverse; 
 html:root:not(#_):not(#_) .fo-pct { font-weight: 400; color: var(--muted); }
 html:root:not(#_):not(#_) .fo-side.up .fo-pct { color: var(--good); }
 html:root:not(#_):not(#_) .fo-side.down .fo-pct { color: var(--bad); }
-html:root:not(#_):not(#_) .fo-dot { font-style: normal; font-weight: 200; font-size: 0.8em; }
+html:root:not(#_):not(#_) .fo-dot { font-style: normal; font-weight: 400; font-size: 0.8em; }
 html:root:not(#_):not(#_) .fo-end { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 html:root:not(#_):not(#_) .fo-end:empty { display: none; }
 
