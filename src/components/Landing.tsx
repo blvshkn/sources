@@ -27,6 +27,7 @@ import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
+import { LandingSteps } from "./LandingSteps";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -238,14 +239,7 @@ export function Landing({ onLive, onDemo }: {
         <p className="ld2-tag">{tagline.split(" ").map((w, i) => <span key={i}>{w} </span>)}</p>
       </section>
 
-      <section className="ld-section ld2-steps" aria-labelledby="ld-steps">
-        <h2 id="ld-steps" className="ld-h2 ld2-reveal">Up and running in a minute.</h2>
-        <ol>
-          <li className="ld2-reveal" style={{ ["--i" as string]: 0 }}><b>1</b><h3>Enter your username</h3><p>Your Sleeper username, nothing else. No password, no sign up form.</p></li>
-          <li className="ld2-reveal" style={{ ["--i" as string]: 1 }}><b>2</b><h3>Pick your league</h3><p>Sources loads rosters, projections, trades and waivers for the league you choose.</p></li>
-          <li className="ld2-reveal" style={{ ["--i" as string]: 2 }}><b>3</b><h3>Get your moves</h3><p>Trade ideas that help both sides, lineup fixes and waiver bids, refreshed through the week.</p></li>
-        </ol>
-      </section>
+      <LandingSteps trade={demo.trade} />
 
       <section className="ld-section" aria-labelledby="ld-how">
         <h2 id="ld-how" className="ld-h2 ld2-reveal">Built on your league, not a value chart.</h2>

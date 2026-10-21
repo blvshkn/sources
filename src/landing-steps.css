@@ -1,0 +1,119 @@
+/* Landing: "Up and running in a minute." (LandingSteps.tsx). Phone and tablet: a vertical timeline with the rail on
+   the left. Desktop (1024 and up): three steps across with the rail joining the chips. The rail's position comes from
+   the chips themselves (set in JS); its fill and the chip lights are transform and opacity only. Loads before frame.css. */
+
+html:root:not(#_):not(#_) .lds-wrap { position: relative; margin-top: 32px; }
+html:root:not(#_):not(#_) .lds-ol { position: relative; z-index: 1; display: grid; gap: 40px; margin: 0; padding: 0; list-style: none; }
+
+/* Rail: a faint track with a lime fill scaled along it */
+html:root:not(#_):not(#_) .lds-rail { position: absolute; z-index: 0; display: block; overflow: hidden; border-radius: 2px; background: var(--line); pointer-events: none; }
+html:root:not(#_):not(#_) .lds-rail[data-dir="y"] { width: 2px; margin-left: -1px; }
+html:root:not(#_):not(#_) .lds-rail[data-dir="x"] { height: 2px; margin-top: -1px; }
+html:root:not(#_):not(#_) .lds-rail > i { position: absolute; inset: 0; background: var(--lime); transform-origin: 0 0; will-change: transform; }
+html:root:not(#_):not(#_) .lds-rail[data-dir="y"] > i { transform: scaleY(var(--f, 0)); }
+html:root:not(#_):not(#_) .lds-rail[data-dir="x"] > i { transform: scaleX(var(--f, 0)); }
+
+/* Step: chip in a 32px gutter, copy and demo beside it */
+html:root:not(#_):not(#_) .lds-step { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 16px; row-gap: 16px; align-items: start; min-width: 0; }
+html:root:not(#_):not(#_) .lds-copy, html:root:not(#_):not(#_) .lds-stage { grid-column: 2; min-width: 0; }
+html:root:not(#_):not(#_) .lds-copy { display: grid; gap: 4px; padding-top: 2px; }
+html:root:not(#_):not(#_) .lds h3 {
+  margin: 0; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-size: 1.125rem; line-height: 1.75rem; font-weight: 500; letter-spacing: 0;
+  font-synthesis-weight: none;
+}
+html:root:not(#_):not(#_) .lds-copy p { margin: 0; max-width: 36ch; font-size: 0.875rem; line-height: 1.25rem; color: var(--muted); text-wrap: pretty; }
+
+/* Number chip: a lime tint at rest, solid lime once the rail reaches it */
+html:root:not(#_):not(#_) .lds-num {
+  grid-row: 1 / span 2; position: relative; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: #121513; box-shadow: inset 0 0 0 1px rgba(var(--lime-rgb), 0.24); color: var(--lime); font: 600 0.875rem/1 var(--font-mono);
+}
+html:root:not(#_):not(#_) .lds-num > i {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; background: var(--lime); color: #121410; font-style: normal;
+  opacity: 0; transform: scale(0.6); transition: opacity 320ms cubic-bezier(0.23, 1, 0.32, 1), transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .lds-step.lit .lds-num > i { opacity: 1; transform: none; }
+
+/* Demo card */
+html:root:not(#_):not(#_) .lds-demo { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 12px; align-content: start; min-height: 132px; padding: 16px; border-radius: 20px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+
+/* 1. Username pill, a small copy of the hero form */
+html:root:not(#_):not(#_) .lds-field { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 8px 0 16px; border-radius: 999px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .lds-field .at { color: var(--muted); font-weight: 600; }
+html:root:not(#_):not(#_) .lds-typed { display: inline-flex; align-items: center; flex: 1; min-width: 0; color: var(--ink); font-size: 1rem; white-space: nowrap; overflow: hidden; }
+html:root:not(#_):not(#_) .lds-ph { color: var(--faint); }
+html:root:not(#_):not(#_) .lds-caret { display: inline-block; width: 2px; height: 20px; margin-left: 1px; background: var(--lime); opacity: 0; }
+html:root:not(#_):not(#_) .lds-caret.on { animation: lds-blink 900ms steps(1) infinite; }
+@keyframes lds-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+html:root:not(#_):not(#_) .lds-ok {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--good-soft); color: var(--good);
+  opacity: 0; transform: scale(0.5); transition: opacity 260ms cubic-bezier(0.23, 1, 0.32, 1), transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+html:root:not(#_):not(#_) .lds-found {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding-left: 16px; font-size: 0.8125rem; color: var(--muted);
+  opacity: 0; transform: translateY(6px); transition: opacity 260ms cubic-bezier(0.23, 1, 0.32, 1) 80ms, transform 260ms cubic-bezier(0.23, 1, 0.32, 1) 80ms;
+}
+html:root:not(#_):not(#_) .lds-user.found :is(.lds-ok, .lds-found) { opacity: 1; transform: none; }
+
+/* Sleeper chip, as the loading screen draws it */
+html:root:not(#_):not(#_):not(#_) .lds .thk-chip { height: 22px; max-width: none; margin: 0; padding: 0 4px 0 6px; gap: 4px; background: var(--surface-2); color: var(--ink); font: 500 0.75rem/16px var(--font-body); animation: none; vertical-align: middle; }
+html:root:not(#_):not(#_):not(#_) .lds .thk-chip .plat-logo { flex: none; width: 16px; height: 16px; border-radius: 4px; }
+
+/* 2. League row, then the trace step loading it */
+html:root:not(#_):not(#_):not(#_) .lds-row { position: relative; min-height: 56px; padding: 8px 12px; border-radius: 14px; background: var(--surface-2); cursor: default; }
+html:root:not(#_):not(#_):not(#_) .lds-row::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--ink); opacity: 0; transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1); pointer-events: none; }
+html:root:not(#_):not(#_):not(#_) .lds-row.on::after { opacity: 1; }
+html:root:not(#_):not(#_):not(#_) .lds-row > svg { opacity: 0; transform: scale(0.6); transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1), transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1); color: var(--lime); }
+html:root:not(#_):not(#_):not(#_) .lds-row.on > svg { opacity: 1; transform: none; }
+html:root:not(#_):not(#_):not(#_) .lds-row .lsw-av { width: 36px; height: 36px; border-radius: 10px; flex: none; }
+html:root:not(#_):not(#_):not(#_) .lds-row .lsw-n small { font-family: var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_) .lds-thk { font-size: 0.8125rem; opacity: 0; transform: translateY(6px); transition: opacity 260ms cubic-bezier(0.23, 1, 0.32, 1), transform 260ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_) .lds-league:is(.p2, .p3) .lds-thk { opacity: 1; transform: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .lds-thk .thk-steps { padding: 0 0 0 4px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .lds-thk .thk-step { animation: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .lds-thk .thk-mark.run { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .lds-n { font-family: var(--font-mono); color: var(--ink); }
+
+/* 3. A trade idea from the sample league, points in green */
+html:root:not(#_):not(#_):not(#_) .lds-trade .ask-prows > li { opacity: 0; transform: translateY(8px); transition: opacity 280ms cubic-bezier(0.23, 1, 0.32, 1), transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_) .lds-trade .ask-prows > li:nth-child(n + 2) { transition-delay: 90ms; }
+html:root:not(#_):not(#_):not(#_) .lds-trade:is(.p1, .p2, .p3) .ask-prows > li:first-child,
+html:root:not(#_):not(#_):not(#_) .lds-trade:is(.p2, .p3) .ask-prows > li { opacity: 1; transform: none; }
+html:root:not(#_):not(#_):not(#_) .lds-trade .ask-prow { min-height: 52px; padding: 6px 12px; }
+html:root:not(#_):not(#_):not(#_) .lds-pl { display: grid; flex: 1; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .lds-pl .ask-prow-meta { font-size: 0.75rem; line-height: 1.3; }
+html:root:not(#_):not(#_):not(#_) .lds-pts, html:root:not(#_):not(#_):not(#_) .lds-both {
+  opacity: 0; transform: scale(0.85); transition: opacity 260ms cubic-bezier(0.23, 1, 0.32, 1), transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+html:root:not(#_):not(#_):not(#_) .lds-both { display: block; margin: 0; padding-left: 2px; font-size: 0.8125rem; color: var(--muted); transform: translateY(6px); transform-origin: left center; }
+html:root:not(#_):not(#_):not(#_) .lds-g { font: 500 0.8125rem/1 var(--font-mono); color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .lds-trade.p3 :is(.lds-pts, .lds-both) { opacity: 1; transform: none; }
+
+@media (max-width: 399px) {
+  html:root:not(#_):not(#_) .lds-demo { padding: 12px; }
+  html:root:not(#_):not(#_) .lds-step { column-gap: 12px; }
+}
+
+/* Tablet: copy on the left, demo on the right of each step */
+@media (min-width: 640px) {
+  html:root:not(#_):not(#_) .lds-step { grid-template-columns: 32px minmax(0, 0.9fr) minmax(0, 1.2fr); column-gap: 24px; }
+  html:root:not(#_):not(#_) .lds-num { grid-row: 1; }
+  html:root:not(#_):not(#_) .lds-copy { grid-column: 2; }
+  html:root:not(#_):not(#_) .lds-stage { grid-column: 3; grid-row: 1; }
+  html:root:not(#_):not(#_) .lds-ol { gap: 48px; }
+}
+
+/* Desktop: three steps across, chip over copy over demo */
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_) .lds-ol { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; column-gap: 24px; row-gap: 16px; }
+  /* Subgrid, so every title, every line of copy and every card starts on the same line across the three */
+  html:root:not(#_):not(#_) .lds-step { grid-row: span 3; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; row-gap: 16px; }
+  html:root:not(#_):not(#_) .lds-num, html:root:not(#_):not(#_) .lds-copy, html:root:not(#_):not(#_) .lds-stage { grid-column: 1; grid-row: auto; }
+  html:root:not(#_):not(#_) .lds-stage { align-self: stretch; display: grid; }
+  html:root:not(#_):not(#_) .lds-demo { min-height: 176px; align-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) .lds :is(.lds-num > i, .lds-ok, .lds-found, .lds-row::after, .lds-row > svg, .lds-thk, .ask-prows > li, .lds-pts, .lds-both) { transition: none; }
+  html:root:not(#_):not(#_):not(#_) .lds .lds-caret { animation: none; }
+}
