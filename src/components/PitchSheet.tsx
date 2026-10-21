@@ -12,6 +12,8 @@ import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitc
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 import { ShareCard, canShareFile } from "./ShareCard";
+import { MARK } from "./Logo";
+import { WORDMARK, WORD_FONT, WORD_WEIGHT } from "./BrandLogo";
 
 /** Short tap on Android when the share goes through. iOS Safari ignores it. */
 const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
@@ -87,6 +89,9 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
+  // The wordmark is set in Clash Grotesk (src/fonts.ts loads it as a FontFace). Ask for it by name so it's in before
+  // the first letter is drawn; a canvas never waits for a font on its own.
+  try { await document.fonts?.load(`${WORD_WEIGHT} 28px ${WORD_FONT}`, WORDMARK); } catch { /* falls back to Geist */ }
   try { await document.fonts?.ready; } catch { /* fonts optional */ }
   const F = (w: number, px: number) => `${w} ${px}px 'Geist', system-ui, sans-serif`;
   // Numbers use Geist Mono, the same as everywhere else in the app
@@ -107,8 +112,15 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
 
   // Header
-  g.fillStyle = LIME; g.beginPath(); g.arc(X + 9, 92, 9, 0, Math.PI * 2); g.fill();
-  g.fillStyle = INK; g.font = F(600, 34); g.fillText("sources", X + 30, 104);
+  // The logo, as in Figma's "Logo": the two-lane mark, 4/56 of its size apart from SOURCES in Clash Grotesk Medium at
+  // 24/56 of it. The mark's artwork starts a fifth of the way into its square, so the square sits that far left of X
+  // and the artwork lines up with everything under it.
+  const MK = 80, mx = X - MK * 0.2, my = 92 - MK / 2;
+  g.save(); g.translate(mx + MK / 2, my + MK / 2); g.scale(MK / 100, MK / 100);
+  g.strokeStyle = LIME; g.lineWidth = 5.26; g.lineJoin = "round"; g.lineCap = "butt";
+  for (const d of MARK) g.stroke(new Path2D(d));
+  g.restore();
+  g.fillStyle = INK; g.font = `${WORD_WEIGHT} ${MK * 24 / 56}px ${WORD_FONT}`; g.fillText(WORDMARK, mx + MK + MK * 4 / 56, 104);
   g.fillStyle = LIME; g.font = F(700, 22); const tag = "TRADE OFFER"; let tw = 0; for (const ch of tag) tw += g.measureText(ch).width + 5; track(tag, W - X - tw, 102, 5);
   // Two runs: the words in Geist, the week number in Geist Mono like every other number
   g.fillStyle = MUTED; g.font = F(500, 26); const wk = `${LEAGUE_NAME || "Your league"} · Week `; g.fillText(wk, X, 160);

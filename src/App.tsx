@@ -16,7 +16,8 @@ import { installIconTooltips } from "./tooltips";
 import { Tooltip } from "./components/Tooltip";
 import { Boot } from "./components/Boot";
 import { IDLE, tracer, type TraceState } from "./think";
-import { Logo, Mark } from "./components/Logo";
+import { Mark } from "./components/Logo";
+import { BrandLogo } from "./components/BrandLogo";
 import { LeagueCtx } from "./components/LeagueSwitch";
 import { ManagerAvatar } from "./components/Avatar";
 import { IdeaFeedback, IdeaFeedbackCtx, IdeaReason } from "./components/IdeaFeedback";
@@ -616,7 +617,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <AppBackdrop />
       <aside className="side">
         <div className="brand">
-          <button type="button" className="lockup side-logo" style={{ ["--lh" as string]: "30px" }} aria-label="Sources home" onClick={goHome}><Logo height={30} /><span className="lockup-tag">Your fantasy insider</span></button>
+          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={20.57} tagline tag={11.14} label="Sources" /></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
           <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" />
@@ -644,7 +645,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
 
       <header className="topbar">
-        <button type="button" className="top-logo lockup" style={{ ["--lh" as string]: "24px" }} aria-label="Sources home" onClick={goHome}><Logo height={24} /><span className="lockup-tag">Your fantasy insider</span></button>
+        <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" /></button>
         <div className="row" style={{ gap: 4 }}>
           {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
           {/* Ask on phones and tablets: the shared Ask icon, next to the bell (desktop has it in the sidebar) */}
