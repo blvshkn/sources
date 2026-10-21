@@ -1,0 +1,16 @@
+/* Status tags (Waivers MUST FIX, FILLS SLOT, OUT, IR, Q, SKIPPED THIS WEEK): the same tag as the Alpha tag.
+   Line height 100% with equal top and bottom padding, text centered, radius 3. The trailing letter-spacing is
+   taken off the right padding so the word sits centered side to side. */
+html:root:not(#_):not(#_):not(#_) .wv-tag {
+  display: inline-block; text-align: center; height: auto; box-sizing: border-box; vertical-align: middle;
+  padding: 4px calc(6px - 0.08em) 4px 6px; border-radius: 3px;
+  font: 600 0.625rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+}
+/* Trim the line box to the caps so the equal padding reads equal, the way Figma draws it. Browsers without
+   text-box get a 1px nudge instead (caps sit high in a 100% line box). */
+@supports (text-box: trim-both cap alphabetic) {
+  html:root:not(#_):not(#_):not(#_) .wv-tag { text-box: trim-both cap alphabetic; padding-top: 5px; padding-bottom: 5px; }
+}
+@supports not (text-box: trim-both cap alphabetic) {
+  html:root:not(#_):not(#_):not(#_) .wv-tag { padding-top: 5px; padding-bottom: 3px; }
+}
