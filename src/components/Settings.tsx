@@ -28,11 +28,13 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Settings({ username, demo, leagueFormat, onRefresh, format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague, syncUser = "" }: {
+export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = "", format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague, syncUser = "" }: {
   username: string;
   demo: boolean;
   leagueFormat: LeagueFormat;
   onRefresh: () => void;
+  /** When Sleeper's data was last read ("Refreshed 9:23 PM"), shown under the connection line */
+  refreshed?: string;
   format: Format; setFormat: (f: Format) => void;
   level: Level; setLevel: (l: Level) => void;
   fade: FadeWeeks; setFade: (f: FadeWeeks) => void;
@@ -69,7 +71,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
         <h2 className="section-title">League connection</h2>
         <div className="set-row acc-conn">
           <span className="set-ic"><PlatformLogo size={20} /></span>
-          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
+          <span className="grow" style={{ minWidth: 0 }}><b>Sleeper</b><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span>{refreshed && <span className="small muted set-when" style={{ display: "block" }}>{refreshed}</span>}</span>
           {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}><PlatformLogo size={16} />Connect Sleeper</button> : (
             <span className="row wrap">
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>

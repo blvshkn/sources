@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { UPDATED, INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
+import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
 import { lockLine, useKickoffs } from "./kickoff";
 import { loadLeague } from "./sleeper";
 import { TIER, playersInText, rankPlayers } from "./search";
@@ -14,7 +14,6 @@ import {
 } from "./engine";
 import { lineupCard } from "./bye";
 import { installIconTooltips } from "./tooltips";
-import { Tooltip } from "./components/Tooltip";
 import { Boot } from "./components/Boot";
 import { IDLE, tracer, type TraceState } from "./think";
 import { Mark } from "./components/Logo";
@@ -721,7 +720,6 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <header className="topbar">
         <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" stage /></button>
         <div className="row top-acts">
-          {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
           <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
             <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
           </button>
@@ -768,7 +766,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onPass={passPlayer} onUnpass={unpassPlayer} />}
           {tab === "ask" && <Ask initial={askSeed} answer={(q, ctx) => askSteps(q, active, myTags, prices, passed, ctx)} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
-            <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
+            <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} refreshed={refreshed} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}
               level={level} setLevel={setLevel} fade={fade} setFade={setFade}
               dismissed={dismissed} resetDismissed={() => { setDismissed({}); setDismissedIds([]); setToast("Nudges reset. You'll see everything again."); }}
               onDisconnect={onDisconnect}
