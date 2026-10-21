@@ -1,10 +1,7 @@
 /* Waivers: kicker and defense tabs, chips and must-fix tag. */
 
-/* DEF gets its own tone next to K so the two chips read apart. K keeps the app's --k. */
-:root { --def: #4F6B7A; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --def: #9FB6C3; } }
-:root[data-theme="dark"] { --def: #9FB6C3; }
-html:root:not(#_) .lu-pos.p-DEF { color: var(--def) !important; }
+/* DEF reads the always-dark --def token (deep teal, styles.css Night Field block). It used to set its own --def
+   here, light by default and dark only under a dark OS setting, so most phones drew DEF at #4F6B7A, 3.04:1. */
 
 /* Seven position tabs: one even row while it fits, then a clean horizontal scroll inside the card */
 html:root:not(#_) .wv2-pos.wv2-pos-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -18,5 +15,8 @@ html:root:not(#_) .wv2-pos.wv2-pos-6 button { min-width: 0; white-space: nowrap;
 
 /* Must fix: a K or DEF that fills a slot scoring zero this week. Good news, so green. */
 html:root:not(#_) .wv-tag.t-fix { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+/* A long name next to the tag: the tag drops to its own line instead of cutting "Seahawks D/ST" to "Seah...". */
+html:root:not(#_):not(#_) .wv-name:has(> .wv-tag.t-fix) { flex-wrap: wrap; column-gap: 8px; row-gap: 4px; }
+html:root:not(#_):not(#_) .wv-name:has(> .wv-tag.t-fix) > .wv-tag.t-fix { margin-left: 0; }
 
 html:root:not(#_) .wv-kdef-bid { margin: 2px 0 12px; }

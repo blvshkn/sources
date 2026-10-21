@@ -906,6 +906,8 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .pos-RB { background: color-mix(in srgb, var(--rb) 18%, transparent); color: var(--rb); }
 .pos-WR { background: color-mix(in srgb, var(--wr) 18%, transparent); color: var(--wr); }
 .pos-TE { background: color-mix(in srgb, var(--te) 18%, transparent); color: var(--te); }
+.pos-K { background: color-mix(in srgb, var(--k) 18%, transparent); color: var(--k); }
+.pos-DEF { background: color-mix(in srgb, var(--def) 18%, transparent); color: var(--def); }
 .pos-FLEX, .pos-SF { background: var(--surface-3); color: var(--muted); }
 .status { border-radius: 999px; }
 .delta { font-variant-numeric: tabular-nums; }
@@ -1504,11 +1506,12 @@ body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-event
 .lu-slot.s-RB { background: var(--rb-bg) !important; color: var(--rb) !important; }
 .lu-slot.s-WR { background: var(--wr-bg) !important; color: var(--wr) !important; }
 .lu-slot.s-TE { background: var(--te-bg) !important; color: var(--te) !important; }
-.lu-slot.s-K, .lu-slot.s-DEF { background: var(--k-bg) !important; color: var(--k) !important; }
+.lu-slot.s-K { background: var(--k-bg) !important; color: var(--k) !important; }
+.lu-slot.s-DEF { background: var(--def-bg) !important; color: var(--def) !important; }
 .lu-slot.s-FLEX, .lu-slot.s-SF { background: var(--surface) !important; color: var(--ink) !important; box-shadow: inset 0 0 0 1px var(--line); }
 .lu-slot.s-BN, .lu-slot.s-TX { background: transparent !important; color: var(--faint) !important; box-shadow: inset 0 0 0 1px var(--line); }
 .lu-slot.s-IR { background: var(--bad-soft) !important; color: var(--bad) !important; }
-.lu-pos.p-QB { color: var(--qb) !important; } .lu-pos.p-RB { color: var(--rb) !important; } .lu-pos.p-WR { color: var(--wr) !important; } .lu-pos.p-TE { color: var(--te) !important; } .lu-pos.p-K, .lu-pos.p-DEF { color: var(--k) !important; }
+.lu-pos.p-QB { color: var(--qb) !important; } .lu-pos.p-RB { color: var(--rb) !important; } .lu-pos.p-WR { color: var(--wr) !important; } .lu-pos.p-TE { color: var(--te) !important; } .lu-pos.p-K { color: var(--k) !important; } .lu-pos.p-DEF { color: var(--def) !important; }
 .lu-tag, .vb-split { border-radius: 999px !important; font-family: var(--font-mono); letter-spacing: 0.05em; padding: 2px 7px !important; border: 0 !important; }
 .lu-tag { background: var(--warn-soft) !important; color: var(--warn) !important; } .lu-tag.bad { background: var(--bad-soft) !important; color: var(--bad) !important; }
 
@@ -2424,8 +2427,8 @@ html:root:not([data-nf]):not(#_) {
   --good: #7BE08F; --good-soft: rgba(123, 224, 143, 0.12);
   --warn: #F2BE55; --warn-soft: rgba(242, 190, 85, 0.12);
   --bad: #FF8473; --bad-soft: rgba(255, 132, 115, 0.12);
-  --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #C2B3F0;
-  --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(194, 179, 240, 0.13);
+  --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #C2B3F0; --def: #3AA0AE;
+  --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(194, 179, 240, 0.13); --def-bg: rgba(58, 160, 174, 0.13);
   --you-rgb: var(--good-rgb); --good-rgb: 123, 224, 143; --warn-rgb: 242, 190, 85; --them-rgb: 152, 163, 155;
   --tab-rgb: 216, 242, 74; --glow-a: 0.15;
   color-scheme: dark;
