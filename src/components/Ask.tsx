@@ -160,24 +160,103 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
   const thread = useRef<HTMLDivElement>(null);
   const col = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  // Follow the newest message unless you've scrolled up to read something earlier. The empty state starts at the
-  // top instead, so a short phone opens on the intro and the last suggestions fade under the composer.
+  // Scrolling the thread. Sending is an explicit action, so it always brings your question and the answer area into
+  // view (smoothly, or at once under reduced motion), then the thread follows the bottom while the trace and the
+  // answer stream in. Following never scrolls past the top of the answer card, so on a short phone a long answer
+  // keeps its headline in view. Scrolling yourself (wheel, touch, scroll keys, the bar) stops the follow; if the
+  // answer card then appears out of view, the thread brings its top into view once. Scroll back to the bottom and
+  // the follow picks up again. The empty state starts at the top instead, so a short phone opens on the intro.
   const stick = useRef(!!initial?.trim());
+  const cap = useRef(true);
+  const userAt = useRef(0);
+  const smoothUntil = useRef(0);
+  const seenCard = useRef<Element | null>(null);
+  const settle = useRef(0);
+  const follow = useRef<() => void>(() => {});
   useFitHeight(page);
 
   useLayoutEffect(() => {
     const t = thread.current, c = col.current;
     if (!t || !c) return;
-    const toEnd = () => { if (stick.current) t.scrollTop = t.scrollHeight; };
-    toEnd();
-    const ro = new ResizeObserver(toEnd);
+    const reduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const now = () => performance.now();
+    // Where the thread would sit to put an element's top at its scroll-padding line
+    const topOf = (el: Element) =>
+      t.scrollTop + el.getBoundingClientRect().top - t.getBoundingClientRect().top - (parseFloat(getComputedStyle(t).scrollPaddingTop) || 0);
+    const go = (top: number, smooth: boolean) => {
+      const to = Math.round(Math.max(0, Math.min(top, t.scrollHeight - t.clientHeight)));
+      if (Math.abs(t.scrollTop - to) < 1) return;
+      if (smooth) t.scrollTo({ top: to, behavior: "smooth" }); else t.scrollTop = to;
+    };
+    // Restarting a smooth scroll on every resize would crawl: send it once, then put it exactly in place after
+    const land = () => {
+      window.clearTimeout(settle.current);
+      settle.current = window.setTimeout(() => { smoothUntil.current = 0; follow.current(); }, Math.max(0, smoothUntil.current - now()) + 40);
+    };
+    let smoothSent = 0, revealAt = 0, wait = 0, moving = false;
+    let reveal: Element | null = null;
+    follow.current = () => {
+      const turn = c.lastElementChild;
+      const card = turn?.classList.contains("ask-turn") ? turn.querySelector(".ask-card") : null;
+      const fresh = !!card && card !== seenCard.current;
+      if (card) seenCard.current = card;
+      const smooth = !reduced() && now() < smoothUntil.current;
+      if (smooth && smoothSent === smoothUntil.current) return; // already on its way; land() finishes it
+      // Never fight a scroll you're making: wait until you've paused
+      const idleIn = userAt.current + 400 - now();
+      if (idleIn > 0) {
+        if (fresh && card) { reveal = card; moving = false; }
+        window.clearTimeout(wait);
+        wait = window.setTimeout(() => follow.current(), idleIn + 20);
+        return;
+      }
+      if (stick.current) {
+        reveal = null;
+        let top = t.scrollHeight - t.clientHeight;
+        if (card && cap.current) top = Math.min(top, topOf(card));
+        if (smooth) { smoothSent = smoothUntil.current; land(); }
+        go(top, smooth);
+        return;
+      }
+      // Not following: an answer card that starts appearing out of view is brought in once, smoothly, then put
+      // exactly in place after it lands, unless you've scrolled again since
+      if (fresh && card) { reveal = card; moving = false; }
+      if (!card || reveal !== card || smooth) return;
+      const r = card.getBoundingClientRect(), tr = t.getBoundingClientRect();
+      const away = r.top < tr.top - 1 || r.top > tr.bottom - 64;
+      if (!moving && away) {
+        moving = true; revealAt = now();
+        const smooth2 = !reduced();
+        if (smooth2) { smoothUntil.current = smoothSent = now() + 600; land(); }
+        go(topOf(card), smooth2);
+        if (smooth2) return;
+      } else if (moving && away && userAt.current < revealAt) go(topOf(card), false);
+      reveal = null;
+    };
+    follow.current();
+    const ro = new ResizeObserver(() => follow.current());
     ro.observe(c);
     ro.observe(t);
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); window.clearTimeout(settle.current); window.clearTimeout(wait); };
   }, []);
+  // A new question: always go to it
+  useLayoutEffect(() => { if (msgs.length) follow.current(); }, [msgs.length]);
+
+  // Only your own scrolling stops the follow; the thread's own scrolls (and the content growing) never do
+  const mine = () => { userAt.current = performance.now(); };
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const el = e.target as HTMLElement;
+    if (["PageUp", "PageDown", "ArrowUp", "ArrowDown", "Home", "End", " "].includes(e.key) && !el.closest("button, input, a, textarea")) mine();
+  };
   const onScroll = () => {
     const t = thread.current;
-    if (t) stick.current = t.scrollHeight - t.scrollTop - t.clientHeight < 40;
+    if (!t) return;
+    const gap = t.scrollHeight - t.scrollTop - t.clientHeight;
+    if (performance.now() - userAt.current < 400) {
+      cap.current = false;
+      smoothUntil.current = 0;
+      stick.current = gap < 40;
+    } else if (gap < 40) stick.current = true;
   };
 
   const groups = useMemo(() => {
@@ -193,6 +272,9 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
     busyRef.current = true;
     const id = Date.now();
     stick.current = true;
+    cap.current = true;
+    userAt.current = 0;
+    smoothUntil.current = performance.now() + 700;
     setMsgs((m) => [...m, { id, q: t }]);
     setBusy((b) => [...b, id]);
     setQ("");
@@ -216,7 +298,8 @@ export function Ask({ answer, onLink, onPitch, starters, initial }: {
       </header>
 
       <section className="ask-page" ref={page} aria-label="Ask your league">
-        <div className="ask-thread" ref={thread} onScroll={onScroll} aria-live="polite">
+        <div className="ask-thread" ref={thread} onScroll={onScroll} aria-live="polite"
+          onWheel={mine} onTouchMove={mine} onKeyDown={onKeyDown} onPointerDown={(e) => { if (e.target === e.currentTarget) mine(); }}>
           <div className="ask-col" ref={col}>
             {msgs.length === 0 ? (
               <div className="ask-empty">

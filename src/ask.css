@@ -17,9 +17,13 @@ html:root:not(#_):not(#_) .ask-page {
 }
 html:root:not(#_):not(#_) .ask-thread {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-  display: flex; flex-direction: column; scrollbar-width: thin; overflow-anchor: none;
+  display: flex; flex-direction: column; overflow-anchor: none;
   /* Room for focus rings at the edges */
   margin-inline: -4px; padding-inline: 4px;
+  /* No scrollbar-width or scrollbar-color here: either one makes Chrome drop the app's bar (scroll.css) for its own
+     grey one. Ask.tsx brings an answer card's top to this line when it scrolls to one. The composer is a sibling
+     below the thread, never on top of it, so the bottom needs only a little air. */
+  scroll-padding-block: 12px 8px;
 }
 html:root:not(#_):not(#_) .ask-col {
   margin-top: auto; width: 100%; max-width: none; margin-inline: 0;
@@ -180,3 +184,26 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask:active { tran
 
 /* While an answer is being built the button can't send, but the loader inside it shows at full strength */
 html:root:not(#_):not(#_):not(#_) .ask-send[aria-busy="true"] { opacity: 1; cursor: progress; }
+
+/* ---------- Send button while an answer is built ----------
+   The solid fill gives way to a slow, low-contrast light that drifts around the button: a soft glow of a lighter,
+   warmer tint of the button's own color on a layer that turns once every 3.2s, so it runs on the compositor
+   (a transform, never background-position). It fades in when the work starts and back out to the solid fill when
+   it's done; reduced motion keeps the glow still. The loader sits above it, and its ink is the button's dark ink,
+   so the dots read on the lime and on the tint alike. */
+html:root:not(#_):not(#_):not(#_) .ask-send {
+  --ask-send-glow: color-mix(in srgb, var(--action) 66%, #FFFBEA);
+  position: relative; isolation: isolate; overflow: hidden;
+}
+html:root:not(#_):not(#_):not(#_) .ask-send > * { position: relative; z-index: 1; }
+html:root:not(#_):not(#_):not(#_) .ask-send::before {
+  content: ""; position: absolute; inset: -50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle at 38% 38%, var(--ask-send-glow) 0, transparent 34%);
+  opacity: 0; transition: opacity 480ms var(--ask-ease);
+  animation: ask-send-drift 3.2s linear infinite paused;
+}
+html:root:not(#_):not(#_):not(#_) .ask-send[aria-busy="true"]::before { opacity: 1; animation-play-state: running; }
+@keyframes ask-send-drift { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) .ask-send::before { animation: none; }
+}

@@ -6,6 +6,15 @@
    faces) from here. By default those are the app's ink and surface, so it follows the light and dark themes. */
 html:root:not(#_):not(#_) .wkl { display: inline-block; flex: none; position: relative; vertical-align: middle; }
 html:root:not(#_):not(#_) .thk-ic .wkl, html:root:not(#_):not(#_) .thk-mark .wkl { display: block; }
+/* Centered at any size. The design lays out its 23px dot grid at full size and scales it down from the grid's own
+   center, so in a host smaller than 23px the grid starts at the host's top-left corner and the dots land
+   (23 - size) / 2 px right of and below center (2.5px in the 18px send loader). Its stage gets at least 23px,
+   centered on the host; the design still sizes the dots from the host. */
+html:root:not(#_):not(#_) .wkl > span {
+  position: absolute !important; left: 50% !important; top: 50% !important;
+  width: max(23px, 100%) !important; height: max(23px, 100%) !important;
+  transform: translate(-50%, -50%); pointer-events: none;
+}
 
 /* Ask send button: the loader takes the arrow's place while an answer is being built, in the button's own colors */
 html:root:not(#_):not(#_) .ask-send .wkl { --lb-ink: currentColor; --lb-paper: var(--action, var(--ink)); }
