@@ -20,14 +20,23 @@ export interface AskTurnLog { q: string; a: string }
 /** About this much JSON at most. Bigger leagues lose detail (bench rest-of-season numbers, then IR and taxi) first. */
 export const CONTEXT_BUDGET = 25_000;
 
-type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | null; ros?: number; status?: string; starter?: true; pts?: number };
+type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | string; ros?: number; status?: string; starter?: true; pts?: number };
+
+/** What Ask says for a player with no projection this week, in the context and in any reply. */
+export const NO_PROJ = "no projection this week";
+/** A reply never shows a raw null for a projection, whatever the model wrote. */
+export const noNulls = (s: string) => s
+  .replace(/\b(?:proj(?:ected|ection)?|projects?)\b\.?:?\s*(?:of\s*|at\s*|is\s*)?null\b(?:\s+this week)?/gi, NO_PROJ)
+  .replace(/\bnull\s+(?:proj(?:ected|ection)?|projection)\b/gi, NO_PROJ)
+  .replace(/\bnull\b/gi, "none");
 
 const bytes = (o: unknown) => new TextEncoder().encode(JSON.stringify(o)).length;
 
 function playerRow(p: Player, live: Live | undefined, starter: boolean, lean: boolean): CtxPlayer {
   const row: CtxPlayer = { id: p.id, name: p.name, pos: p.pos, nfl: p.nfl };
-  // This week's projection (null on a bye or when he isn't projected), and rest-of-season points a week
-  row.proj = p.wk === null ? null : eff(p, true);
+  // This week's projection, and rest-of-season points a week. A player on a bye or without a projection says so in
+  // words: a bare null here once came back in the answer as "proj null".
+  row.proj = p.wk === null ? NO_PROJ : eff(p, true);
   if (!lean || starter) row.ros = round1(scored(p));
   const status = p.injury ?? (p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : undefined);
   if (status) row.status = p.note ? `${status} (${p.note})` : status;
@@ -128,6 +137,19 @@ export function factsOf(a: Answer): Record<string, unknown> {
       ...(acc ? { chanceTheyAccept: `${Math.round(acc.p * 100)}%` } : {}), ...(deal.youDrop.length ? { youDrop: deal.youDrop.map(nm) } : {}),
     };
   }
+  if (a.offers?.length) {
+    // Ask shows each of these as its own trade card. The words should point at them by approach, not repeat them.
+    f.offersShownAsCards = a.offers.map((o) => {
+      const them = teamById(o.trade.partnerId);
+      return {
+        approach: o.label, works: o.works, with: them?.manager, youGive: o.trade.give.map(nm), youGet: o.trade.get.map(nm),
+        yourStartersPerWeek: o.trade.youDelta, theirStartersPerWeek: o.trade.themDelta,
+        ...(o.trade.accept ? { chanceTheyAccept: `${Math.round(o.trade.accept.p * 100)}%` } : {}),
+        ...(o.trade.youDrop.length ? { youDrop: o.trade.youDrop.map(nm) } : {}),
+      };
+    });
+  }
+  if (a.acq) { f.target = nm(a.acq.target); if (a.acq.exclude.length) f.userWontTrade = a.acq.exclude.map(nm); }
   const s = a.show;
   if (s?.kind === "player") f.player = { id: s.id, name: nm(s.id) };
   if (s?.kind === "swaps") f.lineupSwaps = s.rows.map((r) => ({ start: nm(r.start), bench: nm(r.bench), slot: r.slot, gain: r.gain }));
@@ -136,7 +158,9 @@ export function factsOf(a: Answer): Record<string, unknown> {
 }
 
 /** A finished answer as plain text, for the next question's history. */
-export const turnText = (a: Answer) => [a.text, ...a.points, a.quip ?? ""].filter(Boolean).join(" ");
+export const turnText = (a: Answer) => [a.text, ...a.points,
+  ...(a.offers ?? []).map((o) => `${o.label}: ${o.trade.give.map((id) => playerById(id)?.name ?? id).join(" + ")} for ${o.trade.get.map((id) => playerById(id)?.name ?? id).join(" + ")}.`),
+  a.quip ?? ""].filter(Boolean).join(" ");
 
 export type AiReply = { text: string; points: string[]; playerIds?: string[]; teamId?: string; quip?: string };
 
@@ -154,10 +178,10 @@ export async function askServer(question: string, context: Record<string, unknow
     const a = d?.answer;
     if (!a || typeof a.text !== "string" || !a.text.trim()) return null;
     return {
-      text: a.text, points: Array.isArray(a.points) ? a.points.filter((p) => typeof p === "string").slice(0, 3) : [],
+      text: noNulls(a.text), points: Array.isArray(a.points) ? a.points.filter((p) => typeof p === "string").slice(0, 3).map(noNulls) : [],
       playerIds: Array.isArray(a.playerIds) ? a.playerIds.filter((id) => typeof id === "string" && !!PLAYERS[id]).slice(0, 4) : undefined,
       teamId: typeof a.teamId === "string" && TEAMS.some((t) => t.id === a.teamId) ? a.teamId : undefined,
-      quip: typeof a.quip === "string" && a.quip.trim() ? a.quip.trim() : undefined,
+      quip: typeof a.quip === "string" && a.quip.trim() ? noNulls(a.quip.trim()) : undefined,
     };
   } catch {
     onOff?.("offline");
@@ -167,6 +191,8 @@ export async function askServer(question: string, context: Record<string, unknow
 
 /** The AI's reply over the engine's answer: the AI's words, the engine's inline content and links. */
 export function merge(ai: AiReply, base: Answer | null, q = ""): Answer {
+  // Offers carry their own players, numbers and ways out: the AI's words sit above them with nothing else added
+  if (base?.offers?.length) return { text: ai.text, points: ai.points, links: base.links, offers: base.offers, acq: base.acq, quip: ai.quip, by: "ai" };
   const show = base?.show ?? (ai.playerIds?.length ? (ai.playerIds.length === 1 ? { kind: "player" as const, id: ai.playerIds[0] } : { kind: "players" as const, ids: ai.playerIds }) : undefined);
   let links = base?.links ?? [];
   // A way out to Trade or Lineup only when the question was about a move; otherwise the answer stays in Ask
@@ -174,7 +200,7 @@ export function merge(ai: AiReply, base: Answer | null, q = ""): Answer {
     const t = teamById(ai.teamId);
     links = t.you ? [{ label: "Open your lineup", tab: "roster" }] : [{ label: `Build a trade with ${t.manager}`, tab: "trade", teamId: t.id }];
   }
-  return { text: ai.text, points: ai.points, links, show, quip: ai.quip, by: "ai" };
+  return { text: ai.text, points: ai.points, links, show, quip: ai.quip, by: "ai", ...(base?.acq ? { acq: base.acq } : {}) };
 }
 
 /** A start/sit answer from Set optimal lineup's result: its moves (with reasons) as Ask's inline swaps. */

@@ -5,6 +5,10 @@ const NUM = /^[\s$+\-−–▲▼↑↓]*\d[\d\s.,:%$+\-−–/x×]*$/;
 
 function mark(el: Element) {
   if (el.closest("svg")) return;
+  // A word streamed in by Words (ThinkingTrace.tsx) is its own span, so "1.2" in the middle of a sentence looked like a
+  // whole-number element and went mono, where the period takes a full digit's width and reads "1 . 2". It's part of
+  // its sentence: keep the text face.
+  if (el.classList.contains("thk-w")) { el.removeAttribute("data-n"); return; }
   const t = el.textContent?.trim() ?? "";
   if (t && NUM.test(t)) el.setAttribute("data-n", ""); else el.removeAttribute("data-n");
 }

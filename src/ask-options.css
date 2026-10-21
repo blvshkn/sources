@@ -1,0 +1,21 @@
+/* Ask: the offers under a "how can I get X" answer. Each is the same trade card as a single deal, headed by the
+   approach it answers (Best odds, Keeps your starters, Cheapest in value). They stack full width in the chat column
+   on every size, phone first. Loads before frame.css. */
+html:root:not(#_):not(#_) .ask-turn .ask-opts { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; }
+html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"] { display: block; min-width: 0; }
+html:root:not(#_):not(#_) .ask-turn .ask-card.ask-opt { gap: 12px; }
+html:root:not(#_):not(#_) .ask-turn .ask-opt .ask-opt-label {
+  margin: 0; font-family: var(--font-mono); font-size: 0.6875rem; line-height: 1.4; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink);
+}
+html:root:not(#_):not(#_) .ask-turn .ask-opt .ask-opt-why { margin: 4px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ask-turn .ask-opt.miss .ask-opt-label { color: var(--muted); }
+/* Each card comes in a beat after the one above it, once the answer is written */
+html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(2) .ask-after { transition-delay: 60ms; }
+html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(3) .ask-after { transition-delay: 120ms; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ask-turn .ask-opts { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .ask-turn .ask-opts .ask-after { transition: none; transition-delay: 0ms; }
+}

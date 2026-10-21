@@ -4,7 +4,7 @@ import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { deny } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { Answer, AskShow, Trade, acceptance, fmt } from "../engine";
+import { Answer, AskCtx, AskShow, Trade, acceptance, fmt, type AcquireOption } from "../engine";
 import { Player, TEAMS, YOU, isSpecialFA, playerById, teamById } from "../data";
 import { AiLabel, Icon } from "./ui";
 import { WorkingLoader, AiMark } from "./WorkingLoader";
@@ -15,7 +15,7 @@ import { useLive, type Live } from "../live";
 import { SwapRows } from "./SwapRows";
 import { useIconStroke } from "./iconStroke";
 
-type Msg = { id: number; q: string; history: AskTurnLog[] };
+type Msg = { id: number; q: string; history: AskTurnLog[]; ctx: AskCtx };
 type Topic = "Trades" | "Lineup" | "Waivers" | "League";
 const TOPICS: Topic[] = ["Trades", "Lineup", "Waivers", "League"];
 
@@ -137,13 +137,38 @@ export function DealNumbers({ t }: { t: Trade }) {
   );
 }
 
+/** One engine-built offer from a "how can I get X" answer: the same trade card as a single deal, headed by the approach
+ *  it answers. Nothing here leaves Ask except View in Trade. */
+function OfferCard({ o, done, onLink, onPitch, onPlayer }: { o: AcquireOption; done: boolean; onLink: (l: Answer["links"][number]) => void; onPitch?: (t: Trade) => void; onPlayer: OpenPlayer }) {
+  const t = o.trade;
+  const wait = `ask-after${done ? "" : " wait"}`;
+  return (
+    <article className={`ask-card ask-opt${o.works ? "" : " miss"}`} aria-busy={!done} aria-hidden={!done || undefined} aria-label={`${o.label}: ${t.give.map((id) => playerById(id)?.name).join(" and ")}`}>
+      <div className={wait}>
+        <p className="ask-opt-label">{o.label}</p>
+        <p className="ask-opt-why">{o.why}</p>
+      </div>
+      <div className={wait}><AskShowBlock deal={t} onPlayer={onPlayer} live={done} /></div>
+      <div className={wait}><DealNumbers t={t} /></div>
+      <div className={`ask-acts ${wait}`}>
+        {onPitch && t.themDelta > 0 && <button type="button" className="ask-act" tabIndex={done ? undefined : -1} onClick={() => onPitch(t)}>Write pitch</button>}
+        <button type="button" className="ask-out" tabIndex={done ? undefined : -1} onClick={() => onLink({ label: "Open in builder", tab: "trade", trade: t })} title="Open in builder">
+          {OUT.trade}<Icon name="chev" size={14} />
+        </button>
+      </div>
+    </article>
+  );
+}
+
 /** One answer: the trace of the work, then the answer card streaming in as it's written out. */
-function AskTurn({ q, history, live, answer, onLink, onPitch, onPlayer, onDone, follow, onFollow }: {
+function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onDone, follow, onFollow }: {
   q: string;
+  /** Thread state from earlier turns (the player being chased, who you've said you'll keep) */
+  ctx: AskCtx;
   /** The last few finished turns, so a follow-up can lean on them */
   history: AskTurnLog[];
   live: Live;
-  answer: (q: string) => Steps<Answer>;
+  answer: (q: string, ctx?: AskCtx) => Steps<Answer>;
   onLink: (l: Answer["links"][number]) => void;
   onPitch?: (t: Trade) => void;
   onPlayer: OpenPlayer;
@@ -153,7 +178,7 @@ function AskTurn({ q, history, live, answer, onLink, onPitch, onPlayer, onDone, 
 }) {
   const { trace, result: a, start } = useTrace<Answer>();
   // Sources AI answers; the engine runs first when it has a rule for the question, and is the answer if the AI is down
-  useEffect(() => { start(askJob(q, answer, history, live)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { start(askJob(q, (x) => answer(x, ctx), history, live)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Headline, then each point, then the one-liner, as one stream
   const counts = a ? [wordCount(a.text), ...a.points.map(wordCount), ...(a.quip ? [wordCount(a.quip)] : [])] : [];
   const total = counts.reduce((x, y) => x + y, 0);
@@ -201,6 +226,11 @@ function AskTurn({ q, history, live, answer, onLink, onPitch, onPlayer, onDone, 
           {a.by === "off" && <p className="ask-ai-off">{offNote(a.offWhy)}</p>}
           <AiLabel />
         </article>
+      )}
+      {a?.offers && a.offers.length > 0 && (
+        <div className="ask-opts" role="list" aria-label="Offers">
+          {a.offers.map((o) => <div role="listitem" key={o.trade.key}><OfferCard o={o} done={done} onLink={onLink} onPitch={onPitch} onPlayer={onPlayer} /></div>)}
+        </div>
       )}
       {done && follow.length > 0 && (
         <div className="ask-chips ask-follow" role="group" aria-label="Follow-up questions">
@@ -252,7 +282,7 @@ function useFitHeight(ref: React.RefObject<HTMLElement | null>) {
 }
 
 export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
-  answer: (q: string) => Steps<Answer>;
+  answer: (q: string, ctx?: AskCtx) => Steps<Answer>;
   /** The explicit way out on an answer: opens that tab (a deal goes into the builder) */
   onLink: (l: Answer["links"][number]) => void;
   /** A "take me there" question */
@@ -262,7 +292,9 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
   initial?: string;
 }) {
   // A question sent from the inbox composer arrives here and starts working at once
-  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, q: initial.trim(), history: [] }] : []));
+  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, q: initial.trim(), history: [], ctx: {} }] : []));
+  // The player you're trying to get and who you've said you'll keep, so "I don't want to give up Cook" rebuilds the offers
+  const acq = useRef<AskCtx["acq"]>(undefined);
   // Finished turns, oldest first. The last three go along with each new question.
   const log = useRef<AskTurnLog[]>([]);
   const live = useLive();
@@ -404,7 +436,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     cap.current = true;
     userAt.current = 0;
     smoothUntil.current = performance.now() + 700;
-    setMsgs((m) => [...m, { id, q: t, history: log.current.slice(-3) }]);
+    setMsgs((m) => [...m, { id, q: t, history: log.current.slice(-3), ctx: { acq: acq.current } }]);
     setBusy((b) => [...b, id]);
     setQ("");
   };
@@ -449,8 +481,8 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 </div>
               </div>
             ) : msgs.map((m, i) => (
-              <AskTurn key={m.id} q={m.q} history={m.history} live={live} answer={answer} onLink={onLink} onPitch={onPitch} onPlayer={setSheet}
-                onDone={(a) => { if (a && !log.current.some((x) => x.q === m.q && x.a === turnText(a))) log.current = [...log.current, { q: m.q, a: turnText(a) }].slice(-6); setBusy((b) => b.filter((x) => x !== m.id)); }}
+              <AskTurn key={m.id} q={m.q} ctx={m.ctx} history={m.history} live={live} answer={answer} onLink={onLink} onPitch={onPitch} onPlayer={setSheet}
+                onDone={(a) => { if (a?.acq) acq.current = a.acq; if (a && !log.current.some((x) => x.q === m.q && x.a === turnText(a))) log.current = [...log.current, { q: m.q, a: turnText(a) }].slice(-6); setBusy((b) => b.filter((x) => x !== m.id)); }}
                 follow={i === msgs.length - 1 ? followFor(m.q) : []} onFollow={send} />
             ))}
           </div>

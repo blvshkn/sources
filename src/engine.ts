@@ -628,6 +628,66 @@ export function* costToGetSteps(you: Team, playerId: string, tags: ManagerTag[],
   return closest ? { trade: closest, works: false } : null;
 }
 
+/** One way to get a player, built by the engine: the package, its read, and which approach it answers. */
+export interface AcquireOption { label: "Best odds" | "Keeps your starters" | "Cheapest in value" | "Best for your lineup" | "Closest"; trade: Trade; works: boolean; why: string }
+export interface AcquireResult { owner: Team; options: AcquireOption[]; tried: number; excluded: string[] }
+
+/**
+ * Several distinct ways to get one player, each a full deal from your roster for him. Tries every one and two player
+ * package (minus anyone in `exclude`, your untouchables and his tags), keeps the ones he'd take (his lineup gains a
+ * point a week and nothing on his side blocks it), then picks one per approach: the best chance of a yes, one that
+ * leaves your starting lineup alone, and the least market value out. No two options share the same package. When
+ * nothing works, the one closest to working comes back as "Closest", with works false.
+ */
+export function* acquireSteps(you: Team, playerId: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, exclude: string[] = []): Steps<AcquireResult | null> {
+  const owner = TEAMS.find((t) => t.roster.includes(playerId));
+  if (!owner || owner.you) return null;
+  const pool = you.roster.filter((id) => !exclude.includes(id));
+  const starterIds = new Set(lineupFor(you.roster).slots.map((s) => s.player?.id).filter(Boolean) as string[]);
+  const ok: { t: Trade; a: Acceptance }[] = [];
+  let closest: { t: Trade; a: Acceptance } | null = null;
+  let tried = 0;
+  for (const give of combos(pool, 2)) {
+    yield { t: "n", n: tried++ };
+    const t = evaluate(you, owner, give, [playerId], tags, myTags, prices);
+    if (t.warnings.length) continue;
+    const a = acceptance(t, you, owner);
+    t.accept = a;
+    if (t.themDelta >= 1 && !a.theirBlockers.length) ok.push({ t, a });
+    else if (t.youDelta >= -6 && (!closest || t.themDelta - a.theirBlockers.length > closest.t.themDelta - closest.a.theirBlockers.length)) closest = { t, a };
+  }
+  yield { t: "n", n: tried };
+  const nm = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
+  if (!ok.length) {
+    return { owner, tried, excluded: exclude, options: closest ? [{ label: "Closest", trade: closest.t, works: false, why: closest.a.theirBlockers[0] ? `Short because ${closest.a.theirBlockers[0]}.` : `${owner.manager}'s starters go ${fmt(closest.t.themDelta)} a week.` }] : [] };
+  }
+  // Deals that also keep your lineup level or better come first; a deal that costs you starter points only shows
+  // when there aren't two that don't
+  const level = ok.filter((x) => x.t.youDelta >= 0);
+  const pool2 = level.length >= 2 ? level : ok;
+  const picked: AcquireOption[] = [];
+  const used = new Set<string>();
+  // `top` is false when the best deal for this approach is already shown under another label, so the line doesn't claim it
+  const take = (label: AcquireOption["label"], list: { t: Trade; a: Acceptance }[], why: (x: { t: Trade; a: Acceptance }, top: boolean) => string) => {
+    const x = list.find((c) => !used.has(c.t.key));
+    if (!x || picked.length >= 3) return;
+    used.add(x.t.key);
+    picked.push({ label, trade: x.t, works: true, why: why(x, x === list[0]) });
+  };
+  const byOdds = [...pool2].sort((a, b) => b.a.p - a.a.p || b.t.youDelta - a.t.youDelta);
+  take("Best odds", byOdds, (x) => `${Math.round(x.a.p * 100)}% chance ${owner.manager} says yes${x.a.reasons[0] ? `: ${x.a.reasons[0]}` : ""}.`);
+  const benchOnly = pool2.filter((x) => x.t.give.every((id) => !starterIds.has(id))).sort((a, b) => b.t.youDelta - a.t.youDelta || b.a.p - a.a.p);
+  if (benchOnly.some((x) => !used.has(x.t.key))) take("Keeps your starters", benchOnly, (x) => `${nm(x.t.give)} ${x.t.give.length > 1 ? "are" : "is"} off your bench, so your starting lineup stays as it is.`);
+  else take("Best for your lineup", [...pool2].sort((a, b) => b.t.youDelta - a.t.youDelta || b.a.p - a.a.p), (x, top) => `Your starters go ${fmt(x.t.youDelta)} a week${top ? ", the best of the deals they'd take" : ""}.`);
+  take("Cheapest in value", [...pool2].sort((a, b) => a.t.marketGive - b.t.marketGive || b.a.p - a.a.p), (x, top) => `${Math.round(x.t.marketGive).toLocaleString("en-US")} in market value out${top ? ", the least of the deals they'd take" : ""}.`);
+  // Too few even deals for a third card: the cheapest of the rest, even if it costs you starter points (its numbers say so)
+  if (pool2 !== ok && !picked.some((o) => o.label === "Cheapest in value")) {
+    const cheap = [...ok].sort((a, b) => a.t.marketGive - b.t.marketGive || b.a.p - a.a.p);
+    take("Cheapest in value", cheap, (x, top) => `${Math.round(x.t.marketGive).toLocaleString("en-US")} in market value out${top ? ", the least of the deals they'd take" : ""}.`);
+  }
+  return { owner, tried, excluded: exclude, options: picked };
+}
+
 /** Counteroffer coach: tweak a deal by one player so it works for you and still works for them. */
 export function counterFor(t: Trade, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): { trade: Trade; line: string } | null {
   const them = teamById(t.partnerId);
@@ -1196,27 +1256,91 @@ export interface Answer {
   generic?: boolean;
   /** A start/sit question: Ask runs Set optimal lineup's signals and AI check on it (optimalLineup.ts). */
   lineup?: boolean;
+  /** "How can I get X": the engine's distinct offers for him, each shown in Ask as its own trade card. */
+  offers?: AcquireOption[];
+  /** The player being chased and the players you've said you'll keep, carried to the next question in the thread. */
+  acq?: AskAcq;
 }
+/** What Ask remembers between turns about a player you're trying to get. */
+export interface AskAcq { target: string; exclude: string[] }
+/** Thread state Ask hands back to the engine with a follow-up. */
+export interface AskCtx { acq?: AskAcq }
 
-export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
-  return drain(askSteps(q, tags, myTags, prices, passed));
+export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = [], ctx?: AskCtx): Answer {
+  return drain(askSteps(q, tags, myTags, prices, passed, ctx));
 }
 
 const poss = (name: string) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
 const names = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 const yourRoster = (): TraceEv => ({ t: "step", doing: "Reading your roster", done: `Read your roster (${YOU.roster.length} players)`, chips: [{ label: YOU.name, kind: "team" }] });
 
+/** The answer to "how can I get X": two or three distinct offers from the engine, each its own card in Ask, and a
+ *  plain line on how many work. `keepNow` is who this question just took off the table, for the plan line. */
+function* acquireAnswer(target: string, exclude: string[], keepNow: string[], tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>): Steps<Answer> {
+  const p = playerById(target);
+  const owner = TEAMS.find((x) => x.roster.includes(target))!;
+  const without = exclude.length ? ` without ${names(exclude).replace(/ \+ /g, " or ")}` : "";
+  yield { t: "think", text: keepNow.length
+    ? `You'd rather keep ${names(keepNow).replace(/ \+ /g, " and ")}. I'll take ${keepNow.length > 1 ? "them" : "him"} out of every package, try the rest of your roster for ${p.name} again, and rebuild the offers ${owner.manager} would take.`
+    : `You want ${p.name} from ${owner.manager}. I'll try every one and two player package from your roster${exclude.length ? `${without}` : ""}, keep the ones ${owner.manager} would say yes to, and build a few different ways to get there.` };
+  yield yourRoster();
+  yield { t: "step", doing: `Pricing {n} packages for ${p.name}`, done: `Priced {n} packages for ${p.name}`, n: 0,
+    chips: [{ label: owner.name, kind: "team" }, ...exclude.map((id) => ({ label: `Keeping ${playerById(id).name}`, kind: "player" as const }))] };
+  const r = yield* acquireSteps(YOU, target, tags, myTags, prices, exclude);
+  const opts = r?.options ?? [];
+  const works = opts.filter((o) => o.works);
+  yield { t: "step", doing: "Building offers", done: works.length ? `Built ${works.length} ${works.length === 1 ? "offer" : "offers"} ${owner.manager} would take` : opts.length ? "Nothing works, so kept the closest" : "No package comes close",
+    chips: opts.map((o) => ({ label: o.label, kind: "feed" as const })) };
+  const acq = { target, exclude };
+  const kept = exclude.length ? [`Kept out of every offer: ${names(exclude).replace(/ \+ /g, ", ")}.`] : [];
+  if (works.length) return {
+    text: works.length === 1 ? `One package gets ${p.name} from ${owner.manager}${without}.` : `${works.length === 2 ? "Two" : "Three"} ways to get ${p.name} from ${owner.manager}${without}.`,
+    points: [...kept, `Each one gains ${owner.manager}'s starters at least +1.0 a week, so it's a real offer.`],
+    links: [], offers: works, acq,
+  };
+  const c = opts[0];
+  if (c) return {
+    text: `No package gets ${p.name} from ${owner.manager}${without}. The closest is ${names(c.trade.give)}, and it still comes up short.`,
+    points: [...kept, `${owner.manager}'s starters go ${fmt(c.trade.themDelta)} a week on it. They'd need at least +1.0 to say yes.`],
+    links: [], offers: [c], acq,
+  };
+  const refused = tags.find((x) => x.teamId === owner.id && x.kind === "refuses" && (x.playerId ? x.playerId === target : x.pos === p.pos));
+  if (refused) return {
+    text: `${owner.manager} won't move ${p.name}, so no package gets him right now.`,
+    points: [...kept, `Your note on ${owner.manager}: ${refused.text}.`],
+    links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }], show: { kind: "player", id: target }, acq,
+  };
+  return {
+    text: `Nothing on your roster gets ${p.name} from ${owner.manager}${without}.`,
+    points: [...kept, "Every package breaks one of your tags or theirs, or costs your lineup too much."],
+    links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }], show: { kind: "player", id: target }, acq,
+  };
+}
+
 /**
  * Ask, as the steps it really takes. It reads the question, says in a sentence what it's going to do, then reports
  * each piece of work with real counts (rosters checked, lineups built, swaps scored) before it returns the answer.
  * ask() runs the same steps straight through.
  */
-export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Steps<Answer> {
+export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = [], ctx?: AskCtx): Steps<Answer> {
   const s = q.toLowerCase();
   const pos = POS_WORDS.find(([re]) => re.test(q))?.[1];
   const said = teamInText(q);
   const named = playerInText(q, said ? [said.span] : undefined);
   const others = TEAMS.filter((t) => !t.you);
+
+  // Getting a player: a new target ("how can I get Swift?"), or a constraint on the one already being chased ("I don't
+  // want to give up Cook"). Players of yours named with a keep word are left out of every offer from here on.
+  const yours = playersInText(q, YOU.roster.map(playerById).filter(Boolean), (p) => p.name, { names: playerWords().names }).map((m) => m.item.id);
+  const keepWords = /(don'?t|do not|won'?t|wouldn'?t|not|never|without|keep|keeping|no |rather|leave|except|hold)/.test(s);
+  const target = named && TEAMS.some((t) => !t.you && t.roster.includes(named.id)) ? named.id : null;
+  const wantsTarget = !!target && /(what would it take|cost|\bget\b|trade for|acquire|\bland\b|\bbuy\b|\bpry\b|\bi (?:really )?want\b|go after|options for)/.test(s);
+  const prev = ctx?.acq && TEAMS.some((t) => !t.you && t.roster.includes(ctx.acq!.target)) ? ctx.acq : undefined;
+  if (wantsTarget || (prev && yours.length && keepWords && !target)) {
+    const keepNow = keepWords ? yours : [];
+    const exclude = [...new Set([...(prev?.exclude ?? []), ...keepNow])].filter((id) => YOU.roster.includes(id));
+    return yield* acquireAnswer(wantsTarget ? target! : prev!.target, exclude, keepNow, tags, myTags, prices);
+  }
 
   if (/(who has|who owns|who'?s got|who got|whose team|where is|which team)/.test(s) && named) {
     yield { t: "think", text: `You want to know who has ${named.name}. I'll go through every roster in the league, IR spots included.` };
@@ -1238,29 +1362,6 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     };
   }
 
-  if (/(what would it take|cost|get|trade for|acquire)/.test(s) && named && !YOU.roster.includes(named.id)) {
-    const owner = TEAMS.find((x) => x.roster.includes(named.id))!;
-    yield { t: "think", text: `You want ${named.name}${owner ? ` from ${owner.manager}` : ""}. I'll try every one and two player package from your roster, skip anyone you've marked untouchable, and keep the cheapest one ${owner?.manager ?? "they"} would say yes to.` };
-    yield yourRoster();
-    yield { t: "step", doing: `Pricing {n} packages for ${named.name}`, done: `Priced {n} packages for ${named.name}`, n: 0, chips: owner ? [{ label: owner.name, kind: "team" }] : [] };
-    const r = yield* costToGetSteps(YOU, named.id, tags, myTags, prices);
-    if (r) yield { t: "step", doing: "Picking the closest offer", done: r.works ? "Picked the cheapest offer that works" : "Nothing clears, so kept the closest", chips: r.trade.give.map((id) => ({ label: playerById(id).name, kind: "player" as const })) };
-    if (r && !r.works) {
-      const t = r.trade;
-      return {
-        text: `${named.name} is expensive. The closest you get is ${names(t.give)}, and ${owner.manager} still loses ${fmt(t.themDelta).replace("−", "")} a week.`,
-        points: [`Your starters go ${fmt(t.youDelta)} a week.`, `${owner.manager}'s starters go ${fmt(t.themDelta)}. They'd need a reason, like a need you fill.`, "Your untouchables and his tags were left out."],
-        links: [{ label: "Open it in builder", tab: "trade", trade: t }],
-      };
-    }
-    const t = r?.trade;
-    if (!t) return { text: `Nothing on your roster gets ${named.name} from ${owner.manager} without breaking a tag or your own lineup.`, points: [`${owner.name} would need to gain at least +0.5 a week to say yes.`], links: [{ label: `Open ${owner.name} in builder`, tab: "trade", teamId: owner.id }], show: { kind: "player", id: named.id } };
-    return {
-      text: `${names(t.give)} gets it done with ${owner.manager}.`,
-      points: [`${owner.manager}'s starters gain ${fmt(t.themDelta)} a week.`, `Your starters go ${fmt(t.youDelta)} a week.`, ...(t.youDrop.length ? [`You'd drop ${t.youDrop.map((id) => playerById(id).name).join(", ")} to make room.`] : [])],
-      links: [{ label: "Open in builder", tab: "trade", trade: t }],
-    };
-  }
   if (/(need|thin|weak|hurting|short)/.test(s) && pos) {
     yield { t: "think", text: `You asked who's thin at ${pos}. I'll build every team's best lineup, compare its ${pos} points with the league average, and rank the biggest gaps.` };
     yield { t: "step", doing: "Building {n} best lineups", done: "Built {n} best lineups", n: 0 };

@@ -29,6 +29,13 @@ Ground rules
 - "computed_facts", when present, is exact math from the app's engine for this question. Use those numbers as they are and don't contradict them.
 - The user is the team with "you": true. Speak to them as "you". Call other teams by manager or team name.
 - Points are fantasy points. "proj" is a weekly projection, "ros" is rest-of-season points per week, "pf"/"pa" are points for and against.
+- When a player's "proj" reads "no projection this week", say exactly that. Never write the word null.
+- Write every number as plain digits with no spaces inside it: 1.2, 15.3, +4.0.
+
+Trade offers
+- When computed_facts has "offersShownAsCards", the app shows each offer as its own trade card right under your answer, with the players and numbers. Write "text" as a short summary that points at the cards by their approach name (for example "Best odds" or "Cheapest in value") and says which one you'd lead with and why. Don't list every player and number again. "points" can be empty, and leave "playerIds" empty.
+- If no offer works ("works": false on every one), say so plainly and say what's closest.
+- Never suggest trading a player listed in "userWontTrade". Those are the user's own players they've said they'll keep.
 
 Shape of every answer
 - "text": the answer itself in 1 to 3 short sentences. Lead with it. No preamble.
@@ -128,9 +135,17 @@ export const ipOf = guardIpOf;
 
 // ---- Output ----------------------------------------------------------------
 
-/** House style, enforced: no em or en dashes, no stray whitespace, clipped to a length. */
+/** A projection is never shown as a raw null: "proj null" reads "no projection this week". */
+export function noNulls(s) {
+  return String(s ?? "")
+    .replace(/\b(?:proj(?:ected|ection)?|projects?)\b\.?:?\s*(?:of\s*|at\s*|is\s*)?null\b(?:\s+this week)?/gi, "no projection this week")
+    .replace(/\bnull\s+(?:proj(?:ected|ection)?|projection)\b/gi, "no projection this week")
+    .replace(/\bnull\b/gi, "none");
+}
+
+/** House style, enforced: no em or en dashes, no stray whitespace, no raw nulls, clipped to a length. */
 export function tidy(s, n) {
-  let t = String(s ?? "").replace(/\s*[—–]\s*/g, ", ").replace(/\s+/g, " ").replace(/ ,/g, ",").trim();
+  let t = noNulls(s).replace(/\s*[—–]\s*/g, ", ").replace(/\s+/g, " ").replace(/ ,/g, ",").trim();
   if (t.length > n) t = t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…";
   return t;
 }
