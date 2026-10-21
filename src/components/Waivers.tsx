@@ -4,7 +4,7 @@ import { useDismiss } from "./useDismiss";
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
-import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameState, lockedThisWeek } from "../data";
+import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameNow, lockedThisWeek } from "../data";
 import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
 import { WeekView, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
@@ -24,10 +24,11 @@ import { PlayerHero, WatchButton, holdHeader } from "./PlayerHero";
 import type { Player } from "../data";
 
 /** Why a free agent can't help this week, or null when he can. */
-type Avail = null | "played" | "bye" | "out" | "ir";
+export type Avail = null | "played" | "bye" | "out" | "ir";
 const AVAIL_LABEL: Record<Exclude<Avail, null>, string> = { played: "Played", bye: "Bye", out: "Out", ir: "IR" };
-const availOf = (fa: WaiverFA): Avail => {
-  const s = gameState(fa.nfl);
+// Game states are the live ones (data.gameNow), the same states the Lineup rows and lineup advice use
+export const availOf = (fa: WaiverFA): Avail => {
+  const s = gameNow(fa.nfl);
   if (s === "bye") return "bye";
   if (s === "in_game" || s === "complete") return "played";
   if (isSpecialFA(fa)) return fa.status === "O" ? "out" : null;
@@ -36,6 +37,13 @@ const availOf = (fa: WaiverFA): Avail => {
   if (p?.status === "O") return "out";
   return null;
 };
+/** This week's row label for a free agent who can't be claimed for it: "Playing", "Played", "Bye", "Out" or "IR". */
+export const cantLabel = (fa: WaiverFA, avail: Avail) => (avail === "bye" ? "Bye" : avail === "out" ? "Out" : avail === "ir" ? "IR" : gameNow(fa.nfl) === "in_game" ? "Playing" : "Played");
+/** Why a locked row can't be claimed this week, said when it's tapped. Null when he can be. */
+export const lockWhyText = (fa: WaiverFA, avail: Avail): string | null => !avail ? null
+  : avail === "played" ? (gameNow(fa.nfl) === "in_game" ? `${fa.name} is playing now, so Sleeper locks him until waivers run.` : `${fa.name} already played this week, so Sleeper locks him until waivers run.`)
+  : avail === "bye" ? `${fa.name} is on bye this week. Step to Week ${WEEK + 1} to plan a claim.`
+  : `${fa.name} is ${avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`;
 /** `later`: claim details for a player whose game already started, used once you look past this week. */
 type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later?: WaiverRec };
 type Tab = "ALL" | WaiverPos;
@@ -392,7 +400,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           const skip = !e.no && skipped(e.fa.id);
           const shelved = e.no || skip;
           const dim = (kind === "current" && !!r && !!e.avail) || shelved;
-          const st = gameState(e.fa.nfl);
+          const st = gameNow(e.fa.nfl);
           const isWatched = watched(e.fa.id);
           const num = (n: number | null | undefined) => (n === null ? "Bye" : n === undefined ? "–" : n.toFixed(1));
           // Actual points keep Sleeper's two decimals, so they match the Sleeper app exactly
@@ -413,7 +421,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           // What he did that week, or so far this week: one line under the name, cut short rather than wrapping
           const line = kind === "past" ? (e.pts === null ? null : !e.c ? null : e.c.line ?? "Didn't play") : kind === "current" && !r && e.c?.played ? e.c.line : null;
           // Every row carries the same cells in the same order, so the columns never shift between rows, tabs or weeks
-          const cant = kind === "current" && !r ? (e.avail === "bye" ? "Bye" : e.avail === "out" ? "Out" : e.avail === "ir" ? "IR" : st === "in_game" ? "Playing" : "Played") : null;
+          const cant = kind === "current" && !r ? cantLabel(e.fa, e.avail) : null;
           const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
             : skip ? <span className="ps-again-line"><span>Skipped this week.</span><button className="linkish ps-again" onClick={() => unsnooze(e)}>Suggest again</button></span> : <>
             <span className="wv-c-lu"><i>Your lineup</i><b className={!cant && e.gain > 0.05 ? "good" : "flat"}>{cant ?? (loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change")}</b></span>
@@ -436,10 +444,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           </>;
           // This week, a player Sleeper has locked (his game started, or his team is off) or who can't help still takes
           // the tap: it shakes and says why instead of doing nothing (deny.ts)
-          const lockWhy = kind === "current" && !r && !shelved && e.avail ? (
-            e.avail === "played" ? (st === "in_game" ? `${e.fa.name} is playing now, so Sleeper locks him until waivers run.` : `${e.fa.name} already played this week, so Sleeper locks him until waivers run.`)
-            : e.avail === "bye" ? `${e.fa.name} is on bye this week. Step to Week ${WEEK + 1} to plan a claim.`
-            : `${e.fa.name} is ${e.avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`) : null;
+          const lockWhy = kind === "current" && !r && !shelved ? lockWhyText(e.fa, e.avail) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           return (
             <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${shelved ? " ps-no" : ""}`}>

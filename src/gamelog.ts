@@ -3,7 +3,7 @@
 // schedule for opponents and byes, and the player file for depth charts. The demo league builds both from its own
 // season, so every number agrees with the rest of the demo. Nothing here is made up for a live league: a stat Sleeper
 // doesn't send is left out and the table shows "–".
-import { FREE_AGENTS, LEAGUE, PLAYERS, Player, SPECIAL_FREE_AGENTS, TEAMS, WEEK, isDemo } from "./data";
+import { FREE_AGENTS, LEAGUE, PLAYERS, Player, SPECIAL_FREE_AGENTS, TEAMS, WEEK, demoGame, isDemo } from "./data";
 import { eff, round1 } from "./engine";
 import { MISS_WORD, Miss, MissKind, seasonFor } from "./schedule";
 import { DepthRow, StatRow, fetchDepthRows, fetchProjRows, fetchSchedule, fetchStatRows, scoreStats } from "./sleeper";
@@ -73,7 +73,9 @@ function asPlayer(s: Subject): Player {
   const known = PLAYERS[s.id];
   if (known) return known;
   const sp = LEAGUE.specials?.[s.id] ?? SPECIAL_FREE_AGENTS.find((f) => f.id === s.id);
-  return { id: s.id, name: s.name, pos: s.pos as Player["pos"], nfl: s.nfl, proj: s.proj || sp?.proj || 6, opp: sp?.opp };
+  // A free agent's game this week is the demo slate's, so his log's Week 7 is the same game as his Waivers row
+  const g = demoGame(s.nfl);
+  return { id: s.id, name: s.name, pos: s.pos as Player["pos"], nfl: s.nfl, proj: s.proj || sp?.proj || 6, opp: sp?.opp ?? (g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined) };
 }
 /** Skill lines from the usage block's demo generator (so the sheet's usage and the log agree); kickers and defenses
  *  from the week browser's. Points always come from the line itself or the demo season, never both. */

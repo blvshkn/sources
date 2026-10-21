@@ -8,7 +8,9 @@ Where demo data lives:
 
 - `src/data.ts`: the demo league (`demoLeague()`, rosters, `DEMO_*` constants). Teams, players, injuries, byes, the
   week 7 slate, K/DEF, free agents, FAAB, past trades, activity, commish (Jake), last season's champion.
-- `src/live.ts`: the sample Sunday (`demo()`), and the final-week fixture.
+- `src/live.ts`: the sample Sunday (`demo()`, game by game in `DEMO_SUNDAY`: about 3:50 PM Eastern, Thursday and three
+  1:00 games final, three 1:00 games in the fourth quarter, the rest still to come; both teams in a game always share
+  one state and clock), and the final-week fixture. Free agents in a started game score there too, for Waivers.
 - `src/schedule.ts`: the demo season (`demoCell`, `demoBye`, `demoFinal`). Every weekly number in the demo comes from
   it, so add new per-week demo numbers there rather than hashing your own.
 - `src/demoFixtures.ts`: your own saved lists in the demo (Sent offers, Watching). Seeded once per browser by
@@ -35,9 +37,9 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Feature | In the demo | Status |
 | --- | --- | --- |
 | Command center / Intel tabs, Intel without a count | Both tabs; Intel has no number | OK |
-| Face-off score header, win bars, to-play chips, Live badge pulse | Sample Sunday: 2 to play vs 6, Live | OK |
+| Face-off score header, win bars, to-play chips, Live badge pulse | Sample Sunday: 2 to play vs 5, Live | OK |
 | Final week result | final-week: both teams final, "Lost by 20.0", 0% / 100% | OK |
-| Quick moves (lineup fix, top trade, waiver add) | Kincaid over Warren, Coker + Kincaid for Wilson, Sean Tucker | OK |
+| Quick moves (lineup fix, top trade, waiver add) | Shaheed over Warren (Kincaid is locked, BUF is live), Coker + Kincaid for Wilson, Seahawks D/ST | OK |
 | Quick moves: Offer out | "You sent Pat an offer 5h ago", from the seeded Sent offers | Seeded |
 | Where to improve, weakest spot, trade partner | TE, Mike | OK |
 | Their threats, Game day, heating up / cold | Jake's top three; your starters with fire and ice | OK |
@@ -93,10 +95,11 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 
 | Feature | In the demo | Status |
 | --- | --- | --- |
-| FAAB, top pickup, Sugg. bid, Not interested | $64 of $100, Sean Tucker | OK |
+| FAAB, top pickup, Sugg. bid, Not interested | $64 of $100, Seahawks D/ST this week (Sean Tucker's TB game is final, so he's locked) | OK |
 | K/DEF rows and must-fix | Seahawks D/ST must fix (Patriots on bye) | OK |
 | Watching (star) list | Dont'e Thornton and Chig Okonkwo | Seeded |
-| Week stepper, past scores, projections | Week 7 slate | OK |
+| Week stepper, past scores, projections | Week 7 slate; past weeks are the game log's numbers | OK |
+| Locks: Played / Playing rows, tap to say why, no claim or K/DEF stream over a started game | Okonkwo, Spears, Tucker final; Browns D/ST and McPherson playing | OK |
 
 ### League
 
@@ -135,6 +138,3 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 
 - The Slot report's weekly bars (`DEMO_SLOT_HISTORY` in data.ts) are their own fixture, not summed from the demo season.
 
-- The lineup fix nudge and the "Before lock" inbox alerts don't look at game state, so on the sample Sunday (and the
-  final-week fixture) they still suggest starting a player whose game has started or ended. Same code path as a live
-  league, so it isn't a demo-only fix.

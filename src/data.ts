@@ -1,4 +1,5 @@
 import type { SleeperMatchupRow } from "./liveMath";
+import { teamLock } from "./locks";
 // League data store. The app runs on a live Sleeper league (see sleeper.ts)
 // or on the built-in demo league below. Everything the UI reads lives in the
 // mutable exports at the bottom of this file, swapped in by setLeague().
@@ -318,7 +319,7 @@ export const defName = (team: string) => `${DEF_NAMES[team] ?? team} D/ST`;
 export const teamNick = (team: string) => (DEF_NAMES[team] ? `the ${DEF_NAMES[team]}` : team);
 const DEMO_BYES = ["PIT", "NE"];
 // Demo Week 7 slate: [away, home, date]. Thursday and Monday games plus a Sunday full of them.
-const DEMO_SLATE: [string, string, string][] = [
+export const DEMO_SLATE: [string, string, string][] = [
   ["DEN", "KC", "2026-10-22"], ["BUF", "MIA", "2026-10-25"], ["CAR", "TB", "2026-10-25"], ["IND", "TEN", "2026-10-25"],
   ["CIN", "CLE", "2026-10-25"], ["NYJ", "BAL", "2026-10-25"], ["JAX", "HOU", "2026-10-25"], ["NYG", "PHI", "2026-10-25"],
   ["ATL", "NO", "2026-10-25"], ["LAR", "SEA", "2026-10-25"], ["ARI", "SF", "2026-10-25"], ["LV", "LAC", "2026-10-25"],
@@ -585,8 +586,18 @@ export function gameState(team: string): GameState | "bye" | "unknown" {
   if (!g || !Object.keys(g).length) return DEMO_BYES.includes(team) ? "bye" : "unknown";
   return g[team] ?? "bye";
 }
-/** True once a team's game has kicked off this week, or when it has no game. Sleeper locks these players. */
-export const lockedThisWeek = (team: string) => { const s = gameState(team); return s === "bye" || s === "in_game" || s === "complete"; };
+/** A team's game right now, from the live game states (weekGames, the same source as lineup locks): "complete" once
+ *  it's over or the week is, "in_game" while it's on, "pre_game" before kickoff. Byes and unknown teams come from the
+ *  league's schedule. Waivers reads this, so its locks match the Lineup rows on a Sunday afternoon. */
+export function gameNow(team: string): GameState | "bye" | "unknown" {
+  const w = weekGames(), sched = gameState(team);
+  if (!(team in w.games) && (sched === "bye" || sched === "unknown")) return sched;
+  const l = teamLock(w, team);
+  return l === "final" ? "complete" : l === "live" ? "in_game" : "pre_game";
+}
+/** True once a team's game has kicked off this week (live game states), or when it has no game. Sleeper locks these
+ *  players, so no claim can start them this week. */
+export const lockedThisWeek = (team: string) => { const s = gameNow(team); return s === "bye" || s === "in_game" || s === "complete"; };
 /** This week's game states as last read, for lineup locks (locks.ts). live.ts registers its live scoring here, so
  *  advice outside React reads the same states the Lineup rows draw; before that, the league's saved schedule. */
 let weekGamesSrc: (() => { games: Record<string, GameState>; past?: boolean }) | null = null;

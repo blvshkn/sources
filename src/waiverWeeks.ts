@@ -3,10 +3,11 @@
 // Sleeper's weekly stats and projections feeds through fetchWeekRows (the same feed the Lineup week browser uses)
 // and score them with the league's own scoring_settings (weekPoints / scoreStats); the demo league builds stable sample numbers.
 import { useEffect, useMemo, useState } from "react";
-import { LEAGUE, WEEK, Player, isDemo, gameState } from "./data";
+import { LEAGUE, WEEK, isDemo, gameNow } from "./data";
 import { fetchWeekRows, WeekRow } from "./sleeper";
 import { demoStats, weekPoints } from "./weeks";
-import { seasonFor } from "./schedule";
+import { peekLog, type Subject } from "./gamelog";
+import { livePointsNow } from "./live";
 import type { WaiverRec } from "./engine";
 
 /** One player in one week. `pts` null = bye. `played` = he has stats that week (past or in progress). */
@@ -46,24 +47,26 @@ function feed(week: number, kind: "stats" | "projections") {
   return p;
 }
 
-const asPlayer = (fa: FaLite) => ({ id: fa.id, name: fa.name, pos: fa.pos, nfl: fa.nfl, proj: fa.proj }) as Player;
 
-const mix = (k: string) => { let h = 2166136261; for (const ch of k) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15; return (h >>> 0) / 4294967295; };
-/** Demo: the same made up season the player sheet and Start / Sit use, with a stat line built from the points. */
+/** Demo: the game log's own rows (gamelog.peekLog, built on the demo season in schedule.ts), so a free agent's points
+ *  and stat line here are the ones his claim sheet's Game log shows. This week, a game in progress or over reads the
+ *  sample Sunday's live points (live.ts), the same source as the face-off and the Lineup rows. */
 function demoCells(week: number, fas: FaLite[]): WkCells {
   const out: WkCells = {};
   for (const fa of fas) {
-    const c = seasonFor(asPlayer(fa)).find((x) => x.week === week);
-    if (!c || c.opp === null) { out[fa.id] = { pts: null, played: false }; continue; }
-    const opp = oppLabel(c.opp);
-    const st = week === WEEK ? gameState(fa.nfl) : null;
-    if (week < WEEK || st === "in_game" || st === "complete") {
-      // Week first in the seed, so neighbouring weeks don't land on near identical numbers. A game in progress is about half done.
-      // The stat line is built from a target score, then scored with the demo scoring_settings, so line and points agree.
-      const target = Math.round(Math.max(0, fa.proj || 6) * (0.35 + mix(`${week}:${fa.id}`) * 1.3) * (st === "in_game" ? 0.5 : 1) * 10) / 10;
-      const stats = demoStats(fa.pos, target, week * 97 + Math.floor(mix(fa.id) * 1e6));
-      out[fa.id] = { pts: weekPoints(fa.pos, stats), opp, played: true, line: shortLine(fa.pos, stats) };
-    } else out[fa.id] = { pts: c.proj ?? fa.proj, opp, played: false };
+    const row = peekLog({ id: fa.id, name: fa.name, pos: fa.pos as Subject["pos"], nfl: fa.nfl, proj: fa.proj }, LEAGUE.season)?.rows.find((r) => r.week === week);
+    if (!row || row.bye || !row.opp) { out[fa.id] = { pts: null, played: false }; continue; }
+    const opp = oppLabel(row.opp);
+    if (row.when === "past") {
+      // A week he missed (out, inactive, no snaps) has no points: Waivers says "Didn't play"
+      out[fa.id] = row.pts === undefined ? { pts: 0, opp, played: false } : { pts: row.pts, opp, played: true, line: row.stats ? shortLine(fa.pos, row.stats) : undefined };
+      continue;
+    }
+    const st = week === WEEK ? gameNow(fa.nfl) : null;
+    if (st === "in_game" || st === "complete") {
+      const pts = livePointsNow()[fa.id] ?? 0;
+      out[fa.id] = { pts, opp, played: true, line: shortLine(fa.pos, demoStats(fa.pos, pts, week * 97 + fa.id.length)) };
+    } else out[fa.id] = { pts: row.proj ?? fa.proj, opp, played: false };
   }
   return out;
 }

@@ -3,7 +3,7 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek, weekGames,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameNow, lockedThisWeek, weekGames,
   SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
 import { sitsOut } from "./bye";
@@ -870,10 +870,11 @@ const rank = (slot: string) => (slot === "SF" || slot === "SUPER_FLEX" ? 2 : slo
  * to skill players. Used by every piece of lineup advice (sleeperDiff below, Lineup's "Use optimal lineup", the
  * matchup's "Use best lineup", Set optimal lineup), so they never disagree.
  */
-export function bestUnderLocks(mine: SkillSlot[], locked: (id: string) => boolean): SkillSlot[] {
+export function bestUnderLocks(mine: SkillSlot[], locked: (id: string) => boolean, extra: string[] = []): SkillSlot[] {
   const next = mine.map((s) => ({ slot: s.slot, id: s.id && locked(s.id) ? s.id : null }));
   const kept = new Set(next.map((s) => s.id).filter(Boolean));
-  const pool = YOU.roster.filter((id) => !kept.has(id) && !locked(id)).map(playerById).sort((a, b) => eff(b, true) - eff(a, true));
+  // `extra`: players who'd join the pool, like a waiver claim (they fill only slots that are still open)
+  const pool = [...YOU.roster, ...extra].filter((id) => !kept.has(id) && !locked(id)).map(playerById).sort((a, b) => eff(b, true) - eff(a, true));
   const used = new Set<string>();
   next.map((s, i) => ({ s, i })).filter((x) => !x.s.id).sort((a, b) => rank(a.s.slot) - rank(b.s.slot)).forEach(({ s }) => {
     const p = pool.find((q) => !used.has(q.id) && fits(s.slot, q.pos));
@@ -1119,7 +1120,7 @@ export const specialBidRange = (): { bid: [number, number]; estimated: boolean; 
 /** Free agents Sleeper won't let you add for this week: their game kicked off already, or they're on bye. */
 export function waiverHidden() {
   let played = 0, bye = 0;
-  for (const fa of FREE_AGENTS) { const s = gameState(fa.nfl); if (s === "bye") bye++; else if (s === "in_game" || s === "complete") played++; }
+  for (const fa of FREE_AGENTS) { const s = gameNow(fa.nfl); if (s === "bye") bye++; else if (s === "in_game" || s === "complete") played++; }
   return { played, bye };
 }
 
@@ -1156,10 +1157,20 @@ export const lockedRecs = (you: Team): WaiverRec[] => {
   return FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, ctx, fa));
 };
 
-interface RecCtx { base: Lineup; baseRos: Lineup; gaps: Record<string, number>; weak: Set<string>; weakPos: Set<string> }
+interface RecCtx {
+  base: Lineup; baseRos: Lineup; gaps: Record<string, number>; weak: Set<string>; weakPos: Set<string>;
+  /** Set once any of your players' games has kicked off: claims this week only fill slots that are still open. */
+  locks?: { locked: (id: string) => boolean; cur: SkillSlot[]; total: number };
+}
+const slotsTotal = (xs: SkillSlot[]) => round1(xs.reduce((a, x) => a + (x.id ? eff(playerById(x.id), true) : 0), 0));
 const recCtx = (you: Team): RecCtx => {
   const gaps = slotGaps(), weak = weakSet(gaps);
-  return { base: lineupFor(you.roster, true), baseRos: lineupFor(you.roster), gaps, weak, weakPos: weakPositions(weak) };
+  // The lock rule (locks.ts) for this week's gain: a starter whose game has started keeps his slot, so a free agent
+  // can't be suggested in his place. Read from the live game states, the same ones the Lineup rows use.
+  const locked = lockedNow();
+  const cur = you.id === YOU.id && you.roster.some(locked) ? sleeperSlots() : null;
+  const locks = cur ? { locked, cur, total: slotsTotal(bestUnderLocks(cur, locked)) } : undefined;
+  return { base: lineupFor(you.roster, true), baseRos: lineupFor(you.roster), gaps, weak, weakPos: weakPositions(weak), locks };
 };
 
 /** Your players at a position who are all off this week (out or on bye), when that leaves the slot with nobody. */
@@ -1190,10 +1201,12 @@ function skillRec(you: Team, ctx: RecCtx, fa: FreeAgent): WaiverRec {
   const p = PLAYERS[fa.id];
   const withFa = lineupFor([...you.roster, fa.id], true);
   const withRos = lineupFor([...you.roster, fa.id]);
-  const gain = round1(withFa.total - ctx.base.total);
+  // Under locks, this week's lineup with him is the best one you can still set
+  const lockedFa = ctx.locks ? bestUnderLocks(ctx.locks.cur, ctx.locks.locked, [fa.id]) : null;
+  const gain = lockedFa ? round1(slotsTotal(lockedFa) - ctx.locks!.total) : round1(withFa.total - ctx.base.total);
   const ros = round1(Math.max(0, withRos.total - ctx.baseRos.total));
   const value = eff(p);
-  const weekSlot = gain > 0.05 ? withFa.slots.find((s) => s.player?.id === fa.id)?.slot ?? null : null;
+  const weekSlot = gain > 0.05 ? (lockedFa ? lockedFa.find((s) => s.id === fa.id)?.slot : withFa.slots.find((s) => s.player?.id === fa.id)?.slot) ?? null : null;
   const rosSlot = ros > 0.05 ? withRos.slots.find((s) => s.player?.id === fa.id)?.slot ?? null : null;
   const holeNames = gain > 0.05 ? holeAt(ctx.base, you, fa.pos) : [];
   const f = fitScore({ name: fa.name, pos: fa.pos, week: WEEK, weekGain: gain, ros, rosSlot, weekSlot, holeNames }, ctx.gaps, ctx.weak);
@@ -1223,20 +1236,24 @@ function specialRecs(you: Team, base: Lineup): WaiverRec[] {
   // Room on the full Sleeper roster (skill spots plus K/DEF spots) means no one has to go
   const room = you.roster.length + mine.length < LEAGUE.rosterMax + slots.length;
   const benchDrop = room ? null : base.bench.slice().sort((a, b) => eff(a) - eff(b))[0] ?? null;
+  const locked = lockedNow();
   return SPECIAL_FREE_AGENTS.filter((fa) => slots.includes(fa.pos) && !lockedThisWeek(fa.nfl) && fa.status !== "O").map((fa) => {
     const pos = fa.pos;
     const have = mine.filter((p) => p.pos === pos);
     const current = have.find((p) => setIds.includes(p.id)) ?? have.slice().sort((a, b) => specialPts(b) - specialPts(a) || b.proj - a.proj)[0] ?? null;
     const baseline = Math.max(0, ...have.map(specialPts));
-    const fix: KdefRec["fix"] = baseline > 0 ? null : !current ? "empty" : current.status === "O" ? "out" : "bye";
+    // The one you start has kicked off: Sleeper keeps him in the slot, so a stream can't replace him this week
+    const stuck = !!current && locked(current.id);
+    const fix: KdefRec["fix"] = stuck ? null : baseline > 0 ? null : !current ? "empty" : current.status === "O" ? "out" : "bye";
     const wk = fa.wk ?? 0;
-    const gain = round1(wk - baseline);
+    const gain = stuck ? 0 : round1(wk - baseline);
     // Streaming: cut the K/DEF you'd stop using (the weakest this week), never a skill player
     const drop = have.slice().sort((a, b) => specialPts(a) - specialPts(b) || a.proj - b.proj)[0] ?? null;
     const opp = oppPhrase(fa.opp);
     const proj = `${fa.name} projects ${wk.toFixed(1)}${opp ? ` ${opp}` : ""}.`;
     const line = fix === "empty" ? `You have no ${pos} this week. ${proj}`
       : fix ? `Your ${pos} is ${fix === "bye" ? "on bye" : "out"}. ${proj}`
+      : stuck ? `${proj} Your ${current!.name}'s game has started, so he stays in your ${pos} slot this week.`
       : `${proj} Your ${current!.name} projects ${specialPts(current!).toFixed(1)}.`;
     return { fa, value: wk, gain, drop: drop ? null : benchDrop, bid, tier: "Stream" as const, estimated, kdef: { current, baseline, fix, drop, line } };
   });

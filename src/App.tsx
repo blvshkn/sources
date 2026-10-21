@@ -220,6 +220,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // Every engine call below reads the league format set here.
   applyFormat(format);
   const fkey = `${format.scoring}|${format.superflex}|${format.tePremium}`;
+  /** This week's game states in one string, so advice that follows locks (waiver claims) refreshes when a game starts. */
+  const gkey = `${live.past ? "past|" : ""}${Object.entries(live.games).filter(([, st]) => st !== "pre_game").map(([t, st]) => `${t}:${st}`).sort().join(",")}`;
 
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
@@ -301,8 +303,9 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   // Every free agent, ranked weakness first. Waivers lists them all (passed ones dimmed); every other surface
   // only sees the ones you haven't passed on, and only recommends a real pick.
+  // Recomputed as games kick off and end: a claim never starts a player whose game has started (data.lockedThisWeek)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allRecs = useMemo(() => waiverRecs(YOU), [fkey]);
+  const allRecs = useMemo(() => waiverRecs(YOU), [fkey, gkey]);
   // "Not right now": skip a suggested add for this week only. He comes back next week; Waivers still lists him.
   const [snoozed, setSnoozed] = usePersist<Record<string, number>>(`${scope}.snoozed`, {});
   const recs = useMemo(() => allRecs.filter((r) => !passed.includes(r.fa.id) && !((snoozed[r.fa.id] ?? -1) >= WEEK)), [allRecs, passed, snoozed]);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET, setWeekGames } from "./data";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET, setWeekGames, DEMO_SLATE, FREE_AGENTS, SPECIAL_FREE_AGENTS } from "./data";
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
 import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, weekPast, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
 import { getState } from "./sleeper";
@@ -105,33 +105,48 @@ function seed(): Live {
  *  game final, with the matchup rows ordered opponent first, the way a real league's roster_ids can fall. */
 const finalFixture = () => { try { return localStorage.getItem("sources.fixture") === "final-week"; } catch { return false; } };
 
-/** Sample data so the demo league shows what a Sunday looks like: one game final, one in progress. */
+/** The sample Sunday, game by game (keyed by the home team of the demo slate in data.ts), about 3:50 PM Eastern.
+ *  Thursday's game and three of the 1:00 games are final, the other three 1:00 games are deep in the fourth quarter
+ *  (`left` is the share of the game still to play), and the 4:05 and 4:25 windows, Sunday night and Monday night are
+ *  still to come. Both teams in a game always share its state and its clock. */
+const DEMO_SUNDAY: Record<string, { st: GameState; left?: number }> = {
+  KC: { st: "complete" }, TB: { st: "complete" }, TEN: { st: "complete" }, BAL: { st: "complete" },
+  MIA: { st: "in_game", left: 0.12 }, CLE: { st: "in_game", left: 0.08 }, PHI: { st: "in_game", left: 0.18 },
+};
+
+/** Sample data so the demo league shows what a Sunday looks like: some games final, some in progress, some to come. */
 function demo(fin = finalFixture()): Live {
   const games: Record<string, GameState> = {};
   const points: Record<string, number> = {};
   const teamPts: Record<string, number> = {};
-  const done = ["MIA", "KC", "CAR", "BAL", "IND"]; const live = ["BUF", "CIN", "PHI", "TB"];
-  done.forEach((t) => (games[t] = "complete")); live.forEach((t) => (games[t] = "in_game"));
-  const left: Record<string, number> = fin ? {} : { BUF: 0.4, CIN: 0.55, PHI: 0.25, TB: 0.6 };
-  if (fin) {
-    // Every team with a game this week is final; byes stay off the schedule
-    const nfls = new Set([...Object.values(LEAGUE.players).map((p) => p.nfl), ...Object.values(LEAGUE.specials ?? {}).map((p) => p.nfl)]);
-    nfls.forEach((t) => { if (t && t !== "FA" && !onBye(t)) games[t] = "complete"; });
+  const left: Record<string, number> = {};
+  // One state per game, set on both teams. The final-week fixture plays every game out; byes stay off the schedule.
+  for (const [away, home] of DEMO_SLATE) {
+    const g: { st: GameState; left?: number } = fin ? { st: "complete" } : DEMO_SUNDAY[home] ?? { st: "pre_game" };
+    games[away] = games[home] = g.st;
+    if (g.st === "in_game" && g.left !== undefined) left[away] = left[home] = g.left;
   }
+  // Spread outcomes so the sample Sunday shows every state: some past their projection, some close, some short
+  const outcome = (id: string, proj: number, g: GameState) => {
+    const h = [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) / 4294967295;
+    return Math.round(proj * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
+  };
   const sideTotal = (ids: string[]) => ids.reduce((a, id) => {
     const p = LEAGUE.players[id]; if (!p) return a;
-    const g = games[p.nfl]; if (!g) return a;
-    // Spread outcomes so the sample Sunday shows every state: some past their projection, some close, some short
-    const h = [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) / 4294967295;
-    const pts = Math.round(eff(p, true) * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
+    const g = games[p.nfl]; if (!g || g === "pre_game") return a;
+    const pts = outcome(id, eff(p, true), g);
     points[id] = pts; return a + pts;
   }, 0);
+  // Free agents whose game has started score too, so Waivers' "So far" and "Scored" and their game logs (the
+  // final-week fixture reads these points) show the same number. They never count toward a team.
+  for (const fa of FREE_AGENTS) { const g = games[fa.nfl]; if (g && g !== "pre_game") points[fa.id] = outcome(fa.id, fa.proj, g); }
+  for (const fa of SPECIAL_FREE_AGENTS) { const g = games[fa.nfl]; if (g && g !== "pre_game") points[fa.id] = Math.round((fa.wk ?? 0) * (g === "complete" ? 1.1 : 0.5) * 10) / 10; }
   // Everyone on a roster gets points; only the starters set in Sleeper count toward the team score. Built as
   // Sleeper's matchup rows and read back through fromMatchups, the same path a live league takes.
   const row = (t: Team): SleeperMatchupRow => {
     sideTotal(t.roster);
     const sp = specialsOf(t).filter((x): x is SpecialPlayer => !!x);
-    sp.forEach((x) => { if (games[x.nfl] && points[x.id] === undefined) points[x.id] = Math.round(specialPts(x) * (games[x.nfl] === "complete" ? 1.1 : 0.5) * 10) / 10; });
+    sp.forEach((x) => { if (games[x.nfl] && games[x.nfl] !== "pre_game" && points[x.id] === undefined) points[x.id] = Math.round(specialPts(x) * (games[x.nfl] === "complete" ? 1.1 : 0.5) * 10) / 10; });
     const starters = [...startersOf(t), ...sp.map((x) => x.id)];
     const starters_points = starters.map((id) => points[id] ?? 0);
     const players_points: Record<string, number> = {};
@@ -228,6 +243,8 @@ export function useLive(): Live {
 }
 
 /** This week's game states as last read (live scoring once it has loaded, else the league's schedule). */
+/** This week's points as last read (live scoring), by player id. */
+export const livePointsNow = (): Record<string, number> => (LEAGUE ? ensure().points : {});
 export const liveGamesNow = (): Record<string, GameState> => (LEAGUE ? ensure().games : {});
 
 /** A player's game right now: live with points so far, final, or not started. */
