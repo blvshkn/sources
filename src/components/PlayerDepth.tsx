@@ -1,10 +1,10 @@
 // The player sheet's decision blocks: this week's outcome range, the lineup call, recent usage and the matchup,
 // plus the trimmed news row. Everything is computed from league data the app already has; the words are ours.
 import { useEffect, useState } from "react";
-import { kickWhen, kickWhenIn, useKickoffs } from "../kickoff";
+import { kickWhen, kickWhenIn, moveLock, useKickoffs } from "../kickoff";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, sleeperUrl, teamNick } from "../data";
 import { injuryWord } from "../bye";
-import { Lineup, eff, fits, lineupFor, round1, sleeperDiff, type SlotName } from "../engine";
+import { Lineup, eff, fits, lineupFor, lockedNow, round1, sleeperDiff, type SlotName } from "../engine";
 import { SWING, useLive, type Live } from "../live";
 import { seasonFor } from "../schedule";
 import { PosWeeks, Usage, defenseVs, loadPosWeeks, oppTeam, ptsOf, usageFor } from "../usage";
@@ -166,7 +166,11 @@ const slotNames = (lu: Lineup) => {
   return lu.slots.map((s) => { counts[s.slot] = (counts[s.slot] ?? 0) + 1; return s.slot === "SF" ? "SUPERFLEX" : totals[s.slot] > 1 && s.slot !== "FLEX" ? `${s.slot}${counts[s.slot]}` : s.slot; });
 };
 type Tone = "good" | "bad" | "warn" | "info";
-interface Call { tone: Tone; head: string; line: string; slot?: string; alts: { p: Player; tag?: string }[]; changes: string[]; owner: "you" | "them" | "fa" | "ir" }
+interface Call {
+  tone: Tone; head: string; line: string; slot?: string; alts: { p: Player; tag?: string }[]; changes: string[]; owner: "you" | "them" | "fa" | "ir";
+  /** A move to make in your Sleeper lineup that can still be made (both players before kickoff): shows Swap in Sleeper. */
+  move?: boolean;
+}
 
 export function lineupCall(p: Player, now: Now = nowFor(null, p)): Call {
   const owner = TEAMS.find((t) => allOf(t).includes(p.id));
@@ -210,19 +214,22 @@ export function lineupCall(p: Player, now: Now = nowFor(null, p)): Call {
   } else if (onBye(p.nfl) || !me) {
     const why = onBye(p.nfl) ? "He's on bye" : p.status === "O" ? "He's out this week" : p.status === "Q" ? `He's ${injuryWord(p)} with no projection yet` : p.wk === null ? "He has no projection yet" : "He isn't projected to play";
     const set = yours && Object.values(SLEEPER_SET).flat().includes(p.id);
-    // The best lineup's replacement for him, from the same start/sit diff the Lineup page shows
+    // The best lineup's replacement for him, from the same start/sit diff the Lineup page shows: only a move both
+    // players can still make, so a game that has kicked off (his or the fill-in's) never gets a swap
     const swap = set ? sleeperDiff(lu).find((d) => d.benched?.id === p.id) : undefined;
-    const inFor = swap?.start ?? nextUp;
-    call = { tone: set ? "bad" : "info", head: set ? "Take him out of your lineup" : "Sits this week", slot: swap?.slot ?? slotLabel,
-      line: `${why}.${set && inFor ? ` Start ${inFor.name} (${f1(eff(inFor, true))}) in his ${swap?.slot ?? slotLabel} spot before lock.` : set ? " Sleeper still has him in your lineup." : nextUp ? ` ${nextUp.name} is next up at ${slotLabel} (${f1(eff(nextUp, true))}).` : ""}` };
+    const stuck = set && !swap && lockedNow()(p.id);
+    call = stuck
+      ? { tone: "info", head: "Locked in your lineup", slot: slotLabel, line: `${why}. ${now.state === "pre" ? "Lineups are locked for this week" : "His game has started, so Sleeper has locked him in"}.` }
+      : { tone: set ? "bad" : "info", head: set ? "Take him out of your lineup" : "Sits this week", slot: swap?.slot ?? slotLabel, move: !!swap,
+        line: `${why}.${swap ? ` Start ${swap.start.name} (${f1(eff(swap.start, true))}) in his ${swap.slot} spot before ${moveLock(p, swap.start) || "lock"}.` : set ? ` Sleeper still has him in your lineup, and nobody on your bench can still move into his spot.` : nextUp ? ` ${nextUp.name} is next up at ${slotLabel} (${f1(eff(nextUp, true))}).` : ""}` };
   } else if (yours) {
     const diff = sleeperDiff(lu);
     const benchMe = diff.find((d) => d.benched?.id === p.id), startMe = diff.find((d) => d.start.id === p.id);
-    if (benchMe) call = { tone: "bad", head: `Swap him out for ${benchMe.start.name}`, slot: benchMe.slot, line: `${benchMe.start.name} projects ${f1(eff(benchMe.start, true))} to his ${f1(me)}. That's ${f1(benchMe.gain)} points you'd leave on the bench. Make the swap in Sleeper.` };
+    if (benchMe) call = { tone: "bad", head: `Swap him out for ${benchMe.start.name}`, slot: benchMe.slot, move: true, line: `${benchMe.start.name} projects ${f1(eff(benchMe.start, true))} to his ${f1(me)}. That's ${f1(benchMe.gain)} points you'd leave on the bench. Make the swap in Sleeper.` };
     else if (startMe) {
       const b = startMe.benched, bz = eff(b, true) === 0;
       const why = onBye(b.nfl) ? "is on bye" : b.status === "O" ? "is out" : bz && b.status === "Q" ? `is ${injuryWord(b)} with no projection yet,` : bz && b.wk === null ? "has no projection yet" : bz ? "isn't projected to play" : "";
-      call = { tone: "good", head: `Start him over ${b.name}`, slot: slotLabel, line: why
+      call = { tone: "good", head: `Start him over ${b.name}`, slot: slotLabel, move: true, line: why
         ? `${b.name} ${why} but is still in your ${startMe.slot} slot in Sleeper. He projects ${f1(me)}. Make the swap before lock.`
         : `Sleeper has ${b.name} in at ${startMe.slot} (${f1(eff(b, true))}). He projects ${f1(me)}, ${f1(startMe.gain)} more. Make the swap in Sleeper.` };
     }
@@ -275,7 +282,7 @@ export function LineupCall({ p }: { p: Player }) {
         <span><b>{c.head}</b><span>{c.line}</span></span>
       </div>
       {/* A change to make in your own lineup: one tap to Sleeper's team tab (the app opens it on phones that have it) */}
-      {c.owner === "you" && (/in Sleeper|Sleeper still has him/.test(c.line) || c.head === "Take him out of your lineup") && (
+      {c.owner === "you" && c.move && (
         <a className="btn btn-sm pd-sleeper" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       )}
       {c.alts.length > 1 && (

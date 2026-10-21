@@ -4,8 +4,7 @@
 // A time only shows when ESPN's opponent matches ours and the game hasn't kicked off; otherwise the line falls back
 // to the day-only text ("v ATL · Sun"). Nothing here makes up a time.
 import { useEffect, useSyncExternalStore } from "react";
-import { DEADLINES, LEAGUE, WEEK, gameState } from "./data";
-import { liveGamesNow } from "./live";
+import { DEADLINES, LEAGUE, WEEK, demoGame, gameState, isDemo, weekGames } from "./data";
 import { gameIn } from "./weekMatch";
 
 interface WeekKick { at: number; teams: Record<string, string>; opp: Record<string, string> }
@@ -61,10 +60,40 @@ async function fetchWeek(week: number): Promise<Pick<WeekKick, "teams" | "opp"> 
   return null;
 }
 
+// The demo league's own week: its slate (data.ts) with kickoff times, Eastern. Thursday and Monday nights, a Sunday of
+// 1:00 games, two late windows and a Sunday night game. Clearly the demo's schedule, never presented as the NFL's.
+const DEMO_LATE: Record<string, string> = { SEA: "16:05", LAR: "16:05", SF: "16:05", ARI: "16:05", LAC: "16:25", LV: "16:25", HOU: "16:25", JAX: "16:25", NO: "16:25", ATL: "16:25", MIN: "16:25", GB: "16:25", DAL: "20:20", DET: "20:20" };
+const DEMO_TEAMS = ["DEN", "KC", "BUF", "MIA", "CAR", "TB", "IND", "TEN", "CIN", "CLE", "NYJ", "BAL", "JAX", "HOU", "NYG", "PHI", "ATL", "NO", "LAR", "SEA", "ARI", "SF", "LV", "LAC", "GB", "MIN", "DET", "DAL", "WAS", "CHI"];
+function demoWeek(): WeekKick {
+  const teams: Record<string, string> = {}, opp: Record<string, string> = {};
+  for (const t of DEMO_TEAMS) {
+    const g = demoGame(t);
+    if (!g) continue;
+    const day = new Date(`${g.date}T12:00:00Z`).getUTCDay();
+    const time = day === 0 ? DEMO_LATE[t] ?? "13:00" : "20:15"; // Thursday and Monday nights
+    teams[t] = new Date(`${g.date}T${time}:00-04:00`).toISOString();
+    opp[t] = g.opp;
+  }
+  return { at: DEMO_AT, teams, opp };
+}
+/** Marks the demo's own week in memory (never written to storage). */
+const DEMO_AT = -1;
+/** A week's kickoffs as loaded; the demo's own week is always there. */
+const weekKick = (week: number): WeekKick | undefined => {
+  const key = keyOf(week);
+  if (isDemo() && week === WEEK && mem.get(key)?.at !== DEMO_AT) mem.set(key, demoWeek());
+  const w = mem.get(key);
+  // A live league never reads the demo's times
+  return w && w.at === DEMO_AT && !(isDemo() && week === WEEK) ? undefined : w;
+};
+
 /** Load a week's kickoffs once per session (and again after an hour). Safe to call on every render. */
 export function loadKickoffs(week: number) {
   if (!LEAGUE || !(week >= 1 && week <= 18)) return;
   const key = keyOf(week);
+  // The demo's own week never leaves the demo
+  if (isDemo() && week === WEEK) { if (mem.get(key)?.at !== DEMO_AT) { mem.set(key, demoWeek()); bump(); } return; }
+  if (mem.get(key)?.at === DEMO_AT) mem.delete(key);
   let hit = mem.get(key);
   if (!hit) { const ls = readLs(key); if (ls) { mem.set(key, ls); hit = ls; bump(); } }
   if ((hit && Date.now() - hit.at < FRESH_MS) || inflight.has(key)) return;
@@ -100,16 +129,18 @@ export function fmtKick(iso: string, zone = false): string {
 
 const oppTeam = (opp: string | undefined) => /([A-Z]{2,3})\s*$/.exec(opp ?? "")?.[1];
 const started = (team: string, week: number, iso: string) => {
-  if (Date.now() >= Date.parse(iso)) return true;
+  const demoNow = isDemo() && week === WEEK;
+  // The demo's week stands still at its sample Sunday: only its game states say what has kicked off
+  if (!demoNow && Date.now() >= Date.parse(iso)) return true;
   if (week !== WEEK) return false;
-  const live = liveGamesNow()[team], s = gameState(team);
+  const live = weekGames().games[team], s = gameState(team);
   return live === "in_game" || live === "complete" || s === "in_game" || s === "complete";
 };
 
 /** A team's kickoff that week as ISO, only when it's still ahead and ESPN pairs it with the same opponent. */
 export function kickoffOf(team: string | undefined, week: number = WEEK, opp?: string): string | undefined {
   if (!team) return undefined;
-  const w = mem.get(keyOf(week)), iso = w?.teams[team];
+  const w = weekKick(week), iso = w?.teams[team];
   if (!iso) return undefined;
   const o = oppTeam(opp);
   if (o && w.opp[team] && w.opp[team] !== o) return undefined;
@@ -151,9 +182,24 @@ export function gameInAt(p: Parameters<typeof gameIn>[0], week: number): string 
   return g ? oppAt(p.nfl, g, week) : g;
 }
 
+/** When a player locks this week: his own kickoff ("Sun 4:05 PM"), or his game day when the time isn't known
+ *  ("Sun"). Empty once his game has started or when nothing is known. */
+export function lockWhen(p: { nfl?: string; opp?: string; gameDate?: string } | null | undefined): string {
+  if (!p?.nfl) return "";
+  const iso = kickoffOf(p.nfl, WEEK, p.opp);
+  if (iso) return fmtKick(iso);
+  return started(p.nfl, WEEK, "9999-12-31T00:00:00Z") ? "" : kickWhen(p);
+}
+/** The earliest lock among the players in a move, the deadline for making it: "Sun 1:00 PM". */
+export function moveLock(...ps: ({ nfl?: string; opp?: string; gameDate?: string } | null | undefined)[]): string {
+  const isos = ps.map((p) => (p?.nfl ? kickoffOf(p.nfl, WEEK, p.opp) : undefined)).filter((x): x is string => !!x).sort();
+  if (isos.length) return fmtKick(isos[0]);
+  return ps.map(lockWhen).find(Boolean) ?? "";
+}
+
 /** "Lineups lock Thu 8:15 PM EDT" from this week's next kickoff when known, else the league's deadline text. */
 export function lockLine(): string {
-  const w = mem.get(keyOf(WEEK));
+  const w = weekKick(WEEK);
   const next = Object.entries(w?.teams ?? {}).filter(([t, iso]) => !started(t, WEEK, iso)).map(([, iso]) => iso).sort()[0];
   return next ? `Lineups lock ${fmtKick(next, true)}` : DEADLINES.lock;
 }

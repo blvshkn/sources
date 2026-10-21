@@ -1,7 +1,8 @@
 import { createPortal } from "react-dom";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, setLeague, demoLeague, leagueKey, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
-import { lockLine, useKickoffs } from "./kickoff";
+import { moveLock, useKickoffs } from "./kickoff";
+import { LOCKED_LINE } from "./locks";
 import { loadLeague } from "./sleeper";
 import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
@@ -9,7 +10,7 @@ import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, applyValueAsks, askSteps, builderTip,
-  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, sleeperDiff, waiverRecs, weakSlots, recDrop, bidRange,
+  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, lineupStatus, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
 import { lineupCard } from "./bye";
@@ -32,7 +33,8 @@ import { yourPlayers } from "./impact";
 import { urgentNews } from "./components/News";
 import { League } from "./components/League";
 import { TradeBuilder } from "./components/Trade";
-import { Roster, gameDayChecks } from "./components/Roster";
+import { Roster } from "./components/Roster";
+import { gameDayChecks } from "./gameDay";
 import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
@@ -324,7 +326,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     setPassed((c) => c.filter((x) => x !== p.id));
     setToast(`${p.name} is back in suggestions.`, () => setPassed((c) => [...c.filter((x) => x !== p.id), p.id]));
   }, [setPassed, setToast]);
-  const diff = useMemo(() => sleeperDiff(yourLineup), [yourLineup]);
+  // Lineup advice from the moves still open: both players in each move before kickoff, none once the week is final.
+  // Live game states move it, so a Sunday afternoon never suggests a player whose game has started.
+  const lineupNow = useMemo(() => lineupStatus(), [yourLineup, live]); // eslint-disable-line react-hooks/exhaustive-deps
+  const diff = lineupNow.moves;
   const coach = useCallback((t: Trade) => counterFor(t, active, myTags, prices), [active, myTags, prices]);
 
   /** The most valuable rival starter who just went out. */
@@ -362,9 +367,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     // Lineup day
     if (diff.length) {
       const d = diff[0];
+      // The move locks at the earlier of the two kickoffs, so that's its deadline
+      const when = moveLock(d.benched, d.start);
       list.push({
         id: "lineup", kind: "lineup", ...lineupCard(d.benched, d.start, d.slot, onBye(d.benched.nfl)),
-        why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before kickoff.`, trades: [], time: "Now", deadline: lockLine(),
+        why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before ${when || "kickoff"}.`, trades: [], time: "Now", ...(when ? { deadline: `Locks ${when}` } : {}),
         go: { label: "Review lineup", tab: "roster" },
       });
     }
@@ -443,7 +450,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   }, [needs, suggestionsByTeam, active, myTags, prices, recs, diff, level, dismissed, dismissedIds, yourLineup, kick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const briefing: Briefing = {
-    lineup: diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : "Your Sleeper lineup is already optimal.",
+    // A final week gets no lineup line at all; locks that blocked a helpful move say so plainly
+    lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : lineupNow.blocked ? LOCKED_LINE : "Your Sleeper lineup is already optimal.",
     trade: partners[0]?.t ?? null,
     waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
@@ -672,7 +680,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return () => clearTimeout(done);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const checks = useMemo(() => gameDayChecks(yourLineup), [yourLineup]);
+  const checks = useMemo(() => gameDayChecks(yourLineup), [yourLineup, live, kick]); // eslint-disable-line react-hooks/exhaustive-deps
   // Your roster's news feeds the Wire card and, for starters with a fresh status change, the inbox
   const newsPlayers = useMemo(() => yourPlayers(), [fkey, YOU.roster.join()]);
   const rosterNews = useRosterNews(newsPlayers);

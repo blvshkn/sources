@@ -3,10 +3,11 @@
 import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
-  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek,
+  SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameState, lockedThisWeek, weekGames,
   SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
 } from "./data";
 import { sitsOut } from "./bye";
+import { LOCKED_LINE, teamLock, weekFinal, type WeekGames } from "./locks";
 import { nameWords, playersInText, teamsInText } from "./search";
 import { drain, type Steps, type TraceEv } from "./steps";
 
@@ -844,20 +845,107 @@ export function offerRead(t: Trade): { label: string; tone: "good" | "warn" | "b
 
 // ---- Lineup day -----------------------------------------------------------
 
-const started = (team: string) => { const g = gameState(team); return g === "in_game" || g === "complete"; };
+/** A skill slot in a lineup and who's in it, in the league's slot order. */
+export type SkillSlot = { slot: SlotName; id: string | null };
 
-export function sleeperDiff(opt: Lineup): { benched: Player; start: Player; slot: string; gain: number }[] {
-  const setIds = Object.values(SLEEPER_SET).flat();
-  const optIds = opt.slots.map((s) => s.player?.id).filter(Boolean) as string[];
-  const shouldStart = optIds.filter((id) => !setIds.includes(id)).map(playerById);
-  const shouldSit = setIds.filter((id) => !optIds.includes(id)).map(playerById);
-  return shouldStart.map((p, i) => {
-    const sit = shouldSit[i];
-    const slot = Object.entries(SLEEPER_SET).find(([, ids]) => ids.includes(sit?.id ?? ""))?.[0] ?? "FLEX";
-    return { benched: sit, start: p, slot, gain: round1(eff(p, true) - (sit ? eff(sit, true) : 0)) };
-    // Sleeper won't move anyone whose game has kicked off, so never suggest those swaps
-  }).filter((d) => d.benched && !started(d.benched.nfl) && !started(d.start.nfl));
+/** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
+export function slotted(team: Team, starters: string[] | undefined): SkillSlot[] {
+  const base = lineupFor(team.roster, true);
+  if (!starters?.length) return base.slots.map((s) => ({ slot: s.slot, id: s.player?.id ?? null }));
+  const pool = starters.filter((id) => team.roster.includes(id));
+  const used = new Set<string>();
+  return base.slots.map((s) => {
+    const id = pool.find((x) => !used.has(x) && fits(s.slot, playerById(x).pos)) ?? null;
+    if (id) used.add(id);
+    return { slot: s.slot, id };
+  });
 }
+
+/** Fixed slots fill first, then FLEX, then Superflex, so flex gets the best leftover (the same order as lineupFor). */
+const rank = (slot: string) => (slot === "SF" || slot === "SUPER_FLEX" ? 2 : slot === "FLEX" || /FLEX/.test(slot) ? 1 : 0);
+
+/**
+ * The best skill lineup you can still set: a locked starter keeps his slot, a locked bench player stays on the bench,
+ * and every other slot takes the best unlocked player who fits. K/DEF are left out, so callers compare skill players
+ * to skill players. Used by every piece of lineup advice (sleeperDiff below, Lineup's "Use optimal lineup", the
+ * matchup's "Use best lineup", Set optimal lineup), so they never disagree.
+ */
+export function bestUnderLocks(mine: SkillSlot[], locked: (id: string) => boolean): SkillSlot[] {
+  const next = mine.map((s) => ({ slot: s.slot, id: s.id && locked(s.id) ? s.id : null }));
+  const kept = new Set(next.map((s) => s.id).filter(Boolean));
+  const pool = YOU.roster.filter((id) => !kept.has(id) && !locked(id)).map(playerById).sort((a, b) => eff(b, true) - eff(a, true));
+  const used = new Set<string>();
+  next.map((s, i) => ({ s, i })).filter((x) => !x.s.id).sort((a, b) => rank(a.s.slot) - rank(b.s.slot)).forEach(({ s }) => {
+    const p = pool.find((q) => !used.has(q.id) && fits(s.slot, q.pos));
+    if (p) { used.add(p.id); s.id = p.id; }
+  });
+  return next;
+}
+
+/**
+ * The moves from `current` to `fin`: who comes in, who goes out, paired so each start takes a spot he can fill (same
+ * position first, then anyone whose slot he can play, then whoever is left). `slot` is where he starts in `fin`, `from`
+ * the slot the benched player holds now.
+ */
+export function pairMoves(current: SkillSlot[], fin: SkillSlot[]): { start: Player; bench: Player; slot: SlotName; from: SlotName }[] {
+  const curIds = current.map((s) => s.id).filter((x): x is string => !!x);
+  const finIds = fin.map((s) => s.id).filter((x): x is string => !!x);
+  const ins = finIds.filter((id) => !curIds.includes(id)).map(playerById);
+  const outs = curIds.filter((id) => !finIds.includes(id)).map(playerById);
+  const slotOfCur = (id: string) => current.find((s) => s.id === id)?.slot ?? "FLEX";
+  const used = new Set<string>();
+  const order = [...ins].sort((a, b) => Number(!outs.some((o) => o.pos === a.pos)) - Number(!outs.some((o) => o.pos === b.pos)));
+  const out: { start: Player; bench: Player; slot: SlotName; from: SlotName }[] = [];
+  for (const p of order) {
+    const sit = outs.find((o) => !used.has(o.id) && o.pos === p.pos) ?? outs.find((o) => !used.has(o.id) && fits(slotOfCur(o.id), p.pos)) ?? outs.find((o) => !used.has(o.id));
+    if (!sit) continue;
+    used.add(sit.id);
+    out.push({ start: p, bench: sit, slot: fin.find((s) => s.id === p.id)?.slot ?? slotOfCur(sit.id), from: slotOfCur(sit.id) });
+  }
+  return out;
+}
+
+/** Your lineup as set in Sleeper this week, skill slots in league order. */
+export const sleeperSlots = () => {
+  const set = Object.values(SLEEPER_SET).flat();
+  return slotted(YOU, YOU.starters?.length ? YOU.starters : set.length ? set : undefined);
+};
+
+/** Who can't move in Sleeper right now: anyone whose game has kicked off (live or final), everyone once the week is
+ *  final. Reads the live game states (data.weekGames), so a Sunday afternoon locks the early games. */
+export function lockedNow(w: WeekGames = weekGames()): (id: string) => boolean {
+  if (weekFinal(w)) return () => true;
+  return (id) => { const p = PLAYERS[id] ?? LEAGUE.specials?.[id]; return !!p && !!teamLock(w, p.nfl); };
+}
+
+export interface LineupMove { benched: Player; start: Player; slot: string; gain: number }
+
+/**
+ * The moves from your Sleeper lineup to the best one you can still set. Both players in every move are before
+ * kickoff: when the best move is blocked by a lock, the best move still open takes its place. Once the week is
+ * final there are none. The `opt` argument is kept for callers; the answer always comes from Sleeper's lineup.
+ */
+export function sleeperDiff(_opt?: Lineup, w: WeekGames = weekGames()): LineupMove[] {
+  if (weekFinal(w)) return [];
+  const cur = sleeperSlots();
+  return pairMoves(cur, bestUnderLocks(cur, lockedNow(w)))
+    .map((m) => ({ benched: m.bench, start: m.start, slot: m.from, gain: round1(eff(m.start, true) - eff(m.bench, true)) }))
+    // An even swap (two players on bye, or two equal projections) changes nothing
+    .filter((d) => d.gain !== 0);
+}
+
+/** Where this week's lineup advice stands: the moves still open, whether the week is final, and whether locks
+ *  blocked moves that would have helped before kickoff (say LOCKED_LINE then, never "already optimal"). */
+export function lineupStatus(w: WeekGames = weekGames()): { moves: LineupMove[]; final: boolean; blocked: boolean } {
+  const final = weekFinal(w);
+  const moves = final ? [] : sleeperDiff(undefined, w);
+  const cur = sleeperSlots();
+  const free = pairMoves(cur, bestUnderLocks(cur, () => false)).some((m) => eff(m.start, true) > eff(m.bench, true));
+  return { moves, final, blocked: !moves.length && free && Object.values(w.games).some((s) => s !== "pre_game") };
+}
+/** What lineup advice says when there's no move to make: final, locked, or already optimal. */
+export const noMoveText = (st: { final: boolean; blocked: boolean }, total: number) =>
+  st.final ? `Week ${WEEK} is final, so there's no lineup left to set.` : st.blocked ? LOCKED_LINE : `Your lineup in Sleeper is already optimal at ${total.toFixed(1)} projected.`;
 
 export function weakSlots(): { slot: string; misses: number; weeks: number; gap: number }[] {
   return SLOT_HISTORY.map((h) => {
@@ -1435,10 +1523,12 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     const off = lu.bench.filter((p) => isOut(p, true));
     yield { t: "step", doing: `Projecting ${YOU.roster.length} players for week ${WEEK}`, done: `Set the best lineup: ${lu.total.toFixed(1)} projected`, chips: off.map((p) => ({ label: `${p.name} ${onBye(p.nfl) ? "bye" : "out"}`, kind: "player" as const })) };
     const flex = lu.slots.find((x) => x.slot === "FLEX")?.player;
-    const diff = sleeperDiff(lu);
-    yield { t: "step", doing: "Checking your Sleeper lineup", done: diff.length ? `Found ${diff.length} better ${diff.length === 1 ? "swap" : "swaps"} than Sleeper` : "Your Sleeper lineup is already the best", chips: diff.map((d) => ({ label: d.start.name, kind: "player" as const })) };
+    // Only moves Sleeper still allows: both players before kickoff, none once the week is final
+    const st = lineupStatus();
+    const diff = st.moves;
+    yield { t: "step", doing: "Checking your Sleeper lineup", done: diff.length ? `Found ${diff.length} better ${diff.length === 1 ? "swap" : "swaps"} than Sleeper` : st.final ? `Week ${WEEK} is final` : st.blocked ? "Lineups are locked for the games that have started" : "Your Sleeper lineup is already the best", chips: diff.map((d) => ({ label: d.start.name, kind: "player" as const })) };
     return {
-      text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : `Your lineup in Sleeper is already optimal at ${lu.total.toFixed(1)} projected.`,
+      text: diff.length ? `Swap ${diff[0].start.name} in for ${diff[0].benched.name}. That's ${fmt(diff[0].gain)} pts.` : noMoveText(st, lu.total),
       points: [`FLEX: ${flex?.name ?? "empty"} at ${flex ? eff(flex, true).toFixed(1) : "0"} projected.`, ...off.map((p) => `${p.name} is ${onBye(p.nfl) ? "on bye" : "out"} this week.`)],
       links: [{ label: "Open your lineup", tab: "roster" }],
       show: diff.length ? { kind: "swaps", rows: diff.map((d) => ({ start: d.start.id, bench: d.benched.id, slot: d.slot, gain: d.gain })) } : undefined,

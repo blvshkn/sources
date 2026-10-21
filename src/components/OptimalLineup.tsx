@@ -11,8 +11,10 @@ import { SwapRows } from "./SwapRows";
 import { PlatformLogo } from "./PlatformLogo";
 import { AiLabel } from "./ui";
 import { deny } from "../deny";
-import { lockLine } from "../kickoff";
-import { Player, sleeperUrl } from "../data";
+import { moveLock } from "../kickoff";
+import { LOCKED_LINE, weekFinal } from "../locks";
+import { lineupStatus, noMoveText } from "../engine";
+import { Player, WEEK, playerById, sleeperUrl } from "../data";
 import type { Live } from "../live";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { keepOptimal, lastOptimal, lockedIn, optimalJob, resultFor, type OptimalResult } from "../optimalLineup";
@@ -32,14 +34,20 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
   const [kept, setKept] = useState<OptimalResult | null>(() => lastOptimal());
   const [open, setOpen] = useState(() => !!lastOptimal());
   const running = trace.status === "thinking" || trace.status === "working";
-  const res = running ? null : result ?? kept;
+  const raw = running ? null : result ?? kept;
+  // A result kept from before kickoff drops any move whose players have since locked (either side)
+  const isLocked = lockedIn(live);
+  const openSwaps = raw ? raw.swaps.filter((w) => !isLocked(w.start) && !isLocked(w.bench)) : [];
+  const res = raw && (openSwaps.length === raw.swaps.length ? raw
+    : { ...raw, swaps: openSwaps, summary: `${openSwaps.length} ${openSwaps.length === 1 ? "move is" : "moves are"} still open. The rest locked at kickoff.` });
   useEffect(() => { if (result) { keepOptimal(result); setKept(result); } }, [result]);
-  useEffect(() => { onMarks(open && res && res.swaps.length ? marksOf(res) : null); }, [open, res]); // eslint-disable-line react-hooks/exhaustive-deps
+  const markKey = res ? res.swaps.map((w) => `${w.start}>${w.bench}`).join() : "";
+  useEffect(() => { onMarks(open && res && res.swaps.length ? marksOf(res) : null); }, [open, raw, markKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => onMarks(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = (e: MouseEvent<HTMLButtonElement>) => {
     if (running) { deny(e.currentTarget, "Still working on your lineup. One moment."); return; }
-    if (locked) { deny(e.currentTarget, "Lineups are locked for this week."); return; }
+    if (locked) { deny(e.currentTarget, weekFinal(live) ? `Week ${WEEK} is final. Lineups can't change.` : LOCKED_LINE); return; }
     setOpen(true); setKept(null); keepOptimal(null);
     start(optimalJob(live)).catch(() => {
       // Something broke mid-run: the engine's lineup is still the answer, never an error
@@ -49,6 +57,8 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
     });
   };
   const dismiss = () => { setOpen(false); setKept(null); keepOptimal(null); onMarks(null); };
+  // The moves lock at the earliest kickoff among the players in them
+  const lockBy = res ? moveLock(...res.swaps.flatMap((w) => [playerById(w.start), playerById(w.bench)])) : "";
   const where = (id: string) => (res?.swaps.some((w) => w.start === id) ? "Sources AI says start" : "Sources AI says bench");
 
   return (
@@ -62,11 +72,11 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
       {open && trace.status !== "idle" && <ThinkingTrace trace={trace} />}
       {open && res && (
         <div className="lu-ai-res" aria-live="polite">
-          <p className="lu-ai-head">{res.swaps.length ? res.summary : `Your Sleeper lineup is already optimal at ${res.total.toFixed(1)} projected.`}</p>
+          <p className="lu-ai-head">{res.swaps.length ? res.summary : noMoveText(lineupStatus(), res.total)}</p>
           {res.swaps.length > 0 && <SwapRows rows={res.swaps} onPlayer={(p) => onPlayer(p, where(p.id))} />}
           {res.by === "off" && res.note && <p className="lu-ai-off">{res.note}</p>}
           <div className="lu-ai-foot">
-            {res.swaps.length > 0 && <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper. {lockLine()}.</span>}
+            {res.swaps.length > 0 && <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper{lockBy ? ` before ${lockBy}` : ""}.</span>}
             <div className="lu-ai-btns">
               <button type="button" className="btn btn-sm lu-ai-x" onClick={dismiss}>Dismiss</button>
               {res.swaps.length > 0 && <a className="btn btn-sm lu-ai-open" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open in Sleeper</a>}

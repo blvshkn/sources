@@ -3,13 +3,15 @@ import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
 import { LineupWeek, gameIn } from "../weekMatch";
-import { kickWhen, lockLine, oppText, useKickoffs } from "../kickoff";
+import { kickWhen, moveLock, oppText, useKickoffs } from "../kickoff";
+import { injuryDetail, kdefHint } from "../gameDay";
+import { LOCKED_LINE } from "../locks";
 import { WeekStepper } from "./WeekStepper";
 import { Live, useLive, onPace, matchNow, playCount, expect, PlayCount as Counts } from "../live";
 import { playLabel, resultOf, scoreTone, flipTone } from "../liveMath";
 import { LEAGUE, OPPONENT_ID, PLAYERS, SpecialPlayer, teamById, MyTag, TEAMS, YOU, ManagerTag, playerById, Player, onBye, SLOT_HISTORY, WEEK, sleeperUrl } from "../data";
-import { irReport, irLabel, specialLineup, specialPts, startedSpecials, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, sleeperDiff, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
-import { AiLabel, Delta, Icon, IconName, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
+import { irReport, irLabel, lineupStatus, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
+import { AiLabel, Delta, Icon, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
@@ -17,7 +19,7 @@ import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
 import { NumTip, Tooltip } from "./Tooltip";
 import { SwapAnchor, SwapPicker, SwapOption, SpecialWho, WeekWho, Who, byeWhy, outWhy, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
-import { bestNow, bestUnderLocks, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
+import { bestNow, nowScore, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
 import { deny } from "../deny";
 import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
@@ -34,9 +36,6 @@ const TAG_LABEL: Record<MyTag, string> = {
 };
 // Standard normal CDF, for a win chance from two projections
 const ringOf = (p: Player): "bad" | "warn" | undefined => (onBye(p.nfl) || p.status === "O" ? "bad" : p.status === "Q" ? "warn" : undefined);
-/** "Questionable, Groin" becomes "Groin". */
-const LONG_WORD: Record<string, string> = { IR: "Injured reserve", PUP: "PUP list", Sus: "Suspended", NA: "Not active", DNR: "Did not report", COV: "COVID list" };
-export const injuryDetail = (p: Player) => (p.note ?? "").replace(/^(Questionable|Doubtful|Out|IR|PUP|Sus|NA|DNR|COV)\b,?\s*/i, "") || LONG_WORD[p.injury ?? ""] || (p.status === "O" ? "Out" : "Game-time decision");
 /** The pill Sleeper shows next to the name: Q, D, OUT, IR, PUP, SUS. */
 const SLEEPER_TAG: Record<string, string> = { Questionable: "Q", Doubtful: "D", Out: "OUT", IR: "IR", PUP: "PUP", Sus: "SUS", NA: "NA", DNR: "DNR", COV: "COV" };
 export const injuryTag = (p: { status?: string; injury?: string }) => SLEEPER_TAG[p.injury ?? ""] ?? (p.status === "Q" ? "Q" : "OUT");
@@ -584,30 +583,8 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   return onOpen ? <button type="button" className="lu-mx-open mc-press" onClick={onOpen} aria-label={`Open this week's matchup. ${res ? `Final, ${res.long}` : `You ${(inPlay ? myNow! : myTotal).toFixed(1)}${opp ? `, ${opp.name} ${(inPlay && oppNow !== undefined ? oppNow : oppTotal ?? 0).toFixed(1)}, ${chance} percent to win` : ""}`}`}>{body}</button> : body;
 }
 
-export interface Check { key: string; tone: "warn" | "bad" | "info"; icon: IconName; text: string; player?: Player }
-
-/** What needs a look before lock: IR moves, hurt starters, a coin flip at flex, an empty or thin bench, an empty K or DEF.
- *  The inbox shows these; nothing else draws them. */
-export function gameDayChecks(lineup: Lineup): Check[] {
-  const s = lineup.slots.filter((x) => x.player) as { slot: string; player: Player }[];
-  const flex = s.find((x) => x.slot === "FLEX");
-  const bestBench = lineup.bench.filter((p) => p.pos !== "QB" && !isOut(p, true))[0];
-  const closeCall = flex && bestBench && eff(flex.player, true) - eff(bestBench, true) < 1.5;
-  const benchOut = lineup.bench.filter((p) => isOut(p, true));
-  const ir = irReport(YOU);
-  // A K/DEF slot Sleeper has empty, even with one rostered (the suggested pick is the one to start)
-  const emptySpecial = startedSpecials(YOU).filter((x) => !x.player || x.suggested);
-  return [
-    ...ir.mustActivate.map((p) => ({ key: `ira-${p.id}`, tone: "bad" as const, icon: "alert" as IconName, text: `Activate ${p.name} from IR. Sleeper blocks adds and trades until he's moved.`, player: p })),
-    ...(ir.open > 0 && ir.moveIn[0] ? [{ key: "irm", tone: "info" as const, icon: "plug" as IconName, text: `Move ${ir.moveIn[0].name} to IR. It frees a bench spot without a drop.` }] : []),
-    ...s.filter((x) => x.player.status).map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, player: x.player,
-      text: x.player.status === "O" ? `${x.player.name} is out (${injuryDetail(x.player)}). Swap him before lock.` : `${x.player.name} is questionable (${injuryDetail(x.player)}). Check the inactives 90 minutes before kickoff.` })),
-    ...emptySpecial.map((x) => ({ key: `empty-${x.slot}`, tone: "bad" as const, icon: "helmet" as IconName, text: x.player ? `Your ${x.slot} slot is empty in Sleeper. Start ${x.player.name} before lock.` : `Your ${x.slot} slot is empty. Pick up a ${x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.` })),
-    ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Basically a coin flip.` }] : []),
-    ...(benchOut.length ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName,
-      text: `Thin bench this week. ${benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(" and ")} can't cover a starter.` }] : []),
-  ];
-}
+// Game day checks moved to gameDay.ts (plain module, so the lock regression check can run them)
+export { gameDayChecks, injuryDetail, type Check } from "../gameDay";
 
 export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, onPitch, side }: {
   side?: ReactNode;
@@ -630,7 +607,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const movable = YOU.roster.filter((id) => (myTags[id] === "available" || myTags[id] === "shopping") && !prices[id]);
   const untouch = YOU.roster.filter((id) => myTags[id] === "untouchable");
   const unpriced = YOU.roster.filter((id) => !myTags[id] && !prices[id]);
-  const diff = sleeperDiff(lineup);
+  // The moves still open from your Sleeper lineup: both players before kickoff, none once the week is final
+  const lstat = lineupStatus();
+  const diff = lstat.moves;
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
   const [cmp, setCmp] = useState<string | undefined>(undefined);
   const live = useLive();
@@ -663,12 +642,10 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   // skill players. The same helper as the matchup's Use best lineup, so the two never disagree.
   const lockedId = (id: string) => pastWeek || !!lockOf(live, playerById(id));
   const best = bestNow(live, now.mine, lockedId);
-  // Start / Sit: the moves from your Sleeper lineup to the optimal one you can still set, from the same helper, so the
-  // card, the row hints and the button agree (a player whose game started is never suggested)
-  const optIds = bestUnderLocks(now.base.mine, lockedId).map((x) => x.id).filter((id): id is string => !!id);
-  const baseIds = now.base.mine.map((x) => x.id).filter((id): id is string => !!id);
-  const sits = baseIds.filter((id) => !optIds.includes(id)).map(playerById);
-  const moves = optIds.filter((id) => !baseIds.includes(id)).map(playerById).map((p, i) => ({ start: p, benched: sits[i], gain: round1(eff(p, true) - (sits[i] ? eff(sits[i], true) : 0)) })).filter((d) => !!d.benched);
+  // Start / Sit: the moves from your Sleeper lineup to the optimal one you can still set (engine.sleeperDiff, the same
+  // moves the Overview, inbox, player sheet and Ask give), so the card, the row hints and the button agree. A player
+  // whose game started is never suggested, going out or coming in; a final week has none.
+  const moves = pastWeek ? [] : diff;
   const allLocked = pastWeek || (now.mine.every((x) => !!starterLock(x.id ? playerById(x.id) : null)) && now.mineK.every((p) => !!starterLock(p)));
   const menu = useSwapMenu<string>();
   const { open, setOpen, menuRef } = menu;
@@ -691,10 +668,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const lbl = (slot: string) => SLOT_LABEL[slot] ?? slot;
   // A starter Sleeper has where the optimal lineup starts someone else: the row says who, until he's in
   const hintFor = (id: string) => { const d = moves.find((x) => x.benched.id === id && !shownIds.includes(x.start.id)); return d ? { to: d.start, gain: d.gain } : undefined; };
-  const kHint = (p: SpecialPlayer, slot: string) => {
-    const b = kdef.slots.find((x) => x.slot === slot)?.player;
-    return b && b.id !== p.id && !now.mineK.some((x) => x?.id === b.id) && specialPts(b) - specialPts(p) >= 0.5 ? b : undefined;
-  };
+  const kHint = (p: SpecialPlayer, slot: string) => (pastWeek ? undefined : kdefHint(p, kdef.slots.find((x) => x.slot === slot)?.player, now.mineK));
 
   return (
     <>
@@ -730,8 +704,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                       <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><NumTip focusable {...PROJ_TIP}><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></NumTip></div>
                     </div>
                   ))}
-                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {lockLine()}.</span><a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
-                </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
+                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper{moveLock(...moves.flatMap((d) => [d.start, d.benched])) ? ` before ${moveLock(...moves.flatMap((d) => [d.start, d.benched]))}` : ""}.</span><a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
+                </> : <p className="ss-none">{pastWeek || lstat.final ? `Week ${WEEK} is final. Lineups can't change.` : lstat.blocked ? LOCKED_LINE : "Your Sleeper lineup matches the optimal one."}</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
               <OptimalLineup live={live} locked={allLocked} onPlayer={openPlayer} onMarks={setAiMarks} />

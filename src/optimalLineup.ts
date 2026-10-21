@@ -5,7 +5,8 @@
 // If the AI is unavailable or its lineup fails a check, the engine's lineup is the answer with the engine's reasons.
 // Nothing here writes to Sleeper: the result is a list of moves to make there.
 import { LEAGUE, WEEK, YOU, onBye, playerById, type Player, type Pos } from "./data";
-import { eff, fits, fmt, isOut, round1, type SlotName } from "./engine";
+import { eff, fits, fmt, isOut, pairMoves, round1, type SlotName } from "./engine";
+import { teamLock } from "./locks";
 import { bestUnderLocks, sleeperNow, type SkillSlot } from "./lineupWhatIf";
 import { kickoffOf } from "./kickoff";
 import type { Live } from "./live";
@@ -38,12 +39,8 @@ export const REVERT_PTS = 2;
 
 // ---- Locks ---------------------------------------------------------------------
 
-/** A player whose game has kicked off (or a week that's over) can't move in Sleeper. */
-export const lockedIn = (live: Live) => (id: string) => {
-  if (live.past) return true;
-  const st = live.games[playerById(id)?.nfl ?? ""];
-  return st === "in_game" || st === "complete";
-};
+/** A player whose game has kicked off can't move in Sleeper, and nobody moves once the week is final (locks.ts). */
+export const lockedIn = (live: Live) => (id: string) => !!teamLock(live, playerById(id)?.nfl ?? LEAGUE.specials?.[id]?.nfl);
 
 // ---- Validation ------------------------------------------------------------------
 
@@ -123,25 +120,11 @@ export function engineWhy(start: Player, bench: Player, gain: number): { why: st
  * fill (same position first). `reason` gives the AI's line for a start when it has one.
  */
 export function swapsBetween(current: SkillSlot[], fin: SkillSlot[], reason?: (start: string, bench: string) => { why: string; signal: Why } | null): OptSwap[] {
-  const curIds = current.map((s) => s.id).filter((x): x is string => !!x);
-  const finIds = fin.map((s) => s.id).filter((x): x is string => !!x);
-  const ins = finIds.filter((id) => !curIds.includes(id)).map(playerById);
-  const outs = curIds.filter((id) => !finIds.includes(id)).map(playerById);
-  const slotOfCur = (id: string) => current.find((s) => s.id === id)?.slot ?? "FLEX";
-  const out: OptSwap[] = [];
-  const used = new Set<string>();
-  // Same position first, then anyone whose Sleeper slot he can play, then whoever is left
-  const order = [...ins].sort((a, b) => Number(!outs.some((o) => o.pos === a.pos)) - Number(!outs.some((o) => o.pos === b.pos)));
-  for (const p of order) {
-    const sit = outs.find((o) => !used.has(o.id) && o.pos === p.pos) ?? outs.find((o) => !used.has(o.id) && fits(slotOfCur(o.id), p.pos)) ?? outs.find((o) => !used.has(o.id));
-    if (!sit) continue;
-    used.add(sit.id);
-    const slot = fin.find((s) => s.id === p.id)?.slot ?? slotOfCur(sit.id);
+  return pairMoves(current, fin).map(({ start: p, bench: sit, slot }) => {
     const gain = round1(eff(p, true) - eff(sit, true));
     const r = reason?.(p.id, sit.id) ?? engineWhy(p, sit, gain);
-    out.push({ start: p.id, bench: sit.id, slot, gain, why: r.why, signal: r.signal });
-  }
-  return out;
+    return { start: p.id, bench: sit.id, slot, gain, why: r.why, signal: r.signal };
+  });
 }
 
 const totalOf = (xs: SkillSlot[]) => round1(xs.reduce((s, x) => s + (x.id ? eff(playerById(x.id), true) : 0), 0));

@@ -2,14 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { DEADLINES, Player, YOU, playerById } from "../data";
-import { lockLine } from "../kickoff";
+import { teamLock } from "../locks";
 import { eff, fmt, Trade } from "../engine";
 import { startersOf, matchNow, type Live } from "../live";
 import { Icon, IconName } from "./ui";
 import { Tooltip } from "./Tooltip";
 import { AskIcon } from "./AskIcon";
 import type { Nudge } from "./Wire";
-import type { Check } from "./Roster";
+import type { Check } from "../gameDay";
 import { NewsItem, ago, requestPlayer } from "../news";
 import { AiMark } from "./WorkingLoader";
 
@@ -44,7 +44,6 @@ export const GROUPS: { id: InboxGroup; label: string }[] = [{ id: "now", label: 
 export const groupOf = (time: string): InboxGroup =>
   /^(now|live)$|^\d+\s*(m|min)\b/i.test(time.trim()) ? "now" : /this week|yesterday|^\d+\s*d\b|days? ago/i.test(time) ? "week" : "today";
 
-const lockShort = () => lockLine().replace(/^Lineups lock\s*/i, "Locks ");
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 /** Waivers run within the next day: the day before the run, or the run day itself before 3 AM */
 function waiversSoon(): boolean {
@@ -73,13 +72,13 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   partner?: { id: string; text: string; onNotes: () => void };
 }): InboxItem[] {
   const out: InboxItem[] = [];
-  const lock = lockLine() ? lockShort() : undefined;
-
   // Game day: anything that still needs a move before lock. IR and the Sleeper swap come from the nudges below.
+  // gameDayChecks already leaves out players whose games have started; this guards against a newer live read. Each
+  // item shows its own player's kickoff, not the week's first.
   checks.filter((c) => !c.key.startsWith("ir")).forEach((c) => {
     const p = c.player;
-    const state = p ? live.games[p.nfl] : undefined;
-    if (p && (state === "in_game" || state === "complete")) return;
+    if (p && teamLock(live, p.nfl)) return;
+    const lock = c.lockAt ? `Locks ${c.lockAt}` : undefined;
     const urgent = c.tone !== "info";
     out.push({
       id: `chk-${c.key}`, icon: c.icon, title: urgent ? "Before lock" : c.key === "flex" ? "Flex call" : c.key === "bench" ? "Bench" : "Lineup",

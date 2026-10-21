@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET } from "./data";
+import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYERS, Team, SpecialPlayer, onBye, SLEEPER_SET, setWeekGames } from "./data";
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
 import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, weekPast, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
 import { getState } from "./sleeper";
@@ -197,17 +197,26 @@ function schedule() {
   }, wait);
 }
 
+let seeding = false;
+/** This week's live state, seeded on first use for the loaded league (and again when the league or week changes). */
+function ensure(): Live {
+  if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
+    if (seeding) return { points: {}, games: LEAGUE?.games ?? {}, teamPts: {}, left: {}, at: Date.now() };
+    seeding = true;
+    try { current = seed(); } finally { seeding = false; }
+    currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
+    // Fetch every team's points (and the clock) right away instead of waiting for the first poll. A finished
+    // week gets this one read too, so a league saved mid-week still ends on Sleeper's final scores.
+    if (LEAGUE.mode === "live") poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
+  }
+  return current!;
+}
+// Lineup advice outside React (engine.sleeperDiff, the inbox checks) reads the same game states as the rows
+setWeekGames(() => { const l = ensure(); return { games: l.games, past: l.past }; });
+
 /** Live scoring that refreshes itself while games are on. Shared across every component that uses it. */
 export function useLive(): Live {
-  const [v, setV] = useState<Live>(() => {
-    if (!current || currentLeague !== `${LEAGUE.id}:${WEEK}`) {
-      current = seed(); currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
-      // Fetch every team's points (and the clock) right away instead of waiting for the first poll. A finished
-      // week gets this one read too, so a league saved mid-week still ends on Sleeper's final scores.
-      if (LEAGUE.mode === "live") poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
-    }
-    return current;
-  });
+  const [v, setV] = useState<Live>(ensure);
   useEffect(() => {
     subs.add(setV);
     // Catch up right away when the app comes back to the foreground on game day
@@ -219,7 +228,7 @@ export function useLive(): Live {
 }
 
 /** This week's game states as last read (live scoring once it has loaded, else the league's schedule). */
-export const liveGamesNow = (): Record<string, GameState> => current?.games ?? LEAGUE?.games ?? {};
+export const liveGamesNow = (): Record<string, GameState> => (LEAGUE ? ensure().games : {});
 
 /** A player's game right now: live with points so far, final, or not started. */
 export function playerLive(l: Live, id: string, nfl: string): { state: GameState | null; pts: number } {

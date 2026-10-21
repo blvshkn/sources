@@ -3,26 +3,14 @@
 // apart (the way the matchup always has); weeks ahead keep one id per starter slot in Sleeper's lineup order.
 // A tiny module store read through useSyncExternalStore; it resets when the league changes.
 import { useSyncExternalStore } from "react";
-import { LEAGUE, OPPONENT_ID, SLEEPER_SET, SpecialPlayer, Team, YOU, playerById, teamById } from "./data";
-import { eff, fits, lineupFor, round1, SlotName, startedSpecials, StartedSpecial } from "./engine";
+import { LEAGUE, OPPONENT_ID, SLEEPER_SET, SpecialPlayer, YOU, playerById, teamById } from "./data";
+import { bestUnderLocks, fits, round1, slotted, startedSpecials, StartedSpecial, type SkillSlot } from "./engine";
 import { Live, MatchScore, matchNow, scoreMatch, sideScore } from "./live";
 import { order, peekWeek, slotFits, WeekPlayer } from "./weeks";
 import { useWeekMatch, withMine } from "./weekMatch";
 
-export type SkillSlot = { slot: SlotName; id: string | null };
-
-/** Fill the league's slots in order from a list of starters, so both lineups line up slot for slot. */
-export function slotted(team: Team, starters: string[] | undefined): SkillSlot[] {
-  const base = lineupFor(team.roster, true);
-  if (!starters?.length) return base.slots.map((s) => ({ slot: s.slot, id: s.player?.id ?? null }));
-  const pool = starters.filter((id) => team.roster.includes(id));
-  const used = new Set<string>();
-  return base.slots.map((s) => {
-    const id = pool.find((x) => !used.has(x) && fits(s.slot, playerById(x).pos)) ?? null;
-    if (id) used.add(id);
-    return { slot: s.slot, id };
-  });
-}
+// The slot helpers and the lock-aware best lineup live in the engine (one rule for every piece of lineup advice)
+export { slotted, bestUnderLocks, type SkillSlot } from "./engine";
 
 // ---- Store ------------------------------------------------------------------
 let leagueId = "";
@@ -75,25 +63,6 @@ export function swapInto(cur: SkillSlot[], slotIdx: number, id: string): SkillSl
   return next;
 }
 
-/** Fixed slots fill first, then FLEX, then Superflex, so flex gets the best leftover (the same order as lineupFor). */
-const rank = (slot: string) => (slot === "SF" || slot === "SUPER_FLEX" ? 2 : slot === "FLEX" || /FLEX/.test(slot) ? 1 : 0);
-
-/**
- * The best skill lineup you can still set: a locked starter keeps his slot, a locked bench player stays on the bench,
- * and every other slot takes the best unlocked player who fits. K/DEF are left out, so callers compare skill players
- * to skill players. Used by Lineup's "Use optimal lineup" and the matchup's "Use best lineup", so they never disagree.
- */
-export function bestUnderLocks(mine: SkillSlot[], locked: (id: string) => boolean): SkillSlot[] {
-  const next = mine.map((s) => ({ slot: s.slot, id: s.id && locked(s.id) ? s.id : null }));
-  const kept = new Set(next.map((s) => s.id).filter(Boolean));
-  const pool = YOU.roster.filter((id) => !kept.has(id) && !locked(id)).map(playerById).sort((a, b) => eff(b, true) - eff(a, true));
-  const used = new Set<string>();
-  next.map((s, i) => ({ s, i })).filter((x) => !x.s.id).sort((a, b) => rank(a.s.slot) - rank(b.s.slot)).forEach(({ s }) => {
-    const p = pool.find((q) => !used.has(q.id) && fits(s.slot, q.pos));
-    if (p) { used.add(p.id); s.id = p.id; }
-  });
-  return next;
-}
 /** That best lineup and what it adds over the shown one, skill players only on both sides. */
 export function bestNow(live: Live, mine: SkillSlot[], locked: (id: string) => boolean) {
   const slots = bestUnderLocks(mine, locked);

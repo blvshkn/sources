@@ -587,6 +587,11 @@ export function gameState(team: string): GameState | "bye" | "unknown" {
 }
 /** True once a team's game has kicked off this week, or when it has no game. Sleeper locks these players. */
 export const lockedThisWeek = (team: string) => { const s = gameState(team); return s === "bye" || s === "in_game" || s === "complete"; };
+/** This week's game states as last read, for lineup locks (locks.ts). live.ts registers its live scoring here, so
+ *  advice outside React reads the same states the Lineup rows draw; before that, the league's saved schedule. */
+let weekGamesSrc: (() => { games: Record<string, GameState>; past?: boolean }) | null = null;
+export const setWeekGames = (f: typeof weekGamesSrc) => { weekGamesSrc = f; };
+export const weekGames = (): { games: Record<string, GameState>; past?: boolean } => weekGamesSrc?.() ?? { games: LEAGUE?.games ?? {} };
 export let WEEK = 7;
 export let LEAGUE_NAME = "";
 export let UPDATED = "";

@@ -44,7 +44,7 @@ export interface Nudge {
 }
 
 export interface FollowUp { id: string; trade: Trade; via: string; when: string }
-export interface Briefing { lineup: string; trade: Trade | null; waiver: string; /** Who the waiver line suggests, for its Not interested control. */ waiverPass?: { id: string; name: string } }
+export interface Briefing { /** Null once the week is final: no lineup advice then. */ lineup: string | null; trade: Trade | null; waiver: string; /** Who the waiver line suggests, for its Not interested control. */ waiverPass?: { id: string; name: string } }
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
@@ -491,9 +491,9 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
         </div>
-        <button className="brief-row" onClick={() => onGo("roster")}>
+        {briefing.lineup !== null && <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />
-        </button>
+        </button>}
         <button className="brief-row" onClick={() => briefing.trade ? onOpen(briefing.trade) : onGo("trade")}>
           <span className="brief-k">Top trade</span>
           <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No trade helps both sides this week."}</span>

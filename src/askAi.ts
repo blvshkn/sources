@@ -7,7 +7,7 @@ import {
   COMPLETED_TRADES, FREE_AGENTS, LEAGUE, OPPONENT_ID, PLAYERS, TEAMS, WEEK, YOU, isDemo, onBye, playerById, teamById,
   type Player, type Team,
 } from "./data";
-import { Answer, acceptance, currentFormat, eff, formatLabel, needsFor, round1, scored, tendencies } from "./engine";
+import { Answer, acceptance, currentFormat, eff, formatLabel, lineupStatus, needsFor, noMoveText, round1, scored, tendencies } from "./engine";
 import { scoreMatch, sideScore, startersOf, type Live } from "./live";
 import type { Steps, TraceEv } from "./steps";
 import type { Tracer } from "./think";
@@ -212,7 +212,8 @@ export function merge(ai: AiReply, base: Answer | null, q = ""): Answer {
 export function lineupAnswer(r: OptimalResult, base: Answer): Answer {
   const nm = (id: string) => playerById(id)?.name ?? id;
   const first = r.swaps[0];
-  const text = !first ? `Your lineup in Sleeper is already optimal at ${r.total.toFixed(1)} projected.`
+  // No move: say why (the week is final, or locks block every move that would help), never "optimal" by default
+  const text = !first ? noMoveText(lineupStatus(), r.total)
     : r.by === "ai" && r.summary ? r.summary
       : `Swap ${nm(first.start)} in for ${nm(first.bench)}. ${first.why}.`;
   return {
