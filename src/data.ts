@@ -610,7 +610,10 @@ export const teamById = (id: string) => TEAMS.find((t) => t.id === id)!;
 export const playerById = (id: string) => PLAYERS[id];
 export const leagueKey = () => `${LEAGUE.mode}:${LEAGUE.id}:${leagueVersion}`;
 export const isDemo = () => LEAGUE.mode === "demo";
-export const sleeperUrl = (path = "") => (LEAGUE.mode === "live" ? `https://sleeper.com/leagues/${LEAGUE.id}${path}` : "https://sleeper.com/");
+/** Sleeper's league tabs, as its web app names them (checked on sleeper.com): every "open Sleeper" goes to the tab
+ *  for the job. Lineup changes to team, claims to players, offers to trades. The app picks these links up on phones. */
+export type SleeperTab = "team" | "trades" | "players" | "league" | "matchup";
+export const sleeperUrl = (tab: SleeperTab) => (LEAGUE.mode === "live" ? `https://sleeper.com/leagues/${LEAGUE.id}/${tab}` : "https://sleeper.com/");
 
 export function setLeague(d: LeagueData) {
   LEAGUE = d;

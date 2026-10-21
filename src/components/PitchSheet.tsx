@@ -412,7 +412,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const primary = async () => {
     if (method === "text") textMessage();
     if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
-    if (method === "app") { const ok = await copy(); record(app); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
+    if (method === "app") { const ok = await copy(); record(app); window.open(app === "Sleeper" ? sleeperUrl("trades") : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
     if (method === "share") shareImage();
   };
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share" }[method];

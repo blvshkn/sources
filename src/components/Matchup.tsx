@@ -128,7 +128,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
             <span><b>What-if lineup</b>{fmt(round1(myTotal - baseTotal))} pts vs your Sleeper lineup. Make the swap in Sleeper to lock it in.</span>
             <div className="mu-wbtn">
               <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => { reset(); setOpen(null, e.currentTarget); }}>Reset</button>
-              <a className="btn btn-sm btn-primary" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
+              <a className="btn btn-sm btn-primary" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
             </div>
           </div>
         )}
@@ -245,7 +245,7 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
             <span><b>What-if lineup</b>{fmt(round1(m.me.total - (raw?.me.total ?? 0)))} pts vs your best projected lineup. Set it in Sleeper before Week {week} locks.</span>
             <div className="mu-wbtn">
               <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => { wi.reset(); setOpen(null, e.currentTarget); }}>Reset</button>
-              <a className="btn btn-sm btn-primary" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
+              <a className="btn btn-sm btn-primary" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
             </div>
           </div>
         )}

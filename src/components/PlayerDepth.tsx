@@ -276,7 +276,7 @@ export function LineupCall({ p }: { p: Player }) {
       </div>
       {/* A change to make in your own lineup: one tap to Sleeper's team tab (the app opens it on phones that have it) */}
       {c.owner === "you" && (/in Sleeper|Sleeper still has him/.test(c.line) || c.head === "Take him out of your lineup") && (
-        <a className="btn btn-sm pd-sleeper" href={sleeperUrl("/team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
+        <a className="btn btn-sm pd-sleeper" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       )}
       {c.alts.length > 1 && (
         <div className="pd-alts">

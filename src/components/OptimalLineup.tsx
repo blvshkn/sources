@@ -69,7 +69,7 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
             {res.swaps.length > 0 && <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper. {lockLine()}.</span>}
             <div className="lu-ai-btns">
               <button type="button" className="btn btn-sm lu-ai-x" onClick={dismiss}>Dismiss</button>
-              {res.swaps.length > 0 && <a className="btn btn-sm lu-ai-open" href={sleeperUrl("/team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open in Sleeper</a>}
+              {res.swaps.length > 0 && <a className="btn btn-sm lu-ai-open" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open in Sleeper</a>}
             </div>
           </div>
           {res.by === "ai" && <AiLabel />}

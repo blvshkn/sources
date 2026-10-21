@@ -55,7 +55,7 @@ export function WaiverContext({ top: thisWeek, onToast, passed = [], onPass }: {
           </ul>
           {(wp ? wp.fit : !kd && top.fit) && <p className="pctx-note ps-fit">{wp ? wp.fit : top.fit}</p>}
           <span className="ps-ctx-acts">
-            <a className="linkish pctx-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+            <a className="linkish pctx-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"
               onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
               Claim in Sleeper
             </a>

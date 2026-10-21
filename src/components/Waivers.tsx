@@ -456,7 +456,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
                   <div className="row wrap">
-                    <a className="btn btn-primary btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
+                    <a className="btn btn-primary btn-sm" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
                       <PlatformLogo size={16} />Open Sleeper
                     </a>
                     <button className="btn btn-sm btn-ghost ps-pass" onClick={() => pass(e, true)}>Not interested</button>
@@ -514,7 +514,7 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
         </li>
       </ul>
       <div className="ps-actions">
-        <a className="btn btn-primary topk-cta" href={sleeperUrl()} target="_blank" rel="noreferrer"
+        <a className="btn btn-primary topk-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"
           onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
           <PlatformLogo size={18} />Claim in Sleeper
         </a>

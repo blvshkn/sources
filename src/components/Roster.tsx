@@ -62,7 +62,7 @@ function IrBlock({ onOpen }: { onOpen?: (p: Player, where: string) => void }) {
               <span className="lu-name">{p.name}</span>
               <span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span><b className={`lu-st ${stuck ? "warn" : "bad"}`}>{stuck ? "No longer qualifies" : `${irLabel(p)}${detail && detail !== "Out" ? `, ${detail}` : ""}`}</b></span>
             </span>
-            {stuck ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Activate</a> : <span className="lu-pts dim" title="Players on IR don't score for you">0.0</span>}
+            {stuck ? <a className="btn btn-xs" href={sleeperUrl("team")} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Activate</a> : <span className="lu-pts dim" title="Players on IR don't score for you">0.0</span>}
           </div>
         );
       })}
@@ -74,7 +74,7 @@ function IrBlock({ onOpen }: { onOpen?: (p: Player, where: string) => void }) {
             <span className="lu-name muted">Open spot</span>
             <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} is IR-eligible. Moving him opens a bench spot.` : "No one on your roster is IR-eligible right now."}</span>
           </span>
-          {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl()} target="_blank" rel="noreferrer">Move</a> : <span />}
+          {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl("team")} target="_blank" rel="noreferrer">Move</a> : <span />}
         </div>
       ))}
       {taxi.length > 0 && (
@@ -301,7 +301,7 @@ function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { chang
         : locked ? "Lineups are locked for this week." : "Tap a player to try a swap. Swaps here are a what-if, so make them in Sleeper too."}</p>
       <div className="lu-wi-btns">
         {changed && <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => onReset(e.currentTarget)}>{resetLabel}</button>}
-        <a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
+        <a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
       </div>
     </div>
   );
@@ -710,7 +710,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                       <div className="ss-p sit"><span className="ss-tag">Sit</span><Avatar p={d.benched} size={32} /><span className="ss-n"><b>{d.benched.name}</b><small>{d.benched.pos} · {d.benched.nfl}{onBye(d.benched.nfl) ? " · Bye" : ""}</small></span><NumTip focusable {...PROJ_TIP}><span className="ss-pts">{eff(d.benched, true).toFixed(1)}</span></NumTip></div>
                     </div>
                   ))}
-                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {lockLine()}.</span><a className="btn btn-sm" href={sleeperUrl()} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
+                  <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper. {lockLine()}.</span><a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
                 </> : <p className="ss-none">Your Sleeper lineup matches the optimal one.</p>}
               </div>
               <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
