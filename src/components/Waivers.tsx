@@ -16,6 +16,9 @@ import { Select } from "./Select";
 import { WeekStepper } from "./WeekStepper";
 import { useKeyboardInset } from "./useKeyboardInset";
 import { matchPlayer, pieces, rankPlayers } from "../search";
+import { DepthTab, GameLogTab, SheetTabs, useSheetTab, type SheetTab } from "./PlayerTabs";
+import { PlayerSheet } from "./lazy";
+import type { Player } from "../data";
 
 /** Why a free agent can't help this week, or null when he can. */
 type Avail = null | "played" | "bye" | "out" | "ir";
@@ -136,6 +139,9 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
   passed: string[]; onPass: (p: { id: string; name: string }) => void; onUnpass: (p: { id: string; name: string }) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  // The claim sheet's tabs (Claim, Game log, Depth chart), remembered for the session; a depth chart name opens his sheet
+  const [sheetTab, setSheetTab] = useSheetTab("waiver", ["main", "log", "depth"]);
+  const [other, setOther] = useState<Player | null>(null);
   // K and DEF tabs only when the league starts them
   const tabs = TABS.filter((t) => (t !== "K" && t !== "DEF") || (LEAGUE.specialSlots ?? []).includes(t));
   const [pos, setPos] = useSticky<Tab>("waivers.pos", "ALL", tabs);
@@ -440,9 +446,18 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                 </Tooltip>
               </span>}
               {isOpen && r && !e.no && (
-                <DetailSheet className="wv-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
+                <DetailSheet className="wv-sheet pt-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
                   <span className="wvs-head"><Avatar p={e.fa} size={40} /><span className="wvs-who"><b>{e.fa.name}</b><small>{e.fa.pos} · {e.fa.nfl}</small></span></span>
-                }>
+                } bar={(() => {
+                  const opts: { v: SheetTab; label: string }[] = [{ v: "main", label: "Claim" }, { v: "log", label: "Game log" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart" }])];
+                  return <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={opts} onChange={(t) => { setSheetTab(t); document.querySelector(".pt-sheet .ds-body")?.scrollTo({ top: 0 }); }} />;
+                })()}>
+                {(closeSheet) => {
+                const subj = { id: e.fa.id, name: e.fa.name, pos: e.fa.pos, nfl: e.fa.nfl, proj: e.fa.proj, rookie: "rookie" in e.fa ? e.fa.rookie : undefined };
+                const t = e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab;
+                if (t === "log") return <GameLogTab key={e.fa.id} s={subj} />;
+                if (t === "depth") return <DepthTab key={e.fa.id} s={subj} onOpen={(id) => { const n = PLAYERS[id]; if (n) closeSheet(() => setOther(n)); }} />;
+                return (
                 <div className="wv-detail">
                   {e.fit && !kd && <p className="small ps-fit">{e.fit}</p>}
                   <p className="small">{kind === "current" ? (kd ? kd.line : r.fa.why)
@@ -463,6 +478,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
                     <span className="tiny muted">Claims are placed in your league app. Sources never bids for you.</span>
                   </div>
                 </div>
+                );
+                }}
                 </DetailSheet>
               )}
             </div>
@@ -471,6 +488,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
         </div>
       </section>
       </div>
+      {other && <PlayerSheet p={other} onClose={() => setOther(null)} />}
     </>
   );
 }

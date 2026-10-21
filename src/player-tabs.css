@@ -1,0 +1,111 @@
+/* Tabs in the player sheet and the waiver claim sheet (PlayerTabs.tsx): the tab row, the game log table and the depth
+   chart. Mobile first. Loads just before frame.css. Every rule is scoped to .st-tabs, .gl, .dc, .pt-body or .pt-sheet. */
+
+/* ---------- Tab row: the app's segmented control, full width, in the sheet's fixed top ---------- */
+html:root:not(#_):not(#_) .st-tabs { min-width: 0; margin-top: 8px; }
+html:root:not(#_):not(#_) .st-tabs > .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; box-sizing: border-box; }
+html:root:not(#_):not(#_) .st-tabs > .seg button {
+  min-height: 36px; padding: 6px 8px; white-space: nowrap; justify-content: center;
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .ps-detail > .ds-top > .st-tabs { margin-top: 2px; }
+/* The weeks stepper follows the tabs on Overview only */
+html:root:not(#_):not(#_) .ps.ps-player > .pd-top > .st-tabs + .pd-weeknav { margin-top: 4px; }
+
+/* The claim sheet holds one height whatever the tab, so the header and tabs never move */
+html:root:not(#_):not(#_) .ps.ps-detail.pt-sheet { height: 88vh; height: 88dvh; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ps.ps-detail.pt-sheet { height: min(85vh, 760px); max-width: 640px; }
+}
+
+/* Game log and depth chart take the whole body width on the wide two-column player sheet */
+html:root:not(#_):not(#_) .ps-body.pt-body { display: block; }
+html:root:not(#_):not(#_) .ps-body.pt-body > * { min-width: 0; }
+
+/* ---------- Skeleton ---------- */
+html:root:not(#_):not(#_) .gl-skel { display: grid; gap: 10px; padding-top: 4px; }
+html:root:not(#_):not(#_) .gl-skel span { height: 18px; border-radius: 6px; background: var(--surface-2); animation: pd-pulse 1.2s ease-in-out infinite alternate; }
+html:root:not(#_):not(#_) .gl-skel span:nth-child(3n) { width: 78%; }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .gl-skel span { animation: none; } }
+
+/* ---------- Game log ---------- */
+html:root:not(#_):not(#_) .gl { display: grid; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .gl-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+html:root:not(#_):not(#_) .gl-bar > .seg button { min-height: 32px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .gl-sum { display: flex; gap: 16px; margin: 0; }
+html:root:not(#_):not(#_) .gl-sum > div { display: grid; gap: 1px; }
+html:root:not(#_):not(#_) .gl-sum dt { font-size: 0.6875rem; color: var(--muted); }
+html:root:not(#_):not(#_) .gl-sum dd { margin: 0; font: 600 0.875rem/1.2 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* Scrolls sideways inside the tab on phones; the page never does */
+html:root:not(#_):not(#_) .gl-scroll {
+  max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+}
+html:root:not(#_):not(#_) .gl-scroll:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+html:root:not(#_):not(#_) .gl-tbl {
+  --gl-wk: 40px; --gl-opp: 58px; --gl-pts: 56px;
+  border-collapse: separate; border-spacing: 0; width: 100%; min-width: max-content;
+  font: 500 0.8125rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink);
+}
+html:root:not(#_):not(#_) .gl-tbl :is(th, td) { padding: 0 9px; height: 36px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); background: var(--surface); }
+html:root:not(#_):not(#_) .gl-tbl tbody tr:last-child > * { border-bottom: 0; }
+html:root:not(#_):not(#_) .gl-tbl thead th { height: 30px; font: 600 0.6875rem/1 "Geist", sans-serif; letter-spacing: 0.02em; color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl thead abbr { text-decoration: none; cursor: help; }
+html:root:not(#_):not(#_) .gl-tbl .gl-grp th { height: 24px; padding-top: 6px; border-bottom: 0; text-align: left; font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint, var(--muted)); }
+html:root:not(#_):not(#_) .gl-tbl .gl-g0 { border-left: 1px solid var(--line); }
+html:root:not(#_):not(#_) .gl-tbl .gl-grp .gl-g0 { padding-left: 10px; }
+
+/* WK, OPP and FPTS stay put on the left while the rest scrolls under them */
+html:root:not(#_):not(#_) .gl-tbl .gl-s { position: sticky; z-index: 1; }
+html:root:not(#_):not(#_) .gl-tbl .gl-wk { left: 0; width: var(--gl-wk); min-width: var(--gl-wk); box-sizing: border-box; text-align: left; padding-left: 12px; color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl .gl-opp { left: var(--gl-wk); width: var(--gl-opp); min-width: var(--gl-opp); box-sizing: border-box; text-align: left; }
+html:root:not(#_):not(#_) .gl-tbl .gl-pts { left: calc(var(--gl-wk) + var(--gl-opp)); width: var(--gl-pts); min-width: var(--gl-pts); box-sizing: border-box; font-weight: 600; border-right: 1px solid var(--line); }
+html:root:not(#_):not(#_) .gl-tbl .gl-s3 { left: 0; border-right: 1px solid var(--line); }
+html:root:not(#_):not(#_) .gl-tbl thead .gl-pts { font-weight: 600; }
+html:root:not(#_):not(#_) .gl-tbl .gl-at { color: var(--muted); margin-right: 1px; }
+html:root:not(#_):not(#_) .gl-tbl .gl-proj { color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl td.gl-pts.good { color: var(--good); }
+html:root:not(#_):not(#_) .gl-tbl td.gl-pts.bad { color: var(--bad); }
+html:root:not(#_):not(#_) .gl-tbl .gl-rest { text-align: left; font: 500 0.75rem/1 "Geist", sans-serif; color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl .gl-bye > * { background: var(--surface-2); }
+html:root:not(#_):not(#_) .gl-tbl .gl-bye .gl-opp { font: 600 0.6875rem/1 "Geist", sans-serif; letter-spacing: 0.06em; color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl .gl-fut .gl-opp, html:root:not(#_):not(#_) .gl-tbl .gl-fut .gl-wk { color: var(--muted); }
+html:root:not(#_):not(#_) .gl-tbl .gl-cur > * { background: var(--surface-2); }
+html:root:not(#_):not(#_) .gl-tbl .gl-cur .gl-wk { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_) .gl-tbl .gl-now { display: inline-block; width: 5px; height: 5px; margin-left: 4px; border-radius: 50%; background: var(--ink); vertical-align: middle; }
+
+/* ---------- Depth chart ---------- */
+html:root:not(#_):not(#_) .dc { display: grid; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .dc-list { display: grid; margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+html:root:not(#_):not(#_) .dc-g { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: start; border-bottom: 1px solid var(--line); }
+html:root:not(#_):not(#_) .dc-g:last-child { border-bottom: 0; }
+html:root:not(#_):not(#_) .dc-g > dt { padding: 13px 0 0 12px; font: 600 0.75rem/1 var(--font-mono); color: var(--muted); }
+html:root:not(#_):not(#_) .dc-g.his > dt { color: var(--ink); }
+html:root:not(#_):not(#_) .dc-g > dd { margin: 0; min-width: 0; }
+html:root:not(#_):not(#_) .dc-g ol { list-style: none; margin: 0; padding: 4px 6px 4px 0; display: grid; }
+html:root:not(#_):not(#_) .dc-g li {
+  display: flex; align-items: center; gap: 8px; min-height: 34px; min-width: 0; padding: 0 8px; border-radius: 8px;
+  font-size: 0.875rem; color: var(--ink);
+}
+html:root:not(#_):not(#_) .dc-g li.me { background: var(--surface-3); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_) .dc-o { flex: none; width: 14px; font: 500 0.75rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+html:root:not(#_):not(#_) .dc-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) button.dc-n {
+  padding: 4px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: none;
+  transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) { html:root:not(#_):not(#_) button.dc-n:hover { color: var(--muted); } }
+html:root:not(#_):not(#_) .dc-g li .status { flex: none; margin: 0; }
+html:root:not(#_):not(#_) .dc-tag {
+  flex: none; margin-left: auto; padding: 3px 7px; border-radius: 999px; border: 1px solid var(--line);
+  font: 500 0.6875rem/1 "Geist", sans-serif; color: var(--muted); white-space: nowrap;
+}
+html:root:not(#_):not(#_) .dc-tag.you { color: var(--ink); background: var(--surface-2); }
+html:root:not(#_):not(#_) .dc-g li .status + .dc-tag { margin-left: auto; }
+
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .dc-g { grid-template-columns: 64px minmax(0, 1fr); }
+  html:root:not(#_):not(#_) .gl-tbl :is(th, td) { padding: 0 10px; }
+}
+html:root:not(#_):not(#_) .dc-none { margin: 0; padding: 12px 8px 12px 0; font-size: 0.8125rem; color: var(--muted); }

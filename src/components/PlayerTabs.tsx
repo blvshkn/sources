@@ -1,0 +1,216 @@
+// Tabs for the player sheet and the waiver claim sheet: the sheet's own view, a game log and the team depth chart.
+// The tab row sits in the sheet's fixed top, so switching never moves it or the header; only the body swaps, with no
+// entrance animation. The last tab picked is remembered per sheet type for the session.
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { teamNick } from "../data";
+import { useLive } from "../live";
+import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, peekDepth, peekLog, seasonsFor } from "../gamelog";
+import { Seg, type IconName } from "./ui";
+
+// ---- Tab row --------------------------------------------------------------------------
+export type SheetTab = "main" | "log" | "depth";
+const mem: Record<string, SheetTab> = {};
+/** The sheet's tab, remembered per sheet type for this session (sessionStorage, with an in-memory fallback). */
+export function useSheetTab(kind: "player" | "waiver", allowed: SheetTab[]): [SheetTab, (t: SheetTab) => void] {
+  const [t, setT] = useState<SheetTab>(() => {
+    let v: string | null = mem[kind] ?? null;
+    try { v = sessionStorage.getItem(`sources.sheetTab.${kind}`) ?? v; } catch { /* storage blocked */ }
+    return v && allowed.includes(v as SheetTab) ? (v as SheetTab) : "main";
+  });
+  const set = (n: SheetTab) => { setT(n); mem[kind] = n; try { sessionStorage.setItem(`sources.sheetTab.${kind}`, n); } catch { /* ignore */ } };
+  return [allowed.includes(t) ? t : "main", set];
+}
+export function SheetTabs({ value, onChange, options }: { value: SheetTab; onChange: (t: SheetTab) => void; options: { v: SheetTab; label: string; icon?: IconName }[] }) {
+  return <div className="st-tabs"><Seg label="Sheet section" value={value} onChange={onChange} options={options} /></div>;
+}
+
+// ---- Shared bits ------------------------------------------------------------------------
+type Load<T> = { state: "loading" } | { state: "ready"; v: T } | { state: "none"; why: string };
+const DASH = "–";
+const Skel = ({ rows = 6 }: { rows?: number }) => <div className="gl-skel" aria-hidden="true">{Array.from({ length: rows }, (_, i) => <span key={i} />)}</div>;
+
+// ---- Game log -----------------------------------------------------------------------------
+type Col = { k: string; label: string; v: (s: Stats) => string; tip?: string };
+const n0 = (v: number | undefined) => String(Math.round(v ?? 0));
+/** A ratio with one decimal, "–" when there's nothing to divide by. */
+const per = (a: number | undefined, b: number | undefined) => (b ? ((a ?? 0) / b).toFixed(1) : DASH);
+/** A stat Sleeper leaves off a played game's line is a zero (it only sends the stats that happened). */
+const c = (k: string, label: string, tip?: string): Col => ({ k, label, tip, v: (s) => n0(s[k]) });
+const PASS: Col[] = [{ k: "ca", label: "C/A", tip: "Completions / attempts", v: (s) => `${n0(s.pass_cmp)}/${n0(s.pass_att)}` }, c("pass_yd", "YD"), c("pass_td", "TD"), c("pass_int", "INT")];
+const RUSH_FULL: Col[] = [c("rush_att", "ATT"), c("rush_yd", "YD"), { k: "rypc", label: "YPC", tip: "Yards per carry", v: (s) => per(s.rush_yd, s.rush_att) }, c("rush_td", "TD")];
+const RUSH: Col[] = [c("rush_att", "ATT"), c("rush_yd", "YD"), c("rush_td", "TD")];
+const REC: Col[] = [c("rec_tgt", "TAR"), c("rec", "REC"), c("rec_yd", "YD"), { k: "ypt", label: "YPT", tip: "Yards per target", v: (s) => per(s.rec_yd, s.rec_tgt) }, { k: "ypr", label: "YPC", tip: "Yards per catch", v: (s) => per(s.rec_yd, s.rec) }, c("rec_td", "TD")];
+const FUM: Col[] = [c("fum", "FUM"), c("fum_lost", "LOST")];
+const KICK: Col[] = [{ k: "fg", label: "FG", tip: "Field goals made / attempted", v: (s) => `${n0(s.fgm)}/${n0(s.fga)}` }, c("fgm_40_49", "40-49"), c("fgm_50p", "50+"), { k: "xp", label: "XP", tip: "Extra points made / attempted", v: (s) => `${n0(s.xpm)}/${n0(s.xpa)}` }];
+const DEF: Col[] = [c("pts_allow", "PA", "Points allowed"), c("sack", "SACK"), c("int", "INT"), c("fum_rec", "FR", "Fumbles recovered"), c("def_td", "TD")];
+const GROUPS: Record<Subject["pos"], { label: string; cols: Col[] }[]> = {
+  QB: [{ label: "Passing", cols: PASS }, { label: "Rushing", cols: RUSH }, { label: "Fumbles", cols: FUM }],
+  RB: [{ label: "Rushing", cols: RUSH_FULL }, { label: "Receiving", cols: REC }, { label: "Fumbles", cols: FUM }],
+  WR: [{ label: "Receiving", cols: REC }, { label: "Rushing", cols: RUSH }, { label: "Fumbles", cols: FUM }],
+  TE: [{ label: "Receiving", cols: REC }, { label: "Rushing", cols: RUSH }, { label: "Fumbles", cols: FUM }],
+  K: [{ label: "Kicking", cols: KICK }],
+  DEF: [{ label: "Defense", cols: DEF }],
+};
+const oppLabel = (o: string | null) => (o ? o.replace(/^(v|@)\s*/, "") : DASH);
+const away = (o: string | null) => !!o && o.startsWith("@");
+
+export function GameLogTab({ s }: { s: Subject }) {
+  const seasons = seasonsFor();
+  const [season, setSeason] = useState(seasons[0]);
+  const [log, setLog] = useState<Load<SeasonLog>>(() => { const v = peekLog(s, seasons[0]); return v ? { state: "ready", v } : { state: "loading" }; });
+  useEffect(() => {
+    let on = true;
+    const ready = peekLog(s, season);
+    setLog(ready ? { state: "ready", v: ready } : { state: "loading" });
+    if (!ready) loadLog(s, season).then((v) => on && setLog({ state: "ready", v }), () => on && setLog({ state: "none", why: "Couldn't load stats from Sleeper. Try again in a minute." }));
+    return () => { on = false; };
+  }, [s.id, season]); // eslint-disable-line react-hooks/exhaustive-deps
+  const live = useLive();
+  const groups = GROUPS[s.pos];
+  const skill = s.pos !== "K" && s.pos !== "DEF";
+  const lead = skill ? 2 : 1; // PROJ, plus SNP% for skill players
+  const span = lead + groups.reduce((a, g) => a + g.cols.length, 0);
+
+  const played = log.state === "ready" ? log.v.rows.filter((r) => r.pts !== undefined && r.when === "past") : [];
+  const avg = played.length ? played.reduce((a, r) => a + (r.pts ?? 0), 0) / played.length : null;
+  const best = played.length ? Math.max(...played.map((r) => r.pts ?? 0)) : null;
+  const beat = played.filter((r) => r.proj !== undefined && (r.pts ?? 0) >= r.proj).length;
+  const withProj = played.filter((r) => r.proj !== undefined).length;
+
+  const row = (r: LogRow) => {
+    // This week: points so far once his game is on (the live feed), otherwise just the projection
+    const st = live?.games[s.nfl];
+    const nowPts = r.when === "now" && (st === "in_game" || st === "complete") ? live?.points[s.id] : undefined;
+    const pts = r.when === "now" ? nowPts : r.pts;
+    const tone = pts !== undefined && r.proj !== undefined && r.when === "past"
+      ? (pts - r.proj >= Math.max(3, r.proj * 0.2) ? " good" : r.proj - pts >= Math.max(3, r.proj * 0.2) ? " bad" : "") : "";
+    const snap = r.stats && r.stats.off_snp !== undefined && r.stats.tm_off_snp ? `${Math.round((r.stats.off_snp / r.stats.tm_off_snp) * 100)}%` : DASH;
+    const head = (
+      <>
+        <th scope="row" className="gl-s gl-wk">{r.week}{r.when === "now" && <i className="gl-now" aria-label=", this week" />}</th>
+        <td className={`gl-s gl-opp${r.bye ? " bye" : ""}`}>{r.bye ? "BYE" : <>{away(r.opp) && <span className="gl-at">@</span>}{oppLabel(r.opp)}</>}</td>
+        <td className={`gl-s gl-pts${tone}`}>{r.bye ? "" : pts !== undefined ? pts.toFixed(1) : r.when === "past" ? DASH : ""}</td>
+      </>
+    );
+    if (r.bye) return <tr key={r.week} className="gl-bye">{head}<td colSpan={span} className="gl-rest">Bye week</td></tr>;
+    if (r.when !== "past" || !r.stats) return (
+      <tr key={r.week} className={r.when === "now" ? "gl-cur" : r.when === "future" ? "gl-fut" : "gl-miss"}>
+        {head}
+        <td className="gl-proj">{r.proj !== undefined ? r.proj.toFixed(1) : DASH}</td>
+        <td colSpan={span - 1} className="gl-rest">{r.when === "now" ? (nowPts !== undefined ? (st === "complete" ? "Final" : "Live") : "This week") : r.when === "past" ? (r.miss === "na" ? "Stats not available" : "Did not play") : ""}</td>
+      </tr>
+    );
+    return (
+      <tr key={r.week}>
+        {head}
+        <td className="gl-proj">{r.proj !== undefined ? r.proj.toFixed(1) : DASH}</td>
+        {skill && <td>{snap}</td>}
+        {groups.map((g) => g.cols.map((col, i) => <td key={`${g.label}${col.k}`} className={i === 0 ? "gl-g0" : undefined}>{col.v(r.stats!)}</td>))}
+      </tr>
+    );
+  };
+
+  return (
+    <section className="gl" aria-label="Game log" aria-busy={log.state === "loading"}>
+      <div className="gl-bar">
+        <Seg label="Season" value={season} onChange={setSeason} options={seasons.map((y) => ({ v: y, label: y }))} />
+        {log.state === "ready" && played.length > 0 && (
+          <dl className="gl-sum">
+            <div><dt>Games</dt><dd>{played.length}</dd></div>
+            <div><dt>Avg</dt><dd>{avg!.toFixed(1)}</dd></div>
+            <div><dt>Best</dt><dd>{best!.toFixed(1)}</dd></div>
+            {withProj > 0 && <div><dt>Beat proj</dt><dd>{beat}/{withProj}</dd></div>}
+          </dl>
+        )}
+      </div>
+      {log.state === "loading" ? <Skel rows={8} />
+        : log.state === "none" ? <p className="ps-none">{log.why}</p>
+        : log.v.empty || !log.v.rows.length ? <p className="ps-none">{log.v.empty ?? `No ${season} games on record yet.`}</p>
+        : (
+          <>
+            <div className="gl-scroll" tabIndex={0} role="region" aria-label={`${s.name} ${season} game log, scrolls sideways`}>
+              <table className="gl-tbl">
+                <thead>
+                  <tr className="gl-grp">
+                    <th colSpan={3} className="gl-s gl-s3" aria-hidden="true" />
+                    <th colSpan={lead} aria-hidden="true" />
+                    {groups.map((g) => <th key={g.label} colSpan={g.cols.length} scope="colgroup" className="gl-g0">{g.label}</th>)}
+                  </tr>
+                  <tr>
+                    <th scope="col" className="gl-s gl-wk">WK</th>
+                    <th scope="col" className="gl-s gl-opp">OPP</th>
+                    <th scope="col" className="gl-s gl-pts">FPTS</th>
+                    <th scope="col" className="gl-proj">PROJ</th>
+                    {skill && <th scope="col"><abbr title="Share of his team's offensive snaps">SNP%</abbr></th>}
+                    {groups.map((g) => <Fragment key={g.label}>{g.cols.map((col, i) => <th key={col.k} scope="col" className={i === 0 ? "gl-g0" : undefined}>{col.tip ? <abbr title={col.tip}>{col.label}</abbr> : col.label}</th>)}</Fragment>)}
+                  </tr>
+                </thead>
+                <tbody>{log.v.rows.map(row)}</tbody>
+              </table>
+            </div>
+            <p className="pd-fine">
+              {log.v.demo ? "Demo league stats, made up for the sample season. " : `From Sleeper's weekly stats and projections${log.v.team && log.v.team !== s.nfl ? ` (with ${log.v.team} that season)` : ""}, scored with your league's settings. `}
+              {withProj > 0 ? "FPTS is green when he beat his projection by 20% or more, red when he fell 20% short." : ""}
+            </p>
+          </>
+        )}
+    </section>
+  );
+}
+
+// ---- Depth chart -------------------------------------------------------------------------
+const INJ: Record<string, { cls: "Q" | "O"; word: string }> = {
+  Questionable: { cls: "Q", word: "Questionable" }, Doubtful: { cls: "O", word: "Doubtful" }, Out: { cls: "O", word: "Out" },
+  IR: { cls: "O", word: "IR" }, PUP: { cls: "O", word: "PUP" }, Sus: { cls: "O", word: "Suspended" }, NA: { cls: "O", word: "Out" },
+};
+export function DepthTab({ s, onOpen }: { s: Subject; onOpen?: (id: string) => void }) {
+  const [d, setD] = useState<Load<Depth>>(() => { const v = peekDepth(s.nfl); return v ? { state: "ready", v } : { state: "loading" }; });
+  useEffect(() => {
+    let on = true;
+    if (!peekDepth(s.nfl)) {
+      setD({ state: "loading" });
+      loadDepth(s.nfl).then((v) => on && setD({ state: "ready", v }), () => on && setD({ state: "none", why: "Couldn't load the depth chart from Sleeper. Try again in a minute." }));
+    } else setD({ state: "ready", v: peekDepth(s.nfl)! });
+    return () => { on = false; };
+  }, [s.nfl]);
+  const mineKey = d.state === "ready" ? groupOf(d.v, s.id) : undefined;
+  return (
+    <section className="dc" aria-label="Depth chart" aria-busy={d.state === "loading"}>
+      <div className="ps-sub"><b>{teamNick(s.nfl).replace(/^the /, "")} depth chart</b><span>{s.nfl}</span></div>
+      {d.state === "loading" ? <Skel rows={7} />
+        : d.state === "none" ? <p className="ps-none">{d.why}</p>
+        : !d.v.groups.length ? <p className="ps-none">Sleeper has no depth chart for {s.nfl} right now.</p>
+        : (
+          <>
+            <dl className="dc-list">
+              {d.v.groups.map((g) => (
+                <div key={g.key} className={`dc-g${g.key === mineKey ? " his" : ""}`}>
+                  <dt>{g.label}</dt>
+                  <dd>
+                    {!g.entries.length ? <p className="dc-none">No one at {g.label} in the demo league</p> : <ol>
+                      {g.entries.map((e, i) => {
+                        const inj = e.injury ? INJ[e.injury] : undefined;
+                        const me = e.id === s.id;
+                        const name: ReactNode = onOpen && e.tappable && !me
+                          ? <button className="dc-n" onClick={() => onOpen(e.id)}>{e.name}</button>
+                          : <span className="dc-n">{e.name}</span>;
+                        return (
+                          <li key={e.id} className={me ? "me" : undefined} aria-current={me || undefined}>
+                            <span className="dc-o">{i + 1}</span>
+                            {name}
+                            {inj && <span className={`status status-${inj.cls}`}>{inj.word}</span>}
+                            {e.owner && <span className={`dc-tag${e.owner.you ? " you" : ""}`}>{e.owner.label}</span>}
+                          </li>
+                        );
+                      })}
+                    </ol>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="pd-fine">{d.v.demo ? "Demo depth chart, built from the players in the demo league." : `From Sleeper's depth chart for ${s.nfl}. Teams shuffle it during the week, so check it again before lock.`}</p>
+          </>
+        )}
+    </section>
+  );
+}

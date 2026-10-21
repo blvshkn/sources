@@ -117,6 +117,27 @@ export function fetchWeekRows(season: string, week: number, kind: "stats" | "pro
 export type StatRow = { player_id: string; team: string | null; opponent?: string | null; stats: Record<string, number | undefined> };
 export const fetchStatRows = (season: string, week: number, pos: string) =>
   cached(`stats:${season}:${week}:${pos}`, 30 * 60_000, () => get<StatRow[]>(`/stats/nfl/${season}/${week}?season_type=regular&position[]=${pos}`));
+/** One week of league-wide projections for one position, same shape as the stat rows. The game log's PROJ column
+ *  for weeks already played (weeks ahead come from the season slate). Cached for 30 minutes. */
+export const fetchProjRows = (season: string, week: number, pos: string) =>
+  cached(`proj:${season}:${week}:${pos}`, 30 * 60_000, () => get<StatRow[]>(`/projections/nfl/${season}/${week}?season_type=regular&position[]=${pos}`));
+/** The NFL regular-season schedule for any season (the same feed loadLeague reads for this one). The game log uses it
+ *  for last season's opponents and bye week. Cached for an hour. */
+export const fetchSchedule = (season: string) =>
+  cached(`sched:${season}`, 60 * 60_000, () => fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`).then((r) => (r.ok ? r.json() : [])) as Promise<{ week: number; home: string; away: string }[]>);
+/** Sleeper's full player file, trimmed to what a depth chart needs. It's large, so it loads once per session, only
+ *  when a depth chart is opened. Sleeper fills depth_chart_position and depth_chart_order from team depth charts. */
+export interface DepthRow { id: string; name: string; team: string; pos: string; slot: string; order: number; injury?: string | null }
+export const fetchDepthRows = () =>
+  cached("players:depth", 6 * 60 * 60_000, async () => {
+    const all = await get<Record<string, SPlayerLite & { depth_chart_position?: string | null; depth_chart_order?: number | null; active?: boolean }>>("/v1/players/nfl");
+    const out: DepthRow[] = [];
+    for (const [id, p] of Object.entries(all ?? {})) {
+      if (!p?.team || !p.depth_chart_position || typeof p.depth_chart_order !== "number" || p.active === false) continue;
+      out.push({ id, name: [p.first_name, p.last_name].filter(Boolean).join(" "), team: p.team, pos: p.position ?? "", slot: p.depth_chart_position, order: p.depth_chart_order, injury: p.injury_status ?? null });
+    }
+    return out;
+  });
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
 // ---- Public calls --------------------------------------------------------

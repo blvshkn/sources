@@ -30,7 +30,7 @@ const played = (s: Stats) => (s.gp ?? 0) > 0 || (s.off_snp ?? 0) > 0 || (s.pts_p
 
 // ---- Demo lines ----------------------------------------------------------
 /** A stat line that adds up to roughly `pts` PPR points, shaped by position and role. */
-function demoLine(p: Player, w: number, pts: number): Stats {
+export function demoLine(p: Pick<Player, "id" | "pos" | "proj">, w: number, pts: number): Stats {
   const r = (k: string) => hash(`${p.id}:${w}:${k}`);
   const role = Math.min(1, p.proj / 20);
   const td = pts >= 26 ? 2 : pts >= 15 ? 1 : 0;

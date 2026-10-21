@@ -5,7 +5,7 @@ import { ScheduleStrip } from "./Schedule";
 import { LineupCall, OutcomeRange, WeekDepth, gameLog, nowFor, outcomeFor, statusDetail } from "./PlayerDepth";
 import { WeekStepper } from "./WeekStepper";
 import { useLive } from "../live";
-import { Player, WEEK, onBye } from "../data";
+import { PLAYERS, Player, WEEK, onBye } from "../data";
 import { kickLine, useKickoffs } from "../kickoff";
 import { eff, fmt, round1, scored } from "../engine";
 import { Avatar } from "./Avatar";
@@ -14,13 +14,22 @@ import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { useEdgeFade } from "./edgeFade";
 import { ScrollArea } from "./ScrollArea";
+import { DepthTab, GameLogTab, SheetTabs, useSheetTab } from "./PlayerTabs";
 
 /** Below this the player is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches player-modal.css. */
 const isSheet = () => typeof window !== "undefined" && window.innerWidth < 768;
 
 /** Player details in a bottom sheet on phones and a centered modal from 768px, so you stay on the page you were on. */
-export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
+export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onClose, onCompare: firstCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
   const [shown, setShown] = useState(false);
+  // A name tapped in the depth chart opens that player here; the opener's context (where, note, compare) was about the first one
+  const [p, setP] = useState(first);
+  const other = p.id !== first.id;
+  const where = other ? undefined : firstWhere, note = other ? undefined : firstNote, onCompare = other ? undefined : firstCompare;
+  // Overview, Game log, Depth chart. The tab row sits in the fixed top with the header, so neither moves on a switch.
+  const [tab, setTab] = useSheetTab("player", ["main", "log", "depth"]);
+  const pick = (t: typeof tab) => { setTab(t); body.current?.scrollTo({ top: 0 }); };
+  const openOther = (id: string) => { const n = PLAYERS[id]; if (!n) return; setP(n); setWeek(WEEK); setTab("main"); body.current?.scrollTo({ top: 0 }); };
   // Which week the sheet shows. The header and stepper stay put; the body below them swaps.
   const [week, setWeek] = useState(WEEK);
   useKickoffs(week);
@@ -70,10 +79,14 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>
-        <WeekStepper week={week} onChange={(w) => { setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />
+        <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview" }, { v: "log", label: "Game log" }, { v: "depth", label: "Depth chart" }]} />
+        {tab === "main" && <WeekStepper week={week} onChange={(w) => { setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />}
         </div>
         {/* Only this scrolls; the shell clips it to the rounded corners and the header above stays put */}
-        <ScrollArea ref={body} className="ps-body" data-sheet-scroll>
+        <ScrollArea ref={body} className={`ps-body${tab === "main" ? "" : " pt-body"}`} data-sheet-scroll>
+        {tab === "log" && <GameLogTab key={p.id} s={p} />}
+        {tab === "depth" && <DepthTab key={p.id} s={p} onOpen={openOther} />}
+        {tab === "main" && <>
         {note && cur && <p className="ps-why">{note}</p>}
         {status && week >= WEEK && <p className={`ps-inj${p.status === "O" ? " out" : ""}`}><Icon name="alert" size={14} />{status}</p>}
 
@@ -139,6 +152,7 @@ export function PlayerSheet({ p, where, note, onClose, onCompare }: { p: Player;
         </div>
 
         {onCompare && <button className="btn btn-primary ps-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}>Compare in Start / Sit</button>}
+        </>}
         </ScrollArea>
       </section>
     </div>,

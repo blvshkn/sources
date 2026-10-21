@@ -19,8 +19,10 @@ const isSheet = () => typeof window !== "undefined" && window.innerWidth < MODAL
  * The header (title slot plus the close button) stays put; only the body scrolls.
  * `children` can be a function that gets `close(after)`, for actions that should close the sheet and then go somewhere.
  */
-export function DetailSheet({ title, label, className = "", onClose, children }: {
+export function DetailSheet({ title, label, className = "", onClose, children, bar }: {
   title: ReactNode;
+  /** Optional row under the title that stays put with it (tabs, say). Only the body below scrolls. */
+  bar?: ReactNode;
   /** Accessible name when the title slot isn't plain text */
   label?: string;
   className?: string;
@@ -76,6 +78,7 @@ export function DetailSheet({ title, label, className = "", onClose, children }:
           <span className="ps-handle" aria-hidden="true" />
           <div className="ds-title" id={titleId}>{title}</div>
           <button ref={closeBtn} className="ps-x" onClick={() => close()} aria-label="Close"><Icon name="x" size={18} /></button>
+          {bar}
         </div>
         <ScrollArea className="ds-body" data-sheet-scroll>
           {typeof children === "function" ? children(close) : children}
