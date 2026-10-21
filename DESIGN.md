@@ -66,10 +66,11 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - Field: #111916 to #090C0B gradient, lime floodlight glow from the top right, faint yard lines every 120px.
 - Surfaces: #141C19, #1A2420, #222E29. Hairline rgba(244,246,242,0.075).
 - Ink #F4F6F2, muted #98A39B, faint #5E6A62.
-- Floodlight lime #D8F24A is the one accent: you, primary actions, your next move. Anything on lime uses dark ink #0D1311.
+- Floodlight lime #D8F24A is the brand accent: the logo, primary actions, focus rings, your next move. It never means "you" or "good". Anything on lime uses dark ink #0D1311.
+- You are the winning green (--you points at --good, mint #7BE08F). Next to your side, the other side stays neutral gray.
 - Gains mint #7BE08F, warnings #F2BE55, losses #FF8473. Turf #1F6B47 for brand moments.
 - Every tab shares the lime section light. The shareable trade card and the app always match.
-- Lime is rationed: your score and dot, the active tab, the one main action per screen, gains. Repeated actions in lists use the tinted lime button. Labels, links and panels stay in chalk.
+- Lime is rationed: the active tab and the one main action per screen. Repeated actions in lists use the tinted lime button. Labels, links and panels stay in chalk.
 - Sheets: pull down from anywhere once scrolled to the top, or tap outside, to dismiss. No confirmation step unless an action can't be undone.
 - Buttons: primary is solid lime pill; secondary and icon buttons are soft filled pills/circles with no border.
 - One container level. Borders only on tappable things; static surfaces separate by fill. Inside a card, group with space and a hairline, never another bordered box. Pickers and send/get panels may use a soft fill with no border.

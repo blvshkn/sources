@@ -86,7 +86,7 @@ html:root:not(#_) .shell.inbox-open .rail.ibx {
 .ibx-ctx-head .linkish { font-size: 0.8125rem; }
 .mst { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .mst li { display: grid; grid-template-columns: 18px 22px minmax(0, 1fr) auto 36px; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: 0.8125rem; color: var(--muted); }
-.mst li.you { background: rgba(var(--lime-rgb), 0.1); color: var(--ink); }
+.mst li.you { background: rgba(var(--you-rgb), 0.1); color: var(--ink); }
 .mst-rk, .mst-rec, .mst-pf { font-family: var(--font-mono); font-size: 0.75rem; }
 .mst-pf { text-align: right; color: var(--faint); }
 .mst-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -108,7 +108,7 @@ html:root:not(#_):not(#_):not(#_) .mt-team {
 }
 html:root:not(#_):not(#_):not(#_) .mt-team:first-child { border-top: 0; padding-top: 0; }
 html:root:not(#_):not(#_):not(#_) .mt-team .tp-av { width: 32px; height: 32px; }
-html:root:not(#_):not(#_):not(#_) .mt-av.you-dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--action-ink, #10130f); font: 700 0.6875rem/1 var(--font-body); }
+html:root:not(#_):not(#_):not(#_) .mt-av.you-dot { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--you); color: var(--action-ink, #10130f); font: 700 0.6875rem/1 var(--font-body); }
 html:root:not(#_):not(#_):not(#_) .mt-tw { display: grid; gap: 2px; min-width: 0; }
 html:root:not(#_):not(#_):not(#_) .mt-tw b { font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html:root:not(#_):not(#_):not(#_) .mt-tw small { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

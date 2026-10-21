@@ -146,7 +146,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .dv-h {
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-h::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-h.you { color: var(--ink); }
-html:root:not(#_):not(#_):not(#_):not(#_) .dv-h.you::before { background: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-h.you::before { background: var(--you); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-c { min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-v { display: grid; justify-items: end; gap: 3px; text-align: right; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-n { font: 600 1.125rem/1.1 var(--font-mono); letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -155,10 +155,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .dv-n.down { color: var(--bad); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-s { font: 400 0.6875rem/1.25 var(--font-mono); color: var(--muted); white-space: nowrap; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-acc { font: 600 0.9375rem/1.2 var(--font-body); color: var(--ink); white-space: nowrap; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-pct { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-/* One thin bar under trade value: what you give in lime, what you get in chalk */
+/* One thin bar under trade value: what you give in your green, what you get in chalk */
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar { grid-column: 2 / -1; display: flex; gap: 2px; height: 4px; margin-top: 10px; border-radius: 4px; overflow: hidden; }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i { display: block; min-width: 4px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:first-child { background: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:first-child { background: var(--you); }
 html:root:not(#_):not(#_):not(#_):not(#_) .dv-bar i:last-child { background: color-mix(in srgb, var(--ink) 38%, transparent); }
 
 /* Actions: Show the math as a quiet link, Write pitch on the right. Tablet and up push both to the far right. */

@@ -1,0 +1,27 @@
+/* You are green. Lime #D8F24A is the brand (logo, primary buttons, focus rings, the brand accent) and never
+   means "you" or "good". --you now points at --good in the Night Field tokens, so anything that marks your
+   side reads in the winning green.
+   Where your side sits next to a side that used to be green (what you get in the trade builder), the other
+   side goes neutral so the two never share a color: you in green, the rest in gray. */
+
+/* Trade builder: "You send" keeps your green, "You get" goes neutral */
+html:root:not(#_):not(#_):not(#_) .deal-lists > div:last-child .eyebrow { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .mt-col .qs-get .eyebrow { color: var(--muted); }
+
+/* Picked players on their roster: a neutral wash and a gray check, not a second green */
+html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] {
+  background: linear-gradient(90deg, rgba(var(--them-rgb), 0.14), rgba(var(--them-rgb), 0.04)) !important;
+}
+html:root:not(#_):not(#_):not(#_) .pick.tone-get[aria-pressed="true"] .check {
+  background: var(--muted) !important; border-color: var(--muted) !important; color: #121413 !important;
+}
+
+/* Deal tray: Send in green, Get in gray */
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-label { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip { border-color: rgba(var(--them-rgb), 0.25); }
+html:root:not(#_):not(#_):not(#_) .deal-tray .dt-side.get .dt-chip::before {
+  background: rgba(var(--them-rgb), 0.12); box-shadow: inset 0 0 0 1px rgba(var(--them-rgb), 0.25);
+}
+
+/* Waivers: "Rookie" borrowed the you color. It is a fact about the player, so it reads in plain ink. */
+html:root:not(#_):not(#_):not(#_) .wv-meta .wv-flag { color: var(--ink); }

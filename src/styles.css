@@ -1233,7 +1233,7 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .skip-link { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 600; }
 .skip-link:focus { top: calc(env(safe-area-inset-top, 0px) + 12px); }
 .main:focus { outline: none; }
-:where(button, a, select, input, textarea, [tabindex]):focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+:where(button, a, select, input, textarea, [tabindex]):focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
 
 /* Waiver rows, Sleeper Players style */
 .wv .wv-row { display: grid !important; grid-template-columns: 22px 40px minmax(0, 1fr) auto; grid-template-areas: "rank shirt who proj" ". stats stats stats"; align-items: center; gap: 4px 12px; padding: 14px 16px; width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; }
@@ -1545,7 +1545,7 @@ p, .page-sub { max-width: 65ch; }
 .sb-stat-link > svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
 .sb-stat-link:active { transform: scale(0.98); }
 @media (hover: hover) { .sb-stat-link:hover { background: var(--surface-3); } }
-.sb-stat-link:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+.sb-stat-link:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
 
 /* ---------- Top pickup card (Waivers) ---------- */
 .topk { padding: 18px 18px 16px; display: grid; gap: 14px; }
@@ -1577,7 +1577,7 @@ p, .page-sub { max-width: 65ch; }
 .tp-btn > svg { color: var(--muted); transform: rotate(90deg); transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 .tp-btn[aria-expanded="true"] { border-color: var(--faint); }
 .tp-btn[aria-expanded="true"] > svg { transform: rotate(-90deg); }
-.tp-btn:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+.tp-btn:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
 .tp-who { display: grid; gap: 1px; min-width: 0; }
 .tp-who b { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tp-who small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1618,12 +1618,12 @@ p, .page-sub { max-width: 65ch; }
 .wv-head-t span { font-size: 0.8125rem; color: var(--muted); }
 .wv-sort { position: relative; flex: none; display: inline-flex; align-items: center; }
 .wv-sort select { appearance: none; -webkit-appearance: none; height: 34px; padding: 0 30px 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 500 0.8125rem/1 var(--font-body); cursor: pointer; }
-.wv-sort select:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+.wv-sort select:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
 .wv-sort svg { position: absolute; right: 10px; pointer-events: none; color: var(--muted); transform: rotate(90deg); }
 .wv-pos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 0 16px 12px; padding: 3px; border-radius: 8px; background: var(--surface-2); }
 .wv-pos button { height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 500 0.8125rem/1 var(--font-body); cursor: pointer; transition: background 140ms ease, color 140ms ease; }
 .wv-pos button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
-.wv-pos button:focus-visible { outline: 2px solid var(--you); outline-offset: 1px; }
+.wv-pos button:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 1px; }
 .wv-card > .wv:first-of-type, .wv-card .wv-pos + * { border-top: 1px solid var(--line); }
 .wv-card .wv-hidden { margin: 0; padding: 12px 16px 14px; border-top: 1px solid var(--line); font-size: 0.75rem; }
 
@@ -1735,7 +1735,7 @@ p, .page-sub { max-width: 65ch; }
 .team-trade { justify-self: start; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--ink); font: 500 0.875rem/1 var(--font-body); cursor: pointer; }
 .team-trade svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 @media (hover: hover) { .team-trade:hover svg { transform: translateX(2px); } }
-.team-trade:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; border-radius: 4px; }
+.team-trade:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; border-radius: 4px; }
 
 /* ==== Gradients with meaning ===================================================
    Light that tells you where you are and what matters. Every gradient maps to a
@@ -2022,7 +2022,7 @@ body::after {
 .sb2-partner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: inherit; font: inherit; cursor: pointer; text-align: left; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms ease; }
 .sb2-partner:active { transform: scale(0.98); }
 .sb2-partner:hover { border-color: rgba(var(--you-rgb), 0.4); }
-.sb2-partner:focus-visible { outline: 2px solid rgb(var(--you-rgb)); outline-offset: 2px; }
+.sb2-partner:focus-visible { outline: 2px solid var(--lime, rgb(var(--you-rgb))); outline-offset: 2px; }
 .sb2-partner .sb2-who small { order: -1; }
 .sb2-go { display: inline-flex; align-items: center; gap: 2px; font-size: 0.8125rem; font-weight: 600; color: rgb(var(--you-rgb)); white-space: nowrap; }
 .sb2-none { margin: 0; font-size: 0.875rem; color: var(--muted); }
@@ -2420,13 +2420,13 @@ html:root:not([data-nf]):not(#_) {
   --lime: #D8F24A; --lime-rgb: 216, 242, 74; --turf: #1F6B47;
   --stamp: #D8F24A; --stamp-ink: #121413; --stamp-soft: rgba(216, 242, 74, 0.10);
   --action: #D8F24A; --action-ink: #121413;
-  --you: #D8F24A; --them: #7C877F;
+  --you: var(--good); --them: #7C877F;
   --good: #7BE08F; --good-soft: rgba(123, 224, 143, 0.12);
   --warn: #F2BE55; --warn-soft: rgba(242, 190, 85, 0.12);
   --bad: #FF8473; --bad-soft: rgba(255, 132, 115, 0.12);
   --qb: #FF9B8C; --rb: #7BE08F; --wr: #8CC8F2; --te: #F2BE55; --k: #C2B3F0;
   --qb-bg: rgba(255, 155, 140, 0.13); --rb-bg: rgba(123, 224, 143, 0.13); --wr-bg: rgba(140, 200, 242, 0.13); --te-bg: rgba(242, 190, 85, 0.13); --k-bg: rgba(194, 179, 240, 0.13);
-  --you-rgb: 216, 242, 74; --good-rgb: 123, 224, 143; --warn-rgb: 242, 190, 85; --them-rgb: 152, 163, 155;
+  --you-rgb: var(--good-rgb); --good-rgb: 123, 224, 143; --warn-rgb: 242, 190, 85; --them-rgb: 152, 163, 155;
   --tab-rgb: 216, 242, 74; --glow-a: 0.15;
   color-scheme: dark;
 }
@@ -2533,7 +2533,7 @@ html:root:not(#_) .mu-side b { font: 600 clamp(2rem, 1.4rem + 2.4vw, 2.75rem)/1 
 html:root:not(#_) .mu-mid { padding: 0; min-width: 64px; }
 html:root:not(#_) .mu-mid b { font: 600 1.25rem/1 var(--font-display); }
 html:root:not(#_) .mu-bar { height: 6px; background: rgba(255, 255, 255, 0.08); margin-top: 14px; }
-html:root:not(#_) .mu-bar span { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
+html:root:not(#_) .mu-bar span { background: linear-gradient(90deg, rgba(var(--you-rgb), 0.5), var(--you)); }
 /* Start/Sit compare: losing side in chalk, winning side in lime with dark ink */
 html:root:not(#_) .sx-bar { background: rgba(255, 255, 255, 0.04); }
 html:root:not(#_) .sx-bar i { background: rgba(255, 255, 255, 0.12); }
@@ -2979,7 +2979,7 @@ html:root:not(#_) .nudge-actions, html:root:not(#_) .ti-actions, html:root:not(#
 .psr-n b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .psr-n small { font-size: 0.8125rem; color: var(--muted); }
 .psr-team { max-width: 128px; padding: 4px 10px; border-radius: 999px; background: var(--surface-3); color: var(--ink); font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.psr-team.you { background: rgba(var(--lime-rgb), 0.14); color: var(--lime); }
+.psr-team.you { background: rgba(var(--you-rgb), 0.14); color: var(--you); }
 .psr-act { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--lime); color: var(--action-ink); }
 .psr-row.on .psr-act { background: var(--surface-3); color: var(--lime); }
 .psr-none { padding: 14px 10px; font-size: 0.875rem; color: var(--muted); }
@@ -4077,7 +4077,7 @@ html:root:not(#_) .ld2-nav .btn, html:root:not(#_) .ld2-again { min-height: 44px
 html:root:not(#_) .ld2 {
   --lime: #D8F24A; --lime-rgb: 216, 242, 74;
   --stamp: #D8F24A; --stamp-ink: #121413; --stamp-soft: rgba(216, 242, 74, 0.10);
-  --action: #D8F24A; --action-ink: #121413; --you: #D8F24A; --you-rgb: 216, 242, 74; --tab-rgb: 216, 242, 74;
+  --action: #D8F24A; --action-ink: #121413; --you: var(--good); --you-rgb: var(--good-rgb); --tab-rgb: 216, 242, 74;
 }
 /* The gradient lives on each masked line so the clip and the slide can both work */
 html:root:not(#_) .ld2-h1.ld2-lines { background: none; color: inherit; -webkit-background-clip: border-box; background-clip: border-box; }
