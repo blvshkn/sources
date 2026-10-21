@@ -25,6 +25,7 @@ import { lockedIn, resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
+import { useIconStroke } from "./iconStroke";
 
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
@@ -540,10 +541,11 @@ function StatusGlyphs() {
   );
 }
 
-/** Video call, drawn to match the 1.25 line of the nav icons. */
+/** Video call, on the nav icons' line (set by drawn size, iconStroke.ts). */
 function VideoIcon() {
+  const stroke = useIconStroke(24);
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg ref={stroke.ref} style={stroke.style} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="2.75" y="6.25" width="13" height="11.5" rx="3" /><path d="M15.75 10.4l4.4-2.75a.75.75 0 0 1 1.1.64v7.42a.75.75 0 0 1-1.1.64l-4.4-2.75" />
     </svg>
   );

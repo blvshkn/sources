@@ -1,5 +1,5 @@
 // The Ask icon, and the mark for anything Sources writes: two chat bubbles, the back one behind the front one, with
-// three typing dots in the front bubble. Drawn as in Figma's nav icon set: 24 grid, a 1.25 line, round ends and
+// three typing dots in the front bubble. Drawn as in Figma's nav icon set: 24 grid, a line set by drawn size (iconStroke.ts), round ends and
 // joins, dots as tiny filled circles. Still at rest. Hovering or focusing the control that holds it
 // plays one short beat (ai-loader.css): the back bubble nudges away, the front one pops, the dots pulse in turn.
 // Reduced motion keeps it still. currentColor throughout.
@@ -16,9 +16,12 @@ const ASK_OFFSET = [-0.4, 0.35];
 /** Length of the hover beat, longest delay included (ai-loader.css uses the same numbers). */
 const PLAY_MS = 380;
 
+import { useIconStroke } from "./iconStroke";
+
 export function AskIcon({ size = 20, active = false, label }: { size?: number; active?: boolean; label?: string }) {
+  const stroke = useIconStroke(size);
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.25}
+    <svg ref={stroke.ref} style={stroke.style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth}
       strokeLinecap="round" strokeLinejoin="round" className={`askic${active ? " is-on" : ""}`}
       role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <g transform={`translate(${ASK_OFFSET[0]} ${ASK_OFFSET[1]})`}>

@@ -12,6 +12,7 @@ import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
 import { useLive, type Live } from "../live";
 import { SwapRows } from "./SwapRows";
+import { useIconStroke } from "./iconStroke";
 
 type Msg = { id: number; q: string; history: AskTurnLog[] };
 type Topic = "Trades" | "Lineup" | "Waivers" | "League";
@@ -27,10 +28,11 @@ function topicOf(q: string): Topic {
   return "Trades";
 }
 
-/** The arrow on the send button. Drawn on the icon grid: 24 box, 1.6 line, flat ends, round joins. */
+/** The arrow on the send button. Drawn on the icon grid: 24 box, the line set by drawn size (iconStroke.ts), flat ends, round joins. */
 function ArrowUp({ size = 18 }: { size?: number }) {
+  const stroke = useIconStroke(size);
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinejoin="round" aria-hidden="true">
+    <svg ref={stroke.ref} style={stroke.style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinejoin="round" aria-hidden="true">
       <path d="M12 19.5V5M5.5 11.2 12 4.8l6.5 6.4" />
     </svg>
   );

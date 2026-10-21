@@ -39,7 +39,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag {
   position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
   background: var(--bad); color: var(--surface); box-shadow: 0 0 0 2px var(--surface); cursor: default;
 }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag svg { display: block; width: 10px; height: 10px; stroke-width: 2.4; }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag svg { display: block; width: 10px; height: 10px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-flag:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
 
 /* Name over position and team; long names cut at the end, never wrap */

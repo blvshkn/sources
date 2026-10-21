@@ -2940,7 +2940,7 @@ html:root:not(#_) .page-head { position: relative; isolation: isolate; padding-t
 html:root:not(#_) .page-head > * { position: relative; z-index: 1; }
 html:root:not(#_) .page-title { display: block; font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem) !important; font-weight: 700 !important; letter-spacing: -0.045em !important; line-height: 1 !important; }
 html:root:not(#_) .page-head .page-ic { position: absolute; z-index: 0; right: -14px; top: -18px; width: 132px; height: 132px; display: block; background: none; color: rgba(var(--lime-rgb), 0.13); pointer-events: none; transform: rotate(-10deg); }
-html:root:not(#_) .page-head .page-ic svg { width: 132px; height: 132px; stroke-width: 1.1; }
+html:root:not(#_) .page-head .page-ic svg { width: 132px; height: 132px; }
 html:root:not(#_) .page-head h1 { position: static; }
 html:root:not(#_) .page-meta { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0 0 !important; padding: 6px 12px 6px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 0.8125rem; line-height: 1.2; max-width: 100%; }
 html:root:not(#_) .page-meta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 3px rgba(var(--lime-rgb), 0.18); }
@@ -2950,7 +2950,7 @@ html:root:not(#_) .page-meta::before { content: ""; flex: none; width: 7px; heig
 }
 html:root:not(#_) .page-meta { align-self: flex-start; width: fit-content; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { width: 112px; height: 112px; top: -10px; right: -10px; }
-html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 112px; height: 112px; stroke-width: 1.1; }
+html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 112px; height: 112px; }
 html:root:not(#_) .lu-hero { position: relative; isolation: isolate; }
 html:root:not(#_) .lu-hero > * { position: relative; z-index: 1; }
 html:root:not(#_) .lu-hero .page-ic { position: absolute; z-index: 0; display: block; background: none; color: rgba(var(--lime-rgb), 0.13); pointer-events: none; transform: rotate(-10deg); }
@@ -3104,7 +3104,7 @@ html:root:not(#_) .lu-mx { align-items: start; } html:root:not(#_) .lu-mx-mid { 
 /* Section icon sits beside the title in lime; no background watermark */
 html:root:not(#_) .page-head h1.page-title, html:root:not(#_) .lu-hero h1.page-title { display: inline-flex !important; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 14px; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { position: static !important; transform: none !important; width: 30px !important; height: 30px !important; color: var(--lime) !important; background: none !important; display: grid !important; place-items: center; }
-html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 28px !important; height: 28px !important; stroke-width: 2 !important; }
+html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 28px !important; height: 28px !important; }
 
 /* Borders only on things you can tap. Static surfaces separate by fill. */
 html:root:not(#_) .card, html:root:not(#_) .lu-mx, html:root:not(#_) .sb2, html:root:not(#_) .psr-list, html:root:not(#_) .ps, html:root:not(#_) .sheet,

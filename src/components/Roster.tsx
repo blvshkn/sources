@@ -23,6 +23,7 @@ import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
 import { DetailSheet } from "./DetailSheet";
 import { OptimalLineup, type AiMarks } from "./OptimalLineup";
+import { strokeFor } from "./iconStroke";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -110,12 +111,12 @@ export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => <To
 const WAVE = (x: number) => `M${x} 20c-1.5-2 1.5-4 0-6s1.5-4 0-6`;
 const ICE = ["M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9", "M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"];
 const iceSvg = (stroke: string) => (
-  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth="1.8" strokeLinecap="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth={strokeFor(14)} strokeLinecap="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
 );
 const heatSvg = (heat: "fire" | "heating" | "cold") => heat === "fire" ? <Flame /> : heat === "heating" ? (
   <span className="heatwave" aria-hidden="true">
     {[7, 12, 17].map((x) => (
-      <span key={x} className="hw-line"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFB547" strokeWidth="2" strokeLinecap="round"><path d={WAVE(x)} /></svg></span>
+      <span key={x} className="hw-line"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFB547" strokeWidth={strokeFor(14)} strokeLinecap="round"><path d={WAVE(x)} /></svg></span>
     ))}
   </span>
 ) : (

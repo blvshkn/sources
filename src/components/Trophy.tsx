@@ -1,5 +1,6 @@
 import { LEAGUE } from "../data";
 import { Tooltip } from "./Tooltip";
+import { useIconStroke } from "./iconStroke";
 
 /** True for the team whose manager won last season. */
 export const isChampion = (teamId: string) => LEAGUE?.champion?.teamId === teamId;
@@ -26,8 +27,9 @@ export function WinCup({ size = 16 }: { size?: number }) {
 }
 
 function Cup({ size }: { size: number }) {
+  const stroke = useIconStroke(size);
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="butt" strokeLinejoin="round" aria-hidden="true">
+    <svg ref={stroke.ref} style={stroke.style} viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="butt" strokeLinejoin="round" aria-hidden="true">
       <path d="M7.5 4h9v4.8a4.5 4.5 0 0 1-9 0z" fill="currentColor" fillOpacity="0.22" />
       <path d="M7.5 6H5.2a.7.7 0 0 0-.7.8 3.6 3.6 0 0 0 3.4 3.1M16.5 6h2.3a.7.7 0 0 1 .7.8 3.6 3.6 0 0 1-3.4 3.1" />
       <path d="M12 13.3v3.2M8.5 20h7M10 16.5h4l.6 3.5H9.4z" />

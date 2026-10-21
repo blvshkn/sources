@@ -7,6 +7,7 @@ import { PlayerSheet } from "./lazy";
 import { Tooltip } from "./Tooltip";
 import { Icon, StatusPill } from "./ui";
 import { AiMark } from "./WorkingLoader";
+import { strokeFor } from "./iconStroke";
 
 // Lettermarks stand in for source logos (we don't use third-party marks)
 const MARK: Record<string, string> = { RotoWire: "RW", RotoBaller: "RB", ESPN: "E" };
@@ -165,7 +166,7 @@ function Intel({ text }: { text: string }) {
 
 // Bar chart mark for the Stats button, drawn on the icon family's grid and line
 const StatsIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeFor(14)} strokeLinejoin="round" aria-hidden="true">
     <path d="M4 20.5h16M6.5 20.5v-6M12 20.5V5.5M17.5 20.5v-10" />
   </svg>
 );

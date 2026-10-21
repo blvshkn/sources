@@ -2,7 +2,7 @@
    One round button for every icon-only control in the list: the inbox bell (phone header and desktop), settings,
    Ask Sources (the inbox's ask box), close on sheets, modals and the inbox, dismiss, search a player, previous and
    next week, save tag or reason, and voice note.
-   - 40px round, a 24px icon on a 1.5 line. Each glyph is centered optically by its own offset (icons.tsx), so the
+   - 40px round, a 24px icon on a 1.5 line (the 24px weight from iconStroke.ts; no stroke rule here). Each glyph is centered optically by its own offset (icons.tsx), so the
      button itself centers the 24px box exactly.
    - Fill: chalk at 7%, 11% on hover, 14% pressed. Icon: gray, chalk on hover and press, lime when the control is
      on (inbox open, on Settings, dictating).
@@ -20,7 +20,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .bt
   transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 160ms cubic-bezier(0.23, 1, 0.32, 1) !important;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn) > svg {
-  width: 24px !important; height: 24px !important; stroke-width: 1.5; color: inherit !important;
+  width: 24px !important; height: 24px !important; color: inherit !important;
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.top-bell, .topbar .top-acts > .btn-icon, .ps-x, .ibx-close, .ibx-send, .ttb-search, .lu-weeknav > .btn-icon, .composer-btn):hover:not([aria-disabled="true"]):not(:disabled) {

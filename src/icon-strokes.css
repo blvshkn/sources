@@ -1,0 +1,7 @@
+/* Icon line weight by drawn size (Zach's scale, src/components/iconStroke.ts): 0.75px at 13px and under, 1px at 14 to
+   16px, 1.5px from 17px up. Each icon carries --ic-sw, its line in viewBox units for the size it's drawn at; nothing
+   else in the CSS sets an icon's stroke-width.
+   --ic-k undoes a transform that enlarges an icon, so the line stays on the scale for its drawn size: the active tab
+   bar icon grows from 22px to 24px (scale 1.0909) and both sizes take a 1.5px line. Loads before frame.css. */
+html:root:not(#_):not(#_) :is(svg.ic, svg.askic) { stroke-width: calc(var(--ic-sw) * 1px / var(--ic-k, 1)); }
+html:root:not(#_):not(#_) .tabbar.ix button[aria-current="page"] .ix-ic { --ic-k: 1.0909; }
