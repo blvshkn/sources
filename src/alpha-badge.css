@@ -1,11 +1,15 @@
 /* Alpha tag after the SOURCES wordmark (sidebar, phone header, landing header). A label, not a control: no outline,
    no hover change, default cursor. Hovering shows a tooltip. Neutral, not lime: lime is the mark.
-   Optical centering: mono caps sit high in their line box, so the word drops 1.5px (measured equal above and below). */
-html:root:not(#_):not(#_) .bl .bl-wordrow { display: inline-flex; align-items: center; gap: 0.32em; }
+   Zach's Figma tag ("Logo / Alpha tag", page Logo + Alpha): 16px tall, 5px side padding, 3px radius, centered on the
+   wordmark 4.8px after it with no vertical offset.
+   Optical centering: mono caps sit high in their line box, so the word drops 1.5px (measured equal above and below).
+   The trailing letter-spacing after the last letter is pulled back (-0.08em) so the tag comes out 40px wide, as in
+   Figma, and the word nudges 0.04em left so its ink sits centered (measured 4.6px each side). */
+html:root:not(#_):not(#_) .bl .bl-wordrow { display: inline-flex; align-items: center; gap: 4.8px; }
 html:root:not(#_):not(#_) .bl .bl-stage {
-  display: inline-block; height: 16px; padding: 0 6px; border-radius: 5px; box-sizing: border-box;
-  font: 600 9px/16px var(--font-mono); letter-spacing: 0.08em; text-indent: 0.08em; text-transform: uppercase;
+  display: inline-block; height: 16px; padding: 0 5px; border-radius: 3px; box-sizing: border-box;
+  font: 600 9px/16px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
   color: color-mix(in srgb, var(--ink) 55%, transparent); background: color-mix(in srgb, var(--ink) 6%, transparent);
-  box-shadow: none; white-space: nowrap; cursor: default; user-select: none; transform: translateY(-1px);
+  box-shadow: none; white-space: nowrap; cursor: default; user-select: none;
 }
-html:root:not(#_):not(#_) .bl .bl-stage > span { display: inline-block; transform: translateY(var(--stage-dy, 1.5px)); }
+html:root:not(#_):not(#_) .bl .bl-stage > span { display: inline-block; margin-right: -0.08em; transform: translate(var(--stage-dx, -0.04em), var(--stage-dy, 1.5px)); }
