@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { setInert } from "../inert";
 import { BrandLogo } from "./BrandLogo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
 import { activeTags, allNeeds, applyFormat, ask, DEFAULT_FORMAT, findTrades, fmt, groupsFor, waiverRecs } from "../engine";
@@ -342,7 +343,7 @@ export function Landing({ onLive, onDemo }: {
           <article className="card ld-cell ld2-reveal ld2-ask-cell">
             <h3>Ask anything about your league</h3>
             <p>Sources AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
-            {askDemo && <div className="ld2-ask" {...{ inert: "" }}>
+            {askDemo && <div className="ld2-ask" ref={setInert}>
               <div className="ask-you-row"><p className="ask-you">{askDemo.q}</p></div>
               <div className="ask-card">
                 <p className="ask-head">{askDemo.a.text}</p>
@@ -356,7 +357,7 @@ export function Landing({ onLive, onDemo }: {
             <h3>Set optimal lineup</h3>
             <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
             {optDemo.swaps.length > 0
-              ? <div {...{ inert: "" }}><SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /></div>
+              ? <div ref={setInert}><SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /></div>
               : <p className="ld2-opt-none">{optDemo.summary}</p>}
           </article>
           <article className="card ld-cell ld2-reveal ld2-sync-cell">
@@ -536,7 +537,7 @@ function FaceOffStates({ you, partner }: { you: TeamNeeds; partner: string }) {
       onPointerLeave={() => setHold((h) => ({ ...h, hover: false }))}
       onFocus={() => setHold((h) => ({ ...h, focus: true }))}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHold((h) => ({ ...h, focus: false })); }}>
-      <div className="ld2-fo hd-card hd-fo" aria-hidden="true" {...{ inert: "" }}>
+      <div className="ld2-fo hd-card hd-fo" aria-hidden="true" ref={setInert}>
         <div className="hd-tilt"><div className="hd-pose">
           {AT.map(({ v }) => (
             <div key={v} className={`hd-face${at === v ? " on" : ""}`}>

@@ -3,6 +3,7 @@
 // trace step ("Loaded 10 teams from Sleeper"), and a real trade idea from the sample league lands with its points.
 // A rail joins the number chips and fills as you scroll; each chip lights when the fill reaches it. Each demo plays
 // once when it scrolls into view, after the one before it. Reduced motion shows every end state at once.
+import { setInert } from "../inert";
 import { useEffect, useRef, useState } from "react";
 import { LEAGUE, LEAGUE_NAME, TEAMS, playerById, teamById } from "../data";
 import { fmt, type Trade } from "../engine";
@@ -183,7 +184,7 @@ export function LandingSteps({ trade }: { trade?: Trade }) {
             <li key={s.h} className={`lds-step${i < lit ? " lit" : ""}`}>
               <b className="lds-num"><span>{i + 1}</span><i aria-hidden="true">{i + 1}</i></b>
               <div className="lds-copy"><h3>{s.h}</h3><p>{s.p}</p></div>
-              {s.demo && <div className="lds-stage" aria-hidden="true" {...{ inert: "" }}>{s.demo}</div>}
+              {s.demo && <div className="lds-stage" aria-hidden="true" ref={setInert}>{s.demo}</div>}
             </li>
           ))}
         </ol>
