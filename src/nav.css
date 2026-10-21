@@ -26,18 +26,62 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
     min-height: 64px; padding-top: 0; padding-bottom: 0;
     padding-left: max(16px, env(safe-area-inset-left, 0px)) !important; padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
     border-bottom: 0 !important;
-    /* At the top of the page the bar is the background itself; the fill, blur and shadow arrive once content
-       scrolls under it (App sets data-scrolled past 4px) */
+    /* Clear at the top of the page, where the bar is the background itself. On phones the scrolled look lives on two
+       layers behind the content (below), so the change is an opacity fade and nothing in the bar moves or reflows:
+       the same 64px, logo, time and buttons in both states. */
     background: transparent !important; box-shadow: none !important;
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
     transition: background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1) !important;
   }
-  html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_) .topbar {
-    background: rgba(25, 26, 25, 0.9) !important;
-    -webkit-backdrop-filter: blur(1px) !important; backdrop-filter: blur(1px) !important;
-    box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15) !important;
+  /* Tablet (768 to 860px) keeps the earlier scrolled bar as it was */
+  @media (min-width: 768px) {
+    html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_) .topbar {
+      background: rgba(25, 26, 25, 0.9) !important;
+      -webkit-backdrop-filter: blur(1px) !important; backdrop-filter: blur(1px) !important;
+      box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15) !important;
+    }
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { display: none !important; }
   }
-  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { display: none !important; }
+}
+@media (max-width: 767px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar { transition: none !important; }
+  /* Scrolled (Figma "Header · Phone" 29:1701; App sets data-scrolled past 4px): #191A19 at 90%, a drop shadow of
+     0 4 20 8 black at 15%, no border, and a progressive background blur, 48 at the top easing to 2 at 66% of the
+     height. CSS blur is about half a Figma radius, so: 1px over the whole bar (::after, with the fill and shadow) and
+     a 24px layer under it that a mask fades out by 66% (::before). Both reach up through the status bar strip, so
+     the safe area always matches the bar. Clear at the top of the page, where the bar is the background itself. */
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::before,
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after {
+    content: "" !important; display: block !important; position: absolute; z-index: -1; pointer-events: none;
+    left: 0; right: 0; top: calc(-1 * env(safe-area-inset-top, 0px)); bottom: 0; height: auto; margin: 0;
+    opacity: 0 !important;
+    transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::before {
+    background: none !important;
+    -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+    -webkit-mask-image: linear-gradient(#000, transparent 66.4%); mask-image: linear-gradient(#000, transparent 66.4%);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after {
+    background: rgba(25, 26, 25, 0.9) !important;
+    -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px);
+    box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
+  }
+  html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_) .topbar::before,
+  html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { opacity: 1 !important; }
+  /* The safe-area strip (app-qa.css) gives way to the bar's own layers above */
+  html:root:not(#_):not(#_):not(#_):not(#_) body::before { background: transparent; }
+  @media (prefers-reduced-motion: reduce) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::before,
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { transition: none !important; }
+  }
+  /* Transparency turned down: a solid bar, the 90% fill as it reads over the ground, and no blur */
+  @media (prefers-reduced-transparency: reduce) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::before { display: none !important; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { background: #181918 !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+}
+@media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .top-logo { padding: 0; min-height: 44px; }
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts { display: flex; align-items: center; gap: 6px !important; }
   /* "UPDATED" over the time, right-aligned, 12px from the buttons */
