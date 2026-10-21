@@ -478,7 +478,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </div>
       </header>
 
-      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Command center", icon: "headset" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "hatGlasses" }]} />
+      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Command center", icon: "headset" }, { v: "intel", label: "Intel", icon: "hatGlasses" }]} />
 
       {view === "matchup" && <Scoreboard you={you} partner={partner} extras={false} onMatchup={() => setMatchupOpen(true)} />}
       {matchupOpen && <MatchupSheet onClose={() => setMatchupOpen(false)} />}

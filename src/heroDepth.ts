@@ -11,7 +11,8 @@
  * (scroll offset plus pointer tilt); CSS owns `.hd-pose` and the layers, which transition on `.is-x`.
  */
 
-const TILT = 5; // degrees at the card's edge
+// Degrees at the card's edge. It stacks on the resting pose (up to 3deg in hero-depth.css), so 2 keeps the card at 5deg total (Zach, Oct 21)
+const TILT = 2;
 const EXPLODE_IN = 900, BEAT = 320, SETTLE = 700;
 
 interface Card {
