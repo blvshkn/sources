@@ -7,7 +7,7 @@ import { LEAGUE, PLAYERS, Player, SpecialPlayer, WEEK, isDemo, onBye } from "../
 import { fmt } from "../engine";
 import { gameInAt, kickLine, useKickoffs } from "../kickoff";
 import { WeekPlayer, lastWeek } from "../weeks";
-import { seasonFor } from "../schedule";
+import { demoFinal, seasonFor } from "../schedule";
 import { gameIn } from "../weekMatch";
 import { deny } from "../deny";
 import { Avatar } from "./Avatar";
@@ -61,8 +61,8 @@ const byeWeek = (c: CmpWho) => {
 };
 
 // ---- Recent weeks --------------------------------------------------------------
-/** The weeks played before this one, up to six. */
-const recentWeeks = () => Array.from({ length: Math.min(6, WEEK - 1) }, (_, i) => WEEK - Math.min(6, WEEK - 1) + i);
+/** The weeks played, up to six: the ones before this one, and this one too once the demo's final-week fixture has it final. */
+const recentWeeks = () => { const last = demoFinal() ? WEEK : WEEK - 1, n = Math.min(6, last); return Array.from({ length: n }, (_, i) => last - n + 1 + i); };
 /**
  * Fantasy points per week, from the season the player sheet's game log reads (seasonFor in schedule.ts). A live
  * league gets Sleeper's matchups: every rostered player's points that week, scored by the league (LEAGUE.slate.pts),

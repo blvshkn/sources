@@ -9,6 +9,8 @@ Where demo data lives:
 - `src/data.ts`: the demo league (`demoLeague()`, rosters, `DEMO_*` constants). Teams, players, injuries, byes, the
   week 7 slate, K/DEF, free agents, FAAB, past trades, activity, commish (Jake), last season's champion.
 - `src/live.ts`: the sample Sunday (`demo()`), and the final-week fixture.
+- `src/schedule.ts`: the demo season (`demoCell`, `demoBye`, `demoFinal`). Every weekly number in the demo comes from
+  it, so add new per-week demo numbers there rather than hashing your own.
 - `src/demoFixtures.ts`: your own saved lists in the demo (Sent offers, Watching). Seeded once per browser by
   `seedDemo()`, only where the list is still empty. Delete my data seeds them again. The demo stays in week 7, so on
   later visits the saved times move forward together and the list keeps reading as this week.
@@ -84,6 +86,8 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Start / Sit, Compare, Tags, Slot report | All tabs | OK |
 | Asking price (What would it take) | Josh Allen at +25% (no team meets it) and Dalton Kincaid at +5% (1 of 9 teams, with a Write pitch) | Seeded |
 | Week stepper with past, current and future weeks | Weeks 1 to 18 | OK |
+| Past-week points agree everywhere | One demo season (schedule.ts `demoCell`) feeds Lineup and Full matchup past weeks (weeks.ts), the game log, Compare, Start / Sit and Waivers "Last 3". Josh Allen's Week 5 is 10.7 in all of them | Fixed |
+| Final-week fixture: Week 7 in the season | Week 7 is played in the game log and Compare's recent weeks, with the face-off's own final points for your team and Jake's | Fixed |
 
 ### Waivers
 
@@ -127,7 +131,9 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Phone header, tab bar, sidebar, background | Same as live | OK |
 | Landing "Try the demo" | Opens first-run setup on the demo league, then the app | OK |
 
-## Known gaps outside the demo
+## Known gaps
+
+- The Slot report's weekly bars (`DEMO_SLOT_HISTORY` in data.ts) are their own fixture, not summed from the demo season.
 
 - The lineup fix nudge and the "Before lock" inbox alerts don't look at game state, so on the sample Sunday (and the
   final-week fixture) they still suggest starting a player whose game has started or ended. Same code path as a live

@@ -62,9 +62,10 @@ const demoProj = (s: Subject, w: number, base: number) => round1(base * (0.86 + 
 function demoCurrent(s: Subject): SeasonLog {
   const p = asPlayer(s);
   const rows: LogRow[] = seasonFor(p).map((c) => {
-    if (!c.opp) return { week: c.week, opp: null, bye: true, when: c.week < WEEK ? "past" : c.week === WEEK ? "now" : "future" };
+    // c.past covers this week too once the demo's final-week fixture has it played
+    if (!c.opp) return { week: c.week, opp: null, bye: true, when: c.past ? "past" : c.week === WEEK ? "now" : "future" };
     if (c.week > WEEK) return { week: c.week, opp: c.opp, bye: false, when: "future", proj: c.proj };
-    if (c.week === WEEK) return { week: c.week, opp: c.opp, bye: false, when: "now", proj: nowProj(s, c.proj ?? (p.proj || undefined)) };
+    if (c.week === WEEK && !c.past) return { week: c.week, opp: c.opp, bye: false, when: "now", proj: nowProj(s, c.proj ?? (p.proj || undefined)) };
     if (c.pts === undefined) return { week: c.week, opp: c.opp, bye: false, when: "past", miss: "dnp" };
     const r = demoRow(s, c.pts, c.week);
     return { week: c.week, opp: c.opp, bye: false, when: "past", proj: demoProj(s, c.week, p.proj || 6), ...r };

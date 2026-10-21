@@ -1,10 +1,12 @@
 // Week browser: any past week (who you started, what they scored, their stat line)
 // or any future week (projections, with byes shown as byes). Live leagues read Sleeper;
 // the demo league builds a believable season from its projections.
-import { LEAGUE, PLAYERS, WEEK, YOU, OPPONENT_ID, TEAMS as LEAGUE_TEAMS, Team, isDemo, defName } from "./data";
+import { LEAGUE, PLAYERS, WEEK, YOU, OPPONENT_ID, TEAMS as LEAGUE_TEAMS, Team, Player, isDemo, defName } from "./data";
 import { currentFormat } from "./engine";
 import { scoreStats, WeekRow } from "./sleeper";
 import { weekFeed } from "./weekFeed";
+import { demoBye, demoCell } from "./schedule";
+export { demoBye };
 
 export interface WeekPlayer {
   id: string; name: string; pos: string; nfl: string;
@@ -97,9 +99,6 @@ export function info(id: string, row?: WeekRow): Omit<WeekPlayer, "pts"> {
 
 // ---- Demo season ------------------------------------------------------------
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967295; };
-const TEAMS = ["ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC", "LV", "LAC", "LAR", "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SF", "SEA", "TB", "TEN", "WAS"];
-/** Demo bye week per NFL team. The Lineup, the Start / Sit compare and the player sheet all read it, so they agree. */
-export const demoBye = (team: string) => (team === "PIT" || team === "NE" ? 7 : 5 + (TEAMS.indexOf(team) % 10) + (TEAMS.indexOf(team) % 10 >= 2 ? 1 : 0));
 export function demoStats(pos: string, pts: number, seed: number): Record<string, number> {
   const r = (a: number, b: number) => Math.round(a + (b - a) * hash(`${seed}${a}${b}`));
   if (pos === "QB") { const td = Math.max(0, Math.round(pts / 8)); return { pass_cmp: r(16, 27), pass_att: r(28, 40), pass_yd: Math.round(pts * 11 + 40), pass_td: td, pass_int: r(0, 1), rush_att: r(1, 7), rush_yd: r(2, 38) }; }
@@ -119,15 +118,16 @@ export function demoOppId(week: number): string | undefined {
   const at = Math.max(0, others.indexOf(OPPONENT_ID ?? ""));
   return others[(((at + week - WEEK) % n) + n) % n];
 }
-/** Demo numbers for any team in any week: made up points for weeks played, projections for weeks ahead. */
+/** Demo numbers for any team in any week: points for weeks played, projections for weeks ahead. Both come from the
+ *  demo season in schedule.ts (demoCell), so a player's Week 5 here matches his game log, Compare and Start / Sit. */
 function demoPool(ids: string[], week: number): WeekPlayer[] {
   const past = week < WEEK;
   return ids.map((id) => {
     const i = info(id);
-    const base = PLAYERS[id]?.proj ?? LEAGUE.specials?.[id]?.proj ?? 0;
-    if (demoBye(i.nfl) === week) return { ...i, pts: null };
-    const swing = past ? 0.35 + hash(`${id}w${week}`) * 1.4 : 0.9 + hash(`${id}f${week}`) * 0.2;
-    const pts = Math.round(base * swing * 10) / 10;
+    const sp = LEAGUE.specials?.[id];
+    const c = demoCell({ id, nfl: i.nfl, pos: i.pos as Player["pos"], proj: PLAYERS[id]?.proj ?? sp?.proj ?? 0, opp: PLAYERS[id]?.opp ?? sp?.opp }, week);
+    if (!c.opp) return { ...i, pts: null };
+    const pts = (past ? c.pts : c.proj) ?? 0;
     return { ...i, pts, line: past ? statLine(i.pos, demoStats(i.pos, pts, week * 97 + id.length)) : undefined };
   });
 }
