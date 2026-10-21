@@ -10,7 +10,7 @@ export function canShareFile(file: File | null): file is File {
 }
 
 /** Copying an image needs ClipboardItem and a PNG-capable clipboard. Firefox and older Safari say no. */
-const canCopyImage = () => {
+export const canCopyImage = () => {
   if (typeof ClipboardItem === "undefined" || typeof navigator.clipboard?.write !== "function") return false;
   const supports = (ClipboardItem as unknown as { supports?: (t: string) => boolean }).supports;
   return typeof supports === "function" ? supports("image/png") : true;

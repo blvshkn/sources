@@ -11,7 +11,7 @@ import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../dat
 import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
-import { ShareCard, canShareFile } from "./ShareCard";
+import { ShareCard, canShareFile, canCopyImage } from "./ShareCard";
 import { MARK } from "./Logo";
 import { WORDMARK, WORD_FONT, WORD_WEIGHT } from "./BrandLogo";
 
@@ -358,14 +358,59 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const saveImage = () => {
     const c = cardRef.current;
     if (!c) { onSent("The card is still drawing. Try again in a second."); return; }
+    saveCard();
+    record("saved image"); onSent("Image saved");
+  };
+  /** The download itself, shared by Save image and the Text message fallback */
+  const saveCard = () => {
+    const c = cardRef.current;
+    if (!c) return;
     const a = document.createElement("a");
     a.href = c.url; a.download = fileName;
     document.body.appendChild(a); a.click(); a.remove();
-    record("saved image"); onSent("Image saved");
+  };
+
+  /**
+   * Text message. An sms: link can carry text but never a file, so the card needs another way in.
+   * 1. Where the browser can share a file (iOS, Android, macOS Safari and Chrome), open the system share sheet with the
+   *    card and the text. Messages takes both. The text is copied in the same tap as a backup.
+   * 2. Elsewhere (Windows, Firefox), copy the card as a PNG, then open sms: with the text so he can paste the card in.
+   *    No clipboard image support means we save the card instead so he can attach the file.
+   * share() and clipboard.write() are both called before any await, so the tap still counts as the gesture.
+   */
+  const textMessage = () => {
+    const c = cardRef.current;
+    if (!c) { onSent("The card is still drawing. Try again in a second."); return; }
+    const openSms = () => { window.location.href = `sms:?&body=${encodeURIComponent(text)}`; };
+    if (canShareFile(c.file)) {
+      let copied: Promise<boolean>;
+      try { copied = navigator.clipboard.writeText(text).then(() => true, () => false); } catch { copied = Promise.resolve(false); }
+      let shared: Promise<void>;
+      try { shared = navigator.share({ files: [c.file], text }); } catch (e) { shared = Promise.reject(e); }
+      shared.then(
+        async () => {
+          haptic(); record("text");
+          onSent((await copied) ? "Sent with the card. The text is copied too. Sources will ask tomorrow if they replied." : "Sent with the card. Sources will ask tomorrow if they replied.", "text");
+        },
+        (e: unknown) => {
+          if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet: nothing to say
+          openSms(); record("text"); onSent("Opening Messages with your pitch. Save the image to attach the card.", "text");
+        });
+      return;
+    }
+    if (canCopyImage()) {
+      let wrote: Promise<void>;
+      try { wrote = navigator.clipboard.write([new ClipboardItem({ "image/png": c.blob })]); } catch (e) { wrote = Promise.reject(e); }
+      wrote.then(
+        () => { record("text"); onSent("Card copied. Paste it into the message to attach it.", "text"); openSms(); },
+        () => { saveCard(); record("text"); onSent("Card saved. Attach it to the message.", "text"); openSms(); });
+      return;
+    }
+    saveCard(); record("text"); onSent("Card saved. Attach it to the message.", "text"); openSms();
   };
 
   const primary = async () => {
-    if (method === "text") { record("text"); onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
+    if (method === "text") textMessage();
     if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
     if (method === "app") { const ok = await copy(); record(app); window.open(app === "Sleeper" ? sleeperUrl() : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
     if (method === "share") shareImage();
@@ -414,7 +459,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
         </div>
 
         <div className="send-methods" role="radiogroup" aria-label="How to send">
-          {([["text", "msg", "Text message", "Messages, card attached"], ["group", "group", "Group chat", "Tuned for an audience"], ["app", "app", "League app", "Copy + open trade screen"], ["share", "share", "Share sheet", "WhatsApp, Discord, Slack"]] as [Method, "msg" | "group" | "app" | "share", string, string][]).map(([m, ic, label, sub]) => (
+          {([["text", "msg", "Text message", "Messages, with the card"], ["group", "group", "Group chat", "Tuned for an audience"], ["app", "app", "League app", "Copy + open trade screen"], ["share", "share", "Share sheet", "WhatsApp, Discord, Slack"]] as [Method, "msg" | "group" | "app" | "share", string, string][]).map(([m, ic, label, sub]) => (
             <button key={m} role="radio" aria-checked={method === m} className="method" onClick={() => setMethod(m)}>
               <Icon name={ic} size={18} /><span><b>{label}</b><small>{sub}</small></span>
             </button>
