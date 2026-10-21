@@ -1,0 +1,24 @@
+/* Why a week has no points: the short labels in Compare's table and chart and in the Game log's PTS column
+   (BYE, OUT, IR, INA, DNP, SUS, FA, a dash for no data). Scoped to .miss-tag, .cmp-gapm and .cmp-nogames. */
+html:root:not(#_):not(#_) .miss-tag {
+  display: inline-block; padding: 1px 3px; border-radius: 4px; cursor: help;
+  font: 600 0.6875rem/1.2 var(--font-mono); letter-spacing: 0.02em; color: var(--muted);
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+html:root:not(#_):not(#_) .miss-tag:is(.k-out, .k-ir, .k-sus) { color: var(--bad); }
+html:root:not(#_):not(#_) .miss-tag.k-inactive { color: var(--warn); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .miss-tag:hover { background: var(--surface-3); } }
+html:root:not(#_):not(#_) .miss-tag:focus-visible { outline: 2px solid var(--lime); outline-offset: 1px; }
+
+/* Chart: a small label at the foot of each gap, in the series' color */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm rect { fill: var(--surface); stroke-width: 1; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm text { font: 600 8.5px var(--font-mono); letter-spacing: 0.02em; }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s1 rect { stroke: var(--cmp-1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s2 rect { stroke: var(--cmp-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s3 rect { stroke: var(--cmp-3); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s1 text { fill: var(--cmp-1); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s2 text { fill: var(--cmp-2); }
+html:root:not(#_):not(#_) .cmp-sheet .cmp-gapm.s3 text { fill: var(--cmp-3); }
+
+/* A player with no points anywhere in the range: one line under the legend */
+html:root:not(#_):not(#_) .cmp-sheet .cmp-nogames { display: flex; align-items: center; gap: 6px; margin: -4px 0 0; font-size: 0.75rem; line-height: 1.4; color: var(--muted); }

@@ -4,7 +4,8 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { teamNick } from "../data";
 import { useLive } from "../live";
-import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, peekDepth, peekLog, seasonsFor } from "../gamelog";
+import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, missWhy, peekDepth, peekLog, seasonsFor } from "../gamelog";
+import { Tooltip } from "./Tooltip";
 import { Seg, type IconName } from "./ui";
 
 // ---- Tab row --------------------------------------------------------------------------
@@ -84,12 +85,14 @@ export function GameLogTab({ s }: { s: Subject }) {
     const pts = r.when === "now" ? nowPts : r.pts;
     const tone = pts !== undefined && r.proj !== undefined && r.when === "past"
       ? (pts - r.proj >= Math.max(3, r.proj * 0.2) ? " good" : r.proj - pts >= Math.max(3, r.proj * 0.2) ? " bad" : "") : "";
+    // A played week he has no points for says why, with the same label and detail Compare shows
+    const why = r.when === "past" && pts === undefined ? missWhy(r, log.state === "ready" ? log.v.team : s.nfl) : null;
     const snap = r.stats && r.stats.off_snp !== undefined && r.stats.tm_off_snp ? `${Math.round((r.stats.off_snp / r.stats.tm_off_snp) * 100)}%` : DASH;
     const head = (
       <>
         <th scope="row" className="gl-s gl-wk">{r.week}{r.when === "now" && <i className="gl-now" aria-label=", this week" />}</th>
         <td className={`gl-s gl-opp${r.bye ? " bye" : ""}`}>{r.bye ? "BYE" : <>{away(r.opp) && <span className="gl-at">@</span>}{oppLabel(r.opp)}</>}</td>
-        <td className={`gl-s gl-pts${tone}`}>{r.bye ? "" : pts !== undefined ? pts.toFixed(1) : r.when === "past" ? DASH : ""}</td>
+        <td className={`gl-s gl-pts${tone}`}>{r.bye ? "" : pts !== undefined ? pts.toFixed(1) : why ? <Tooltip focusable content={why.detail}><span className={`miss-tag k-${why.kind}`} aria-label={`${why.word}. ${why.detail}`}>{why.label}</span></Tooltip> : r.when === "past" ? DASH : ""}</td>
       </>
     );
     if (r.bye) return <tr key={r.week} className="gl-bye">{head}<td colSpan={span} className="gl-rest">Bye week</td></tr>;
@@ -97,7 +100,7 @@ export function GameLogTab({ s }: { s: Subject }) {
       <tr key={r.week} className={r.when === "now" ? "gl-cur" : r.when === "future" ? "gl-fut" : "gl-miss"}>
         {head}
         <td className="gl-proj">{r.proj !== undefined ? r.proj.toFixed(1) : DASH}</td>
-        <td colSpan={span - 1} className="gl-rest">{r.when === "now" ? (nowPts !== undefined ? (st === "complete" ? "Final" : "Live") : "This week") : r.when === "past" ? (r.miss === "na" ? "Stats not available" : "Did not play") : ""}</td>
+        <td colSpan={span - 1} className="gl-rest">{r.when === "now" ? (nowPts !== undefined ? (st === "complete" ? "Final" : "Live") : "This week") : r.when === "past" ? (r.missNote ?? why?.word ?? "Did not play") : ""}</td>
       </tr>
     );
     return (

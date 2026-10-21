@@ -5,7 +5,7 @@ import { LEAGUE, PLAYERS, WEEK, YOU, OPPONENT_ID, TEAMS as LEAGUE_TEAMS, Team, P
 import { currentFormat } from "./engine";
 import { scoreStats, WeekRow } from "./sleeper";
 import { weekFeed } from "./weekFeed";
-import { demoBye, demoCell } from "./schedule";
+import { MISS_WORD, demoBye, demoCell } from "./schedule";
 export { demoBye };
 
 export interface WeekPlayer {
@@ -127,6 +127,8 @@ function demoPool(ids: string[], week: number): WeekPlayer[] {
     const sp = LEAGUE.specials?.[id];
     const c = demoCell({ id, nfl: i.nfl, pos: i.pos as Player["pos"], proj: PLAYERS[id]?.proj ?? sp?.proj ?? 0, opp: PLAYERS[id]?.opp ?? sp?.opp }, week);
     if (!c.opp) return { ...i, pts: null };
+    // A week he missed scores 0 and says why, the same reason his game log and Compare give
+    if (past && c.miss) return { ...i, pts: 0, line: `${MISS_WORD[c.miss.kind].word}${c.miss.note ? ` (${c.miss.note})` : ""}` };
     const pts = (past ? c.pts : c.proj) ?? 0;
     return { ...i, pts, line: past ? statLine(i.pos, demoStats(i.pos, pts, week * 97 + id.length)) : undefined };
   });

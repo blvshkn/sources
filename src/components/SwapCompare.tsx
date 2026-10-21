@@ -1,18 +1,20 @@
 // Compare, from a Lineup swap card: the player in the row against the players in his swap list. Opens in the shared
 // DetailSheet (a sheet on phones, a modal from 768px up). It starts with the first option in the list; more can be
 // added from that same list only. Each compared option can be swapped in from here, the same swap the list makes.
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { LEAGUE, PLAYERS, Player, SpecialPlayer, WEEK, isDemo, onBye } from "../data";
+import { LEAGUE, PLAYERS, Player, SPECIAL_FREE_AGENTS, SpecialPlayer, WEEK, isDemo, onBye } from "../data";
 import { fmt } from "../engine";
 import { gameInAt, kickLine, useKickoffs } from "../kickoff";
 import { WeekPlayer, lastWeek } from "../weeks";
-import { demoFinal, seasonFor } from "../schedule";
+import { demoFinal } from "../schedule";
+import { LogRow, MissWhy, SeasonLog, Subject, loadLog, missWhy, peekLog } from "../gamelog";
 import { gameIn } from "../weekMatch";
 import { deny } from "../deny";
 import { Avatar } from "./Avatar";
 import { DetailSheet } from "./DetailSheet";
 import { Icon } from "./ui";
+import { Tooltip } from "./Tooltip";
 import type { SwapOption } from "./SwapPicker";
 
 /** One player as Compare shows him, for the week the swap is in. */
@@ -63,28 +65,82 @@ const byeWeek = (c: CmpWho) => {
 // ---- Recent weeks --------------------------------------------------------------
 /** The weeks played, up to six: the ones before this one, and this one too once the demo's final-week fixture has it final. */
 const recentWeeks = () => { const last = demoFinal() ? WEEK : WEEK - 1, n = Math.min(6, last); return Array.from({ length: n }, (_, i) => last - n + 1 + i); };
+/** One player's recent weeks: points, or the reason there are none (bye, out, IR, inactive, DNP, suspended, no team,
+ *  no data). */
+interface Recent { pts: (number | undefined)[]; why: (MissWhy | null)[]; log?: SeasonLog }
+/** Who the game log loads for: the same Subject the player sheet's Game log uses, so both read one season. */
+const subjectOf = (c: CmpWho): Subject => {
+  const p = PLAYERS[c.id], sp = LEAGUE.specials?.[c.id] ?? SPECIAL_FREE_AGENTS.find((f) => f.id === c.id);
+  return { id: c.id, name: c.name, pos: c.pos as Subject["pos"], nfl: c.nfl, proj: p?.proj ?? sp?.proj ?? 0, rookie: p?.rookie };
+};
 /**
- * Fantasy points per week, from the season the player sheet's game log reads (seasonFor in schedule.ts). A live
- * league gets Sleeper's matchups: every rostered player's points that week, scored by the league (LEAGUE.slate.pts),
- * with your own matchup history behind it. The demo league gets its sample season. undefined means no points on
- * record that week, and null a bye: the chart leaves a gap for both and the table says which. Nothing is filled in.
+ * Fantasy points per week from the player sheet's game log (loadLog in gamelog.ts): Sleeper's weekly stats for every
+ * NFL player, scored with this league's settings, whether or not anyone in the league rostered him that week. (Compare
+ * used to read only the league's matchup points, which Sleeper records only for players on a fantasy roster, so a
+ * player picked up late showed nothing for weeks he played.) The demo reads its sample season through the same call.
+ * A week with no points carries its reason. Nothing is filled in.
  */
-function recentPts(id: string, nfl: string, pos: string, weeks: number[]): (number | null | undefined)[] {
-  const base = PLAYERS[id] ?? LEAGUE.specials?.[id];
-  const season = seasonFor((base ?? { id, name: "", nfl, pos, proj: 0 }) as Player);
-  return weeks.map((w) => {
-    const c = season.find((x) => x.week === w);
-    if (c && !c.opp) return null;
-    const v = c?.pts ?? (isDemo() ? undefined : LEAGUE.history?.[w]?.points[id]);
-    return typeof v === "number" ? v : undefined;
-  });
+function recentOf(log: SeasonLog | undefined, weeks: number[], failed: boolean): Recent {
+  if (!log) {
+    const na: MissWhy | null = failed ? { kind: "na", label: "–", word: "No data", detail: "Couldn't load stats from Sleeper." } : null;
+    return { pts: weeks.map(() => undefined), why: weeks.map(() => na) };
+  }
+  const rows = weeks.map((w) => log.rows.find((r) => r.week === w));
+  return {
+    log,
+    pts: rows.map((r) => (r && !r.bye ? r.pts : undefined)),
+    why: rows.map((r, i) => (!r ? { kind: "na", label: "–", word: "No data", detail: `No Week ${weeks[i]} on record.` } : missWhy(r, log.team))),
+  };
 }
+function useRecent(all: CmpWho[], weeks: number[]): { rows: Recent[]; loading: boolean } {
+  const season = LEAGUE.season;
+  const [, bump] = useState(0);
+  const failed = useRef(new Set<string>());
+  const subs = all.map(subjectOf);
+  const ready = subs.map((x) => peekLog(x, season));
+  useEffect(() => {
+    let on = true;
+    subs.forEach((x, i) => { if (!ready[i]) loadLog(x, season).then(() => on && bump((n) => n + 1), () => { failed.current.add(x.id); if (on) bump((n) => n + 1); }); });
+    return () => { on = false; };
+  }, [subs.map((x) => x.id).join(","), season]); // eslint-disable-line react-hooks/exhaustive-deps
+  return { rows: subs.map((x, i) => recentOf(ready[i], weeks, failed.current.has(x.id))), loading: ready.some((r, i) => !r && !failed.current.has(subs[i].id)) };
+}
+/** "IR since Week 2", "Out Week 5", or each run in turn: why a player has no points anywhere in the range. */
+function noneLine(name: string, r: Recent, weeks: number[]): string {
+  const runs: { why: MissWhy; from: number; to: number }[] = [];
+  r.why.forEach((y, i) => {
+    if (!y) return;
+    const last = runs[runs.length - 1];
+    if (last && last.why.kind === y.kind && last.to === weeks[i] - 1) last.to = weeks[i]; else runs.push({ why: y, from: weeks[i], to: weeks[i] });
+  });
+  // A run that reaches the end of the range and started before it reads from the week it really started
+  const lastRun = runs[runs.length - 1];
+  if (lastRun && r.log && lastRun.to === weeks[weeks.length - 1]) {
+    let w = lastRun.from - 1;
+    const row = (n: number): LogRow | undefined => r.log!.rows.find((x) => x.week === n);
+    while (w >= 1 && row(w) && missWhy(row(w)!, r.log.team)?.kind === lastRun.why.kind) w--;
+    lastRun.from = w + 1;
+  }
+  const word = (k: MissWhy) => (k.kind === "bye" ? "Bye" : k.kind === "ir" ? "IR" : k.kind === "na" ? "No data" : k.word);
+  const parts = runs.map((x) => x.why.kind !== "bye" && x.to === weeks[weeks.length - 1] && runs.length === 1
+    ? `${word(x.why)} since Week ${x.from}` : `${word(x.why)} ${x.from === x.to ? `Week ${x.from}` : `Weeks ${x.from} to ${x.to}`}`);
+  return `${name}: no games in this range${parts.length ? ` (${parts.join(", ")})` : ""}`;
+}
+
+/** What each gap label means, for the note under the table. */
+const KEY: Record<MissWhy["kind"], string> = { bye: "bye week", out: "ruled out", ir: "injured reserve", inactive: "inactive", dnp: "did not play", sus: "suspended", noteam: "not on a team", na: "no data" };
 
 /** Series colors, by position in the comparison (never by rank): blue, amber, magenta. Validated as a set for
  *  colorblind separation on both surfaces (dataviz validate_palette, all pairs). No lime, no green or red. */
 const MAX = 3;
 
-function RecentChart({ names, weeks, rows }: { names: string[]; weeks: number[]; rows: (number | null | undefined)[][] }) {
+function RecentChart({ names, weeks, rows, why, hide }: {
+  names: string[]; weeks: number[]; rows: (number | undefined)[][];
+  /** Why each gap is a gap; drawn as a small label at the foot of the gap in the series' color. */
+  why: (MissWhy | null)[][];
+  /** Series with no points in the whole range: left off the chart (a line under the legend says why). */
+  hide: boolean[];
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(320);
   const [hover, setHover] = useState<number | null>(null);
@@ -101,7 +157,8 @@ function RecentChart({ names, weeks, rows }: { names: string[]; weeks: number[];
   const x = (i: number) => L + (weeks.length < 2 ? (w - L - R) / 2 : (i * (w - L - R)) / (weeks.length - 1));
   const y = (v: number) => T + (1 - v / top) * (h - T - B);
   // A week with no data breaks the line: each run of weeks with points is its own segment
-  const paths = rows.map((r) => {
+  const paths = rows.map((r, si) => {
+    if (hide[si]) return "";
     let d = "", pen = false;
     r.forEach((v, i) => { if (typeof v === "number") { d += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`; pen = true; } else pen = false; });
     return d;
@@ -126,12 +183,22 @@ function RecentChart({ names, weeks, rows }: { names: string[]; weeks: number[];
         {hover !== null && <line className="cmp-cross" x1={x(hover)} x2={x(hover)} y1={T} y2={h - B} />}
         {paths.map((d, s) => <path key={names[s] + s} className={`cmp-line s${s + 1}`} d={d} />)}
         {rows.map((r, s) => r.map((v, i) => typeof v === "number" ? <circle key={`${s}-${i}`} className={`cmp-dot s${s + 1}`} cx={x(i)} cy={y(v)} r={hover === i ? 5 : 4} /> : null))}
+        {/* Each gap names its reason at the foot of the chart, stacked by series, so a break in a line reads as a bye or an injury */}
+        {weeks.map((_, i) => {
+          const marks = rows.map((r, s) => (!hide[s] && typeof r[i] !== "number" && why[s][i] ? { s, w: why[s][i]! } : null)).filter((m): m is { s: number; w: MissWhy } => !!m);
+          return marks.map((m, k) => (
+            <g key={`gap-${m.s}-${i}`} className={`cmp-gapm s${m.s + 1}`} transform={`translate(${x(i).toFixed(1)} ${(h - B - 8 - k * 13).toFixed(1)})`}>
+              <rect x={-14} y={-6} width={28} height={12} rx={3} />
+              <text y={3} textAnchor="middle">{m.w.label}</text>
+            </g>
+          ));
+        })}
       </svg>
       {hover !== null && (
         <div className={`cmp-tip${x(hover) > w / 2 ? " left" : ""}`} style={{ left: `${x(hover)}px` }} aria-hidden="true">
           <b>Week {weeks[hover]}</b>
           {names.map((n, s) => (
-            <span key={n + s}><i className={`cmp-key s${s + 1}`} />{n}<em>{typeof rows[s][hover] === "number" ? (rows[s][hover] as number).toFixed(1) : rows[s][hover] === null ? "Bye" : "No data"}</em></span>
+            <span key={n + s}><i className={`cmp-key s${s + 1}`} />{n}<em>{typeof rows[s][hover] === "number" ? (rows[s][hover] as number).toFixed(1) : why[s][hover]?.word ?? "No data"}</em></span>
           ))}
         </div>
       )}
@@ -160,7 +227,13 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
   const full = shown.length >= MAX - 1;
   const weeks = recentWeeks();
   const all = [subject, ...shown.map((o) => o.cmp)];
-  const series = all.map((c) => recentPts(c.id, c.nfl, c.pos, weeks));
+  const recent = useRecent(all, weeks);
+  const series = recent.rows.map((r) => r.pts);
+  const reasons = recent.rows.map((r) => r.why);
+  // Loaded, with no points anywhere in the range: one plain line instead of an empty series
+  const empty = recent.rows.map((r) => !!r.why.length && r.why.every((y) => !!y) && r.pts.every((v) => typeof v !== "number"));
+  const used = new Map<string, MissWhy>();
+  reasons.flat().forEach((y) => { if (y && !used.has(y.label)) used.set(y.label, y); });
 
   return (
     <DetailSheet className="cmp-sheet" label={`Compare ${subject.name}`} onClose={onClose}
@@ -224,8 +297,9 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
             <h3 className="cmp-h">Recent weeks<small>Fantasy points</small></h3>
             {!weeks.length ? <p className="cmp-none">No games played yet this season.</p>
               : <>
-                <ul className="cmp-legend">{all.map((c, s) => <li key={c.id + s}><i className={`cmp-key s${s + 1}`} aria-hidden="true" />{c.name}</li>)}</ul>
-                <RecentChart names={all.map((c) => c.name)} weeks={weeks} rows={series} />
+                <ul className="cmp-legend">{all.map((c, s) => empty[s] ? null : <li key={c.id + s}><i className={`cmp-key s${s + 1}`} aria-hidden="true" />{c.name}</li>)}</ul>
+                {all.map((c, s) => empty[s] ? <p key={`none-${c.id}${s}`} className="cmp-nogames"><i className={`cmp-key s${s + 1}`} aria-hidden="true" />{noneLine(c.name, recent.rows[s], weeks)}</p> : null)}
+                {recent.loading ? <div className="cmp-skel" aria-hidden="true" /> : <RecentChart names={all.map((c) => c.name)} weeks={weeks} rows={series} why={reasons} hide={empty} />}
                 <div className="cmp-table" role="table" aria-label="Fantasy points by week">
                   <div role="row" className="cmp-tr cmp-th" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${weeks.length}, 2.9em)` }}>
                     <span role="columnheader">Player</span>{weeks.map((wk) => <span key={wk} role="columnheader">W{wk}</span>)}
@@ -233,11 +307,23 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
                   {all.map((c, s) => (
                     <div key={c.id + s} role="row" className="cmp-tr" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${weeks.length}, 2.9em)` }}>
                       <span role="rowheader"><i className={`cmp-key s${s + 1}`} aria-hidden="true" />{c.name}</span>
-                      {series[s].map((v, i) => <span key={weeks[i]} role="cell" className={typeof v === "number" ? "" : "cmp-gap"}>{typeof v === "number" ? v.toFixed(1) : v === null ? "Bye" : "–"}</span>)}
+                      {series[s].map((v, i) => {
+                        const y = reasons[s][i];
+                        if (typeof v === "number") return <span key={weeks[i]} role="cell">{v.toFixed(1)}</span>;
+                        if (!y) return <span key={weeks[i]} role="cell" className="cmp-gap" aria-label={recent.loading ? "Loading" : "No data"}>{recent.loading ? "" : "–"}</span>;
+                        return (
+                          <span key={weeks[i]} role="cell" className="cmp-gap">
+                            <Tooltip focusable content={<><b>{c.name}: {y.word}</b><br />{y.detail}</>}>
+                              <span className={`miss-tag k-${y.kind}`} aria-label={`${y.word}. ${y.detail}`}>{y.label}</span>
+                            </Tooltip>
+                          </span>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
-                <p className="cmp-src">{isDemo() ? "Sample points from the demo league, the same ones each player's game log shows." : "Points from Sleeper, scored with your league's settings."} A dash means no points on record that week.</p>
+                <p className="cmp-src">{isDemo() ? "Sample points from the demo league, the same ones each player's game log shows." : "Points from Sleeper's weekly stats, scored with your league's settings, the same ones each player's game log shows."}
+                  {used.size > 0 && <> {[...used.values()].map((y) => `${y.label} ${KEY[y.kind]}`).join(", ")}. Hover or press a label for the detail.</>}</p>
               </>}
           </section>
         </div>

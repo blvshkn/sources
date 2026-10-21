@@ -3,7 +3,18 @@ import { currentFormat } from "./engine";
 import { sampleWeek } from "./live";
 
 /** One week of a player's season: points if it's played, projection and matchup tone if it's ahead. */
-export interface WeekCell { week: number; opp: string | null; past: boolean; pts?: number; proj?: number; tone?: "good" | "ok" | "tough"; playoff: boolean }
+export interface WeekCell { week: number; opp: string | null; past: boolean; pts?: number; proj?: number; tone?: "good" | "ok" | "tough"; playoff: boolean; miss?: Miss }
+
+/** Why a player has no points in a week his team played. Shared by the game log and Compare (missWhy in gamelog.ts
+ *  turns it into a label and a sentence). "na" is the one that means we don't know: the source didn't answer. */
+export type MissKind = "out" | "ir" | "inactive" | "dnp" | "sus" | "noteam" | "na";
+export interface Miss { kind: MissKind; /** Body part or other detail, as the source gives it. */ note?: string }
+/** The short label a table cell shows and the word a sentence uses, per reason. Byes use BYE and "Bye". */
+export const MISS_WORD: Record<MissKind, { label: string; word: string }> = {
+  out: { label: "OUT", word: "Out" }, ir: { label: "IR", word: "On IR" }, inactive: { label: "INA", word: "Inactive" },
+  dnp: { label: "DNP", word: "Did not play" }, sus: { label: "SUS", word: "Suspended" }, noteam: { label: "FA", word: "Not on a team" },
+  na: { label: "–", word: "No data" },
+};
 
 const TEAMS = ["ARI","ATL","BAL","BUF","CAR","CHI","CIN","CLE","DAL","DEN","DET","GB","HOU","IND","JAX","KC","LAC","LAR","LV","MIA","MIN","NE","NO","NYG","NYJ","PHI","PIT","SEA","SF","TB","TEN","WAS"];
 const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
@@ -30,8 +41,24 @@ function finalPts(): Record<string, number> {
   return finalCache.pts;
 }
 
-/** Demo leagues have no real slate, so build a stable made up one from the player's team. */
-export function demoCell(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">, w: number): { opp: string | null; pts?: number; proj?: number } {
+/** Demo league weeks a player missed, so the game log, Compare and Lineup's past weeks all show each reason once:
+ *  an IR stint (Aiyuk, on your IR now), an Out week (Bigsby's hamstring, the one he's doubtful with again), a
+ *  game-day inactive (Deebo's ankle) and an active DNP (Gesicki). Byes come from demoBye. Demo only. */
+const DEMO_MISS: Record<string, { from: number; to?: number; m: Miss }[]> = {
+  "brandon-aiyuk": [{ from: 3, to: 99, m: { kind: "ir", note: "Knee" } }],
+  "tank-bigsby": [{ from: 5, m: { kind: "out", note: "Hamstring" } }],
+  "deebo-samuel": [{ from: 4, m: { kind: "inactive", note: "Ankle" } }],
+  "mike-gesicki": [{ from: 3, m: { kind: "dnp" } }],
+};
+const demoMiss = (id: string, w: number) => DEMO_MISS[id]?.find((x) => w >= x.from && w <= (x.to ?? x.from))?.m;
+
+/** Demo leagues have no real slate, so build a stable made up one from the player's team. A week he missed keeps its
+ *  opponent and carries the reason in place of points. */
+export function demoCell(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">, w: number): { opp: string | null; pts?: number; proj?: number; miss?: Miss } {
+  const c = demoCellRaw(p, w), m = c.opp && c.pts !== undefined ? demoMiss(p.id, w) : undefined;
+  return m ? { opp: c.opp, miss: m } : c;
+}
+function demoCellRaw(p: Pick<Player, "id" | "nfl" | "pos" | "proj" | "opp">, w: number): { opp: string | null; pts?: number; proj?: number } {
   const bye = w === WEEK ? onBye(p.nfl) : demoBye(p.nfl) === w;
   if (bye) return { opp: null };
   const others = TEAMS.filter((t) => t !== p.nfl), ti = TEAMS.indexOf(p.nfl);

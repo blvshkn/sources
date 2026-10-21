@@ -5,7 +5,7 @@
 // doesn't send is left out and the table shows "–".
 import { FREE_AGENTS, LEAGUE, PLAYERS, Player, SPECIAL_FREE_AGENTS, TEAMS, WEEK, isDemo } from "./data";
 import { eff, round1 } from "./engine";
-import { seasonFor } from "./schedule";
+import { MISS_WORD, Miss, MissKind, seasonFor } from "./schedule";
 import { DepthRow, StatRow, fetchDepthRows, fetchProjRows, fetchSchedule, fetchStatRows, scoreStats } from "./sleeper";
 import { demoLine, oppTeam, ptsOf } from "./usage";
 import { demoBye, demoStats } from "./weeks";
@@ -24,9 +24,31 @@ export interface LogRow {
   pts?: number;
   /** His stat line. Undefined when he has none for a week that's been played. */
   stats?: Stats;
-  /** Past week with no line: the feed answered and he wasn't in it ("dnp"), or the feed didn't answer ("na"). */
-  miss?: "dnp" | "na";
+  /** Past week with no points: why (missWhy reads it). "na" means the source didn't answer. */
+  miss?: MissKind;
+  /** The detail behind the reason: the injury, or what the source showed. */
+  missNote?: string;
 }
+
+/** A week without points, as every view shows it: a short label for a table cell (BYE, OUT, IR, INA, DNP, SUS, FA,
+ *  or a dash for no data), a word for a sentence, and the detail for a tooltip. null for a week he scored. */
+export interface MissWhy { kind: MissKind | "bye"; label: string; word: string; detail: string }
+export function missWhy(r: LogRow, team?: string): MissWhy | null {
+  if (r.bye) return { kind: "bye", label: "BYE", word: "Bye", detail: `Week ${r.week}: ${team ? `${team} had` : "his team had"} no game.` };
+  if (r.when !== "past" || r.pts !== undefined || !r.miss) return null;
+  const m = MISS_WORD[r.miss];
+  return { kind: r.miss, label: m.label, word: m.word, detail: `Week ${r.week}${r.opp ? ` ${r.opp.startsWith("@") ? "at" : "vs"} ${r.opp.replace(/^(v|@)\s*/, "")}` : ""}: ${r.missNote ?? m.word}.` };
+}
+/** The demo's sentence for each reason, from the demo season's miss (schedule.ts DEMO_MISS). */
+const demoNote = (m: Miss) => ({
+  out: `Ruled out${m.note ? ` with a ${m.note.toLowerCase()} injury` : ""}`,
+  ir: `On injured reserve${m.note ? ` (${m.note})` : ""}`,
+  inactive: `Doubtful${m.note ? ` (${m.note})` : ""}, then inactive on game day`,
+  dnp: "Active, but played no snaps",
+  sus: "Suspended by the league",
+  noteam: "Not on an NFL roster yet",
+  na: "No points on record",
+})[m.kind];
 export interface SeasonLog { season: string; rows: LogRow[]; demo: boolean; team?: string; empty?: string }
 
 const hash = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return (h >>> 0) / 4294967295; };
@@ -66,7 +88,8 @@ function demoCurrent(s: Subject): SeasonLog {
     if (!c.opp) return { week: c.week, opp: null, bye: true, when: c.past ? "past" : c.week === WEEK ? "now" : "future" };
     if (c.week > WEEK) return { week: c.week, opp: c.opp, bye: false, when: "future", proj: c.proj };
     if (c.week === WEEK && !c.past) return { week: c.week, opp: c.opp, bye: false, when: "now", proj: nowProj(s, c.proj ?? (p.proj || undefined)) };
-    if (c.pts === undefined) return { week: c.week, opp: c.opp, bye: false, when: "past", miss: "dnp" };
+    if (c.miss) return { week: c.week, opp: c.opp, bye: false, when: "past", proj: demoProj(s, c.week, p.proj || 6), miss: c.miss.kind, missNote: demoNote(c.miss) };
+    if (c.pts === undefined) return { week: c.week, opp: c.opp, bye: false, when: "past", miss: "na", missNote: "No points on record" };
     const r = demoRow(s, c.pts, c.week);
     return { week: c.week, opp: c.opp, bye: false, when: "past", proj: demoProj(s, c.week, p.proj || 6), ...r };
   });
@@ -80,7 +103,7 @@ function demoLast(s: Subject, season: string): SeasonLog {
     if (w === bye) return { week: w, opp: null, bye: true, when: "past" };
     const opp = (hash(`${s.nfl}${w}ly`) > 0.5 ? "v" : "@") + others[(ti * 5 + w * 13) % others.length];
     // A couple of missed games for anyone banged up, so last season doesn't read perfect
-    if (hash(`${s.id}:${w}:out`) > 0.94) return { week: w, opp, bye: false, when: "past", miss: "dnp" };
+    if (hash(`${s.id}:${w}:out`) > 0.94) return { week: w, opp, bye: false, when: "past", miss: "out", missNote: "Ruled out" };
     const pts = round1(base * 0.92 * (0.45 + hash(`${s.id}:${w}:ly`) * 1.1));
     return { week: w, opp, bye: false, when: "past", proj: demoProj(s, w + 100, base * 0.92), ...demoRow(s, pts, w + 100) };
   });
@@ -100,7 +123,9 @@ async function weekRows(season: string, weeks: number[], pos: string) {
   ]);
   return { stats, proj };
 }
-const played = (s?: Stats) => !!s && ((s.gp ?? 0) > 0 || (s.off_snp ?? 0) > 0 || Object.values(s).some((v) => typeof v === "number" && v !== 0));
+// Team snap counts, ranks and the active flag ride along on a line for a game he sat out, so they don't count as playing
+const NOT_PLAY = /^(tm_|gms_active$|rank_|pos_rank_)/;
+const played = (s?: Stats) => !!s && ((s.gp ?? 0) > 0 || (s.off_snp ?? 0) > 0 || Object.entries(s).some(([k, v]) => !NOT_PLAY.test(k) && typeof v === "number" && v !== 0));
 
 async function liveLog(s: Subject, season: string): Promise<SeasonLog> {
   const current = season === LEAGUE.season;
@@ -121,6 +146,7 @@ async function liveLog(s: Subject, season: string): Promise<SeasonLog> {
     if (!top) return { season, rows: [], demo: false, empty: `No ${season} games on record for ${s.name}.` };
     team = top[0];
   }
+  const noTeam = !s.nfl || s.nfl === "FA";
   const oppOf = (w: number) => (current ? slate?.opp[team]?.[w] ?? null : oppFrom(sched, team, w));
   const knowsByes = current ? !!slate?.opp[team] : sched.length > 0;
   const rows: LogRow[] = weeks.map((w) => {
@@ -136,11 +162,37 @@ async function liveLog(s: Subject, season: string): Promise<SeasonLog> {
     const pr = mine(proj[i]);
     const projPts = pr?.stats ? score(s.pos, pr.stats) : undefined;
     const projV = projPts !== undefined && projPts > 0 ? round1(projPts) : undefined;
-    if (!row || !played(row.stats)) return { week: w, opp, bye: false, when, proj: projV, miss: stats[i] ? "dnp" : "na", pts: current ? slate?.pts[s.id]?.[w] : undefined };
+    if (!row || !played(row.stats)) {
+      // Only what the feeds show: no feed is "no data"; a line with no snaps puts him with his team that week but
+      // not on the field; no line at all is a game he didn't play, reason not given. IR or a suspension is filled in
+      // below, and only for the run of missed weeks that reaches his latest game, while Sleeper still lists him so.
+      const m: Pick<LogRow, "miss" | "missNote"> = !stats[i] ? { miss: "na", missNote: `Sleeper's Week ${w} stats didn't load` }
+        : row ? { miss: "dnp", missNote: (row.stats?.gms_active ?? 0) > 0 ? `Active for ${row.team ?? team}, no snaps` : `Listed with ${row.team ?? team} that week, no snaps` }
+        : noTeam ? { miss: "noteam", missNote: "Not on an NFL roster" }
+        : { miss: "dnp", missNote: "No stat line that week, and Sleeper gives no reason" };
+      // The league's own score stands only when it's real points (a stats feed that failed, say); a 0 hides the reason
+      const sp = current ? slate?.pts[s.id]?.[w] : undefined;
+      return { week: w, opp, bye: false, when, proj: projV, ...m, pts: sp ? sp : undefined };
+    }
     const pts = score(s.pos, row.stats);
     return { week: w, opp, bye: false, when, proj: projV, stats: row.stats, pts: pts !== undefined ? Math.round(pts * 100) / 100 : undefined };
   });
+  if (current) markLongTerm(s, rows);
   return { season, rows, demo: false, team };
+}
+/** He's on IR, PUP or suspended now (Sleeper's current tag) and hasn't played since some week: the missed weeks from
+ *  then to now get that reason. Earlier misses keep theirs, since the tag says nothing about them. */
+function markLongTerm(s: Subject, rows: LogRow[]) {
+  const tag = PLAYERS[s.id]?.injury;
+  const kind: MissKind | undefined = tag === "IR" || tag === "PUP" ? "ir" : tag === "Sus" ? "sus" : undefined;
+  if (!kind) return;
+  const past = rows.filter((r) => r.when === "past" && !r.bye);
+  const run: LogRow[] = [];
+  for (let i = past.length - 1; i >= 0 && past[i].miss === "dnp" && past[i].pts === undefined; i--) run.unshift(past[i]);
+  const since = run[0]?.week;
+  const word = kind === "ir" ? (tag === "PUP" ? "On the PUP list" : "On injured reserve") : "Suspended";
+  const body = PLAYERS[s.id]?.note?.replace(/^(IR|PUP|Sus|Out)\b,?\s*/i, "");
+  for (const r of run) { r.miss = kind; r.missNote = `${word} now${body ? ` (${body})` : ""}, and no games from Week ${since} on`; }
 }
 
 const logCache = new Map<string, Promise<SeasonLog>>();
