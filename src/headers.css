@@ -1,0 +1,57 @@
+/* Headers in Clash Grotesk (loaded by src/fonts.ts in Medium 500 and Semibold 600 only). Real headers only: page
+   titles, section headings, card titles, sheet and modal titles, the Ask intro, the trade read's verdict and the
+   landing headlines. Body text, labels, chips, buttons, nav, row text and numbers keep Geist and Geist Mono.
+   --font-display already names Geist for numerals and the wordmark in styles.css, so the Clash stack is set on the
+   header elements themselves and nothing else picks it up.
+   Weights: headers that were Geist 600 take Clash 500 (the same weight on screen), anything that was 700 or bolder
+   takes 600. Sizes stay as they were: at the same size Clash runs a little narrower than Geist, so no title gains a
+   line. Tracking: 0 on small titles, slightly negative from 24px up. */
+
+/* Small titles: cards, sheets, sections. Medium, tracking 0 */
+html:root:not(#_):not(#_) :is(
+  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
+  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
+  .ld2-steps h3
+) {
+  --font-display: "Clash Grotesk", Geist, system-ui, sans-serif;
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Titles that were 700 or bolder: Semibold */
+html:root:not(#_):not(#_) :is(.dv-verdict > b, .ld-cell h3) {
+  --font-display: "Clash Grotesk", Geist, system-ui, sans-serif;
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Large titles: the Ask intro and the landing hero and statement (were 600, now Medium) */
+html:root:not(#_):not(#_) :is(.ask-title, .ld2-h1, .ld2-tag) {
+  --font-display: "Clash Grotesk", Geist, system-ui, sans-serif;
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Large titles that were 700 or bolder: page titles, onboarding, the pitch sheet, landing section heads. Semibold */
+html:root:not(#_):not(#_) :is(.page-title, .ob-title, .sheet h2, .ld-h2) {
+  --font-display: "Clash Grotesk", Geist, system-ui, sans-serif;
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+html:root:not(#_):not(#_) .ld2-h1 { letter-spacing: -0.02em !important; }
+
+/* Only 500 and 600 ship, so emphasis inside a header tops out at Semibold and the browser never fakes a bold */
+html:root:not(#_):not(#_) :is(
+  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
+  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
+  .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2
+) { font-synthesis-weight: none; }
+html:root:not(#_):not(#_) :is(
+  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
+  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
+  .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2
+) :is(em, strong, b) { font-weight: 600 !important; }

@@ -77,3 +77,5 @@ In the demo league, player names are real NFL players with illustrative projecti
 ## NOTICE
 
 The AI working loader (Braille Flipwave) is vendored from the npm package `loader-buttons` v0.1.0 by Jaimin Kataria (https://github.com/Appllama/25-unique-loaders), licensed Apache-2.0 per its package.json. The files live in `src/vendor/loader-buttons/`. They are unchanged except for colors in `designs/25-braille-flipwave.js`. `designs/index.js` and `loader.d.ts` are ours.
+
+Headers use Clash Grotesk by Indian Type Foundry (https://www.fontshare.com/fonts/clash-grotesk), under the Fontshare free license, which allows commercial web use. The Medium and Semibold woff2 files live in `src/assets/fonts/` and are unchanged.

@@ -1,4 +1,5 @@
 import "./animationIteration";
+import "./fonts";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -62,6 +63,7 @@ import "./ask-ai.css";
 import "./why-none.css";
 import "./dividers.css";
 import "./motion.css";
+import "./headers.css";
 import "./row-spacing.css";
 import "./frame.css";
 import "./sheet.css";
