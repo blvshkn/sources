@@ -404,7 +404,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       .sort((a, b) => (b.pts?.ppr ?? b.proj) - (a.pts?.ppr ?? a.proj))[0];
     const mgr = partners[0]?.n.team.manager ?? TEAMS.find((t) => !t.you)!.manager;
     return [`Who needs a ${youNeeds.surplus ?? "WR"} most?`, rival ? `What would it take to get ${rival.name.split(" ").slice(-1)[0]}?` : "Who should I trade with?",
-      "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", `What does ${mgr} need?`];
+      "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", `What does ${mgr} need?`,
+      "Who's the unluckiest team?", "Roast the last-place team"];
   }, [partners, youNeeds]);
 
   // The deal in the builder, read only when the deal or what it's judged by changes, not on every render of the app

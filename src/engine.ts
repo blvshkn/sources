@@ -1181,9 +1181,18 @@ export function playerInText(text: string, skip?: [number, number][]) {
  *  trade on its link. `links` are the ways out to another tab, which Ask only takes when you tap one. */
 export type AskShow =
   | { kind: "player"; id: string }
+  | { kind: "players"; ids: string[] }
   | { kind: "swaps"; rows: { start: string; bench: string; slot: string; gain: number }[] }
   | { kind: "waiver"; fa: WaiverFA; gain: number; bid?: string; drop?: string };
-export interface Answer { text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[]; show?: AskShow }
+export interface Answer {
+  text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[]; show?: AskShow;
+  /** A dry one-liner from Sources AI, shown under the answer. */
+  quip?: string;
+  /** "ai" when Sources AI wrote it, "off" when it was unavailable and this is the built-in answer. Unset: built-in only. */
+  by?: "ai" | "off";
+  /** The engine had no rule for this question (its catch-all reply). */
+  generic?: boolean;
+}
 
 export function ask(q: string, tags: ManagerTag[], myTags: Record<string, MyTag>, prices: Record<string, Price>, passed: string[] = []): Answer {
   return drain(askSteps(q, tags, myTags, prices, passed));
@@ -1337,6 +1346,7 @@ export function* askSteps(q: string, tags: ManagerTag[], myTags: Record<string, 
     text: "I can answer questions about your league's rosters, needs, trades, lineup and waivers.",
     points: ["Try: \"Who needs a WR most?\"", "\"Who should I trade with?\"", "\"Who should I start at flex?\""],
     links: [],
+    generic: true,
   };
 }
 

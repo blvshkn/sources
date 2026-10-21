@@ -9,15 +9,18 @@ import { Player, TEAMS, YOU, isSpecialFA, playerById, teamById } from "../data";
 import { AiLabel, Icon } from "./ui";
 import { WorkingLoader } from "./WorkingLoader";
 import { PlayerSheet } from "./lazy";
+import { askJob, turnText, type AskTurnLog } from "../askAi";
+import { useLive, type Live } from "../live";
 
-type Msg = { id: number; q: string };
-type Topic = "Trades" | "Lineup" | "Waivers";
-const TOPICS: Topic[] = ["Trades", "Lineup", "Waivers"];
+type Msg = { id: number; q: string; history: AskTurnLog[] };
+type Topic = "Trades" | "Lineup" | "Waivers" | "League";
+const TOPICS: Topic[] = ["Trades", "Lineup", "Waivers", "League"];
 
 /** What a question is about, read from its words. Needs questions ("Who needs a WR most?", "What does Mike need?")
  *  are trade scouting: who to send your spare players to. */
 function topicOf(q: string): Topic {
   const s = q.toLowerCase();
+  if (/(unluck|lucky|luck\b|roast|last.place|first.place|worst team|best team|standings|champion|trash talk)/.test(s)) return "League";
   if (/(waiver|pick ?up|\badd\b|faab|bid|free agent)/.test(s)) return "Waivers";
   if (/(start|sit|flex|lineup|bench)/.test(s)) return "Lineup";
   return "Trades";
@@ -102,6 +105,7 @@ function AskShowBlock({ show, deal, onPlayer, live }: { show?: AskShow; deal?: T
   }
   if (!show) return null;
   if (show.kind === "player") return <div className="ask-show"><ul className="ask-prows">{row(show.id)}</ul></div>;
+  if (show.kind === "players") return <div className="ask-show"><ul className="ask-prows">{show.ids.map((id) => row(id))}</ul></div>;
   if (show.kind === "swaps") {
     return (
       <div className="ask-show">
@@ -140,25 +144,29 @@ function DealNumbers({ t }: { t: Trade }) {
 }
 
 /** One answer: the trace of the work, then the answer card streaming in as it's written out. */
-function AskTurn({ q, answer, onLink, onPitch, onPlayer, onDone, follow, onFollow }: {
+function AskTurn({ q, history, live, answer, onLink, onPitch, onPlayer, onDone, follow, onFollow }: {
   q: string;
+  /** The last few finished turns, so a follow-up can lean on them */
+  history: AskTurnLog[];
+  live: Live;
   answer: (q: string) => Steps<Answer>;
   onLink: (l: Answer["links"][number]) => void;
   onPitch?: (t: Trade) => void;
   onPlayer: OpenPlayer;
-  onDone: () => void;
+  onDone: (a?: Answer) => void;
   follow: string[];
   onFollow: (q: string) => void;
 }) {
   const { trace, result: a, start } = useTrace<Answer>();
-  useEffect(() => { start(() => answer(q)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Headline, then each point, as one stream
-  const counts = a ? [wordCount(a.text), ...a.points.map(wordCount)] : [];
+  // Sources AI answers; the engine runs first when it has a rule for the question, and is the answer if the AI is down
+  useEffect(() => { start(askJob(q, answer, history, live)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Headline, then each point, then the one-liner, as one stream
+  const counts = a ? [wordCount(a.text), ...a.points.map(wordCount), ...(a.quip ? [wordCount(a.quip)] : [])] : [];
   const total = counts.reduce((x, y) => x + y, 0);
   const k = useReveal(total, !!a);
   const done = !!a && k >= total;
   const failed = trace.status === "error";
-  useEffect(() => { if (done || failed) onDone(); }, [done, failed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (done || failed) onDone(done ? a : undefined); }, [done, failed]); // eslint-disable-line react-hooks/exhaustive-deps
   const deal = a?.links.find((l) => l.trade)?.trade;
   let base = counts[0] ?? 0;
   return (
@@ -173,6 +181,7 @@ function AskTurn({ q, answer, onLink, onPitch, onPlayer, onDone, follow, onFollo
               {a.points.map((p, i) => { const b = base; base += counts[i + 1]; return <li key={p} className={k > b ? undefined : "thk-wait"}><Words text={p} k={k} base={b} /></li>; })}
             </ul>
           )}
+          {a.quip && <p className={`ask-quip${k > base ? "" : " thk-wait"}`}><Words text={a.quip} k={k} base={base} /></p>}
           {/* What it's about, the numbers and the actions hold their space from the start and fade in when the text is
               written, so nothing moves. Everything here stays in Ask (players and the pitch open as sheets over it);
               only the "View in" link at the end goes to another tab. */}
@@ -195,6 +204,7 @@ function AskTurn({ q, answer, onLink, onPitch, onPlayer, onDone, follow, onFollo
               ))}
             </div>
           )}
+          {a.by === "off" && <p className="ask-ai-off">Sources AI is offline right now, so this is the built-in answer.</p>}
           <AiLabel />
         </article>
       )}
@@ -258,7 +268,10 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
   initial?: string;
 }) {
   // A question sent from the inbox composer arrives here and starts working at once
-  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, q: initial.trim() }] : []));
+  const [msgs, setMsgs] = useState<Msg[]>(() => (initial?.trim() ? [{ id: 1, q: initial.trim(), history: [] }] : []));
+  // Finished turns, oldest first. The last three go along with each new question.
+  const log = useRef<AskTurnLog[]>([]);
+  const live = useLive();
   const [busy, setBusy] = useState<number[]>(() => (initial?.trim() ? [1] : []));
   const [q, setQ] = useState("");
   // A player tapped in an answer opens over Ask; the thread and its scroll stay as they are underneath
@@ -386,7 +399,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     cap.current = true;
     userAt.current = 0;
     smoothUntil.current = performance.now() + 700;
-    setMsgs((m) => [...m, { id, q: t }]);
+    setMsgs((m) => [...m, { id, q: t, history: log.current.slice(-3) }]);
     setBusy((b) => [...b, id]);
     setQ("");
   };
@@ -417,7 +430,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 <div className="ask-intro">
                   <span className="ask-mark"><Icon name="spark" size={32} /></span>
                   <h2 className="ask-title">Ask your league</h2>
-                  <p className="ask-sub">Trades, lineups, waivers. I run the numbers on your real rosters and show my work.</p>
+                  <p className="ask-sub">Trades, lineups, waivers, or anything else about your league. I run the numbers on your real rosters and show my work.</p>
                 </div>
                 <div className="ask-groups">
                   {groups.map((g) => (
@@ -431,8 +444,8 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 </div>
               </div>
             ) : msgs.map((m, i) => (
-              <AskTurn key={m.id} q={m.q} answer={answer} onLink={onLink} onPitch={onPitch} onPlayer={setSheet}
-                onDone={() => setBusy((b) => b.filter((x) => x !== m.id))}
+              <AskTurn key={m.id} q={m.q} history={m.history} live={live} answer={answer} onLink={onLink} onPitch={onPitch} onPlayer={setSheet}
+                onDone={(a) => { if (a && !log.current.some((x) => x.q === m.q && x.a === turnText(a))) log.current = [...log.current, { q: m.q, a: turnText(a) }].slice(-6); setBusy((b) => b.filter((x) => x !== m.id)); }}
                 follow={i === msgs.length - 1 ? followFor(m.q) : []} onFollow={send} />
             ))}
           </div>

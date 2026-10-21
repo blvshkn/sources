@@ -1,0 +1,15 @@
+/* Ask with Sources AI: the one-liner under an answer, and the note when the AI is offline. Imported after ask.css. */
+
+/* The dry one-liner: set apart by a thin rule and italics, in the answer's ink so it reads as part of it */
+html:root:not(#_):not(#_) .ask-card .ask-quip {
+  margin: 0; padding-top: 10px; border-top: 1px solid var(--line);
+  font-size: 0.9375rem; line-height: 1.4; font-style: italic; color: var(--ink); text-wrap: pretty;
+}
+html:root:not(#_):not(#_) .ask-card .ask-quip.thk-wait { border-top-color: transparent; }
+
+/* Only shown when the AI couldn't answer: small and muted, never an error */
+html:root:not(#_):not(#_) .ask-card .ask-ai-off { margin: 0; font-size: 0.75rem; line-height: 1.4; color: var(--muted); }
+
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ask-card .ask-quip { font-size: 1rem; padding-top: 12px; }
+}

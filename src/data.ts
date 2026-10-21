@@ -49,6 +49,8 @@ export interface Team {
   manager: string;
   record: string;
   pf: number;
+  /** Points against this season (live leagues, from Sleeper). */
+  pa?: number;
   you?: boolean;
   /** Active roster only: starters and bench. IR and taxi players live below. */
   roster: string[];

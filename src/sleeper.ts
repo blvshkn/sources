@@ -69,7 +69,7 @@ export interface SLeague {
 interface SRoster {
   roster_id: number; owner_id: string | null; co_owners?: string[] | null; players: string[] | null; starters: string[] | null;
   reserve?: string[] | null; taxi?: string[] | null; metadata?: Record<string, unknown> | null;
-  settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; waiver_budget_used?: number; waiver_position?: number };
+  settings: { wins?: number; losses?: number; ties?: number; fpts?: number; fpts_decimal?: number; fpts_against?: number; fpts_against_decimal?: number; waiver_budget_used?: number; waiver_position?: number };
 }
 interface SProj {
   player_id: string; team: string | null; opponent?: string | null; date?: string | null;
@@ -486,6 +486,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       manager: u?.display_name || "Open team",
       record,
       pf: (st.fpts ?? 0) + (st.fpts_decimal ?? 0) / 100,
+      // Points against, when Sleeper has it (Ask reads it for luck questions)
+      pa: st.fpts_against !== undefined ? st.fpts_against + (st.fpts_against_decimal ?? 0) / 100 : undefined,
       you: r.owner_id === userId || !!r.co_owners?.includes(userId),
       avatar: managerAvatar(u, "thumb", r) ?? undefined,
       photo: avatarSrc(u?.avatar) ?? undefined,
