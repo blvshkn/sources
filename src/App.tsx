@@ -58,7 +58,7 @@ const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => 
 
 type Tab = "wire" | "league" | "trade" | "roster" | "waivers" | "ask" | "settings" | "matchup" | "how" | "legal";
 const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boolean; hidden?: boolean }[] = [
-  { id: "wire", label: "The Wire", short: "Wire", icon: "wire", main: true },
+  { id: "wire", label: "Overview", short: "Overview", icon: "overview", main: true },
   { id: "league", label: "League Needs", short: "League", icon: "league", main: true },
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
   { id: "roster", label: "Lineup", short: "Lineup", icon: "helmet", main: true },
@@ -72,6 +72,8 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
 /** The phone tab bar: the five main tabs, then Ask */
 const BAR_TABS = TABS.filter((t) => t.main || t.id === "ask");
 const TAB_IDS = TABS.map((t) => t.id);
+/** The tab a URL hash names. Overview keeps its old key ("wire") so saved links work; #overview reaches it too. */
+const hashTab = (h: string) => (h === "overview" ? "wire" : h);
 
 /** Short tap on Android for meaningful commits only (save, send). iOS Safari ignores it. */
 const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
@@ -137,7 +139,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     setToast(`Removed @${gone.username}. Its leagues are out of the switcher.`, () => onAccounts(prev));
   };
   const [tab, setTab] = useState<Tab>(() => {
-    const h = typeof location !== "undefined" ? location.hash.slice(1) : "";
+    const h = typeof location !== "undefined" ? hashTab(location.hash.slice(1)) : "";
     return (TAB_IDS as string[]).includes(h) ? (h as Tab) : "wire";
   });
   // Tags, prices and history are kept per league, in this browser only.
@@ -235,7 +237,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   }, [toast]);
   useEffect(() => {
     // Back and Forward: pushState doesn't fire hashchange, so listen to popstate too
-    const onHash = () => { const h = location.hash.slice(1) || "wire"; if ((TAB_IDS as string[]).includes(h)) { setTab(h as Tab); setInboxOpen(false); } };
+    const onHash = () => { const h = hashTab(location.hash.slice(1)) || "wire"; if ((TAB_IDS as string[]).includes(h)) { setTab(h as Tab); setInboxOpen(false); } };
     window.addEventListener("hashchange", onHash);
     window.addEventListener("popstate", onHash);
     return () => { window.removeEventListener("hashchange", onHash); window.removeEventListener("popstate", onHash); };
@@ -457,7 +459,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     try { if (location.hash.slice(1) !== t) history.pushState(null, "", `#${t}`); else history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     // A team deep link (League) is opened and scrolled to by the Needs list itself
   };
-  // The logo goes home: the Wire, back at the top (go() alone won't scroll if you're already there)
+  // The logo goes home: Overview, back at the top (go() alone won't scroll if you're already there)
   const goHome = () => { go("wire"); window.scrollTo({ top: 0 }); };
   const loadTrade = (t: Trade) => { if (!isPartner(t.partnerId)) return; setReopened(null); setPartnerId(t.partnerId); setGive(t.give); setGet(t.get); setExtra([]); go("trade"); };
   const toggle = (side: "give" | "get", id: string, teamId?: string) => {

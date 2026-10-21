@@ -98,7 +98,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
       : n.kind === "slot" ? { label: "See slot report", run: () => go("roster:slots") }
       : n.kind === "lineup" ? { label: "Fix lineup", run: () => go("roster") }
       : n.go ? { label: n.go.label, run: () => go(n.go!.tab) }
-      : { label: "Open the wire", run: () => go("wire:intel") };
+      : { label: "Open Overview", run: () => go("wire:intel") };
     const icon: IconName = n.kind === "offer" ? "send" : n.kind === "need" ? "trade" : n.kind === "waiver" ? "waivers" : n.kind === "stale" ? "clock" : n.kind === "slot" ? "values" : n.kind === "lineup" ? "helmet" : "alert";
     out.push({ id: n.id, icon, text, meta, urgent: n.kind === "ir" || n.kind === "lineup", ai: n.kind === "need" || n.kind === "news" || n.kind === "slot" || n.kind === "waiver", action, nudge: n,
       pass: n.pass && pass ? () => pass(n.pass!) : undefined, passName: n.pass?.name });

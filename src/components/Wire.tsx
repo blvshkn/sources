@@ -19,7 +19,7 @@ import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { FaceOff } from "./FaceOff";
-import { MatchupStrip, heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag, PROJ_TIP, soFarTip, paceTip } from "./Roster";
+import { heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag, PROJ_TIP, soFarTip, paceTip } from "./Roster";
 import { SentLine } from "./SentOffers";
 import type { SentDeal, SentOffer } from "../sentOffers";
 
@@ -299,8 +299,9 @@ function threatNote(p: Player, rank: number, manager: string) {
   return `${first} ${second}`;
 }
 
-/** More for the This week tab: when your starters play, who's banged up, the opponent's threats, and the dates that matter. */
-function WeekMore({ onGo }: { onGo: (t: string) => void }) {
+/** Command center's game week: when your starters play on the left, and the opponent's threats, who's banged up and
+ *  the dates that matter on the right. On a phone it's one column, threats first. */
+function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => void }) {
   const live = useLive();
   useKickoffs();
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
@@ -315,8 +316,9 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [lockLine(), DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
   return (
-    <>
-      <section className="card wk" aria-label="When your starters play">
+    <div className="cc-cols">
+      <div className="cc-col cc-main">
+      <section className="card wk cc-days" aria-label="When your starters play">
         <div className="wk-head"><h2 className="section-title">Game day</h2><span className="tiny muted">Your starters</span></div>
         {days.map(({ d, ps }) => (
           <div key={d} className="wk-day">
@@ -331,7 +333,10 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
           </div>
         ))}
       </section>
+      </div>
 
+      <div className="cc-col cc-side">
+      {threats}
       <section className="card wk" aria-label="Injury watch">
         <div className="wk-head"><h2 className="section-title">Injury watch</h2><span className="tiny muted">You and {opp?.manager ?? "your opponent"}</span></div>
         {injured.length === 0 ? <p className="small muted">Nobody in this matchup carries an injury tag.</p> : injured.map(({ p, you }) => (
@@ -348,7 +353,8 @@ function WeekMore({ onGo }: { onGo: (t: string) => void }) {
         <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
         {dates.map((d) => <div key={d} className="wk-date"><Icon name="clock" size={16} /><span>{d}</span></div>)}
       </section>}
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -454,8 +460,10 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   useKickoffs();
   const [leaving, setLeaving] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
-  const [view, setView] = useSticky<"matchup" | "week" | "intel">("wire.view", "matchup", ["matchup", "week", "intel"]);
-  // "See the full matchup" on the Overview card opens it over the Wire (sheet or modal) instead of leaving the page
+  // Two tabs: Command center (key "matchup", kept so saved state still lands there) and Intel. The old This week tab
+  // ("week") folded into Command center; a saved "week" isn't allowed any more, so it falls back to Command center.
+  const [view, setView] = useSticky<"matchup" | "intel">("wire.view", "matchup", ["matchup", "intel"]);
+  // "See the full matchup" on the face-off opens it over Overview (sheet or modal) instead of leaving the page
   const [matchupOpen, setMatchupOpen] = useState(false);
   const visible = showAll ? nudges : nudges.slice(0, 2);
   const leave = (n: Nudge) => {
@@ -466,16 +474,20 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="The Wire" meta={<>{lockLine()}</>} />
+          <LeagueSwitch title="Overview" meta={<>{lockLine()}</>} />
         </div>
       </header>
 
-      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Overview", icon: "app" }, { v: "week", label: "This week", icon: "clock" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "spark" }]} />
+      <PageTabs value={view} onChange={setView} options={[{ v: "matchup", label: "Command center", icon: "headset" }, { v: "intel", label: nudges.length + followUps.length ? `Intel (${nudges.length + followUps.length})` : "Intel", icon: "hatGlasses" }]} />
 
       {view === "matchup" && <Scoreboard you={you} partner={partner} extras={false} onMatchup={() => setMatchupOpen(true)} />}
       {matchupOpen && <MatchupSheet onClose={() => setMatchupOpen(false)} />}
 
-      {view === "matchup" && <section className="card briefing" aria-label="Weekly briefing">
+      {/* Command center: the face-off, then your moves (Quick moves and Where to improve), then the game week:
+          their threats, when your starters play, injuries and key dates. The face-off is the one matchup card here;
+          This week's own matchup strip repeated it and is gone. */}
+      {view === "matchup" && <div className="cc-pair">
+      <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
         </div>
@@ -498,11 +510,16 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
             </Tooltip>
           )}
         </div>
+      </section>
+      <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />
+      </div>}
+      {view === "matchup" && <section className="cc-week" aria-labelledby="cc-week-h">
+        <div className="row wrap cc-sec">
+          <h2 className="section-title" id="cc-week-h">This week</h2>
+          <span className="sample-note">Week {WEEK}{OPPONENT_ID ? ` vs ${teamById(OPPONENT_ID).manager}` : ", bye"}</span>
+        </div>
+        <WeekMore threats={<Threats onGo={onGo} />} onGo={(t) => (t === "matchup" ? setMatchupOpen(true) : onGo(t))} />
       </section>}
-      {view === "matchup" && <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />}
-      {view === "matchup" && <Threats onGo={onGo} />}
-      {view === "week" && <div className="wk-strip"><MatchupStrip onOpen={() => setMatchupOpen(true)} /></div>}
-      {view === "week" && <WeekMore onGo={(t) => (t === "matchup" ? setMatchupOpen(true) : onGo(t))} />}
 
       {view === "intel" && <>
       <RosterNews />

@@ -40,7 +40,7 @@ function ArrowUp({ size = 18 }: { size?: number }) {
 }
 
 /** The way out of Ask for each answer, by the tab it opens. Only this link (or a "take me there" question) leaves. */
-const OUT: Record<string, string> = { trade: "View in Trade", roster: "Open in Lineup", waivers: "Open in Waivers", league: "Open in League", wire: "Open in Wire" };
+const OUT: Record<string, string> = { trade: "View in Trade", roster: "Open in Lineup", waivers: "Open in Waivers", league: "Open in League", wire: "Open in Overview" };
 
 /** "Take me to the trade builder", "open my lineup", "go to waivers": a question that asks to go somewhere goes there.
  *  It has to start with the ask to go and name a place, so "open the top deal" is still answered here. */
@@ -50,7 +50,7 @@ const GO_TO: [RegExp, string][] = [
   [/^(lineup|roster|team|start\/sit)$/, "roster"],
   [/^(waivers?|waiver wire|free agents)$/, "waivers"],
   [/^(league|league needs|needs|needs map)$/, "league"],
-  [/^(wire|the wire)$/, "wire"],
+  [/^(overview|command center|wire|the wire)$/, "wire"],
   [/^settings$/, "settings"],
 ];
 function goTarget(q: string): string | null {

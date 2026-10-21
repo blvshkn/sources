@@ -38,7 +38,7 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 - **Headshots:** round on margin gray, team badge with a paper ring
 - **Chrome:** paper-colored top bar, hairline edge, light blur only on fixed bars
 - **Thumb index (phone nav):** a full-width paper strip. Each section is an icon over its name; Lineup uses the custom helmet. The active name gets a highlighter stroke in the section's color, and a short rule in that color slides along the top edge
-- **Desktop sidebar:** same short names (Wire, League, Trade, Lineup, Waivers, Ask, Settings), same icon tint and highlighter, and a section-colored rule on the left edge that slides between items
+- **Desktop sidebar:** same short names (Overview, League, Trade, Lineup, Waivers, Ask, Settings), same icon tint and highlighter, and a section-colored rule on the left edge that slides between items
 
 - **Icons:** Lucide (ISC) plus Sources customs, all on a 24px grid with a 2px round stroke, in `src/components/icons.tsx`. Active tab thickens the stroke to 2.4; customs may fill. No second icon family
 
@@ -48,7 +48,7 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 
 ## 6. Gradients, Texture & Motion
 Gradients are allowed only where they carry a role:
-- **Section light:** each tab casts its own low light from the top of the page (Wire amber, League lavender, Trade blue, Lineup green, Waivers teal, Ask and Settings neutral) at 11 to 13% opacity, on a fixed pointer-events-none layer. The active tab in the tab bar carries the same color as a short underglow
+- **Section light:** each tab casts its own low light from the top of the page (Overview amber, League lavender, Trade blue, Lineup green, Waivers teal, Ask and Settings neutral) at 11 to 13% opacity, on a fixed pointer-events-none layer. The active tab in the tab bar carries the same color as a short underglow
 - **Matchups:** scoreboards fade from your blue (left) to their gray (right). The win-chance bar fills your side with a blue gradient that deepens toward the split
 - **Best opportunity:** the top pickup that starts for you, and "Likely yes" trade ideas, get a soft green wash from the top or corner
 - **Lineup changes:** a pale yellow highlighter stroke that fades out to the right

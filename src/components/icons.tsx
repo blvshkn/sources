@@ -6,16 +6,25 @@ import { AskIcon } from "./AskIcon";
 import { useIconStroke } from "./iconStroke";
 
 export type IconName =
-  | "wire" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
+  | "overview" | "headset" | "hatGlasses" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
   | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
   | "download" | "image" | "mail" | "star" | "airVent";
 
 const ICONS: Record<IconName, string> = {
-  wire: "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path class=\"m1\" pathLength=\"1\" d=\"M7 8h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M7 12h10\"/><path class=\"m3\" pathLength=\"1\" d=\"M7 16h6\"/>", // square-text
-  league: "<rect class=\"m1\" width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/><rect class=\"m2\" width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect class=\"m3\" width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/><rect class=\"m4\" width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/>", // layout-grid
+  // Overview: Lucide layout-panel-left. The tall panel (m1) opens out from its left edge, then the two cells (m2, m3)
+  // slide in after it, top first.
+  overview: "<rect class=\"m1\" width=\"7\" height=\"18\" x=\"3\" y=\"3\" rx=\"1\"/><rect class=\"m2\" width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect class=\"m3\" width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/>", // layout-panel-left
+  // Command center (the Overview page tab): Lucide headset, both paths as drawn.
+  headset: "<path d=\"M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z\"/><path d=\"M21 16v2a4 4 0 0 1-4 4h-5\"/>", // headset
+  // League: Lucide landmark, paths in Lucide's order. The four columns (m1 to m4, left to right) rise from the floor
+  // in turn under a still roof and base.
+  // Intel (the Overview page tab): Lucide hat-glasses, paths as drawn.
+  hatGlasses: "<path d=\"M14 18a2 2 0 0 0-4 0\"/><path d=\"m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11\"/><path d=\"M2 11h20\"/><circle cx=\"17\" cy=\"18\" r=\"3\"/><circle cx=\"7\" cy=\"18\" r=\"3\"/>", // hat-glasses
+  league: "<path class=\"m2\" d=\"M10 18v-7\"/><path d=\"M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z\"/><path class=\"m3\" d=\"M14 18v-7\"/><path class=\"m4\" d=\"M18 18v-7\"/><path d=\"M3 22h18\"/><path class=\"m1\" d=\"M6 18v-7\"/>", // landmark
   trade: "<g class=\"m1\"><path d=\"m16 3 4 4-4 4\"/><path d=\"M20 7H4\"/></g><g class=\"m2\"><path d=\"m8 21-4-4 4-4\"/><path d=\"M4 17h16\"/></g>", // arrow-right-left
-  waivers: "<circle class=\"m2\" cx=\"12\" cy=\"12\" r=\"10\"/><g class=\"m1\"><path d=\"M8 12h8\"/><path d=\"M12 8v8\"/></g>", // circle-plus
+  // Waivers: Lucide square-text (the old Wire glyph). The three lines (m1 to m3, pathLength 1) write in, top to bottom.
+  waivers: "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path class=\"m1\" pathLength=\"1\" d=\"M7 8h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M7 12h10\"/><path class=\"m3\" pathLength=\"1\" d=\"M7 16h6\"/>", // square-text
   spark: "", // drawn by AskIcon (Lucide messages-square)
   app: "<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M10 4v4\"/><path d=\"M2 8h20\"/><path d=\"M6 4v4\"/>", // app-window
   clock: "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>", // clock
@@ -65,15 +74,19 @@ const ICONS: Record<IconName, string> = {
 // Icons with a micro-animation (src/icon-motion.css). "nav" ones play when their tab becomes active and on hover inside
 // the sidebar, tab bar or top bar. "any" ones are affordances that play on hover of whatever control holds them.
 const MOTION: Partial<Record<IconName, "nav" | "any">> = {
-  helmet: "nav", wire: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", gear: "nav",
+  helmet: "nav", overview: "nav", league: "nav", trade: "nav", waivers: "nav", bell: "nav", ask: "nav", gear: "nav",
   search: "any", pen: "any", chev: "any", airVent: "any",
 };
 
 /** Optical centering, in 24-grid units, measured from each glyph's ink: centered by mass, with the ink box kept within
- *  about half a unit of center. Most Lucide glyphs already sit centered. The square-text lines and the chevron lean
- *  left, the up arrow's head weights it high, the star's weight sits low (lifted 0.35, the same split of mass and box
- *  as the old star), and the closed helmet carries more ink low and right than the open one did. */
-const OFFSET: Partial<Record<IconName, [number, number]>> = { wire: [0.1, 0], chev: [0.1, 0], send: [0, 0.5], star: [0, -0.35], helmet: [-0.05, 0.35] };
+ *  about half a unit of center. Most Lucide glyphs already sit centered. The panel layout's two right cells carry more
+ *  outline than its tall panel (mass 0.21 right), so it moves left 0.1. The landmark's base and roof sit low (mass 0.2
+ *  down), so it lifts 0.15. The headset's mic arm weights it right and low (mass 0.73 right, 0.25 down), so it moves
+ *  left 0.45 and up 0.25 with its box still inside half a unit. The hat-glasses' two lenses weigh it low (mass 0.84
+ *  down), so it lifts 0.45, as far as its box allows. The square-text lines and the chevron lean left, the up
+ *  arrow's head weights it high, the star's weight sits low (lifted 0.35, the same split of mass and box as the old
+ *  star), and the closed helmet carries more ink low and right than the open one did. */
+const OFFSET: Partial<Record<IconName, [number, number]>> = { overview: [-0.1, 0], league: [0, -0.15], waivers: [0.1, 0], headset: [-0.45, -0.25], hatGlasses: [0, -0.45], chev: [0.1, 0], send: [0, 0.5], star: [0, -0.35], helmet: [-0.05, 0.35] };
 const inked = (name: IconName) => { const o = OFFSET[name]; return o ? `<g transform="translate(${o[0]} ${o[1]})">${ICONS[name]}</g>` : ICONS[name]; };
 
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {

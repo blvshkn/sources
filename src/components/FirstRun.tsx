@@ -157,7 +157,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
               ))}
             </div>
             <div className="row wrap">
-              <button className="btn btn-primary" onClick={() => finish()}>Open The Wire</button>
+              <button className="btn btn-primary" onClick={() => finish()}>Open Overview</button>
               <button className="btn btn-ghost" onClick={() => finish({})}>Skip for now</button>
             </div>
           </div>

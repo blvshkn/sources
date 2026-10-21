@@ -94,7 +94,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #0D0E0D; }
   /* Bell and settings are icon buttons (icon-buttons.css) */
 }
 
-/* ---------- Phone tab bar: Wire, League, Trade, Lineup, Waivers, Ask ---------- */
+/* ---------- Phone tab bar: Overview, League, Trade, Lineup, Waivers, Ask ---------- */
 @media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix {
     grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 0 !important;

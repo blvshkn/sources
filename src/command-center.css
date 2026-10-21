@@ -1,0 +1,26 @@
+/* Overview > Command center (Wire.tsx): the old Overview and This week tabs in one view.
+   Order: the face-off, then your moves (Quick moves and Where to improve), then the game week under a This week
+   header (their threats, game day, injury watch, key dates).
+   Phone: one column with the page's own 24px rhythm, the threats first in the game week.
+   Main column 720 and up: game day on the left, threats, injuries and dates stacked on the right.
+   Main column 960 and up: Quick moves and Where to improve side by side, the same height.
+   Only layout lives here. The cards are the existing ones, with their own padding tokens and var(--line) borders. */
+
+html:root:not(#_):not(#_) :is(.main-inner > .cc-pair, .main-inner > .cc-week, .cc-week > .cc-cols, .cc-cols > .cc-col) {
+  display: flex; flex-direction: column; gap: 24px; min-width: 0;
+}
+html:root:not(#_):not(#_) .cc-week > .cc-sec { justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+html:root:not(#_):not(#_) .cc-week > .cc-sec > .section-title { margin: 0; }
+
+/* One column: the two halves melt into one list so the threats can lead it */
+@container col (max-width: 719px) {
+  html:root:not(#_):not(#_) .cc-cols > .cc-col { display: contents; }
+  html:root:not(#_):not(#_) .cc-cols > .cc-side > .thr { order: -1; }
+}
+@container col (min-width: 720px) {
+  html:root:not(#_):not(#_) .cc-week > .cc-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+}
+@container col (min-width: 960px) {
+  html:root:not(#_):not(#_) .main-inner > .cc-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  html:root:not(#_):not(#_) .cc-pair > .card { height: 100%; margin: 0; }
+}

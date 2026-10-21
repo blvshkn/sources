@@ -15,7 +15,7 @@ Everything in the product spec's MVP, plus v1 previews (marked **v1 preview** in
 | Area | What it does |
 | --- | --- |
 | **First run** | Sleeper username only (no passwords), pick from your real leagues, confirm your team, see your top need and one trade worth a look, optionally tag untouchables. Or try the demo league. |
-| **The Wire** | Per Sources nudges with a reason and one action each: league needs, offers received (verdict + ready counter), news breaks (what it changes for your lineup, targets and prices), lineup-day flags, waivers, stale-tag checks, slot patterns. Weekly briefing. "Did Mike reply?" follow-ups that turn the answer into a tag or a counteroffer. |
+| **Overview** | Command center: this week's face-off, Quick moves, where to improve, their threats, game day, injury watch and key dates. Intel: per Sources nudges with a reason and one action each: league needs, offers received (verdict + ready counter), news breaks (what it changes for your lineup, targets and prices), lineup-day flags, waivers, stale-tag checks, slot patterns. Weekly briefing. "Did Mike reply?" follow-ups that turn the answer into a tag or a counteroffer. |
 | **League Needs** | Every team's starting slots against the league average, contender/seller from record and points scored, the 2 or 3 best trade partners, fading intent tags, and manager tendencies from completed trades. |
 | **Build a Deal** | Both full rosters side by side, live before/after starting-lineup points, refused players dimmed, wanted players highlighted, untouchables locked, live tips, roster-drop accounting, slot-by-slot math, and tags from free text or dictation. |
 | **Lineup** | Optimal lineup drawn as an offensive formation on a football field (line of scrimmage, first-down line, hash marks), Sleeper lineup diff with "Apply in Sleeper", close calls, byes and injuries, roster tag suggestions, "what would it take" with a price in points a week or percent over value, and a slot report. |
@@ -68,7 +68,7 @@ src/
   engine.ts        lineups, needs, trades, verdicts, counters, waivers, tendencies, Ask
   pitch.ts         pitch writer (tones, DM vs group chat)
   App.tsx          state, nudges, navigation
-  components/      Wire, League, Trade, Roster, Waivers, Ask, Settings, FirstRun, PitchSheet, TagCapture, ui
+  components/      Wire (Overview), League, Trade, Roster, Waivers, Ask, Settings, FirstRun, PitchSheet, TagCapture, ui
   styles.css       design tokens and components
 ```
 

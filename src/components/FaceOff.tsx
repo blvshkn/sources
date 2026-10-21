@@ -49,8 +49,8 @@ function perGame(t: Team) {
 }
 
 /**
- * The matchup face-off (Figma "Score header", node 1:173), shared by the Wire Overview card, the Wire This week
- * strip, the Lineup team strip and the header of the full matchup. One surface, two mirrored sides around a round
+ * The matchup face-off (Figma "Score header", node 1:173), shared by the Overview > Command center card, the
+ * Lineup team strip and the header of the full matchup. One surface, two mirrored sides around a round
  * VS ring. Each side: avatar, "You" or the handle over the team name, the big score, a bar filled by win %, then a
  * mono meta line (win %, record, the "N to play" chip while games are on, then the projection or points per game,
  * which tablet and desktop push to the inner end). The matchup winner's cup sits before the handle. Under the badge:

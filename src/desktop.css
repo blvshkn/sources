@@ -1,4 +1,4 @@
-/* Shell, inbox, Wire, League and Lineup at tablet and desktop widths. Loads last.
+/* Shell, inbox, Overview, League and Lineup at tablet and desktop widths. Loads last.
    Phone (390) keeps its layout: everything below either sits behind a container or
    viewport query, or only styles markup the inbox adds. 4pt spacing: 4 8 12 16 24 32 48. */
 
@@ -152,20 +152,9 @@ html:root:not(#_) .nav .nav-inbox { position: relative; }
 }
 @media (prefers-reduced-transparency: reduce) { .ibx-scrim { background: rgba(5, 6, 8, 0.8); } }
 
-/* ---------- Wire ---------- */
-/* Overview: the matchup leads full width; the moves and the improve card pair up when there's room */
-@container col (min-width: 960px) {
-  html:root:not(#_) .main-inner:has(> .sb2) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
-  html:root:not(#_) .main-inner:has(> .sb2) > :is(.page-head, .page-tabs, .sb2, .briefing) { grid-column: 1 / -1; }
-  html:root:not(#_) .main-inner:has(> .sb2) > .card { height: 100%; }
-}
-/* This week: game day on the left, injuries and dates stacked on the right */
-@container col (min-width: 720px) {
-  /* The spare 1fr row soaks up game day's height so the right-hand cards stack tight */
-  html:root:not(#_) .main-inner:has(> .wk-strip) { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: auto auto auto auto auto 1fr; align-items: start; gap: 24px; }
-  html:root:not(#_) .main-inner:has(> .wk-strip) > :is(.page-head, .page-tabs, .wk-strip) { grid-column: 1 / -1; }
-  html:root:not(#_) .main-inner:has(> .wk-strip) > .wk[aria-label="When your starters play"] { grid-column: 1; grid-row: 4 / 7; }
-}
+/* ---------- Overview (tab key "wire") ---------- */
+/* Command center lays itself out in command-center.css: the face-off full width, Quick moves beside Where to
+   improve, and the game week in two columns. Intel is below. */
 /* Intel is reading: hold it to a comfortable measure */
 @container col (min-width: 800px) {
   html:root:not(#_) .main-inner:has(> .nudge, > .followup) > :not(.page-head):not(.page-tabs) { width: 100%; max-width: 760px; }

@@ -36,7 +36,7 @@ export function MatchupWeek({ week, onBack, stepper = null }: { week: number; on
   return week === WEEK ? <MatchupNow onBack={onBack} stepper={stepper} /> : <WeekMatchup week={week} onBack={onBack} stepper={stepper} />;
 }
 
-const BackBtn = ({ onBack }: { onBack?: () => void }) => onBack ? <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Wire</button> : null;
+const BackBtn = ({ onBack }: { onBack?: () => void }) => onBack ? <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Overview</button> : null;
 
 function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNode }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
