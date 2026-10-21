@@ -183,7 +183,7 @@ html:root:not(#_) .lg-top { display: contents; }
   html:root:not(#_) .lg-top:has(> :nth-child(2)) { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
   html:root:not(#_) .lg-top > .capture-card .lg2 { margin-top: auto; }
 }
-html:root:not(#_) .capture-card .lg2 { padding: 12px 0 0; border-top: 1px solid var(--line); }
+html:root:not(#_) .capture-card .lg2 { padding: 12px 0 0; border-top: 0; }
 @container pg (min-width: 720px) {
   html:root:not(#_) .main-inner > .capture-card, html:root:not(#_) .lg-top > .capture-card:only-child { max-width: 640px; }
 }
