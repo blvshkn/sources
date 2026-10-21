@@ -666,7 +666,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           ) : (
             <p className="sf-who"><span className="sf-from">Live from <span className="sf-chip">Sleeper<PlatformLogo size={16} /></span></span> connected as @{username},</p>
           )}
-          {refreshed && <p className="sf-when">{refreshed}.</p>}
+          {refreshed && <p className="sf-when">{refreshed}</p>}
         </div>
       </aside>
 
