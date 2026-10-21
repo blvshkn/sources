@@ -1,3 +1,5 @@
 /* Settings, League connection: the refresh time sits on the brand's line, after "Sleeper" */
 html:root:not(#_):not(#_) .set-row .set-brandline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
 html:root:not(#_):not(#_) .set-row .set-brandline .set-when { white-space: nowrap; }
+/* Settings, Sleeper accounts: the account picture fills its circle; initials stay as the fallback */
+html:root:not(#_):not(#_) img.acc-av { object-fit: cover; background: var(--surface-2); }

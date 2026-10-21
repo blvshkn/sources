@@ -95,7 +95,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
       if (dup) { already(dup); setBusy(false); return; }
       const { leagues } = await findLeagues(u.user_id);
       if (!leagues.length) { setError(`@${handle} isn't in any NFL leagues on Sleeper this season, so there's nothing to add.`); setBusy(false); input.current?.focus(); return; }
-      const acct: Account = { username: u.username || handle, userId: u.user_id, name: u.display_name || undefined };
+      const acct: Account = { username: u.username || handle, userId: u.user_id, name: u.display_name || undefined, avatar: u.avatar || undefined };
       setGroups((g) => ({ ...g, [acct.userId]: toRows(leagues) }));
       loadTeamPics(acct.userId, toRows(leagues));
       setPics((p) => ({ ...p, [acct.userId]: managerAvatar(u) }));

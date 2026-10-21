@@ -8,6 +8,7 @@ import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
 import { Account, accountLabel } from "../accounts";
 import { SyncDevicesRow } from "./SyncDevices";
+import { ManagerAvatar } from "./Avatar";
 
 export type Level = "light" | "standard" | "hands";
 export const PUSH_CAP: Record<Level, number> = { light: 2, standard: 5, hands: 10 };
@@ -90,7 +91,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
                 const owns = a.userId === activeUserId;
                 return (
                   <li key={a.userId} className="acc-item">
-                    <span className="acc-av" aria-hidden="true">{a.username.slice(0, 1).toUpperCase()}</span>
+                    <ManagerAvatar src={owns ? [LEAGUE.userPhoto, a.avatar, LEAGUE.userAvatar] : [a.avatar]} name={a.name || a.username} size={36} className="acc-av" />
                     <span className="acc-who">
                       <b>{label}</b>
                       <small>{owns ? `Owns ${LEAGUE_NAME}` : label !== `@${a.username}` ? `@${a.username}` : "In the league switcher"}</small>

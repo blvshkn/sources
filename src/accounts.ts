@@ -1,6 +1,6 @@
 // Connected Sleeper accounts. A live session can hold several; the active league belongs to one of them.
 
-export type Account = { username: string; userId: string; name?: string };
+export type Account = { username: string; userId: string; name?: string; /** Sleeper account picture id, when known */ avatar?: string };
 
 /** none and demo can still remember accounts, so a trip back through the landing doesn't lose them. */
 export type Session =
