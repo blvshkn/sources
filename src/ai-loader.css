@@ -20,8 +20,9 @@ html:root:not(#_):not(#_) .wkl > span {
 html:root:not(#_):not(#_) .ask-send .wkl { --lb-ink: currentColor; --lb-paper: var(--action, var(--ink)); }
 html:root:not(#_):not(#_) .ask-send[aria-busy="true"] { cursor: progress; }
 
-/* League loading: that screen is always dark, so the loader takes dark ink and the screen's own ground */
-html:root:not(#_):not(#_) .boot3-trace .wkl { --lb-ink: #F2F3F5; --lb-paper: #15171C; }
+/* League loading: that screen is always dark. Figma's AI loader set: dots in color/ink #F2F3EE, flipped faces in
+   color/surface-3 #2A2D2C. The large loader above the trace takes the same colors. */
+html:root:not(#_):not(#_) :is(.boot3-trace, .boot3-loader) .wkl { --lb-ink: #F2F3EE; --lb-paper: #2A2D2C; }
 
 /* ---------- Ask icon ---------- */
 html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }

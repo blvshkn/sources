@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { WorkingLoader } from "./WorkingLoader";
 import { Icon } from "./icons";
+import { PlatformLogo } from "./PlatformLogo";
 import { MIN_STEP_MS, fillN, type Chip, type TraceState } from "../think";
 
 /** Words per tick when text streams in. Display only: the text is already final when it starts. */
@@ -97,7 +98,11 @@ function Chips({ chips }: { chips: Chip[] }) {
   const shown = chips.slice(0, CHIP_MAX), more = chips.length - shown.length;
   return (
     <span className="thk-chips">
-      {shown.map((c, i) => <span key={`${c.label}-${i}`} className={`thk-chip${c.kind ? ` k-${c.kind}` : ""}`}>{c.label}</span>)}
+      {shown.map((c, i) => (
+        <span key={`${c.label}-${i}`} className={`thk-chip${c.kind ? ` k-${c.kind}` : ""}${c.logo ? " has-logo" : ""}`}>
+          {c.label}{c.logo && <PlatformLogo platform={c.logo} size={16} />}
+        </span>
+      ))}
       {more > 0 && <span className="thk-chip thk-more">{more} more</span>}
     </span>
   );

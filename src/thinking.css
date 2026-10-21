@@ -71,13 +71,47 @@ html:root:not(#_):not(#_) .ask-links.wait { opacity: 0; pointer-events: none; }
 html:root:not(#_):not(#_) .ask-turn .ai-label { transition: opacity 240ms cubic-bezier(0.23, 1, 0.32, 1); }
 html:root:not(#_):not(#_) .ask-turn .ask-links.wait + .ai-label { opacity: 0; }
 
-/* ---------- Loading a league: the steps sit under the logo ---------- */
-/* The loader is always dark, so the trace takes dark ink in either theme */
+/* ---------- Loading a league: the steps under the large loader (Figma "Loading screen") ---------- */
+/* The loading screen is always dark, so the trace takes its own ink in either theme. Head: chevron, "Loading" in
+   Geist Medium 15, seconds in Geist Mono 14. Steps 10px apart: a 5px dot (or the 16px loader while it runs), then
+   the label in Geist 14 (the running one in Clash Grotesk Medium, in ink). A 1px rail joins the finished dots. */
 html:root:not(#_):not(#_) .boot3-trace {
-  position: absolute; left: 50%; top: calc(50% + 112px); transform: translateX(-50%); width: min(360px, calc(100vw - 32px));
-  --ink: #F2F4F1; --muted: #9AA19B; --faint: #626963; --surface-2: rgba(255, 255, 255, 0.08);
+  align-self: stretch; min-height: var(--boot-trace, 272px);
+  --ink: #F2F3EE; --muted: #9A9C98; --faint: #9A9C98; --surface-2: #2A2D2C; --boot-rail: #202322;
 }
-@media (min-width: 768px) { html:root:not(#_):not(#_) .boot3-trace { top: calc(50% + 124px); } }
+html:root:not(#_):not(#_) .boot3-trace .thk { font: 400 0.875rem/18px var(--font-body); color: var(--muted); }
+html:root:not(#_):not(#_) .boot3-trace .thk-head { gap: 8px; margin: -4px 0 -4px -6px; font-size: 0.9375rem; line-height: 20px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-ic { width: 16px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-sec { margin-left: 2px; font-size: 0.875rem; color: var(--muted); }
+html:root:not(#_):not(#_) .boot3-trace .thk-steps { padding: 12px 0 0; gap: 10px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-step { position: relative; column-gap: 8px; padding: 0; }
+html:root:not(#_):not(#_) .boot3-trace .thk-mark { height: 18px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-step:has(.thk-chip) .thk-mark { height: 22px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-step.active:has(.thk-chip) .thk-mark { height: 23px; }
+html:root:not(#_):not(#_) .boot3-trace i.thk-mark { position: relative; z-index: 1; }
+html:root:not(#_):not(#_) .boot3-trace i.thk-mark::after { background: var(--muted); }
+/* The rail: from this finished dot to the next finished one (the running step isn't joined) */
+html:root:not(#_):not(#_) .boot3-trace .thk-step.done:has(+ .thk-step.done)::before {
+  content: ""; position: absolute; left: 8px; top: 9px; bottom: -19px; width: 1px; background: var(--boot-rail);
+}
+html:root:not(#_):not(#_) .boot3-trace .thk-step.done:has(.thk-chip):has(+ .thk-step.done)::before { top: 11px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-line { gap: 6px 8px; min-height: 18px; line-height: 18px; }
+/* Chips wrap one at a time, like words, rather than as a block */
+html:root:not(#_):not(#_) .boot3-trace .thk-chips { display: contents; }
+html:root:not(#_):not(#_) .boot3-trace .thk-chip { height: 22px; max-width: none; padding: 0 6px; line-height: 16px; background: var(--surface-2); color: var(--ink); font: 500 0.75rem/16px var(--font-body); }
+html:root:not(#_):not(#_) .boot3-trace .thk-chip.has-logo { gap: 4px; padding-right: 4px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-chip .plat-logo { flex: none; width: 16px; height: 16px; border-radius: 4px; }
+/* The running step reads in ink, in Clash Grotesk Medium; its chips follow it (Figma's start frames) */
+html:root:not(#_):not(#_) .boot3-trace .thk-step.active .thk-label,
+html:root:not(#_):not(#_) .boot3-trace .thk-step.active .thk-chip { font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500; font-size: 0.875rem; }
+html:root:not(#_):not(#_) .boot3-trace .thk-step.active .thk-chip { height: 23px; line-height: 17px; }
+html:root:not(#_):not(#_) .boot3-trace .thk-step.active .thk-label.shim {
+  background-image: linear-gradient(90deg, var(--ink) 0%, var(--ink) 38%, #FFFFFF 50%, var(--ink) 62%, var(--ink) 100%);
+}
+/* Counts read as part of the sentence here: same font, size and color as the label */
+html:root:not(#_):not(#_) .boot3-trace .thk-roll { height: 18px; font: inherit; color: inherit; }
+html:root:not(#_):not(#_) .boot3-trace .thk-roll :is([data-n], .thk-dg-col > span) { font-family: var(--font-body) !important; }
+html:root:not(#_):not(#_) .boot3-trace :is(.thk-dg, .thk-dg-col > span, .thk-sep) { height: 18px; line-height: 18px; }
 html:root:not(#_):not(#_) .boot3.leaving .boot3-trace { opacity: 0; transition: opacity 200ms ease; }
 
 @media (min-width: 768px) {

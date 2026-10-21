@@ -233,14 +233,15 @@ export interface LoadTrace {
 
 export async function loadLeague(leagueId: string, userId: string, username: string, onStep?: (s: string) => void, tr?: LoadTrace): Promise<LeagueData> {
   onStep?.("Loading your league");
-  await tr?.step("Loading your league from Sleeper", "Loaded {n} teams from Sleeper", { chips: [{ label: "Sleeper", kind: "feed" }] });
+  // The Sleeper chip finishes the sentence: "Loaded 10 teams from [Sleeper]"
+  await tr?.step("Loading your league from", "Loaded {n} teams from", { chips: [{ label: "Sleeper", kind: "feed", logo: "sleeper" }] });
   const [state, league, users, rosters] = await Promise.all([
     getState(),
     get<SLeague>(`/v1/league/${leagueId}`),
     get<SUser[]>(`/v1/league/${leagueId}/users`),
     get<SRoster[]>(`/v1/league/${leagueId}/rosters`),
   ]);
-  await tr?.n(rosters.length, { label: league.name, kind: "team" });
+  await tr?.n(rosters.length);
   const season = league.season;
   const champP = championFor(league, rosters);
   const live = state.season === season && state.season_type === "regular";
@@ -271,8 +272,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
 
   onStep?.("Loading projections and trade values");
   const projWeeks = 1 + futureWeeks.length;
-  await tr?.step(`Loading ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and trade values`, `Loaded ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and {n} trade values`,
-    { chips: [{ label: "Sleeper", kind: "feed" }, { label: "FantasyCalc", kind: "feed" }] });
+  await tr?.step(`Loading ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and trade values`, `Loaded ${projWeeks} ${projWeeks === 1 ? "week" : "weeks"} of projections and {n} trade values`);
   const specialQuery = "position[]=K&position[]=DEF";
   const [weekProj, seasonProj, trending, futureProj, market, kdefWeek, kdefSeason] = await Promise.all([
     get<SProj[]>(`/projections/nfl/${season}/${week}?season_type=regular&${positionsQuery}`).catch(() => [] as SProj[]),

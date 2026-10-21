@@ -3170,6 +3170,16 @@ html:root:not(#_) .page-title { font-weight: 400 !important; letter-spacing: 0 !
 :root[data-theme="light"] { --logo-mark: var(--text); --logo-word: var(--text); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --logo-mark: var(--text); --logo-word: var(--text); } }
 .logo, .logo-mark, .logo-word { display: block; flex: none; overflow: visible; }
+/* The updated logo (components/BrandLogo.tsx): mark, uppercase wordmark in Clash Grotesk Medium, mono tagline.
+   Static. Figma's stack: mark 88, 4px, wordmark 40 on a 100% line, 2px, tagline 13. */
+html:root:not(#_):not(#_) .bl { display: inline-flex; flex: none; align-items: center; --brand-mark: var(--logo-mark); --brand-word: var(--logo-word); --brand-tag: var(--muted); }
+html:root:not(#_):not(#_) .bl-stack { flex-direction: column; gap: 4px; }
+html:root:not(#_):not(#_) .bl-row { flex-direction: row; gap: 0.3em; }
+html:root:not(#_):not(#_) .bl .bl-mark g { stroke: var(--brand-mark); }
+html:root:not(#_):not(#_) .bl-type { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+html:root:not(#_):not(#_) .bl-row .bl-type { align-items: flex-start; }
+html:root:not(#_):not(#_) .bl-word { display: block; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500; line-height: 1; letter-spacing: 0; color: var(--brand-word); white-space: nowrap; font-kerning: normal; }
+html:root:not(#_):not(#_) .bl-tag { display: block; font: 500 0.8125rem/1.3 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.02em; text-transform: uppercase; color: var(--brand-tag); white-space: nowrap; }
 .brand .logo { margin-bottom: 6px; }
 .top-league .top-mark { flex: none; }
 
@@ -3190,36 +3200,58 @@ html:root:not(#_) .page-meta::before { margin-left: 3px; }
   html:root:not(#_) .page-league .top-league-n { flex: 1; }
 }
 
-/* ---- Loader: the full logo and tagline. Lanes sit in graphite and fill once with lime, then rest.
-   Holds until the fill completes (~1.3s), then lifts off (ease-in). ---- */
-.boot3 { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; background: #121413; color: var(--ink); }
-.boot3-core { position: relative; display: grid; justify-items: center; gap: 0; }
-.boot3-glow { position: absolute; left: 50%; top: 48px; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; background: radial-gradient(circle, rgba(216, 242, 74, 0.14), transparent 65%); pointer-events: none; }
-.boot3-mark, .boot3-wordmark { position: relative; display: block; overflow: visible; }
-.boot3-mark { margin-bottom: 20px; }
-.boot3-base { stroke: #3A3F3C; }
-.boot3-fill { stroke: #D8F24A; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
-.boot3-word { fill: #F2F4F1; }
-.boot3-tag { position: relative; margin-top: 12px; font: 500 0.8125rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.02em; color: var(--muted); white-space: nowrap; }
+/* ---- Loading screen (components/Boot.tsx), from Zach's Figma. Always dark. Phone first: the loader and the trace
+   start a quarter of the way down, the logo stands at the foot. The trace keeps the height it will have when the
+   load is done, so the logo never moves; on a short screen the space above the loader gives way first. The screen
+   fades out (ease-in) once the league is ready. Nothing in the logo animates. ---- */
+html:root:not(#_):not(#_) .boot3 {
+  position: fixed; inset: 0; z-index: 100; overflow: hidden; color: #F2F3EE;
+  background: linear-gradient(180deg, #161817 0%, #121413 50%, #0F1110 100%);
+  --boot-col: calc(100% - 48px); --boot-top: 24.53vh; --boot-top: 24.53dvh; --boot-gap: 23px; --boot-foot: 76px; --boot-trace: 272px;
+  /* The tiles: 1.6x on the phone, 2.8x on desktop */
+  --boot-tile-k: 1;
+  /* The glow behind the logo: lime at 6%, gone 70% of the way out */
+  --boot-glow: 298px 356px at 50% 100%;
+  /* The large loader: the vendored Braille Flipwave draws at 30px at most, so it's scaled up as a whole to 64px */
+  --boot-loader: 64px; --boot-loader-k: calc(64 / 30);
+}
+/* The field: the bottom 44% of the screen, fading out from the bottom center (an ellipse 70% of the width across) */
+html:root:not(#_):not(#_) .boot3-field {
+  position: absolute; left: 0; bottom: 0; display: block; pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
+  mask-image: radial-gradient(ellipse 70% 121% at 50% 100%, #000 22%, transparent 74%);
+}
+/* The tiled mark at 5%, strongest at the top and gone 82% of the way down */
+html:root:not(#_):not(#_) .boot3-tiles {
+  position: absolute; left: 0; top: 0; display: block; pointer-events: none; opacity: 0.05;
+  width: calc(100% / var(--boot-tile-k)); height: calc(100% / var(--boot-tile-k)); transform: scale(var(--boot-tile-k)); transform-origin: 0 0;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.1%, rgba(0, 0, 0, 0.5) 59.6%, transparent 82.2%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 41.1%, rgba(0, 0, 0, 0.5) 59.6%, transparent 82.2%);
+}
+html:root:not(#_):not(#_) .boot3-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(var(--boot-glow), rgba(216, 242, 74, 0.06) 0%, rgba(216, 242, 74, 0) 70%);
+}
+html:root:not(#_):not(#_) .boot3-col { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--boot-foot); }
+html:root:not(#_):not(#_) .boot3-top { flex: 0 1 var(--boot-top); min-height: 24px; }
+html:root:not(#_):not(#_) .boot3-gap { flex: 1 1 24px; min-height: 24px; }
+html:root:not(#_):not(#_) .boot3-work { flex: none; width: var(--boot-col); display: flex; flex-direction: column; align-items: flex-start; gap: var(--boot-gap); }
+/* The loader's dots start 9px inside its 64px square (Figma); pulled left so they line up with the trace */
+html:root:not(#_):not(#_) .boot3-loader { position: relative; display: block; flex: none; width: var(--boot-loader); height: var(--boot-loader); margin-left: -10px; }
+html:root:not(#_):not(#_) .boot3-loader > .wkl { display: block; transform: scale(var(--boot-loader-k)); transform-origin: 0 0; }
+html:root:not(#_):not(#_) .boot3 .boot3-logo { flex: none; --brand-mark: #D8F24A; --brand-word: #FFFFFF; --brand-tag: #9A9C98; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .boot3 { --boot-col: 460px; --boot-top: 25.6vh; --boot-top: 25.6dvh; --boot-gap: 20px; --boot-foot: 92px; --boot-trace: 232px; --boot-tile-k: calc(2.2 / 1.6); --boot-glow: 640px 358px at 50% 105%; }
+}
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_) .boot3 { --boot-top: 26.67vh; --boot-top: 26.67dvh; --boot-gap: 16px; --boot-foot: 108px; --boot-tile-k: calc(2.8 / 1.6); --boot-glow: 70% 40% at 50% 110%; }
+}
 @media (prefers-reduced-motion: no-preference) {
-  /* Calm: the logo fades up, both lanes fill once from graphite to lime, then rest with a slow breath while loading
-     finishes. One direction, one pace, nothing looping fast. */
-  .boot3-core { animation: boot3-in 480ms cubic-bezier(0.23, 1, 0.32, 1) both; }
-  .boot3-fill { animation: boot3-fill 1100ms cubic-bezier(0.65, 0, 0.35, 1) 120ms both, boot3-rest 2.8s ease-in-out 1300ms infinite; }
-  .boot3-glow { animation: boot3-glow 1100ms ease-out 120ms both; }
-  .boot3-tag { animation: boot3-rise 480ms cubic-bezier(0.23, 1, 0.32, 1) 700ms both; }
-  .boot3.leaving { animation: boot3-out 320ms cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
-  .boot3.leaving .boot3-core { animation: boot3-lift 320ms cubic-bezier(0.4, 0, 1, 1) forwards; }
-  @keyframes boot3-in { from { opacity: 0; transform: translateY(6px); } }
-  @keyframes boot3-fill { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-  @keyframes boot3-rest { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-  @keyframes boot3-glow { from { opacity: 0; } }
-  @keyframes boot3-rise { from { opacity: 0; transform: translateY(4px); } }
+  html:root:not(#_):not(#_) .boot3.leaving { animation: boot3-out 320ms cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
   @keyframes boot3-out { to { opacity: 0; } }
-  @keyframes boot3-lift { to { transform: translateY(-6px); } }
 }
 @media (prefers-reduced-motion: reduce) {
-  .boot3.leaving { opacity: 0; transition: opacity 200ms ease; }
+  html:root:not(#_):not(#_) .boot3.leaving { opacity: 0; transition: opacity 200ms ease; pointer-events: none; }
 }
 /* Slim league selector: one line, fills the row, chevron at the right. */
 html:root:not(#_) .page-league { display: none; }
@@ -3470,7 +3502,6 @@ html:root:not(#_) .top-logo .lockup-tag { font-size: 0.625rem; }
 html:root:not(#_) .brand .lockup .logo { margin-bottom: 0; }
 @media (max-width: 860px) { html:root:not(#_) .top-logo .lockup-tag { margin-left: 0; } }
 /* Accessibility fixes from the interface review */
-@media (prefers-reduced-motion: reduce) { html:root:not(#_) .boot3-fill { animation: none !important; } html:root:not(#_) .boot3-core, html:root:not(#_) .boot3-tag { animation: none !important; } }
 @media (pointer: coarse) {
   html:root:not(#_) .toast-undo { min-height: 44px; min-width: 44px; }
   /* Bigger hit area without changing how the chips look */

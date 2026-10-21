@@ -2,7 +2,7 @@
 // so the engine can report its progress without knowing who's watching. think.ts turns these into a trace.
 
 /** Something a step read or touched, shown as a chip beside it: a team, a player, a feed. */
-export interface Chip { label: string; kind?: "team" | "player" | "feed" | "pos" }
+export interface Chip { label: string; kind?: "team" | "player" | "feed" | "pos"; /** The platform's own icon after the label (PlatformLogo) */ logo?: "sleeper" | "yahoo" | "espn" }
 
 /** `{n}` in a label is replaced by the live count. `done` on an "n" event rewrites the finished label. */
 export type TraceEv =
