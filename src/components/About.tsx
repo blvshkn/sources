@@ -1,6 +1,6 @@
 import { Icon } from "./ui";
 
-const UPDATED = "October 18, 2026";
+const UPDATED = "October 21, 2026";
 
 function Back({ onBack }: { onBack: () => void }) {
   return <button className="st-back doc-back" onClick={onBack}><Icon name="chev" size={16} />Settings</button>;
@@ -37,8 +37,9 @@ export function HowItWorksDoc() {
       <ul>
         <li><b>Your league.</b> Rosters, starting lineups, scoring settings, matchups, standings and transactions come straight from your fantasy platform (Sleeper today). Sources reads them. It never changes anything in your league.</li>
         <li><b>Weekly projections.</b> Player projections come from your platform's published weekly projections, adjusted to your league's scoring.</li>
-        <li><b>The trade market.</b> Trade values start from public market data for your league's format (1QB or Superflex, PPR or not, number of teams).</li>
-        <li><b>Your notes.</b> Tags you log ("Mike won't move Chase Brown", "I'm keeping Allen") steer trade ideas. They stay private to you.</li>
+        <li><b>The trade market.</b> Trade values start from FantasyCalc's public market values for your league's format (1QB or Superflex, PPR or not, number of teams).</li>
+        <li><b>News and game info.</b> Player news comes from RotoWire, RotoBaller and ESPN feeds. Kickoff times and live scores come from Sleeper and ESPN.</li>
+        <li><b>Your notes.</b> Tags you log ("Mike won't move Chase Brown", "I'm keeping Allen") steer trade ideas. They stay in your browser and private to you.</li>
       </ul>
     </section>
     <section>
@@ -67,11 +68,20 @@ export function HowItWorksDoc() {
         <li><b>Win chance</b> follows your platform: the two projected totals, with less room for surprises as fewer points are left to play.</li>
         <li><b>Playoff odds</b> come from thousands of simulated rest-of-season schedules using each team's current best lineup.</li>
         <li><b>Sugg. bid</b> is a dollar range sized to your league budget, how fast a player is being added across Sleeper, how much he adds to your starters and how high winning bids run in your league. It never goes past what you have left.</li>
+        <li><b>Crown and cup.</b> A crown marks last season's league champion. A cup marks the side that won a finished matchup.</li>
       </ul>
     </section>
     <section>
-      <h2>AI summaries</h2>
-      <p>Lines marked "AI summary" are written from the numbers above. They explain a result. They don't change it.</p>
+      <h2>Sources AI</h2>
+      <p>Two features use an AI model, Anthropic's Claude: Ask and Set optimal lineup. Everything else on this page is Sources' own engine.</p>
+      <ul>
+        <li><b>Ask.</b> Your question, your last few questions and answers, and a compact snapshot of your league go to Anthropic's API. The snapshot holds team and manager names, rosters with projections and injury status, standings, this week's matchups, recent trades and transactions, top free agents and what each team needs. Your tags are not part of it.</li>
+        <li><b>The math stays ours.</b> When the engine can work out the answer, like a trade, a start or sit, or a waiver pick, its numbers go along and the model has to use them. Trade values, acceptance chances and lineup gains always come from the engine. The AI puts them into words.</li>
+        <li><b>Set optimal lineup.</b> It starts from your best lineup by projection. Sources then gathers the week's signals: news, Sleeper injury and practice reports, Vegas lines from The Odds API when that feed is on, and kickoff weather from Open-Meteo at outdoor stadiums. Your roster, projections, current Sleeper lineup and those signals go to the model, which suggests changes with a short reason for each. Sources checks every slot for byes, injuries and locks, and any change that fails goes back to the projection pick. Nothing changes in Sleeper until you make the move.</li>
+        <li><b>Answers can be wrong.</b> A model can misread the data or miss news. Check anything important before you act on it.</li>
+        <li><b>Limits.</b> Each connection can only make so many AI requests a minute and an hour. When the AI is busy or offline, Ask answers from the built-in engine and Set optimal lineup uses your projections.</li>
+        <li><b>AI summary.</b> Lines marked "AI summary" explain a result from the numbers. They don't change it.</li>
+      </ul>
     </section>
     <section>
       <h2>What to keep in mind</h2>
@@ -90,7 +100,7 @@ export function LegalDoc({ dated = false }: { dated?: boolean }) {
       <h2>Terms of use</h2>
       <ul>
         <li><b>For your own league.</b> Sources is a personal tool for managing fantasy football leagues you play in. Don't use it to scrape, resell or republish league data.</li>
-        <li><b>Information, not guarantees.</b> Projections, values, odds and suggestions are estimates for entertainment and informational purposes. They are provided as is, without warranties of any kind, and results may differ.</li>
+        <li><b>Information, not guarantees.</b> Projections, values, odds, suggestions and AI answers are estimates for entertainment and informational purposes. They are provided as is, without warranties of any kind, and results may differ.</li>
         <li><b>Not betting advice.</b> Sources isn't built for real-money betting or daily fantasy contests, and nothing in it is financial advice.</li>
         <li><b>You make the moves.</b> Sources never sends a message, trade or lineup change for you. You decide what to do in your league and you're responsible for it.</li>
         <li><b>Be decent.</b> Don't use pitches or tags to harass anyone in your league.</li>
@@ -101,10 +111,13 @@ export function LegalDoc({ dated = false }: { dated?: boolean }) {
     <section>
       <h2>Privacy</h2>
       <ul>
-        <li>No passwords, ever. Sources connects with a username or the platform's official sign-in.</li>
-        <li>Your tags, prices and history are stored on your device and never shown to your league mates.</li>
+        <li><b>No passwords, ever.</b> Sources connects with your Sleeper username. There's nothing to sign into and no account to create.</li>
+        <li><b>On your device.</b> Your tags, prices, settings and history are stored in this browser and never shown to your league mates.</li>
+        <li><b>Synced across devices.</b> Offers you send (the players, your pitch, who it went to and when) and players you star on Waivers are saved in Vercel Blob storage so they follow you to your other devices. They're filed under your Sleeper user id and league id, not a password, so someone who knows both ids could look them up. Leave anything private out of your pitches. The demo league never syncs.</li>
+        <li><b>AI.</b> When you use Ask or Set optimal lineup, what you type and a snapshot of your league are sent to Anthropic's API to write the answer (see How Sources works for exactly what's in it). Anthropic handles that data under its own API terms. Sources doesn't save your questions or answers on its servers.</li>
+        <li><b>Hosting.</b> Sources runs on Vercel, and fonts load from Google Fonts. Like any website, they see basic request details such as your IP address. Sources uses your IP address only to limit how often the AI can be called, and that count isn't saved. There are no ads, analytics or tracking scripts.</li>
+        <li><b>Deleting.</b> Delete my data in Settings clears Sources from this browser and removes the synced offers and watchlist for the league you have open. Used Sources with another league? Open it and delete there too. Disconnecting signs you out but doesn't delete the synced copy.</li>
         <li>Sources doesn't sell your data.</li>
-        <li>You can disconnect or delete your data any time in Settings.</li>
       </ul>
     </section>
     <section>
@@ -114,7 +127,11 @@ export function LegalDoc({ dated = false }: { dated?: boolean }) {
     </section>
     <section>
       <h2>Data sources</h2>
-      <p>League data and projections come from your fantasy platform's public API. Trade market data comes from public market values. Sources follows each provider's terms and only reads data you or your league already have access to.</p>
+      <p>League data, projections, injury and practice reports, player photos and live scores come from Sleeper's public, read-only API. Trade market values come from FantasyCalc. Player news comes from RotoWire, RotoBaller and ESPN, and game times and scores also come from ESPN. Vegas lines come from The Odds API. Weather data by Open-Meteo.com. AI answers are written with Anthropic's API. Vercel hosts Sources and stores synced offers and watchlists. Sources follows each provider's terms and only reads data you or your league already have access to.</p>
+    </section>
+    <section>
+      <h2>Credits</h2>
+      <p>Headers are set in Clash Grotesk by Indian Type Foundry, used under the Fontshare license. The AI loading animation is adapted from loader-buttons by Jaimin Kataria.</p>
     </section>
     </>
   );

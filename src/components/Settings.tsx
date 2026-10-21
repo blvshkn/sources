@@ -183,16 +183,17 @@ export function Settings({ username, demo, leagueFormat, onRefresh, format, setF
       <section className="card settings-group">
         <h2 className="section-title">Privacy and trust</h2>
         <ul className="trust">
-          <li><b>No passwords, ever.</b> Official sign-in or username only.</li>
+          <li><b>No passwords, ever.</b> Your Sleeper username is all it takes.</li>
           <li><b>Tags are private.</b> What you note about a league mate is never shown to them.</li>
-          <li><b>Collect the minimum.</b> Rosters are mostly public already; tokens and emails get real protection.</li>
-          <li><b>One tap to leave.</b> Disconnect any platform or delete your account and data instantly.</li>
+          <li><b>Collect the minimum.</b> No email, no account. Rosters are public on Sleeper already.</li>
+          <li><b>AI sees the league, not your notes.</b> Ask and Set optimal lineup send league data to Anthropic. Tags stay here.</li>
+          <li><b>One tap to leave.</b> Disconnect, or delete your data, any time.</li>
           <li><b>No selling data.</b> Said plainly in the privacy policy.</li>
           <li><b>Show our work.</b> Every verdict explains why, and every value shows when it last changed.</li>
           <li><b>Nothing sends on its own.</b> Sources preps the message. You tap send.</li>
         </ul>
         <div className="set-row danger-row">
-          <span className="grow"><b>Delete account and data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device. This can't be undone.</span></span>
+          <span className="grow"><b>Delete your data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device, plus the offers and watchlist synced for this league. This can't be undone.</span></span>
           {confirm === "delete" ? (
             <span className="row"><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete my data</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
           ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete my data</button>}
