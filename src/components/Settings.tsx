@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
-import { LEAGUE, LEAGUE_NAME, LeagueFormat } from "../data";
+import { LEAGUE, LEAGUE_NAME, LeagueFormat, YOU } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
 import { PlatformLogo } from "./PlatformLogo";
 import { DetailSheet } from "./DetailSheet";
@@ -89,6 +89,19 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
             </span>
           )}
         </div>
+        {demo && (
+          // The demo's own account row, so the picture and the league role read the way a connected account's do
+          <div className="acc-list">
+            <h3 className="acc-list-h">Sleeper accounts</h3>
+            <ul>
+              <li className="acc-item">
+                <ManagerAvatar src={[YOU.avatar]} name={YOU.name} size={36} className="acc-av" />
+                <span className="acc-who"><b>Demo account</b><small>{leagueRole(YOU.id)}</small></span>
+                <span className="acc-inuse">In use</span>
+              </li>
+            </ul>
+          </div>
+        )}
         {!demo && accounts.length > 0 && (
           <div className="acc-list">
             <h3 className="acc-list-h">Sleeper accounts</h3>

@@ -75,7 +75,8 @@ export interface Team {
 export interface WeekHistory { starters: string[]; players: string[]; points: Record<string, number>; total: number; oppTotal?: number; oppName?: string }
 export interface SpecialPlayer { id: string; name: string; pos: "K" | "DEF"; nfl: string; wk: number | null; proj: number; status?: Status; note?: string; opp?: string; gameDate?: string }
 
-type Row = [string, Pos, string, number, Status?, string?];
+/** [name, pos, team, proj, status, note]. "D" is Doubtful: status Q with Sleeper's injury word, as a live league reads it. */
+type Row = [string, Pos, string, number, (Status | "D")?, string?];
 
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -100,7 +101,7 @@ const rosters: Record<string, { name: string; manager: string; record: string; p
       ["Tyler Warren", "TE", "IND", 10.1],
       ["Jaylen Warren", "RB", "PIT", 10.2],
       ["Romeo Doubs", "WR", "NE", 9.6],
-      ["Tank Bigsby", "RB", "PHI", 8.6],
+      ["Tank Bigsby", "RB", "PHI", 8.6, "D", "Hamstring, did not practice"],
       ["Rashid Shaheed", "WR", "SEA", 9.0],
       ["Mike Gesicki", "TE", "CIN", 6.3],
     ],
@@ -344,10 +345,11 @@ function demoSpecials(teams: Team[]): Record<string, SpecialPlayer> {
 
 function demoTeams(): { teams: Team[]; players: Record<string, Player> } {
   const players: Record<string, Player> = {};
-  const toId = ([name, pos, nfl, proj, status, note]: Row, onIr = false) => {
+  const toId = ([name, pos, nfl, proj, tag, note]: Row, onIr = false) => {
     const pid = slug(name);
     const g = demoGame(nfl);
-    players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O", irEligible: status === "O", injury: onIr ? "IR" : status === "O" ? "Out" : undefined, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date };
+    const status: Status | undefined = tag === "D" ? "Q" : tag;
+    players[pid] = { id: pid, name, pos, nfl, proj, status, note, longTerm: status === "O", irEligible: status === "O", injury: onIr ? "IR" : status === "O" ? "Out" : tag === "D" ? "Doubtful" : undefined, opp: g ? `${g.home ? "vs" : "@"} ${g.opp}` : undefined, gameDate: g?.date };
     return pid;
   };
   const teams = Object.entries(rosters).map(([id, t]) => {

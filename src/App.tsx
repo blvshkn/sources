@@ -53,6 +53,7 @@ import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
 import { useSectionEnter } from "./sectionEnter";
+import { seedDemo } from "./demoFixtures";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -119,6 +120,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   onRefresh: () => void;
 }) {
   const demo = isDemo();
+  // The demo's own saved lists (Sent offers, Watching) start with sample entries; see demoFixtures.ts
+  if (demo) seedDemo();
   // Sources AI's daily limits go by Sleeper user when a league is connected, by visitor in the demo
   setAiUser(!demo && session.mode === "live" ? session.userId : "");
   const scope = demo ? "demo" : LEAGUE.id;
@@ -147,7 +150,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // Tags, prices and history are kept per league, in this browser only.
   const [tags, setTags] = usePersist<ManagerTag[]>(`${scope}.tags`, demo ? INITIAL_MANAGER_TAGS : []);
   const [myTags, setMyTags] = usePersist<Record<string, MyTag>>(`${scope}.myTags`, demo ? { ...INITIAL_MY_TAGS, ...initialMyTags } : initialMyTags ?? {});
-  const [prices, setPrices] = usePersist<Record<string, Price>>(`${scope}.prices`, demo ? { "josh-allen": { mode: "pct", amount: 25 } } : {});
+  const [prices, setPrices] = usePersist<Record<string, Price>>(`${scope}.prices`, demo ? { "josh-allen": { mode: "pct", amount: 25 }, "dalton-kincaid": { mode: "pct", amount: 5 } } : {}); // Kincaid's price is one a team meets, so What would it take shows an offer
   const [format, setFormat] = usePersist<Format>(`${scope}.format`, LEAGUE.format ?? DEFAULT_FORMAT);
   const [level, setLevel] = usePersist<Level>("level", "standard");
   const [fade, setFade] = usePersist<FadeWeeks>("fade", 4);
@@ -455,10 +458,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     const rival = TEAMS.filter((t) => !t.you).flatMap((t) => t.roster.map(playerById)).filter((p) => !(p.status === "O" && p.longTerm))
       .sort((a, b) => (b.pts?.ppr ?? b.proj) - (a.pts?.ppr ?? a.proj))[0];
     const mgr = partners[0]?.n.team.manager ?? TEAMS.find((t) => !t.you)!.manager;
-    return [`Who needs a ${youNeeds.surplus ?? "WR"} most?`, rival ? `What would it take to get ${rival.name.split(" ").slice(-1)[0]}?` : "Who should I trade with?",
+    // The demo asks for the top idea's target, so the first tap shows Ask's 2 to 3 offer options
+    const demoGet = demo && partners[0]?.t?.get[0] ? playerById(partners[0].t.get[0]) : null;
+    return [`Who needs a ${youNeeds.surplus ?? "WR"} most?`, demoGet ? `How can I get ${demoGet.name}?` : rival ? `What would it take to get ${rival.name.split(" ").slice(-1)[0]}?` : "Who should I trade with?",
       "Who should I start at flex?", "Who should I trade with?", "Best waiver add this week?", `What does ${mgr} need?`,
       "Who's the unluckiest team?", "Roast the last-place team"];
-  }, [partners, youNeeds]);
+  }, [partners, youNeeds, demo]);
 
   // The deal in the builder, read only when the deal or what it's judged by changes, not on every render of the app
   // (a toast or the inbox opening). The builder tip tries dozens of counters, so it's worth keeping.

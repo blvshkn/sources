@@ -5,3 +5,5 @@ html:root:not(#_):not(#_) .set-row .set-brandline .set-when { white-space: nowra
 html:root:not(#_):not(#_) img.acc-av { object-fit: cover; background: var(--surface-2); }
 /* Player sheet, Lineup call: the Swap in Sleeper button sits under the verdict, lined up with its text */
 html:root:not(#_):not(#_) .pd-call .pd-sleeper { align-self: flex-start; justify-self: start; width: fit-content; margin: 12px 0 4px 36px; gap: 8px; text-decoration: none; }
+/* Settings, Sleeper accounts: the league role ("Member of X · Commish: Jake") wraps instead of cutting off the commish */
+html:root:not(#_):not(#_) .acc-item .acc-who small { white-space: normal; overflow-wrap: anywhere; }
