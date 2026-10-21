@@ -1,9 +1,10 @@
 // The thinking trace: one line that says what Sources is doing and for how long, over a timeline of the real steps
 // (think.ts). While it thinks, the plan streams in under the line. While it works, the timeline is open and the
 // running step carries the working loader (Braille Flipwave). When it's done it folds to "Worked 1.4s" with a chevron that opens the
-// steps again. The head line is always there, so nothing below it jumps when the steps fold.
-import { useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
+// steps again. The head line is always there. When the steps fold or open, the trace changes height in one step and
+// whatever sits under it (Ask's answer card, the lineup result) slides from where it was by transform, so nothing jumps.
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode, RefObject } from "react";
 import { WorkingLoader } from "./WorkingLoader";
 import { Icon } from "./icons";
 import { PlatformLogo } from "./PlatformLogo";
@@ -30,8 +31,9 @@ export function useReveal(total: number, go = true, rate = WORD_MS): number {
 export const wordCount = (text: string) => (text.trim() ? text.trim().split(/\s+/).length : 0);
 
 /**
- * Text that streams in word by word: each new word fades and sharpens in. Words not shown yet still take their
- * space, so the block is its full size from the start and nothing below it moves. `base` is this text's first word
+ * Text that streams in word by word: each new word fades in. Words not shown yet still take their space (in a trace
+ * or an answer card they draw as skeleton bars, trace-flow.css), so the block is its full size and final shape from
+ * the start and nothing below it moves. `base` is this text's first word
  * in a longer stream; `muteBefore` dims everything older than that word.
  */
 export function Words({ text, k, base = 0, muteBefore }: { text: string; k: number; base?: number; muteBefore?: number }) {
@@ -113,6 +115,65 @@ const secs = (ms: number, done: boolean) => {
   return done ? (s < 10 ? `${Math.max(0.1, Math.round(s * 10) / 10)}s` : `${Math.round(s)}s`) : `${Math.floor(s)}s`;
 };
 
+const SLIDE: KeyframeAnimationOptions = { duration: 300, easing: "cubic-bezier(0.23, 1, 0.32, 1)", id: "thk-slide" };
+const scrolls = (e: Element) => e === document.body || /(auto|scroll)/.test(getComputedStyle(e).overflowY);
+
+/**
+ * FLIP for whatever follows a trace. Every commit, each element after the trace (its later siblings, then its
+ * ancestors' later siblings up to the scroll container) is measured against the trace's own top. When one has moved
+ * (a step was added, the steps folded, the answer card came in under them) it starts where it was and slides to its
+ * new place by transform alone. An element that has just appeared right after the trace starts where it would have
+ * been under the trace's old height. Reduced motion: everything just lands.
+ */
+function useSlideFollowers(root: RefObject<HTMLDivElement | null>, open: boolean) {
+  const seen = useRef(new WeakMap<Element, number>());
+  const was = useRef<{ open: boolean; h: number } | null>(null);
+  const slide = useRef(0);
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el) { was.current = null; return; }
+    const h = el.offsetHeight, prev = was.current;
+    was.current = { open, h };
+    const base = el.getBoundingClientRect().top;
+    const still = reduced();
+    const grew = prev && prev.open !== open ? prev.h - h : 0;
+    const runs: Animation[] = [];
+    let node: Element = el, siblingsSlid = false;
+    for (let lvl = 0; lvl < 4 && node.parentElement; lvl++) {
+      for (let n = node.nextElementSibling; n; n = n.nextElementSibling) {
+        const st = getComputedStyle(n);
+        if (st.position === "fixed" || st.position === "absolute" || st.position === "sticky" || st.display === "none") continue;
+        const now = (n as HTMLElement).getAnimations?.().find((a) => a.id === "thk-slide");
+        const shift = st.transform !== "none" ? new DOMMatrixReadOnly(st.transform).m42 : 0;
+        const at = n.getBoundingClientRect().top - shift - base;
+        const before = seen.current.get(n);
+        seen.current.set(n, at);
+        // Only a real move starts a slide; one already running carries on from where it is
+        const moved = before !== undefined ? before - at : lvl === 0 ? grew : 0;
+        if (still || Math.abs(moved) < 2) continue;
+        const from = moved + (now ? shift : 0);
+        now?.cancel();
+        const a = (n as HTMLElement).animate?.([{ transform: `translateY(${from}px)` }, { transform: "translateY(0)" }], SLIDE);
+        if (a) { runs.push(a); if (lvl === 0) siblingsSlid = true; }
+      }
+      node = node.parentElement;
+      if (scrolls(node)) break;
+    }
+    // While the trace's own siblings slide, its parent clips them: a box pushed down by a transform still counts
+    // toward the scroll height, and Ask's thread would follow that phantom height and jump
+    const parent = el.parentElement;
+    if (!siblingsSlid || !parent) return;
+    if (parent.dataset.thkKeep === undefined) parent.dataset.thkKeep = parent.style.overflow;
+    parent.style.overflow = typeof CSS !== "undefined" && CSS.supports?.("overflow", "clip") ? "clip" : "hidden";
+    const token = ++slide.current;
+    Promise.all(runs.map((a) => a.finished.catch(() => undefined))).then(() => {
+      if (token !== slide.current || parent.dataset.thkKeep === undefined) return;
+      parent.style.overflow = parent.dataset.thkKeep;
+      delete parent.dataset.thkKeep;
+    });
+  });
+}
+
 /** The trace itself. `idle` draws nothing. `doneLabel` lets a surface say "Read" or "Loaded" instead of "Worked". */
 export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, stayOpen = false, children }: {
   trace: TraceState;
@@ -143,6 +204,11 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   const thinkWords = useMemo(() => wordCount(trace.think), [trace.think]);
   // The plan streams inside the thinking line's minimum time, so showing it never holds the work up
   const k = useReveal(thinkWords, trace.status !== "idle", Math.max(4, Math.min(14, Math.floor((MIN_STEP_MS - 40) / Math.max(1, thinkWords)))));
+
+  // Fold, unfold and new steps never animate height: the trace snaps to its new size and whatever follows it slides
+  // from where it was by transform (useSlideFollowers)
+  const root = useRef<HTMLDivElement>(null);
+  useSlideFollowers(root, open);
   if (trace.status === "idle") return null;
 
   const elapsed = (trace.ended ?? t) - trace.started;
@@ -151,7 +217,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   const active = trace.steps[trace.steps.length - 1];
   const inline = compact && running && !open && active?.state === "active";
   return (
-    <div className={`thk ${className}`} data-status={trace.status}>
+    <div ref={root} className={`thk ${className}`} data-status={trace.status}>
       <button /* dismiss-exempt: inline accordion, not an overlay */ type="button" className="thk-head" aria-expanded={open} disabled={thinking && !compact}
         onClick={() => setManual(!open)}>
         <span className="thk-ic" aria-hidden="true">{thinking || (compact && running && !open) ? <WorkingLoader size={16} /> : <Icon name="chev" size={14} />}</span>
@@ -161,15 +227,14 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
       </button>
       <div className={`thk-body${open ? " open" : ""}`}>
         <div className="thk-clip">
-          {thinking ? (
-            <p className="thk-think"><Words text={trace.think} k={k} muteBefore={Math.max(0, k - 10)} /></p>
-          ) : (
-            <ol className="thk-steps" aria-label="Steps">
+          {/* Thinking and working share one list: the plan is its first row from the start, streaming in over skeleton
+              bars, so when the steps start under it nothing above them reflows */}
+          <ol className="thk-steps" aria-label="Steps">
               {trace.think && (
-                <li className="thk-step done">
+                <li className={`thk-step ${thinking ? "plan" : "done"}`}>
                   <i className="thk-mark" aria-hidden="true" />
-                  <span className="thk-line"><span className="thk-label">Done thinking</span></span>
-                  <p className="thk-plan">{trace.think}</p>
+                  <span className="thk-line"><span className="thk-label">{thinking ? "Planning" : "Done thinking"}</span></span>
+                  <p className="thk-plan"><Words text={trace.think} k={k} /></p>
                 </li>
               )}
               {trace.steps.map((s, i) => (
@@ -182,8 +247,7 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
                 </li>
               ))}
               {children}
-            </ol>
-          )}
+          </ol>
         </div>
       </div>
     </div>

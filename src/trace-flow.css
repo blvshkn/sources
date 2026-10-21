@@ -1,23 +1,66 @@
-/* Every thinking trace (Lineup's Set optimal lineup, Trade, the pitch, Ask) lays a step out as plain text with its
-   dot hung in a 16px gutter, the same fix Ask got in 75a169e. A step used to be a grid row holding a wrapping flex
-   line; iOS Safari sized those rows from their narrowest, one-word-per-line layout and kept that height, so on
-   iPhone a lone dot sat on its own row with the label far below it and big gaps between steps.
-   The loading screen keeps its own grid (its rail joins the dots), restored at the bottom. Loads before frame.css. */
+/* Every thinking trace (Lineup's Set optimal lineup, Ask, Trade's read, Trade ideas, the pitch, the loading screen)
+   on phones first, iOS Safari above all. Loads before frame.css.
 
-html:root:not(#_):not(#_):not(#_) .thk-steps { gap: 4px; padding: 4px 0 6px; }
+   Why: a step used to be a grid row (16px dot column, 1fr text column) holding a flex-wrap line with the label
+   centered in it, and the whole body folded by animating grid-template-rows 0fr to 1fr. WebKit sizes rows like that
+   from the text's min-content width (one word per line) and keeps that height, so on iPhone each dot sat alone at the
+   top of a tall row, its label centered far below it, chips off to the right, big gaps between steps. 0466fed took the
+   per-step grid out; this finishes the job:
+   1. Steps are plain block text with the dot hung in a 22px gutter, the dot centered on the first line.
+   2. Chips get their own wrapping row under the text, never squeezed beside it.
+   3. The body has no grid and no height animation: it opens and folds in one layout change, and ThinkingTrace slides
+      whatever follows by transform (FLIP).
+   4. Text that streams in word by word never shows blank space: words still to come draw as skeleton bars in the
+      exact place the word will land, and each word fades in by opacity (no blur filter, which WebKit paints per word).
+   5. The loading screen keeps its rail and its inline chips, as block text too. */
+
+/* ---------- 1. Steps ---------- */
+html:root:not(#_):not(#_):not(#_) .thk-steps { display: block; padding: 4px 0 6px; }
 html:root:not(#_):not(#_):not(#_) .thk-step { display: block; position: relative; padding: 0 0 0 22px; }
-html:root:not(#_):not(#_):not(#_) .thk-step > .thk-mark { position: absolute; left: 0; top: 0; }
+html:root:not(#_):not(#_):not(#_) .thk-step + .thk-step { margin-top: 4px; }
+html:root:not(#_):not(#_):not(#_) .thk-step > .thk-mark { position: absolute; left: 0; top: 0; height: 22px; }
 html:root:not(#_):not(#_):not(#_) .thk-line { display: block; min-height: 22px; line-height: 22px; text-wrap: pretty; }
-html:root:not(#_):not(#_):not(#_) .thk-chips { display: inline; }
-html:root:not(#_):not(#_):not(#_) .thk-chip { display: inline-flex; vertical-align: top; margin: 1px 0 1px 4px; }
-html:root:not(#_):not(#_):not(#_) .thk-chips > .thk-chip:first-child { margin-left: 8px; }
-html:root:not(#_):not(#_):not(#_) .thk-plan { margin: 0 0 2px; line-height: 18px; text-wrap: pretty; }
-html:root:not(#_):not(#_):not(#_) .thk-think { text-wrap: pretty; }
+html:root:not(#_):not(#_):not(#_) .thk-plan { margin: 0; line-height: 18px; text-wrap: pretty; }
+html:root:not(#_):not(#_):not(#_) .thk-step.plan .thk-plan { color: var(--muted); }
 
-/* Loading screen: back to its own grid and rail */
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-steps { gap: 10px; padding: 12px 0 0; }
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step { display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 8px; padding: 0; }
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step > .thk-mark { position: static; }
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-height: 18px; line-height: 18px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chips { display: contents; }
-html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chip { margin: 0; }
+/* ---------- 2. Chips: a row of their own under the label ---------- */
+html:root:not(#_):not(#_):not(#_) .thk-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 0; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .thk-chip { display: inline-flex; flex: none; max-width: 100%; margin: 0; vertical-align: top; }
+/* The landing page's one-step demo reads as a sentence: "Loaded 10 teams from [Sleeper]" */
+html:root:not(#_):not(#_):not(#_):not(#_) .lds-thk .thk-chips { display: inline; margin: 0 0 0 6px; }
+
+/* ---------- 3. Fold and unfold: one size change, the rest by opacity and transform ---------- */
+html:root:not(#_):not(#_):not(#_) .thk-body { display: block; grid-template-rows: none; transition: none; }
+html:root:not(#_):not(#_):not(#_) .thk-body:not(.open) { height: 0; overflow: hidden; opacity: 0; }
+html:root:not(#_):not(#_):not(#_) .thk-body.open { opacity: 1; animation: thk-open 220ms cubic-bezier(0.23, 1, 0.32, 1) 90ms both; }
+@keyframes thk-open { from { opacity: 0; } }
+
+/* ---------- 4. Streamed words ---------- */
+html:root:not(#_):not(#_):not(#_) .thk-w { filter: none; transition: color 500ms ease; }
+html:root:not(#_):not(#_):not(#_) .thk-w.on { opacity: 1; animation: thk-w-in 240ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes thk-w-in { from { opacity: 0; } }
+/* In a trace or an answer card, a word still to come is a skeleton bar where it will land */
+html:root:not(#_):not(#_):not(#_) :is(.thk, .ask-card) .thk-w:not(.on) { opacity: 1; position: relative; color: transparent; }
+html:root:not(#_):not(#_):not(#_) :is(.thk, .ask-card) .thk-w:not(.on)::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 0.66em; margin-top: -0.33em;
+  border-radius: 3px; background: var(--surface-2); background: color-mix(in srgb, var(--muted) 24%, transparent); pointer-events: none;
+}
+
+/* ---------- 5. Loading screen: block text, its rail, chips inline like words ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-steps { padding: 12px 0 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step { padding: 0 0 0 24px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step + .thk-step { margin-top: 10px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step > .thk-mark { height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step:has(.thk-chip) > .thk-mark { height: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step.active:has(.thk-chip) > .thk-mark { height: 23px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-line { min-height: 18px; line-height: 18px; }
+/* A row with chips is as tall as a chip; wrapped chips sit 6px apart, and the last line takes that 6px back */
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step:has(.thk-chip) .thk-line { line-height: 22px; margin-bottom: -6px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step.active:has(.thk-chip) .thk-line { line-height: 23px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chips { display: inline; margin: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chip { margin: 0 0 6px 8px; vertical-align: top; }
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) :is(.thk-body.open, .thk-w.on) { animation: none; }
+  html:root:not(#_):not(#_):not(#_) .thk-w { transition: none; }
+}

@@ -232,9 +232,10 @@ function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onD
           {a.offers.map((o) => <div role="listitem" key={o.trade.key}><OfferCard o={o} done={done} onLink={onLink} onPitch={onPitch} onPlayer={onPlayer} /></div>)}
         </div>
       )}
-      {done && follow.length > 0 && (
-        <div className="ask-chips ask-follow" role="group" aria-label="Follow-up questions">
-          {follow.map((s) => <button key={s} type="button" className="ask-chip" onClick={() => onFollow(s)}>{s}</button>)}
+      {/* The follow-ups hold their place from the moment the card comes in, so the turn reaches its full height once */}
+      {a && follow.length > 0 && (
+        <div className={`ask-chips ask-follow${done ? "" : " wait"}`} role="group" aria-label="Follow-up questions" aria-hidden={!done || undefined}>
+          {follow.map((s) => <button key={s} type="button" className="ask-chip" tabIndex={done ? undefined : -1} onClick={() => onFollow(s)}>{s}</button>)}
         </div>
       )}
     </div>
@@ -358,6 +359,8 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
       const card = turn?.classList.contains("ask-turn") ? turn.querySelector(".ask-card") : null;
       const fresh = !!card && card !== seenCard.current;
       if (card) seenCard.current = card;
+      // A new answer card while following: the thread glides to it instead of snapping in the frame it lands
+      if (fresh && stick.current && !reduced() && now() - userAt.current > 400) smoothUntil.current = now() + 600;
       const smooth = !reduced() && now() < smoothUntil.current;
       if (smooth && smoothSent === smoothUntil.current) return; // already on its way; land() finishes it
       // Never fight a scroll you're making: wait until you've paused

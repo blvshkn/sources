@@ -6,25 +6,17 @@
    2. Trace steps lay out as plain text with the dot hung in the gutter, not as a grid row holding a wrapping flex
       line. WebKit sized those rows from their narrowest (one word per line) layout and kept that height, so on
       iPhone a lone dot sat on its own row with the label floating far below it and big gaps between steps.
-   3. An answer's bullet shows with its point's first word, never as an empty row ahead of it. */
+   3. An answer's bullet shows with its point's first word, never as an empty row ahead of it. Until then the point
+      is a skeleton line (ask-skeleton.css) with its bullet dimmed. */
 
 /* ---------- 1. Room for the newest turn ---------- */
 html:root:not(#_):not(#_) .ask-thread > .ask-col > .ask-turn:last-child { min-height: var(--ask-room, 0px); }
 
-/* ---------- 2. Trace steps: dot in a 16px gutter, label and chips flowing like a sentence ---------- */
-html:root:not(#_):not(#_) .ask-turn .thk-steps { gap: 4px; padding: 4px 0 6px; }
-html:root:not(#_):not(#_) .ask-turn .thk-step { display: block; position: relative; padding: 0 0 0 22px; }
-html:root:not(#_):not(#_) .ask-turn .thk-step > .thk-mark { position: absolute; left: 0; top: 0; }
-html:root:not(#_):not(#_) .ask-turn .thk-line { display: block; min-height: 22px; line-height: 22px; text-wrap: pretty; }
-html:root:not(#_):not(#_) .ask-turn .thk-chips { display: inline; }
-html:root:not(#_):not(#_) .ask-turn .thk-chip { display: inline-flex; vertical-align: top; margin: 1px 0 1px 4px; }
-html:root:not(#_):not(#_) .ask-turn .thk-chips > .thk-chip:first-child { margin-left: 8px; }
-html:root:not(#_):not(#_) .ask-turn .thk-plan { margin: 0 0 2px; line-height: 18px; text-wrap: pretty; }
-html:root:not(#_):not(#_) .ask-turn .thk-think { text-wrap: pretty; }
+/* ---------- 2. Trace steps: trace-flow.css lays them out for every trace ---------- */
 
 /* ---------- 3. Answer points: the bullet comes in with the point's first word ---------- */
 html:root:not(#_):not(#_) .ask-turn .ask-pts.many li::before { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
-html:root:not(#_):not(#_) .ask-turn .ask-pts li.thk-wait::before { opacity: 0; }
+html:root:not(#_):not(#_) .ask-turn .ask-pts li.thk-wait::before { opacity: 0.3; }
 html:root:not(#_):not(#_) .ask-turn .ask-pts li { text-wrap: pretty; }
 html:root:not(#_):not(#_) .ask-turn .ask-card .ask-ai-off { text-wrap: pretty; }
 /* Your question breaks between words; only a single word too long for the bubble breaks inside itself */
