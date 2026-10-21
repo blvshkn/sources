@@ -1205,14 +1205,20 @@ export function tendencies(teamId: string): Tendency {
   const closeRate = offers ? done.length / offers : null;
   const mgr = teamById(teamId).manager;
   const parts: string[] = [];
+  // He passed on an offer for wanting more value, so ideas with him add pieces his way. That outranks advice read
+  // from his history (a clean 1-for-1, lead with youth), so it takes the advice slot: the summary's last sentence.
+  const valueTip = VALUE_ASKS.has(teamId) ? "He wants more value back, so lead with your best offer, not a lowball." : null;
   if (!done.length) parts.push(`${mgr} hasn't completed a trade ${OFFERS_RECEIVED ? "in the last year" : "this season"}. Expect a slow reply and a hard bargain.`);
   else {
     parts.push(closeRate !== null ? `${mgr} has closed ${done.length} of ${offers} offers.` : `${mgr} has made ${done.length} trade${done.length === 1 ? "" : "s"} this season.`);
     if (buys.length) parts.push(`Usually buys ${buys.join(" and ")}.`);
-    if (rookieShare >= 0.5) parts.push("Chases rookies, so lead with youth.");
-    else if (closeRate !== null ? closeRate >= 0.4 : done.length >= 2) parts.push("Says yes more than most. Lead with a clean 1-for-1.");
+    const saysYes = closeRate !== null ? closeRate >= 0.4 : done.length >= 2;
+    if (valueTip) parts.push(rookieShare >= 0.5 ? "Chases rookies." : saysYes ? "Says yes more than most." : "Tough to close.");
+    else if (rookieShare >= 0.5) parts.push("Chases rookies, so lead with youth.");
+    else if (saysYes) parts.push("Says yes more than most. Lead with a clean 1-for-1.");
     else parts.push("Tough to close. Don't open with a lowball.");
   }
+  if (valueTip) parts.push(valueTip);
   return { teamId, trades: done.length, offers, closeRate, buys, rookieShare, summary: parts.join(" ") };
 }
 

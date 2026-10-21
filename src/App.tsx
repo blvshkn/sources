@@ -678,7 +678,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     if (!n) return undefined;
     const spare = n.surplusPlayer && n.surplus !== n.need ? ` Spare ${n.surplus}: ${n.surplusPlayer.name}.` : "";
     return { id: partnerId, text: `${n.team.name} needs ${n.need}.${spare} ${tendencies(partnerId).summary}`.trim(), onNotes: () => go("trade:notes") };
-  }, [give.length, get.length, partnerId, needs]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [give.length, get.length, partnerId, needs, asks]); // eslint-disable-line react-hooks/exhaustive-deps
   // "Open matchup" from the inbox closes it and opens the matchup sheet over whatever page you're on
   const [matchupSheet, setMatchupSheet] = useState(false);
   const inboxGo = (dest: string) => { if (dest === "matchup") { setInboxOpen(false); setMatchupSheet(true); } else go(dest); };
