@@ -168,9 +168,9 @@ export function Landing({ onLive, onDemo }: {
     ["How does Ask work?", "Sources AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Sources' own engine, and once in a while the AI cracks a joke. There's a daily limit, and past it Ask gives the built-in answer."],
     ["What does Set optimal lineup check?", "It starts from your best projected lineup, then reads player news, injury and practice reports, Vegas lines and kickoff weather. Every suggested move comes with its reason. You make the moves in Sleeper."],
     ["Does a pitch send on its own?", "No. Sources writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
-    ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers follow your Sleeper account to your phone, tablet and desktop. The sample league stays on one device."],
+    ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers sync to your phone, tablet and desktop. A key that lives on your devices protects them, and a new device joins with a one-time code from Settings. The sample league stays on one device."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Sources never shows them to other managers."],
-    ["What data does Sources keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved under your Sleeper user and league ids so they can sync. Delete my data in Settings clears this browser and the synced copy for the league you have open."],
+    ["What data does Sources keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved so they can sync, readable only with your device key. Delete my data in Settings clears this browser and the synced copies."],
     ["Does the win chance match Sleeper?", "Closely. Sources uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Sources works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
