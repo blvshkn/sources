@@ -353,6 +353,17 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
       });
   };
 
+  /** Save image: downloads the card on every size. Sleeper on desktop won't take a pasted image, so a file he can
+   *  attach is the one route that works everywhere. Share stays on the main button. */
+  const saveImage = () => {
+    const c = cardRef.current;
+    if (!c) { onSent("The card is still drawing. Try again in a second."); return; }
+    const a = document.createElement("a");
+    a.href = c.url; a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    record("saved image"); onSent("Image saved");
+  };
+
   const primary = async () => {
     if (method === "text") { record("text"); onSent("Opening Messages with your pitch. Sources will ask tomorrow if they replied.", "text"); window.location.href = `sms:?&body=${encodeURIComponent(text)}`; }
     if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
@@ -421,7 +432,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
           <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>
           <div className="sa2-row">
             <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); if (ok) record("copied"); onSent(ok ? "Message copied" : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
-            <button className="btn sa2-sub" onClick={shareImage}><Icon name="share" size={16} />Share image</button>
+            <button className="btn sa2-sub" onClick={saveImage}><Icon name="download" size={16} />Save image</button>
           </div>
         </div>
         <div className="so-sheet-foot">
