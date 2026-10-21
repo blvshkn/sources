@@ -29,6 +29,13 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
+/** "Member of X · Commish: Jake", or "Commish of X" when this account runs the league. Sleeper may not say. */
+function leagueRole(userId: string) {
+  const c = LEAGUE.commish ?? [];
+  if (c.some((x) => x.userId === userId)) return `Commish of ${LEAGUE_NAME}`;
+  return c.length ? `Member of ${LEAGUE_NAME} · Commish: ${c.map((x) => x.name).join(", ")}` : `Member of ${LEAGUE_NAME}`;
+}
+
 export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = "", format, setFormat, level, setLevel, fade, setFade, dismissed, resetDismissed, onDisconnect, onDelete, onReplay, paused, onResume, hiddenCount, onUnhide, passed = [], onBringBack, onClearPassed, accounts = [], activeUserId = "", onRemoveAccount, onAddAccount, onSwitchLeague, syncUser = "" }: {
   username: string;
   demo: boolean;
@@ -94,7 +101,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
                     <ManagerAvatar src={owns ? [LEAGUE.userPhoto, a.avatar, LEAGUE.userAvatar] : [a.avatar]} name={a.name || a.username} size={36} className="acc-av" />
                     <span className="acc-who">
                       <b>{label}</b>
-                      <small>{owns ? `Owns ${LEAGUE_NAME}` : label !== `@${a.username}` ? `@${a.username}` : "In the league switcher"}</small>
+                      <small>{owns ? leagueRole(a.userId) : label !== `@${a.username}` ? `@${a.username}` : "In the league switcher"}</small>
                     </span>
                     {owns
                       ? <span className="acc-inuse">In use</span>

@@ -562,6 +562,8 @@ export interface LeagueData {
   /** How many weeks the rest-of-season projections cover. */
   rosWeeks?: number;
   username?: string;
+  /** The league's commissioners, from Sleeper's users list (live leagues). Empty when Sleeper doesn't say. */
+  commish?: { userId: string; name: string }[];
   /** The signed-in user's picture in this league (live leagues). Shown on the league switcher. */
   userAvatar?: string;
   /** The signed-in user's personal Sleeper picture, the fallback when the team picture fails to load. */
@@ -672,6 +674,7 @@ export function demoLeague(): LeagueData {
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), specialBids: [0, 1, 0, 0, 2, 1],
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     userAvatar: teams.find((t) => t.you)?.avatar,
+    commish: [{ userId: "jake", name: "Jake" }],
     champion: { teamId: "jake", season: "2025" },
     valueSource: "Demo estimate from projections",
     scoring: DEMO_SCORING,

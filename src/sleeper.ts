@@ -27,7 +27,7 @@ export function leagueTransactions(leagueId: string, week: number): Promise<STxn
 
 // ---- Raw shapes (only the fields we read) --------------------------------
 
-interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; metadata?: { team_name?: string; avatar?: string; [k: string]: unknown } | null }
+interface SUser { user_id: string; username?: string; display_name: string; avatar?: string | null; /** Sleeper marks the league's commissioners (owners) with this on the league users list */ is_owner?: boolean | null; metadata?: { team_name?: string; avatar?: string; [k: string]: unknown } | null }
 
 // ---- Avatars ------------------------------------------------------------------
 // Sleeper keeps a manager's picture in two places. user.avatar is an id on Sleeper's CDN (the account picture).
@@ -687,6 +687,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Sources" },
     faabHistory, freeAgents, specialFreeAgents, specialBids, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
+    commish: users.filter((u) => u.is_owner).map((u) => ({ userId: u.user_id, name: u.display_name || u.username || "Commish" })),
     userPhoto: avatarSrc(userBy.get(userId)?.avatar) ?? undefined,
     userAvatar: managerAvatar(userBy.get(userId), "thumb", rosters.find((r) => r.owner_id === userId || r.co_owners?.includes(userId))) ?? undefined,
     champion: await champP,
