@@ -52,6 +52,7 @@ import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchS
 import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
+import { useSectionEnter } from "./sectionEnter";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -214,6 +215,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
 
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => { window.scrollTo({ top: 0 }); document.documentElement.dataset.tab = tab; }, [tab]);
+  // Picking a section brings its page in with a short stagger; in-page tabs never do (sectionEnter.ts)
+  useSectionEnter(tab);
   // Accent color follows the fantasy platform you're connected to. Chalk and graphite stay the same everywhere.
   // The top bar only gets its glass, edge and shadow once content scrolls under it
   useEffect(() => {

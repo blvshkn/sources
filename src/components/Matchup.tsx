@@ -13,6 +13,7 @@ import { PlatformLogo } from "./PlatformLogo";
 import { deny, denyOn } from "../deny";
 import { SwapPicker, SpecialWho, WeekWho, Who, lockOf, lockRules, spPts, useSwapMenu, weekBye } from "./SwapPicker";
 import { bestNow, slotted, swapInto, useNowLineup, useWeekWhatIf } from "../lineupWhatIf";
+import { order, SLOT_NAME } from "../weeks";
 
 const proj = (id: string | null) => (id ? eff(playerById(id), true) : 0);
 
@@ -203,6 +204,30 @@ function Num({ x, past }: { x: Slot; past: boolean }) {
   return x.p?.pts === null ? <span className="lu-pts mu-pts bye">BYE</span> : <span className={`lu-pts mu-pts${past ? " actual" : ""}`}>{(x.p?.pts ?? 0).toFixed(1)}</span>;
 }
 
+/** Loading a week: the matchup card itself, its face-off, header and one row per lineup slot, with soft bars where the
+ *  names and numbers go. The same rows the loaded card draws, so nothing below the stepper moves when it lands. */
+function MatchSkel({ week }: { week: number }) {
+  const side = (s: "you" | "them") => <span className={`mu-p ${s}`}><span className="av sk" style={{ width: 32, height: 32 }} /><span className="mu-n"><b>&nbsp;</b><small>&nbsp;</small></span></span>;
+  return (
+    <section className="card mu is-skel" aria-busy="true" aria-label={`Loading Week ${week}`}>
+      <FaceOff week={week} state={week < WEEK ? "final" : "pre"} chance={null} res={null} skel flat msg="Loading"
+        you={{ t: YOU, pts: 0 }} them={{ t: null, pts: 0, empty: "Loading" }} />
+      {/* The summary line's usual wording, hidden behind a bar, so it wraps where the loaded one will */}
+      <p className="mu-sum" aria-hidden="true"><span>{week < WEEK ? `You won 000.0-000.0, won by 00.0. You won 0 of ${order().length} spots.` : `Projected to win 0 of ${order().length} spots. Both sides use Sleeper's Week ${week} projections.`}</span></p>
+      <div className="mu-th" aria-hidden="true"><span>Slot</span><span>&nbsp;</span><span className="mu-th-you">You</span><span className="mu-th-them">&nbsp;</span></div>
+      {order().map((slot, i) => (
+        <div key={i} className="mu-row" aria-hidden="true">
+          <span className="mu-slot">{SLOT_NAME[slot] ?? slot}</span>
+          <span className="mu-mine">{side("you")}<span className="lu-pts mu-pts">&nbsp;</span></span>
+          <span className="mu-edge">&nbsp;</span>
+          <span className="mu-theirs">{side("them")}<span className="lu-pts mu-pts">&nbsp;</span></span>
+        </div>
+      ))}
+      <div className="mu-foot" aria-hidden="true"><span>&nbsp;</span></div>
+    </section>
+  );
+}
+
 function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => void; stepper: ReactNode }) {
   // A week ahead takes the shared what-if (lineupWhatIf), so a swap tried on Lineup shows here and the other way round
   const { m, raw, err, wi } = useWeekWhatIf(week);
@@ -210,12 +235,12 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   const { open, setOpen, menuRef } = useSwapMenu<number>();
   useEffect(() => setOpen(null), [week]); // eslint-disable-line react-hooks/exhaustive-deps
   const back = <BackBtn onBack={onBack} />;
+  if (!m && !err) return <>{back}{stepper}<MatchSkel week={week} /></>;
   if (!m || !m.opp) return (
     <>{back}{stepper}
-      <section className="card card-pad mu-week-msg" aria-busy={!m && !err}>
+      <section className="card card-pad mu-week-msg">
         {m ? <p className="small"><b>{m.empty?.title}</b> <span className="muted">{m.empty?.body}</span></p>
-          : err ? <p className="small muted">{err}</p>
-          : <div className="lu-skel" aria-label={`Loading Week ${week}`}>{Array.from({ length: 6 }).map((_, i) => <span key={i} />)}</div>}
+          : <p className="small muted">{err}</p>}
       </section>
     </>
   );

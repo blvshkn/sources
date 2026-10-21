@@ -380,6 +380,8 @@ function WeekSkel({ week }: { week: number }) {
     <div className="lu-wskel" aria-busy="true" aria-label={`Loading Week ${week}`}>
       <div className="lu-list-head" aria-hidden="true"><b>&nbsp;</b></div>
       {Array.from({ length: starters }, (_, i) => row(`s${i}`))}
+      {/* A week ahead gets the what-if note under the starters, so its frame is here too */}
+      {week > WEEK && <div className="lu-wi" aria-hidden="true"><p className="lu-wi-txt">&nbsp;</p><div className="lu-wi-btns"><span className="btn btn-sm">&nbsp;</span></div></div>}
       <div className="lu-list-head sub" aria-hidden="true"><b>&nbsp;</b></div>
       {Array.from({ length: bench }, (_, i) => row(`b${i}`, true))}
     </div>

@@ -1,0 +1,95 @@
+/* Section load-in and skeletons. Loads just before frame.css.
+
+   Load-in (src/sectionEnter.ts): a section picked from the sidebar, tab bar or tablet nav brings its header, then
+   its cards, in with a short rise and fade. These tokens set the timing; the script reads them once. In-page tabs and
+   week steppers never play it. */
+:root {
+  --ld-dur: 240;   /* ms per card */
+  --ld-step: 35;   /* ms between cards */
+  --ld-cap: 160;   /* latest start, so a page settles by --ld-cap + --ld-dur = 400ms */
+  --ld-rise: 8;    /* px */
+  --ld-near: 120;  /* px below the fold still counted as on screen */
+}
+
+/* A chart mounted in place by a tab or week swap is drawn settled, no grow-in (src/chartReveal.ts) */
+html:root:not(#_):not(#_) .seen-still { animation: none !important; }
+
+/* ---- Skeleton primitive -------------------------------------------------------------------------------------------
+   One look for every loading state: the final layout's own boxes, filled with a surface tone, text hidden, pulsing
+   gently on opacity. Never lime. The pulse stops under reduced motion.
+   .sk           a block (give it the final element's size, or put it on the final element itself)
+   .sk-text      on a text element: keeps its line box and width, hides the words behind a bar */
+html:root:not(#_):not(#_) .sk { display: block; border-radius: 6px; background: var(--surface-2); color: transparent; }
+html:root:not(#_):not(#_) .sk.av { border-radius: 50%; flex: none; }
+html:root:not(#_):not(#_) .sk-text { color: transparent !important; border-radius: 6px; background: var(--surface-2); }
+@keyframes sk-pulse { 50% { opacity: 0.55; } }
+
+/* The skeletons that were here before, on the same surface and the same pulse (some shimmered a background gradient,
+   which repaints every frame; the pulse is opacity only) */
+html:root:not(#_):not(#_) :is(.lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) {
+  background: var(--surface-3); background-size: auto;
+}
+html:root:not(#_):not(#_) .pd-skel span { background: var(--surface-2); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) {
+    animation: sk-pulse 1.2s ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) { animation: none; }
+}
+
+/* ---- Matchup page, a week loading (Matchup.tsx MatchSkel): the loaded card's rows with bars for names and numbers */
+html:root:not(#_):not(#_) .mu.is-skel :is(.mu-n b, .mu-n small, .mu-pts, .mu-edge, .mu-sum > span, .mu-th > span:nth-child(2), .mu-th-them, .mu-foot > span) {
+  color: transparent !important; border-radius: 6px; background: var(--surface-2);
+}
+html:root:not(#_):not(#_) .mu.is-skel .mu-n b { width: 7.5em; max-width: 100%; }
+html:root:not(#_):not(#_) .mu.is-skel .mu-n small { width: 4.5em; max-width: 80%; }
+html:root:not(#_):not(#_) .mu.is-skel .mu-pts { min-width: 2.6em; }
+html:root:not(#_):not(#_) .mu.is-skel .mu-edge { justify-self: center; min-width: 2.4em; }
+html:root:not(#_):not(#_) .mu.is-skel .mu-sum > span { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+html:root:not(#_):not(#_) .mu.is-skel :is(.mu-th > span:nth-child(2), .mu-th-them) { min-width: 5em; }
+html:root:not(#_):not(#_) .mu.is-skel .mu-foot > span { display: inline-block; width: min(30em, 80%); }
+html:root:not(#_):not(#_) .mu.is-skel .mu-row { pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .mu.is-skel :is(.mu-p, .mu-pts, .mu-edge, .mu-sum > span, .mu-th > span:nth-child(2), .mu-th-them, .mu-foot > span) { animation: sk-pulse 1.2s ease-in-out infinite; }
+}
+
+/* ---- Waivers, a week loading: the numbers that aren't in yet become bars in the same cells */
+html:root:not(#_):not(#_) .wv3-list[aria-busy="true"] :is(.wv-proj b, .wv-c-lu b) { color: transparent !important; border-radius: 6px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .wv3-list[aria-busy="true"] .wv-proj b { display: inline-block; min-width: 2.8em; }
+html:root:not(#_):not(#_) .wv3-list[aria-busy="true"] .wv-c-lu b { display: inline-block; min-width: 4.5em; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .wv3-list[aria-busy="true"] :is(.wv-proj b, .wv-c-lu b) { animation: sk-pulse 1.2s ease-in-out infinite; }
+}
+
+/* ---- Start / Sit, a week loading: the verdict line keeps its height behind a bar */
+html:root:not(#_):not(#_) .sx-verdict.sx-loading { color: transparent !important; }
+html:root:not(#_):not(#_) .sx-verdict.sx-loading::after { content: ""; position: absolute; left: 0; top: calc(50% - 0.6em); height: 1.2em; width: min(18em, 70%); border-radius: 6px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .sx-verdict { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .sx-verdict.sx-loading::after { animation: sk-pulse 1.2s ease-in-out infinite; }
+}
+
+/* ---- Waivers, the top pickup card while another week loads its first time (Waivers.tsx TopCard skel) */
+html:root:not(#_):not(#_) .topk.is-skel { pointer-events: none; }
+html:root:not(#_):not(#_) .topk.is-skel :is(.topk-label, .topk-name, .wv-meta, dt, dd, .topk-why, .topk-plan li > span, .btn) {
+  color: transparent !important; border-radius: 6px; background: var(--surface-2) !important; box-shadow: none !important; border-color: transparent !important;
+}
+html:root:not(#_):not(#_) .topk.is-skel :is(.topk-name, .wv-meta, .topk-why, .topk-plan li > span, .topk-label) { width: fit-content; max-width: 100%; }
+html:root:not(#_):not(#_) .topk.is-skel .topk-plan li > span { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+html:root:not(#_):not(#_) .topk.is-skel :is(.av, .ai-label, .topk-plan svg, .btn svg, .btn img, .wv-meta *) { visibility: hidden; }
+html:root:not(#_):not(#_) .topk.is-skel .av { visibility: visible; background: var(--surface-2); }
+html:root:not(#_):not(#_) .topk.is-skel .av > * { visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .topk.is-skel > * { animation: sk-pulse 1.2s ease-in-out infinite; }
+}
+
+/* ---- Lineup, a week loading (Roster.tsx WeekSkel): the skeleton rows sit one level down, inside .lu-wskel, so they
+   take the same card padding the loaded rows get as direct children of the list card */
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-wskel > :is(.lu-list-head, .lu-row) { padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-wskel > .lu-list-head:not(.sub) { padding-top: var(--pad-card-y); }
+html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-wskel > .lu-wi { margin-left: var(--pad-card-x); margin-right: var(--pad-card-x); }
+html:root:not(#_):not(#_) .lu-wskel .lu-wi :is(.lu-wi-txt, .btn) { color: transparent; background: var(--surface-3); border-color: transparent; box-shadow: none; border-radius: 6px; }
+html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .lu-wskel .lu-wi { animation: sk-pulse 1.2s ease-in-out infinite; } }

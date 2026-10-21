@@ -321,7 +321,12 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
           why={past ? (x.c?.line ?? null) : x.fit ?? `${x.fa.name} projects ${(x.pts as number).toFixed(1)}${x.c?.opp ? ` ${x.c.opp}` : ""} in week ${week}.`}
           plan={past ? (starts ? <span>Would have added <b>{fmt(x.gain)} pts</b> to your week {week} lineup.</span> : <span>Wouldn't have cracked your week {week} lineup.</span>)
             : starts ? <span>Starts for you in week {week}. <b>{fmt(x.gain)} pts</b>.</span> : <span>Bench depth in week {week}. Doesn't crack your lineup.</span>} />;
-      })() : <EmptyTop label={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} text={loading ? `Loading week ${week}` : sel.err ?? (kind === "past" ? "Nobody on the wire to claim for that week." : `Nobody on the wire fixes a weak spot in week ${week}.`)} />)}
+      })() : loading && nowTop ? (
+        // First load of another week: the top pickup card's own frame as a skeleton, so the list below doesn't jump
+        <TopCard skel rec={nowTop} irMove={irMove?.name} onToast={onToast} starts={false} onPass={() => {}}
+          eyebrow={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} stat={{ dt: `Week ${week}`, dd: "0.0" }}
+          why={nowTop.fit ?? nowTop.fa.why} plan={<span>Starts for you in week {week}. <b>+0.0 pts</b>.</span>} />
+      ) : <EmptyTop label={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} text={loading ? `Loading week ${week}` : sel.err ?? (kind === "past" ? "Nobody on the wire to claim for that week." : `Nobody on the wire fixes a weak spot in week ${week}.`)} />)}
       </aside>
 
       <section className="card wv-card" aria-label="Waiver targets">
@@ -494,8 +499,10 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onPass, onUnpas
 }
 
 /** The Top pickup card. This week it's the engine's pick; other weeks the caller passes that week's numbers. */
-function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, game: weekGame, onPass }: {
-  rec: WaiverRec; eyebrow: string; stat: { dt: string; dd: string }; why: string | null; plan: ReactNode; starts: boolean; irMove?: string; onToast: (m: string) => void;
+function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, game: weekGame, onPass, skel = false }: {
+  rec: WaiverRec;
+  /** Drawn as a loading skeleton: the same frame, text behind soft bars, nothing to tap */
+  skel?: boolean; eyebrow: string; stat: { dt: string; dd: string }; why: string | null; plan: ReactNode; starts: boolean; irMove?: string; onToast: (m: string) => void;
   /** "Not interested": Sources stops suggesting him everywhere and the next best fills in. */
   onPass: () => void;
   /** That week's opponent, for a week other than this one. */
@@ -506,7 +513,8 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
   const drop = recDrop(top);
   const hold = useHoldHeight<HTMLElement>(top.fa.id);
   return (
-    <section ref={hold} className={`card topk${starts ? " gain" : ""}`} aria-label="Top pickup">
+    <section ref={hold} className={`card topk${starts ? " gain" : ""}${skel ? " is-skel" : ""}`} aria-label={skel ? undefined : "Top pickup"}
+      {...(skel ? { "aria-hidden": true, inert: "" } : {})}>
       <div className="topk-head"><span className="topk-label">{eyebrow}</span><AiLabel /></div>
       <div className="topk-who">
         <Avatar p={top.fa} size={52} />
