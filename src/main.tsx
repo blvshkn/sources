@@ -1,4 +1,5 @@
 import "./animationIteration";
+import "./imageGuard";
 import "./fonts";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -76,6 +77,7 @@ import "./landing-refresh.css";
 import "./icon-strokes.css";
 import "./final-cta.css";
 import "./live-dot.css";
+import "./image-guard.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

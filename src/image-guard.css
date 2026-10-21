@@ -1,0 +1,6 @@
+/* Images can't be dragged off or long-pressed to save (iOS callout). Paired with src/imageGuard.ts. */
+html:root:not(#_):not(#_) :is(img, svg, canvas, picture, video) {
+  -webkit-user-drag: none; user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none; user-select: none;
+}
