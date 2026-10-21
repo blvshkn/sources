@@ -1,0 +1,43 @@
+/* Card content edges: the outermost text, mark or box in every card lands on --pad-card-x (16 / 26 / 28), the same
+   edge as the face-off card. Measured in demo mode (normal and final week) at 390, 834 and 1440: for each card, the
+   gap from the card edge to its outermost text or drawn mark, left and right. Only offsets change; hover pills keep
+   --pad-pill-gap from the card edge. Loads just before frame.css, after container-padding.css. */
+
+/* ---------- Trade Ideas: the thinking card ----------
+   The head's chevron (and the step dots under it) sit in a 16px icon column, but the chevron glyph only starts
+   about 6px into that column, so the card read 6px narrower on the left than every other card (22 / 32 / 34). The
+   trace moves 6px out so the chevron lands on the token; the head's hover pill stays --pad-pill-gap from the edge. */
+html:root:not(#_):not(#_):not(#_) .main-inner .card.thk-card > .thk { margin-left: -6px; }
+html:root:not(#_):not(#_):not(#_) .main-inner .card.thk-card > .thk > .thk-head {
+  margin-left: calc(var(--pad-pill-gap) - var(--pad-card-x) + 6px);
+  padding-left: calc(var(--pad-card-x) - var(--pad-pill-gap) - 6px);
+}
+/* The working loader's braille dots start 4.5px into the same column: 1.5px in keeps them on the token too */
+html:root:not(#_):not(#_):not(#_) .main-inner .card.thk-card :is(.thk-ic, .thk-mark) .wkl { transform: translateX(1.5px); }
+
+/* ---------- Waivers: Not interested ----------
+   The X button is 40px but its slot (.ps-end) is 36px, so it ran 4px past the slot's right edge: 4px outside the
+   token (12 / 22 / 24). The slot now lines its button up on its right edge. */
+html:root:not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end { justify-content: flex-end; }
+
+/* ---------- Row chevrons at a card's right edge (Where to improve, Quick moves, Settings, Slot report, threats) ----
+   The 16px chevron box sat on the token, but its glyph is narrow and drawn in the middle of the box, so it ended
+   about 6px inside: Where to improve and About Sources, where the chevrons are the outermost thing on the right,
+   read 6px narrower than every other card (22 / 32 / 34). The glyph now ends on the token, in every card, so the
+   chevron column lines up from card to card. The hover pills don't move. */
+html:root:not(#_):not(#_):not(#_) .main-inner .card :is(.brief-row, .wk-row, .wk-more, .set-link, .sr-main) > svg.ic-chev:last-child { translate: 5.5px 0; }
+
+/* ---------- Standings on phones ----------
+   The tables kept 12px (Playoff picture) and 18px (Positions) on the right below 521px, so the last column ran 4px
+   past the token or stopped 2px short of it. Every width now takes the token, like the heads above them. */
+html:root:not(#_):not(#_):not(#_) .card.st .st-row { padding-right: var(--pad-card-x) !important; }
+
+/* ---------- Trade rosters: the pick check ----------
+   The 22px check sat at the start of its 26px column, 4px inside the token. It ends on the token now. */
+html:root:not(#_):not(#_):not(#_) .card > .pick > .check { justify-self: end; }
+
+/* ---------- Week steppers in cards ----------
+   The arrow cells are 44px and the buttons 40px, both at the cell's start, so the right arrow stopped 4px short of
+   the stepper's edge: 4px inside the token in Start / Sit's header (no box there), and 8px from the box's edge (4px
+   on the left) in the Lineup and Waivers steppers. The right arrow ends on the edge now. */
+html:root:not(#_):not(#_):not(#_) .main-inner .card .lu-weeknav > button:last-of-type { justify-self: end; }
