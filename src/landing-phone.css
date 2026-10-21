@@ -68,6 +68,9 @@ html:root:not(#_):not(#_) .ld2-phone .ph-power { right: calc(-2.5 * var(--u)); t
 html:root:not(#_):not(#_) .ld2-phone .ld2-sms {
   position: absolute; inset: calc(12 * var(--u)); display: flex; flex-direction: column;
   overflow: clip; border-radius: calc(52 * var(--u));
+  /* The header's backdrop blur escapes a radius clip from overflow alone and drew square corners into the bezel;
+     a clip-path with the same round clips it too */
+  clip-path: inset(0 round calc(52 * var(--u)));
   background: var(--scr);
   box-shadow: 0 0 0 calc(1.5 * var(--u)) #040404;
   font-size: calc(15 * var(--u));
