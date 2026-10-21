@@ -7,7 +7,6 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
   --nav-ease: 160ms cubic-bezier(0.23, 1, 0.32, 1);
   --nav-bg: #191A19; --nav-line: #202322; --nav-chip: #2A2D2C;
   --nav-muted: #9A9C98; --nav-ink: #F2F3EE; --nav-strong: #FFFFFF; --nav-lime: #D8F24A;
-  --nav-hover: rgba(32, 35, 34, 0.6); --nav-active: rgba(32, 35, 34, 0.9);
   /* The phone tab bar's height: 4px over 66px items, then 8px, or the home indicator's inset less 4px so the labels
      sit 12px above it (Figma 00:07: 78px with no inset) */
   --tabbar-pad-b: max(8px, calc(env(safe-area-inset-bottom, 0px) - 4px));
@@ -96,7 +95,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #181918; }
 /* ---------- Desktop sidebar ---------- */
 @media (min-width: 861px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .shell > .side {
-    gap: 0 !important; padding: 22px 14px 20px !important; background: var(--nav-bg); border-right: 1px solid var(--nav-line);
+    gap: 0 !important; padding: 22px 14px 20px !important; background: var(--nav-bg); border-right: 1px solid var(--line);
+    /* Figma clips the sidebar: the lime haze beside the active item stays inside it */
+    overflow-x: hidden;
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .side > .brand { padding: 0; margin: 0 0 20px -3px; }
   /* League switcher: 52px, the league in Geist Medium 13 over "PPR · WEEK 6" in mono */
@@ -116,7 +117,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #181918; }
 html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn .lsw-line { font: 500 0.625rem/1 var(--font-mono); letter-spacing: 0.02em; word-spacing: -4px; text-transform: uppercase; color: var(--nav-muted); }
   html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn > svg { width: 14px; height: 14px; color: var(--nav-muted); }
 
-  /* Items: 40px, 12px in, icon 20, label Geist Medium 15, 2px apart */
+  /* Items: 40px, 12px in, icon 20, label Geist Medium 15, 2px apart. No fill in any state (Figma 00:38): hover lights the
+     label and icon, active lights the label and turns the icon lime beside the lime edge bar */
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-main { gap: 2px; }
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button {
     height: 40px; gap: 12px; padding: 0 12px !important; border-radius: 10px !important;
@@ -129,11 +131,11 @@ html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix > button + button { margin-top
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .ix-ic svg { width: 20px; height: 20px; color: inherit !important; }
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .ix-w { padding: 0; letter-spacing: 0; font-weight: 500 !important; }
   @media (hover: hover) and (pointer: fine) {
-    html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:hover { background: var(--nav-hover) !important; color: var(--nav-strong) !important; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:hover { color: var(--nav-strong) !important; }
     html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:hover .ix-ic { color: var(--nav-ink); }
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:active { transform: scale(0.98); }
-  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] { background: var(--nav-active) !important; color: var(--nav-strong) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] { color: var(--nav-strong) !important; }
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] .ix-w { color: var(--nav-strong); }
   html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] :is(.ix-ic, svg) { color: var(--nav-lime) !important; }
   /* The lime bar on the sidebar's left edge, 28px, beside the active item, with its haze */
@@ -146,7 +148,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix > button + button { margin-top
     background: var(--nav-lime); opacity: 0.55; filter: blur(24px); pointer-events: none;
   }
   /* Divider: 14px clear above and below, inset 14px */
-  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-sep { flex: none; height: 1px; margin: 16px 14px; background: var(--nav-line); border: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-sep { flex: none; height: 1px; margin: 16px 14px; background: var(--line); border: 0; }
 
   /* Footer: "Live from [Sleeper] / connected as @user," then the refresh time in mono */
   html:root:not(#_):not(#_):not(#_):not(#_) .side > .side-foot { margin-top: auto; padding: 24px 0 0; display: grid; gap: 16px; color: var(--nav-muted); }
