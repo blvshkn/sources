@@ -8,16 +8,26 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
   --nav-bg: #191A19; --nav-line: #202322; --nav-chip: #2A2D2C;
   --nav-muted: #9A9C98; --nav-ink: #F2F3EE; --nav-strong: #FFFFFF; --nav-lime: #D8F24A;
   --nav-hover: rgba(32, 35, 34, 0.6); --nav-active: rgba(32, 35, 34, 0.9);
+  /* The phone tab bar's height: 4px over 66px items, then 8px, or the home indicator's inset less 4px so the labels
+     sit 12px above it (Figma 00:07: 78px with no inset) */
+  --tabbar-pad-b: max(8px, calc(env(safe-area-inset-bottom, 0px) - 4px));
+  --tabbar-h: calc(70px + var(--tabbar-pad-b));
 }
+
+/* ---------- Safari's toolbar ---------- */
+/* iOS Safari tints the area around its toolbar from the page behind it and theme-color (index.html). The html box shows
+   in the overscroll and behind the toolbar, so it takes the bars' color: #191A19 at 90% over the #121413 ground, which
+   reads as #181918. */
+html:root:not(#_):not(#_):not(#_):not(#_) { background-color: #181918; }
 
 /* ---------- Phone header: logo, then when it was updated, then bell and settings ---------- */
 @media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar {
     min-height: 64px; padding-top: 0; padding-bottom: 0;
     padding-left: max(16px, env(safe-area-inset-left, 0px)) !important; padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
-    background: linear-gradient(180deg, var(--nav-bg) 0%, rgba(25, 26, 25, 0) 100%) !important;
+    background: rgba(25, 26, 25, 0.9) !important;
     -webkit-backdrop-filter: blur(1px) !important; backdrop-filter: blur(1px) !important;
-    border-bottom: 0 !important; box-shadow: none !important;
+    border-bottom: 0 !important; box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15) !important;
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { display: none !important; }
   html:root:not(#_):not(#_):not(#_):not(#_) .top-logo { padding: 0; min-height: 44px; }
@@ -36,13 +46,16 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
 @media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix {
     grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 0 !important;
-    padding: 4px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px)) !important;
+    padding: 4px max(6px, env(safe-area-inset-right, 0px)) var(--tabbar-pad-b) max(6px, env(safe-area-inset-left, 0px)) !important;
+    /* Figma clips the bar's content, so the lime haze over the active tab never spills above it. Clipping leaves the
+       bar's own shadow alone. */
+    overflow: clip;
     border: 0 !important; border-radius: 16px 16px 0 0 !important; box-shadow: 0 -4px 20px 8px rgba(0, 0, 0, 0.15) !important;
     background: rgba(25, 26, 25, 0.9) !important;
     -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button {
-    height: 56px; padding: 6px 0 8px !important; gap: 6px !important; justify-content: flex-end;
+    height: 66px; padding: 8px 0 16px !important; gap: 6px !important; justify-content: flex-end;
     color: var(--nav-muted) !important; background: transparent !important;
     transition: color var(--nav-ease), transform var(--nav-ease);
   }
@@ -71,6 +84,13 @@ html:root:not(#_):not(#_):not(#_):not(#_) {
     background: var(--nav-lime); opacity: 0.55; filter: blur(24px); pointer-events: none;
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix[data-i="5"] { --i: 5; }
+  /* Everything that sits above the bar follows its height: the page's end, the deal tray, toasts, the picked player */
+  html:root:not(#_):not(#_):not(#_):not(#_) .main { padding-bottom: calc(var(--tabbar-h) + 24px) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .main:has(.deal-tray) { padding-bottom: calc(var(--tabbar-h) + 120px) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .deal-tray { bottom: calc(var(--tabbar-h) + 8px) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .toast { bottom: calc(var(--tabbar-h) + 16px) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) body:has(.deal-tray) .toast { bottom: calc(var(--tabbar-h) + 100px) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs-pick { scroll-margin-bottom: calc(var(--tabbar-h) + 36px); }
 }
 
 /* ---------- Desktop sidebar ---------- */
