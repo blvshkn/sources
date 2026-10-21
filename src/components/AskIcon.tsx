@@ -1,13 +1,16 @@
 // The Ask icon, and the mark for anything Sources writes: Lucide's messages-square (ISC), two chat bubbles, the back one
-// tucked behind the front one, no typing dots and no cut-outs. 24 grid, a line set by drawn size (iconStroke.ts), round
+// tucked behind the front one, no typing dots and no cut-outs, every outline closed. 24 grid, a line set by drawn size (iconStroke.ts), round
 // ends and joins. Still at rest. Hovering or focusing the control that holds it plays one short beat (icon-lucide.css):
 // the back bubble nudges away down and right, the front one pops from its tail. Reduced motion keeps it still.
 // currentColor throughout.
 
 /** Front bubble, top left, tail at bottom left (Lucide messages-square, first path). */
 const FRONT = "M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z";
-/** Back bubble, bottom right, tail at bottom right; its outline stops where the front bubble covers it. */
-const BACK = "M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1";
+/** Back bubble, bottom right, tail at bottom right. Lucide stops its outline 4 units short of the front bubble at both
+ *  ends, which leaves a gap; here both ends run on until they meet the front bubble's outline (top edge out from its
+ *  right side at y 9, left side up to its bottom at y 12). The round caps sit on the front line's centre, so the joins
+ *  close at every drawn size and line weight. */
+const BACK = "M16 9h4a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-5";
 /** Optical centering, in 24-grid units (icons.tsx measures the same way: mass within about 0.25, ink box within 0.5). */
 const ASK_OFFSET = [0, 0.3];
 

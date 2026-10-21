@@ -38,6 +38,7 @@ function UserDemo({ go, onDone }: { go: boolean; onDone: () => void }) {
   const found = k > USER.length;
   return (
     <div className={`lds-demo lds-user${found ? " found" : ""}`}>
+      <span className="nudge-kind"><Icon name="plug" size={15} />Connect Sleeper</span>
       <div className="lds-field">
         <span className="at">@</span>
         <span className="lds-typed">{typed || <span className="lds-ph">yourname…</span>}<i className={`lds-caret${go && !found ? " on" : ""}`} /></span>
@@ -53,6 +54,7 @@ function LeagueDemo({ go, onDone }: { go: boolean; onDone: () => void }) {
   const n = TEAMS.length;
   return (
     <div className={`lds-demo lds-league p${k}`}>
+      <span className="nudge-kind"><Icon name="league" size={15} />Your leagues</span>
       <span className={`lsw-row lds-row${k >= 1 ? " on" : ""}`}>
         <ManagerAvatar src={LEAGUE?.userAvatar} name={LEAGUE_NAME} size={36} className="lsw-av" />
         <span className="lsw-n"><b>{LEAGUE_NAME || "Sample league"}</b><small>Sample data</small></span>

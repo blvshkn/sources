@@ -1,0 +1,10 @@
+/* Landing "Up and running" (LandingSteps.tsx): the three demo cards read as one set. Each opens with the same kind
+   label the trade card uses, then its demo, then a footnote line pinned to the bottom. On desktop the cards share one
+   height, so the first two hold their demo in the middle of the spare room instead of floating in an empty box.
+   Loads before frame.css. */
+
+html:root:not(#_):not(#_):not(#_) .lds-demo { grid-template-rows: auto 1fr auto; align-content: stretch; }
+html:root:not(#_):not(#_):not(#_) .lds-demo > .nudge-kind { align-self: start; }
+html:root:not(#_):not(#_):not(#_) .lds-demo > :is(.lds-field, .lds-row) { align-self: center; }
+html:root:not(#_):not(#_):not(#_) .lds-demo > :is(.lds-found, .lds-thk, .lds-both) { align-self: end; }
+html:root:not(#_):not(#_):not(#_) .lds-trade > .ask-prows { align-self: start; }
