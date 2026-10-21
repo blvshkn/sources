@@ -165,6 +165,31 @@ html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background: line
   @keyframes fo-sweep-back { 0% { transform: translateX(100%); } 64.29%, 100% { transform: translateX(-166.67%); } }
 }
 
+/* Live texture: fine diagonal stripes drift through each live fill toward the VS badge, under the sweep band, so the
+   bar never sits still while games are on. The stripes are the surface color at 14% over the fill: a shade deeper on
+   the green or red, and gone where the fill fades back to the surface, so the leader still reads green and the
+   trailer red. The fill's ::before, clipped by its pill (overflow hidden on the fill, above), 96px wider than the fill
+   on the outer side. Stripes repeat every 8px across (5.657px apart at 45deg, 8 / sqrt 2), and the layer slides
+   96px, twelve repeats, every 8s on linear, so the last frame lands on the first and the loop never seams. Only
+   transform moves; will-change is set on live fills alone. Your bar flows right and leans "/", theirs flows left and
+   leans "\", both toward the center. Final, Projected and Scored bars draw no texture. With reduced motion there is
+   no texture at all: a still stripe read as a pattern, not as life. */
+html:root:not(#_):not(#_) .fo-st-live .fo-bar i { --fo-tex: color-mix(in srgb, var(--fo-bg) 14%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .fo-st-live .fo-bar i::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: -96px; right: 0; pointer-events: none;
+    background: repeating-linear-gradient(135deg, var(--fo-tex) 0 2.8284px, transparent 2.8284px 5.6569px);
+    will-change: transform; animation: fo-tex 8s linear infinite;
+  }
+  html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::before {
+    left: 0; right: -96px; animation-name: fo-tex-back;
+    background: repeating-linear-gradient(225deg, var(--fo-tex) 0 2.8284px, transparent 2.8284px 5.6569px);
+  }
+  html:root:not(#_):not(#_) .fo.is-skel .fo-bar i::before { animation: none; display: none; }
+  @keyframes fo-tex { from { transform: translateX(0); } to { transform: translateX(96px); } }
+  @keyframes fo-tex-back { from { transform: translateX(0); } to { transform: translateX(-96px); } }
+}
+
 /* Meta: win %, record, then the projection or points per game. Mono, 11px. */
 html:root:not(#_):not(#_) .fo-meta {
   grid-area: meta; display: flex; align-items: center; gap: 2px; width: 100%; min-width: 0; height: 16px; margin-top: 12px;
