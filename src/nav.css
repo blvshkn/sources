@@ -1,0 +1,158 @@
+/* Navigation, from Zach's Figma ("Navigation": Nav / Sidebar item, Nav / Tab bar item, Sidebar · Desktop, Tab bar ·
+   Phone, Header · Phone). Phone first: the header and the six-tab bar up to 860px, the sidebar from 861px.
+   The app is dark-only, so Figma's colors are used as they are. Labels stay in Geist (Clash Grotesk is for headers).
+   Hover, leave and press all move at 160ms on the same curve. Loads late so it settles the older nav rules. */
+
+html:root:not(#_):not(#_):not(#_):not(#_) {
+  --nav-ease: 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  --nav-bg: #191A19; --nav-line: #202322; --nav-chip: #2A2D2C;
+  --nav-muted: #9A9C98; --nav-ink: #F2F3EE; --nav-strong: #FFFFFF; --nav-lime: #D8F24A;
+  --nav-hover: rgba(32, 35, 34, 0.6); --nav-active: rgba(32, 35, 34, 0.9);
+}
+
+/* ---------- Phone header: logo, then when it was updated, then bell and settings ---------- */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar {
+    min-height: 64px; padding-top: 0; padding-bottom: 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)) !important; padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    background: linear-gradient(180deg, var(--nav-bg) 0%, rgba(25, 26, 25, 0) 100%) !important;
+    -webkit-backdrop-filter: blur(1px) !important; backdrop-filter: blur(1px) !important;
+    border-bottom: 0 !important; box-shadow: none !important;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar::after { display: none !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-logo { padding: 0; min-height: 44px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts { display: flex; align-items: center; gap: 6px !important; }
+  /* "UPDATED" over the time, right-aligned, 12px from the buttons */
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar .top-upd {
+    margin-right: 6px; font: 400 0.6875rem/1 var(--font-mono); letter-spacing: 0; text-transform: uppercase; color: var(--nav-ink); text-align: right; white-space: nowrap;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar .top-upd::before {
+    content: "Updated"; display: block; margin-bottom: 4px; font: 500 0.5625rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--nav-muted); opacity: 1;
+  }
+  /* Bell and settings: 40px rounds */
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon {
+    width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; border: 0 !important; border-radius: 20px !important;
+    background: var(--nav-line) !important; color: var(--nav-ink) !important; box-shadow: none !important;
+    transition: background-color var(--nav-ease), transform var(--nav-ease);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon svg { width: 20px; height: 20px; color: var(--nav-ink); }
+  @media (hover: hover) and (pointer: fine) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon:hover { background: var(--nav-chip) !important; }
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon:active { transform: scale(0.96); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .topbar > .top-acts > .btn.btn-icon[aria-current="page"] { background: var(--nav-chip) !important; }
+}
+
+/* ---------- Phone tab bar: Wire, League, Trade, Lineup, Waivers, Ask ---------- */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix {
+    grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: 0 !important;
+    padding: 4px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px)) !important;
+    border: 0 !important; border-radius: 16px 16px 0 0 !important; box-shadow: 0 -4px 20px 8px rgba(0, 0, 0, 0.15) !important;
+    background: rgba(25, 26, 25, 0.9) !important;
+    -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button {
+    height: 56px; padding: 6px 0 8px !important; gap: 6px !important; justify-content: flex-end;
+    color: var(--nav-muted) !important; background: transparent !important;
+    transition: color var(--nav-ease), transform var(--nav-ease);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button:active { transform: scale(0.95); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-ic { height: 22px; color: var(--nav-muted); transform-origin: 50% 100%; transition: color var(--nav-ease), transform var(--nav-ease) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-ic svg { color: inherit !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-w {
+    padding: 0; font: 500 0.75rem/1 var(--font-body) !important; letter-spacing: 0; white-space: nowrap;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button:hover { color: var(--nav-ink) !important; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button:hover .ix-ic { color: var(--nav-ink); }
+  }
+  /* Active: the label in ink, the icon in lime and a touch larger (24px over 22), the lime bar over it */
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button[aria-current="page"] { color: var(--nav-ink) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button[aria-current="page"] .ix-w { font-weight: 500; color: var(--nav-ink); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix button[aria-current="page"] .ix-ic { color: var(--nav-lime); transform: scale(1.0909); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-rule {
+    top: 0; left: max(6px, env(safe-area-inset-left, 0px)); height: 3px;
+    width: calc((100% - max(6px, env(safe-area-inset-left, 0px)) - max(6px, env(safe-area-inset-right, 0px))) / 6);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-rule::after { width: 28px; height: 3px; border-radius: 0 0 2px 2px; background: var(--nav-lime); }
+  /* Figma's soft lime haze just above the bar */
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix .ix-rule::before {
+    content: ""; position: absolute; left: 50%; top: -23px; width: 28px; height: 19px; margin-left: -14px; border-radius: 50%;
+    background: var(--nav-lime); opacity: 0.55; filter: blur(24px); pointer-events: none;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar.ix[data-i="5"] { --i: 5; }
+}
+
+/* ---------- Desktop sidebar ---------- */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .shell > .side {
+    gap: 0 !important; padding: 22px 14px 20px !important; background: var(--nav-bg); border-right: 1px solid var(--nav-line);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .brand { padding: 0; margin: 0 0 20px -3px; }
+  /* League switcher: 52px, the league in Geist Medium 13 over "PPR · WEEK 6" in mono */
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn {
+    min-height: 52px; gap: 10px; padding: 10px 11px 12px 10px !important; margin-bottom: 36px;
+    border: 0 !important; border-radius: 12px !important; background: var(--nav-line) !important;
+    transition: background-color var(--nav-ease), transform var(--nav-ease);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn:hover { background: var(--nav-chip) !important; }
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn:active { transform: scale(0.98); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn .lsw-me { width: 28px !important; height: 28px !important; margin: 0 !important; font-size: 11px; background: var(--nav-chip); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn .grow { gap: 4px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn .grow > b { font: 500 0.8125rem/16px var(--font-body); letter-spacing: 0; color: var(--nav-ink); }
+  /* Figma sets PPR, the dot and WEEK 6 as three runs 2px apart: tighter than a mono space */
+html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn .lsw-line { font: 500 0.625rem/1 var(--font-mono); letter-spacing: 0.02em; word-spacing: -4px; text-transform: uppercase; color: var(--nav-muted); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .league-pill.lsw-btn > svg { width: 14px; height: 14px; color: var(--nav-muted); }
+
+  /* Items: 40px, 12px in, icon 20, label Geist Medium 15, 2px apart */
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-main { gap: 2px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button {
+    height: 40px; gap: 12px; padding: 0 12px !important; border-radius: 10px !important;
+    background: transparent !important; color: var(--nav-muted) !important; font: 500 0.9375rem/1 var(--font-body) !important;
+    transition: background-color var(--nav-ease), color var(--nav-ease), transform var(--nav-ease) !important;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix { display: flex; flex-direction: column; gap: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix > button + button { margin-top: 2px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .ix-ic { width: 20px; height: 20px; color: var(--nav-muted); transition: color var(--nav-ease) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .ix-ic svg { width: 20px; height: 20px; color: inherit !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .ix-w { padding: 0; letter-spacing: 0; font-weight: 500 !important; }
+  @media (hover: hover) and (pointer: fine) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:hover { background: var(--nav-hover) !important; color: var(--nav-strong) !important; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:hover .ix-ic { color: var(--nav-ink); }
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button:active { transform: scale(0.98); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] { background: var(--nav-active) !important; color: var(--nav-strong) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] .ix-w { color: var(--nav-strong); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix button[aria-current="page"] :is(.ix-ic, svg) { color: var(--nav-lime) !important; }
+  /* The lime bar on the sidebar's left edge, 28px, beside the active item, with its haze */
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-rule {
+    left: -14px; top: 6px; width: 2px; height: 28px; border-radius: 0 2px 2px 0; background: var(--nav-lime);
+    transform: translateY(calc(var(--i, 0) * 42px));
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-rule::before {
+    content: ""; position: absolute; left: 2.5px; top: 4px; width: 28px; height: 19px; border-radius: 50%;
+    background: var(--nav-lime); opacity: 0.55; filter: blur(24px); pointer-events: none;
+  }
+  /* Divider: 14px clear above and below, inset 14px */
+  html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix .nav-sep { flex: none; height: 1px; margin: 16px 14px; background: var(--nav-line); border: 0; }
+
+  /* Footer: "Live from [Sleeper] / connected as @user," then the refresh time in mono */
+  html:root:not(#_):not(#_):not(#_):not(#_) .side > .side-foot { margin-top: auto; padding: 24px 0 0; display: grid; gap: 16px; color: var(--nav-muted); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .sf-who { margin: 0; font: 400 0.75rem/1.45 var(--font-body); color: var(--nav-muted); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .sf-from { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .sf-chip {
+    display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 3px 4px 3px 6px; border-radius: 6px;
+    background: var(--nav-chip); color: var(--nav-ink); font: 500 0.6875rem/1 var(--font-body);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .sf-chip .plat-logo { width: 16px; height: 16px; border-radius: 4px; vertical-align: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .sf-when { margin: 0; font: 500 0.625rem/1 var(--font-mono); letter-spacing: 0.02em; text-transform: uppercase; color: var(--nav-muted); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .side-foot .linkish { display: block; margin-top: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .tabbar.ix .ix-ic, .topbar > .top-acts > .btn.btn-icon, .side > .league-pill.lsw-btn) { transition: none !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .topbar > .top-acts > .btn.btn-icon, .side > .league-pill.lsw-btn):active { transform: none; }
+}

@@ -19,7 +19,7 @@ export function BrandWordmark({ size = 40, className = "" }: { size?: number; cl
   return <span className={`bl-word ${className}`.trim()} style={{ fontSize: size }} aria-hidden="true">{WORDMARK}</span>;
 }
 
-export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, label = "Sources", className = "" }: {
+export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Sources", className = "" }: {
   layout?: "stack" | "row";
   /** Mark size in px (the square it's drawn in, as in Figma) */
   mark?: number;
@@ -29,12 +29,14 @@ export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = fa
   tagline?: boolean;
   /** Tagline font size in px */
   tag?: number;
+  /** Space between the wordmark and the tagline in px, when an instance sets its own (the sidebar's is 0) */
+  lineGap?: number;
   label?: string;
   className?: string;
 }) {
   // Figma's spacing scales with the lockup: in a row, 4px after a 56px mark and 2px between the lines
   const gaps = layout === "row"
-    ? { ["--bl-gap" as string]: `${+(mark * 4 / 56).toFixed(2)}px`, ["--bl-line" as string]: `${+(mark * 2 / 56).toFixed(2)}px` }
+    ? { ["--bl-gap" as string]: `${+(mark * 4 / 56).toFixed(2)}px`, ["--bl-line" as string]: `${lineGap ?? +(mark * 2 / 56).toFixed(2)}px` }
     : undefined;
   return (
     <span className={`bl bl-${layout} ${className}`.trim()} style={gaps as CSSProperties | undefined} role="img" aria-label={label}>

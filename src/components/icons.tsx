@@ -63,12 +63,16 @@ const MOTION: Partial<Record<IconName, "nav" | "any">> = {
 };
 
 /** One icon. The active tab thickens the line a little. The helmet keeps its original drawing and round ends. */
+/** The nav icons (Figma "Nav / Icon"): round line ends, and the same 1.6 line whether or not the tab is active
+ *  (the active tab shows in color, not weight). */
+const NAV_ICONS = new Set<IconName>(["wire", "league", "trade", "waivers", "gear", "bell"]);
+
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   // Ask, and the mark on anything Sources writes, is the chat bubbles icon with its own hover beat (AskIcon)
   if (name === "spark" || name === "ask") return <AskIcon size={size} active={active} />;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === "helmet" ? 1.8 : active ? 2 : 1.6}
-      strokeLinecap={name === "helmet" ? "round" : "butt"} strokeLinejoin="round" aria-hidden="true" className={`ic ic-${name}`} data-m={MOTION[name]}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === "helmet" ? 1.8 : 1.6}
+      strokeLinecap={name === "helmet" || NAV_ICONS.has(name) ? "round" : "butt"} strokeLinejoin="round" aria-hidden="true" className={`ic ic-${name}`} data-m={MOTION[name]}
       dangerouslySetInnerHTML={{ __html: ICONS[name] }} />
   );
 }

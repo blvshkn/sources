@@ -36,7 +36,7 @@ import { Roster, gameDayChecks } from "./components/Roster";
 import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
-import { PlatformName } from "./components/PlatformLogo";
+import { PlatformLogo } from "./components/PlatformLogo";
 import type { FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
 import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
@@ -64,6 +64,8 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "how", label: "How Sources works", short: "How it works", icon: "spark", main: false, hidden: true },
   { id: "legal", label: "Terms and legal", short: "Legal", icon: "lock", main: false, hidden: true },
 ];
+/** The phone tab bar: the five main tabs, then Ask */
+const BAR_TABS = TABS.filter((t) => t.main || t.id === "ask");
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Short tap on Android for meaningful commits only (save, send). iOS Safari ignores it. */
@@ -110,6 +112,13 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const demo = isDemo();
   const scope = demo ? "demo" : LEAGUE.id;
   const username = activeAccount(session)?.username ?? "";
+  // The sidebar footer's last line: when Sleeper's projections were last read ("Refreshed 9:23 PM"), or the demo's age
+  const refreshed = (() => {
+    const u = LEAGUE.updated ?? "", at = /refreshed\s+(.+)$/i.exec(u)?.[1];
+    if (at) return `Refreshed ${at}`;
+    const ago = u.replace(/^Projections updated\s*/i, "");
+    return ago && ago !== u ? `Updated ${ago}` : u;
+  })();
   /** Whose picture sits on the league switcher: initials come from this when Sleeper has no picture (and in the demo). */
   const meName = activeAccount(session)?.name || username || YOU?.manager || LEAGUE_NAME;
   const accounts = session.mode === "live" ? session.accounts : [];
@@ -617,11 +626,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <AppBackdrop />
       <aside className="side">
         <div className="brand">
-          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={20.57} tagline tag={11.14} label="Sources" /></button>
+          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Sources" /></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
           <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" />
-          <span className="grow"><b>{LEAGUE_NAME}</b><span>{formatLabel(format)} · Week {WEEK}</span></span>
+          <span className="grow"><b>{LEAGUE_NAME}</b><span className="lsw-line">{formatLabel(format)} · Week {WEEK}</span></span>
           <Icon name="switch" size={16} />
         </button>
         <nav className="nav nav-ix" aria-label="Main">
@@ -641,17 +650,20 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
             </button>
           ))}
         </nav>
-        <p className="side-foot">{demo ? <>Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></> : <>Live from <PlatformName size={12} /> as @{username}. {LEAGUE.updated}.</>}</p>
+        <div className="side-foot">
+          {demo ? (
+            <p className="sf-who">Demo league with sample data. <button className="linkish" onClick={onReconnect}>Connect Sleeper</button></p>
+          ) : (
+            <p className="sf-who"><span className="sf-from">Live from <span className="sf-chip">Sleeper<PlatformLogo size={16} /></span></span> connected as @{username},</p>
+          )}
+          {refreshed && <p className="sf-when">{refreshed}.</p>}
+        </div>
       </aside>
 
       <header className="topbar">
         <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" /></button>
-        <div className="row" style={{ gap: 4 }}>
+        <div className="row top-acts">
           {UPDATED && <Tooltip content={UPDATED}><span className="top-upd">{/refreshed\s+(.+)$/i.exec(UPDATED)?.[1] ?? UPDATED.replace(/^Projections updated\s*/i, "")}</span></Tooltip>}
-          {/* Ask on phones and tablets: the shared Ask icon, next to the bell (desktop has it in the sidebar) */}
-          <button type="button" className="btn btn-icon btn-ghost top-ask" aria-label="Ask Sources" aria-current={tab === "ask" ? "page" : undefined} onClick={() => go("ask")}>
-            <Icon name="spark" size={18} />
-          </button>
           <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
             <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
           </button>
@@ -727,10 +739,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       </aside>
       {matchupSheet && <MatchupSheet onClose={() => setMatchupSheet(false)} />}
 
-      <nav className="tabbar ix" aria-label="Main" data-on={TABS.filter((t) => t.main).some((t) => t.id === tab) ? "" : undefined}
-        data-i={Math.max(0, TABS.filter((t) => t.main).findIndex((t) => t.id === tab))}>
+      <nav className="tabbar ix" aria-label="Main" data-on={BAR_TABS.some((t) => t.id === tab) ? "" : undefined}
+        data-i={Math.max(0, BAR_TABS.findIndex((t) => t.id === tab))}>
         <span className="ix-rule" aria-hidden="true" />
-        {TABS.filter((t) => t.main).map((t) => (
+        {BAR_TABS.map((t) => (
           <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => go(t.id)}>
             <span className="ix-ic"><Icon name={t.icon} size={22} active={tab === t.id} /></span>
             <span className="ix-w">{t.short}</span>
