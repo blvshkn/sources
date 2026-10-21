@@ -63,7 +63,9 @@ export function heroDepth(hero: HTMLElement, env: HTMLElement | null): () => voi
     }
   };
 
-  const setX = (c: Card) => c.el.classList.toggle("is-x", c.hover || c.focus || c.intro === 1);
+  // Zach passed on the exploded layers (Oct 21): cards keep their depth, tilt and parallax but never come apart
+  const EXPLODE = false;
+  const setX = (c: Card) => c.el.classList.toggle("is-x", EXPLODE && (c.hover || c.focus || c.intro === 1));
 
   const frame = () => {
     raf = 0;
@@ -179,7 +181,7 @@ export function heroDepth(hero: HTMLElement, env: HTMLElement | null): () => voi
 
   // The one-time explode and settle: each card once, the first time most of it is on screen, after its entrance
   const play = (c: Card) => {
-    if (c.intro) return;
+    if (c.intro || !EXPLODE) return;
     c.intro = 1;
     const wait = Math.max(0, born + 1500 - performance.now());
     timers.push(window.setTimeout(() => {
