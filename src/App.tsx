@@ -43,6 +43,7 @@ import { FirstRun, LeagueSwitcher, PitchSheet, preloadOverlays } from "./compone
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
 import { useOfferSync } from "./offerSync";
+import { setAiUser } from "./aiClient";
 import { useWatchSync } from "./watchSync";
 import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchSet } from "./watchMerge.js";
 import { leagueTransactions } from "./sleeper";
@@ -112,6 +113,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   onRefresh: () => void;
 }) {
   const demo = isDemo();
+  // Sources AI's daily limits go by Sleeper user when a league is connected, by visitor in the demo
+  setAiUser(!demo && session.mode === "live" ? session.userId : "");
   const scope = demo ? "demo" : LEAGUE.id;
   const username = activeAccount(session)?.username ?? "";
   // The sidebar footer's last line: when Sleeper's projections were last read ("Refreshed 9:23 PM"), or the demo's age

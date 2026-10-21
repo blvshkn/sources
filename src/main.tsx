@@ -1,3 +1,4 @@
+import "./botid";
 import "./animationIteration";
 import "./imageGuard";
 import "./fonts";

@@ -12,6 +12,7 @@ import { scoreMatch, sideScore, startersOf, type Live } from "./live";
 import type { Steps, TraceEv } from "./steps";
 import type { Tracer } from "./think";
 import { optimalJob, type OptimalResult } from "./optimalLineup";
+import { aiHeaders, offReason, type AiOff } from "./aiClient";
 
 /** One finished turn, sent back with the next question so "what about him?" works. */
 export interface AskTurnLog { q: string; a: string }
@@ -139,15 +140,16 @@ export const turnText = (a: Answer) => [a.text, ...a.points, a.quip ?? ""].filte
 
 export type AiReply = { text: string; points: string[]; playerIds?: string[]; teamId?: string; quip?: string };
 
-/** Ask the server. Resolves to the reply, or null when Sources AI is unavailable for any reason. */
-export async function askServer(question: string, context: Record<string, unknown>, history: AskTurnLog[], signal?: AbortSignal): Promise<AiReply | null> {
+/** Ask the server. Resolves to the reply, or null when Sources AI is unavailable for any reason (`onOff` hears why). */
+export async function askServer(question: string, context: Record<string, unknown>, history: AskTurnLog[], signal?: AbortSignal, onOff?: (why: AiOff) => void): Promise<AiReply | null> {
+  let r: Response | null = null;
   try {
-    const r = await fetch("/api/ask", {
-      method: "POST", headers: { "content-type": "application/json" },
+    r = await fetch("/api/ask", {
+      method: "POST", headers: aiHeaders(),
       body: JSON.stringify({ question: question.slice(0, 500), context, history: history.slice(-3) }),
       signal: signal ?? AbortSignal.timeout(25_000),
     });
-    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) return null;
+    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { onOff?.(await offReason(r)); return null; }
     const d = await r.json() as { answer?: AiReply };
     const a = d?.answer;
     if (!a || typeof a.text !== "string" || !a.text.trim()) return null;
@@ -158,6 +160,7 @@ export async function askServer(question: string, context: Record<string, unknow
       quip: typeof a.quip === "string" && a.quip.trim() ? a.quip.trim() : undefined,
     };
   } catch {
+    onOff?.("offline");
     return null;
   }
 }
@@ -187,6 +190,7 @@ export function lineupAnswer(r: OptimalResult, base: Answer): Answer {
     links: base.links,
     show: first ? { kind: "swaps", rows: r.swaps.map((w) => ({ start: w.start, bench: w.bench, slot: w.slot, gain: w.gain, why: w.why })) } : undefined,
     by: r.by,
+    ...(r.offWhy ? { offWhy: r.offWhy } : {}),
   };
 }
 
@@ -223,11 +227,12 @@ export function askJob(q: string, engine: (q: string) => Steps<Answer>, history:
     // Start/sit: the same signals and AI check as Set optimal lineup, so both give the same moves and reasons
     if (base?.lineup && live) return lineupAnswer(await optimalJob(live, { intro: false })(tr), base);
     await tr.step("Asking Sources AI", "Asked Sources AI");
-    const ai = await askServer(q, ruled && base ? { league, facts: factsOf(base) } : { league }, history);
+    let offWhy = "offline" as AiOff;
+    const ai = await askServer(q, ruled && base ? { league, facts: factsOf(base) } : { league }, history, undefined, (why) => { offWhy = why; });
     if (!ai) {
-      tr.state.steps[tr.state.steps.length - 1].done = "Sources AI is unavailable, used the built-in answer";
+      tr.state.steps[tr.state.steps.length - 1].done = offWhy === "cap" ? "Sources AI is resting for today, used the built-in answer" : "Sources AI is unavailable, used the built-in answer";
       await tr.finish();
-      return { ...(base ?? { text: "", points: [], links: [] }), by: "off" };
+      return { ...(base ?? { text: "", points: [], links: [] }), by: "off", offWhy };
     }
     await tr.finish();
     return merge(ai, ruled ? base : null, q);

@@ -37,6 +37,13 @@ export function blobFromEnv(env = process.env) {
       });
       if (!r.ok) throw new Error(`blob write ${r.status}`);
     },
+    /** Pathnames under a prefix (the Blob list API), up to `limit`. Used to sweep old Sources AI ledgers. */
+    async list(prefix, limit = 100) {
+      const r = await fetch(`${api}/?prefix=${encodeURIComponent(prefix)}&limit=${limit}`, { headers: headers(), cache: "no-store", signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error(`blob list ${r.status}`);
+      const d = await r.json();
+      return (Array.isArray(d?.blobs) ? d.blobs : []).map((b) => String(b?.pathname ?? "")).filter(Boolean);
+    },
     async remove(path) {
       const r = await fetch(`${api}/delete`, {
         method: "POST", headers: { ...headers(), "content-type": "application/json" },

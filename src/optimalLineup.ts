@@ -11,6 +11,7 @@ import { kickoffOf } from "./kickoff";
 import type { Live } from "./live";
 import type { Tracer } from "./think";
 import type { Chip } from "./steps";
+import { aiHeaders, offNote, offReason, type AiOff } from "./aiClient";
 
 export type SignalKind = "news" | "injury" | "odds" | "weather" | "rankings";
 export const SIGNAL_KINDS: SignalKind[] = ["news", "injury", "odds", "weather", "rankings"];
@@ -23,6 +24,8 @@ export interface OptimalResult {
   by: "ai" | "off";
   /** Why it's the engine's lineup, shown small and muted. */
   note?: string;
+  /** With by "off" because Sources AI refused: why ("cap": today's AI budget is spent, "limit": out of calls today). */
+  offWhy?: AiOff;
   slots: SkillSlot[]; swaps: OptSwap[];
   total: number; currentTotal: number; summary: string;
 }
@@ -185,23 +188,23 @@ export function signalBody(players: Player[]) {
 
 async function fetchPart(part: Part, body: object): Promise<SignalReply | null> {
   try {
-    const r = await fetch("/api/lineup-signals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, part }), signal: AbortSignal.timeout(15_000) });
+    const r = await fetch("/api/lineup-signals", { method: "POST", headers: aiHeaders(), body: JSON.stringify({ ...body, part }), signal: AbortSignal.timeout(15_000) });
     if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) return null;
     const d = await r.json() as SignalReply;
     return d && typeof d === "object" && d.status ? d : null;
   } catch { return null; }
 }
 
-/** Ask Sources AI. Resolves the lineup, or null when it's unavailable for any reason. */
-export async function askLineup(body: object): Promise<AiLineup | null> {
+/** Ask Sources AI. Resolves the lineup, or null when it's unavailable for any reason (`onOff` hears why). */
+export async function askLineup(body: object, onOff?: (why: AiOff) => void): Promise<AiLineup | null> {
   try {
-    const r = await fetch("/api/lineup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) });
-    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) return null;
+    const r = await fetch("/api/lineup", { method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) });
+    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { onOff?.(await offReason(r)); return null; }
     const d = await r.json() as { lineup?: AiLineup };
     const l = d?.lineup;
     if (!l || !Array.isArray(l.starters)) return null;
     return { starters: l.starters, swaps: Array.isArray(l.swaps) ? l.swaps : [], summary: typeof l.summary === "string" ? l.summary : "" };
-  } catch { return null; }
+  } catch { onOff?.("offline"); return null; }
 }
 
 const arr = (x: unknown) => (Array.isArray(x) ? x : []) as Record<string, unknown>[];
@@ -275,6 +278,7 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
     }
 
     await tr.step("Asking Sources AI", "Asked Sources AI");
+    let offWhy = "offline" as AiOff;
     const ai = await askLineup({
       week: WEEK,
       slots: base.map((s) => s.slot),
@@ -291,11 +295,11 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
         ...(wxRows.length ? { weather: wxRows } : {}),
         ...(rkRows.length ? { rankings: rkRows } : {}),
       },
-    });
+    }, (why) => { offWhy = why; });
     if (!ai) {
-      say("Sources AI is offline, used your projections");
+      say(offWhy === "cap" ? "Sources AI is resting for today, used your projections" : "Sources AI is offline, used your projections");
       await tr.finish();
-      return resultFor(current, base, "off", null, "Sources AI is offline right now, so this is your best lineup by projection.");
+      return { ...resultFor(current, base, "off", null, offNote(offWhy, "lineup")), offWhy };
     }
 
     await tr.step("Validating the lineup", "Validated the lineup");

@@ -10,6 +10,7 @@ import { AiLabel, Icon } from "./ui";
 import { WorkingLoader, AiMark } from "./WorkingLoader";
 import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
+import { offNote } from "../aiClient";
 import { useLive, type Live } from "../live";
 import { SwapRows } from "./SwapRows";
 import { useIconStroke } from "./iconStroke";
@@ -197,7 +198,7 @@ function AskTurn({ q, history, live, answer, onLink, onPitch, onPlayer, onDone, 
               ))}
             </div>
           )}
-          {a.by === "off" && <p className="ask-ai-off">Sources AI is offline right now, so this is the built-in answer.</p>}
+          {a.by === "off" && <p className="ask-ai-off">{offNote(a.offWhy)}</p>}
           <AiLabel />
         </article>
       )}

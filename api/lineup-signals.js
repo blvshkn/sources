@@ -1,7 +1,9 @@
 // What the lineup check reads besides projections, one source per call so the app's trace waits on each for real.
 //   POST /api/lineup-signals  body { part, season, week, players: [{ id, name, pos, nfl, status?, note? }], games: [{ team, opp?, home?, at? }] }
 //   part: news | injuries | odds | weather | rankings
-//   200 { part, status: "ok" | "off" | "error", ...data }   400 bad input · 405 not POST · 413 too big · 429 slow down
+//   200 { part, status: "ok" | "off" | "error", ...data }   400 bad input · 403 not this site, or a bot · 405 not POST
+//   413 too big · 429 slow down · 503 the bot check couldn't run
+// The deployed handler runs the same-origin and BotID check from api/_lib/guard.js first, since odds spend credits.
 //
 // news      Our news feed (api/news.js), matched to these players: status, move and role stories from the last week,
 //           with practice reports (DNP, Limited, Full) and inactive or ruled-out calls read from the story text.
@@ -19,6 +21,7 @@ import { leagueNews, matches, nameForms, clip } from "./news.js";
 import { weekGames } from "./kickoffs.js";
 import { STADIUMS } from "./_lib/stadiums.js";
 import { ipOf, rateLimiter } from "./ask.js";
+import { createGuard } from "./_lib/guard.js";
 
 export const PARTS = ["news", "injuries", "odds", "weather", "rankings"];
 const MAX_BODY = 24_000;
@@ -275,7 +278,7 @@ export function readSignalsBody(req) {
     const s = typeof b === "string" ? b : new TextDecoder().decode(b);
     if (s.length > MAX_BODY) return { status: 413, error: "body too large" };
     try { b = JSON.parse(s); } catch { return { status: 400, error: "body must be JSON" }; }
-  }
+  } else if (b && typeof b === "object" && JSON.stringify(b).length > MAX_BODY) return { status: 413, error: "body too large" };
   if (!b || typeof b !== "object" || Array.isArray(b)) return { status: 400, error: "body must be a JSON object" };
   if (!PARTS.includes(b.part)) return { status: 400, error: `part must be one of ${PARTS.join(", ")}` };
   const raw = Array.isArray(b.players) ? b.players : [];
@@ -293,10 +296,12 @@ export function readSignalsBody(req) {
   return { part: b.part, players, games, season, week };
 }
 
-export function createSignalsHandler({ env = process.env } = {}) {
+/** `guard` is api/_lib/guard.js's createGuard(); the deployed handler (the default export) always has one. */
+export function createSignalsHandler({ env = process.env, guard = null } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method not allowed" }); }
+    if (guard) { const g = await guard.check(req); if (!g.ok) return res.status(g.status).json(g.body); }
     const input = readSignalsBody(req);
     if (input.status) return res.status(input.status).json({ error: input.error });
     if (signalsLimit.limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "slow down" }); }
@@ -317,4 +322,4 @@ export function createSignalsHandler({ env = process.env } = {}) {
 }
 
 export const resetSignalLimits = signalsLimit.reset;
-export default createSignalsHandler();
+export default createSignalsHandler({ guard: createGuard() });

@@ -1,15 +1,21 @@
 // Ask, answered by a model that reads your league.
 //   POST /api/ask  body { question, context: { league, facts? }, history: [{ q, a }] }
 //   200 { answer: { text, points, playerIds?, teamId?, quip? } }
-//   400 bad input · 405 not POST · 413 too big · 429 slow down · 502 bad model reply · 503 no key · 504 timed out
+//   400 bad input · 403 not this site, or a bot · 405 not POST · 413 too big · 429 slow down (reason "daily_limit" when
+//   out of calls for today) · 502 bad model reply · 503 unavailable (reason: no_key, guard, daily_cap) · 504 timed out
 // `league` is the compact league snapshot the app builds from loaded data (src/askContext.ts). `facts` is what the
 // rule engine already computed for this question (a deal, a lineup swap, a waiver pick), so the model phrases real
 // math instead of guessing. The model only ever sees that data plus general football knowledge.
 // Calls the Anthropic Messages API with fetch (no SDK installed). The key and the context are never logged.
+// Before any paid call the deployed handler runs api/_lib/guard.js: same-origin, Vercel BotID, the daily spend ceiling
+// and the per-IP, per-user and demo limits kept in Blob. The app reads 403, 429 and 503 as "use the built-in answer".
+
+import { createGuard, ipOf as guardIpOf } from "./_lib/guard.js";
 
 export const MODEL = "claude-haiku-5-5";
 export const MAX_Q = 500;
 export const MAX_CONTEXT = 48_000; // bytes of JSON; the app aims for under 25 KB
+const MAX_BODY = MAX_CONTEXT + 8_000; // the whole request body, checked before parsing
 export const MAX_HISTORY = 3;
 export const TIMEOUT_MS = 20_000;
 const MAX_TOKENS = 600;
@@ -67,12 +73,12 @@ const byteLen = (s) => new TextEncoder().encode(s).length;
 export function readBody(req) {
   let b = req.body;
   const declared = Number(req.headers?.["content-length"] ?? 0);
-  if (declared > MAX_CONTEXT + 8_000) return { status: 413, error: "body too large" };
+  if (declared > MAX_BODY) return { status: 413, error: "body too large" };
   if (typeof b === "string" || b instanceof Uint8Array) {
     const s = typeof b === "string" ? b : new TextDecoder().decode(b);
-    if (byteLen(s) > MAX_CONTEXT + 8_000) return { status: 413, error: "body too large" };
+    if (byteLen(s) > MAX_BODY) return { status: 413, error: "body too large" };
     try { b = JSON.parse(s); } catch { return { status: 400, error: "body must be JSON" }; }
-  }
+  } else if (b && typeof b === "object" && byteLen(JSON.stringify(b)) > MAX_BODY) return { status: 413, error: "body too large" };
   if (!b || typeof b !== "object" || Array.isArray(b)) return { status: 400, error: "body must be a JSON object" };
   const question = typeof b.question === "string" ? b.question.trim() : "";
   if (!question) return { status: 400, error: "question is required" };
@@ -118,7 +124,7 @@ export function rateLimiter(rate) {
 const askLimit = rateLimiter(RATE);
 export const limited = askLimit.limited;
 export const resetLimits = askLimit.reset;
-export const ipOf = (req) => String(req.headers?.["x-forwarded-for"] ?? "").split(",")[0].trim() || req.socket?.remoteAddress || "unknown";
+export const ipOf = guardIpOf;
 
 // ---- Output ----------------------------------------------------------------
 
@@ -182,18 +188,36 @@ export function buildRequest({ question, league, facts, history }, quip) {
   };
 }
 
-export function createHandler({ env = process.env, rand = Math.random, timeoutMs = TIMEOUT_MS } = {}) {
+/**
+ * Runs one model call through the guard: admit, call, record. Without a guard (unit tests) it just calls. Shared with
+ * api/lineup.js. Resolves like callModel, or { ok: false, status, body } when the guard refuses.
+ */
+export async function guardedCall(guard, req, key, request, timeoutMs) {
+  let ticket = null;
+  if (guard) {
+    const a = await guard.admit(req, request);
+    if (!a.ok) return a;
+    ticket = a.ticket;
+  }
+  const r = await callModel(key, request, timeoutMs);
+  if (guard) await guard.record(ticket, r.ok ? r.msg?.usage ?? null : null, { billed: !r.ok && r.status === 504 });
+  return r;
+}
+
+/** `guard` is api/_lib/guard.js's createGuard(); the deployed handler (the default export) always has one. */
+export function createHandler({ env = process.env, rand = Math.random, timeoutMs = TIMEOUT_MS, guard = null } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method not allowed" }); }
     const key = env.ANTHROPIC_API_KEY;
     if (!key) return res.status(503).json({ error: "ai_unavailable", reason: "no_key" });
+    if (guard) { const g = await guard.check(req); if (!g.ok) return res.status(g.status).json(g.body); }
     const input = readBody(req);
     if (input.status) return res.status(input.status).json({ error: input.error });
     if (limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many questions, try again in a minute" }); }
 
     const quip = ROAST.test(input.question) || rand() < 0.25;
-    const r = await callModel(key, buildRequest(input, quip), timeoutMs);
+    const r = await guardedCall(guard, req, key, buildRequest(input, quip), timeoutMs);
     if (!r.ok) return res.status(r.status).json(r.body);
     const answer = answerFrom(r.msg, input.ids);
     if (!answer) return res.status(502).json({ error: "bad model reply" });
@@ -229,4 +253,4 @@ export async function callModel(key, request, timeoutMs = TIMEOUT_MS) {
   }
 }
 
-export default createHandler();
+export default createHandler({ guard: createGuard() });

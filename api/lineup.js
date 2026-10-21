@@ -1,13 +1,16 @@
 // Set optimal lineup: Sources AI checks the engine's projection-best lineup against the week's signals.
 //   POST /api/lineup  body { week, slots, roster, current, baseline, signals }
 //   200 { lineup: { starters: [{ slot, id }], swaps: [{ start, bench, slot, why, signal }], summary } }
-//   400 bad input · 405 not POST · 413 too big · 429 slow down · 502 bad model reply · 503 no key · 504 timed out
+//   400 bad input · 403 not this site, or a bot · 405 not POST · 413 too big · 429 slow down (reason "daily_limit")
+//   502 bad model reply · 503 unavailable (reason: no_key, guard, daily_cap) · 504 timed out
 // The app sends its roster with this week's projections, Sleeper's current lineup, the engine's best lineup under
 // the locks (the floor and the math), and what api/lineup-signals.js found: news, injuries, Vegas lines, weather and,
 // when licensed, expert rankings. The model returns starters per slot and a one-line reason for each change that
 // cites one of those signals. The app validates the lineup (roster, slots, byes, injuries, locks) before showing it.
-// Shares the model, the Messages API call, the rate limiter and the house style with api/ask.js.
-import { MODEL, callModel, ipOf, rateLimiter, tidy } from "./ask.js";
+// Shares the model, the Messages API call, the guard (api/_lib/guard.js), the rate limiter and the house style with
+// api/ask.js.
+import { MODEL, guardedCall, ipOf, rateLimiter, tidy } from "./ask.js";
+import { createGuard } from "./_lib/guard.js";
 
 export const MAX_BODY = 48_000;
 const MAX_TOKENS = 900;
@@ -87,7 +90,7 @@ export function readLineupBody(req) {
     const s = typeof b === "string" ? b : new TextDecoder().decode(b);
     if (new TextEncoder().encode(s).length > MAX_BODY) return { status: 413, error: "body too large" };
     try { b = JSON.parse(s); } catch { return { status: 400, error: "body must be JSON" }; }
-  }
+  } else if (b && typeof b === "object" && new TextEncoder().encode(JSON.stringify(b)).length > MAX_BODY) return { status: 413, error: "body too large" };
   if (!b || typeof b !== "object" || Array.isArray(b)) return { status: 400, error: "body must be a JSON object" };
   const slots = Array.isArray(b.slots) ? b.slots.map(String) : [];
   if (!slots.length || slots.length > 12 || !slots.every((s) => SLOT_NAMES.includes(s))) return { status: 400, error: "slots must list the starting slots" };
@@ -171,16 +174,18 @@ export function buildLineupRequest(input) {
 
 // ---- Handler ---------------------------------------------------------------
 
-export function createLineupHandler({ env = process.env, timeoutMs } = {}) {
+/** `guard` is api/_lib/guard.js's createGuard(); the deployed handler (the default export) always has one. */
+export function createLineupHandler({ env = process.env, timeoutMs, guard = null } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method not allowed" }); }
     const key = env.ANTHROPIC_API_KEY;
     if (!key) return res.status(503).json({ error: "ai_unavailable", reason: "no_key" });
+    if (guard) { const g = await guard.check(req); if (!g.ok) return res.status(g.status).json(g.body); }
     const input = readLineupBody(req);
     if (input.status) return res.status(input.status).json({ error: input.error });
     if (lineupLimit.limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many lineups, try again in a minute" }); }
-    const r = await callModel(key, buildLineupRequest(input), timeoutMs);
+    const r = await guardedCall(guard, req, key, buildLineupRequest(input), timeoutMs);
     if (!r.ok) return res.status(r.status).json(r.body);
     const lineup = lineupFrom(r.msg, input);
     if (!lineup) return res.status(502).json({ error: "bad model reply" });
@@ -189,4 +194,4 @@ export function createLineupHandler({ env = process.env, timeoutMs } = {}) {
 }
 
 export const resetLineupLimits = lineupLimit.reset;
-export default createLineupHandler();
+export default createLineupHandler({ guard: createGuard() });

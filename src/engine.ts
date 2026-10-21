@@ -1190,6 +1190,8 @@ export interface Answer {
   quip?: string;
   /** "ai" when Sources AI wrote it, "off" when it was unavailable and this is the built-in answer. Unset: built-in only. */
   by?: "ai" | "off";
+  /** With by "off": why Sources AI didn't answer ("cap": today's AI budget is spent, "limit": out of calls today). */
+  offWhy?: "cap" | "limit" | "offline";
   /** The engine had no rule for this question (its catch-all reply). */
   generic?: boolean;
   /** A start/sit question: Ask runs Set optimal lineup's signals and AI check on it (optimalLineup.ts). */
