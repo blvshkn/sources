@@ -6,7 +6,7 @@ import { fmt } from "../engine";
 import { Icon, type IconName } from "./icons";
 import { Tooltip } from "./Tooltip";
 import { AiMark } from "./WorkingLoader";
-import { EASE_OUT, mo } from "../motion";
+import { mo } from "../motion";
 import { MorphPill, RollNum } from "../gameDayMotion";
 export { Icon };
 export type { IconName } from "./icons";
