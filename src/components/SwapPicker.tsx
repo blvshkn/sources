@@ -181,7 +181,11 @@ export function placeSwap(menu: HTMLElement): number {
   const mine = prev ? null : host.querySelector<HTMLElement>(":scope > .mu-mine");
   if (mine) {
     menu.style.left = `${mine.offsetLeft}px`; menu.style.right = "auto"; menu.style.width = `${mine.offsetWidth}px`;
-    menu.style.top = `${mine.offsetTop + mine.offsetHeight - 1}px`; menu.style.bottom = "";
+    // On narrow cards the Compare button sits in its own strip right under your player (compare-fill.css), so the list
+    // hangs from the strip's bottom instead of covering it
+    const cmp = host.querySelector<HTMLElement>(":scope > .sw-cmp");
+    const under = cmp && cmp.offsetTop >= mine.offsetTop + mine.offsetHeight - 2 ? cmp : mine;
+    menu.style.top = `${under.offsetTop + under.offsetHeight - 1}px`; menu.style.bottom = "";
     host.dataset.sw = "down"; menu.dataset.sw = "down";
   }
   const sc = scrollerOf(row);

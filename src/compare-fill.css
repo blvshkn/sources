@@ -7,7 +7,18 @@
   html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row:has(> .sw-cmp) { grid-template-rows: minmax(48px, auto); }
 }
 @container mu (max-width: 679.98px) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp { justify-self: stretch; justify-content: center; margin: 0 12px 8px; }
+  /* Full matchup on phones: Compare gets its own strip right under your player, on the open card's surface, so it never
+     covers him (Zach, Oct 22); the swap list hangs below the strip (SwapPicker.placeSwap) and the opponent moves a row down */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp {
+    grid-column: 2; grid-row: 2; justify-self: stretch; justify-content: center; position: relative; z-index: 0;
+    height: 56px; margin: 0; padding: 4px 12px 8px; border: 0; border-radius: 0 !important; background: color-mix(in srgb, var(--ink) 8%, transparent) !important; box-shadow: none;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp::before {
+    content: ""; position: absolute; z-index: -1; inset: 4px 12px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, transparent);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row[data-sw="up"] > .sw-cmp { border-radius: 0 0 16px 16px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row:has(> .sw-cmp) > :is(.mu-theirs, .mu-edge) { grid-row: 3; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row[data-sw]:has(> .sw-cmp) > .mu-mine { border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; }
 }
 
 /* Compare chart on touch: taller plot (set in RecentChart), thicker marks, and a readout strip above the plot so the
