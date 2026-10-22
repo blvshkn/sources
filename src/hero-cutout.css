@@ -28,3 +28,6 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-logo { top: -104px
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph:not(.ph-slim) { grid-template-areas: "art who" "bio bio" "rank rank"; }
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) .ph-name { text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55); }
+/* The name, position badge and pills sit on top of the headshot where the photo tucks under them (Zach) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-art { position: relative; z-index: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-who { position: relative; z-index: 1; }
