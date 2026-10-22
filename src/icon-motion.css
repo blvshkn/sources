@@ -1,71 +1,16 @@
 /* ---------- Icon motion ----------
-   One purposeful micro-animation per icon. Each plays once: when its nav item becomes active (aria-current) and on
-   mouse hover, where src/components/icons.tsx sets [data-play] for a beat. The bell plays when the inbox is opened
-   and when the unread count rises.
+   One purposeful micro-animation per icon. Each plays once on mouse hover, where src/components/icons.tsx sets
+   [data-play] for a beat, so these only apply under (hover: hover) and (pointer: fine). A tab tap never replays one:
+   the active color change is the feedback. The bell plays when the inbox is opened and when the unread count rises,
+   on any device.
    Transform and opacity only, on parts inside the svg, so the icon box never changes size.
    Reduced motion: none of this applies. The active color change is the only feedback. */
-
-/* Supersedes the generic ic-settle in styles.css: every nav icon now has its own play. */
-html:root:not(#_):not(#_) :is(.tabbar, .side, nav) button[aria-current="page"] .ic { animation: none; }
 
 /* Parts may swing a little past the 24px grid mid-animation; let them, instead of clipping. */
 html:root:not(#_) svg.ic[data-m] { overflow: visible; }
 html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-box; }
 
 @media (prefers-reduced-motion: no-preference) {
-
-  /* Overview: the tall panel opens out from its left edge, then the two cells slide in beside it, top first. */
-  html:root:not(#_) :is([aria-current="page"] .ic-overview, .ic-overview[data-play]) .m1 { transform-origin: 3px 12px; animation: lp-open 420ms both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-overview, .ic-overview[data-play]) :is(.m2, .m3) { animation: lp-cell 420ms both 70ms; }
-  html:root:not(#_) :is([aria-current="page"] .ic-overview, .ic-overview[data-play]) .m3 { animation-delay: 130ms; }
-  @keyframes lp-open {
-    0%   { transform: scaleX(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    30%  { transform: scaleX(0.72); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    70%  { transform: scaleX(1.06); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100% { transform: scaleX(1); }
-  }
-  @keyframes lp-cell {
-    0%   { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    30%  { transform: translateX(2.5px); opacity: 0.4; animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes ic-write { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-
-  /* League: the four columns rise from the floor in turn, left to right, under a still roof. */
-  html:root:not(#_) :is([aria-current="page"] .ic-league, .ic-league[data-play]) :is(.m1, .m2, .m3, .m4) { transform-origin: 12px 18px; animation: lm-rise 420ms both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-league, .ic-league[data-play]) .m2 { animation-delay: 50ms; }
-  html:root:not(#_) :is([aria-current="page"] .ic-league, .ic-league[data-play]) .m3 { animation-delay: 100ms; }
-  html:root:not(#_) :is([aria-current="page"] .ic-league, .ic-league[data-play]) .m4 { animation-delay: 150ms; }
-  @keyframes lm-rise {
-    0%   { transform: scaleY(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    30%  { transform: scaleY(0.25); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    72%  { transform: scaleY(1.08); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100% { transform: scaleY(1); }
-  }
-
-  /* Trade: each arrow exits its own way and comes back around, so they pass each other. */
-  html:root:not(#_) :is([aria-current="page"] .ic-trade, .ic-trade[data-play]) .m1 { animation: tr-right 560ms both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-trade, .ic-trade[data-play]) .m2 { animation: tr-left 560ms both 40ms; }
-  @keyframes tr-right {
-    0%     { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
-    34%    { transform: translateX(5px); opacity: 0; }
-    34.01% { transform: translateX(-5px); opacity: 0; animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    78%    { transform: translateX(0.5px); opacity: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100%   { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes tr-left {
-    0%     { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
-    34%    { transform: translateX(-5px); opacity: 0; }
-    34.01% { transform: translateX(5px); opacity: 0; animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    78%    { transform: translateX(-0.5px); opacity: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100%   { transform: translateX(0); opacity: 1; }
-  }
-
-  /* Waivers: the lines on the sheet write themselves in, top to bottom (this was the Wire's play). */
-  html:root:not(#_) :is([aria-current="page"] .ic-waivers, .ic-waivers[data-play]) :is(.m1, .m2, .m3) { stroke-dasharray: 1 2; animation: ic-write 300ms cubic-bezier(0.23, 1, 0.32, 1) both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-waivers, .ic-waivers[data-play]) .m2 { animation-delay: 80ms; }
-  html:root:not(#_) :is([aria-current="page"] .ic-waivers, .ic-waivers[data-play]) .m3 { animation-delay: 160ms; }
-
   /* Inbox bell: a short ring, damped. The clapper lags behind the shell. */
   html:root:not(#_) .ic-bell[data-play] .m1 { transform-origin: 12px 2px; animation: bell-ring 650ms cubic-bezier(0.37, 0, 0.63, 1) both; }
   html:root:not(#_) .ic-bell[data-play] .m2 { animation: bell-clap 650ms cubic-bezier(0.37, 0, 0.63, 1) both; }
@@ -84,11 +29,66 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
     52% { transform: translateX(-0.7px); }
     68% { transform: translateX(0.3px); }
   }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+
+  /* Overview: the tall panel opens out from its left edge, then the two cells slide in beside it, top first. */
+  html:root:not(#_) .ic-overview[data-play] .m1 { transform-origin: 3px 12px; animation: lp-open 420ms both; }
+  html:root:not(#_) .ic-overview[data-play] :is(.m2, .m3) { animation: lp-cell 420ms both 70ms; }
+  html:root:not(#_) .ic-overview[data-play] .m3 { animation-delay: 130ms; }
+  @keyframes lp-open {
+    0%   { transform: scaleX(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+    30%  { transform: scaleX(0.72); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    70%  { transform: scaleX(1.06); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100% { transform: scaleX(1); }
+  }
+  @keyframes lp-cell {
+    0%   { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+    30%  { transform: translateX(2.5px); opacity: 0.4; animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes ic-write { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+  /* League: the four columns rise from the floor in turn, left to right, under a still roof. */
+  html:root:not(#_) .ic-league[data-play] :is(.m1, .m2, .m3, .m4) { transform-origin: 12px 18px; animation: lm-rise 420ms both; }
+  html:root:not(#_) .ic-league[data-play] .m2 { animation-delay: 50ms; }
+  html:root:not(#_) .ic-league[data-play] .m3 { animation-delay: 100ms; }
+  html:root:not(#_) .ic-league[data-play] .m4 { animation-delay: 150ms; }
+  @keyframes lm-rise {
+    0%   { transform: scaleY(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+    30%  { transform: scaleY(0.25); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    72%  { transform: scaleY(1.08); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100% { transform: scaleY(1); }
+  }
+
+  /* Trade: each arrow exits its own way and comes back around, so they pass each other. */
+  html:root:not(#_) .ic-trade[data-play] .m1 { animation: tr-right 560ms both; }
+  html:root:not(#_) .ic-trade[data-play] .m2 { animation: tr-left 560ms both 40ms; }
+  @keyframes tr-right {
+    0%     { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+    34%    { transform: translateX(5px); opacity: 0; }
+    34.01% { transform: translateX(-5px); opacity: 0; animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    78%    { transform: translateX(0.5px); opacity: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100%   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes tr-left {
+    0%     { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+    34%    { transform: translateX(-5px); opacity: 0; }
+    34.01% { transform: translateX(5px); opacity: 0; animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
+    78%    { transform: translateX(-0.5px); opacity: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+    100%   { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Waivers: the lines on the sheet write themselves in, top to bottom (this was the Wire's play). */
+  html:root:not(#_) .ic-waivers[data-play] :is(.m1, .m2, .m3) { stroke-dasharray: 1 2; animation: ic-write 300ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_) .ic-waivers[data-play] .m2 { animation-delay: 80ms; }
+  html:root:not(#_) .ic-waivers[data-play] .m3 { animation-delay: 160ms; }
 
   /* Ask is drawn by AskIcon (messages-square); its beat lives in icon-lucide.css. */
 
   /* Settings gear (Lucide settings, six lobes): one lobe's turn (60deg, so the end matches the start), a hair past and back. */
-  html:root:not(#_) :is([aria-current="page"] .ic-gear, .ic-gear[data-play]) .m1 { transform-origin: 12px 12px; animation: gear-turn 640ms both; }
+  html:root:not(#_) .ic-gear[data-play] .m1 { transform-origin: 12px 12px; animation: gear-turn 640ms both; }
   @keyframes gear-turn {
     0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
     66%  { transform: rotate(68deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
@@ -130,11 +130,11 @@ html:root:not(#_) svg.ic[data-m] :is(.m1, .m2, .m3, .m4) { transform-box: view-b
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .sb2) [data-play] { animation: none !important; }
 
 /* Lineup (the original helmet): leans back, charges forward with speed lines behind it, the facemask snaps on contact,
-   then it rocks back and settles. 760ms, plays once on select and on hover. */
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m1 { transform-origin: 6px 20px; animation: hm-charge 760ms both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m2 { transform-origin: 14px 11px; animation: hm-mask 760ms both; }
-  html:root:not(#_) :is([aria-current="page"] .ic-helmet[data-m], .ic-helmet[data-m][data-play]) .m3 { transform-origin: -1px 12px; animation: hm-speed 760ms both; }
+   then it rocks back and settles. 760ms, plays once on mouse hover. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  html:root:not(#_) .ic-helmet[data-m][data-play] .m1 { transform-origin: 6px 20px; animation: hm-charge 760ms both; }
+  html:root:not(#_) .ic-helmet[data-m][data-play] .m2 { transform-origin: 14px 11px; animation: hm-mask 760ms both; }
+  html:root:not(#_) .ic-helmet[data-m][data-play] .m3 { transform-origin: -1px 12px; animation: hm-speed 760ms both; }
   @keyframes hm-charge {
     0%   { transform: translateX(0) rotate(0); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
     18%  { transform: translateX(-1.6px) rotate(-7deg); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.4); }

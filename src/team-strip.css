@@ -47,7 +47,7 @@ html:root:not(#_):not(#_) .mwf-foot {
 html:root:not(#_):not(#_) .mwf-wk { flex: none; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 html:root:not(#_):not(#_) .mwf-foot .lu-live { flex: none; margin: 0; }
 html:root:not(#_):not(#_) .mwf-bar { flex: 1; min-width: 32px; height: 6px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
-html:root:not(#_):not(#_) .mwf-bar i { display: block; height: 100%; border-radius: inherit; background: var(--muted); transition: width 600ms var(--ease-out); }
+html:root:not(#_):not(#_) .mwf-bar i { display: block; height: 100%; border-radius: inherit; background: var(--muted); transform-origin: 0 50%; transform: scaleX(var(--v, 1)); transition: transform var(--dur-data) var(--ease-out); }
 html:root:not(#_):not(#_) .mwf-chance { flex: none; white-space: nowrap; font-size: 0.8125rem; line-height: 1; color: var(--muted); }
 html:root:not(#_):not(#_) .mwf-chance b { font: 600 0.9375rem/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
 html:root:not(#_):not(#_) .mwf-res { margin-left: auto; white-space: nowrap; font: 600 0.875rem/1 var(--font-body); color: var(--ink); }

@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react";
 import type { Team } from "../data";
 import type { PlayCount, Result } from "../liveMath";
 import { LiveNum } from "./ui";
@@ -158,8 +158,8 @@ function Side({ s, side, pct, other, won, chip, state, tips = true, focus = fals
       <span className="fo-score">
         {pts === null ? <span className="fo-pts muted">--</span> : t ? <NumTip focusable={focus} {...scoreTip(st, s.note)}>{pts}</NumTip> : pts}
       </span>
-      {pct === null ? <span className="fo-bar"><i style={{ width: "0%" }} /></span>
-        : <NumTip focusable={focus} {...winTip(pct, st, true)}><span className="fo-bar"><i style={{ width: `${pct}%` }} /></span></NumTip>}
+      {pct === null ? <span className="fo-bar"><i style={{ "--v": 0 } as CSSProperties} /></span>
+        : <NumTip focusable={focus} {...winTip(pct, st, true)}><span className="fo-bar"><i style={{ "--v": pct / 100 } as CSSProperties} /></span></NumTip>}
       <span className="fo-meta">
         {meta.flatMap((x, i) => (i ? [<i key={`d${i}`} className="fo-dot">•</i>, x] : [x]))}
         {left && <i className="fo-dot fo-dot-chip">•</i>}

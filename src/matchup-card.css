@@ -142,7 +142,16 @@ html:root:not(#_):not(#_) .fo-side.them .fo-bar { justify-content: flex-end; }
 html:root:not(#_):not(#_) .fo-side { --fo-fill: color-mix(in srgb, var(--ink) 30%, transparent); }
 html:root:not(#_):not(#_) .fo-side.up { --fo-fill: var(--good); }
 html:root:not(#_):not(#_) .fo-side.down { --fo-fill: var(--bad); }
-html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radius: 9999px; background: var(--fo-fill); transition: width 600ms var(--st-ease); }
+/* The fill spans the track and is clipped to the win % (--v, 0 to 1, set by FaceOff): a clip moves no layout, and the
+   pill end and the live texture stay true at any value. Theirs is clipped from the left, so it fills from the outer edge. */
+html:root:not(#_):not(#_) .fo-bar i {
+  display: block; flex: none; width: 100%; height: 100%; border-radius: 9999px; background: var(--fo-fill);
+  clip-path: inset(0 calc((1 - var(--v, 0)) * 100%) 0 0 round 9999px);
+}
+html:root:not(#_):not(#_) .fo-side.them .fo-bar i { clip-path: inset(0 0 0 calc((1 - var(--v, 0)) * 100%) round 9999px); }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .fo-bar i { transition: clip-path var(--dur-data) var(--ease-out), background-size var(--dur-data) var(--ease-out); }
+}
 
 /* Live (Figma State=Live): the fill keeps its color at the tip and fades to the surface by 88.5% of the way back to
    the outer edge. While games are on, a soft lighter band sweeps along it from the outer end to the tip, then rests,
@@ -152,9 +161,12 @@ html:root:not(#_):not(#_) .fo-bar i { display: block; height: 100%; border-radiu
    animationIteration.ts). 2.8s a loop: 1.8s to cross on ease-in-out, 1s at rest. No band with reduced motion. */
 html:root:not(#_):not(#_) .fo-st-live .fo-bar i { position: relative; overflow: hidden; background: linear-gradient(90deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
 html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background: linear-gradient(270deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
+/* The fade is sized to the visible fill, not the whole track, and anchored at the outer edge */
+html:root:not(#_):not(#_) .fo-st-live .fo-bar i { background-repeat: no-repeat; background-size: calc(var(--v, 0) * 100%) 100%; background-position: 0 0; }
+html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background-position: 100% 0; }
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_) .fo-st-live .fo-bar i::after {
-    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 60%; pointer-events: none;
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: calc(60% * var(--v, 0)); pointer-events: none;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2) 50%, transparent);
     transform: translateX(-100%); animation: fo-sweep 2.8s ease-in-out infinite;
   }

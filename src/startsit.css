@@ -18,9 +18,15 @@ html:root:not(#_) .sx-verdict { min-height: 2.8em; display: flex; align-items: c
 /* Dims after 120ms (a fast week never flickers), and eases back up when the week lands (loadin.css sets the transition) */
 .sx-loading { opacity: 0.55; transition-delay: 120ms !important; }
 
+/* Bars: each fill spans its half and is clipped to its share (--v, 0 to 1, set by StartSit), so nothing reflows. The
+   two grow out from the middle: yours is anchored at its right edge, theirs at its left. The lit fill's gradient is
+   sized to the visible part and pinned to the middle, and the leading end keeps its 6px rounding. */
+html:root:not(#_):not(#_) .sx-bar i { flex: none; width: 100%; margin-left: 0; border-radius: 0; background-repeat: no-repeat; background-size: calc(var(--v, 1) * 100%) 100%; }
+html:root:not(#_):not(#_) .sx-bar.a i { background-position: 100% 0; transform-origin: 100% 50%; clip-path: inset(0 0 0 calc((1 - var(--v, 1)) * 100%) round 6px 0 0 6px); }
+html:root:not(#_):not(#_) .sx-bar.b i { background-position: 0 0; transform-origin: 0 50%; clip-path: inset(0 calc((1 - var(--v, 1)) * 100%) 0 0 round 0 6px 6px 0); }
 /* The week row's bars slide to the new week instead of snapping */
 @media (prefers-reduced-motion: no-preference) {
-  .sx-wk .sx-bar i { transition: width 320ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .sx-wk .sx-bar i { transition: clip-path var(--dur-data) var(--ease-out), background-size var(--dur-data) var(--ease-out); }
 }
 
 @media (max-width: 420px) {

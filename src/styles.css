@@ -2322,7 +2322,7 @@ button.sb2-open { display: grid; width: 100%; padding: 0; margin: 0; border: 0; 
 .mu-mid { display: grid; justify-items: center; padding-bottom: 4px; }
 .mu-mid b { font-size: 1.125rem; font-weight: 700; } .mu-mid small { font-size: 0.75rem; color: var(--muted); }
 .mu-bar { height: 8px; border-radius: 8px; background: var(--surface-3); overflow: hidden; }
-.mu-bar span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, rgba(var(--you-rgb), 0.55), rgb(var(--you-rgb))); transition: width 420ms cubic-bezier(0.23, 1, 0.32, 1); }
+.mu-bar span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, rgba(var(--you-rgb), 0.55), rgb(var(--you-rgb))); transform-origin: 0 50%; transform: scaleX(var(--v, 1)); transition: transform var(--dur-data) var(--ease-out); }
 .mu-sum { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--muted); }
 .mu-sum b { color: var(--ink); font-weight: 600; }
 .mu-whatif { display: grid; gap: 10px; padding: 12px; border-radius: 12px; border: 1px solid rgba(var(--warn-rgb), 0.35); background: rgba(var(--warn-rgb), 0.08); font-size: 0.8125rem; color: var(--muted); }
@@ -3456,14 +3456,14 @@ html:root:not(#_) .ld2-final-form { width: 100%; max-width: 480px; margin-top: 3
 html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
 
 /* ==== Motion pass (Emil Kowalski principles): only where it explains a change ==== */
-:root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+/* (--ease-out and the other motion tokens live in src/motion-tokens.css) */
 @media (prefers-reduced-motion: no-preference) {
-  /* Toasts: rise in from the bottom edge, drop back out the same way (ease-out in, ease-in out) */
-  html:root:not(#_) .toast { animation: toast-in 260ms var(--ease-out) both; }
-  html:root:not(#_) .toast.leaving { animation: toast-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards; }
-  /* Animate translate/scale on their own so the toast keeps whatever positioning (centered or edge to edge) it has */
-  @keyframes toast-in { from { opacity: 0; translate: 0 16px; scale: 0.97; } }
-  @keyframes toast-out { to { opacity: 0; translate: 0 12px; scale: 0.98; } }
+  /* Toasts: transitions, not keyframes, so a repeat of the same message (App reuses its id) just stays put, and a
+     toast that was already leaving turns around from wherever it is. translate and scale on their own, so the toast
+     keeps whatever positioning (centered or edge to edge) it has. */
+  html:root:not(#_) .toast { transition: opacity var(--dur-base) var(--ease-out), translate var(--dur-base) var(--ease-out), scale var(--dur-base) var(--ease-out); }
+  @starting-style { html:root:not(#_) .toast { opacity: 0; translate: 0 16px; scale: 0.97; } }
+  html:root:not(#_) .toast.leaving { opacity: 0; translate: 0 12px; scale: 0.98; transition-duration: var(--dur-fast); }
   /* Live score went up: a short lime tick, then back to normal */
   /* The number lifts back into place while a lime copy on top holds, then fades, so only transform and opacity move */
   html:root:not(#_) [data-bump="a"] { animation: live-tick-a 900ms var(--ease-out); }
@@ -3475,8 +3475,8 @@ html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border:
   @keyframes live-tick-b { 0% { transform: translateY(-3px); } 60% { transform: none; } }
   @keyframes live-tick-lime-a { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes live-tick-lime-b { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
-  /* Win chance bars glide to a new value instead of snapping */
-  html:root:not(#_) .sb2-bar span, html:root:not(#_) .lu-mx-bar i { transition: width 600ms var(--ease-out); }
+  /* Win chance bars glide to a new value (--v, 0 to 1) instead of snapping: a scale, never a width */
+  html:root:not(#_) .sb2-bar span, html:root:not(#_) .lu-mx-bar i { transform-origin: 0 50%; transform: scaleX(var(--v, 1)); transition: transform var(--dur-data) var(--ease-out); }
   /* Waiver row details open with a short lift so the expansion reads */
   html:root:not(#_) .wv-detail { animation: wv-open 220ms var(--ease-out); }
   @keyframes wv-open { from { opacity: 0; transform: translateY(-4px); } }
@@ -3485,10 +3485,10 @@ html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border:
   @keyframes bubble-in { from { opacity: 0; transform: translateY(6px); } }
 }
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_) .toast { animation: toast-fade 160ms ease both; }
-  html:root:not(#_) .toast.leaving { animation: toast-fade-out 160ms ease forwards; }
-  @keyframes toast-fade { from { opacity: 0; } }
-  @keyframes toast-fade-out { to { opacity: 0; } }
+  /* Toasts fade in and out in place, the exit included */
+  html:root:not(#_) .toast { transition: opacity var(--dur-fast) ease; }
+  @starting-style { html:root:not(#_) .toast { opacity: 0; } }
+  html:root:not(#_) .toast.leaving { opacity: 0; }
 }
 html:root:not(#_) [data-bump] { display: inline-block; position: relative; }
 /* The dot by "PPR · Week" is a label, not a live signal. Hold it still. */
@@ -3514,11 +3514,6 @@ html:root:not(#_) .deal-tray { animation: none; }
   @keyframes mu-swap-in { from { opacity: 0; transform: translateY(-4px); } }
   html:root:not(#_) .mu-mine, html:root:not(#_) .mu-opt, html:root:not(#_) .lsw-row { transition: transform 120ms ease-out, background-color 120ms ease-out; }
   html:root:not(#_) .mu-mine:active, html:root:not(#_) .mu-opt:active, html:root:not(#_) .lsw-row:active { transform: scale(0.99); }
-}
-/* Toast exit plays under reduced motion too */
-@media (prefers-reduced-motion: reduce) {
-  html:root:not(#_) .toast { animation: toast-fade 160ms ease both !important; }
-  html:root:not(#_) .toast.leaving { animation: toast-fade-out 160ms ease forwards !important; }
 }
 
 /* ==== Season schedule strip: weeks behind (points) and ahead (opponent, projection, matchup tone) ==== */
@@ -3680,7 +3675,7 @@ html:root:not(#_) .mw-win b { font: 600 0.9375rem/1 var(--font-mono); }
 html:root:not(#_) .mw-win.up b { color: var(--lime); } html:root:not(#_) .mw-win.down b { color: #FF7A66; }
 html:root:not(#_) .mw-lbl { font-size: 0.8125rem; color: var(--muted); }
 html:root:not(#_) .mw-bar { flex: 1; height: 6px; margin-left: 4px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
-html:root:not(#_) .mw-bar i { display: block; height: 100%; border-radius: inherit; transition: width 600ms var(--ease-out); }
+html:root:not(#_) .mw-bar i { display: block; height: 100%; border-radius: inherit; transform-origin: 0 50%; transform: scaleX(var(--v, 1)); transition: transform var(--dur-data) var(--ease-out); }
 html:root:not(#_) .mw-win.up .mw-bar i { background: linear-gradient(90deg, rgba(var(--lime-rgb), 0.5), var(--lime)); }
 html:root:not(#_) .mw-win.down .mw-bar i { background: linear-gradient(90deg, rgba(255, 122, 102, 0.5), #FF7A66); }
 /* News */
@@ -3858,11 +3853,11 @@ html:root:not(#_) .page-league .plat-logo { flex: none; border-radius: 6px; }
    Charts grow in when a sheet or section mounts, so the data reads as arriving rather than snapping in.
    Strong ease-out, under 700ms, a short stagger so bars read left to right. Transform only. */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) :is(.ps-bar span i, .slot-bars .sb-you) { transform-origin: 50% 100%; animation: grow-y 620ms cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(var(--i, 0) * 40ms + 80ms); }
-  html:root:not(#_) .ps-bar b { animation: fade-up 360ms cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(var(--i, 0) * 40ms + 260ms); }
-  html:root:not(#_) :is(.sx-bar i, .vb-bar > span, .bar-fill.up, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i) { transform-origin: 0 50%; animation: grow-x 700ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
-  html:root:not(#_) .bar-fill.down { transform-origin: 100% 50%; animation: grow-x 700ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
-  html:root:not(#_) :is(.tc-bar > span, .tc-market-bar > span) { transform-origin: 0 50%; animation: grow-x 700ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
+  html:root:not(#_) :is(.ps-bar span i, .slot-bars .sb-you) { transform-origin: 50% 100%; animation: grow-y var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms + 80ms); }
+  html:root:not(#_) .ps-bar b { animation: fade-up var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms + 200ms); }
+  html:root:not(#_) :is(.sx-bar i, .vb-bar > span, .bar-fill.up, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i) { transform-origin: 0 50%; animation: grow-x var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms + 60ms); }
+  html:root:not(#_) .bar-fill.down { transform-origin: 100% 50%; animation: grow-x var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms + 60ms); }
+  html:root:not(#_) :is(.tc-bar > span, .tc-market-bar > span) { transform-origin: 0 50%; animation: grow-x var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms + 60ms); }
   html:root:not(#_) .tc-bar > span:last-child, html:root:not(#_) .tc-market-bar > span:last-child { transform-origin: 100% 50%; }
   /* Held at the start until scrolled into view (src/chartReveal.ts) */
   html:root:not(#_) :is(.ps-bar span i, .slot-bars .sb-you, .ps-bar b, .sx-bar i, .vb-bar > span, .bar-fill, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i, .tc-bar > span, .tc-market-bar > span):not(.seen) { animation-play-state: paused; }
@@ -3870,9 +3865,6 @@ html:root:not(#_) .page-league .plat-logo { flex: none; border-radius: 6px; }
   @keyframes grow-x { from { transform: scaleX(0.02); } }
   @keyframes fade-up { from { opacity: 0; transform: translateY(4px); } }
 
-  /* Icons react to their state change, once. The tab you land on gives a small settle, so the tap feels received. */
-  html:root:not(#_) :is(.tabbar, .side, nav) button[aria-current="page"] .ic { animation: ic-settle 320ms cubic-bezier(0.34, 1.4, 0.64, 1); }
-  @keyframes ic-settle { from { transform: scale(0.82) translateY(1px); } }
   /* A confirmed state draws its check in */
   html:root:not(#_) :is(.ss-ok, .scan-steps li.done .scan-mark) .ic path { stroke-dasharray: 24; animation: ic-draw 380ms cubic-bezier(0.23, 1, 0.32, 1) both 60ms; }
   @keyframes ic-draw { from { stroke-dashoffset: 24; } }

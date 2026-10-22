@@ -196,8 +196,15 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const [extra, setExtra] = useState<DealLeg[]>([]);
   const [get, setGet] = useState<string[]>([]);
   const [pitch, setPitch] = useState<Trade | null>(null);
-  const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number } | null>(null);
-  const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState(msg ? { msg, undo, id: Date.now() } : null), []);
+  // id keys the visible toast; the same message arriving while one is showing keeps its id, so it stays put (its
+  // timer restarts) instead of remounting and replaying the entrance. seq keys the live region so a repeat is still announced.
+  const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number; seq: number } | null>(null);
+  const toastSeq = useRef(0);
+  const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState((prev) => {
+    if (!msg) return null;
+    const seq = ++toastSeq.current;
+    return { msg, undo, id: prev && prev.msg === msg ? prev.id : Date.now(), seq };
+  }), []);
   const watchApi = useMemo(() => ({ watch, onWatch: setWatch, onToast: (m: string) => setToast(m) }), [watch, setWatch, setToast]);
   useEffect(() => setDenySink(setToast), [setToast]);
   const [focusTeam, setFocusTeam] = useState<string | undefined>();
@@ -242,7 +249,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   useEffect(() => {
     if (!toast) return; setToastOut(false);
     const t = window.setTimeout(() => setToastOut(true), toast.undo ? 5000 : 2800);
-    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + 200);
+    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + 160);
     return () => { clearTimeout(t); clearTimeout(t2); };
   }, [toast]);
   useEffect(() => {
@@ -880,7 +887,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
       {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
-      <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.id}>{toast.msg}</span>}</div>
+      <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.seq}>{toast.msg}</span>}</div>
       {/* On document.body, so it sits above sheets and modals (they portal there too) */}
       {toast && createPortal(
         <div className={`toast${toastOut ? " leaving" : ""}`} key={toast.id}>

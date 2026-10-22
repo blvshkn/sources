@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { LEAGUE, Player, WEEK, YOU, onBye, playerById } from "../data";
 import { kickLine, oppAt, useKickoffs } from "../kickoff";
 import { eff, round1, scored } from "../engine";
@@ -114,8 +114,8 @@ function Bars({ label, a, b, at, bt, wk, dim }: { label: string; a: number; b: n
     <div className={`sx-row${wk ? " sx-wk" : ""}${dim ? " sx-loading" : ""}`}>
       <span className="sx-label">{label}</span>
       <div className="sx-bars">
-        <span className={`sx-bar a${a > b ? " win" : ""}`}><i style={{ width: `${(a / max) * 100}%` }} /><b>{at}</b></span>
-        <span className={`sx-bar b${b > a ? " win" : ""}`}><i style={{ width: `${(b / max) * 100}%` }} /><b>{bt}</b></span>
+        <span className={`sx-bar a${a > b ? " win" : ""}`}><i style={{ "--v": a / max } as CSSProperties} /><b>{at}</b></span>
+        <span className={`sx-bar b${b > a ? " win" : ""}`}><i style={{ "--v": b / max } as CSSProperties} /><b>{bt}</b></span>
       </div>
     </div>
   );

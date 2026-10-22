@@ -60,11 +60,13 @@ html:root:not(#_):not(#_) .sa-thumb {
   position: absolute; top: 0; right: 4px; width: 4px; border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 25%, transparent);
   pointer-events: auto; cursor: default; touch-action: none;
-  transition: width 140ms ease, background-color 140ms ease;
+  /* Drawn at the hover width and scaled down from its right edge, so widening on hover is a scale, not a reflow */
+  width: 6px; transform-origin: 100% 50%; scale: 0.6667 1;
+  transition: scale var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 /* The thumb only takes clicks while it shows */
 html:root:not(#_):not(#_) .sa-track:not([data-on]) .sa-thumb { pointer-events: none; }
-html:root:not(#_):not(#_) .sa-track:is([data-hot], [data-drag]) .sa-thumb { width: 6px; background: color-mix(in srgb, var(--ink) 40%, transparent); }
+html:root:not(#_):not(#_) .sa-track:is([data-hot], [data-drag]) .sa-thumb { scale: 1; background: color-mix(in srgb, var(--ink) 40%, transparent); }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) :is(.sa-track, .sa-thumb) { transition: none; }
 }
