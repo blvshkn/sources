@@ -134,7 +134,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav::before {
   /* The app's bar surface: the same as its top and bottom navs */
   background: rgba(15, 17, 16, 0.9);
   -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
-  box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
+  /* No drop shadow on the landing's bar (Zach, Oct 22) */
+  box-shadow: none;
   opacity: 0; transition: opacity calc(320ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
   pointer-events: none;
 }
@@ -171,11 +172,12 @@ html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
 
 /* ---------- The hero phones as the real iPhone 18 Pro Max (phone3d.ts) ----------
    The phone boxes take the model's proportions (78.97 x 163.35 mm) and the screens its glass: inset 2.46 mm top,
-   2.41 mm bottom, 2.97 mm each side, 9 mm corners. That holds for the CSS fallback too, so either way the app fits. */
+   2.41 mm bottom, 2.97 mm each side, 10.2mm corners. That holds for the CSS fallback too, so either way the app fits. */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone { aspect-ratio: 78.968 / 163.353; height: auto; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone .hp-scr {
   inset: calc(var(--pw) * 0.03115) calc(var(--pw) * 0.03761) calc(var(--pw) * 0.03047);
-  border-radius: calc(var(--pw) * 0.114); clip-path: inset(0 round calc(var(--pw) * 0.114));
+  /* The glass corner, measured off the model: a near-circular curve about 10.2mm across (12.9% of the body's width) */
+  border-radius: calc(var(--pw) * 0.129); clip-path: inset(0 round calc(var(--pw) * 0.129));
 }
 /* The canvas sits between the phones behind (now drawn in it) and the front phone's live screen */
 html:root:not(#_):not(#_) .hp-gl { position: absolute; z-index: 2; pointer-events: none; display: block; }
@@ -251,7 +253,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { back
 html:root:not(#_):not(#_):not(#_) .ld2-yband-item { gap: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
   display: inline-block; background: #D8F24A; padding-block: clamp(14px, 1.6vw, 22px);
-  margin-right: -0.5px; padding-right: 0.5px; box-shadow: 0 0 0 1px #D8F24A; /* no hairline seams between pieces, even tipped */
+  margin-right: -0.5px; padding-right: 0.5px; box-shadow: 0 0 0 3px #D8F24A; /* no hairline seams between pieces, even tipped and bunched */
   transform-origin: 50% 50%; will-change: transform; white-space: pre;
 }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
@@ -263,7 +265,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0;
    of sight; without WebGL the screen shows with a plain dark edge. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d { aspect-ratio: 78.968 / 163.353; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d .ld2-sms {
-  inset: 3.115cqi 3.761cqi 3.047cqi; border-radius: 11.4cqi; clip-path: inset(0 round 11.4cqi); z-index: 3;
+  inset: 3.115cqi 3.761cqi 3.047cqi; border-radius: 12.9cqi; clip-path: inset(0 round 12.9cqi); z-index: 3;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-try { opacity: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d:is(.gl-try, .gl-on) .ph-chrome { visibility: hidden; }
@@ -273,3 +275,40 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-off .ld2-sms
 /* The landing's deal readout holds its full width from the first frame, and its bars are drawn full, not filled in */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv, .dv-main, .dv-read, .dv-rows) { width: 100%; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-accbar i) { transition: none !important; animation: none !important; }
+
+/* The readout's read: the finder's scan and Run it again, inside the trade card */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder .dv { margin-top: 0; }
+/* Run it again sits on the actions' row, at its left end */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { position: absolute; left: 0; bottom: 0; margin: 0; }
+
+/* The nav's arrival lets go once it lands (fill backwards, not both): an animation that keeps holding opacity stops
+   the browser from blurring what scrolls under the bar (Zach, Oct 22: the background blur wasn't showing) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav { animation-fill-mode: backwards; }
+/* No rule over the trust section (Zach, Oct 22: "not sure why this divider line is here") */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld-trust { background: none; border-top: 0; }
+
+/* ---------- Bottom edge blur (Landing.tsx .ld2-edgeblur) ----------
+   A progressive blur along the bottom of the screen: four backdrop blurs, 1 to 8px, each masked to a stretch of the
+   band, so content blurs more the closer it gets to the edge. A faint shade of the page's ground at the very bottom
+   helps it read. Above the content, under the nav and sheets, and never takes a click. */
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur {
+  position: fixed; left: 0; right: 0; bottom: 0; height: clamp(64px, 11vh, 112px); z-index: 30; pointer-events: none;
+  background: linear-gradient(180deg, rgba(18, 20, 19, 0) 0%, rgba(18, 20, 19, 0.55) 100%);
+}
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i { position: absolute; inset: 0; display: block; }
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i:nth-child(1) { -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px); -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 25%, #000 50%, transparent 75%); mask-image: linear-gradient(180deg, transparent 0%, #000 25%, #000 50%, transparent 75%); }
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i:nth-child(2) { -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); -webkit-mask-image: linear-gradient(180deg, transparent 25%, #000 50%, #000 75%, transparent 100%); mask-image: linear-gradient(180deg, transparent 25%, #000 50%, #000 75%, transparent 100%); }
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i:nth-child(3) { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); -webkit-mask-image: linear-gradient(180deg, transparent 50%, #000 75%, #000 100%); mask-image: linear-gradient(180deg, transparent 50%, #000 75%, #000 100%); }
+html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i:nth-child(4) { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); -webkit-mask-image: linear-gradient(180deg, transparent 75%, #000 100%); mask-image: linear-gradient(180deg, transparent 75%, #000 100%); }
+@media (prefers-reduced-transparency: reduce) { html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i { display: none; } }
+
+/* ---------- Hero players drift through the page (Zach, Oct 22) ----------
+   The players around the phones keep moving with the scroll at their own depth (Landing.tsx sets --hsy): the near
+   ones rise past fastest, the far ones barely move. Driven by the scroll only, so they stop when it does. */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head { will-change: transform; }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d0 { transform: translate3d(0, calc(var(--hsy, 0) * -0.42px), 0); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { transform: translate3d(0, calc(var(--hsy, 0) * -0.2px), 0); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { transform: translate3d(0, calc(var(--hsy, 0) * -0.06px), 0); }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .hp-head { transform: none !important; } }

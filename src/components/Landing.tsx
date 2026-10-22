@@ -207,13 +207,18 @@ export function Landing({ onLive, onDemo }: {
       if (!xs.length) measure();
       const w = run?.offsetWidth || 1;
       const shift = ((window.scrollY * 0.45) % w + w) % w; // the track's own scroll offset (the band effect above)
-      const amp = Math.min(28, window.innerWidth * 0.022) * k, len = Math.max(420, window.innerWidth * 0.42), ph = window.scrollY / 90;
-      const f = (2 * Math.PI) / len;
+      // Scrunched (Zach, Oct 22: "more dramatic but not too crazy"): tighter waves, a little taller, and the letters
+      // gather into each dip like fabric bunching, then spread out again as it flattens
+      const amp = Math.min(40, window.innerWidth * 0.03) * k, len = Math.max(300, window.innerWidth * 0.3), ph = window.scrollY / 70;
+      const f = (2 * Math.PI) / len, gather = amp * 0.6;
       letters.forEach((l, i) => {
-        const x = xs[i] - shift;
-        const y = amp * Math.sin(x * f - ph);
-        const r = Math.atan(amp * f * Math.cos(x * f - ph));
-        l.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0) rotate(${r.toFixed(4)}rad)`;
+        const x = xs[i] - shift, a = x * f - ph;
+        const y = amp * Math.sin(a);
+        const dx = gather * Math.cos(a);
+        // Each piece narrows by exactly how far its neighbors close in, so the strip bunches without tearing
+        const sx = 1 - gather * f * Math.sin(a);
+        const r = Math.atan(amp * f * Math.cos(a));
+        l.style.transform = `translate3d(${dx.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${r.toFixed(4)}rad) scaleX(${sx.toFixed(3)})`;
       });
     };
     window.addEventListener("resize", () => { xs = []; }, { passive: true });
@@ -274,6 +279,16 @@ export function Landing({ onLive, onDemo }: {
     io.observe(el);
     return () => { alive = false; io.disconnect(); window.clearTimeout(give); gone?.(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Hero players' parallax: the scroll position, for their per-depth drift (landing-type.css .hp-head)
+  useEffect(() => {
+    const stage = phonesRef.current;
+    if (!stage || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const paint = () => { raf = 0; stage.style.setProperty("--hsy", String(Math.round(window.scrollY))); };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    window.addEventListener("scroll", kick, { passive: true }); paint();
+    return () => { window.removeEventListener("scroll", kick); cancelAnimationFrame(raf); };
+  }, []);
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
     const stage = phonesRef.current;
@@ -480,6 +495,9 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </nav>
 
+      {/* The bottom edge blur (Zach, Oct 22, from his portfolio): the page softens as it scrolls toward the bottom of the
+          screen. Stacked backdrop blurs, each masked to a band, so it deepens smoothly to the edge. */}
+      <div className="ld2-edgeblur" aria-hidden="true"><i /><i /><i /><i /></div>
       <main id="ld-main" tabIndex={-1}>
       {/* Players scattered down the page (Zach, Oct 22): near ones large and sharp out in the margins, far ones small,
           blurred and faint behind the sections. They drift at their own rate as the page scrolls. */}
@@ -593,7 +611,7 @@ export function Landing({ onLive, onDemo }: {
           </div>
           {/* The deal the way the trade builder reads it (Zach, Oct 22: "so you can see it's a win win"): both sides,
               the verdict, points and value for each team, and their odds. Same pieces as Trade.tsx, read only. */}
-          <LandingDeal trade={demo.trade} them={demo.mike} onOpen={() => openDeal("trade")(demo.trade!)} onPitch={() => openDeal("pitch")(demo.trade!)} />
+          <LandingDeal trade={demo.trade} them={demo.mike} run={() => ideaSteps(demo.mike, demo.tags, INITIAL_MY_TAGS, {}, 1)} onOpen={() => openDeal("trade")(demo.trade!)} onPitch={() => openDeal("pitch")(demo.trade!)} />
         </section>
       )}
 
@@ -1052,7 +1070,7 @@ function VideoIcon() {
 }
 
 /** The landing's trade readout: Trade.tsx's builder card for one deal, without the editing. */
-function LandingDeal({ trade, them, onOpen, onPitch }: { trade: Trade; them: Team; onOpen: () => void; onPitch: () => void }) {
+function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them: Team; run: () => Steps<Trade[]>; onOpen: () => void; onPitch: () => void }) {
   const v = verdict(trade);
   const acc = trade.accept ?? acceptance(trade, YOU, them);
   const side = (title: string, ids: string[], get?: boolean) => (
@@ -1077,29 +1095,34 @@ function LandingDeal({ trade, them, onOpen, onPitch }: { trade: Trade; them: Tea
           {side("You send", trade.give)}
           {side("You get", trade.get, true)}
         </div>
-        <div className="dv">
-          <div className="dv-main">
-            {/* Already written (Zach, Oct 22: "it should already be filled"): no typing in, so nothing below it moves */}
-            <div className="dv-read"><div className={`dv-verdict ${v.tone === "warn" ? "neutral" : v.tone}`}><b>{v.label}</b><p>{dealWhy(v.label, trade.youDelta, trade.adjGive, trade.adjGet, them.manager)}</p></div></div>
-            <DealRows
-              cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
-              rows={[
-                { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
-                  <DealPts key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
-                  <DealPts key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
-                { label: "Trade value", tip: "Market value, the plain sum of each player's value.", cells: [
-                  <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
-                  <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
-                  extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
-                { label: "Will they accept", cls: "dv-accrow", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />],
-                  extra: <span className={`dv-accbar ${acc.label === "Likely yes" ? "is-likely" : acc.label === "Worth a shot" ? "is-maybe" : "is-long"}`} aria-hidden="true"><i style={{ width: `${Math.round(acc.p * 100)}%` }} /></span> },
-              ]} />
-            <div className="dv-actions">
-              <button className="linkish small" onClick={onOpen}>Open in builder</button>
-              <button className="btn btn-primary" onClick={onPitch}><Icon name="pen" size={16} />Write pitch</button>
+        {/* Source reads the deal when it scrolls into view (the finder's steps), then the readout appears in the same
+            space, so the card never changes size; Run it again replays the read (Zach, Oct 22: the Ideas card's
+            interactions move here) */}
+        <FinderDemo run={run}>
+          <div className="dv">
+            <div className="dv-main">
+              {/* Already written (Zach, Oct 22: "it should already be filled"): no typing in, so nothing below it moves */}
+              <div className="dv-read"><div className={`dv-verdict ${v.tone === "warn" ? "neutral" : v.tone}`}><b>{v.label}</b><p>{dealWhy(v.label, trade.youDelta, trade.adjGive, trade.adjGet, them.manager)}</p></div></div>
+              <DealRows
+                cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
+                rows={[
+                  { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
+                    <DealPts key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
+                    <DealPts key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
+                  { label: "Trade value", tip: "Market value, the plain sum of each player's value.", cells: [
+                    <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
+                    <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
+                    extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
+                  { label: "Will they accept", cls: "dv-accrow", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />],
+                    extra: <span className={`dv-accbar ${acc.label === "Likely yes" ? "is-likely" : acc.label === "Worth a shot" ? "is-maybe" : "is-long"}`} aria-hidden="true"><i style={{ width: `${Math.round(acc.p * 100)}%` }} /></span> },
+                ]} />
+              <div className="dv-actions">
+                <button className="linkish small" onClick={onOpen}>Open in builder</button>
+                <button className="btn btn-primary" onClick={onPitch}><Icon name="pen" size={16} />Write pitch</button>
+              </div>
             </div>
           </div>
-        </div>
+        </FinderDemo>
       </section>
     </div>
   );
