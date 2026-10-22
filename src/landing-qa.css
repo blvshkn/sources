@@ -149,3 +149,22 @@ html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
 @media (max-width: 379px) {
   html:root:not(#_):not(#_) .ld2-nav > .brand { zoom: 0.82; }
 }
+
+/* "YOUR fantasy Source." (Zach, Oct 22): one word at poster size in Clash Grotesk Semibold, the boldest cut loaded,
+   then the name and the address in the app's own type. It arrives with the page's usual reveal, once. */
+html:root:not(#_):not(#_) .ld2-yours {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  width: min(1200px, 100% - 32px); margin: clamp(48px, 10vw, 120px) auto clamp(32px, 6vw, 72px);
+}
+html:root:not(#_):not(#_) .ld2-yours-big {
+  margin: 0; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
+  font-size: clamp(5.5rem, 24vw, 19rem); line-height: 0.82; letter-spacing: -0.045em; color: var(--ink, #F4F6F2);
+}
+html:root:not(#_):not(#_) .ld2-yours-name {
+  margin: 0; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500;
+  font-size: clamp(1.75rem, 5vw, 3.5rem); line-height: 1; letter-spacing: -0.02em; color: #D8F24A;
+}
+html:root:not(#_):not(#_) .ld2-yours-url {
+  margin: 10px 0 0; font-family: var(--font-mono, "Geist Mono", ui-monospace, monospace); font-size: clamp(0.8125rem, 1.4vw, 1rem);
+  letter-spacing: 0.06em; color: var(--muted);
+}

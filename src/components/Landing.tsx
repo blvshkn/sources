@@ -453,6 +453,14 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </section>
 
+      {/* The brand line (Zach, Oct 22): YOUR in Clash Semibold at poster size, then the name and the address. The same
+          lockup the ads use. */}
+      <section className="ld2-yours ld2-reveal" aria-label="Your fantasy Source">
+        <p className="ld2-yours-big" aria-hidden="true">YOUR</p>
+        <p className="ld2-yours-name"><span className="sr-only">Your </span>fantasy Source.</p>
+        <p className="ld2-yours-url">fantasysource.app</p>
+      </section>
+
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
         <div className="ld2-endfield" aria-hidden="true"><div className="env-turf" /></div>
         <FinalCtaPanel>
