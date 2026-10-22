@@ -6,6 +6,9 @@ import { avatarSrc } from "../sleeper";
 // Headshots and team marks come from Sleeper's image CDN, keyed by the same ids as the API.
 const headshot = (id: string) => `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`;
 export const teamLogo = (team: string) => `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png`;
+/** ESPN's 500px team marks, for big placements (the player header) where Sleeper's small logo goes soft. ESPN spells
+ *  Washington "wsh"; every other code matches. Callers fall back to teamLogo if it fails to load. */
+export const teamLogoHi = (team: string) => `https://a.espncdn.com/i/teamlogos/nfl/500/${team === "WAS" ? "wsh" : team.toLowerCase()}.png`;
 const isTeam = (id: string) => /^[A-Z]{2,3}$/.test(id);
 const initials = (name: string) => name.replace(/\b(Jr|Sr|II|III|IV)\.?$/i, "").split(" ").filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 

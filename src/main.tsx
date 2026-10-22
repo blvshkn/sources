@@ -118,6 +118,8 @@ import "./matchup-groups.css";
 import "./boot-chips.css";
 import "./radius.css";
 import "./waiver-actions.css";
+import "./hero-pop.css";
+import "./sheet-actions.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

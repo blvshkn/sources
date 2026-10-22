@@ -3,11 +3,11 @@
 // fixed top with the tabs, so only the body below scrolls. On phones it folds to a slim bar once you scroll the body,
 // and opens again back at the top. Every number here comes from the app's own data: bios from Sleeper (playerBio.ts),
 // ranks from the Values board, rostered % and adds from the waiver feed. Anything without a source is left out.
-import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { FREE_AGENTS, LEAGUE, SPECIAL_FREE_AGENTS, isDemo, type BoardRow } from "../data";
 import { teamColors } from "../jersey";
 import { feet, useBio } from "../playerBio";
-import { Avatar, AvatarPhotos, teamLogo } from "./Avatar";
+import { Avatar, AvatarPhotos, teamLogo, teamLogoHi } from "./Avatar";
 import { demoBoard, specialBoard } from "./Values";
 import { Tooltip } from "./Tooltip";
 import { Icon, PosBadge } from "./ui";
@@ -55,12 +55,32 @@ export function holdHeader(scroller: HTMLElement | null | undefined) {
 function useSlim(ref: React.RefObject<HTMLDivElement | null>) {
   const [slim, setSlim] = useState(false);
   const full = useRef(0);
+  const prevH = useRef(0);
+  const first = useRef(true);
+  // Fold and unfold as one motion instead of a snap (Zach: it read janky on iPhone). After the swap, the header is set
+  // back to its old height and eased to the new one, so the tabs and list below glide with it; the bottom edge is
+  // clipped meanwhile so a growing header never paints over the tabs. The new content fades up as it lands.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (first.current) { first.current = false; return; }
+    if (!el || !prevH.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const to = el.offsetHeight, from = prevH.current;
+    if (Math.abs(to - from) < 2) return;
+    const ease = "cubic-bezier(0.32, 0.72, 0, 1)";
+    const a = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 260, easing: ease });
+    el.style.clipPath = "inset(-120px -100vw 0 -100vw)";
+    a.onfinish = a.oncancel = () => { el.style.clipPath = ""; };
+    for (const c of el.querySelectorAll<HTMLElement>(":scope > .ph-art, :scope > .ph-who, :scope > .ph-acts")) {
+      c.animate([{ opacity: 0.4, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    }
+  }, [slim, ref]);
   useEffect(() => {
     const el = ref.current;
     const sc = el?.closest(".ps")?.querySelector<HTMLElement>("[data-sheet-scroll]");
     if (!el || !sc) return;
     const mq = window.matchMedia(PHONE);
     const on = () => {
+      prevH.current = el.offsetHeight;
       if (!mq.matches) { setSlim(false); return; }
       if (sc.dataset.phHold) return;
       const t = sc.scrollTop;
@@ -83,6 +103,7 @@ function useSlim(ref: React.RefObject<HTMLDivElement | null>) {
   /** A tap on the slim bar opens the header again: back to the top of the tab */
   const open = () => {
     const sc = ref.current?.closest(".ps")?.querySelector<HTMLElement>("[data-sheet-scroll]");
+    if (ref.current) prevH.current = ref.current.offsetHeight;
     if (!sc || sc.scrollTop < 4) { setSlim(false); return; }
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     sc.scrollTo({ top: 0, behavior: reduce ? ("instant" as ScrollBehavior) : "smooth" });
@@ -107,8 +128,10 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   const ref = useRef<HTMLDivElement>(null);
   const [slim, open] = useSlim(ref);
   const photos = useContext(AvatarPhotos);
-  const [logoOk, setLogoOk] = useState(true);
-  useEffect(() => setLogoOk(true), [s.nfl]);
+  // 0: ESPN's 500px mark, 1: Sleeper's smaller one, 2: none
+  const [logoTry, setLogoTry] = useState(0);
+  useEffect(() => setLogoTry(0), [s.nfl]);
+  const logoOk = logoTry < 2;
   const bio = useBio(s);
   const def = s.pos === "DEF";
   const [c1, , c3] = teamColors(s.nfl);
@@ -127,7 +150,7 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   return (
     <div ref={ref} className={`ph${slim ? " ph-slim" : ""}${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
-      {photos && team && logoOk && !def && <img className="ph-logo" src={teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoOk(false)} />}
+      {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
       <span className="ph-art"><Avatar p={s} size={slim ? 40 : def ? 76 : 84} badge={false} /></span>
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>

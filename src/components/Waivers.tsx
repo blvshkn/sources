@@ -469,7 +469,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                         <PlatformLogo size={16} />Claim
                       </a>
                       <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
-                      <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not right now</button>
+                      <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
                     </>} />
                 } bar={(() => {
                   const opts: { v: SheetTab; label: string; icon: IconName }[] = [{ v: "main", label: "Claim", icon: "userPlus" }, { v: "log", label: "Game log", icon: "table" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart", icon: "listOrdered" as IconName }])];
