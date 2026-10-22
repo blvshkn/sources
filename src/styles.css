@@ -2860,7 +2860,7 @@ html:root:not(#_) .lu-hero { padding-top: 4px; }
 .seg button .ic { flex: none; }
 html:root:not(#_) :is(.page-head, .page-tabs) > .seg button { display: inline-flex; align-items: center; gap: 6px; }
 html:root:not(#_) :is(.page-head, .page-tabs) > .seg button .ic { color: var(--muted); }
-html:root:not(#_) :is(.page-head, .page-tabs) > .seg button[aria-pressed="true"] .ic { color: var(--lime); }
+html:root:not(#_) :is(.page-head, .page-tabs) > .seg button[aria-pressed="true"] :is(.ic, .askic, .px-ic) { color: var(--lime); }
 html:root:not(#_) .league-pill.lsw-btn { display: flex !important; flex-direction: row !important; align-items: center; padding: 12px 14px; border-radius: 16px; background: rgba(244, 246, 242, 0.05); }
 html:root:not(#_) .league-pill.lsw-btn .grow { display: grid; }
 @media (hover: hover) { html:root:not(#_) .league-pill.lsw-btn:hover { background: rgba(244, 246, 242, 0.08); } }

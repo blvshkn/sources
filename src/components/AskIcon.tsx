@@ -28,7 +28,8 @@ function install() {
   installed = true;
   const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const play = (control: Element | null) => {
-    if (!control || reduced?.matches) return;
+    // Tabs (Zach, Oct 22): an icon in a tab row stays still; selecting it is the feedback
+    if (!control || reduced?.matches || control.closest(".seg, [role='tablist']")) return;
     control.querySelectorAll("svg.askic").forEach((svg) => {
       if (svg.hasAttribute("data-play")) return;
       svg.setAttribute("data-play", "");
