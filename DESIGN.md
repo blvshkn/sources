@@ -1,4 +1,4 @@
-# Design System: Sources, Your Fantasy Insider
+# Design System: Source, Your Fantasy Insider
 
 ## 1. Visual Theme & Atmosphere
 "Almanac." Utilitarian minimalism that reads like a printed sports almanac or the Monday box scores: warm bone paper, charcoal ink, one friendly grotesk (Google Sans) for everything, and small mono labels in the margins. Color is scarce and always means something (a position, a gain, a loss, a change to make). Density 5 of 10. Gradients appear only where they mean something: the section you're in, your side of a matchup, a gain, a change to make. Motion is nearly invisible: presses scale to 0.98 and nothing loops.
@@ -40,7 +40,7 @@ Positions (pastel pill, colored text): QB pale red, RB pale green, WR pale blue,
 - **Thumb index (phone nav):** a full-width paper strip. Each section is an icon over its name; Lineup uses the custom helmet. The active name gets a highlighter stroke in the section's color, and a short rule in that color slides along the top edge
 - **Desktop sidebar:** same short names (Overview, League, Trade, Lineup, Waivers, Ask, Settings), same icon tint and highlighter, and a section-colored rule on the left edge that slides between items
 
-- **Icons:** Lucide (ISC) plus Sources customs, all on a 24px grid with a 2px round stroke, in `src/components/icons.tsx`. Active tab thickens the stroke to 2.4; customs may fill. No second icon family
+- **Icons:** Lucide (ISC) plus Source customs, all on a 24px grid with a 2px round stroke, in `src/components/icons.tsx`. Active tab thickens the stroke to 2.4; customs may fill. No second icon family
 
 ## 5. Layout Principles
 - Phone first, one column, 16px gutters, 44px targets. Desktop: sidebar, main column, live wire rail
@@ -77,7 +77,7 @@ The app uses the trade card's palette on every device: one dark scheme, no light
 - One container level. Borders only on tappable things; static surfaces separate by fill. Inside a card, group with space and a hairline, never another bordered box. Pickers and send/get panels may use a soft fill with no border.
 - One type family (Google Sans) for text and numbers; numbers use tabular figures. Micro labels are sentence case with no wide tracking.
 - Toasts: dark floating pill with a lime Undo. Back links: small soft pill.
-- Trade ideas end with "Won't work? Tell Sources why", which opens a sheet of reasons that become tags, untouchables, paused managers or a hidden idea.
+- Trade ideas end with "Won't work? Tell Source why", which opens a sheet of reasons that become tags, untouchables, paused managers or a hidden idea.
 - Page header: section icon in a soft lime circle + title on one line, meta below. The top bar on phones is the league switcher (tap to change leagues). View tabs carry icons.
 - Graphite base (#121413 bg, #191C1B surface) with a faint green tint; decorative tints are neutral so lime, gains and losses carry the color.
 - Type: Google Sans for all interface copy and team or player names; Geist Mono for numbers and code, with uppercase mono for stamps, nudge kinds, slot tags and live meta; Array (Fontshare) only for page titles.

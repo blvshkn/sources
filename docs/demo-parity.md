@@ -24,7 +24,7 @@ pitch is on that roster, a bye matches `DEMO_BYES`), and never presented as real
 
 Things the demo gets from the network, same as a live league: headshots and team marks (Sleeper CDN), jersey
 numbers and player ids (`/api/player-numbers`), news (`/api/news` and ESPN), kickoff times (`/api/kickoffs`), and
-Sources AI (`/api/ask`). When those are unreachable the demo falls back to initials, no news, slate dates, and Ask's
+Source AI (`/api/ask`). When those are unreachable the demo falls back to initials, no news, slate dates, and Ask's
 built-in answer. The public landing turns headshots and NFL marks off on purpose (`AvatarPhotos` false in
 Landing.tsx); the app's demo keeps them on.
 
@@ -84,7 +84,7 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Bye only from the schedule | PIT and NE on bye (Jaylen Warren, Romeo Doubs, Patriots D/ST) | OK |
 | Team logo badge on avatars | Shows on every player avatar when the Sleeper CDN loads; initials when no headshot id | OK (network) |
 | Swap menu, Use optimal lineup, locked rows and lock badge | Live and final games lock | OK |
-| Set optimal lineup (Sources AI) | Button and trace on the demo week | OK |
+| Set optimal lineup (Source AI) | Button and trace on the demo week | OK |
 | Start / Sit, Compare, Tags, Slot report | All tabs | OK |
 | Asking price (What would it take) | Josh Allen at +25% (no team meets it) and Dalton Kincaid at +5% (1 of 9 teams, with a Write pitch) | Seeded |
 | Week stepper with past, current and future weeks | Weeks 1 to 18 | OK |
@@ -116,7 +116,7 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Starter questions | The trade starter asks for the top idea's target ("How can I get Garrett Wilson?") | Fixed |
 | 2 to 3 offer options for "how can I get X" | Best odds, Best for your lineup, Cheapest in value | OK |
 | Follow-up exclusions ("I don't want to give up X") | Rebuilds every option without him | OK |
-| Built-in answer when Sources AI is offline | Same options, with the offline note | OK |
+| Built-in answer when Source AI is offline | Same options, with the offline note | OK |
 
 ### Settings
 
@@ -143,7 +143,7 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Swap card opens without nudging the player row | Lineup | OK |
 | Top nav matches the bottom tab bar when scrolled | All pages | OK |
 | Trade roster switch: solid track and tab over a fade from the nav | Trade | OK |
-| Practice weighed by day (final practice counts, early-week DNPs are routine) | Demo notes now name the day: Deebo "limited Saturday" (Monday game), Bigsby "missed Friday practice", Lamb "sat Wednesday, full Friday"; Sources AI and Ask read the same rule | Seeded |
+| Practice weighed by day (final practice counts, early-week DNPs are routine) | Demo notes now name the day: Deebo "limited Saturday" (Monday game), Bigsby "missed Friday practice", Lamb "sat Wednesday, full Friday"; Source AI and Ask read the same rule | Seeded |
 | Start/sit close calls go to the healthy player | Lineup > Compare, e.g. Deebo Samuel vs Jalen Coker | OK |
 | Full matchup groups split by space; only tappable cards outlined | Full matchup | OK |
 | Empty Top pickup card hidden | Waivers (the demo always has a pick, so the card shows) | OK |
@@ -174,7 +174,7 @@ Motion plays when you act, when something actually changes, or on first arrival.
 | Spring check: pops and draws itself when newly reached | Lineup, Start / Sit: tap Use optimal lineup and "Lineup set" pops. Overview, On your radar: tap Not right now on the waiver row until the wire is covered, and the Waivers row's check pops. Coming back to either page shows it settled | OK |
 | Swipe toast: springs up, flick it sideways past 80px to dismiss, Undo and auto-dismiss unchanged | Any toast, for example Watch on a waiver row | OK |
 | Bell: swings once and its lime dot springs in when a new inbox item arrives; opening the inbox clears the dot quietly | Seeded: about 20 seconds after your first tap or keypress, once per visit, Mike offers Jerry Jeudy for your Dalton Kincaid (his TE, Sam LaPorta, is out). Inbox only; the Overview cards don't change | Seeded |
-| Shiny text: slow sheen on the thinking label and on AI summary while the answer is still writing | Ask, any starter question (the built-in answer when Sources AI is unreachable) | OK |
+| Shiny text: slow sheen on the thinking label and on AI summary while the answer is still writing | Ask, any starter question (the built-in answer when Source AI is unreachable) | OK |
 | Decrypted text: the Start / Sit verdict resolves left to right when it changes | Lineup, Compare: change the week or a pick. Not on first open | OK |
 | Highlight: one pill slides between rows on a desktop pointer | League, Standings and Values | OK |
 | Auto height: text disclosures grow and shrink to their real height | Lineup, price check "teams can't get there"; landing FAQ | OK |

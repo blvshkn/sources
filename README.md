@@ -1,8 +1,8 @@
-# Sources
+# Source
 
 **Live:** https://fantasysource.app
 
-**Your fantasy insider.** Sources connects to your fantasy football league, learns what every team needs, and finds trades both sides will accept. It sets your best lineup each week, tells you who to pick up and what to bid, and remembers what your league mates said so you don't have to.
+**Your fantasy insider.** Source connects to your fantasy football league, learns what every team needs, and finds trades both sides will accept. It sets your best lineup each week, tells you who to pick up and what to bid, and remembers what your league mates said so you don't have to.
 
 > *Per sources, Mike's Mistakes needs a TE. Their starter is out and they're losing points every week at the spot. Here are two deals that help you both.*
 
@@ -15,12 +15,12 @@ Everything in the product spec's MVP, plus v1 previews (marked **v1 preview** in
 | Area | What it does |
 | --- | --- |
 | **First run** | Sleeper username only (no passwords), pick from your real leagues, confirm your team, see your top need and one trade worth a look, optionally tag untouchables. Or try the demo league. |
-| **Overview** | Command center: this week's face-off, Quick moves, where to improve, their threats, game day, injury watch and key dates. Intel: per Sources nudges with a reason and one action each: league needs, offers received (verdict + ready counter), news breaks (what it changes for your lineup, targets and prices), lineup-day flags, waivers, stale-tag checks, slot patterns. Weekly briefing. "Did Mike reply?" follow-ups that turn the answer into a tag or a counteroffer. |
+| **Overview** | Command center: this week's face-off, Quick moves, where to improve, their threats, game day, injury watch and key dates. Intel: per Source nudges with a reason and one action each: league needs, offers received (verdict + ready counter), news breaks (what it changes for your lineup, targets and prices), lineup-day flags, waivers, stale-tag checks, slot patterns. Weekly briefing. "Did Mike reply?" follow-ups that turn the answer into a tag or a counteroffer. |
 | **League Needs** | Every team's starting slots against the league average, contender/seller from record and points scored, the 2 or 3 best trade partners, fading intent tags, and manager tendencies from completed trades. |
 | **Build a Deal** | Both full rosters side by side, live before/after starting-lineup points, refused players dimmed, wanted players highlighted, untouchables locked, live tips, roster-drop accounting, slot-by-slot math, and tags from free text or dictation. |
 | **Lineup** | Optimal lineup drawn as an offensive formation on a football field (line of scrimmage, first-down line, hash marks), Sleeper lineup diff with "Apply in Sleeper", close calls, byes and injuries, roster tag suggestions, "what would it take" with a price in points a week or percent over value, and a slot report. |
 | **Waivers** | Who to add, who to drop, and a bid range drawn from your league's own winning bids. |
-| **Ask Sources** | Plain-English questions answered from league data. Every answer is labeled and links to the numbers. |
+| **Ask Source** | Plain-English questions answered from league data. Every answer is labeled and links to the numbers. |
 | **Pitch and send** | Drafts the message around the other team's need in three tones, builds a shareable trade card, and hands off to Messages, a group chat, the league app, or the share sheet. Nothing sends until you do. |
 | **Settings** | League format (PPR, Half, Standard, Superflex, TE Premium), nudge level, tag fade window, connections, privacy, disconnect and delete. |
 
