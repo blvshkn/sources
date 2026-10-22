@@ -211,6 +211,21 @@ export function Landing({ onLive, onDemo }: {
   }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
+  // The 3D phones (phone3d.ts): tried wherever WebGL2 works; the CSS phones stay as the fallback. "try" holds the
+  // phones back until the model has drawn, so the arrival plays once, on the real thing.
+  const [gl, setGl] = useState<"try" | "on" | "off">(() =>
+    typeof window !== "undefined" && typeof WebGL2RenderingContext !== "undefined" && new URLSearchParams(location.search).get("gl") !== "0" ? "try" : "off");
+  useEffect(() => {
+    const stage = phonesRef.current;
+    if (!stage || gl !== "try") return;
+    let alive = true, gone: (() => void) | null = null;
+    const give = window.setTimeout(() => { if (alive) setGl("off"); }, 7000);
+    const phones = [".hp-left", ".hp-right", ".hp-front"].map((s) => stage.querySelector<HTMLElement>(s)!);
+    import("./phone3d").then(({ mountPhones3D }) => mountPhones3D(stage, phones, ["/phones/trade-screen.webp", "/phones/waivers-screen.webp", null], [0.62, 0.62, 1]))
+      .then((p) => { if (!alive) { p.dispose(); return; } gone = p.dispose; window.clearTimeout(give); setGl("on"); p.kick(1800); })
+      .catch(() => { if (alive) setGl("off"); });
+    return () => { alive = false; window.clearTimeout(give); gone?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
     const stage = phonesRef.current;
@@ -439,7 +454,7 @@ export function Landing({ onLive, onDemo }: {
         {/* Our phone, three times (Zach, Oct 22): the trade idea face on, Sunday live and Set optimal lineup behind it at
             angles. Real components from the sample league, drawn at the app's 390 width and scaled to each screen. Players
             float around them at different depths, the near ones sharp, the far ones small and soft. */}
-        <div className="ld2-stage hp-stage" ref={phonesRef}>
+        <div className={`ld2-stage hp-stage gl-${gl}`} ref={phonesRef}>
           <div className="hp-heads" aria-hidden="true">
             {cast.map((p, i) => (
               <span key={p.id} className={`hp-head d${HEAD_DEPTH[i] ?? 2} h${i}`} style={{ ["--i" as string]: i }}>
@@ -453,7 +468,7 @@ export function Landing({ onLive, onDemo }: {
             <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
-              <PhoneApp tab="trade" go={appsGo} front={false} />
+              <PhoneApp tab="trade" go={gl === "off" ? appsGo : "none"} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
               <img className="hp-poster" src="/phones/trade.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
             </div>
@@ -463,7 +478,7 @@ export function Landing({ onLive, onDemo }: {
             <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
-              <PhoneApp tab="waivers" go={appsGo} front={false} />
+              <PhoneApp tab="waivers" go={gl === "off" ? appsGo : "none"} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
               <img className="hp-poster" src="/phones/waivers.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
             </div>

@@ -168,3 +168,24 @@ html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
    The headline types and erases between lines of different lengths. Its box keeps the height of the longest one, so
    the copy and the phones beside it never shift as it changes. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 { min-height: 4lh; }
+
+/* ---------- The hero phones as the real iPhone 18 Pro Max (phone3d.ts) ----------
+   The phone boxes take the model's proportions (78.97 x 163.35 mm) and the screens its glass: inset 2.46 mm top,
+   2.41 mm bottom, 2.97 mm each side, 9 mm corners. That holds for the CSS fallback too, so either way the app fits. */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone { aspect-ratio: 78.968 / 163.353; height: auto; }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone .hp-scr {
+  inset: calc(var(--pw) * 0.03115) calc(var(--pw) * 0.03761) calc(var(--pw) * 0.03047);
+  border-radius: calc(var(--pw) * 0.114); clip-path: inset(0 round calc(var(--pw) * 0.114));
+}
+/* The canvas sits between the phones behind (now drawn in it) and the front phone's live screen */
+html:root:not(#_):not(#_) .hp-gl { position: absolute; z-index: 2; pointer-events: none; display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .hp-gl { animation: hp-gl-in calc(1100ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both; }
+}
+@keyframes hp-gl-in { from { opacity: 0; } }
+/* Waiting on the model: the phones hold their arrival until it has drawn */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone { opacity: 0; animation-play-state: paused; }
+/* Drawn: the CSS body, buttons and the back phones' screens give way to the render */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.hp-body, .ph-chrome) { display: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-back .hp-scr { visibility: hidden; }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-front .hp-scr { box-shadow: none; }
