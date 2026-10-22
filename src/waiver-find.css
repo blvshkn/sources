@@ -1,0 +1,20 @@
+/* Waivers search on phones (Zach): the full search field gives way to an icon button to the right of Watching and
+   Sort. Tapping it opens the field over that row, focused, with an X to close; the row comes back when it closes
+   (the field stays open while there's a search in it). Tablet and desktop keep the field as it was. */
+html:root:not(#_):not(#_):not(#_):not(#_) .wv2-bar > .wv3-find { display: none; }
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar { flex-wrap: nowrap; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar > .wv3-find {
+    order: 3; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); cursor: pointer;
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar > .wv3-find:active { transform: scale(0.94); transition-duration: 100ms; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar:not(.is-finding) > .wv-search { display: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar.is-finding > :is(.wv3-watching, .wv2-sort, .wv3-find) { display: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar.is-finding > .wv-search { flex: 1 1 100%; }
+  @media (prefers-reduced-motion: no-preference) {
+    html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar.is-finding > .wv-search { animation: wv-find-in 160ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+    @keyframes wv-find-in { from { opacity: 0; transform: scale(0.98); } }
+  }
+}
