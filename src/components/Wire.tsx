@@ -499,9 +499,9 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       {view === "matchup" && <div className="cc-pair">
       {/* Every row shows. A row with a move to make reads as before; a covered row says so with a check and still
           points somewhere useful: Lineup, Trade, Waivers, then a question for Ask (Zach) */}
-      <section className="card briefing" aria-label="Weekly briefing">
+      <section className="card briefing" aria-label="On your radar">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
-          <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
+          <div className="row"><h2 className="section-title">On your radar</h2><Phase v="v1" /></div>
         </div>
         {briefing.lineup !== null ? <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />
