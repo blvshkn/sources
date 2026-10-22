@@ -25,7 +25,9 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
  * `ready` false (a loading skeleton) waits without spending the key.
  */
 export function useCountTogether(key: string | undefined, targets: number[], { ready = true, ms = 1100, min = 0.05, changes = true } = {}) {
-  const [vals, setVals] = useState<number[]>(() => targets);
+  // A first count that's about to run starts at zero on the very first paint, so the final numbers never flash first
+  const startsAtZero = () => !!key && ready && !reduce() && (!seen.has(key) || pending.has(key));
+  const [vals, setVals] = useState<number[]>(() => (startsAtZero() ? targets.map(() => 0) : targets));
   const [running, setRunning] = useState(false);
   const shown = useRef<number[]>(targets);
   const raf = useRef(0);
