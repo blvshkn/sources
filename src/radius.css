@@ -1,0 +1,20 @@
+/* One card corner everywhere (Zach: "all cards"): every card, top level or nested, takes the matchup card's 16px.
+   That covers the Sources AI and what-if cards in Lineup, the Settings note, the compare sheet's player cards and
+   week readout, and the player cards in the full matchup. Pills and chips keep their own shapes. */
+html:root:not(#_):not(#_) { --r: 16px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.lu-ai, .lu-wi, .note-good, .cmp-col, .cmp-read) { border-radius: 16px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-mine { border-radius: 16px; }
+/* A player card joined to its open swap list keeps the joined edge square (matchup-rows.css) */
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-row[data-sw="down"] > .mu-mine { border-radius: 16px 16px 0 0 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .mu-row[data-sw="up"] > .mu-mine { border-radius: 0 0 16px 16px !important; }
+/* Open swap cards (Lineup and the full matchup): the player card and its swap list share 16px outer corners; the
+   joined edge stays square through the existing !important zero rules. Options inside sit 6px in, so they take 10px
+   to stay concentric. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row::after { border-radius: 16px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw="down"]::after { border-radius: 16px 16px 0 0 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row[data-sw="up"]::after { border-radius: 0 0 16px 16px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-swap { border-radius: 16px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-swap[data-sw="down"] { border-radius: 0 0 16px 16px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-swap[data-sw="up"] { border-radius: 16px 16px 0 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-swap .mu-opt { border-radius: 10px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.swap-row, .cmp-sheet .cmp-skel) { border-radius: 16px; }
