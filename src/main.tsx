@@ -132,6 +132,7 @@ import "./hero-cutout.css";
 import "./headshots.css";
 import "./figma-oct21.css";
 import "./waiver-nopick.css";
+import "./quick-moves.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

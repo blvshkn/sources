@@ -45,7 +45,12 @@ export interface Nudge {
 }
 
 export interface FollowUp { id: string; trade: Trade; via: string; when: string }
-export interface Briefing { /** Null once the week is final: no lineup advice then. */ lineup: string | null; trade: Trade | null; waiver: string; /** Who the waiver line suggests, for its Not interested control. */ waiverPass?: { id: string; name: string } }
+export interface Briefing { /** Null once the week is final: no lineup advice then. */ lineup: string | null; trade: Trade | null; waiver: string; /** Who the waiver line suggests, for its Not interested control. */ waiverPass?: { id: string; name: string };
+  /** What a covered row says instead of a move (lineup already optimal, no two-way trade, nobody on the wire), so the
+   *  card stays useful and points somewhere (Zach: Quick moves felt naked with one row) */
+  ok?: { lineup?: string; trade?: string; waiver?: string };
+  /** A question to start Ask with */
+  ask?: string }
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
@@ -437,7 +442,7 @@ function OfferBlock({ n, onOpen, onPitch }: { n: Nudge; onOpen: (t: Trade) => vo
   );
 }
 
-export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onSnooze, sent, onOpenSent }: {
+export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coach, onOpen, onPitch, onGo, onDismiss, onTag, onResolve, onKeepTag, onClearTag, onCapture, level, onSnooze, sent, onOpenSent, onAsk }: {
   you: TeamNeeds;
   partner: string | null;
   partnerId: string | null;
@@ -459,6 +464,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   onSnooze?: (p: { id: string; name: string }) => void;
   /** Your newest offer still out (or just accepted), as one line in Quick moves that opens it */
   sent?: SentDeal | null; onOpenSent?: (o: SentOffer) => void;
+  /** Opens Ask with this question already asked */
+  onAsk?: (q: string) => void;
 }) {
   useKickoffs();
   const [leaving, setLeaving] = useState<string[]>([]);
@@ -490,32 +497,41 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           their threats, when your starters play, injuries and key dates. The face-off is the one matchup card here;
           This week's own matchup strip repeated it and is gone. */}
       {view === "matchup" && <div className="cc-pair">
-      {/* Rows that would only say "nothing to do" are left out, and so is the card when every row is (Zach) */}
-      {(briefing.lineup !== null || briefing.trade || (sent && onOpenSent) || briefing.waiverPass) && <section className="card briefing" aria-label="Weekly briefing">
+      {/* Every row shows. A row with a move to make reads as before; a covered row says so with a check and still
+          points somewhere useful: Lineup, Trade, Waivers, then a question for Ask (Zach) */}
+      <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
         </div>
-        {briefing.lineup !== null && <button className="brief-row" onClick={() => onGo("roster")}>
+        {briefing.lineup !== null ? <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />
+        </button> : briefing.ok?.lineup && <button className="brief-row is-ok" onClick={() => onGo("roster")}>
+          <span className="brief-k"><Icon name="check" size={14} />Lineup</span><span className="grow">{briefing.ok.lineup}</span><Icon name="chev" size={16} />
         </button>}
-        {briefing.trade && <button className="brief-row" onClick={() => briefing.trade && onOpen(briefing.trade)}>
+        {briefing.trade ? <button className="brief-row" onClick={() => briefing.trade && onOpen(briefing.trade)}>
           <span className="brief-k">Top trade</span>
-          <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : null}</span>
+          <span className="grow"><>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></></span>
           <Icon name="chev" size={16} />
+        </button> : briefing.ok?.trade && <button className="brief-row is-ok" onClick={() => onGo("trade")}>
+          <span className="brief-k"><Icon name="check" size={14} />Trades</span><span className="grow">{briefing.ok.trade}</span><Icon name="chev" size={16} />
         </button>}
         {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
-        {/* No pickup worth making: no Waiver add row at all (Zach) */}
-        {briefing.waiverPass && <div className="ps-brief">
+        {briefing.waiverPass ? <div className="ps-brief">
           <button className="brief-row" onClick={() => onGo("waivers")}>
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
           </button>
-          {briefing.waiverPass && onSnooze && (
+          {onSnooze && (
             <Tooltip content="Skips him this week. He can come back next week.">
               <button className="brief-snooze" aria-label={`Not right now: skip ${briefing.waiverPass.name} this week`} onClick={() => onSnooze(briefing.waiverPass!)}>Not right now</button>
             </Tooltip>
           )}
-        </div>}
-      </section>}
+        </div> : briefing.ok?.waiver && <button className="brief-row is-ok" onClick={() => onGo("waivers")}>
+          <span className="brief-k"><Icon name="check" size={14} />Waivers</span><span className="grow">{briefing.ok.waiver}</span><Icon name="chev" size={16} />
+        </button>}
+        {briefing.ask && onAsk && <button className="brief-row brief-ask" onClick={() => onAsk(briefing.ask!)}>
+          <span className="brief-k"><Icon name="spark" size={14} />Ask</span><span className="grow">"{briefing.ask}"</span><Icon name="chev" size={16} />
+        </button>}
+      </section>
       <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />
       </div>}
       {view === "matchup" && <section className="cc-week" aria-labelledby="cc-week-h">

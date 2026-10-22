@@ -1,0 +1,9 @@
+/* Overview, Quick moves (Zach: one row felt naked). Every row shows now. A covered row (lineup already optimal, no
+   two-way trade, nobody on the wire) gets a green check by its label and quieter text, and still opens its page. The
+   last row starts Ask with a question about this league. */
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row .brief-k { display: inline-flex; align-items: center; gap: 6px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row .brief-k > svg { flex: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row.is-ok .brief-k > svg { color: var(--good); }
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row.is-ok .grow { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row.brief-ask .brief-k > svg { color: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .brief-row.brief-ask .grow { color: var(--ink); }

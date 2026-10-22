@@ -468,6 +468,11 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     trade: partners[0]?.t ?? null,
     waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
+    ok: {
+      lineup: lineupNow.final ? `Week ${WEEK} is final. Next week's lineup is ready to set.` : !diff.length && !lineupNow.blocked ? "Your best projected lineup is set in Sleeper." : undefined,
+      trade: partners[0]?.t ? undefined : "Nothing helps both sides yet. Build a deal and Sources grades it.",
+      waiver: topRec ? undefined : `Nobody on the wire beats your starters.${Object.keys(watch).length ? ` Watching ${Object.keys(watch).length}.` : ""}`,
+    },
   };
 
   const askStarters = useMemo(() => {
@@ -809,7 +814,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           </button>
           <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
-            <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={briefing} coach={coach} level={level}
+            <Wire you={youNeeds} partner={partners[0]?.n.team.manager ?? null} partnerId={partners[0]?.n.team.id ?? null} nudges={nudges} followUps={followUps} briefing={{ ...briefing, ask: askStarters[1] }} onAsk={(q) => { go("ask"); setAskSeed(q); }} coach={coach} level={level}
               onOpen={loadTrade} onPitch={setPitch} onGo={go} onDismiss={dismiss} onTag={addTag} onSnooze={snoozePlayer}
               onResolve={(id, msg) => { setFollowUps((c) => c.filter((f) => f.id !== id)); setToast(msg); }}
               onCapture={() => go("league")} sent={wireSent} onOpenSent={reopenSent}
