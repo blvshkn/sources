@@ -263,9 +263,13 @@ html:root:not(#_):not(#_) .ld2-chip .av-photo { width: 100% !important; height: 
 html:root:not(#_):not(#_) .ld2-chip-ic { background: #D8F24A; color: #0D0E0D; box-shadow: none; }
 html:root:not(#_):not(#_):not(#_) .ld2-chip-ic svg { width: 0.46em !important; height: 0.46em !important; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip { transform: translateY(0.18em) scale(0.6); opacity: 0; transition: transform calc(700ms * var(--mo, 1)) var(--ease-fluid), opacity calc(500ms * var(--mo, 1)) var(--ease-fluid); }
-  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip.on { transform: none; opacity: 1; }
+  html:root:not(#_):not(#_):not(#_) .ld2-tag-stack > .ld2-chip { transform: translateY(0.18em) scale(0.6); opacity: 1 !important; transition: transform calc(700ms * var(--mo, 1)) var(--ease-fluid); }
+  html:root:not(#_):not(#_):not(#_) .ld2-tag-stack > .ld2-chip.on { transform: none; }
 }
 
 /* Hero player circles: no ring around them (Zach, Oct 22). The soft drop shadow stays so they still float. */
 html:root:not(#_):not(#_):not(#_) .ld2-head .av { box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.7); }
+/* The tagline's dim-until-lit rule (styles.css .ld2-tag span) also reached the spans inside each headshot chip, and
+   only the chip itself lights. The chip's insides always show at full strength; the chip's own reveal does the rest. */
+html:root:not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip span { opacity: 1 !important; transition: none !important; }
+html:root:not(#_):not(#_):not(#_) .ld2-tag-stack > .ld2-chip { opacity: 1 !important; }
