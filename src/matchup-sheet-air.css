@@ -1,0 +1,20 @@
+/* Full matchup sheet, lighter (Zach, Oct 22): no divider under the column headers and no outlines on your players.
+   Your player sits on a soft fill, centered, with the points pulled in from the edge; the opponent sits a little
+   lower under them; slots sit closer together now the lines are gone. The headers stay, close to the first slot.
+   Smaller week arrows, and no focus ring on the close button when the sheet opens from a tap. Sheet only. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .ps-x:focus:not(:focus-visible) { outline: none !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .lu-weeknav.mus-weeks-in { grid-template-columns: minmax(0, 1fr) 36px 36px !important; margin: 4px 0 12px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .lu-weeknav.mus-weeks-in > .btn-icon { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
+/* Column headers: kept, no rule under them, sitting just above the first slot */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mu-th { border-bottom: 0 !important; padding-bottom: 0 !important; margin-bottom: -6px !important; box-shadow: none !important; }
+/* Slots: no dividers, a little closer together */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .card.mu > :is(.mu-row, .mu-foot) { border-top-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .card.mu > .mu-row { padding-top: 6px !important; padding-bottom: 6px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .card.mu > .mu-row + .mu-row { margin-top: 2px !important; }
+/* Your player: a soft fill instead of an outline, even padding, the points pulled in from the right edge */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mu-mine { border-color: transparent !important; background: color-mix(in srgb, var(--ink) 5%, transparent) !important; padding: 10px 16px 10px 10px !important; align-items: center !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mu-row.open .mu-mine { background: color-mix(in srgb, var(--ink) 8%, transparent) !important; }
+/* Headshots read top-heavy: a 1px nudge down centers them optically against the two text lines */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup :is(.mu-mine, .mu-theirs) .mu-p > .av { align-self: center; transform: translateY(1px); }
+/* The opponent sits a touch lower under your player, lined up with your player's text and points */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mu-theirs { margin-top: 6px !important; padding-left: 10px !important; padding-right: 16px !important; }
