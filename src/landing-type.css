@@ -312,3 +312,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d0 { transform: translate3d(0
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { transform: translate3d(0, calc(var(--hsy, 0) * -0.2px), 0); }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { transform: translate3d(0, calc(var(--hsy, 0) * -0.06px), 0); }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .hp-head { transform: none !important; } }
+
+/* Tagline chips' initials match every other avatar (Zach, Oct 22): 36% of the circle, in the app's body font, and they
+   scale with the chip instead of staying at the 96px avatar's size */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { container-type: size; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip .av-initials {
+  font-size: 36cqw !important; line-height: 1; font-family: var(--font-body, Geist, system-ui, sans-serif); font-weight: 700; letter-spacing: -0.02em;
+}
