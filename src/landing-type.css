@@ -148,52 +148,23 @@ html:root:not(#_):not(#_) .ld2-navcta {
     filter calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
 }
 html:root:not(#_):not(#_) .ld2-navcta.on { max-width: 220px; margin-left: 0; opacity: 1; transform: none; filter: none; }
-html:root:not(#_):not(#_) .ld2-navcta.on.open { max-width: 480px; overflow: visible; }
 html:root:not(#_):not(#_) .ld2-navcta > .btn { white-space: nowrap; }
 
-/* The field, opened: same pill as the hero's, sized for the nav, unrolling from the button's right edge */
-html:root:not(#_):not(#_) .ld2-navpop { position: relative; }
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform {
-  display: flex; align-items: center; gap: 4px; width: min(420px, 46vw); min-height: 44px; margin: 0; padding: 4px 4px 4px 14px; box-sizing: border-box;
-  animation: ld2-navunroll calc(460ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both;
-}
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform input { flex: 1; min-width: 0; height: 36px; font-size: 16px; }
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform .btn { min-height: 36px; height: 36px; white-space: nowrap; font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; padding-inline: 14px; }
-html:root:not(#_):not(#_) .ld2-navx {
-  display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 999px;
-  background: transparent; color: var(--muted); cursor: pointer;
-  transition: background calc(160ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1), color calc(160ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
-}
-html:root:not(#_):not(#_) .ld2-navx:hover { background: var(--surface-2, #202322); color: var(--text); }
-html:root:not(#_):not(#_) .ld2-navx:active { transform: scale(0.96); }
-html:root:not(#_):not(#_) .ld2-navx:focus-visible { outline: 2px solid var(--accent, #D8F24A); outline-offset: 2px; }
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navhelp {
-  position: absolute; top: calc(100% + 8px); right: 8px; margin: 0; white-space: nowrap;
-  font-size: 0.75rem; line-height: 1rem;
-  animation: ld2-navhelp calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1) calc(160ms * var(--mo, 1)) both;
-}
-@keyframes ld2-navunroll {
-  from { clip-path: inset(0 0 0 calc(100% - 150px) round 999px); opacity: 0.6; }
-  to { clip-path: inset(0 0 0 0 round 999px); opacity: 1; }
-}
-@keyframes ld2-navhelp { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-
-/* Phones: the logo keeps its spot, and the open field drops under the nav across the full width */
+/* Phones: "Try the demo" steps aside once "Find my leagues" arrives, so the logo keeps its room */
 @media (max-width: 719px) {
-  html:root:not(#_):not(#_) :is(.ld2-navpop, .ld2-navright) { position: static; }
-  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform {
-    position: absolute; top: calc(100% + 8px); left: 16px; right: 16px; width: auto; z-index: 2;
-    background: var(--surface-1, #171918); box-shadow: 0 12px 32px rgb(0 0 0 / 0.45), inset 0 0 0 1px var(--line, #2A2D2B);
-    border-radius: 999px; flex-direction: row !important; flex-wrap: nowrap !important; height: 52px; padding: 6px 6px 6px 14px;
-  }
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-navform .btn { width: auto !important; flex: none; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-navform .at { display: block; }
-  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navhelp { top: calc(100% + 68px); left: 32px; right: 32px; white-space: normal; text-align: left; }
   html:root:not(#_):not(#_) .ld2-navright > .btn-ghost:has(+ .ld2-navcta.on) { display: none; }
 }
+/* Find my leagues (Landing.tsx findOpen): the Ask modal's sheet, holding the hero's username form */
+html:root:not(#_):not(#_) .ldf-body { display: flex; flex-direction: column; gap: 16px; padding: 4px 0 8px; }
+html:root:not(#_):not(#_) .ldf-sub { margin: 0; color: var(--muted); font-size: 1rem; line-height: 1.5rem; text-wrap: pretty; }
+html:root:not(#_):not(#_) .ldf-body .ld2-form { width: 100%; max-width: none; }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) .ld2-navcta { transition: opacity 200ms ease; transform: none; filter: none; }
-  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform { animation: none; }
 }
 html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
 @media (min-width: 600px) { html:root:not(#_):not(#_) .ld2 { --navh: 72px; } }
+
+/* ---------- Hero holds still while the headline types (Zach, Oct 22: "it's auto scrolling down") ----------
+   The headline types and erases between lines of different lengths. Its box keeps the height of the longest one, so
+   the copy and the phones beside it never shift as it changes. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 { min-height: 4lh; }

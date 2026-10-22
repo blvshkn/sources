@@ -162,7 +162,7 @@ export function Landing({ onLive, onDemo }: {
   // once the hero's username field is out of sight it offers "Find my leagues", which opens that field in the nav.
   const [stuck, setStuck] = useState(false);
   const [navCta, setNavCta] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const navBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 8);
@@ -174,7 +174,6 @@ export function Landing({ onLive, onDemo }: {
       io = new IntersectionObserver(([en]) => {
         const gone = !en.isIntersecting && en.boundingClientRect.top < 0;
         setNavCta(gone);
-        if (!gone) setNavOpen(false);
       }, { rootMargin: "-72px 0px 0px 0px" });
       io.observe(heroForm);
     }
@@ -412,26 +411,8 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-navright">
           <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
           {/* Once the hero's username field has scrolled away, the nav carries it: "Find my leagues" opens the same field here */}
-          <div className={`ld2-navcta${navCta ? " on" : ""}${navOpen ? " open" : ""}`} aria-hidden={!navCta || undefined}>
-            {navOpen ? (
-              <div className="ld2-navpop">
-                <form className="ld2-form ld2-navform" onSubmit={(e) => { setErrFor("ld-nav-user"); connect(e); }} noValidate
-                  onKeyDown={(e) => { if (e.key === "Escape") { setNavOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); } }}>
-                  <label htmlFor="ld-nav-user" className="sr-only">Your Sleeper username</label>
-                  <span className="at" aria-hidden="true">@</span>
-                  <input id="ld-nav-user" autoFocus value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} name="username"
-                    aria-invalid={!!error && errFor === "ld-nav-user"} aria-describedby="ld-nav-user-help"
-                    placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
-                  <button className="btn btn-sm btn-primary" type="submit" disabled={busy}>{busy ? "Finding…" : "Find my leagues"}</button>
-                  <button type="button" className="ld2-navx" aria-label="Close" onClick={() => { setNavOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }}><Icon name="x" size={16} /></button>
-                </form>
-                <p id="ld-nav-user-help" className={error && errFor === "ld-nav-user" ? "ld2-error ld2-navhelp" : "ld2-help ld2-navhelp"} role={error && errFor === "ld-nav-user" ? "alert" : undefined}>
-                  {(errFor === "ld-nav-user" && error) || "Free. No password. Read only."}
-                </p>
-              </div>
-            ) : (
-              <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setNavOpen(true)} aria-expanded={false}>Find my leagues</button>
-            )}
+          <div className={`ld2-navcta${navCta ? " on" : ""}`} aria-hidden={!navCta || undefined}>
+            <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setFindOpen(true)} aria-haspopup="dialog">Find my leagues</button>
           </div>
         </div>
       </nav>
@@ -770,6 +751,18 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sign-word" ref={wordRef}>{"SOURCE".split("").map((c, i) => <span key={i} style={{ ["--i" as string]: i }}>{c}</span>)}</p>
         </div>
       </footer>
+      {/* Find my leagues from the nav (Zach, Oct 22): a modal on desktop, a sheet on phones, with the hero's form */}
+      {findOpen && (
+        <DetailSheet className="lda-sheet ldf-sheet" onClose={() => { setFindOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }} label="Find my leagues"
+          title={<h2 className="ds-h">Find your leagues</h2>}>
+          <div className="ldf-body">
+            <p className="ldf-sub">Type your Sleeper username and Source pulls in every league you're in. No password, nothing to sign into.</p>
+            <div className="lda-form">{form("ld-find-user")}</div>
+            <div className="lda-or" aria-hidden="true"><span>or</span></div>
+            <button type="button" className="btn btn-secondary lda-demo" onClick={onDemo}>Try the sample league</button>
+          </div>
+        </DetailSheet>
+      )}
       {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} faqs={faqs} />}
       {doc && (
         <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>

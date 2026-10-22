@@ -200,21 +200,16 @@ html:root:not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { width: 100%; max-wid
   html:root:not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { zoom: 1.2; max-width: 460px; }
 }
 
-/* ---------- Full-screen sections, locked scrolling (Zach, Oct 22: "I love 100% vertical lock scrolling") ----------
-   Every block of the landing fills the screen and the page snaps to the start of each. A section taller than the
-   screen (the feature grid) still scrolls freely inside its own length before the next snap. Content centers in its
-   screen, which gives each section the breathing room around it. Snapping is firm on desktop and gentle on phones,
-   where sections run long. The footer snaps to the page's end. */
-html:has(.ld2) { scroll-snap-type: y proximity; }
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) { html:has(.ld2) { scroll-snap-type: y mandatory; } }
+/* ---------- Tall sections, free scrolling (Zach, Oct 22: the 100% lock felt off; "try 85% and not locking") ----------
+   Each block of the landing is at least 85% of the screen tall so the next one peeks in from below, and the page
+   scrolls freely with no snapping. Content centers in its block. */
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > :not(.sc-layer) {
-  scroll-snap-align: start; min-height: 100svh; box-sizing: border-box;
+  min-height: 85svh; box-sizing: border-box;
   padding-block: clamp(64px, 10vh, 120px); margin-block: 0;
 }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > :is(.ld-section:not(.ld2-fosec), .ld2-trust, .ld2-final, .ld2-yourscreen, .ld-hero) { display: grid; align-content: center; }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-fosec { justify-content: center; }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > .ld-hero { padding-block: 32px 64px; }
-html:root:not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { scroll-snap-align: end; }
 /* The banner screen: banner, then the tagline under it with room between */
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(64px, 12vh, 140px); padding-inline: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { margin: 0; }
