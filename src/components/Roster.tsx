@@ -715,8 +715,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   <div className="ss-foot"><span>Make the {moves.length > 1 ? "swaps" : "swap"} in Sleeper{moveLock(...moves.flatMap((d) => [d.start, d.benched])) ? ` before ${moveLock(...moves.flatMap((d) => [d.start, d.benched]))}` : ""}.</span><a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a></div>
                 </> : <p className="ss-none">{pastWeek || lstat.final ? `Week ${WEEK} is final. Lineups can't change.` : lstat.blocked ? LOCKED_LINE : "Your Sleeper lineup matches the optimal one."}</p>}
               </div>}
-              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
               <OptimalLineup live={live} locked={allLocked} onPlayer={openPlayer} onMarks={setAiMarks} />
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="tiny muted">{started ? "Pts" : "Proj"}</span></div>
               {started && <div className="lu-play"><PlayCount c={playCount(live, [...now.mine.map((x) => (x.id ? playerById(x.id).nfl : undefined)), ...now.mineK.map((p) => p?.nfl)])} /></div>}
               {now.mine.map((x, i) => {
                 const p = x.id ? playerById(x.id) : null, key = `s${i}`, label = lbl(x.slot);
