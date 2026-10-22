@@ -457,7 +457,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Ask Sources" meta={<>Ask your league</>} />
+          <LeagueSwitch title="Ask Sources" meta={<>Ask about your league</>} />
         </div>
       </header>
 
@@ -496,7 +496,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
             onPointerDown={(e) => { if (e.target === e.currentTarget) { e.preventDefault(); input.current?.focus(); } }}>
             <span className="ask-composer-mark" aria-hidden="true"><AiMark size={16} /></span>
             <label htmlFor="ask" className="sr-only">Ask a question about your league</label>
-            <input id="ask" ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your league anything"
+            <input id="ask" ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about your league"
               autoComplete="off" enterKeyHint="send" />
             <button className="ask-send" type="submit" aria-label={working ? "Ask (working on an answer)" : "Ask"} aria-disabled={empty || working || undefined} aria-busy={working || undefined}
               onClick={(e) => {

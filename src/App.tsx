@@ -462,8 +462,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   }, [needs, suggestionsByTeam, active, myTags, prices, recs, diff, level, dismissed, dismissedIds, yourLineup, kick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const briefing: Briefing = {
-    // A final week gets no lineup line at all; locks that blocked a helpful move say so plainly
-    lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : lineupNow.blocked ? LOCKED_LINE : "Your Sleeper lineup is already optimal.",
+    // No lineup line when there's nothing to change (final week, or already optimal); locks that blocked a helpful move say so plainly
+    lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : lineupNow.blocked ? LOCKED_LINE : null,
     trade: partners[0]?.t ?? null,
     waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,

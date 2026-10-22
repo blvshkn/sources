@@ -490,18 +490,19 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           their threats, when your starters play, injuries and key dates. The face-off is the one matchup card here;
           This week's own matchup strip repeated it and is gone. */}
       {view === "matchup" && <div className="cc-pair">
-      <section className="card briefing" aria-label="Weekly briefing">
+      {/* Rows that would only say "nothing to do" are left out, and so is the card when every row is (Zach) */}
+      {(briefing.lineup !== null || briefing.trade || (sent && onOpenSent) || briefing.waiverPass) && <section className="card briefing" aria-label="Weekly briefing">
         <div className="row wrap" style={{ justifyContent: "space-between" }}>
           <div className="row"><h2 className="section-title">Quick moves</h2><Phase v="v1" /></div>
         </div>
         {briefing.lineup !== null && <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />
         </button>}
-        <button className="brief-row" onClick={() => briefing.trade ? onOpen(briefing.trade) : onGo("trade")}>
+        {briefing.trade && <button className="brief-row" onClick={() => briefing.trade && onOpen(briefing.trade)}>
           <span className="brief-k">Top trade</span>
-          <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : "No trade helps both sides this week."}</span>
+          <span className="grow">{briefing.trade ? <>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></> : null}</span>
           <Icon name="chev" size={16} />
-        </button>
+        </button>}
         {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
         {/* No pickup worth making: no Waiver add row at all (Zach) */}
         {briefing.waiverPass && <div className="ps-brief">
@@ -514,7 +515,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
             </Tooltip>
           )}
         </div>}
-      </section>
+      </section>}
       <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />
       </div>}
       {view === "matchup" && <section className="cc-week" aria-labelledby="cc-week-h">

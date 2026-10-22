@@ -251,8 +251,8 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
       {/* Sends the question to Ask Sources, where the work shows as a thinking trace */}
       <form className="ibx-ask" onSubmit={(e) => { e.preventDefault(); onAsk(q.trim()); setQ(""); }}>
         <AskIcon size={18} />
-        <label htmlFor="ibx-q" className="sr-only">Ask your league anything</label>
-        <input id="ibx-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask your league anything" autoComplete="off" />
+        <label htmlFor="ibx-q" className="sr-only">Ask about your league</label>
+        <input id="ibx-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about your league" autoComplete="off" />
         <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Sources"><Icon name="ask" size={16} /></button>
       </form>
     </>
