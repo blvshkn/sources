@@ -11,9 +11,8 @@ html:root:not(#_):not(#_) .pd-blk .ps-sub { align-items: center; }
 .pd-fine { margin: 0; font-size: 0.75rem; line-height: 1.45; color: var(--faint); text-wrap: pretty; }
 .pd-fine .tt-term { color: var(--muted); }
 .pd-skel { display: grid; gap: 8px; }
-.pd-skel span { height: 14px; border-radius: 6px; background: var(--surface-2); animation: pd-pulse 1.2s ease-in-out infinite alternate; }
+.pd-skel span { height: 14px; border-radius: 6px; background: var(--surface-2); animation: sk-pulse 1.2s ease-in-out infinite; }
 .pd-skel span:nth-child(odd) { width: 86%; }
-@keyframes pd-pulse { from { opacity: 0.55; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pd-skel span { animation: none; } }
 
 /* ---------- Outcome range (inside the This week card) ---------- */

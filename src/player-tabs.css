@@ -25,7 +25,7 @@ html:root:not(#_):not(#_) .ps-body.pt-body > * { min-width: 0; }
 
 /* ---------- Skeleton ---------- */
 html:root:not(#_):not(#_) .gl-skel { display: grid; gap: 10px; padding-top: 4px; }
-html:root:not(#_):not(#_) .gl-skel span { height: 18px; border-radius: 6px; background: var(--surface-2); animation: pd-pulse 1.2s ease-in-out infinite alternate; }
+html:root:not(#_):not(#_) .gl-skel span { height: 18px; border-radius: 6px; background: var(--surface-2); animation: sk-pulse 1.2s ease-in-out infinite; }
 html:root:not(#_):not(#_) .gl-skel span:nth-child(3n) { width: 78%; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .gl-skel span { animation: none; } }
 

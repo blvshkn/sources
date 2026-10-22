@@ -29,6 +29,15 @@ export interface Reason { big: string; line: string; detail?: string }
 const SLOT_NAME: Record<Group, string> = { QB: "QB", RB: "RB", WR: "WR", TE: "TE", FLEX: "flex", SF: "superflex" };
 const n1 = (n: number) => n.toFixed(1);
 /** Every real reason this deal is good for THEM, best first. Never a number that's bad for them. */
+/** The share card's height in canvas pixels (it's 1080 wide). It grows with the deal, never shorter than a 4:5 post,
+ *  so a skeleton can hold the exact space before the card is drawn (PitchSheet drawCard lays out from this). */
+export function cardHeight(t: Trade): number {
+  const ROW = 112, TOP = 420, rs = Math.min(3, reasonsFor(t).length);
+  const sectionH = (n: number) => 44 + n * ROW;
+  const PANEL = rs ? 130 + rs * 96 : 0;
+  return Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 150);
+}
+
 export function reasonsFor(t: Trade): Reason[] {
   const them = teamById(t.partnerId);
   const after = [...them.roster.filter((id) => !t.get.includes(id)), ...t.give];

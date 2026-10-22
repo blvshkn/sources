@@ -61,7 +61,7 @@ html:root:not(#_):not(#_) .mwf-foot.down .mwf-bar i { background: var(--bad); }
 /* Loading: the same rows as placeholders */
 html:root:not(#_):not(#_) .mw.mwf.is-skel :is(.mwf-pts, .mwf-note, .mwf-name > span, .mwf-msg) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .mw.mwf.is-skel :is(.mwf-pts, .mwf-name > span, .mwf-msg) { animation: lw-pulse 1.2s ease-in-out infinite; }
+  html:root:not(#_):not(#_) .mw.mwf.is-skel :is(.mwf-pts, .mwf-name > span, .mwf-msg) { animation: sk-pulse 1.2s ease-in-out infinite; }
 }
 
 /* Wide screens: keep each name a short read from its score instead of stretching across the page */

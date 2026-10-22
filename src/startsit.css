@@ -15,10 +15,8 @@
 html:root:not(#_) .sx-verdict { min-height: 2.8em; display: flex; align-items: center; }
 
 /* Loading a week: dim, never collapse */
-.sx-loading { animation: sx-dim 160ms ease-out 120ms both; }
-@keyframes sx-dim { from { opacity: 1; } to { opacity: 0.55; } }
-.sx-row.sx-loading .sx-bar { background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .sx-row.sx-loading .sx-bar { animation: none; } }
+/* Dims after 120ms (a fast week never flickers), and eases back up when the week lands (loadin.css sets the transition) */
+.sx-loading { opacity: 0.55; transition-delay: 120ms !important; }
 
 /* The week row's bars slide to the new week instead of snapping */
 @media (prefers-reduced-motion: no-preference) {

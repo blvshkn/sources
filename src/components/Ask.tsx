@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Steps } from "../steps";
 import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
@@ -235,7 +235,7 @@ function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onD
       {/* The follow-ups hold their place from the moment the card comes in, so the turn reaches its full height once */}
       {a && follow.length > 0 && (
         <div className={`ask-chips ask-follow${done ? "" : " wait"}`} role="group" aria-label="Follow-up questions" aria-hidden={!done || undefined}>
-          {follow.map((s) => <button key={s} type="button" className="ask-chip" tabIndex={done ? undefined : -1} onClick={() => onFollow(s)}>{s}</button>)}
+          {follow.map((s, i) => <button key={s} type="button" className="ask-chip" style={{ "--i": i } as CSSProperties} tabIndex={done ? undefined : -1} onClick={() => onFollow(s)}>{s}</button>)}
         </div>
       )}
     </div>

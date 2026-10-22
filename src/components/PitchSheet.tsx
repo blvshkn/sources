@@ -6,10 +6,11 @@ import { useReducedMotion } from "motion/react";
 import { usePullToDismiss } from "./sheetDrag";
 import { spring, type SpringRun } from "./sheetSpring";
 import { useFocusTrap } from "./focusTrap";
+import { useLoadedIn } from "../loadedIn";
 import { useDismiss } from "./useDismiss";
 import { Trade } from "../engine";
 import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
-import { Audience, Tone, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
+import { Audience, Tone, cardHeight, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
 import { ShareCard, canShareFile, canCopyImage } from "./ShareCard";
@@ -84,9 +85,8 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   const W = 1080, X = 72, ROW = 112, AV = 80;
   // Layout first, so the canvas is exactly as tall as the deal needs (never shorter than a 4:5 post)
   const TOP = 420;                        // header, league line, greeting, "from" line
-  const sectionH = (n: number) => 44 + n * ROW;
   const PANEL = rs.length ? 130 + rs.length * 96 : 0;
-  const H = Math.max(1350, TOP + sectionH(t.give.length) + 76 + sectionH(t.get.length) + 48 + PANEL + 150);
+  const H = cardHeight(t);
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
@@ -236,6 +236,8 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [trade]); // eslint-disable-line react-hooks/exhaustive-deps
   const cardUrl = card?.url ?? null;
+  // The card fades in over its skeleton, which already holds the card's exact shape (cardHeight), so nothing moves
+  const cardIn = useLoadedIn(!cardUrl);
   const [shareOpen, setShareOpen] = useState(false);
   // Once anything here sends the deal, it's in Sent offers, and the Mark as sent button says so
   const [saved, setSaved] = useState(false);
@@ -441,7 +443,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
         )}
 
         <figure className="tcard" aria-label="Trade card that goes with your message">
-          {cardUrl ? <img src={cardUrl} alt={`Trade offer card: ${them.manager} gets ${trade.give.map((id) => playerById(id).name).join(" and ")}, I get ${trade.get.map((id) => playerById(id).name).join(" and ")}.`} /> : <span className="tcard-skel" aria-hidden="true" />}
+          {cardUrl ? <img className={cardIn ? "tcard-in" : undefined} src={cardUrl} alt={`Trade offer card: ${them.manager} gets ${trade.give.map((id) => playerById(id).name).join(" and ")}, I get ${trade.get.map((id) => playerById(id).name).join(" and ")}.`} /> : <span className="tcard-skel" style={{ aspectRatio: `1080 / ${cardHeight(trade)}` }} aria-hidden="true" />}
           <figcaption>This card goes with your message.</figcaption>
         </figure>
 

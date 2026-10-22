@@ -30,18 +30,18 @@ html:root:not(#_):not(#_) .sk-text { color: transparent !important; border-radiu
 @keyframes sk-pulse { 50% { opacity: 0.55; } }
 
 /* The skeletons that were here before, on the same surface and the same pulse (some shimmered a background gradient,
-   which repaints every frame; the pulse is opacity only) */
+   which repaints every frame; the pulse is opacity only). News rows and the trade card joined them. */
 html:root:not(#_):not(#_) :is(.lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) {
   background: var(--surface-3); background-size: auto;
 }
-html:root:not(#_):not(#_) .pd-skel span { background: var(--surface-2); }
+html:root:not(#_):not(#_) :is(.pd-skel span, .nxs-sk b, .tcard-skel) { background: var(--surface-2); background-size: auto; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) {
+  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span, .nxs-sk b, .tcard-skel) {
     animation: sk-pulse 1.2s ease-in-out infinite;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span) { animation: none; }
+  html:root:not(#_):not(#_) :is(.sk, .sk-text, .lu-skel span, .sx-row.sx-loading .sx-bar, .nx-sk-card b, .nx-sk-who i, .nx-sk-who b, .pd-skel span, .nxs-sk b, .tcard-skel) { animation: none; }
 }
 
 /* ---- Matchup page, a week loading (Matchup.tsx MatchSkel): the loaded card's rows with bars for names and numbers */
@@ -98,3 +98,48 @@ html:root:not(#_):not(#_):not(#_) .card.lu-list > .lu-wskel > .lu-wi { margin-le
 html:root:not(#_):not(#_) .lu-wskel .lu-wi :is(.lu-wi-txt, .btn) { color: transparent; background: var(--surface-3); border-color: transparent; box-shadow: none; border-radius: 6px; }
 html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .lu-wskel .lu-wi { animation: sk-pulse 1.2s ease-in-out infinite; } }
+
+/* ---- Skeleton to content ----------------------------------------------------------------------------------------
+   When a skeleton was really on screen, what replaces it fades in over 180ms instead of snapping (useLoadedIn in
+   src/loadedIn.ts decides; a cache hit never gets the class). Opacity only, in the skeleton's exact footprint, so
+   nothing moves. Reduced motion: no fade, the content is just there. */
+@keyframes sk-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .sk-in,
+  /* Lineup's list: the rows of a week that loaded, not the week stepper above them */
+  html:root:not(#_):not(#_):not(#_) .card.lu-list.lu-in > :not(.lu-weeknav),
+  /* Player sheet usage: the table and its note, under the header that stayed put */
+  html:root:not(#_):not(#_) .pd-blk.pd-in > :not(.ps-sub),
+  /* Their threats: the real rows, or the message, over where the ghosts were */
+  html:root:not(#_):not(#_) .thr-body.thr-in > :not(.thr-ghost) { animation: sk-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  /* The trade card is a big image; a touch longer */
+  html:root:not(#_):not(#_) img.tcard-in { animation: sk-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+}
+
+/* Skeletons that are the loaded element with a class on top (same nodes before and after): the bars dissolve into
+   the text as the class comes off. Color and background only, nothing that changes size. */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) :is(
+    .mw :is(.mw-pts, .mw-score small, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl, .mwf-pts, .mwf-note, .mwf-name > span, .mwf-msg),
+    .fo :is(.fo-pts, .fo-name > span),
+    .wv3-list :is(.wv-proj b, .wv-c-lu b),
+    .topk :is(.topk-label, .topk-name, .wv-meta, dt, dd, .topk-why, .topk-plan li > span),
+    .sx-verdict
+  ) { transition: color 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  /* Start / Sit: the dimmed rows ease back up (startsit.css holds the 120ms delay on the way down) and the verdict's
+     bar fades out under the words */
+  html:root:not(#_):not(#_) .sx-row { transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .sx-verdict { transition: color 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .sx-verdict::after { content: ""; position: absolute; left: 0; top: calc(50% - 0.6em); height: 1.2em; width: min(18em, 70%); border-radius: 6px; background: var(--surface-2); opacity: 0; pointer-events: none; transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .sx-verdict.sx-loading::after { opacity: 1; }
+}
+
+/* Lineup, a week that couldn't load: the skeleton's rows stay as hidden ghosts so the card keeps its height, and the
+   message sits over them (the way Their threats lays its message over hidden rows) */
+html:root:not(#_):not(#_) .lu-wskel.has-msg { position: relative; }
+html:root:not(#_):not(#_) .lu-wskel.has-msg > :not(.lu-wskel-msg) { visibility: hidden; animation: none; }
+html:root:not(#_):not(#_) .lu-wskel-msg {
+  /* Near the top, not the middle: the list is taller than a phone screen, so a centered line would sit below the fold */
+  position: absolute; inset: 0; margin: 0; display: grid; align-content: start; justify-items: center; padding: 40px 24px 0;
+  text-align: center; font-size: 0.8125rem; line-height: 1.5; color: var(--muted); text-wrap: balance;
+}

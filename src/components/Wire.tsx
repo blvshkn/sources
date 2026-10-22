@@ -2,6 +2,7 @@ import { Fragment, useContext, useState } from "react";
 import { denyOn } from "../deny";
 import { scoreTone, flipTone } from "../liveMath";
 import type { ReactNode } from "react";
+import { useLoadedIn } from "../loadedIn";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
@@ -217,8 +218,10 @@ function ThreatBody({ rows, msg }: { rows: ReactNode[] | null; msg?: { title: st
       <span className="thr-av" /><span className="wk-name"><span className="thr-n"><span className="thr-bar" />{"\u00a0"}</span><small><span className="thr-bar short" />{"\u00a0"}</small></span><span className="wk-pts"><span className="thr-bar num" /></span>
     </span>
   );
+  // Rows (or the message) that land after the ghosts were on screen fade in over them; a cached week is just there
+  const fadeIn = useLoadedIn(!rows && !msg);
   return (
-    <div className={`thr-body${msg ? " has-msg" : ""}${!rows && !msg ? " is-skel" : ""}`} aria-busy={!rows && !msg}>
+    <div className={`thr-body${msg ? " has-msg" : ""}${!rows && !msg ? " is-skel" : ""}${fadeIn ? " thr-in" : ""}`} aria-busy={!rows && !msg}>
       {[0, 1, 2].map((i) => (rows && rows[i]) ? <Fragment key={i}>{rows[i]}</Fragment> : ghost(i))}
       {msg && <div className="thr-msg" role="status"><b>{msg.title}</b><span>{msg.body}</span></div>}
     </div>

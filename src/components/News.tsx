@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Player } from "../data";
+import { useLoadedIn } from "../loadedIn";
 import { KIND_LABEL, NEWS_SOURCES, NewsItem, ago, byImpact, byNewest, sourcesLine, usePlayerNews, usePlayerRequest, useRosterNews } from "../news";
 import { PlayerContext, contextFor, impactFor, playerWeight, roleLabel, yourPlayers } from "../impact";
 import { Avatar } from "./Avatar";
@@ -111,6 +112,7 @@ function Skeleton({ n = 2, who }: { n?: number; who?: boolean }) {
 /** The player sheet's news: newest first, three to start. */
 export function PlayerNews({ p }: { p: Player }) {
   const { items, loading } = usePlayerNews(p);
+  const fadeIn = useLoadedIn(loading, p.id);
   const c = useMemo(() => contextFor(p), [p.id]);
   const list = byNewest(items);
   const [more, setMore] = useState(false);
@@ -120,8 +122,8 @@ export function PlayerNews({ p }: { p: Player }) {
     <section className="ps-games ps-news" id="ps-news" aria-label={`News on ${p.name}`} aria-busy={loading}>
       <div className="ps-sub"><b>News</b><span>{loading ? "Checking sources" : list.length ? `${list.length} ${list.length === 1 ? "story" : "stories"}` : NEWS_SOURCES.join(" · ")}</span></div>
       {loading ? <Skeleton n={2} />
-        : list.length ? <div className="nx-list">{shown.map((n, i) => <StoryCard key={n.id ?? n.url} n={n} impact={lines[i]} />)}</div>
-        : <p className="nx-empty">No recent news on {p.name}. We check {sourcesLine()} every 10 minutes.</p>}
+        : list.length ? <div className={`nx-list${fadeIn ? " sk-in" : ""}`}>{shown.map((n, i) => <StoryCard key={n.id ?? n.url} n={n} impact={lines[i]} />)}</div>
+        : <p className={`nx-empty${fadeIn ? " sk-in" : ""}`}>No recent news on {p.name}. We check {sourcesLine()} every 10 minutes.</p>}
       {list.length > 3 && <button /* dismiss-exempt: inline show-more list toggle, not an overlay */ type="button" className="nx-more" aria-expanded={more} onClick={() => setMore((m) => !m)}>{more ? "Show less" : `Show ${list.length - 3} more`}<Icon name="chev" size={14} /></button>}
     </section>
   );
@@ -317,6 +319,8 @@ export function RosterNews() {
     return [{ p, c, items, weight: (top.score ?? 0) + playerWeight(p, c) + (top.kind === "status" ? 15 : 0) }];
   }).sort((a, b) => b.weight - a.weight);
   const shown = all ? groups : groups.slice(0, 5);
+  // Only when the skeleton showed: a refresh with groups already on screen swaps in place (loadedIn.ts)
+  const fadeIn = useLoadedIn(loading && !groups.length);
 
   // The inbox can ask for a player's news; open his sheet when it does
   const [want, clearWant] = usePlayerRequest();
@@ -332,10 +336,10 @@ export function RosterNews() {
       <div className="wk-head"><h2 className="section-title">News on your players</h2><span className="tiny muted nxr-src">{NEWS_SOURCES.join(" · ")}</span></div>
       {loading && !groups.length ? <RosterSkeleton />
         : groups.length ? (
-          <div className="nxr-list">
+          <div className={`nxr-list${fadeIn ? " sk-in" : ""}`}>
             {shown.map(({ p, c, items }, i) => <PlayerGroup key={p.id} p={p} c={c} items={items} first={i === 0} onOpen={() => setSheet({ p, c })} />)}
           </div>
-        ) : <p className="nx-empty">No recent news on your players. We check {sourcesLine()} every 10 minutes.</p>}
+        ) : <p className={`nx-empty${fadeIn ? " sk-in" : ""}`}>No recent news on your players. We check {sourcesLine()} every 10 minutes.</p>}
       {groups.length > 5 && <button type="button" className="nx-more nxr-all" aria-expanded={all} onClick={() => setAll((a) => !a)}>{all ? "Show top 5 players" : `Show all players (${groups.length})`}<Icon name="chev" size={14} /></button>}
       {sheet && <PlayerSheet p={sheet.p} where={whereFor(sheet.c)} focus={sheet.news ? "news" : undefined} onClose={() => setSheet(null)} />}
     </section>

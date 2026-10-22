@@ -21,8 +21,7 @@ html:root:not(#_) .mw-win b.mw-result { min-width: 1.4em; text-align: center; }
 /* Loading: the same rows, text hidden behind soft bars */
 html:root:not(#_) .mw.is-skel :is(.mw-pts, .mw-score small, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
 html:root:not(#_) .mw.is-skel .mw-vs-pts small { visibility: hidden; }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .mw.is-skel :is(.mw-pts, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl) { animation: lw-pulse 1.2s ease-in-out infinite; } }
-@keyframes lw-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .mw.is-skel :is(.mw-pts, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl) { animation: sk-pulse 1.2s ease-in-out infinite; } }
 
 /* Their threats: always three rows tall. Loading shows ghost rows; an empty week lays its message over hidden ones */
 html:root:not(#_) .thr-sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -37,7 +36,7 @@ html:root:not(#_) .thr-bar { display: inline-block; width: 128px; max-width: 100
 html:root:not(#_) .thr-bar.short { width: 92px; }
 html:root:not(#_) .thr-bar.num { width: 34px; }
 html:root:not(#_) .thr-body.has-msg .thr-ghost { visibility: hidden; }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .thr-body.is-skel :is(.thr-av, .thr-bar) { animation: lw-pulse 1.2s ease-in-out infinite; } }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .thr-body.is-skel :is(.thr-av, .thr-bar) { animation: sk-pulse 1.2s ease-in-out infinite; } }
 html:root:not(#_) .thr-msg { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 6px; padding: 0 16px; text-align: center; }
 html:root:not(#_) .thr-msg b { font-size: 0.9375rem; font-weight: 600; }
 html:root:not(#_) .thr-msg span { max-width: 32ch; font-size: 0.8125rem; color: var(--muted); }
@@ -50,7 +49,7 @@ html:root:not(#_) .lu-wskel .lu-name { width: 9em; }
 html:root:not(#_) .lu-wskel .lu-meta { width: 5em; }
 html:root:not(#_) .lu-wskel .lu-pts { width: 3em; height: 1.1em; }
 html:root:not(#_) .lu-wskel .lu-list-head b { width: 5em; }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .lu-wskel .lu-row-skel { animation: lw-pulse 1.2s ease-in-out infinite; } }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_) .lu-wskel .lu-row-skel { animation: sk-pulse 1.2s ease-in-out infinite; } }
 
 /* Matchup page: week stepper between the back link and the card */
 html:root:not(#_) .lu-weeknav.mu-weeks { max-width: 360px; margin: 0 auto 12px; padding: 0; }

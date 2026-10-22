@@ -1275,9 +1275,7 @@ h1, h2, h3 { letter-spacing: -0.015em; }
 .lu-result.w { background: var(--good-soft); color: var(--good); } .lu-result.l { background: var(--bad-soft); color: var(--bad); }
 .lu-week-sum:not(:has(.lu-result)) { grid-template-columns: 1fr; }
 .lu-skel { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 18px; }
-.lu-skel span { height: 52px; border-radius: 12px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
-@keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .lu-skel span { animation: none; } }
+.lu-skel span { height: 52px; border-radius: 12px; background: var(--surface-2); }
 .lu-slot.s-K { background: var(--k-bg); }
 .lu-slot.s-DEF { background: color-mix(in srgb, #94a3b8 60%, #fff); }
 .lu-pos.p-K { color: var(--k); } .lu-pos.p-DEF { color: #94a3b8; }
@@ -2400,9 +2398,7 @@ button.sb2-open { display: grid; width: 100%; padding: 0; margin: 0; border: 0; 
 .tcard-skel { border-radius: 24px; }
 .tcard img { height: auto; object-fit: contain; background: transparent; }
 .tcard-skel { aspect-ratio: 4 / 5; }
-.tcard-skel { background: linear-gradient(110deg, var(--surface-2) 30%, var(--surface-3) 50%, var(--surface-2) 70%); background-size: 200% 100%; animation: tc-shim 1.2s linear infinite; }
-@keyframes tc-shim { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .tcard-skel { animation: none; } }
+.tcard-skel { background: var(--surface-2); } /* pulses on opacity with the other skeletons (loadin.css) */
 .tcard figcaption { font-size: 0.8125rem; color: var(--muted); }
 .tcard figcaption a { color: rgb(var(--tab-rgb)); font-weight: 600; }
 @media (min-width: 861px) { .tcard img, .tcard-skel { max-height: 640px; width: auto; max-width: 100%; margin: 0 auto; } }

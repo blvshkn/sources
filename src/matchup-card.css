@@ -285,5 +285,5 @@ html:root:not(#_):not(#_) .fo-flat.fo-st-pre .fo-foot > .fo-line { font-weight: 
 /* Loading: the same rows as placeholders */
 html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name > span) { color: transparent !important; border-radius: 6px; background: var(--surface-3); }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name > span) { animation: lw-pulse 1.2s ease-in-out infinite; }
+  html:root:not(#_):not(#_) .fo.is-skel :is(.fo-pts, .fo-name > span) { animation: sk-pulse 1.2s ease-in-out infinite; }
 }

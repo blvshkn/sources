@@ -68,7 +68,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-bio dt { font: 500 0.6875r
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-bio dd { margin: 0; font: 600 0.9375rem/1.15 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-bio .ph-col dd { font-family: Geist, system-ui, sans-serif; white-space: normal; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-skel { display: flex; gap: 20px; height: 34px; align-items: stretch; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-skel i { width: 48px; border-radius: 6px; background: var(--surface-2); animation: pd-pulse 1.2s ease-in-out infinite alternate; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-skel i { width: 48px; border-radius: 6px; background: var(--surface-2); animation: sk-pulse 1.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-skel i { animation: none; } }
 
 /* ---------- Ranks: a band of equal tiles ---------- */

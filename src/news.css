@@ -86,7 +86,7 @@ html:root:not(#_):not(#_) .nx-skel { display: grid; gap: 10px; }
 html:root:not(#_):not(#_) .nx-sk-card { display: grid; gap: 8px; padding: 14px; min-height: 148px; box-sizing: border-box; border-radius: var(--r-inner, 12px); background: var(--surface-2); border: 1px solid var(--line); }
 html:root:not(#_):not(#_) .nx-sk-card b, html:root:not(#_):not(#_) .nx-sk-who i, html:root:not(#_):not(#_) .nx-sk-who b {
   display: block; height: 10px; border-radius: 5px;
-  background: linear-gradient(90deg, var(--surface-3), var(--surface-2), var(--surface-3)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite;
+  background: var(--surface-3); /* pulses on opacity (loadin.css) */
 }
 html:root:not(#_):not(#_) .nx-sk-card b.s { width: 38%; }
 html:root:not(#_):not(#_) .nx-sk-card b.h { height: 14px; width: 82%; margin-bottom: 2px; }
@@ -254,7 +254,7 @@ html:root:not(#_):not(#_) .nxs-skel { padding: 12px 0; }
 html:root:not(#_):not(#_) .nxs-sk { display: grid; gap: 8px; padding: 12px 0; }
 html:root:not(#_):not(#_) .nxs-sk b {
   display: block; height: 10px; border-radius: 5px;
-  background: linear-gradient(90deg, var(--surface-3), var(--surface-2), var(--surface-3)); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite;
+  background: var(--surface-2); /* pulses on opacity (loadin.css) */
 }
 html:root:not(#_):not(#_) .nxs-sk b.s { width: 30%; }
 html:root:not(#_):not(#_) .nxs-sk b.h { height: 13px; width: 78%; }

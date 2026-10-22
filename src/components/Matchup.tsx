@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { useLoadedIn } from "../loadedIn";
 import { WeekStepper } from "./WeekStepper";
 import { Slot, pendingMatchupWeek, clearMatchupWeek } from "../weekMatch";
 import { LEAGUE, OPPONENT_ID, PLAYERS, Player, SpecialPlayer, WEEK, YOU, onBye, playerById, sleeperUrl, teamById } from "../data";
@@ -264,6 +265,8 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   useEffect(() => setOpen(null), [week]); // eslint-disable-line react-hooks/exhaustive-deps
   const { setCmp, infoFor, layers } = useMatchupCompare(() => setOpen(null));
   const back = <BackBtn onBack={onBack} />;
+  // A week that showed its skeleton fades in when it lands; a cached week is just there (loadedIn.ts)
+  const fadeIn = useLoadedIn(!m && !err, week);
   if (!m && !err) return <>{back}{stepper}<MatchSkel week={week} /></>;
   if (!m || !m.opp) return (
     <>{back}{stepper}
@@ -287,7 +290,7 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   return (
     <>
       {back}{stepper}
-      <section className="card mu" aria-label={`Week ${week} matchup`}>
+      <section className={`card mu${fadeIn ? " sk-in" : ""}`} aria-label={`Week ${week} matchup`}>
         <FaceOff week={week} state={past ? "final" : "pre"} chance={chance} res={res} flat
           label={`${wi.changed && !past ? "Your what-if" : "You"} ${m.me.total.toFixed(1)}, ${opp.team.name} ${opp.total.toFixed(1)}. ${res ? `Final, ${res.short}` : `Projected, ${chance} percent to win`}`}
           you={{ t: YOU, pts: m.me.total, dim: wkTone === "trail", note: !past && wi.changed ? "what-if" : undefined }}

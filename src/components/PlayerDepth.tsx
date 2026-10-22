@@ -1,6 +1,7 @@
 // The player sheet's decision blocks: this week's outcome range, the lineup call, recent usage and the matchup,
 // plus the trimmed news row. Everything is computed from league data the app already has; the words are ours.
 import { useEffect, useState } from "react";
+import { useLoadedIn } from "../loadedIn";
 import { kickWhen, kickWhenIn, moveLock, useKickoffs } from "../kickoff";
 import { LEAGUE, Player, Pos, SLEEPER_SET, TEAMS, Team, WEEK, YOU, gameState, onBye, sleeperUrl, teamNick } from "../data";
 import { injuryWord } from "../bye";
@@ -326,12 +327,13 @@ function usePosWeeks(p: Player): Load<PosWeeks> {
 const show = (v: number, pct?: boolean, dec?: number) => (pct ? `${Math.round(v * 100)}%` : v.toFixed(dec ?? 1));
 
 export function UsageBlock({ p, data }: { p: Player; data: Load<PosWeeks> }) {
+  const fadeIn = useLoadedIn(data.state === "loading", p.id);
   const u: Load<Usage> = data.state !== "ready" ? data : (() => {
     const v = usageFor(p, data.v);
     return v ? { state: "ready" as const, v } : { state: "none" as const, why: WEEK <= 1 ? "No games played yet this season." : `No stat lines from Sleeper for ${p.name} yet.` };
   })();
   return (
-    <section className="pd-blk pd-usage" aria-label="Usage and role" aria-busy={u.state === "loading"}>
+    <section className={`pd-blk pd-usage${fadeIn ? " pd-in" : ""}`} aria-label="Usage and role" aria-busy={u.state === "loading"}>
       <div className="ps-sub"><b>Season usage</b><span>{u.state === "ready" ? `${u.v.games} ${u.v.games === 1 ? "game" : "games"}` : ""}</span></div>
       {u.state === "loading" ? <div className="pd-skel" aria-hidden="true">{Array.from({ length: 5 }, (_, i) => <span key={i} />)}</div>
         : u.state === "none" ? <p className="ps-none">{u.why}</p>
@@ -370,6 +372,7 @@ const oppOf = (p: Player, week: number) => {
 
 export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks>; week: number }) {
   useKickoffs(week);
+  const fadeIn = useLoadedIn(data.state === "loading", p.id);
   const { cell, team: opp, away, raw } = oppOf(p, week);
   const bye = week === WEEK ? onBye(p.nfl) : !!cell && !cell.opp;
   if (bye || !opp) return (
@@ -391,7 +394,7 @@ export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks
       </div>
       <dl className="pd-mx">
         {data.state === "loading" ? <div className="pd-skel" aria-hidden="true"><span /><span /></div> : d ? (
-          <div>
+          <div className={fadeIn ? "sk-in" : undefined}>
             <dt><Term t={`Allows to ${POS_PLURAL[p.pos]}`} tip={`Fantasy points per game ${opp} has given up to every ${p.pos} it has faced this season${d.demo ? " (demo estimate)" : `, from Sleeper's weekly stats over ${d.games} ${d.games === 1 ? "game" : "games"}`}. League average is ${f1(d.leagueAvg)}.`} /></dt>
             <dd><b>{f1(d.perGame)}</b><span className={`pd-rk${dTone ? ` t-${dTone}` : ""}`}>{d.rank <= d.of / 2 ? `${ord(d.rank)} most` : `${ord(d.of + 1 - d.rank)} fewest`}</span></dd>
           </div>
@@ -411,6 +414,7 @@ export function MatchupBlock({ p, data, week }: { p: Player; data: Load<PosWeeks
 // ---- A week other than this one --------------------------------------------------------
 /** Past week: what he scored, his stat line and snaps. Upcoming week: projection, opponent, bye and status. */
 export function WeekCard({ p, week, data, avg }: { p: Player; week: number; data: Load<PosWeeks>; avg: number | null }) {
+  const fadeIn = useLoadedIn(data.state === "loading", p.id);
   const { cell, team: opp, away } = oppOf(p, week);
   const bye = !!cell && !cell.opp;
   const head = (k: string, big: string, cls = "") => (
@@ -437,8 +441,8 @@ export function WeekCard({ p, week, data, avg }: { p: Player; week: number; data
             <p className="pd-line">
               <span className="pd-k">Stat line</span>
               {data.state === "loading" ? <span className="pd-skel" aria-hidden="true"><span /></span>
-                : row ? <b>{statLine(p.pos, row.stats) || "No counting stats"}</b>
-                : <span className="muted">{pts ? "Stat line not available for this week." : "Did not play."}</span>}
+                : row ? <b className={fadeIn ? "sk-in" : undefined}>{statLine(p.pos, row.stats) || "No counting stats"}</b>
+                : <span className={`muted${fadeIn ? " sk-in" : ""}`}>{pts ? "Stat line not available for this week." : "Did not play."}</span>}
             </p>
             {role && <p className="pd-fine">{role} in Week {week}.</p>}
           </div>

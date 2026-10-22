@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
+import { useLoadedIn } from "../loadedIn";
 import { LineupWeek, gameIn } from "../weekMatch";
 import { kickWhen, moveLock, oppText, useKickoffs } from "../kickoff";
 import { injuryDetail, kdefHint } from "../gameDay";
@@ -388,17 +389,19 @@ function WeekPanel({ v, menu, onInfo, onCompare }: { v: WeekView; menu: SwapMenu
 }
 
 /** Loading a week: the same rows WeekPanel draws (starters, bench), so the list doesn't jump when it lands. */
-function WeekSkel({ week }: { week: number }) {
+function WeekSkel({ week, msg }: { week: number; msg?: string | null }) {
   const starters = order().length, bench = Math.max(0, YOU.roster.length + (YOU.special?.length ?? 0) - starters);
   const row = (k: string, bench?: boolean) => <div key={k} className={`lu-row lu-row-skel${bench ? " bench" : ""}`} aria-hidden="true"><span className="lu-slot" /><span className="ir-empty" /><span className="lu-who"><span className="lu-name">&nbsp;</span><span className="lu-meta">&nbsp;</span>{week < WEEK && <span className="lu-line">&nbsp;</span>}</span><span className="lu-pts" /></div>;
   return (
-    <div className="lu-wskel" aria-busy="true" aria-label={`Loading Week ${week}`}>
+    // Couldn't load: the same rows stay as hidden ghosts under the message, so the card keeps its height
+    <div className={`lu-wskel${msg ? " has-msg" : ""}`} aria-busy={!msg} aria-label={msg ? undefined : `Loading Week ${week}`}>
       <div className="lu-list-head" aria-hidden="true"><b>&nbsp;</b></div>
       {Array.from({ length: starters }, (_, i) => row(`s${i}`))}
       {/* A week ahead gets the what-if note under the starters, so its frame is here too */}
       {week > WEEK && <div className="lu-wi" aria-hidden="true"><p className="lu-wi-txt">&nbsp;</p><div className="lu-wi-btns"><span className="btn btn-sm">&nbsp;</span></div></div>}
       <div className="lu-list-head sub" aria-hidden="true"><b>&nbsp;</b></div>
       {Array.from({ length: bench }, (_, i) => row(`b${i}`, true))}
+      {msg && <p className="lu-wskel-msg" role="status">{msg}</p>}
     </div>
   );
 }
@@ -634,6 +637,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     loadWeek(week).then((v) => live && setWv(v)).catch(() => live && setWErr("Couldn't load that week from Sleeper. Try again in a minute."));
     return () => { live = false; };
   }, [week]);
+  const weekReady = week !== WEEK ? (wv?.week === week ? wv : peekWeek(week)) : null;
+  // A week that showed its skeleton fades its rows in when it lands; a cached week is just there (loadedIn.ts)
+  const weekIn = useLoadedIn(week !== WEEK && !wErr && !weekReady, week);
   // The lineup shown this week is the shared what-if (lineupWhatIf): Sleeper's until you swap, here or in the matchup
   const now = useNowLineup();
   const ms = nowScore(live, now.mine, now.mineK, now.changed);
@@ -688,9 +694,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
-            <section className="card lu-list" aria-label="Starters and bench">
+            <section className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
-              {week !== WEEK ? (wErr ? <p className="small muted" style={{ padding: "4px 16px 18px" }}>{wErr}</p> : (wv?.week === week ? wv : peekWeek(week)) ? <WeekPanel v={(wv?.week === week ? wv : peekWeek(week))!} menu={menu} onInfo={openPlayer} onCompare={setSwapCmp} /> : <WeekSkel week={week} />) : <>
+              {week !== WEEK ? (wErr ? <WeekSkel week={week} msg={wErr} /> : weekReady ? <WeekPanel v={weekReady} menu={menu} onInfo={openPlayer} onCompare={setSwapCmp} /> : <WeekSkel week={week} />) : <>
               {/* Nothing to do (lineup already optimal, final or locked): no Start / Sit block at all (Zach) */}
               {(moves.length > 0 || (!allLocked && best.gain > 0)) && <div className={`ss${moves.length ? "" : " ok"}`} aria-label="Start and sit">
                 <div className="ss-head">

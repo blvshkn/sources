@@ -15,7 +15,8 @@ import { IdeaScan } from "./IdeaScan";
 import { ideaSteps } from "../reads";
 import type { Answer, Trade } from "../engine";
 import type { Steps } from "../steps";
-import { draftPitch } from "../pitch";
+import { cardHeight, draftPitch } from "../pitch";
+import { useLoadedIn } from "../loadedIn";
 import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
 import { useLive, startersOf, playCount } from "../live";
 import { eff } from "../engine";
@@ -106,6 +107,7 @@ export function Landing({ onLive, onDemo }: {
     drawCard(demo.trade, "216, 242, 74", { photos: false }).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
     return () => { alive = false; if (url) URL.revokeObjectURL(url); };
   }, [demo.trade]);
+  const cardIn = useLoadedIn(!cardUrl);
 
   const connect = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -288,7 +290,7 @@ export function Landing({ onLive, onDemo }: {
                   </div>
                   <div className="sms-feed">
                     <span className="sms-day">Today</span>
-                    <figure className="sms-img">{cardUrl ? <img src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" />}</figure>
+                    <figure className="sms-img">{cardUrl ? <img className={cardIn ? "tcard-in" : undefined} src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" style={demo.trade ? { aspectRatio: `1080 / ${cardHeight(demo.trade)}` } : undefined} />}</figure>
                     <p className="sms-out">{draftPitch(demo.trade, "friendly")}</p>
                     <span className="sms-meta">Delivered</span>
                     <span className="sms-typing" role="img" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
