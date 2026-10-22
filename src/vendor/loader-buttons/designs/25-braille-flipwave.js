@@ -2,9 +2,11 @@
 // (https://github.com/Appllama/25-unique-loaders, packages/loader-buttons).
 // License: Apache-2.0, per the package.json. See the NOTICE section in README.md.
 // Changed from the package: colors (the --lb-ink and --lb-paper lines in the style block) and, for Sources' pixel
-// icons (Oct 22), each dot's shape: a pixel circle (a 4 x 4 block with its corners cut) instead of a round dot.
+// icons (Oct 22), each dot's shape: a pixel circle (a 4 x 4 block with its corners cut) instead of a round dot,
+// and the timing: frames step at 12 a second (PIXEL_FPS) instead of every display frame.
 
 const DURATION = 2.9;
+const PIXEL_FPS = 12;
 const FLIP_DURATION = 0.31;
 const CURL_START = 0.74;
 const CURL_STEP = 0.024;
@@ -299,7 +301,9 @@ export default {
     return {
       render(timeSeconds, deltaSeconds) {
         void deltaSeconds;
-        applyFrame(timeSeconds);
+        // Sources pixel motion (Zach, Oct 22): the flip wave advances in 16-bit frames, 12 a second, instead of
+        // gliding, so the pixel dots step the way the pixel icons do.
+        applyFrame(Math.floor(timeSeconds * PIXEL_FPS) / PIXEL_FPS);
       },
 
       resize(widthCssPixels, heightCssPixels, devicePixelRatio) {
