@@ -490,7 +490,9 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     setTab(t as Tab);
     // A new screen is a new history entry, so the browser's Back steps back through the app (hashchange brings the
     // tab back) instead of leaving it. Same screen, new section, just updates the entry.
-    try { if (location.hash.slice(1) !== t) history.pushState(null, "", `#${t}`); else history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
+    // Inside the landing's phones (App.tsx IN_FRAME) a tab change replaces the entry, so the page's Back button leaves the
+    // page instead of stepping back through taps in the phone
+    try { if (location.hash.slice(1) !== t && !document.documentElement.classList.contains("in-frame")) history.pushState(null, "", `#${t}`); else history.replaceState(null, "", `#${t}`); } catch { /* ignore */ }
     // A team deep link (League) is opened and scrolled to by the Needs list itself
   };
   // The logo goes home: Overview, back at the top (go() alone won't scroll if you're already there)

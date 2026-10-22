@@ -151,6 +151,7 @@ export function Landing({ onLive, onDemo }: {
   // Hero phones: each screen draws the app at its 390px width and scales it to fit (--hp-s)
   const phonesRef = useRef<HTMLDivElement>(null);
   const foSec = useRef<HTMLElement>(null);
+  const tradeSec = useRef<HTMLElement>(null);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
@@ -301,6 +302,7 @@ export function Landing({ onLive, onDemo }: {
   const hero = useRef<HTMLElement>(null);
   useEffect(() => (hero.current ? heroDepth(hero.current, env.current) : undefined), []);
   useEffect(() => (foSec.current ? heroDepth(foSec.current, null) : undefined), []);
+  useEffect(() => (tradeSec.current ? heroDepth(tradeSec.current, null) : undefined), []);
 
   // The trade idea's buttons start the sample league the way "Or explore a sample league" does, then the app opens
   // this deal: in the builder, or with its pitch written (demoHandoff.ts). A handoff left from an earlier visit is dropped.
@@ -389,22 +391,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="trade" go={appsGo} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <div className="hp-app">
-                <p className="hp-title">Sunday, live</p>
-                <div className="lu-list hp-live">
-                  {liveRows.slice(0, 4).map((p) => {
-                    const g = gameNow(showLive, p.id, p.nfl);
-                    return (
-                      <div key={p.id} className={`lu-row${playCls(g)}`}>
-                        <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
-                        <Avatar p={p} size={40} />
-                        <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span></span></span>
-                        <PtsCell id={`hp-${p.id}`} g={g} proj={eff(p, true)} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <img className="hp-poster" src="/phones/trade.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
             </div>
           </div>
           <div className="hp-phone hp-back hp-right ld2-phone" aria-hidden="true" ref={setInert}>
@@ -414,10 +401,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="waivers" go={appsGo} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <div className="hp-app">
-                <p className="hp-title">Set optimal lineup</p>
-                {optDemo.swaps.length > 0 ? <SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /> : <p className="ld2-opt-none">{optDemo.summary}</p>}
-              </div>
+              <img className="hp-poster" src="/phones/waivers.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
             </div>
           </div>
           <div className="hp-phone hp-front ld2-phone">
@@ -427,17 +411,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="wire" go={appsGo} front={true} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <div className="hp-app">
-                <p className="hp-title" aria-hidden="true">Trade ideas</p>
-                {demo.trade && (
-                  <article className="card nudge ld2-idea ld2-card c2">
-                    <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
-                    {/* Styled as the card heading it is (h3), but read as level 2: it's the first heading after the h1 */}
-                    <h3 aria-level={2}>{demo.mike.name} needs <em>a TE.</em></h3>
-                    <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
-                  </article>
-                )}
-              </div>
+              <img className="hp-poster" src="/phones/wire.webp" width={780} height={1590} alt="" decoding="async" fetchPriority="high" />
             </div>
           </div>
         </div>
@@ -475,6 +449,28 @@ export function Landing({ onLive, onDemo }: {
               </span>)}
         </p>
       </section>
+
+      {/* The trade idea, large and in its own section (Zach, Oct 22: not in the phone, further down where trades are the
+          subject). The same card as Overview, with the hero's depth: tilt on pointer, layers that lift apart. */}
+      {demo.trade && (
+        <section className="ld-section ld2-tradesec" aria-labelledby="ld-trades" ref={tradeSec}>
+          <div className="ld2-tradesec-copy">
+            <SplitHead id="ld-trades" a="Every deal," b="built for both sides." />
+            <p className="ld2-tradesec-sub">Source finds the trade the other manager is already shopping for, checks it against both starting lineups, and only shows it when you both come out ahead.</p>
+          </div>
+          <div className="hd-card hd-trade" data-hd-pin=".ti-actions">
+            <div className="hd-tilt"><div className="hd-pose">
+              <div className="ld-preview ld2-preview">
+                <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
+                  <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
+                  <h3>{demo.mike.name} needs <em>a TE.</em></h3>
+                  <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
+                </article>
+              </div>
+            </div></div>
+          </div>
+        </section>
+      )}
 
       <LandingSteps trade={demo.trade} />
 
