@@ -1,16 +1,17 @@
 /* Player header headshot (Zach): no circle. The photo stands on the team wash by itself, larger, and fades into the
    background at the bottom so it reads as a cutout rather than a framed avatar. Only when there's a photo: initials
-   and defense logos keep their circle. Phones 148px wide, wider screens 180px; only the last fifth fades. */
+   and defense logos keep their circle. Phones 124x136 (Zach's drawn size, from just under the handle to the bio row), wider screens 160x172; the
+   photo fills the box, cropped from the top, and only the last fifth fades. Uses Sleeper's full-size headshot. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) {
-  width: 148px !important; height: 128px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
-  margin: -20px -32px -10px -14px;
+  width: 124px !important; height: 136px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
+  margin: -30px -36px -8px -4px;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av > .av-photo {
-  border-radius: 0 !important; background: none !important; object-fit: contain; object-position: 50% 100%;
+  border-radius: 0 !important; background: none !important; object-fit: cover; object-position: 50% 0%;
   -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%); mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 @media (min-width: 768px) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) { width: 180px !important; height: 156px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) { width: 160px !important; height: 172px !important; }
 }
 
 /* The header sits higher (Zach): it starts 24px sooner, right under the close button (which moves up 8px), and the team logo rides higher behind it, bleeding off the sheet's top edge. */
@@ -26,3 +27,4 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-logo { top: -104px
 @media (max-width: 767.98px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph:not(.ph-slim) { grid-template-areas: "art who" "bio bio" "rank rank"; }
 }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) .ph-name { text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55); }
