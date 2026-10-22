@@ -1,0 +1,46 @@
+/* Live win % bar, option A (Zach, Oct 22): heartbeat with color flow. Replaces the soft white sweep and the drifting
+   stripe texture on live face-off bars (matchup-card.css). The fill, its fade and its growth stay as they are.
+
+   Flow (::before): a band of a richer shade of the bar's own color travels from the outer edge to the tip. The band is
+   45% of the visible fill, so it crosses a short bar and a long bar in the same time. Beat (::after): as the band
+   lands, the tip beats once, a white core inside a halo of that richer color. One beat every 2.4s. Both are clipped
+   by the fill's pill. Only transform and opacity animate.
+
+   Green is the leader, red the trailer (FaceOff sets .up / .down by win %). The red runs calmer (Zach): its band is
+   about half strength and its beat dimmer and warmer, with no hard white. Final, Projected and Scored bars stay
+   still, and with reduced motion there is no flow or beat. */
+html:root:not(#_):not(#_):not(#_) .fo-side.up { --fo-rich: #21D45B; --fo-band: var(--fo-rich); --fo-core: #FFFFFF; --fo-halo: var(--fo-rich); }
+html:root:not(#_):not(#_):not(#_) .fo-side.down { --fo-rich: #E0685A; --fo-band: color-mix(in srgb, var(--fo-rich) 55%, transparent); --fo-core: rgba(255, 226, 220, 0.55); --fo-halo: color-mix(in srgb, var(--fo-rich) 45%, transparent); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The flow band: 45% of the visible fill wide, starting just off the outer edge */
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-bar i::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: auto; width: calc(45% * var(--v, 0)); pointer-events: none;
+    background: linear-gradient(90deg, transparent 0%, var(--fo-band, transparent) 50%, transparent 100%);
+    opacity: 0; transform: translateX(-100%); will-change: transform, opacity;
+    animation: fo-flow calc(2400ms * var(--mo, 1) / 1.75) cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::before { left: auto; right: 0; transform: translateX(100%); animation-name: fo-flow-back; }
+  /* -100% to 222.2% of the band's own width (45% of the fill) carries it from just off the outer edge to the tip */
+  @keyframes fo-flow { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 55% { transform: translateX(222.2%); opacity: 1; } 56%, 100% { transform: translateX(222.2%); opacity: 0; } }
+  @keyframes fo-flow-back { 0% { transform: translateX(100%); opacity: 0; } 15% { opacity: 1; } 55% { transform: translateX(-222.2%); opacity: 1; } 56%, 100% { transform: translateX(-222.2%); opacity: 0; } }
+
+  /* The beat: a 60px glow whose bright end sits on the tip */
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-bar i::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--v, 0) * 100% - 60px); right: auto; width: 60px; pointer-events: none;
+    background: radial-gradient(60px 10px at 100% 50%, var(--fo-core, #fff) 0, var(--fo-halo, transparent) 34%, transparent 76%);
+    opacity: 0; transform: none; will-change: opacity;
+    animation: fo-beat calc(2400ms * var(--mo, 1) / 1.75) ease-out infinite;
+  }
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::after {
+    left: auto; right: calc(var(--v, 0) * 100% - 60px);
+    background: radial-gradient(60px 10px at 0 50%, var(--fo-core, #fff) 0, var(--fo-halo, transparent) 34%, transparent 76%);
+  }
+  @keyframes fo-beat { 0%, 48% { opacity: 0; } 58% { opacity: 1; } 90%, 100% { opacity: 0; } }
+
+  /* An even bar (no leader) and a loading face-off stay still */
+  html:root:not(#_):not(#_):not(#_) .fo-side:not(.up):not(.down) .fo-bar i::before,
+  html:root:not(#_):not(#_):not(#_) .fo-side:not(.up):not(.down) .fo-bar i::after,
+  html:root:not(#_):not(#_):not(#_) .fo.is-skel .fo-bar i::before,
+  html:root:not(#_):not(#_):not(#_) .fo.is-skel .fo-bar i::after { animation: none; display: none; }
+}
