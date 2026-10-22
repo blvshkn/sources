@@ -36,7 +36,7 @@ export function confetti(host: HTMLElement, from: DOMRect): () => void {
   const t0 = performance.now();
   let f = 0, raf = 0;
   const step = (now: number) => {
-    const want = Math.min(T, Math.floor((now - t0) / FRAME));
+    const want = Math.max(0, Math.min(T, Math.floor((now - t0) / FRAME)));
     while (f < want) {
       f++;
       for (const q of P) {

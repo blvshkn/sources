@@ -46,7 +46,8 @@ export function useCountTogether(key: string | undefined, targets: number[], { r
     const t0 = performance.now();
     setRunning(true);
     const step = (now: number) => {
-      const e = easeOut(Math.min(1, (now - t0) / dur));
+      // rAF stamps the frame start, which can be a hair before t0: clamp, so a count never dips below its start
+      const e = easeOut(Math.max(0, Math.min(1, (now - t0) / dur)));
       const next = targets.map((t, i) => from[i] + (t - from[i]) * e);
       shown.current = next; setVals(next);
       if (e < 1) raf.current = requestAnimationFrame(step); else { shown.current = targets; setVals(targets); setRunning(false); pending.delete(key); }

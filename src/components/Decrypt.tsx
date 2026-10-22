@@ -21,7 +21,7 @@ export function Decrypt({ text, hold = false }: { text: string; hold?: boolean }
     const per = mo(22 / 1.75), t0 = performance.now();
     let raf = 0;
     const step = (now: number) => {
-      const n = Math.floor((now - t0) / per);
+      const n = Math.max(0, Math.floor((now - t0) / per));
       if (n >= text.length) { setFrame(null); return; }
       const tail = text.slice(n, n + 6).replace(/\S/g, () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)]);
       setFrame({ head: text.slice(0, n), tail, rest: text.slice(n + 6) });

@@ -64,7 +64,7 @@ export function PullRefresh({ onSync }: { onSync: () => Promise<() => void> }) {
       cancelAnimationFrame(raf);
       if (reduced() || ms <= 0) { fn(1); done?.(); return; }
       const t0 = performance.now();
-      const step = (now: number) => { const t = Math.min(1, (now - t0) / ms); fn(ease(t)); if (t < 1) raf = requestAnimationFrame(step); else done?.(); };
+      const step = (now: number) => { const t = Math.max(0, Math.min(1, (now - t0) / ms)); fn(ease(t)); if (t < 1) raf = requestAnimationFrame(step); else done?.(); };
       raf = requestAnimationFrame(step);
     };
 
