@@ -1,6 +1,6 @@
 /* Trade: the sticky "Your roster / Them" switch on phones and small tablets. Zach: since it sticks under the nav, it
    should read as part of the nav, so it drops its own pill backing and sits on a full-width fade that starts at the
-   nav's dark (#0D0E0D at 90%, nav.css) and runs to clear. A matching blur fades out with it, like the nav's own. The
+   nav's dark (#0F1110 at 90%, top-nav-match.css) and runs to clear. A matching blur fades out with it, like the nav's own. The
    selected tab keeps its pill. */
 @media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_) .rosters .side-switch {
@@ -9,8 +9,8 @@
   html:root:not(#_):not(#_):not(#_) .rosters .side-switch::before {
     content: ""; position: absolute; z-index: -1; pointer-events: none;
     top: -1px; bottom: -28px; left: 50%; width: 100vw; transform: translateX(-50%);
-    background: linear-gradient(rgba(13, 14, 13, 0.9) 0%, rgba(13, 14, 13, 0.9) 45%, rgba(13, 14, 13, 0) 100%);
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    background: linear-gradient(rgba(15, 17, 16, 0.9) 0%, rgba(15, 17, 16, 0.9) 45%, rgba(15, 17, 16, 0) 100%);
+    -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
     -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent);
   }
   @media (prefers-reduced-transparency: reduce) {

@@ -1,0 +1,24 @@
+/* Top nav matches the bottom tab bar (Zach). When scrolled, the bar takes the tab bar's exact surface: #0F1110 at 90%
+   with a full 24px blur, the same 0 4 20 8 black-at-15% shadow pointed down, and the tab bar's 14px fade, flipped to
+   hang below the bar. The earlier 1px blur let text read through the top bar while the bottom one frosted it.
+   Before scrolling, the bar stays clear, as it was. */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::after {
+    content: "" !important; display: block !important; position: absolute; z-index: -1; pointer-events: none;
+    left: 0; right: 0; top: calc(-1 * env(safe-area-inset-top, 0px)); bottom: 0; height: auto; margin: 0;
+    background: rgba(15, 17, 16, 0.9) !important;
+    -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
+    box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::before {
+    content: "" !important; display: block !important; position: absolute; z-index: -1; pointer-events: none;
+    left: 0; right: 0; top: 100%; bottom: auto; height: 14px; margin: 0;
+    background: linear-gradient(rgba(18, 20, 19, 0.7), rgba(18, 20, 19, 0)) !important;
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important; -webkit-mask-image: none !important; mask-image: none !important;
+  }
+  /* Tablet had its own scrolled fill on the bar itself; the layers above now carry it */
+  html[data-scrolled]:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: none !important; }
+  @media (prefers-reduced-transparency: reduce) {
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::after { background: #0F1110 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  }
+}
