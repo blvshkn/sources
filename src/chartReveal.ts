@@ -15,7 +15,8 @@ export function chartReveal(root: HTMLElement) {
     if (e.isIntersecting) { e.target.classList.add("seen"); if (still.has(e.target)) e.target.classList.add("seen-still"); io.unobserve(e.target); }
     still.delete(e.target);
   }), { rootMargin: "0px 0px -8% 0px" });
-  const swap = (n: Element) => !document.documentElement.hasAttribute("data-entering") && !!n.closest("#main") && !n.closest(OVERLAY);
+  // A page you've already seen this visit (data-revisit) draws every chart settled, even ones you scroll down to
+  const swap = (n: Element) => (document.documentElement.hasAttribute("data-revisit") || !document.documentElement.hasAttribute("data-entering")) && !!n.closest("#main") && !n.closest(OVERLAY);
   const add = (n: Element) => { if (n.classList.contains("seen")) return; if (swap(n)) still.add(n); io.observe(n); };
   const watch = (el: Element) => {
     if (el.matches(CHART_BARS)) add(el);

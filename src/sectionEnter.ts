@@ -9,16 +9,15 @@
  *  of a section entrance or when scrolled to, never on a tab or week swap.
  *
  *  Timings (tokens in loadin.css, read once): 200ms per card, 30ms apart, the last start capped at 90ms, so a page
- *  is settled by 290ms. Going back to a section you left less than 8 seconds ago skips it: flipping between two pages
- *  to compare them shouldn't replay the same entrance. The app's first appearance gets a fuller version once a
+ *  is settled quickly. Each section enters once per visit: coming back to one you already opened shows it settled.
+ *  The app's first appearance gets a fuller version once a
  *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
 import { EASE_OUT } from "./motion";
+import { firstTime } from "./motionOnce";
 
 const EASE = EASE_OUT;
-/** Left a section this recently? Coming back to it skips the entrance. */
-const AGAIN_MS = 8000;
 /** Things inside a page that are fixed to the viewport. A moving ancestor would carry them along, so a card holding
  *  one is split into its children instead, and the fixed piece itself never moves. */
 const FIXED = ".deal-tray";
@@ -102,23 +101,23 @@ export function enterApp() {
 /** Call once in the app shell with the current section. */
 export function useSectionEnter(section: string) {
   const prev = useRef<string | null>(null);
-  const leftAt = useRef<Record<string, number>>({});
   useLayoutEffect(() => {
     const from = prev.current;
     prev.current = section;
     // First paint of the app: no stagger, but charts on it still grow in as they always have
     if (from === null) {
       // The loading screen is up: it calls enterApp as it lifts. Otherwise (the demo) the app comes in now.
+      firstTime(`section:${section}`);
       if (document.querySelector(".boot3")) mark(1000); else enterApp();
       return;
     }
     if (from === section) return;
     // Shell scrolls to the top after paint; do it now so the first frame and the measuring below see the top
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    const now = performance.now();
-    leftAt.current[from] = now;
-    const was = leftAt.current[section];
-    if (was !== undefined && now - was < AGAIN_MS) return;
+    // Once per section per visit (Zach): the first time you open a section it comes in; coming back to one you've
+    // already seen this visit shows it settled, charts included (chartReveal reads data-revisit)
+    if (!firstTime(`section:${section}`)) { document.documentElement.dataset.revisit = ""; return; }
+    delete document.documentElement.dataset.revisit;
     if (document.hidden) return;
     const root = document.querySelector<HTMLElement>(".main-inner");
     if (root) enter(root);

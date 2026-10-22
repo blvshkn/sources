@@ -10,6 +10,7 @@ import { fetchFaPool } from "../sleeper";
 import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
+import { useCountTogether } from "../motionOnce";
 import { AiLabel, Icon, StatusPill, useSticky, type IconName } from "./ui";
 import { Avatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
@@ -345,6 +346,9 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   }, [pickKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setWeekPick(null), []);
 
+  // FAAB left counts up with its bar the first time Waivers opens this visit, and again only if the number changes (Zach)
+  const { vals: [faabNow], running: faabCounting } = useCountTogether(FAAB.enabled ? "waivers-faab" : undefined, [FAAB.remaining], { ms: 900 });
+
   return (
     <>
       <header className="page-head">
@@ -356,8 +360,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
       <div className="wv-layout">
       <aside className="wv-aside" aria-label="Your budget and top pickup">
       {FAAB.enabled && <div className="faab faab-row" aria-label={`FAAB remaining ${FAAB.remaining} of ${FAAB.budget}`}>
-        <span className="faab-row-top"><b className="num">${FAAB.remaining}<span className="muted">/{FAAB.budget}</span></b><span className="muted">FAAB left</span></span>
-        <span className="faab-track"><span style={{ width: `${(FAAB.remaining / FAAB.budget) * 100}%` }} /></span>
+        <span className="faab-row-top"><b className="num">${Math.round(faabNow)}<span className="muted">/{FAAB.budget}</span></b><span className="muted">FAAB left</span></span>
+        <span className="faab-track"><span style={{ width: `${(faabNow / FAAB.budget) * 100}%`, ...(faabCounting ? { transition: "none" } : {}) }} /></span>
       </div>}
 
       {kind === "current" && (nowTop ? (() => {
