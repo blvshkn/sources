@@ -1,12 +1,21 @@
-/* Motion tokens, defined once. The house curve is --ease-out at --dur-fast; presses settle in --dur-press.
-   Loads before frame.css. Use these in new rules instead of repeating raw curves and durations. */
+/* Motion tokens, defined once. Loads before frame.css. Use these in new rules instead of raw curves and durations.
+
+   Oct 22 retime (Zach: "fast and not smooth"). Every duration in the CSS is written as calc(Nms * var(--mo)), so this
+   one factor sets the pace of the whole app; src/motion.ts holds the same number for script-driven motion. The house
+   curve is now an even ease-out (cubic) instead of the steep quint-like one, which spent most of its travel in the
+   first few frames and read as a snap. Presses still go down fast (90ms) and come back up at the slower pace. */
 :root {
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --mo: 1.75;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --dur-press: 100ms;
-  --dur-fast: 160ms;
-  --dur-base: 200ms;
-  --dur-drawer: 240ms;
-  --dur-data: 300ms;
+  --dur-press: calc(100ms * var(--mo));
+  --dur-fast: calc(160ms * var(--mo));
+  --dur-base: calc(200ms * var(--mo));
+  --dur-drawer: calc(240ms * var(--mo));
+  --dur-data: calc(300ms * var(--mo));
 }
+
+/* Press in quickly, release at the house pace: the pressed state's own transitions run short */
+html:root:not(#_):not(#_):not(#_) :is(button, a[href], [role="button"], .tap, .mc-press):active { transition-duration: 90ms !important; }
+@media (prefers-reduced-motion: reduce) { :root { --mo: 1; } }

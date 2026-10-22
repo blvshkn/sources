@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { mo } from "../motion";
 
 /**
  * Branded tooltip. Hover opens after a short delay, keyboard focus opens right away, and once one tip
@@ -14,7 +15,7 @@ const SKIP_MS = 400; // how long after a tip closes the next one still opens ins
 const LONG_PRESS = 500;
 /** Hover delay for number tips (NumTip): long enough that sweeping across a card doesn't flash them. */
 export const NUM_DELAY = 650;
-const FADE_OUT = 160; // matches the exit fade in num-tips.css
+const FADE_OUT = mo(160); // matches the exit fade in num-tips.css
 let openNow = 0;
 let lastClose = 0;
 let closeOther: (() => void) | null = null;

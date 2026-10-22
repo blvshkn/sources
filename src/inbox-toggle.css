@@ -2,7 +2,7 @@
    - Phones and tablets (to 860px): the top bar bell opens the slide-over, as before.
    - 861px up: the same bell sits top right of the page, on the page header row. On Trade it sits beside search.
    - 1241px up (Trade from 1600px): the bell opens and closes the docked panel. Closed, the page takes the room.
-     The panel slides in from the right while the page column eases its width, 240ms. Reduced motion is instant. */
+     The panel slides in from the right while the page column eases its width, calc(240ms * var(--mo, 1)). Reduced motion is instant. */
 
 /* ---------- The bell: one control everywhere ---------- */
 html:root:not(#_):not(#_) .top-bell {

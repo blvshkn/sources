@@ -6,23 +6,23 @@
    on the page and in the sheet (the open row too), trade partners, the inbox, news groups, sheet option lists (Why
    won't this work, league switcher), player search results and Sent offers.
    Dividers fade with a color change only: widths never change, so nothing moves. Hover lives under a fine pointer
-   only, so a tap never leaves a row stuck without its lines. The fade is 160ms cubic-bezier(0.23, 1, 0.32, 1), the
+   only, so a tap never leaves a row stuck without its lines. The fade is calc(160ms * var(--mo, 1)) var(--ease-out), the
    rows' own hover timing; with reduced motion the dividers change instantly.
    Loads just before frame.css. Every rule is scoped to a list's own classes: nothing here styles bare .ps, .card,
    .btn or .row. Three :not(#_) because some of the rules it overrides use three. */
 
-html:root:not(#_):not(#_):not(#_) { --dv-dur: var(--st-dur, 160ms); --dv-ease: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)); }
+html:root:not(#_):not(#_):not(#_) { --dv-dur: var(--st-dur, calc(160ms * var(--mo, 1))); --dv-ease: var(--st-ease, var(--ease-out)); }
 
 /* ---------- The fade ---------- */
 /* Rows that already transition other things: the same list, with the divider properties on --dv-dur */
 html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .sr-row, .wv, .lu-row, .psr-row, .vb-row) {
   transition-property: background-color, box-shadow, transform, opacity, color, border-color;
-  transition-duration: var(--st-dur, 160ms), var(--dv-dur), var(--st-dur, 160ms), var(--st-dur, 160ms), var(--st-dur, 160ms), var(--dv-dur);
+  transition-duration: var(--st-dur, calc(160ms * var(--mo, 1))), var(--dv-dur), var(--st-dur, calc(160ms * var(--mo, 1))), var(--st-dur, calc(160ms * var(--mo, 1))), var(--st-dur, calc(160ms * var(--mo, 1))), var(--dv-dur);
   transition-timing-function: var(--dv-ease);
 }
 html:root:not(#_):not(#_):not(#_) .card .partner-card {
   transition-property: transform, border-color;
-  transition-duration: var(--st-dur, 160ms), var(--dv-dur);
+  transition-duration: var(--st-dur, calc(160ms * var(--mo, 1))), var(--dv-dur);
   transition-timing-function: var(--dv-ease);
 }
 /* Wrappers whose only change is the divider */
@@ -30,12 +30,12 @@ html:root:not(#_):not(#_):not(#_) :is(.card.mu > .mu-row, .card.mu > .mu-foot, .
   transition: border-color var(--dv-dur) var(--dv-ease);
 }
 html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { transition: opacity var(--dv-dur) var(--dv-ease); }
-/* Reduced motion: styles.css keeps a 160ms fade on color and opacity everywhere (with !important); dividers go
+/* Reduced motion: styles.css keeps a calc(160ms * var(--mo, 1)) fade on color and opacity everywhere (with !important); dividers go
    instantly instead, and the rows' fills keep their fade */
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .pick, .set-link, .wk-more, .sr-row, .wv, .lu-row, .psr-row, .vb-row, .card .partner-card) {
     transition-property: opacity, background-color, color, border-color, box-shadow !important;
-    transition-duration: 160ms, 160ms, 160ms, 0s, 0s !important;
+    transition-duration: calc(160ms * var(--mo, 1)), calc(160ms * var(--mo, 1)), calc(160ms * var(--mo, 1)), 0s, 0s !important;
   }
   html:root:not(#_):not(#_):not(#_) :is(.card.mu > .mu-row, .card.mu > .mu-foot, .lu-list .lu-list-head.sub, .fb-list > li, .psr-list > li, .so-card .so-row, .nxr-g, .wv3-list),
   html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { transition-duration: 0s !important; }

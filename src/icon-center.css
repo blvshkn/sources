@@ -64,7 +64,7 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
 
 /* ---------- Bell: rings on hover and on click ---------- */
 /* Two parts (icons.tsx, Lucide bell): the dome (m1) swings from its crown at (12, 2); the clapper (m2) rides inside it, hangs from
-   the lip at (12, 17) and swings the other way, 40ms behind and wider, so it reads as a clapper lagging. Hover rings
+   the lip at (12, 17) and swings the other way, calc(40ms * var(--mo, 1)) behind and wider, so it reads as a clapper lagging. Hover rings
    once per entry (icons.tsx sets data-play for a beat and never loops); a click rings 1.3x harder (data-strong) as the
    inbox opens or closes. Rotation on parts inside the svg only, after the centring nudge, so at rest the glyph is where
    it was measured and the button box never changes. */
@@ -72,9 +72,9 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
   html:root:not(#_):not(#_):not(#_) svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 2px; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17px; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m1 { animation: bell-dome 600ms both; }
-  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m2 { animation: bell-clapper 600ms 40ms both; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play] .m2 { animation: bell-clapper 600ms calc(40ms * var(--mo, 1)) both; }
   html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m1 { animation: bell-dome-strong 680ms both; }
-  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m2 { animation: bell-clapper-strong 680ms 40ms both; }
+  html:root:not(#_):not(#_):not(#_) svg.ic-bell[data-play][data-strong] .m2 { animation: bell-clapper-strong 680ms calc(40ms * var(--mo, 1)) both; }
   /* Each swing eases in and out like a pendulum; the swings shorten, so the ring as a whole eases out */
   @keyframes bell-dome {
     0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1); }
@@ -108,7 +108,7 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
     78%  { transform: rotate(6.5deg); animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); }
     100% { transform: rotate(0); }
   }
-  /* Press: the button dips to 0.94 for 100ms, then springs back as the click rings it */
-  html:root:not(#_):not(#_):not(#_) .top-bell { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease; }
-  html:root:not(#_):not(#_):not(#_) .top-bell:active:not(:disabled) { transform: scale(0.94) !important; transition-duration: 100ms; }
+  /* Press: the button dips to 0.94 for calc(100ms * var(--mo, 1)), then springs back as the click rings it */
+  html:root:not(#_):not(#_):not(#_) .top-bell { transition: transform calc(160ms * var(--mo, 1)) var(--ease-out), background-color calc(150ms * var(--mo, 1)) ease; }
+  html:root:not(#_):not(#_):not(#_) .top-bell:active:not(:disabled) { transform: scale(0.94) !important; transition-duration: calc(100ms * var(--mo, 1)); }
 }

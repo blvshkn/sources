@@ -21,7 +21,7 @@ html:root:not(#_):not(#_) .card.nc-card {
   padding: 16px !important; text-align: left; color: inherit; font: inherit; cursor: pointer; text-decoration: none;
   position: relative; isolation: isolate; -webkit-tap-highlight-color: transparent;
   transition-property: box-shadow, transform, background-color;
-  transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+  transition-duration: var(--st-dur, calc(160ms * var(--mo, 1))); transition-timing-function: var(--st-ease, var(--ease-out));
 }
 html:root:not(#_):not(#_) .nc-card > :first-child { grid-area: av; align-self: center; border-radius: 50%; object-fit: cover; }
 html:root:not(#_):not(#_) .nc-card .nc-name {
@@ -55,7 +55,7 @@ html:root:not(#_):not(#_) .card.nc-card.you { background: color-mix(in srgb, rgb
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .card.nc-card:hover { box-shadow: var(--st-lift) !important; }
 }
-html:root:not(#_):not(#_) .card.nc-card:active { box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .card.nc-card:active { box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) .card.nc-card:focus-visible { outline: 2px solid var(--lime) !important; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) .card.nc-card:active { transform: none; }

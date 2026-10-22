@@ -11,8 +11,8 @@ html:root:not(#_):not(#_) .ask-turn .ask-opt .ask-opt-label {
 html:root:not(#_):not(#_) .ask-turn .ask-opt .ask-opt-why { margin: 4px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
 html:root:not(#_):not(#_) .ask-turn .ask-opt.miss .ask-opt-label { color: var(--muted); }
 /* Each card comes in a beat after the one above it, once the answer is written */
-html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(2) .ask-after { transition-delay: 60ms; }
-html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(3) .ask-after { transition-delay: 120ms; }
+html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(2) .ask-after { transition-delay: calc(60ms * var(--mo, 1)); }
+html:root:not(#_):not(#_) .ask-turn .ask-opts > [role="listitem"]:nth-child(3) .ask-after { transition-delay: calc(120ms * var(--mo, 1)); }
 @media (min-width: 768px) {
   html:root:not(#_):not(#_) .ask-turn .ask-opts { gap: 12px; }
 }

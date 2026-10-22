@@ -18,6 +18,7 @@ import { useDismiss } from "./useDismiss";
 import { useEdgeFade } from "./edgeFade";
 import { ScrollArea } from "./ScrollArea";
 import { DepthTab, GameLogTab, SheetTabs, useSheetTab } from "./PlayerTabs";
+import { mo } from "../motion";
 
 /** Below this the player is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches player-modal.css. */
 const isSheet = () => typeof window !== "undefined" && window.innerWidth < 768;
@@ -46,7 +47,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   }, []);
   // Out on a shorter 240ms ease (styles.css .ps-wrap.out), unmounted only once it has fully left
   const [out, setOut] = useState(false);
-  const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setOut(true); setShown(false); window.setTimeout(onClose, 240); };
+  const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setOut(true); setShown(false); window.setTimeout(onClose, mo(240)); };
   const sheet = useRef<HTMLElement>(null);
   useFocusTrap(sheet);
   const body = useRef<HTMLDivElement>(null);
@@ -74,7 +75,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const call = owner?.you && !onCompare ? lineupCall(p, nowFor(live, p)) : null;
   const swap = !!call && (/in Sleeper|Sleeper still has him/.test(call.line) || call.head === "Take him out of your lineup");
   const primary = onCompare
-    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 240); }}><Icon name="columns2" size={16} />Compare</button>
+    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, mo(240)); }}><Icon name="columns2" size={16} />Compare</button>
     : swap
       ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       : !owner && p.nfl !== "FA"

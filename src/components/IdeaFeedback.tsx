@@ -7,6 +7,7 @@ import { Icon } from "./ui";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
 import { useDismiss } from "./useDismiss";
+import { mo } from "../motion";
 
 /** Anything that renders a trade idea can offer "Won't work" when this is provided. */
 export const IdeaFeedbackCtx = createContext<((t: Trade) => void) | null>(null);
@@ -34,7 +35,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
   const close = () => {
     if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
     if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
-    setShown(false); window.setTimeout(onClose, 220);
+    setShown(false); window.setTimeout(onClose, mo(220));
   };
   const pick = (r: IdeaReason) => { onPick(r); close(); };
 

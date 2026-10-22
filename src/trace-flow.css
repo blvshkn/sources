@@ -32,12 +32,12 @@ html:root:not(#_):not(#_):not(#_):not(#_) .lds-thk .thk-chips { display: inline;
 /* ---------- 3. Fold and unfold: one size change, the rest by opacity and transform ---------- */
 html:root:not(#_):not(#_):not(#_) .thk-body { display: block; grid-template-rows: none; transition: none; }
 html:root:not(#_):not(#_):not(#_) .thk-body:not(.open) { height: 0; overflow: hidden; opacity: 0; }
-html:root:not(#_):not(#_):not(#_) .thk-body.open { opacity: 1; animation: thk-open 220ms cubic-bezier(0.23, 1, 0.32, 1) 90ms both; }
+html:root:not(#_):not(#_):not(#_) .thk-body.open { opacity: 1; animation: thk-open calc(220ms * var(--mo, 1)) var(--ease-out) calc(90ms * var(--mo, 1)) both; }
 @keyframes thk-open { from { opacity: 0; } }
 
 /* ---------- 4. Streamed words ---------- */
 html:root:not(#_):not(#_):not(#_) .thk-w { filter: none; transition: color 500ms ease; }
-html:root:not(#_):not(#_):not(#_) .thk-w.on { opacity: 1; animation: thk-w-in 240ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+html:root:not(#_):not(#_):not(#_) .thk-w.on { opacity: 1; animation: thk-w-in calc(240ms * var(--mo, 1)) var(--ease-out) both; }
 @keyframes thk-w-in { from { opacity: 0; } }
 /* In a trace or an answer card, a word still to come is a skeleton bar where it will land */
 html:root:not(#_):not(#_):not(#_) :is(.thk, .ask-card) .thk-w:not(.on) { opacity: 1; position: relative; color: transparent; }

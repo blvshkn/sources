@@ -1,6 +1,6 @@
 /* Sent offers (SentOffers.tsx): Trade's Sent tab, the Wire's "You sent Mike an offer" line and the Mark as sent
    button in the pitch sheet. Phones first: one column, row actions under the players. 768px up: the actions sit on
-   the right of each row. Hover, leave and press share one curve: 160ms cubic-bezier(0.23, 1, 0.32, 1), press 0.97.
+   the right of each row. Hover, leave and press share one curve: calc(160ms * var(--mo, 1)) var(--ease-out), press 0.97.
    Green means it went through, red means declined; waiting stays plain. Numbers in Geist Mono.
    Loads just before frame.css; every rule is scoped to .so-card or a .so-* class. */
 
@@ -19,7 +19,7 @@ html:root:not(#_):not(#_) .so-card .so-open {
   display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: start; column-gap: 12px;
   width: calc(100% + 16px); margin: 0 -8px; padding: 8px; border: 0; border-radius: 12px; background: transparent;
   color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition-property: background-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-open > svg { align-self: center; color: var(--muted); }
 html:root:not(#_):not(#_) .so-card .so-av-empty { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); }
@@ -50,10 +50,10 @@ html:root:not(#_):not(#_) .so-sheet-foot .so-mark {
   display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; margin: 0;
   border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink);
   font: 500 0.8125rem/1 "Geist", sans-serif; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition-property: background-color, color, border-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, color, border-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-more { margin-left: auto; border-color: transparent; color: var(--muted); padding-right: 6px; }
-html:root:not(#_):not(#_) .so-card .so-more svg { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); transform: rotate(90deg); }
+html:root:not(#_):not(#_) .so-card .so-more svg { transition: transform calc(160ms * var(--mo, 1)) var(--ease-out); transform: rotate(90deg); }
 html:root:not(#_):not(#_) .so-card .so-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
 
 /* Earlier versions, under the latest */
@@ -62,7 +62,7 @@ html:root:not(#_):not(#_) .so-card .so-ver {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 10px;
   width: 100%; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: inherit;
   font: 400 0.8125rem/1.4 "Geist", sans-serif; text-align: left; text-decoration: none; cursor: pointer;
-  transition-property: background-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-vn { font: 500 0.75rem/1 var(--font-mono); color: var(--muted); }
 html:root:not(#_):not(#_) .so-card .so-vp { color: var(--ink); min-width: 0; }
@@ -71,7 +71,7 @@ html:root:not(#_):not(#_) .so-card .so-vp { color: var(--ink); min-width: 0; }
 html:root:not(#_):not(#_) .so-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 html:root:not(#_):not(#_) .so-sheet-foot .tiny { margin: 0; }
 html:root:not(#_):not(#_) .so-sheet-foot .so-mark { height: 36px; padding: 0 12px; border-radius: 999px; }
-html:root:not(#_):not(#_) .so-sheet-foot .so-mark svg { color: var(--muted); transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .so-sheet-foot .so-mark svg { color: var(--muted); transition: color calc(160ms * var(--mo, 1)) var(--ease-out); }
 html:root:not(#_):not(#_) .so-sheet-foot .so-mark.is-saved { color: var(--good); border-color: var(--good-soft); background: var(--good-soft); cursor: default; }
 html:root:not(#_):not(#_) .so-sheet-foot .so-mark.is-saved svg { color: var(--good); }
 

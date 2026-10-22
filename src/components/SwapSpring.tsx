@@ -3,12 +3,13 @@
 import { useMemo, type ReactNode } from "react";
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import { SwapShell } from "./SwapPicker";
+import { mo } from "../motion";
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 // The app's motion: 160ms on the shared ease-out curve
-const OPEN = { duration: 0.16, ease: EASE } as const;
+const OPEN = { duration: mo(160) / 1000, ease: EASE } as const;
 // Closing is quicker than opening
-const CLOSE = { duration: 0.12, ease: EASE } as const;
+const CLOSE = { duration: mo(120) / 1000, ease: EASE } as const;
 
 /**
  * Mounts the anchor while `show` is true and keeps it through the close. The menu grows out of its row: the

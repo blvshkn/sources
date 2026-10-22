@@ -8,7 +8,7 @@
    - Press: the tint deepens, quicker.
    - Focus-visible: the lime ring.
    The tint lives on a ::after overlay and only its opacity animates, so the hero gradients never have to interpolate
-   and nothing grows in from the edges. 160ms on the app's strong ease-out, the same as the list rows on these pages. */
+   and nothing grows in from the edges. calc(160ms * var(--mo, 1)) on the app's strong ease-out, the same as the list rows on these pages. */
 
 html:root:not(#_):not(#_) {
   --mc-tint: color-mix(in srgb, var(--ink) 7%, transparent);
@@ -29,7 +29,7 @@ html:root:not(#_):not(#_) .mc-press::after {
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):hover::after { opacity: var(--mc-hover); }
 }
-html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):active::after { opacity: 1; transition-duration: 100ms; }
+html:root:not(#_):not(#_) .mc-press:not([aria-disabled="true"]):active::after { opacity: 1; transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) .mc-press[aria-disabled="true"] { cursor: default; }
 
 
@@ -126,7 +126,7 @@ html:root:not(#_):not(#_) .fo-name.muted { color: var(--muted); font-weight: 500
 html:root:not(#_):not(#_) .fo-score { grid-area: score; display: flex; min-width: 0; margin-top: 6px; }
 html:root:not(#_):not(#_) .fo-pts {
   white-space: nowrap; font: 500 var(--fo-score)/1 var(--font-body); letter-spacing: -0.04em; color: var(--ink);
-  transition: color 150ms ease-out;
+  transition: color calc(150ms * var(--mo, 1)) ease-out;
 }
 /* The app sets any all-number element in mono (monoNumbers.ts); the big scores stay Geist, as in Figma */
 html:root:not(#_):not(#_) .fo .fo-pts[data-n] { font-family: var(--font-body) !important; font-variant-numeric: normal; }

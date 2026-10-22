@@ -1,16 +1,16 @@
 /* Number tips (NumTip in Tooltip.tsx): what a bare number means, on a longer hover or a long press.
-   The chip itself is tooltip.css. This file adds the timing: in on the shared 160ms ease, scaled from the trigger
+   The chip itself is tooltip.css. This file adds the timing: in on the shared calc(160ms * var(--mo, 1)) ease, scaled from the trigger
    (tooltip.css sets the origin at the arrow), out with a short fade. Reduced motion keeps only a quick fade. */
 
-html:root:not(#_):not(#_) .tt.tt-num { animation-duration: 160ms; }
+html:root:not(#_):not(#_) .tt.tt-num { animation-duration: calc(160ms * var(--mo, 1)); }
 
 /* Leaving: every tip fades out instead of vanishing, on the same curve */
-html:root:not(#_):not(#_) .tt[data-closing] { animation: tt-num-out 160ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+html:root:not(#_):not(#_) .tt[data-closing] { animation: tt-num-out calc(160ms * var(--mo, 1)) var(--ease-out) both; }
 @keyframes tt-num-out { from { opacity: 1; } to { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .tt.tt-num { animation-duration: 120ms; }
-  html:root:not(#_):not(#_) .tt[data-closing] { animation-duration: 120ms; }
+  html:root:not(#_):not(#_) .tt.tt-num { animation-duration: calc(120ms * var(--mo, 1)); }
+  html:root:not(#_):not(#_) .tt[data-closing] { animation-duration: calc(120ms * var(--mo, 1)); }
 }
 
 /* Long press on a number: no text selection or iOS callout, so holding reads the tip instead */

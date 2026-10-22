@@ -66,18 +66,18 @@ html:root:not(#_):not(#_) .ptn-row .ptn-stat .delta {
 /* ---------- States: the shared row pill, drawn behind the content ---------- */
 html:root:not(#_):not(#_) .card .partner-card.ptn-row {
   position: relative; isolation: isolate;
-  transition-property: transform; transition-duration: var(--st-dur, 160ms); transition-timing-function: var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+  transition-property: transform; transition-duration: var(--st-dur, calc(160ms * var(--mo, 1))); transition-timing-function: var(--st-ease, var(--ease-out));
 }
 html:root:not(#_):not(#_) .card .partner-card.ptn-row::before {
   content: ""; position: absolute; inset: 4px -12px; z-index: -1; border-radius: 12px; pointer-events: none;
   background: var(--st-tint); opacity: 0;
-  transition: opacity var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)), background-color var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23, 1, 0.32, 1));
+  transition: opacity var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, var(--ease-out)), background-color var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, var(--ease-out)), box-shadow var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, var(--ease-out));
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .card .partner-card.ptn-row:hover::before { opacity: 1; background: var(--st-tint); }
 }
-html:root:not(#_):not(#_) .card .partner-card.ptn-row:active { transform: scale(0.99) !important; transition-duration: 100ms; }
-html:root:not(#_):not(#_) .card .partner-card.ptn-row:active::before { opacity: 1; background: var(--st-tint-2); transition-duration: 80ms; }
+html:root:not(#_):not(#_) .card .partner-card.ptn-row:active { transform: scale(0.99) !important; transition-duration: calc(100ms * var(--mo, 1)); }
+html:root:not(#_):not(#_) .card .partner-card.ptn-row:active::before { opacity: 1; background: var(--st-tint-2); transition-duration: calc(80ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) .card .partner-card.ptn-row:focus-visible::before { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 
 @media (prefers-reduced-motion: reduce) {

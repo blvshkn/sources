@@ -9,6 +9,7 @@ import { WorkingLoader } from "./WorkingLoader";
 import { Icon } from "./icons";
 import { PlatformLogo } from "./PlatformLogo";
 import { MIN_STEP_MS, fillN, type Chip, type TraceState } from "../think";
+import { EASE_OUT, mo } from "../motion";
 
 /** Words per tick when text streams in. Display only: the text is already final when it starts. */
 export const WORD_MS = 26;
@@ -115,7 +116,7 @@ const secs = (ms: number, done: boolean) => {
   return done ? (s < 10 ? `${Math.max(0.1, Math.round(s * 10) / 10)}s` : `${Math.round(s)}s`) : `${Math.floor(s)}s`;
 };
 
-const SLIDE: KeyframeAnimationOptions = { duration: 300, easing: "cubic-bezier(0.23, 1, 0.32, 1)", id: "thk-slide" };
+const SLIDE: KeyframeAnimationOptions = { duration: mo(300), easing: EASE_OUT, id: "thk-slide" };
 const scrolls = (e: Element) => e === document.body || /(auto|scroll)/.test(getComputedStyle(e).overflowY);
 
 /**

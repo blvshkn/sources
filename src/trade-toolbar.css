@@ -11,11 +11,11 @@ html:root:not(#_):not(#_):not(#_):not(#_) .tr-bar .ttb-offer {
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ttb-offer .ttb-sw {
   position: relative; flex: none; width: 30px; height: 18px; border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 24%, transparent); transition: background-color 200ms ease;
+  background: color-mix(in srgb, var(--ink) 24%, transparent); transition: background-color calc(200ms * var(--mo, 1)) ease;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ttb-offer .ttb-sw > span {
   position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform 220ms cubic-bezier(0.25, 1, 0.5, 1), background-color 200ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); transition: transform calc(220ms * var(--mo, 1)) cubic-bezier(0.25, 1, 0.5, 1), background-color calc(200ms * var(--mo, 1)) ease;
 }
 /* On is lime, with a dark knob so it reads on the bright track */
 html:root:not(#_):not(#_):not(#_):not(#_) .ttb-offer[aria-checked="true"] .ttb-sw { background: var(--lime, #D8F24A); }
@@ -146,7 +146,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row .dv-c:last-child .dv-v
 /* Actions: Write pitch stays primary, Show the math is a quiet text button */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish {
   text-decoration: none; font-weight: 500; font-size: 0.875rem; color: var(--muted); min-height: 40px; padding: 0 6px; border-radius: 8px;
-  display: inline-flex; align-items: center; transition: color 150ms ease-out;
+  display: inline-flex; align-items: center; transition: color calc(150ms * var(--mo, 1)) ease-out;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish:hover { color: var(--ink); text-decoration: none; }
 /* The tip spans the same width as the rows, one even inset */

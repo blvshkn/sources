@@ -9,6 +9,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon, StatusPill } from "./ui";
 import { AiMark } from "./WorkingLoader";
 import { strokeFor } from "./iconStroke";
+import { EASE_OUT, mo } from "../motion";
 
 // Lettermarks stand in for source logos (we don't use third-party marks)
 const MARK: Record<string, string> = { RotoWire: "RW", RotoBaller: "RB", ESPN: "E" };
@@ -189,7 +190,7 @@ function rememberOpen(id: string, count: number) {
   save(OPEN_KEY, openCounts);
 }
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
+const EASE = EASE_OUT;
 
 /** One player, collapsible. Closed: who he is, his newest headline and a story count. Open: our read, then his
  *  stories three at a time. "Stats" opens his sheet. */
@@ -220,12 +221,12 @@ function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerConte
     if (h1 === h0) return;
     anim.current?.cancel();
     el.style.overflow = "hidden";
-    const a = el.animate([{ height: `${h0}px` }, { height: `${h1}px` }], { duration: 220, easing: EASE });
+    const a = el.animate([{ height: `${h0}px` }, { height: `${h1}px` }], { duration: mo(220), easing: EASE });
     anim.current = a;
     const done = () => { if (anim.current === a) { el.style.overflow = ""; anim.current = null; } };
     a.onfinish = done; a.oncancel = done;
     // New rows fade in as the space opens
-    Array.from(el.children).slice(before.current).forEach((r) => r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: EASE }));
+    Array.from(el.children).slice(before.current).forEach((r) => r.animate([{ opacity: 0 }, { opacity: 1 }], { duration: mo(220), easing: EASE }));
   }, [count]);
 
   const setTo = (next: number) => { rememberOpen(p.id, next); setCount(next); };
@@ -249,7 +250,7 @@ function PlayerGroup({ p, c, items, first, onOpen }: { p: Player; c: PlayerConte
     anim.current?.cancel();
     const h0 = el.offsetHeight, h1 = keep.offsetTop - el.offsetTop;
     el.style.overflow = "hidden";
-    const a = el.animate([{ height: `${h0}px` }, { height: `${h1}px` }], { duration: 220, easing: EASE, fill: "forwards" });
+    const a = el.animate([{ height: `${h0}px` }, { height: `${h1}px` }], { duration: mo(220), easing: EASE, fill: "forwards" });
     anim.current = a;
     a.onfinish = () => { a.cancel(); el.style.overflow = ""; anim.current = null; fold(); };
   };

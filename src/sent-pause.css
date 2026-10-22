@@ -1,7 +1,7 @@
 /* "Not trading now" and "Wanted more value" (declineWhy.ts): the paused line with Resume now, on the Sent offer row,
    Trade's Ideas tab and the partner profile, plus the profile's "Wants more value" line. Phones first: the line wraps
    and Resume drops under the text when it has to. Resume is a small outlined button like the row actions; it never
-   underlines, and press scales it to 0.97 over 160ms (not with reduced motion). */
+   underlines, and press scales it to 0.97 over calc(160ms * var(--mo, 1)) (not with reduced motion). */
 
 html:root:not(#_):not(#_) .why-paused {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0;
@@ -13,7 +13,7 @@ html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume {
   display: inline-flex; align-items: center; flex: none; height: 32px; padding: 0 12px; margin: 0;
   border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink);
   font: 500 0.8125rem/1 "Geist", sans-serif; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition-property: background-color, border-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, border-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) :is(.why-paused, .so-card .so-why-wrap) .why-resume:is(:hover, :focus, :active) { text-decoration: none; }
 @media (hover: hover) and (pointer: fine) {

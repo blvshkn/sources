@@ -1,14 +1,14 @@
 /* Lucide icons (icons.tsx, AskIcon.tsx): motion rebuilt for the new shapes. Loads before frame.css.
    Ask is Lucide's messages-square: the front bubble sits top left with its tail at bottom left, the back bubble bottom
    right. On hover the pair swells a little from the front bubble's tail, so the back bubble swings out down and right,
-   then both settle. The typing dots are gone, and their pulse with them. Same 340ms beat as before. */
+   then both settle. The typing dots are gone, and their pulse with them. Same calc(340ms * var(--mo, 1)) beat as before. */
 html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }
 /* The pair moves as one: the back bubble's ends sit on the front bubble's outline, and any motion of one without the
    other opens a gap at those joins. Scaling the pair from the front bubble's tail (bottom left) keeps the old beat:
    the front swells from its tail and the back bubble, farther from that point, travels out down and right. */
 html:root:not(#_):not(#_) svg.askic .askic-pair { transform-box: fill-box; transform-origin: 0% 66%; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-pair { animation: askic-swell 340ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .askic-pair { animation: askic-swell calc(340ms * var(--mo, 1)) var(--ease-out) both; }
 }
 @keyframes askic-swell {
   0%, 100% { transform: scale(1); }

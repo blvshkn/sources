@@ -6,6 +6,7 @@ import { fmt } from "../engine";
 import { Icon, type IconName } from "./icons";
 import { Tooltip } from "./Tooltip";
 import { AiMark } from "./WorkingLoader";
+import { EASE_OUT, mo } from "../motion";
 export { Icon };
 export type { IconName } from "./icons";
 
@@ -68,8 +69,8 @@ export function Seg<T extends string>({ value, options, onChange, label, thumb =
     if (prev && now && (prev.x !== now.x || prev.w !== now.w)) {
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       el.getAnimations().forEach((a) => a.cancel());
-      if (reduce) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "ease-out" });
-      else el.animate([{ transform: `translateX(${prev.x}px) scaleX(${prev.w / now.w})` }, { transform: `translateX(${now.x}px)` }], { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+      if (reduce) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: mo(160), easing: "ease-out" });
+      else el.animate([{ transform: `translateX(${prev.x}px) scaleX(${prev.w / now.w})` }, { transform: `translateX(${now.x}px)` }], { duration: mo(200), easing: EASE_OUT });
     }
     // A resize (fonts landing, the row reflowing) re-places it without motion
     const ro = new ResizeObserver(() => { last.current = place(); });

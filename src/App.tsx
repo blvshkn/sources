@@ -58,6 +58,7 @@ import { AppBackdrop } from "./components/AppBackdrop";
 import { enterApp, useSectionEnter } from "./sectionEnter";
 import { seedDemo } from "./demoFixtures";
 import { useDismiss } from "./components/useDismiss";
+import { mo } from "./motion";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -249,7 +250,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   useEffect(() => {
     if (!toast) return; setToastOut(false);
     const t = window.setTimeout(() => setToastOut(true), toast.undo ? 5000 : 2800);
-    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + 160);
+    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + mo(160));
     return () => { clearTimeout(t); clearTimeout(t2); };
   }, [toast]);
   useEffect(() => {

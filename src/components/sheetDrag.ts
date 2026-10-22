@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { SpringRun } from "./sheetSpring";
+import { mo } from "../motion";
 
 type Ref<T> = { current: T | null };
 
@@ -185,7 +186,7 @@ export function usePullToDismiss(
         // Opacity only: the stylesheet's 160ms fade carries it out or back; a detent change is an instant snap
         el.style.removeProperty("transition");
         const s = scrim(); if (s) s.style.removeProperty("transition");
-        if (away) { el.style.opacity = "0"; if (s) s.style.opacity = "0"; window.setTimeout(m.onDismiss, 160); }
+        if (away) { el.style.opacity = "0"; if (s) s.style.opacity = "0"; window.setTimeout(m.onDismiss, mo(160)); }
         else release();
         return;
       }
@@ -193,10 +194,10 @@ export function usePullToDismiss(
       busy.current = true;
       if (away) {
         // Leave the way it came in: straight down, no bounce, at the finger's speed
-        run.current = kit.spring(y, h + 40, Math.max(v, 0), 1, 0.3, springFrame, () => { run.current = null; m.onDismiss(); });
+        run.current = kit.spring(y, h + 40, Math.max(v, 0), 1, 0.4, springFrame, () => { run.current = null; m.onDismiss(); });
       } else {
         // To its detent (or home). Critically damped, unless it was flicked: then a little bounce
-        run.current = kit.spring(y, home, v, Math.abs(v) > 700 ? 0.8 : 1, 0.3, springFrame, () => { run.current = null; release(); });
+        run.current = kit.spring(y, home, v, Math.abs(v) > 700 ? 0.85 : 1, 0.46, springFrame, () => { run.current = null; release(); });
       }
     };
 

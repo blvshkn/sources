@@ -17,7 +17,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .mt-col .qs { --qs-px: -6px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-row { position: relative; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs ul.qs-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding: 0; list-style: none; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li { box-sizing: border-box; height: var(--qs-h); min-width: 0; margin: 0; padding: 0; border-top: 1px solid transparent; }
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li + li { border-top-color: var(--line); transition: border-color var(--st-dur, 160ms) var(--st-ease, ease-out); }
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-list > li + li { border-top-color: var(--line); transition: border-color var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, ease-out); }
 
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item {
   position: relative; isolation: isolate;
@@ -25,7 +25,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item {
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item::after {
   content: ""; position: absolute; z-index: -1; inset: var(--dl-y, 4px) var(--qs-px); border-radius: 10px; pointer-events: none;
-  background: var(--st-tint); opacity: 0; transition: opacity var(--st-dur, 160ms) var(--st-ease, ease-out);
+  background: var(--st-tint); opacity: 0; transition: opacity var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-item:hover::after { opacity: 1; }
@@ -87,8 +87,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-plus svg { display: block; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:active:not(:disabled) { transform: scale(0.99) !important; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 /* Open: the row becomes the search field in the same box. The button fades out under it, the field fades in over
-   it with the + turned into the search icon, and Done sits on the right. 180ms, none with reduced motion. */
-html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 100ms ease-out; }
+   it with the + turned into the search icon, and Done sits on the right. calc(180ms * var(--mo, 1)), none with reduced motion. */
+html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out), color calc(160ms * var(--mo, 1)) var(--ease-out), border-color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(100ms * var(--mo, 1)) ease-out; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-addli.open > .qs-add { opacity: 0; pointer-events: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field {
   position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; min-width: 0; height: 100%;
@@ -108,8 +108,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-done { position: rel
 /* Done's tap area reaches 44px */
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-done::after { content: ""; position: absolute; inset: -2px; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field { animation: qs-morph 180ms cubic-bezier(0.23, 1, 0.32, 1); }
-  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-plus svg { animation: qs-morph-icon 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field { animation: qs-morph calc(180ms * var(--mo, 1)) var(--ease-out); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-field .qs-plus svg { animation: qs-morph-icon calc(200ms * var(--mo, 1)) var(--ease-out); }
 }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-add { transition: none; } }
 @keyframes qs-morph { from { opacity: 0; } }
@@ -203,7 +203,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; height: auto; min-width: 0; padding: 6px;
   border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-md); transform-origin: top center;
 }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick { animation: st-pop 180ms cubic-bezier(0.23, 1, 0.32, 1); } }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-pick { animation: st-pop calc(180ms * var(--mo, 1)) var(--ease-out); } }
 
 /* One template for the header and every row: avatar, position, name, Proj, Value, + */
 html:root:not(#_):not(#_):not(#_):not(#_) .qs :is(.qs-head, .qs-opts button) {
@@ -215,7 +215,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-col.on { color: var(--ink); }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort { grid-column: 1 / 4; justify-self: start; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button {
   height: 22px; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--muted);
-  font: 600 0.6875rem/1 var(--font-body); cursor: pointer; transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  font: 600 0.6875rem/1 var(--font-body); cursor: pointer; transition: background-color calc(140ms * var(--mo, 1)) var(--ease-out), color calc(140ms * var(--mo, 1)) var(--ease-out);
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button[aria-checked="true"] { background: var(--surface-3); color: var(--ink); }
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_):not(#_):not(#_) .qs .qs-sort button:hover { color: var(--ink); } }

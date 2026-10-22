@@ -52,9 +52,9 @@ html:root:not(#_):not(#_) [data-sa]::-webkit-scrollbar { display: none !importan
 
 html:root:not(#_):not(#_) .sa-track {
   position: absolute; z-index: 2; width: 14px; margin: 0; padding: 0; box-sizing: border-box;
-  pointer-events: none; opacity: 0; transition: opacity 240ms ease;
+  pointer-events: none; opacity: 0; transition: opacity calc(240ms * var(--mo, 1)) ease;
 }
-html:root:not(#_):not(#_) .sa-track[data-on] { opacity: 1; transition-duration: 120ms; }
+html:root:not(#_):not(#_) .sa-track[data-on] { opacity: 1; transition-duration: calc(120ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) .sa-track[data-hot], html:root:not(#_):not(#_) .sa-track[data-drag] { pointer-events: auto; }
 html:root:not(#_):not(#_) .sa-thumb {
   position: absolute; top: 0; right: 4px; width: 4px; border-radius: 999px;

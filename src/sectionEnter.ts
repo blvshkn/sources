@@ -14,8 +14,9 @@
  *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
+import { EASE_OUT } from "./motion";
 
-const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
+const EASE = EASE_OUT;
 /** Left a section this recently? Coming back to it skips the entrance. */
 const AGAIN_MS = 8000;
 /** Things inside a page that are fixed to the viewport. A moving ancestor would carry them along, so a card holding

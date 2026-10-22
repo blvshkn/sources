@@ -7,7 +7,7 @@
    by opacity. The trace above it folds in the same frame, and the card slides up from where it was by transform
    (ThinkingTrace), so nothing jumps. */
 
-html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card { animation: ask-card-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card { animation: ask-card-in calc(220ms * var(--mo, 1)) var(--ease-out) both; }
 @keyframes ask-card-in { from { opacity: 0; } }
 
 /* The one-liner's rule is part of the card's shape from the start */
@@ -15,11 +15,11 @@ html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-quip.thk-wait { bor
 
 /* Blocks that wait for the text: their content fades in over a skeleton slab of the same size */
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after { position: relative; opacity: 1; }
-html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after > * { transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after > * { transition: opacity calc(220ms * var(--mo, 1)) var(--ease-out); }
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after.wait > * { opacity: 0; }
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after::after {
   content: ""; position: absolute; inset: 0; border-radius: 10px; background: var(--surface-2); background: color-mix(in srgb, var(--muted) 14%, transparent);
-  opacity: 0; transition: opacity 220ms cubic-bezier(0.23, 1, 0.32, 1); pointer-events: none;
+  opacity: 0; transition: opacity calc(220ms * var(--mo, 1)) var(--ease-out); pointer-events: none;
 }
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after.wait::after { opacity: 1; }
 
@@ -29,10 +29,10 @@ html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-card .ask-after.wait::after {
 }
 
 /* Follow-up questions: in place from the start, shown when the answer is written */
-/* Each chip fades in 40ms after the one before it (capped at 120ms, so the row is in by 340ms); they leave together */
+/* Each chip fades in calc(40ms * var(--mo, 1)) after the one before it (capped at calc(120ms * var(--mo, 1)), so the row is in by calc(340ms * var(--mo, 1))); they leave together */
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-follow > .ask-chip {
-  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 220ms cubic-bezier(0.23, 1, 0.32, 1);
-  transition-delay: 0ms, 0ms, 0ms, min(calc(var(--i, 0) * 40ms), 120ms);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out), border-color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out), opacity calc(220ms * var(--mo, 1)) var(--ease-out);
+  transition-delay: 0ms, 0ms, 0ms, min(calc(var(--i, 0) * calc(40ms * var(--mo, 1))), calc(120ms * var(--mo, 1)));
 }
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-follow.wait { pointer-events: none; }
 html:root:not(#_):not(#_):not(#_) .ask-turn > .ask-follow.wait > .ask-chip { opacity: 0; transition-delay: 0ms; }

@@ -33,10 +33,10 @@ html:root:not(#_):not(#_) .tp > .tp-pop {
   transform-origin: top center;
 }
 /* Opens with a transition from @starting-style, so a quick close mid-open reverses from where it is */
-html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out); }
 @starting-style { html:root:not(#_):not(#_) .tp > .tp-pop { opacity: 0; transform: scale(0.98) translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity calc(160ms * var(--mo, 1)) var(--ease-out); }
   @starting-style { html:root:not(#_):not(#_) .tp > .tp-pop { opacity: 0; transform: none; } }
 }
 html:root:not(#_):not(#_) .tp > .tp-pop > .tp-list {

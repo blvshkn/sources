@@ -8,6 +8,7 @@ import { useFocusTrap } from "./focusTrap";
 import { useDismiss } from "./useDismiss";
 import { ScrollArea } from "./ScrollArea";
 import { chartReveal } from "../chartReveal";
+import { mo } from "../motion";
 
 /** Below this the detail is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches detail-sheet.css. */
 const MODAL_FROM = 768;
@@ -50,7 +51,7 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
     // Out on a shorter 240ms ease (styles.css .ps-wrap.out) and unmounted only once it has fully left
     setOut(true);
     setShown(false);
-    window.setTimeout(() => { onClose(); after?.(); }, 240);
+    window.setTimeout(() => { onClose(); after?.(); }, mo(240));
   };
 
   useEffect(() => {

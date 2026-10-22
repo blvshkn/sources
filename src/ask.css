@@ -11,7 +11,7 @@ html:root[data-tab="ask"]:not(#_):not(#_) { overflow-anchor: none; }
 }
 
 html:root:not(#_):not(#_) .ask-page {
-  --ask-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ask-ease: var(--ease-out);
   display: flex; flex-direction: column; min-height: 0; height: calc(100dvh - 220px);
   margin: 0; padding: 0; background: none; border: 0;
 }
@@ -47,7 +47,7 @@ html:root:not(#_):not(#_) .ask-chip {
   appearance: none; margin: 0; min-height: 40px; padding: 9px 14px; border-radius: 999px;
   background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
   font: 400 0.875rem/1.4 var(--font-body); text-align: left; cursor: pointer; max-width: 100%;
-  transition: background-color 160ms var(--ask-ease), border-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ask-ease), border-color calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .ask-chip:hover { background: var(--surface-3); border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
@@ -86,7 +86,7 @@ html:root:not(#_):not(#_) .ask-act {
   appearance: none; margin: 0; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 9px 14px 9px 16px;
   border-radius: 999px; border: 0; background: var(--surface-3); color: var(--ink);
   font: 500 0.875rem/1.4 var(--font-body); cursor: pointer;
-  transition: background-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 html:root:not(#_):not(#_) .ask-act svg { flex: none; margin-right: -2px; }
 html:root:not(#_):not(#_) .ask-act:last-child:not(:has(svg)) { padding-right: 16px; }
@@ -99,7 +99,7 @@ html:root:not(#_):not(#_) .ask-out {
   appearance: none; margin: 0; display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 9px 6px;
   border: 0; border-radius: 999px; background: none; color: var(--muted);
   font: 500 0.875rem/1.4 var(--font-body); cursor: pointer;
-  transition: color 160ms var(--ask-ease), background-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+  transition: color calc(160ms * var(--mo, 1)) var(--ask-ease), background-color calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 html:root:not(#_):not(#_) .ask-out svg { flex: none; }
 html:root:not(#_):not(#_) .ask-act + .ask-out { margin-left: 4px; }
@@ -121,7 +121,7 @@ html:root:not(#_):not(#_) .ask-prow {
 }
 html:root:not(#_):not(#_) button.ask-prow {
   cursor: pointer;
-  transition: background-color 160ms var(--ask-ease), border-color 160ms var(--ask-ease), transform 160ms var(--ask-ease);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ask-ease), border-color calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) button.ask-prow:hover { background: var(--surface-3); border-color: color-mix(in srgb, var(--ink) 14%, transparent); }
@@ -144,7 +144,7 @@ html:root:not(#_):not(#_) .ask-prow-v + svg { margin-left: 0; }
 }
 
 /* Held in place while the text streams, faded in once it's written */
-html:root:not(#_):not(#_) .ask-after { transition: opacity 220ms var(--ask-ease); }
+html:root:not(#_):not(#_) .ask-after { transition: opacity calc(220ms * var(--mo, 1)) var(--ask-ease); }
 html:root:not(#_):not(#_) .ask-after.wait { opacity: 0; pointer-events: none; }
 html:root:not(#_):not(#_) .ask-card .ai-label { margin: 0; }
 
@@ -153,7 +153,7 @@ html:root:not(#_):not(#_) .ask-dock { flex: none; display: flex; flex-direction:
 html:root:not(#_):not(#_) .ask-composer {
   display: flex; align-items: center; gap: 10px; height: 56px; margin: 0; padding: 6px 6px 6px 16px;
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 28px; cursor: text;
-  transition: border-color 160ms var(--ask-ease);
+  transition: border-color calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 html:root:not(#_):not(#_) .ask-composer:focus-within { border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
 html:root:not(#_):not(#_) .ask-composer:has(input:focus-visible) { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; }
@@ -168,7 +168,7 @@ html:root:not(#_):not(#_) .ask-send {
   appearance: none; flex: none; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
   background: var(--action); color: var(--action-ink);
-  transition: opacity 160ms var(--ask-ease), transform 160ms var(--ask-ease), filter 160ms var(--ask-ease);
+  transition: opacity calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease), filter calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 html:root:not(#_):not(#_) .ask-send[aria-disabled] { opacity: 0.4; cursor: default; }
 @media (hover: hover) and (pointer: fine) {
@@ -181,7 +181,7 @@ html:root:not(#_):not(#_) .ask-wide { display: none; }
 /* ---------- Phone header: Ask next to the bell ---------- */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask {
   border: 1px solid transparent; border-radius: 50%;
-  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out), border-color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out);
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask[aria-current="page"] { background: var(--surface-3) !important; border-color: var(--ink) !important; color: var(--ink); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar .top-ask:active { transform: scale(0.97); }
@@ -248,7 +248,7 @@ html:root:not(#_):not(#_):not(#_) .ask-send > * { position: relative; z-index: 1
 html:root:not(#_):not(#_):not(#_) .ask-send::before {
   content: ""; position: absolute; inset: -50%; z-index: 0; pointer-events: none;
   background: radial-gradient(circle at 38% 38%, var(--ask-send-glow) 0, transparent 34%);
-  opacity: 0; transition: opacity 480ms var(--ask-ease);
+  opacity: 0; transition: opacity calc(480ms * var(--mo, 1)) var(--ask-ease);
   animation: ask-send-drift 3.2s linear infinite paused;
 }
 html:root:not(#_):not(#_):not(#_) .ask-send[aria-busy="true"]::before { opacity: 1; animation-play-state: running; }

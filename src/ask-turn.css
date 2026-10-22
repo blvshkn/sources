@@ -15,7 +15,7 @@ html:root:not(#_):not(#_) .ask-thread > .ask-col > .ask-turn:last-child { min-he
 /* ---------- 2. Trace steps: trace-flow.css lays them out for every trace ---------- */
 
 /* ---------- 3. Answer points: the bullet comes in with the point's first word ---------- */
-html:root:not(#_):not(#_) .ask-turn .ask-pts.many li::before { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .ask-turn .ask-pts.many li::before { transition: opacity calc(160ms * var(--mo, 1)) var(--ease-out); }
 html:root:not(#_):not(#_) .ask-turn .ask-pts li.thk-wait::before { opacity: 0.3; }
 html:root:not(#_):not(#_) .ask-turn .ask-pts li { text-wrap: pretty; }
 html:root:not(#_):not(#_) .ask-turn .ask-card .ask-ai-off { text-wrap: pretty; }

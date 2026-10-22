@@ -41,7 +41,7 @@ html:root:not(#_):not(#_) .acc-label { font-size: 0.875rem; font-weight: 600; co
 html:root:not(#_):not(#_) .acc-label b { font-weight: 600; }
 html:root:not(#_):not(#_) .acc-form {
   display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; border-radius: 999px;
-  background: var(--surface-2); transition: box-shadow 200ms ease;
+  background: var(--surface-2); transition: box-shadow calc(200ms * var(--mo, 1)) ease;
 }
 html:root:not(#_):not(#_) .acc-form:focus-within { box-shadow: 0 0 0 2px var(--lime); }
 html:root:not(#_):not(#_) .acc-form .at { color: var(--muted); font-weight: 600; }

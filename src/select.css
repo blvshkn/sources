@@ -17,7 +17,7 @@ html:root:not(#_):not(#_) .sel-trigger:active:not(:disabled) { transform: scale(
 html:root:not(#_):not(#_) .sel-value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html:root:not(#_):not(#_) .sel-value.placeholder { color: var(--muted); }
 html:root:not(#_):not(#_) .sel-chev { flex: none; display: inline-flex; color: var(--muted); }
-html:root:not(#_):not(#_) .sel-chev .ic { position: static; transform: none; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .sel-chev .ic { position: static; transform: none; transition: transform calc(140ms * var(--mo, 1)) var(--ease-out); }
 html:root:not(#_):not(#_) .sel-chev.down .ic { transform: rotate(90deg); }
 html:root:not(#_):not(#_) .sel-trigger[data-open] .sel-chev.down .ic { transform: rotate(-90deg); }
 
@@ -69,7 +69,7 @@ html:root:not(#_):not(#_) .sel-menu {
   box-shadow: var(--shadow-md, 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 0 rgba(255,255,255,.06), 0 1px 1px -.5px rgba(0,0,0,.2), 0 3px 3px -1.5px rgba(0,0,0,.2), 0 6px 6px -3px rgba(0,0,0,.2), 0 12px 12px -6px rgba(0,0,0,.2), 0 24px 24px -12px rgba(0,0,0,.2));
   font: 500 0.875rem/1.25 var(--font-body); text-align: left;
   opacity: 0; transform: scale(0.97);
-  transition: opacity 140ms cubic-bezier(0.23, 1, 0.32, 1), transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: opacity calc(140ms * var(--mo, 1)) var(--ease-out), transform calc(140ms * var(--mo, 1)) var(--ease-out);
   will-change: opacity, transform;
 }
 html:root:not(#_):not(#_) .sel-menu[data-state="open"] { opacity: 1; transform: none; }
@@ -83,7 +83,7 @@ html:root:not(#_):not(#_) .sel-group:not(:first-child) { margin-top: 4px; border
 html:root:not(#_):not(#_) .sel-opt {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 8px 0 10px; border-radius: 10px;
   cursor: pointer; user-select: none; -webkit-user-select: none; white-space: nowrap;
-  transition: background-color 80ms ease;
+  transition: background-color calc(80ms * var(--mo, 1)) ease;
 }
 html:root:not(#_):not(#_) .sel-opt.active { background: color-mix(in srgb, var(--ink) 7%, transparent); }
 html:root:not(#_):not(#_) .sel-list:focus-visible .sel-opt.active { box-shadow: inset 0 0 0 1.5px rgba(var(--lime-rgb), 0.55); }
@@ -101,7 +101,7 @@ html:root:not(#_):not(#_) .sel-check { flex: none; width: 16px; height: 16px; ma
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .sel-menu { transform: none !important; transition: opacity 140ms linear; }
+  html:root:not(#_):not(#_) .sel-menu { transform: none !important; transition: opacity calc(140ms * var(--mo, 1)) linear; }
   html:root:not(#_):not(#_) .sel-trigger, html:root:not(#_):not(#_) .sel-chev .ic { transition: none; }
   html:root:not(#_):not(#_) .sel-trigger:active:not(:disabled) { transform: none; }
 }

@@ -7,11 +7,11 @@
    - Press: cards and rows scale to 0.99, buttons, pills and chips to 0.97. Tint deepens to 7%.
    - Focus-visible: 2px lime ring, 2px offset. Rows show it on their pill.
    - Hover only on devices that hover with a fine pointer. Press everywhere.
-   - Transitions: background-color, box-shadow, transform, opacity (and text color), 160ms on a strong ease-out. */
+   - Transitions: background-color, box-shadow, transform, opacity (and text color), calc(160ms * var(--mo, 1)) on a strong ease-out. */
 
 html:root:not(#_):not(#_) {
-  --st-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  --st-dur: 160ms;
+  --st-ease: var(--ease-out);
+  --st-dur: calc(160ms * var(--mo, 1));
   --st-tint: color-mix(in srgb, var(--ink) 4%, transparent);
   --st-tint-2: color-mix(in srgb, var(--ink) 7%, transparent);
   --st-ring: color-mix(in srgb, var(--ink) 12%, transparent);
@@ -61,7 +61,7 @@ html:root:not(#_):not(#_) .partner-card { border-radius: 12px; }
   html:root:not(#_):not(#_) .league-pill.lsw-btn:hover { background: var(--surface-2) !important; }
 }
 html:root:not(#_):not(#_) :is(.partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main):active {
-  box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: 100ms;
+  box-shadow: var(--st-lift-press) !important; transform: scale(0.99); transition-duration: calc(100ms * var(--mo, 1));
 }
 /* The open matchup row keeps its fill as the selected state */
 html:root:not(#_):not(#_) .mu-row.open .mu-mine { background: var(--surface-2); border-color: transparent; box-shadow: inset 0 0 0 1px var(--st-ring); }
@@ -85,8 +85,8 @@ html:root:not(#_):not(#_) .brief-row:hover .grow { text-decoration: none; }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row) > svg:last-child { transition: transform var(--st-dur) var(--st-ease); }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row):hover > svg:last-child { transform: translateX(3px); }
 }
-html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
-html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active { transform: scale(0.99) !important; transition-duration: 100ms; }
+html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: calc(100ms * var(--mo, 1)); }
+html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):active { transform: scale(0.99) !important; transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):focus-visible { outline: none !important; }
 html:root:not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row):focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 
@@ -96,12 +96,12 @@ html:root:not(#_):not(#_) :is(.qs-opts button, .wv-ta-list button, .tp-list butt
   html:root:not(#_):not(#_) :is(.qs-opts button, .tp-list button, .mu-opt):hover { background-color: var(--st-tint-2) !important; }
 }
 html:root:not(#_):not(#_) .wv-ta-list button.on { background-color: var(--st-tint-2) !important; }
-html:root:not(#_):not(#_) :is(.qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt):active { background-color: color-mix(in srgb, var(--ink) 10%, transparent) !important; transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_) :is(.qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt):active { background-color: color-mix(in srgb, var(--ink) 10%, transparent) !important; transform: scale(0.99); transition-duration: calc(100ms * var(--mo, 1)); }
 
 /* ---------- Buttons ---------- */
 html:root:not(#_):not(#_) .btn-primary:is(:hover, :active) { opacity: 1 !important; filter: none !important; }
 html:root:not(#_):not(#_) .ld2-form .btn:hover { filter: none; }
-html:root:not(#_):not(#_) :is(.btn, .chip-btn, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link):active:not(:disabled) { transform: scale(0.97) !important; transition-duration: 100ms; }
+html:root:not(#_):not(#_) :is(.btn, .chip-btn, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link):active:not(:disabled) { transform: scale(0.97) !important; transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) :is(.btn, .chip-btn):disabled:active { transform: none !important; }
 /* Quiet buttons get the same soft tint the cards use */
 @media (hover: hover) and (pointer: fine) {
@@ -116,13 +116,13 @@ html:root:not(#_):not(#_) :is(.btn, .chip-btn):disabled:active { transform: none
   html:root:not(#_):not(#_) .side-logo:hover { opacity: 0.82; }
   html:root:not(#_):not(#_) .switch:not(.on):hover { background-color: color-mix(in srgb, var(--ink) 14%, transparent); }
 }
-html:root:not(#_):not(#_) .side-logo:active { transform: scale(0.98); transition-duration: 100ms; }
+html:root:not(#_):not(#_) .side-logo:active { transform: scale(0.98); transition-duration: calc(100ms * var(--mo, 1)); }
 
 /* ---------- Tabs and pills: hover tints, the active one stays distinct ---------- */
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) :is(.seg button, .wv2-pos button, .wv-pos button):not([aria-pressed="true"]):hover { background-color: var(--st-tint) !important; color: var(--ink) !important; }
 }
-html:root:not(#_):not(#_) :is(.seg button, .wv2-pos button, .wv-pos button):active { transform: scale(0.97); transition-duration: 100ms; }
+html:root:not(#_):not(#_) :is(.seg button, .wv2-pos button, .wv-pos button):active { transform: scale(0.97); transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_) :is(.seg button, .wv2-pos button, .wv-pos button):focus-visible { outline-offset: 1px; }
 
 /* ---------- Inbox items ---------- */
@@ -155,7 +155,7 @@ html:root:not(#_):not(#_) .qs-opts {
 }
 html:root:not(#_):not(#_) .qs-opts:empty { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .qs-opts { animation: st-pop 180ms var(--st-ease); }
+  html:root:not(#_):not(#_) .qs-opts { animation: st-pop calc(180ms * var(--mo, 1)) var(--st-ease); }
 }
 @keyframes st-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
 /* The halves and the deal panel must not clip the list */
@@ -206,7 +206,7 @@ html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }
 /* League trade partners: rows get the same soft rounded pill as other list rows, drawn behind the content with room
    on every side, instead of a square outline that touched the numbers. Dividers hide next to the hovered row. */
 html:root:not(#_):not(#_) .card .partner-card { position: relative; isolation: isolate; border-radius: 0 !important; box-shadow: none !important; outline: none; }
-html:root:not(#_):not(#_) .card .partner-card::before { content: ""; position: absolute; inset: 4px -12px; z-index: -1; border-radius: 12px; background: transparent; transition: background-color var(--st-dur, 160ms) var(--st-ease, cubic-bezier(0.23,1,0.32,1)); pointer-events: none; }
+html:root:not(#_):not(#_) .card .partner-card::before { content: ""; position: absolute; inset: 4px -12px; z-index: -1; border-radius: 12px; background: transparent; transition: background-color var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, var(--ease-out)); pointer-events: none; }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .card .partner-card:hover { background: none !important; border-color: var(--line) !important; }
   html:root:not(#_):not(#_) .card .partner-card:hover::before { background: color-mix(in srgb, var(--ink) 5%, transparent); }
@@ -278,8 +278,8 @@ html:root:not(#_):not(#_):not(#_) .sr-main:is(:hover, :active, :focus-visible) {
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):hover::after { opacity: 1; }
 }
-html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.99) !important; opacity: 1 !important; transition-duration: 100ms; }
-html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.99) !important; opacity: 1 !important; transition-duration: calc(100ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):active::after { opacity: 1; background: var(--st-tint-2); transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible { outline: none !important; }
 html:root:not(#_):not(#_):not(#_) :is(.set-link, .card.wk > .wk-more, .sr-main):focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 @media (prefers-reduced-motion: reduce) {
@@ -320,7 +320,7 @@ html:root:not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar button) {
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_):not(#_) .nav-ix button:hover { background-color: color-mix(in srgb, var(--ink) 5%, transparent) !important; color: var(--ink) !important; }
 }
-html:root:not(#_):not(#_):not(#_) .nav-ix button:active { background-color: color-mix(in srgb, var(--ink) 8%, transparent) !important; transform: scale(0.98); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) .nav-ix button:active { background-color: color-mix(in srgb, var(--ink) 8%, transparent) !important; transform: scale(0.98); transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar button):focus-visible { outline: 2px solid var(--lime) !important; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .nav-ix button:active { transform: none; } }
 
@@ -337,7 +337,7 @@ html:root:not(#_):not(#_):not(#_) :is(.nl, .team-card) .tag-line .btn:not(:disab
   html:root:not(#_):not(#_):not(#_) .method:hover { background-color: var(--surface-3); }
 }
 html:root:not(#_):not(#_):not(#_) .method { transition-property: background-color, box-shadow, transform; transition-duration: var(--st-dur); transition-timing-function: var(--st-ease); }
-html:root:not(#_):not(#_):not(#_) .method:active { transform: scale(0.99); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) .method:active { transform: scale(0.99); transition-duration: calc(100ms * var(--mo, 1)); }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .method:active { transform: none; } }
 /* Tag composer: the field's ring is for typing. Pressing the chip, mic or send button with a mouse no longer
    lights the whole composer; keyboard focus on those buttons draws their own ring. */
@@ -422,8 +422,8 @@ html:root:not(#_):not(#_):not(#_) .fb-opt::after {
   transition: opacity var(--st-dur) var(--st-ease), background-color var(--st-dur) var(--st-ease), box-shadow var(--st-dur) var(--st-ease);
 }
 html:root:not(#_):not(#_):not(#_) .fb-opt:is(:active, :focus-visible) { opacity: 1 !important; outline: none !important; }
-html:root:not(#_):not(#_):not(#_) .fb-opt:active { transform: scale(0.99); transition-duration: 100ms; }
-html:root:not(#_):not(#_):not(#_) .fb-opt:active::after { opacity: 1; background: var(--st-tint-2); transition-duration: 100ms; }
+html:root:not(#_):not(#_):not(#_) .fb-opt:active { transform: scale(0.99); transition-duration: calc(100ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) .fb-opt:active::after { opacity: 1; background: var(--st-tint-2); transition-duration: calc(100ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) .fb-opt:focus-visible::after { opacity: 1; box-shadow: 0 0 0 2px var(--lime); }
 html:root:not(#_):not(#_):not(#_) .fb-list > li { transition: border-color var(--st-dur) var(--st-ease); }
 html:root:not(#_):not(#_):not(#_) .fb-opt svg { transition: transform var(--st-dur) var(--st-ease); }

@@ -1,11 +1,11 @@
 /* Why a sent offer was declined (SentOffers.tsx WhyPanel, declineWhy.ts). Phones first: the panel and the "Why:"
    line sit under the row's actions, full width. 768px up they span both columns of the row.
-   The picks match Ask's suggestion chips. Opening fades and lifts the panel 4px over 160ms,
+   The picks match Ask's suggestion chips. Opening fades and lifts the panel 4px over calc(160ms * var(--mo, 1)),
    transform and opacity only, and not at all with reduced motion. Every rule is scoped to .so-card or a .tag-from. */
 
 html:root:not(#_):not(#_) .so-card .so-why-panel {
   display: grid; gap: 10px; margin-left: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent;
-  animation: so-why-in 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: so-why-in calc(160ms * var(--mo, 1)) var(--ease-out) both;
 }
 @keyframes so-why-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 html:root:not(#_):not(#_) .so-card .so-why-q { margin: 0; font: 600 0.8125rem/1.3 "Geist", sans-serif; color: var(--ink); }
@@ -15,7 +15,7 @@ html:root:not(#_):not(#_) .so-card .so-why-chip {
   appearance: none; margin: 0; min-height: 36px; max-width: 100%; padding: 7px 12px; border-radius: 999px;
   background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
   font: 400 0.8125rem/1.4 "Geist", sans-serif; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition-property: background-color, color, border-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, color, border-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-why-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 500; }
 @media (hover: hover) and (pointer: fine) {
@@ -26,7 +26,7 @@ html:root:not(#_):not(#_) .so-card .so-why-k { font-size: 0.75rem; color: var(--
 html:root:not(#_):not(#_) .so-card .so-why-note {
   width: 100%; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
   color: var(--ink); font: 400 1rem/1 "Geist", sans-serif; outline: none;
-  transition: border-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: border-color calc(160ms * var(--mo, 1)) var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-why-note::placeholder { color: var(--muted); }
 html:root:not(#_):not(#_) .so-card .so-why-note:focus-visible { border-color: var(--ink); }
@@ -40,7 +40,7 @@ html:root:not(#_):not(#_) .so-card .so-why-line {
   display: grid; grid-template-columns: minmax(0, 1fr) 14px; align-items: center; column-gap: 8px; row-gap: 2px;
   margin: 0 0 0 40px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: var(--ink);
   font: 400 0.875rem/1.4 "Geist", sans-serif; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition-property: background-color, transform; transition-duration: 160ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-property: background-color, transform; transition-duration: calc(160ms * var(--mo, 1)); transition-timing-function: var(--ease-out);
 }
 html:root:not(#_):not(#_) .so-card .so-why-line > svg { grid-column: 2; grid-row: 1 / span 2; color: var(--muted); }
 html:root:not(#_):not(#_) .so-card .so-why-line .so-why-k { font-size: 0.875rem; }

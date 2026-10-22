@@ -21,7 +21,7 @@ html:root:not(#_) .tt {
   text-align: left; text-wrap: pretty; white-space: normal;
   pointer-events: none;
   transform-origin: var(--ax, 50%) calc(100% + 6px);
-  animation: tt-in 120ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: tt-in calc(120ms * var(--mo, 1)) var(--ease-out) both;
 }
 html:root:not(#_) .tt[data-side="bottom"] { transform-origin: var(--ax, 50%) -6px; animation-name: tt-in-b; }
 /* Skip-delay: once a tip is up, its neighbours swap in with no animation */

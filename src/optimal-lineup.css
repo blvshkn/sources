@@ -4,7 +4,7 @@
    reason line inside .ask-show: nothing here styles bare .card, .btn or .row. Mobile first, then by the block's own width. */
 
 html:root:not(#_):not(#_) .lu-list .lu-ai {
-  --lu-ai-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --lu-ai-ease: var(--ease-out);
   margin: 2px 12px 10px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0;
   container: lu-ai / inline-size;
   border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2);
@@ -17,7 +17,7 @@ html:root:not(#_):not(#_) .lu-ai .lu-ai-txt > b { font-size: 0.875rem; font-weig
 html:root:not(#_):not(#_) .lu-ai .lu-ai-go,
 html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .btn {
   height: 44px; gap: 8px; justify-content: center; white-space: nowrap; text-decoration: none;
-  transition: background-color 160ms var(--lu-ai-ease), border-color 160ms var(--lu-ai-ease), transform 160ms var(--lu-ai-ease);
+  transition: background-color calc(160ms * var(--mo, 1)) var(--lu-ai-ease), border-color calc(160ms * var(--mo, 1)) var(--lu-ai-ease), transform calc(160ms * var(--mo, 1)) var(--lu-ai-ease);
 }
 html:root:not(#_):not(#_) .lu-ai .lu-ai-go { width: 100%; }
 html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn):is(:hover, :focus-visible, :active) { text-decoration: none; }

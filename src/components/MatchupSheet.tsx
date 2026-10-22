@@ -9,6 +9,7 @@ import { useDismiss } from "./useDismiss";
 import { ScrollArea } from "./ScrollArea";
 import { WeekStepper } from "./WeekStepper";
 import { MatchupWeek, useMatchupWeek } from "./Matchup";
+import { mo } from "../motion";
 
 /** Below this the matchup is a bottom sheet; from here up (tablet and desktop) a centered modal. Matches matchup-sheet.css. */
 const MODAL_FROM = 768;
@@ -37,7 +38,7 @@ export function MatchupSheet({ week: start = WEEK, onClose }: { week?: number; o
     if (el) { el.style.transition = ""; el.style.transform = ""; }
     if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
     setShown(false);
-    window.setTimeout(onClose, 220);
+    window.setTimeout(onClose, mo(220));
   };
 
   useEffect(() => {

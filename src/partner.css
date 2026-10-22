@@ -73,7 +73,7 @@ html:root:not(#_):not(#_) .ps-partner .pp-tags li { max-width: 100%; padding: 5p
     max-width: 600px; max-height: min(85vh, 780px);
     border-radius: 28px; border-bottom: 1px solid var(--line);
     transform: scale(0.96); opacity: 0;
-    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out;
+    transition: transform calc(200ms * var(--mo, 1)) var(--ease-out), opacity calc(200ms * var(--mo, 1)) ease-out;
   }
   html:root:not(#_):not(#_) .ps-wrap.pp-wrap.in .ps.ps-partner { transform: none; opacity: 1; }
   html:root:not(#_):not(#_) .ps-partner > .pp-top { padding: 20px 24px 16px; }
@@ -81,5 +81,5 @@ html:root:not(#_):not(#_) .ps-partner .pp-tags li { max-width: 100%; padding: 5p
   html:root:not(#_):not(#_) .ps-partner .pp-body { padding: 18px 24px 24px; }
 }
 @media (min-width: 768px) and (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .ps.ps-partner { transform: none; transition: opacity 160ms ease-out; }
+  html:root:not(#_):not(#_) .ps.ps-partner { transform: none; transition: opacity calc(160ms * var(--mo, 1)) ease-out; }
 }

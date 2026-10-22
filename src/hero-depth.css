@@ -13,7 +13,7 @@
    needs a blur (the cffee27 rule in landing-phone.css), never the host. Reduced motion keeps the resting depth only. */
 
 html:root:not(#_):not(#_) .ld2-hero {
-  --hd-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --hd-out: var(--ease-out);
   --hd-big: cubic-bezier(0.32, 0.72, 0, 1);
   --hd-z: 16px;
 }
@@ -87,7 +87,7 @@ html:root:not(#_):not(#_) .ld2-hero .hd-card :is(.tx-side, .ti-stats, .ti-why, .
   content: ""; position: absolute; inset: -6px; border-radius: 14px; pointer-events: none;
   box-shadow: inset 0 0 0 1px var(--line), 0 16px 32px -16px rgba(0, 0, 0, 0.55);
   background: rgba(244, 246, 242, 0.015);
-  opacity: 0; transition: opacity 240ms var(--hd-out);
+  opacity: 0; transition: opacity calc(240ms * var(--mo, 1)) var(--hd-out);
 }
 /* The panels and stats row have their own corners, so their outline sits on them */
 html:root:not(#_):not(#_) .ld2-hero .hd-trade :is(.tx-side, .ti-stats)::after { inset: 0; border-radius: inherit; }
@@ -114,7 +114,7 @@ html:root:not(#_):not(#_) .ld2-hero .hd-card.is-x :is(.tx-side, .tx-swap, .ti-st
   translate: 0 0 calc(var(--hd-l) * var(--hd-z));
   transition: translate 640ms var(--hd-big) calc(var(--hd-at, var(--hd-l)) * 22ms);
 }
-html:root:not(#_):not(#_) .ld2-hero .hd-card.is-x :is(.tx-side, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-foot)::after { opacity: 1; transition-duration: 400ms; }
+html:root:not(#_):not(#_) .ld2-hero .hd-card.is-x :is(.tx-side, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-foot)::after { opacity: 1; transition-duration: calc(400ms * var(--mo, 1)); }
 /* The buttons move in step with the pose, no cascade delay either way, so their net depth stays at the pivot through
    the whole move and they never swing out from under the pointer */
 html:root:not(#_):not(#_) .ld2-hero .hd-trade .ti-actions { transition-delay: 0ms; }
@@ -142,14 +142,14 @@ html:root:not(#_):not(#_) .ld2-copy .hd-states {
 }
 html:root:not(#_):not(#_) .ld2-copy .hd-states .ld2-fo { grid-area: card; margin-top: 0; max-width: none; }
 html:root:not(#_):not(#_) .ld2-hero .hd-states .hd-seg { grid-area: seg; margin-top: 16px; }
-html:root:not(#_):not(#_) .ld2-hero .hd-states .hd-seg .seg button { min-height: 32px; padding: 6px 14px; transition: background-color 160ms var(--hd-out), color 160ms var(--hd-out), transform 160ms var(--hd-out); }
+html:root:not(#_):not(#_) .ld2-hero .hd-states .hd-seg .seg button { min-height: 32px; padding: 6px 14px; transition: background-color calc(160ms * var(--mo, 1)) var(--hd-out), color calc(160ms * var(--mo, 1)) var(--hd-out), transform calc(160ms * var(--mo, 1)) var(--hd-out); }
 /* The three cards share one cell, so the tallest sets the height and a switch moves nothing */
 html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-pose { display: grid; }
 html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face {
   grid-area: 1 / 1; display: flex; flex-direction: column;
-  opacity: 0; visibility: hidden; transition: opacity 240ms var(--hd-out), visibility 0s linear 240ms;
+  opacity: 0; visibility: hidden; transition: opacity calc(240ms * var(--mo, 1)) var(--hd-out), visibility 0s linear calc(240ms * var(--mo, 1));
 }
-html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face.on { opacity: 1; visibility: visible; transition: opacity 240ms var(--hd-out); }
+html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face.on { opacity: 1; visibility: visible; transition: opacity calc(240ms * var(--mo, 1)) var(--hd-out); }
 html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face > .sb2 { flex: 1; margin: 0; }
 /* A card that isn't showing runs nothing: the Live card's sweep and pulse only move while Live is up */
 html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face:not(.on) *,
@@ -158,7 +158,7 @@ html:root:not(#_):not(#_) .ld2-hero .hd-fo .hd-face:not(.on) *::after { animatio
 html:root:not(#_):not(#_) .ld2-hero .hd-caps { grid-area: cap; display: grid; margin-top: 16px; }
 html:root:not(#_):not(#_) .ld2-hero .hd-cap {
   grid-area: 1 / 1; margin: 0; font-size: 0.8125rem; line-height: 1.25rem; color: var(--muted); text-wrap: pretty;
-  opacity: 0; transition: opacity 240ms var(--hd-out);
+  opacity: 0; transition: opacity calc(240ms * var(--mo, 1)) var(--hd-out);
 }
 html:root:not(#_):not(#_) .ld2-hero .hd-cap.on { opacity: 1; }
 html:root:not(#_):not(#_) .ld2-hero .hd-cap .num { color: var(--ink); }
@@ -191,6 +191,6 @@ html:root:not(#_):not(#_) .ld2-hero .hd-cap .trophy { display: inline-flex; vert
   html:root:not(#_):not(#_) .ld2-hero .hd-card .hd-pose { transform: rotateX(var(--hd-rx)) rotateY(var(--hd-ry)) !important; transition: none !important; }
   html:root:not(#_):not(#_) .ld2-hero .hd-card :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) { translate: none !important; transition: none !important; }
   html:root:not(#_):not(#_) .ld2-hero .hd-card :is(.tx-side, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-foot)::after { display: none; }
-  html:root:not(#_):not(#_) .ld2-hero .hd-trade { animation: rm-fade 240ms ease both; }
+  html:root:not(#_):not(#_) .ld2-hero .hd-trade { animation: rm-fade calc(240ms * var(--mo, 1)) ease both; }
   html:root:not(#_):not(#_) .ld2-hero :is(.hd-face, .hd-cap) { transition: none !important; }
 }

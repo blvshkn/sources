@@ -16,6 +16,7 @@ import { AiLabel, Icon, Seg } from "./ui";
 import { ShareCard, canShareFile, canCopyImage } from "./ShareCard";
 import { MARK } from "./Logo";
 import { WORDMARK, WORD_FONT, WORD_WEIGHT } from "./BrandLogo";
+import { mo } from "../motion";
 
 /** Short tap on Android when the share goes through. iOS Safari ignores it. */
 const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
@@ -284,7 +285,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
       if (el) { el.style.transition = ""; el.style.transform = ""; }
       if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
       setOut(true); setShown(false);
-      window.setTimeout(onClose, 240);
+      window.setTimeout(onClose, mo(240));
       return;
     }
     if (reduce) { sheet.current?.classList.add("fading"); scrim.current?.classList.add("fading"); window.setTimeout(onClose, 160); return; }

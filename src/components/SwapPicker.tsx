@@ -15,6 +15,7 @@ import { StatusPill } from "./ui";
 import { deny } from "../deny";
 import type { CmpWho } from "./SwapCompare";
 import { MetaParts, gameParts } from "./Meta";
+import { EASE_OUT, mo as moT } from "../motion";
 
 // ---- Locks ------------------------------------------------------------------
 /** Sleeper locks a player at his game's kickoff: "live" while it's on, "final" once it's over, null before. Byes
@@ -111,7 +112,7 @@ const still = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").ma
  *  house curve. Additive, so a second move mid-way (another row opening) stacks instead of snapping. */
 function slideFrom(els: HTMLElement[], dy: number) {
   if (Math.abs(dy) < 0.5 || still()) return;
-  for (const e of els) e.animate?.([{ transform: `translateY(${-dy}px)` }, { transform: "none" }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", composite: "add" });
+  for (const e of els) e.animate?.([{ transform: `translateY(${-dy}px)` }, { transform: "none" }], { duration: moT(160), easing: EASE_OUT, composite: "add" });
 }
 /** Lineup: where every row of the list, and everything after the list, sits on screen right now. Taken just before an
  *  open or close commits, so the rows can play from these spots to their new ones (the opened row grows, its anchor
@@ -139,7 +140,7 @@ function releaseAnchor(a: HTMLElement) {
   };
   const mo = new MutationObserver(() => { if (!a.isConnected) done(); });
   if (parent) mo.observe(parent, { childList: true });
-  t = window.setTimeout(done, 160);
+  t = window.setTimeout(done, moT(160));
 }
 
 /**

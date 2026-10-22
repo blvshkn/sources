@@ -4,15 +4,15 @@
    its cards, in with a short rise and fade. These tokens set the timing; the script reads them once. In-page tabs and
    week steppers never play it. */
 :root {
-  --ld-dur: 200;   /* ms per card */
-  --ld-step: 30;   /* ms between cards */
-  --ld-cap: 90;    /* latest start, so a page settles by --ld-cap + --ld-dur = 290ms, inside the 300ms budget */
-  --ld-rise: 6;    /* px */
+  --ld-dur: 380;   /* ms per card */
+  --ld-step: 50;   /* ms between cards */
+  --ld-cap: 200;    /* latest start, so a page settles by --ld-cap + --ld-dur = calc(290ms * var(--mo, 1)), inside the calc(300ms * var(--mo, 1)) budget */
+  --ld-rise: 10;    /* px */
   /* The app's first appearance (after the loading screen, or the demo opening): once a session, so a fuller beat */
-  --ld-first-dur: 240;
-  --ld-first-step: 40;
-  --ld-first-cap: 140;
-  --ld-first-rise: 12;
+  --ld-first-dur: 520;
+  --ld-first-step: 70;
+  --ld-first-cap: 320;
+  --ld-first-rise: 16;
   --ld-near: 120;  /* px below the fold still counted as on screen */
 }
 
@@ -100,7 +100,7 @@ html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
 @media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .lu-wskel .lu-wi { animation: sk-pulse 1.2s ease-in-out infinite; } }
 
 /* ---- Skeleton to content ----------------------------------------------------------------------------------------
-   When a skeleton was really on screen, what replaces it fades in over 180ms instead of snapping (useLoadedIn in
+   When a skeleton was really on screen, what replaces it fades in over calc(180ms * var(--mo, 1)) instead of snapping (useLoadedIn in
    src/loadedIn.ts decides; a cache hit never gets the class). Opacity only, in the skeleton's exact footprint, so
    nothing moves. Reduced motion: no fade, the content is just there. */
 @keyframes sk-in { from { opacity: 0; } }
@@ -111,9 +111,9 @@ html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
   /* Player sheet usage: the table and its note, under the header that stayed put */
   html:root:not(#_):not(#_) .pd-blk.pd-in > :not(.ps-sub),
   /* Their threats: the real rows, or the message, over where the ghosts were */
-  html:root:not(#_):not(#_) .thr-body.thr-in > :not(.thr-ghost) { animation: sk-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) .thr-body.thr-in > :not(.thr-ghost) { animation: sk-in calc(180ms * var(--mo, 1)) var(--ease-out) both; }
   /* The trade card is a big image; a touch longer */
-  html:root:not(#_):not(#_) img.tcard-in { animation: sk-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  html:root:not(#_):not(#_) img.tcard-in { animation: sk-in calc(220ms * var(--mo, 1)) var(--ease-out) both; }
 }
 
 /* Skeletons that are the loaded element with a class on top (same nodes before and after): the bars dissolve into
@@ -125,12 +125,12 @@ html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
     .wv3-list :is(.wv-proj b, .wv-c-lu b),
     .topk :is(.topk-label, .topk-name, .wv-meta, dt, dd, .topk-why, .topk-plan li > span),
     .sx-verdict
-  ) { transition: color 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms cubic-bezier(0.23, 1, 0.32, 1); }
-  /* Start / Sit: the dimmed rows ease back up (startsit.css holds the 120ms delay on the way down) and the verdict's
+  ) { transition: color calc(180ms * var(--mo, 1)) var(--ease-out), background-color calc(180ms * var(--mo, 1)) var(--ease-out); }
+  /* Start / Sit: the dimmed rows ease back up (startsit.css holds the calc(120ms * var(--mo, 1)) delay on the way down) and the verdict's
      bar fades out under the words */
-  html:root:not(#_):not(#_) .sx-row { transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
-  html:root:not(#_):not(#_) .sx-verdict { transition: color 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
-  html:root:not(#_):not(#_) .sx-verdict::after { content: ""; position: absolute; left: 0; top: calc(50% - 0.6em); height: 1.2em; width: min(18em, 70%); border-radius: 6px; background: var(--surface-2); opacity: 0; pointer-events: none; transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .sx-row { transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out); }
+  html:root:not(#_):not(#_) .sx-verdict { transition: color calc(180ms * var(--mo, 1)) var(--ease-out), background-color calc(180ms * var(--mo, 1)) var(--ease-out), opacity calc(180ms * var(--mo, 1)) var(--ease-out); }
+  html:root:not(#_):not(#_) .sx-verdict::after { content: ""; position: absolute; left: 0; top: calc(50% - 0.6em); height: 1.2em; width: min(18em, 70%); border-radius: 6px; background: var(--surface-2); opacity: 0; pointer-events: none; transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out); }
   html:root:not(#_):not(#_) .sx-verdict.sx-loading::after { opacity: 1; }
 }
 

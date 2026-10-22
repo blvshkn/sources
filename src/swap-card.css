@@ -49,7 +49,7 @@ html:root:not(#_):not(#_):not(#_) .sw-cmp svg { display: block; }
       grid-row: 1; grid-column: 5; justify-self: end; align-self: center; margin: 0;
       display: inline-grid; place-items: center; width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; gap: 0;
       border: 0 !important; border-radius: 20px !important; background: rgba(244, 246, 242, 0.07) !important; color: #9A9C98 !important; box-shadow: none !important;
-      transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+      transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out), color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out);
     }
     html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > :is(.sw-cmp-ic, .sw-cmp-t) { display: none; }
     html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp > .sw-cmp-ic2 { display: inline-grid; }
@@ -77,10 +77,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .mu-row:has(> .sw-cmp) > .mu-mine { pa
   html:root:not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp { grid-column: 1; grid-row: 1 / span 2; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_) .mu-row > .sw-cmp { animation: sw-cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_):not(#_) .mu-row > .sw-cmp { animation: sw-cmp-in calc(160ms * var(--mo, 1)) var(--ease-out); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { animation: sw-cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { animation: sw-cmp-in calc(160ms * var(--mo, 1)) var(--ease-out); }
 }
 @keyframes sw-cmp-in { from { opacity: 0; transform: scale(0.96); } }
 
@@ -113,7 +113,7 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-add { display: grid; gap: 8px; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-lbl { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 10px; color: var(--ink); cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  transition: transform calc(160ms * var(--mo, 1)) var(--ease-out), background-color calc(160ms * var(--mo, 1)) var(--ease-out), opacity calc(160ms * var(--mo, 1)) var(--ease-out); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chip > svg { color: var(--muted); }
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:not(.is-full):hover { background: var(--surface-2); } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-chip:active { transform: scale(0.97); }
@@ -128,12 +128,12 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="1"] { grid-template-c
 @container cmpsec (min-width: 470px) { html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container cmpsec (min-width: 620px) { html:root:not(#_):not(#_) .cmp-sheet .cmp-cols[data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-col { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
-@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .cmp-sheet .cmp-col { animation: cmp-in 160ms cubic-bezier(0.23, 1, 0.32, 1); } }
+@media (prefers-reduced-motion: no-preference) { html:root:not(#_):not(#_) .cmp-sheet .cmp-col { animation: cmp-in calc(160ms * var(--mo, 1)) var(--ease-out); } }
 @keyframes cmp-in { from { opacity: 0; transform: translateY(4px); } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-who { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-info { flex: 1; min-width: 0; display: grid; justify-items: start; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; border-radius: 8px; }
 html:root:not(#_):not(#_) .cmp-sheet button.cmp-info { cursor: pointer; }
-html:root:not(#_):not(#_) .cmp-sheet button.cmp-info b { text-decoration: none; transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .cmp-sheet button.cmp-info b { text-decoration: none; transition: color calc(160ms * var(--mo, 1)) var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet button.cmp-info:hover b { color: var(--muted); } }
 html:root:not(#_):not(#_) .cmp-sheet button.cmp-info:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-n { display: grid; gap: 2px; min-width: 0; max-width: 100%; }
@@ -141,7 +141,7 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-n > b { font-size: 0.875rem; font-weig
 html:root:not(#_):not(#_) .cmp-sheet .cmp-n > small { font-size: 0.75rem; color: var(--muted); }
 /* Remove sits in the column's corner, beside the headshot, so the name keeps the column's full width */
 html:root:not(#_):not(#_) .cmp-sheet .cmp-x { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 32px; height: 32px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer;
-  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out), color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out); }
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .cmp-sheet .cmp-x:hover { background: var(--surface-3); color: var(--ink); } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-x:active { transform: scale(0.94); }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-x:focus-visible { outline: 2px solid var(--lime); outline-offset: 0; }
@@ -176,7 +176,7 @@ html:root:not(#_):not(#_) .cmp-sheet .cmp-ax { fill: var(--muted); font-size: 10
 html:root:not(#_):not(#_) .cmp-sheet .cmp-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-dot { stroke: var(--surface); stroke-width: 2; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .cmp-sheet :is(.cmp-line, .cmp-dot) { animation: cmp-fade 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_) .cmp-sheet :is(.cmp-line, .cmp-dot) { animation: cmp-fade calc(160ms * var(--mo, 1)) var(--ease-out); }
 }
 @keyframes cmp-fade { from { opacity: 0; } }
 html:root:not(#_):not(#_) .cmp-sheet .cmp-line.s1 { stroke: var(--cmp-1); }

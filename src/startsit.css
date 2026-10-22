@@ -15,8 +15,8 @@
 html:root:not(#_) .sx-verdict { min-height: 2.8em; display: flex; align-items: center; }
 
 /* Loading a week: dim, never collapse */
-/* Dims after 120ms (a fast week never flickers), and eases back up when the week lands (loadin.css sets the transition) */
-.sx-loading { opacity: 0.55; transition-delay: 120ms !important; }
+/* Dims after calc(120ms * var(--mo, 1)) (a fast week never flickers), and eases back up when the week lands (loadin.css sets the transition) */
+.sx-loading { opacity: 0.55; transition-delay: calc(120ms * var(--mo, 1)) !important; }
 
 /* Bars: each fill spans its half and is clipped to its share (--v, 0 to 1, set by StartSit), so nothing reflows. The
    two grow out from the middle: yours is anchored at its right edge, theirs at its left. The lit fill's gradient is

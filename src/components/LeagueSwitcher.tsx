@@ -12,6 +12,7 @@ import { ManagerAvatar } from "./Avatar";
 import { Marked } from "./Marked";
 import { SEARCH_AT } from "./Select";
 import { matchPlayer, type Match } from "../search";
+import { mo } from "../motion";
 
 type Row = { id: string; name: string; teams: number; avatar?: string | null };
 type Group = Row[] | { error: string } | null;
@@ -47,7 +48,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   const close = () => {
     if (sheet.current) { sheet.current.style.transition = ""; sheet.current.style.transform = ""; }
     if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
-    setShown(false); window.setTimeout(onClose, 220);
+    setShown(false); window.setTimeout(onClose, mo(220));
   };
 
   const load = (userId: string) => {

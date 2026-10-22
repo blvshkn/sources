@@ -8,8 +8,8 @@
    dividers.css and inbox-toggle.css no longer apply to them. Loads just before frame.css. */
 
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx {
-  --ibx-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  --ibx-dur: 160ms;
+  --ibx-ease: var(--ease-out);
+  --ibx-dur: calc(160ms * var(--mo, 1));
 }
 
 /* Header and list share the container padding at every size, docked or sliding over */
