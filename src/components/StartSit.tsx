@@ -67,7 +67,7 @@ function sideFor(p: Player, w: number, view: WeekView | null): Side {
 }
 
 /** The verdict for a week, saying plainly when someone can't play. */
-function verdictFor(A: Side, B: Side, w: number, rosEdge: Player | null): { text: string; flip: boolean; lead?: string } {
+function verdictFor(A: Side, B: Side, w: number): { text: string; flip: boolean; lead?: string } {
   const past = w < WEEK;
   const wk = `week ${w}`;
   const aOut = !!A.avail?.out, bOut = !!B.avail?.out;
@@ -80,8 +80,8 @@ function verdictFor(A: Side, B: Side, w: number, rosEdge: Player | null): { text
   if (aOut || bOut) {
     const [out, ok] = aOut ? [A, B] : [B, A];
     if (past) return { flip: false, lead: ok.p.id, text: `${out.p.name} was ${out.avail!.say} in ${wk}. ${ok.p.name} scored ${(ok.pts ?? 0).toFixed(1)}.` };
-    const note = ok.avail?.kind === "q" ? ` He's ${ok.avail.say}.` : "";
-    return { flip: false, lead: ok.p.id, text: `${out.p.name} is ${out.avail!.say} in ${wk}. Start ${ok.p.name}.${note}` };
+    const note = ok.avail?.kind === "q" ? `, though he's ${ok.avail.say}` : "";
+    return { flip: false, lead: ok.p.id, text: `${out.p.name} is ${out.avail!.say} for ${wk}. Start ${ok.p.name}${note}.` };
   }
   if (A.pts === null || B.pts === null) return { flip: true, text: `No ${past ? "score" : "projection"} for ${(A.pts === null ? A : B).p.name} in ${wk}.` };
   const gap = round1(Math.abs(A.pts - B.pts));
@@ -92,9 +92,19 @@ function verdictFor(A: Side, B: Side, w: number, rosEdge: Player | null): { text
       : { flip: false, lead: lead.p.id, text: `${lead.p.name} outscored ${other.p.name} by ${gap.toFixed(1)} pts in ${wk}.` };
   }
   if (A.pts === 0 && B.pts === 0) return { flip: true, text: `Neither is projected to play in ${wk}.` };
-  const note = lead.avail?.kind === "q" ? ` He's ${lead.avail.say}.` : "";
-  if (gap < 1) return { flip: true, text: `Coin flip in ${wk}. ${rosEdge ? `Lean ${rosEdge.name}, who has the rest-of-season edge.` : "Go with your gut."}${note}` };
-  return { flip: false, lead: lead.p.id, text: `Start ${lead.p.name}. Projects ${gap.toFixed(1)} pts more than ${other.p.name} in ${wk}.${note}` };
+  // Under a point apart, the projection can't decide it; availability can. The healthy player is the safer start.
+  // Rest-of-season value says nothing about this week, so it never breaks the tie.
+  if (gap < 1) {
+    const aQ = A.avail?.kind === "q", bQ = B.avail?.kind === "q";
+    if (aQ !== bQ) {
+      const [q, safe] = aQ ? [A, B] : [B, A];
+      return { flip: false, lead: safe.p.id, text: `Too close to call on projections. Start ${safe.p.name}, since ${q.p.name} is ${q.avail!.say}.` };
+    }
+    if (aQ && bQ) return { flip: true, text: `Too close to call, and both are questionable. Check who's active before kickoff.` };
+    return { flip: true, text: gap < 0.1 ? `Dead even for ${wk}. Either is a fine start.` : `Too close to call for ${wk}. Either is a fine start.` };
+  }
+  const but = lead.avail?.kind === "q" ? `, but he's ${lead.avail.say}` : "";
+  return { flip: false, lead: lead.p.id, text: `Start ${lead.p.name}. He projects ${gap.toFixed(1)} more points than ${other.p.name} for ${wk}${but}.` };
 }
 
 /** One compare row: two bars growing out from the middle, the bigger one lit. */
@@ -135,8 +145,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
   const view = week === WEEK ? null : (wv?.week === week ? wv : peekWeek(week) ?? null);
   const loading = week !== WEEK && !wErr && !view;
   const A = sideFor(A0, week, view), B = sideFor(B0, week, view);
-  const rosEdge = eff(A0) === eff(B0) ? null : eff(A0) > eff(B0) ? A0 : B0;
-  const v: { text: string; flip: boolean; lead?: string } = wErr ? { text: wErr, flip: true } : loading ? { text: `Loading week ${week}`, flip: false } : verdictFor(A, B, week, rosEdge);
+  const v: { text: string; flip: boolean; lead?: string } = wErr ? { text: wErr, flip: true } : loading ? { text: `Loading week ${week}`, flip: false } : verdictFor(A, B, week);
   const leadId = v.lead;
 
   const Pick = ({ s, set, side }: { s: Side; set: (v: string) => void; side: "a" | "b" }) => {
