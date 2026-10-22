@@ -2,7 +2,7 @@
 // Everything here runs in the user's browser; nothing is stored on a server.
 import type { Chip } from "./steps";
 import { byeTeamsFrom } from "./bye";
-import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
+import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, WaiverFA, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
 const SKILL: Pos[] = ["QB", "RB", "WR", "TE"];
@@ -128,9 +128,13 @@ export const fetchSchedule = (season: string) =>
 /** Sleeper's full player file, trimmed to what a depth chart needs. It's large, so it loads once per session, only
  *  when a depth chart is opened. Sleeper fills depth_chart_position and depth_chart_order from team depth charts. */
 export interface DepthRow { id: string; name: string; team: string; pos: string; slot: string; order: number; injury?: string | null }
+type SPlayerFull = SPlayerLite & { depth_chart_position?: string | null; depth_chart_order?: number | null; active?: boolean };
+/** Sleeper's full player file (every NFL player, about 5 MB). Loaded at most once per session and shared by the depth
+ *  chart and Waivers search. */
+const fetchPlayerFile = () => cached("players:all", 6 * 60 * 60_000, () => get<Record<string, SPlayerFull>>("/v1/players/nfl"));
 export const fetchDepthRows = () =>
   cached("players:depth", 6 * 60 * 60_000, async () => {
-    const all = await get<Record<string, SPlayerLite & { depth_chart_position?: string | null; depth_chart_order?: number | null; active?: boolean }>>("/v1/players/nfl");
+    const all = await fetchPlayerFile();
     const out: DepthRow[] = [];
     for (const [id, p] of Object.entries(all ?? {})) {
       if (!p?.team || !p.depth_chart_position || typeof p.depth_chart_order !== "number" || p.active === false) continue;
@@ -138,6 +142,26 @@ export const fetchDepthRows = () =>
     }
     return out;
   });
+/** Why a player with no NFL team sits on the wire and can't score for you. */
+const noTeamWhy = (name: string) => `${name} has no NFL team right now, so he can't score for you until someone signs him.`;
+/** Everyone else on the wire for Waivers search: active players in Sleeper's full player file who aren't rostered in
+ *  the league and aren't already known (`known`). One request for the whole file, cached, made only once a search
+ *  starts. Skill players, plus kickers when the league starts one. */
+export async function fetchFaPool(known: Set<string>, kickers: boolean): Promise<WaiverFA[]> {
+  const all = await fetchPlayerFile();
+  const out: WaiverFA[] = [];
+  for (const [id, p] of Object.entries(all ?? {})) {
+    if (!p || p.active === false || known.has(id)) continue;
+    const pos = p.position ?? "";
+    const name = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    if (!name) continue;
+    const nfl = p.team || "FA";
+    const why = nfl === "FA" ? noTeamWhy(name) : "No projection from Sleeper yet.";
+    if ((SKILL as string[]).includes(pos)) out.push({ id, name, pos: pos as Pos, nfl, proj: 0, trend: "flat", rookie: p.years_exp === 0, why });
+    else if (kickers && pos === "K") out.push({ id, name, pos: "K", nfl, proj: 0, wk: null, trend: "flat", why });
+  }
+  return out;
+}
 interface SPlayerLite { first_name?: string; last_name?: string; position?: string; team?: string | null; injury_status?: string | null; years_exp?: number }
 
 // ---- Public calls --------------------------------------------------------
@@ -429,7 +453,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   if (missing.length) {
     onStep?.("Loading player details");
     await tr?.step(`Loading ${missing.length} missing ${missing.length === 1 ? "player" : "players"}`, `Loaded ${missing.length} missing ${missing.length === 1 ? "player" : "players"}`);
-    const all = await get<Record<string, SPlayerLite>>("/v1/players/nfl").catch(() => ({} as Record<string, SPlayerLite>));
+    const all = await fetchPlayerFile().catch(() => ({} as Record<string, SPlayerFull>));
     missing.forEach((id) => { add(id, all[id], null); if (!players[id]) addSpecial(id, all[id], null); });
   }
 
@@ -603,38 +627,59 @@ export async function loadLeague(leagueId: string, userId: string, username: str
   // Top available at each position plus the most-added players across Sleeper, so position filters always have depth
   const byValue = SKILL.flatMap((pos) => pool.filter((p) => p.pos === pos).sort((a, b) => (b.pts?.ppr ?? 0) - (a.pts?.ppr ?? 0)).slice(0, 8));
   const byTrend = pool.filter((p) => trend.has(p.id)).sort((a, b) => trend.get(b.id)! - trend.get(a.id)!).slice(0, 12);
-  const freeAgents: FreeAgent[] = Array.from(new Map([...byTrend, ...byValue].map((p) => [p.id, p])).values()).map((p) => {
+  const toFa = (p: Player): FreeAgent => {
     const t = trend.get(p.id);
     const wk = p.wk ? p.wk.ppr : 0;
     return {
       id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: p.proj, rookie: p.rookie, trend: t ? "up" : "flat", adds: t,
-      why: t ? `Added in ${t.toLocaleString()} Sleeper leagues over the last 7 days. Projects ${wk.toFixed(1)} this week.`
+      why: p.nfl === "FA" ? noTeamWhy(p.name)
+        : t ? `Added in ${t.toLocaleString()} Sleeper leagues over the last 7 days. Projects ${wk.toFixed(1)} this week.`
         : byeSet.has(p.nfl) ? `On bye this week, but projects ${p.proj.toFixed(1)} a week going forward.`
         : p.wk === null ? `No projection for this week yet. Projects ${p.proj.toFixed(1)} a week going forward.`
         : `Projects ${wk.toFixed(1)} this week and ${p.proj.toFixed(1)} a week going forward.`,
     };
-  });
+  };
+  const freeAgents: FreeAgent[] = Array.from(new Map([...byTrend, ...byValue].map((p) => [p.id, p])).values()).map(toFa);
 
   // Kickers and defenses worth streaming: the top 8 of each by this week's projection, from the same K/DEF feed the lineup uses
+  const isKdef = (p: SProj, pos: "K" | "DEF") => pos === "DEF" ? /^[A-Z]{2,3}$/.test(p.player_id) : p.player?.position === "K" && !/^[A-Z]{2,3}$/.test(p.player_id);
+  // One kicker or defense as a waiver entry, from his row in this week's K/DEF feed (or the season feed when he has none this week)
+  const toSpecialFa = (p: SProj, pos: "K" | "DEF"): SpecialFreeAgent => {
+    const id = p.player_id, isDef = pos === "DEF";
+    const w = kWeek.get(id), s = kSeason.get(id);
+    const gp = Math.max(1, s?.stats?.gp ?? 17);
+    const team = isDef ? id : w?.team ?? p.team ?? p.player?.team ?? "FA";
+    const wk = w ? Math.round((w.stats.pts_ppr ?? 0) * 10) / 10 : byeSet.has(team) ? null : 0;
+    const per = Math.round(((s?.stats?.pts_ppr ?? 0) / gp) * 10) / 10 || (wk ?? 0);
+    const t = trend.get(id);
+    const opp = w?.opponent ?? undefined;
+    return {
+      id, pos, nfl: team,
+      name: isDef ? defName(id) : [p.player?.first_name, p.player?.last_name].filter(Boolean).join(" ") || `Kicker ${id}`,
+      wk, proj: per, opp, gameDate: w?.date ?? undefined, trend: t ? "up" : "flat", adds: t,
+      status: statusOf((w ?? p).player?.injury_status).status,
+      why: team === "FA" ? noTeamWhy(isDef ? defName(id) : [p.player?.first_name, p.player?.last_name].filter(Boolean).join(" ") || "This kicker")
+        : wk === null ? `On bye this week. Projects ${per.toFixed(1)} a week on the season.`
+        : `Projects ${wk.toFixed(1)} this week${opp ? ` against ${opp}` : ""} and ${per.toFixed(1)} a week on the season.`,
+    };
+  };
   const specialFreeAgents: SpecialFreeAgent[] = (["K", "DEF"] as const).flatMap((pos) => kdefWeek
-    .filter((p) => !rosteredAll.has(p.player_id) && (pos === "DEF" ? /^[A-Z]{2,3}$/.test(p.player_id) : p.player?.position === "K" && !/^[A-Z]{2,3}$/.test(p.player_id)))
+    .filter((p) => !rosteredAll.has(p.player_id) && isKdef(p, pos))
     .filter((p) => (p.stats?.pts_ppr ?? 0) > 0 && (p.team || pos === "DEF") && statusOf(p.player?.injury_status).status !== "O")
     .sort((a, b) => (b.stats.pts_ppr ?? 0) - (a.stats.pts_ppr ?? 0)).slice(0, 8)
-    .map((p): SpecialFreeAgent => {
-      const id = p.player_id, isDef = pos === "DEF";
-      const s = kSeason.get(id);
-      const gp = Math.max(1, s?.stats?.gp ?? 17);
-      const wk = Math.round((p.stats.pts_ppr ?? 0) * 10) / 10;
-      const per = Math.round(((s?.stats?.pts_ppr ?? 0) / gp) * 10) / 10 || wk;
-      const t = trend.get(id);
-      return {
-        id, pos, nfl: isDef ? id : p.team ?? p.player?.team ?? "FA",
-        name: isDef ? defName(id) : [p.player?.first_name, p.player?.last_name].filter(Boolean).join(" ") || `Kicker ${id}`,
-        wk, proj: per, opp: p.opponent ?? undefined, gameDate: p.date ?? undefined, trend: t ? "up" : "flat", adds: t,
-        status: statusOf(p.player?.injury_status).status,
-        why: `Projects ${wk.toFixed(1)} this week${p.opponent ? ` against ${p.opponent}` : ""} and ${per.toFixed(1)} a week on the season.`,
-      };
-    }));
+    .map((p) => toSpecialFa(p, pos)));
+
+  // Search pool: every other unrostered player the feeds know, no NFL team included. Waivers search reads it; the
+  // list above stays the suggested few. Skill players, plus kickers and defenses when the league starts them.
+  const listed = new Set([...freeAgents, ...specialFreeAgents].map((f) => f.id));
+  const kdefPos = (["K", "DEF"] as const).filter((pos) => specialSlots.includes(pos));
+  const kdefSeen = new Set<string>();
+  const faSearch: WaiverFA[] = [
+    ...Object.values(players).filter((p) => !rosteredAll.has(p.id) && !listed.has(p.id)).sort((a, b) => b.proj - a.proj).map(toFa),
+    ...kdefPos.flatMap((pos) => [...kdefWeek, ...kdefSeason]
+      .filter((p) => isKdef(p, pos) && !rosteredAll.has(p.player_id) && !listed.has(p.player_id) && !kdefSeen.has(p.player_id) && !!kdefSeen.add(p.player_id))
+      .map((p) => toSpecialFa(p, pos))),
+  ];
 
   // Completed trades
   const nameOf = (id: string) => players[id] ? { name: players[id].name, pos: players[id].pos, rookie: players[id].rookie } : null;
@@ -706,7 +751,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     byeTeams, teams, players, sleeperSet, slotHistory,
     // Sleeper's own suggested bid only reaches its mobile app through a signed-in private endpoint, so Sources sizes it
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Sources" },
-    faabHistory, freeAgents, specialFreeAgents, specialBids, trades, activity, offers: null, username, type: leagueType(league),
+    faabHistory, freeAgents, specialFreeAgents, faSearch, specialBids, trades, activity, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     commish: users.filter((u) => u.is_owner).map((u) => ({ userId: u.user_id, name: u.display_name || u.username || "Commish" })),
     userPhoto: avatarSrc(userBy.get(userId)?.avatar) ?? undefined,

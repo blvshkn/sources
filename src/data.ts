@@ -434,13 +434,25 @@ const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "dont-e-thornton", name: "Dont'e Thornton", pos: "WR", nfl: "LV", proj: 8.1, rostered: 9, adds: 9870, trend: "up", rookie: true, why: "Rookie deep threat whose snaps jumped to 81 percent. A stash with upside." },
   { id: "mason-rudolph", name: "Mason Rudolph", pos: "QB", nfl: "PIT", proj: 0, rostered: 4, adds: 410, trend: "flat", why: "On bye this week. Only matters in Superflex." },
 ];
+/** Demo league only: more unrostered players that aren't on the suggested list, so Waivers search can find them.
+ *  Illustrative projections, like every demo number. Austin Ekeler has no NFL team in the demo league. */
+const DEMO_SEARCH_FA: FreeAgent[] = [
+  { id: "austin-ekeler", name: "Austin Ekeler", pos: "RB", nfl: "FA", proj: 0, rostered: 3, trend: "flat", why: "Austin Ekeler has no NFL team right now, so he can't score for you until someone signs him." },
+  { id: "ray-davis", name: "Ray Davis", pos: "RB", nfl: "BUF", proj: 6.4, rostered: 12, trend: "flat", why: "Backs up James Cook. Projects 6.4 a week, more if Cook misses time." },
+  { id: "jalen-mcmillan", name: "Jalen McMillan", pos: "WR", nfl: "TB", proj: 7.2, rostered: 15, trend: "flat", why: "Third receiver in Tampa. Projects 7.2 a week going forward." },
+  { id: "tre-tucker", name: "Tre Tucker", pos: "WR", nfl: "LV", proj: 6.8, rostered: 8, trend: "flat", why: "Field-stretcher with a steady snap share. Projects 6.8 a week." },
+  { id: "aj-barner", name: "AJ Barner", pos: "TE", nfl: "SEA", proj: 5.6, rostered: 6, trend: "flat", why: "Blocking-first tight end with some red-zone looks. Projects 5.6 a week." },
+  { id: "mac-jones", name: "Mac Jones", pos: "QB", nfl: "SF", proj: 10.2, rostered: 5, trend: "flat", why: "Backup quarterback. Projects 10.2 a week, only useful in Superflex or a bye pinch." },
+];
 /** Demo kickers and defenses on the wire: [name or DEF team, team, this week, season per week, rostered %]. */
 const DEMO_SPECIAL_FA: [string, string, number, number, number][] = [
   ["SEA", "SEA", 8.0, 7.3, 44], ["TB", "TB", 7.4, 6.6, 31], ["IND", "IND", 7.0, 6.4, 22], ["CLE", "CLE", 6.6, 6.9, 38],
   ["Chase McLaughlin", "TB", 8.2, 8.0, 41], ["Evan McPherson", "CIN", 7.6, 7.7, 35], ["Cairo Santos", "CHI", 7.1, 7.4, 18],
 ];
-function demoSpecialFreeAgents(): SpecialFreeAgent[] {
-  return DEMO_SPECIAL_FA.map(([who, nfl, wk, proj, rostered]) => {
+/** Demo K/DEF for search only, in the same shape as DEMO_SPECIAL_FA. */
+const DEMO_SEARCH_SPECIAL: [string, string, number, number, number][] = [["NYG", "NYG", 5.8, 6.1, 9], ["Jason Sanders", "MIA", 6.9, 7.2, 14]];
+function demoSpecialFreeAgents(rows = DEMO_SPECIAL_FA): SpecialFreeAgent[] {
+  return rows.map(([who, nfl, wk, proj, rostered]) => {
     const def = /^[A-Z]{2,3}$/.test(who);
     const g = demoGame(nfl);
     const bye = DEMO_BYES.includes(nfl);
@@ -551,6 +563,9 @@ export interface LeagueData {
   freeAgents: FreeAgent[];
   /** Best available kickers and defenses this week. Kept apart from freeAgents so trade and value code never sees them. */
   specialFreeAgents?: SpecialFreeAgent[];
+  /** Every other unrostered player we know of, for Waivers search only (never listed, never valued). Includes players
+   *  with no NFL team (nfl "FA"). */
+  faSearch?: WaiverFA[];
   /** Winning K/DEF waiver bids this season, as a percent of budget. */
   specialBids?: number[];
   trades: PastTrade[];
@@ -616,6 +631,10 @@ export let FAAB: Faab = { enabled: true, budget: 100, remaining: 100, source: "S
 export let FAAB_HISTORY: BidTier[] = [];
 export let FREE_AGENTS: FreeAgent[] = [];
 export let SPECIAL_FREE_AGENTS: SpecialFreeAgent[] = [];
+/** Search-only free agents: unrostered players outside the suggested lists (LeagueData.faSearch). */
+export let FA_SEARCH: WaiverFA[] = [];
+/** No NFL team: he can't score for anyone until he signs. */
+export const noTeam = (fa: { nfl?: string }) => !fa.nfl || fa.nfl === "FA";
 export let SPECIAL_BIDS: number[] = [];
 export let COMPLETED_TRADES: PastTrade[] = [];
 export let OFFERS_RECEIVED: Record<string, number> | null = null;
@@ -650,6 +669,7 @@ export function setLeague(d: LeagueData) {
   FAAB_HISTORY = d.faabHistory;
   FREE_AGENTS = d.freeAgents;
   SPECIAL_FREE_AGENTS = d.specialFreeAgents ?? [];
+  FA_SEARCH = d.faSearch ?? [];
   SPECIAL_BIDS = d.specialBids ?? [];
   COMPLETED_TRADES = d.trades;
   OFFERS_RECEIVED = d.offers;
@@ -692,7 +712,7 @@ export function demoLeague(): LeagueData {
     byeTeams: DEMO_BYES,
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
-    faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), specialBids: [0, 1, 0, 0, 2, 1],
+    faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), faSearch: [...DEMO_SEARCH_FA, ...demoSpecialFreeAgents(DEMO_SEARCH_SPECIAL)], specialBids: [0, 1, 0, 0, 2, 1],
     trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     userAvatar: teams.find((t) => t.you)?.avatar,
     commish: [{ userId: "jake", name: "Jake" }],

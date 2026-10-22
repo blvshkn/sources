@@ -4,8 +4,9 @@ import { useDismiss } from "./useDismiss";
 import { denyOn } from "../deny";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../kickoff";
-import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameNow, lockedThisWeek } from "../data";
-import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, round1, slotGaps, specialBidRange, weakSet } from "../engine";
+import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, TEAMS, FREE_AGENTS, SPECIAL_FREE_AGENTS, FA_SEARCH, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameNow, lockedThisWeek, leagueKey, noTeam } from "../data";
+import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, recFor, round1, slotGaps, specialBidRange, weakSet } from "../engine";
+import { fetchFaPool } from "../sleeper";
 import { WeekView, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
@@ -45,7 +46,18 @@ export const lockWhyText = (fa: WaiverFA, avail: Avail): string | null => !avail
   : avail === "bye" ? `${fa.name} is on bye this week. Step to Week ${WEEK + 1} to plan a claim.`
   : `${fa.name} is ${avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`;
 /** `later`: claim details for a player whose game already started, used once you look past this week. */
-type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later?: WaiverRec };
+/** `only`: found through search, outside the suggested list. `noTeam`: no NFL team, so nothing to claim for points. */
+type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later?: WaiverRec; only?: boolean; noTeam?: boolean };
+/** Why a player with no NFL team has no claim, said on his row and when it's tapped. */
+const noTeamText = (fa: WaiverFA) => `${fa.name} has no NFL team right now, so he can't score for you until someone signs him.`;
+/** This week's projection for a search-only player, when there is one. */
+const searchValue = (fa: WaiverFA) => (isSpecialFA(fa) ? fa.wk ?? fa.proj : PLAYERS[fa.id] ? eff(PLAYERS[fa.id]) : fa.proj);
+/** A search-only free agent as a full list entry, with claim details from the same engine path as the list (recFor). */
+function searchEntry(fa: WaiverFA): Entry {
+  if (noTeam(fa)) return { fa, value: fa.proj, avail: null, only: true, noTeam: true };
+  const { rec, later } = recFor(YOU, fa);
+  return { fa, value: rec?.value ?? searchValue(fa), avail: availOf(fa), rec, later, only: true };
+}
 type Tab = "ALL" | WaiverPos;
 const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"];
 /** The game line for any free agent: skill players carry it in PLAYERS, kickers and defenses on the entry itself. */
@@ -175,7 +187,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   const live = useLive();
   useKickoffs(week);
   // Every free agent: the ones who can help this week first, then anyone who already played, is on bye, Out or on IR
-  const all = useMemo<Entry[]>(() => {
+  const listed = useMemo<Entry[]>(() => {
     const ok: Entry[] = recs.map((r) => ({ fa: r.fa, value: r.value, avail: availOf(r.fa), rec: r }));
     const later = new Map(lockedRecs(YOU).map((r) => [r.fa.id, r]));
     const locked: Entry[] = FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => ({ fa, value: PLAYERS[fa.id] ? eff(PLAYERS[fa.id]) : fa.proj, avail: availOf(fa), later: later.get(fa.id) }));
@@ -183,6 +195,13 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
     const lockedSpecial: Entry[] = SPECIAL_FREE_AGENTS.filter((fa) => slots.includes(fa.pos) && !ok.some((e) => e.fa.id === fa.id)).map((fa) => ({ fa, value: fa.proj, avail: availOf(fa) }));
     return [...ok, ...locked, ...lockedSpecial];
   }, [recs]);
+  // A player picked from search who isn't on the suggested list joins it as a full row until the search is cleared
+  const [extraFa, setExtraFa] = useState<WaiverFA | null>(null);
+  useEffect(() => { if (!q.trim()) setExtraFa(null); }, [q]);
+  const all = useMemo<Entry[]>(() => {
+    if (!extraFa || listed.some((e) => e.fa.id === extraFa.id)) return listed;
+    return [...listed, searchEntry(extraFa)];
+  }, [listed, extraFa]);
 
   // Week numbers for every free agent: the selected week, plus the current week's points for anyone who already played
   const lite = useMemo<FaLite[]>(() => all.map((e) => ({ id: e.fa.id, name: e.fa.name, pos: e.fa.pos, nfl: e.fa.nfl, proj: e.fa.proj })), [all]);
@@ -207,6 +226,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
     const lt = l3Weeks.map((w) => { const x = l3.cells[w]?.[e.fa.id]; return x ? x.pts : undefined; });
     // Rows that can't be claimed this week say why in their stats (bye, out, or the score so far), so they skip the tag
     const n = no(e.fa.id);
+    if (e.noTeam) return { ...e, r: undefined, c: undefined, pts: undefined, gain: 0, help: false, no: n, score: 0, fit: null, pick: false, tag: null, l3: lt };
     if (kind === "current") return { ...e, r: e.rec, c, pts: e.value, gain: e.rec?.gain ?? 0, help: !e.avail && !n, no: n, score: e.rec?.score ?? 0, fit: e.rec ? (e.rec.kdef ? e.rec.kdef.line : e.rec.fit ?? null) : null, pick: !!e.rec?.pick && !e.avail && !n, tag: e.avail && e.rec ? { cls: `t-${e.avail}`, label: AVAIL_LABEL[e.avail] } : null, l3: lt };
     const bye = c?.pts === null;
     const out = kind === "future" && longOut(e.fa);
@@ -243,20 +263,47 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   }, [rows, pos, sort, q, onlyWatch, watch, kind]); // eslint-disable-line react-hooks/exhaustive-deps
   // Type-ahead: names that start with what you typed rank above names that merely contain it
   const term = q.trim().toLowerCase();
+  // Everyone else on the wire, search-only: the league load's pool, plus (live leagues) the rest of Sleeper's player
+  // file, fetched once when a search starts. They join the list only when picked.
+  const [more, setMore] = useState<{ key: string; list: WaiverFA[] }>({ key: "", list: [] });
+  const asked = useRef("");
+  useEffect(() => {
+    const key = leagueKey();
+    if (term.length < 2 || LEAGUE.mode !== "live" || asked.current === key) return;
+    asked.current = key;
+    const known = new Set([...Object.keys(PLAYERS), ...Object.keys(LEAGUE.specials ?? {}), ...FREE_AGENTS.map((f) => f.id), ...SPECIAL_FREE_AGENTS.map((f) => f.id), ...FA_SEARCH.map((f) => f.id),
+      ...TEAMS.flatMap((t) => [...t.roster, ...(t.ir ?? []), ...(t.taxi ?? []), ...(t.special ?? [])])]);
+    fetchFaPool(known, (LEAGUE.specialSlots ?? []).includes("K")).then((list) => setMore({ key, list })).catch(() => { asked.current = ""; });
+  }, [term]);
+  const pool = useMemo<Entry[]>(() => {
+    const slots = LEAGUE.specialSlots ?? [];
+    const extra = more.key === leagueKey() ? more.list : [];
+    return [...FA_SEARCH, ...extra].filter((fa) => !isSpecialFA(fa) || slots.includes(fa.pos))
+      .map((fa) => ({ fa, value: fa.proj, avail: null as Avail, only: true, noTeam: noTeam(fa) }));
+  }, [more, recs]); // eslint-disable-line react-hooks/exhaustive-deps
   const hits = useMemo(() => {
     if (!term) return [];
     const sorted = [...all].sort((a, b) => Number(!!a.avail) - Number(!!b.avail) || b.value - a.value);
-    return rankPlayers(term, sorted, (e) => ({ name: e.fa.name })).map((r) => r.item).slice(0, 6);
-  }, [all, term]);
+    const have = new Set(all.map((e) => e.fa.id));
+    const listHits = rankPlayers(term, sorted, (e) => ({ name: e.fa.name }));
+    const poolHits = rankPlayers(term, pool.filter((e) => !have.has(e.fa.id)), (e) => ({ name: e.fa.name }));
+    // The suggested list wins a tie; search-only players get this week's number and availability once they make the cut
+    return [...listHits.map((h) => ({ ...h, l: 0 })), ...poolHits.map((h) => ({ ...h, l: 1 }))].sort((a, b) => b.match.score - a.match.score || a.l - b.l).slice(0, 6)
+      .map(({ item: e }): Entry => (e.only && !e.noTeam && !have.has(e.fa.id) ? { ...e, value: searchValue(e.fa), avail: availOf(e.fa) } : e));
+  }, [all, pool, term]);
   // Phones: the type-ahead fits above the keyboard (useKeyboardInset.ts)
   const taField = useRef<HTMLLabelElement>(null);
   const taList = useRef<HTMLUListElement>(null);
   const taMax = useKeyboardInset(taField, taList);
   // The suggestions close on a tap outside the field and the list, and on Escape. Focus stays in the field.
   useDismiss(taList, () => setSuggest(false), { open: suggest && hits.length > 0, keep: (t) => !!taField.current?.contains(t), restoreFocus: false });
-  const pick = (e: Entry) => {
+  const pick = (hit: Entry) => {
+    // Search-only: add him to the list as a full row, with claim details worked out the same way as everyone else's
+    const e = hit.only && !all.some((x) => x.fa.id === hit.fa.id) ? searchEntry(hit.fa) : all.find((x) => x.fa.id === hit.fa.id) ?? hit;
+    if (e.only) setExtraFa(e.fa);
     setQ(e.fa.name); setSuggest(false); setPos("ALL"); setOnlyWatch(false); setOpen(e.rec || (week !== WEEK && e.later) ? e.fa.id : null);
-    requestAnimationFrame(() => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
+    const scroll = () => listRef.current?.querySelector(`[data-id="${CSS.escape(e.fa.id)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    requestAnimationFrame(() => requestAnimationFrame(scroll));
   };
   const onKey = (ev: { key: string; preventDefault: () => void }) => {
     if (!suggest || !hits.length) return;
@@ -374,10 +421,12 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
             <ul className="wv-ta-list" id="wv-ta-list" role="listbox" ref={taList} style={taMax ? { maxHeight: taMax, overflowY: "auto" } : undefined}>
               {hits.map((e, i) => (
                 <li key={e.fa.id} id={`wv-ta-${e.fa.id}`} role="option" aria-selected={i === hi}>
-                  <button tabIndex={-1} onMouseDown={(ev) => ev.preventDefault()} onClick={() => pick(e)} onMouseEnter={() => setHi(i)} className={`${i === hi ? "on" : ""}${e.avail ? " off" : ""}`}>
+                  <button tabIndex={-1} onMouseDown={(ev) => ev.preventDefault()} onClick={() => pick(e)} onMouseEnter={() => setHi(i)} className={`${i === hi ? "on" : ""}${e.avail || e.noTeam ? " off" : ""}`}>
                     <b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>
-                    <span className="wv-ta-n"><span><Hit name={e.fa.name} term={term} /></span><small>{e.fa.nfl}</small></span>
-                    {e.avail ? <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span> : <span className="wv-ta-p">{e.value.toFixed(1)}</span>}
+                    <span className="wv-ta-n"><span><Hit name={e.fa.name} term={term} /></span>{!e.noTeam && <small>{e.fa.nfl}</small>}</span>
+                    {e.noTeam ? <span className="wv-tag t-noteam">No team</span>
+                      : e.avail ? <span className={`wv-tag t-${e.avail}`}>{AVAIL_LABEL[e.avail]}</span>
+                      : <span className="wv-ta-p">{e.only && !(e.value > 0) ? "–" : e.value.toFixed(1)}</span>}
                   </button>
                 </li>
               ))}
@@ -398,7 +447,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           const kd = kind === "current" ? r?.kdef : undefined;
           const drop = r ? recDrop(r) : null;
           const game = gameOf(e.fa);
-          const off = kind === "current" ? !r : e.pts === null;
+          const off = e.noTeam || (kind === "current" ? !r : e.pts === null);
           // Passed on for good, or skipped this week ("Not right now"): dimmed, with a way back instead of the stats
           const skip = !e.no && skipped(e.fa.id);
           const shelved = e.no || skip;
@@ -410,7 +459,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           const act = (n: number | null | undefined) => (n === null ? "Bye" : n === undefined ? "–" : n.toFixed(2));
           const played = kind === "current" && e.avail === "played";
           // The box on the right: this week's projection, points so far for anyone who already played, or the selected week's number
-          const box = kind === "past" ? { k: "Scored", v: act(e.pts) }
+          const box = e.noTeam ? { k: "Proj", v: "–" }
+            : kind === "past" ? { k: "Scored", v: act(e.pts) }
             : kind === "future" ? { k: "Proj", v: num(e.pts) }
             : played ? { k: st === "in_game" ? "So far" : "Scored", v: e.c ? act(e.c.pts) : sel.loading ? "–" : "0.00" }
             : { k: "Proj", v: e.value.toFixed(1) };
@@ -425,7 +475,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           const line = kind === "past" ? (e.pts === null ? null : !e.c ? null : e.c.line ?? "Didn't play") : kind === "current" && !r && e.c?.played ? e.c.line : null;
           // Every row carries the same cells in the same order, so the columns never shift between rows, tabs or weeks
           const cant = kind === "current" && !r ? cantLabel(e.fa, e.avail) : null;
-          const stats: ReactNode = e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
+          const stats: ReactNode = e.noTeam && !e.no && !skip ? <span className="ps-again-line"><span>No NFL team. Nothing to claim for points.</span></span>
+            : e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
             : skip ? <span className="ps-again-line"><span>Skipped this week.</span><button className="linkish ps-again" onClick={() => unsnooze(e)}>Suggest again</button></span> : <>
             <span className="wv-c-lu"><i>Your lineup</i><b className={!cant && e.gain > 0.05 ? "good" : "flat"}>{cant ?? (loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change")}</b></span>
             <span className="wv-c-bid"><i>{FAAB.enabled ? SUGG_BID : "Tier"}</i><b>{bidCell(e.fa, r)}</b></span>
@@ -438,7 +489,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
               <span className="wv-name"><span className="wv-nm">{e.fa.name}</span>{e.fa.trend === "up" && kind === "current" && r && <Tooltip content="Trending up: adds are rising across Sleeper"><span className="wv-trend up" aria-label="Trending up">▲</span></Tooltip>}
                 {e.no ? <span className="wv-tag ps-tag">Not interested</span> : skip ? <span className="wv-tag ps-tag">Skipped this week</span> : e.tag && (e.tag.tip ? <Tooltip content={e.tag.tip}><span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span></Tooltip> : <span className={`wv-tag ${e.tag.cls}`}>{e.tag.label}</span>)}
                 {kd?.fix && kd.lead && <span className="wv-tag t-fix">{kd.fix === "empty" ? "Fills slot" : "Must fix"}</span>}</span>
-              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.fa.nfl}{meta}{e.fa.rookie && <span className="wv-flag">Rookie</span>}{line && <Tooltip content={line}><span className="wv-line">· {line}</span></Tooltip>}</span>
+              <span className="wv-meta"><b className={`lu-pos p-${e.fa.pos}`}>{e.fa.pos}</b>{e.noTeam ? <Tooltip content={noTeamText(e.fa)}><span className="wv-tag t-noteam">No team</span></Tooltip> : <>{e.fa.nfl}{meta}</>}{e.fa.rookie && <span className="wv-flag">Rookie</span>}{line && <Tooltip content={line}><span className="wv-line">· {line}</span></Tooltip>}</span>
             </span>
             <span className={`wv-proj${box.k !== "Proj" ? " wv3-scored" : ""}`}><span>{box.k}</span><b>{box.v}</b></span>
             <span className="wv-stats">{stats}</span>
@@ -447,7 +498,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           </>;
           // This week, a player Sleeper has locked (his game started, or his team is off) or who can't help still takes
           // the tap: it shakes and says why instead of doing nothing (deny.ts)
-          const lockWhy = kind === "current" && !r && !shelved ? lockWhyText(e.fa, e.avail) : null;
+          const lockWhy = e.noTeam && !shelved ? noTeamText(e.fa) : kind === "current" && !r && !shelved ? lockWhyText(e.fa, e.avail) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
           // The claim sheet's actions: in the hero from 768px, docked to the sheet's bottom edge on phones
           const claimActs = isOpen && r && !shelved ? <>

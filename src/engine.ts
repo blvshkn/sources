@@ -4,7 +4,7 @@ import {
   Player, Pos, Team, ManagerTag, MyTag, TEAMS, PLAYERS, POS_ORDER, playerById, onBye,
   FREE_AGENTS, FAAB_HISTORY, FAAB, COMPLETED_TRADES, OFFERS_RECEIVED, SLEEPER_SET,
   SLOT_HISTORY, teamById, YOU, LEAGUE, leagueKey, BidTier, SpecialPlayer, demoGame, gameNow, lockedThisWeek, weekGames,
-  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, teamNick, FreeAgent, WEEK,
+  SPECIAL_FREE_AGENTS, SPECIAL_BIDS, WaiverFA, isSpecialFA, SpecialFreeAgent, teamNick, FreeAgent, WEEK,
 } from "./data";
 import { sitsOut } from "./bye";
 import { LOCKED_LINE, teamLock, weekFinal, type WeekGames } from "./locks";
@@ -1157,6 +1157,20 @@ export const lockedRecs = (you: Team): WaiverRec[] => {
   return FREE_AGENTS.filter((fa) => lockedThisWeek(fa.nfl)).map((fa) => skillRec(you, ctx, fa));
 };
 
+/** Claim details for one free agent outside the suggested list (a Waivers search pick), on the same path the list
+ *  takes. `rec` when he can be claimed for this week; `later` for a skill player whose game already started, so a
+ *  later week can still show a bid and a drop. Neither for a K/DEF who can't help this week. */
+export function recFor(you: Team, fa: WaiverFA): { rec?: WaiverRec; later?: WaiverRec } {
+  const ctx = recCtx(you);
+  if (isSpecialFA(fa)) {
+    const r = specialRecs(you, ctx.base, [fa])[0];
+    if (r) { r.score = r.gain > 0.05 ? round1(r.gain * 0.5) : 0; r.pick = r.gain > 0.05; }
+    return { rec: r };
+  }
+  const r = skillRec(you, ctx, fa);
+  return lockedThisWeek(fa.nfl) ? { later: r } : { rec: r };
+}
+
 interface RecCtx {
   base: Lineup; baseRos: Lineup; gaps: Record<string, number>; weak: Set<string>; weakPos: Set<string>;
   /** Set once any of your players' games has kicked off: claims this week only fill slots that are still open. */
@@ -1228,7 +1242,7 @@ function skillRec(you: Team, ctx: RecCtx, fa: FreeAgent): WaiverRec {
 }
 
 /** Kickers and defenses on the wire against the one you start this week. */
-function specialRecs(you: Team, base: Lineup): WaiverRec[] {
+function specialRecs(you: Team, base: Lineup, list: SpecialFreeAgent[] = SPECIAL_FREE_AGENTS): WaiverRec[] {
   const slots = LEAGUE.specialSlots ?? [];
   const mine = (you.special ?? []).map((id) => LEAGUE.specials?.[id]).filter(Boolean) as SpecialPlayer[];
   const setIds = you.setSpecial ?? (you.id === YOU.id ? LEAGUE.sleeperSpecial : undefined) ?? [];
@@ -1237,7 +1251,7 @@ function specialRecs(you: Team, base: Lineup): WaiverRec[] {
   const room = you.roster.length + mine.length < LEAGUE.rosterMax + slots.length;
   const benchDrop = room ? null : base.bench.slice().sort((a, b) => eff(a) - eff(b))[0] ?? null;
   const locked = lockedNow();
-  return SPECIAL_FREE_AGENTS.filter((fa) => slots.includes(fa.pos) && !lockedThisWeek(fa.nfl) && fa.status !== "O").map((fa) => {
+  return list.filter((fa) => slots.includes(fa.pos) && !lockedThisWeek(fa.nfl) && fa.status !== "O").map((fa) => {
     const pos = fa.pos;
     const have = mine.filter((p) => p.pos === pos);
     const current = have.find((p) => setIds.includes(p.id)) ?? have.slice().sort((a, b) => specialPts(b) - specialPts(a) || b.proj - a.proj)[0] ?? null;
