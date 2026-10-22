@@ -68,3 +68,7 @@ html:root:not(#_):not(#_) .ps.ps-matchup {
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 160px),
     var(--surface);
 }
+
+/* The week switcher sits inside the card under the summary line (Zach), full width between the card's own side
+   padding, with a little room above and below so it reads as its own row */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .lu-weeknav.mus-weeks-in { width: 100% !important; max-width: none !important; margin: 0 0 4px !important; }

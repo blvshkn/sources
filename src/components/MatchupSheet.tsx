@@ -60,11 +60,10 @@ export function MatchupSheet({ week: start = WEEK, onClose }: { week?: number; o
         <div className="mus-top">
           <span className="ps-handle" aria-hidden="true" />
           <h2 id="mus-title" className="mus-title">Full matchup</h2>
-          <WeekStepper week={week} onChange={setWeek} className="mu-weeks mus-weeks" />
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </div>
         <ScrollArea className="mus-body" data-sheet-scroll>
-          <MatchupWeek week={week} />
+          <MatchupWeek week={week} inner={<WeekStepper week={week} onChange={setWeek} className="mu-weeks mus-weeks mus-weeks-in" />} />
         </ScrollArea>
       </section>
     </div>,

@@ -59,13 +59,14 @@ export function useMatchupWeek(start?: number) {
 
 /** One week of the full matchup. The #matchup page passes a back button and the stepper above it; the matchup
  *  sheet keeps its stepper in its own fixed header and passes neither. */
-export function MatchupWeek({ week, onBack, stepper = null }: { week: number; onBack?: () => void; stepper?: ReactNode }) {
-  return week === WEEK ? <MatchupNow onBack={onBack} stepper={stepper} /> : <WeekMatchup week={week} onBack={onBack} stepper={stepper} />;
+export function MatchupWeek({ week, onBack, stepper = null, inner = null }: { week: number; onBack?: () => void; stepper?: ReactNode;
+  /** A stepper drawn inside the card, under the summary line (the matchup sheet, Zach) */ inner?: ReactNode }) {
+  return week === WEEK ? <MatchupNow onBack={onBack} stepper={stepper} inner={inner} /> : <WeekMatchup week={week} onBack={onBack} stepper={stepper} inner={inner} />;
 }
 
 const BackBtn = ({ onBack }: { onBack?: () => void }) => onBack ? <button className="st-back mu-back" onClick={onBack}><Icon name="chev" size={16} />Overview</button> : null;
 
-function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNode }) {
+function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: ReactNode; inner?: ReactNode }) {
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   const theirs = useMemo(() => (opp ? slotted(opp, opp.starters) : []), [opp]);
   // Your lineup is the shared what-if (lineupWhatIf): Sleeper's until you swap, here or on the Lineup page
@@ -78,7 +79,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
   const { setCmp, infoFor, layers } = useMatchupCompare(() => setOpen(null));
 
   if (!opp) return (
-    <><BackBtn onBack={onBack} />{stepper}<section className="card card-pad"><p className="small muted">No matchup this week.</p></section></>
+    <><BackBtn onBack={onBack} />{stepper}<section className="card card-pad">{inner}<p className="small muted">No matchup this week.</p></section></>
   );
 
   // Totals include the K/DEF started in Sleeper (best projected only for a slot left empty). Each side's score is
@@ -150,6 +151,7 @@ function MatchupNow({ onBack, stepper }: { onBack?: () => void; stepper: ReactNo
           {edges[bigWin] > 0 && <> Biggest edge: <b>{mine[bigWin].slot} {fmt(edges[bigWin])}</b>.</>}
           {edges[bigLoss] < 0 && <> Weakest spot: <b>{mine[bigLoss].slot} {fmt(edges[bigLoss])}</b>.</>}
         </p>
+        {inner}
 
         {changed && (
           <div className="mu-whatif">
@@ -235,7 +237,7 @@ function Num({ x, past }: { x: Slot; past: boolean }) {
 
 /** Loading a week: the matchup card itself, its face-off, header and one row per lineup slot, with soft bars where the
  *  names and numbers go. The same rows the loaded card draws, so nothing below the stepper moves when it lands. */
-function MatchSkel({ week }: { week: number }) {
+function MatchSkel({ week, inner }: { week: number; inner?: ReactNode }) {
   const side = (s: "you" | "them") => <span className={`mu-p ${s}`}><span className="av sk" style={{ width: 32, height: 32 }} /><span className="mu-n"><b>&nbsp;</b><small>&nbsp;</small></span></span>;
   return (
     <section className="card mu is-skel" aria-busy="true" aria-label={`Loading Week ${week}`}>
@@ -243,6 +245,7 @@ function MatchSkel({ week }: { week: number }) {
         you={{ t: YOU, pts: 0 }} them={{ t: null, pts: 0, empty: "Loading" }} />
       {/* The summary line's usual wording, hidden behind a bar, so it wraps where the loaded one will */}
       <p className="mu-sum" aria-hidden="true"><span>{week < WEEK ? `You won 000.0-000.0, won by 00.0. You won 0 of ${order().length} spots.` : `Projected to win 0 of ${order().length} spots. Both sides use Sleeper's Week ${week} projections.`}</span></p>
+      {inner}
       <div className="mu-th" aria-hidden="true"><span>Slot</span><span>&nbsp;</span><span className="mu-th-you">You</span><span className="mu-th-them">&nbsp;</span></div>
       {order().map((slot, i) => (
         <div key={i} className="mu-row" aria-hidden="true">
@@ -257,7 +260,7 @@ function MatchSkel({ week }: { week: number }) {
   );
 }
 
-function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => void; stepper: ReactNode }) {
+function WeekMatchup({ week, onBack, stepper, inner }: { week: number; onBack?: () => void; stepper: ReactNode; inner?: ReactNode }) {
   // A week ahead takes the shared what-if (lineupWhatIf), so a swap tried on Lineup shows here and the other way round
   const { m, raw, err, wi } = useWeekWhatIf(week);
   const future = m?.kind === "future";
@@ -267,10 +270,11 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
   const back = <BackBtn onBack={onBack} />;
   // A week that showed its skeleton fades in when it lands; a cached week is just there (loadedIn.ts)
   const fadeIn = useLoadedIn(!m && !err, week);
-  if (!m && !err) return <>{back}{stepper}<MatchSkel week={week} /></>;
+  if (!m && !err) return <>{back}{stepper}<MatchSkel week={week} inner={inner} /></>;
   if (!m || !m.opp) return (
     <>{back}{stepper}
       <section className="card card-pad mu-week-msg">
+        {inner}
         {m ? <p className="small"><b>{m.empty?.title}</b> <span className="muted">{m.empty?.body}</span></p>
           : <p className="small muted">{err}</p>}
       </section>
@@ -297,6 +301,7 @@ function WeekMatchup({ week, onBack, stepper }: { week: number; onBack?: () => v
           them={{ t: opp.team, pts: opp.total, dim: flipTone(wkTone) === "trail" }} />
         <p className="mu-sum">{res ? <>{res.long}, <span className={`sc-res ${res.tone}`}>{res.short.charAt(0).toLowerCase()}{res.short.slice(1)}</span>. You won <b>{winning} of {n}</b> spots.</>
           : <>Projected to win <b>{winning} of {n}</b> spots. Both sides use Sleeper's Week {week} projections.</>}</p>
+        {inner}
         {wi.changed && (
           <div className="mu-whatif">
             <span><b>What-if lineup</b>{fmt(round1(m.me.total - (raw?.me.total ?? 0)))} pts vs your best projected lineup. Set it in Sleeper before Week {week} locks.</span>
