@@ -17,6 +17,10 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut >
 /* The header sits higher (Zach): it starts 24px sooner, right under the close button (which moves up 8px), and the team logo rides higher behind it, bleeding off the sheet's top edge. */
 @media (max-width: 767.98px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) { padding-top: 44px; }
+  /* Sticky offsets count from inside the body's padding, so with 44px of padding (not --ph-top + 4px) the tab row has
+     to stick 20px down to land right under the 64px top. At -4px it slid 24px under the compact bar on phones and the
+     tabs couldn't be reached (Zach, Oct 22). */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick { top: calc(var(--ph-top) - 44px); }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-top, .pd-top) > .ps-x { top: 10px; }
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-logo { top: -104px; }
