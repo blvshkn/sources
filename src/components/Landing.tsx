@@ -257,6 +257,22 @@ export function Landing({ onLive, onDemo }: {
     window.addEventListener("scroll", kick, { passive: true }); paint();
     return () => { window.removeEventListener("scroll", kick); cancelAnimationFrame(raf); };
   }, []);
+  // The bottom edge blur fades out over the last screen and a half of the page, so it's gone by the sign-off and
+  // Safari never paints it as a dark box behind its toolbar (Zach, Oct 22). Scroll-driven only.
+  const edgeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = edgeRef.current;
+    if (!el) return;
+    let raf = 0;
+    const paint = () => {
+      raf = 0;
+      const vh = window.innerHeight, left = document.documentElement.scrollHeight - (window.scrollY + vh);
+      el.style.opacity = Math.min(1, Math.max(0, (left - vh * 0.25) / (vh * 1.25))).toFixed(3);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    window.addEventListener("scroll", kick, { passive: true }); window.addEventListener("resize", kick); paint();
+    return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); cancelAnimationFrame(raf); };
+  }, []);
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
     const stage = phonesRef.current;
@@ -465,7 +481,7 @@ export function Landing({ onLive, onDemo }: {
 
       {/* The bottom edge blur (Zach, Oct 22, from his portfolio): the page softens as it scrolls toward the bottom of the
           screen. Stacked backdrop blurs, each masked to a band, so it deepens smoothly to the edge. */}
-      <div className="ld2-edgeblur" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="ld2-edgeblur" ref={edgeRef} aria-hidden="true"><i /><i /><i /><i /></div>
       <main id="ld-main" tabIndex={-1}>
       {/* Players scattered down the page (Zach, Oct 22): near ones large and sharp out in the margins, far ones small,
           blurred and faint behind the sections. They drift at their own rate as the page scrolls. */}

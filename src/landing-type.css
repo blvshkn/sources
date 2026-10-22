@@ -357,3 +357,31 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-split-b { margin-left: 0 !importa
 /* The username form's focus ring sits on the inside edge, so nothing around it can clip it (Zach, Oct 22: the green
    border was getting cut off on iPhone) */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-form:focus-within { box-shadow: inset 0 0 0 2px var(--lime); }
+
+/* ---------- Ground shadows under the hero phones (Zach, Oct 22: "to show dimension") ----------
+   A soft dark pool just under each phone, wider and fainter for the ones further back, so they read as standing
+   off the page. Drawn in CSS under the render; nothing animates. */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone::after {
+  content: ""; position: absolute; left: 2%; right: 2%; top: 95%; height: 11%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(42% 30% at 50% 22%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%),
+    radial-gradient(50% 50% at 50% 30%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
+  filter: blur(6px);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-back::after { left: -4%; right: -4%; height: 13%; opacity: 0.8; filter: blur(10px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone::after { opacity: 0; }
+
+/* Live board rows (Zach, Oct 22): room between the position chip and a smaller avatar. Phones 36px, wider 40px */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row { grid-template-columns: auto 36px minmax(0, 1fr) auto; column-gap: 14px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row .av { width: 36px !important; height: 36px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row .av-initials { font-size: 13px !important; }
+@media (min-width: 640px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row { grid-template-columns: auto 40px minmax(0, 1fr) auto; column-gap: 18px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row .av { width: 40px !important; height: 40px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row .av-initials { font-size: 14px !important; }
+}
+
+/* "Still have a question?": the AI mark lines up with its heading, not the middle of the block (Zach, Oct 22) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask { align-items: flex-start; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask .ld2-faq-ask-mark { display: grid; place-items: center; height: 24px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask > svg:last-child { align-self: center; }
