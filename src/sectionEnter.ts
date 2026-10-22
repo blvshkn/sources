@@ -74,7 +74,7 @@ function pieces(root: HTMLElement, t: Tokens) {
 function enter(root: HTMLElement, first: boolean | "soft" = false) {
   const base = read();
   // "soft": coming back to a section this visit, the same order but quick and close (Zach: soft and quick, not a blink)
-  const t = first === "soft" ? { ...base, dur: 280, step: 40, cap: 160, rise: 4 } : first ? { ...base, ...base.first } : base;
+  const t = first === "soft" ? { ...base, dur: 420, step: 70, cap: 300, rise: 8 } : first ? { ...base, ...base.first } : base;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const list = pieces(root, t);
   if (!list.length) return;
