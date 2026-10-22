@@ -297,7 +297,7 @@ export function Landing({ onLive, onDemo }: {
     let raf = 0, on = false;
     const paint = () => {
       raf = 0;
-      const run = (track.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0;
+      const run = track.querySelector<HTMLElement>(".ld2-yband-run")?.offsetWidth ?? 0;
       if (!run) return;
       const x = ((window.scrollY * 0.45) % run + run) % run;
       track.style.transform = `translate3d(${-x}px, 0, 0)`;
@@ -537,20 +537,37 @@ export function Landing({ onLive, onDemo }: {
       {/* The YOUR banner (Zach, Oct 22, after northeasttomato.com's product strip; moved down to sit over the tagline): YOUR, over and over, in
           Clash on lime. It slides with the page as you scroll and stops when you stop, so it never loops on its own. */}
       <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
-        <div className="ld2-yband-track" ref={trackRef} aria-hidden="true">
-          {[0, 1, 2].map((k) => (
-            <span key={k} className="ld2-yband-run">
-              {/* Letter by letter, each on its own piece of lime, so the strip can ripple like cloth as it blows in */}
-              {YOURS.map((w) => (
-                <span key={w} className="ld2-yband-item">
-                  {[..."YOUR"].map((c, i) => <span key={`b${i}`} className="yl yl-b">{c}</span>)}
-                  {[..." " + w + " "].map((c, i) => <span key={`w${i}`} className="yl">{c === " " ? "\u00a0" : c}</span>)}
-                  <span className="yl yl-dot"><i className="ld2-yband-dot" /></span>
-                  <span className="yl">{"\u00a0"}</span>
-                </span>
-              ))}
-            </span>
-          ))}
+        <div className="ld2-yband-tracks" ref={trackRef} aria-hidden="true">
+          <div className="ld2-yband-track yb-bg" aria-hidden="true">
+            {[0, 1, 2].map((k) => (
+              <span key={k} className="ld2-yband-run">
+                {/* The lime: one piece per letter, so the strip can ripple like cloth as it blows in */}
+                {YOURS.map((w) => (
+                  <span key={w} className="ld2-yband-item">
+                    {[..."YOUR"].map((c, i) => <span key={`b${i}`} className="yl yl-b">{c}</span>)}
+                    {[..." " + w + " "].map((c, i) => <span key={`w${i}`} className="yl">{c === " " ? "\u00a0" : c}</span>)}
+                    <span className="yl yl-dot"><i className="ld2-yband-dot" /></span>
+                    <span className="yl">{"\u00a0"}</span>
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
+          <div className="ld2-yband-track yb-tx" aria-hidden="true">
+            {[0, 1, 2].map((k) => (
+              <span key={k} className="ld2-yband-run">
+                {/* The words, on their own layer above all the lime, so no piece can cover a neighbor's letters */}
+                {YOURS.map((w) => (
+                  <span key={w} className="ld2-yband-item">
+                    {[..."YOUR"].map((c, i) => <span key={`b${i}`} className="yl yl-b">{c}</span>)}
+                    {[..." " + w + " "].map((c, i) => <span key={`w${i}`} className="yl">{c === " " ? "\u00a0" : c}</span>)}
+                    <span className="yl yl-dot"><i className="ld2-yband-dot" /></span>
+                    <span className="yl">{"\u00a0"}</span>
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
         </div>
         <p className="sr-only">Your Fantasy Source: your trades, your lineup, your waivers, your league.</p>
       </section>

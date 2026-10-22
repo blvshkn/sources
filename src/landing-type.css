@@ -252,10 +252,16 @@ html:root:not(#_):not(#_):not(#_) .hp-scr .ph-status { background: transparent; 
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { background: transparent; padding: 0; overflow-x: clip; overflow-y: visible; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband-item { gap: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
-  display: inline-block; background: #D8F24A; padding-block: clamp(14px, 1.6vw, 22px);
-  margin-right: -0.5px; padding-right: 0.5px; box-shadow: 0 0 0 3px #D8F24A; /* no hairline seams between pieces, even tipped and bunched */
+  display: inline-block; padding-block: clamp(14px, 1.6vw, 22px);
+  margin-right: -0.5px; padding-right: 0.5px;
   transform-origin: 50% 50%; will-change: transform; white-space: pre;
 }
+/* Two copies of the strip, same layout and same wave: the lime underneath (padded out so the pieces never show a seam,
+   even tipped and bunched) and the words on top, so the lime never covers a letter (Zach, Oct 22: copy cut off) */
+html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks { position: relative; width: max-content; will-change: transform; }
+html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks > .yb-tx { position: absolute; left: 0; top: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { background: #D8F24A; box-shadow: 0 0 0 3px #D8F24A; color: transparent; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .ld2-yband-dot { visibility: hidden; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0; }
@@ -280,8 +286,19 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-a
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder .dv { margin-top: 0; }
 /* Run it again sits on the actions' row, at its left end */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 0; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { position: absolute; left: 0; bottom: 0; margin: 0; }
+/* From 720px it shares the actions' row at the left end; on phones, where the actions stack full width, it gets its
+   own row under them (Zach, Oct 22: it was overlaying Write pitch) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 12px; }
+@media (min-width: 720px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { gap: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { position: absolute; left: 0; bottom: 0; margin: 0; }
+}
+@media (max-width: 719px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { order: -1; width: 100%; height: 48px; min-height: 48px; flex: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { justify-self: center; min-height: 44px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { align-self: center; }
+}
 
 /* The nav's arrival lets go once it lands (fill backwards, not both): an animation that keeps holding opacity stops
    the browser from blurring what scrolls under the bar (Zach, Oct 22: the background blur wasn't showing) */
@@ -318,4 +335,15 @@ html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { transform: translate3d(0
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { container-type: size; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip .av-initials {
   font-size: 36cqw !important; line-height: 1; font-family: var(--font-body, Geist, system-ui, sans-serif); font-weight: 700; letter-spacing: -0.02em;
+}
+
+/* Split headings settle aligned (Zach, Oct 22): once the two lines stop moving they share one left edge with the
+   copy under them; the slide in from opposite sides is unchanged */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-split-b { margin-left: 0 !important; }
+
+/* Stacked username form on phones: its corners follow the button inside (26px pill + 8px padding), so the button
+   never crowds the focus ring at the bottom corners (Zach, Oct 22: "this is getting clipped") */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-form { border-radius: 34px; padding: 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-form input { padding: 0 18px; }
 }

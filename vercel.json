@@ -86,5 +86,18 @@
         "pathname": "/**"
       }
     ]
-  }
+  },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "sources-orpin.vercel.app"
+        }
+      ],
+      "destination": "https://fantasysource.app/:path*",
+      "permanent": true
+    }
+  ]
 }
