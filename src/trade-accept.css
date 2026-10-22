@@ -1,0 +1,18 @@
+/* "Will they accept" on the trade read (Zach, Oct 22: clean it up). Only their side has an answer, so the row reads
+   as one line: the label on the left, the answer on the right in its tone (likely green, worth a shot gold, long shot
+   red), and a thin meter under it filled to the chance. The empty "you" cell is gone, and the drop note sits close
+   under the rows instead of floating. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-accrow { grid-template-columns: minmax(0, 1fr) auto; align-items: center; row-gap: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-accrow > .dv-l { grid-column: 1; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-accrow > .dv-c:has(> .dv-none) { display: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-accrow .dv-v { justify-items: end; text-align: right; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-row.dv-accrow .dv-acc { white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-acc.is-likely { color: var(--good); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-acc.is-maybe { color: var(--warn, #F2BE55); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-acc.is-long { color: var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-accbar { grid-column: 1 / -1; display: block; height: 4px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--ink) 10%, transparent); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-accbar > i { display: block; height: 100%; border-radius: 4px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-accbar.is-likely > i { background: var(--good); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-accbar.is-maybe > i { background: var(--warn, #F2BE55); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-accbar.is-long > i { background: var(--bad); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .dv-main > .drop-note { margin: -10px 0 0; font-size: 0.8125rem; line-height: 1.45; }

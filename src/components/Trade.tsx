@@ -419,14 +419,14 @@ export function AcceptCell({ a }: { a: Acceptance }) {
   return (
     <span className="dv-v">
       <Tooltip focusable content={<>{why.length ? `${why.map(cap).join(". ")}. ` : ""}{range}, from their needs, notes and trade history.</>}>
-        <b className="dv-acc tt-term">{word}, <span className="dv-pct">{Math.round(a.p * 100)}%</span></b>
+        <b className={`dv-acc tt-term ${a.label === "Likely yes" ? "is-likely" : a.label === "Worth a shot" ? "is-maybe" : "is-long"}`}>{word}, <span className="dv-pct">{Math.round(a.p * 100)}%</span></b>
       </Tooltip>
     </span>
   );
 }
 
 export interface DvCol { id: string; head: ReactNode; you?: boolean }
-export interface DvRow { label: string; tip?: string; cells: ReactNode[]; extra?: ReactNode }
+export interface DvRow { label: string; tip?: string; cells: ReactNode[]; extra?: ReactNode; cls?: string }
 /** Comparison rows: label on the left, a right-aligned column per team, every row on the same grid. */
 export function DealRows({ cols, rows }: { cols: DvCol[]; rows: DvRow[] }) {
   return (
@@ -436,7 +436,7 @@ export function DealRows({ cols, rows }: { cols: DvCol[]; rows: DvRow[] }) {
         {cols.map((c) => <span key={c.id} className={`dv-h${c.you ? " you" : ""}`} role="columnheader">{c.head}</span>)}
       </div>
       {rows.map((r) => (
-        <div key={r.label} className="dv-row" role="row">
+        <div key={r.label} className={`dv-row${r.cls ? ` ${r.cls}` : ""}`} role="row">
           <span className="dv-l" role="rowheader">{r.tip ? <Tooltip focusable content={r.tip}><span className="tt-term">{r.label}</span></Tooltip> : r.label}</span>
           {r.cells.map((c, i) => <span key={i} className="dv-c" role="cell">{c}</span>)}
           {r.extra}
@@ -678,7 +678,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                     <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
                     <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
                     extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
-                  ...(acc ? [{ label: "Will they accept", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />] }] : []),
+                  ...(acc ? [{ label: "Will they accept", cls: "dv-accrow", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />],
+                    extra: <span className={`dv-accbar ${acc.label === "Likely yes" ? "is-likely" : acc.label === "Worth a shot" ? "is-maybe" : "is-long"}`} aria-hidden="true"><i style={{ width: `${Math.round(acc.p * 100)}%` }} /></span> }] : []),
                 ]} />
               {received && counter && (
                 <div className="coach">
