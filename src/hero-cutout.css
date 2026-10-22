@@ -4,7 +4,7 @@
    photo fills the box, cropped from the top, and only the last fifth fades. Uses Sleeper's full-size headshot. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut {
   width: 180px !important; height: 131px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
-  margin: -14px -72px -6px -20px;
+  margin: -14px -50px -6px -20px;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut > .av-photo {
   border-radius: 0 !important; background: none !important; object-fit: contain; object-position: 50% 100%;
