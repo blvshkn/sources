@@ -1,7 +1,8 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Player } from "../data";
 import { espnId, sleeperId, teamColors, useJerseys } from "../jersey";
 import { avatarSrc } from "../sleeper";
+import { viaEdge } from "../imgProxy";
 
 // Headshots and team marks come from Sleeper's image CDN, keyed by the same ids as the API.
 const headshot = (id: string) => `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`;
@@ -27,24 +28,29 @@ export function Avatar({ p, size = 40, ring, badge = true, cut = false }: { p: P
   cut?: boolean }) {
   useJerseys();
   const photos = useContext(AvatarPhotos);
-  const [failed, setFailed] = useState(false);
-  const [hiFailed, setHiFailed] = useState(false);
-  const [espnFailed, setEspnFailed] = useState(false);
-  const hi = (cut || size >= 80) && !hiFailed;
+  // Each photo tries, in order: ESPN through Vercel's cache, ESPN directly, Sleeper through the cache, Sleeper
+  // directly. Any that fails to load moves on to the next; when all fail, initials.
+  const [tryAt, setTryAt] = useState(0);
   const [logoFailed, setLogoFailed] = useState(false);
   const [c1, c2] = teamColors(p.nfl);
   const team = isTeam(p.id);
   const sid = team ? undefined : sleeperId(p);
-  const eid = team || espnFailed ? undefined : espnId(p);
-  const showPhoto = photos && !team && (eid || (sid && !failed));
+  const eid = team ? undefined : espnId(p);
+  const box = cut ? 184 : size;
+  const sleeperUrl = sid ? (cut || size >= 80 ? headshotHi(sid) : headshot(sid)) : null;
+  const tries = [eid && viaEdge(headshotEspn(eid), box), eid && headshotEspn(eid), sleeperUrl && viaEdge(sleeperUrl, box), sleeperUrl]
+    .filter((u, i, a): u is string => !!u && a.indexOf(u) === i);
+  const src = tries[tryAt];
+  // A new player, or his ESPN id arriving after the id table loads, starts the chain over
+  useEffect(() => setTryAt(0), [p.id, eid]);
+  const showPhoto = photos && !team && !!src;
   const showTeamMark = photos && team && !logoFailed;
   return (
     <span className={`av${ring ? ` ring-${ring}` : ""}${team ? " av-team" : ""}${cut && showPhoto ? " av-cut" : ""}`} style={{ width: size, height: size, ["--team" as string]: c1 }} role="img" aria-label={team ? `${p.nfl} defense` : p.name}>
       {showPhoto ? (
-        <img className="av-photo" src={eid ? headshotEspn(eid) : hi ? headshotHi(sid!) : headshot(sid!)} alt="" loading="lazy" decoding="async" width={size} height={size}
-          onError={() => (eid ? setEspnFailed(true) : !sid ? setFailed(true) : hi ? setHiFailed(true) : setFailed(true))} />
+        <img className="av-photo" src={src} alt="" loading="lazy" decoding="async" width={size} height={size} onError={() => setTryAt((n) => n + 1)} />
       ) : showTeamMark ? (
-        <img className="av-logo" src={teamLogo(p.nfl)} alt="" loading="lazy" decoding="async" onError={() => setLogoFailed(true)} />
+        <img className="av-logo" src={viaEdge(teamLogo(p.nfl), size)} alt="" loading="lazy" decoding="async" onError={() => setLogoFailed(true)} />
       ) : (
         <span className="av-initials" style={{ background: c1, color: c2, fontSize: size * 0.36 }}>{team ? p.nfl : initials(p.name)}</span>
       )}

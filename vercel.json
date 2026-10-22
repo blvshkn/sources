@@ -17,19 +17,65 @@
   "headers": [
     {
       "source": "/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/:path*",
-      "headers": [{ "key": "X-Frame-Options", "value": "SAMEORIGIN" }]
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
     },
     {
       "source": "/(.*)",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noimageindex, noai, noimageai" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noimageindex, noai, noimageai"
+        }
+      ]
     },
     {
       "source": "/(.*)\\.(png|jpg|jpeg|gif|webp|avif|svg|ico)",
-      "headers": [{ "key": "Cross-Origin-Resource-Policy", "value": "same-site" }]
+      "headers": [
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-site"
+        }
+      ]
     },
     {
       "source": "/og-image(.*)\\.png",
-      "headers": [{ "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" }]
+      "headers": [
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        }
+      ]
     }
-  ]
+  ],
+  "images": {
+    "sizes": [
+      64,
+      128,
+      256,
+      384,
+      640
+    ],
+    "formats": [
+      "image/avif",
+      "image/webp"
+    ],
+    "minimumCacheTTL": 2592000,
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "a.espncdn.com",
+        "pathname": "/i/**"
+      },
+      {
+        "protocol": "https",
+        "hostname": "sleepercdn.com",
+        "pathname": "/**"
+      }
+    ]
+  }
 }

@@ -8,6 +8,7 @@ import { eff } from "../engine";
 import { teamColors } from "../jersey";
 import { feet, useBio } from "../playerBio";
 import { Avatar, AvatarPhotos, teamLogo, teamLogoHi } from "./Avatar";
+import { viaEdge } from "../imgProxy";
 import { demoBoard, specialBoard } from "./Values";
 import { Tooltip } from "./Tooltip";
 import { Icon, PosBadge } from "./ui";
@@ -155,10 +156,10 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   const ref = useRef<HTMLDivElement>(null);
   useLargeTitle(ref);
   const photos = useContext(AvatarPhotos);
-  // 0: ESPN's 500px mark, 1: Sleeper's smaller one, 2: none
+  // 0: ESPN's 500px mark through Vercel's cache, 1: the same mark directly, 2: Sleeper's smaller one, 3: none
   const [logoTry, setLogoTry] = useState(0);
   useEffect(() => setLogoTry(0), [s.nfl]);
-  const logoOk = logoTry < 2;
+  const logoOk = logoTry < 3;
   const bio = useBio(s);
   const def = s.pos === "DEF";
   const [c1, , c3] = teamColors(s.nfl);
@@ -177,7 +178,7 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   return (
     <div ref={ref} className={`ph${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
-      {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
+      {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? viaEdge(teamLogoHi(s.nfl), 240) : logoTry === 1 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
       <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut /></span>
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>
