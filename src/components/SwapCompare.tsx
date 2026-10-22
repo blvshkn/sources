@@ -238,7 +238,12 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
 }) {
   useKickoffs(subject.week);
   const pool = options.filter((o): o is SwapOption & { cmp: CmpWho } => !!o.cmp);
-  const [keys, setKeys] = useState<string[]>(() => pool.slice(0, 1).map((o) => o.key));
+  // Start with the first option who can actually play that week (not on bye, not ruled out); the list's first pick
+  // otherwise. Opening on a bye week player compared nothing useful.
+  const [keys, setKeys] = useState<string[]>(() => {
+    const ok = pool.find((o) => o.cmp.proj !== null && o.cmp.status?.tone !== "bad") ?? pool[0];
+    return ok ? [ok.key] : [];
+  });
   const shown = keys.map((k) => pool.find((o) => o.key === k)).filter((o): o is (typeof pool)[number] => !!o);
   const rest = pool.filter((o) => !keys.includes(o.key));
   const full = shown.length >= MAX - 1;
