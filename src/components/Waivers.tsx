@@ -353,11 +353,11 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
         {sel.err && kind !== "current" && <p className="small muted wv3-err">{sel.err}</p>}
         <div className={`wv-ta wv2-bar${findOpen || q ? " is-finding" : ""}`}>
           {/* Phones: search lives behind an icon button beside Watching and Sort, and opens over that row */}
-          <button className="wv3-find" aria-label="Search players" aria-expanded={findOpen || !!q} onClick={() => { setFindOpen(true); window.setTimeout(() => taField.current?.querySelector("input")?.focus(), 0); }}><Icon name="search" size={18} /></button>
+          <button className="wv3-find" aria-label="Search players" aria-expanded={findOpen || !!q} onClick={() => { taField.current?.querySelector("input")?.focus(); setFindOpen(true); }}><Icon name="search" size={18} /></button>
           <label className="psr-field wv-search" ref={taField}>
             <Icon name="search" size={18} />
             <span className="sr-only">Search free agents</span>
-            <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={() => window.setTimeout(() => setSuggest(false), 120)} onKeyDown={onKey}
+            <input value={q} onChange={(e) => { setQ(e.target.value); setSuggest(true); setHi(0); }} onFocus={() => setSuggest(true)} onBlur={(e) => { const empty = !e.currentTarget.value; window.setTimeout(() => { setSuggest(false); if (empty) setFindOpen(false); }, 120); }} onKeyDown={onKey}
               placeholder="Search players…" autoComplete="off" spellCheck={false} role="combobox" aria-expanded={suggest && hits.length > 0} aria-controls="wv-ta-list" aria-autocomplete="list" aria-activedescendant={suggest && hits[hi] ? `wv-ta-${hits[hi].fa.id}` : undefined} />
             {(q || findOpen) && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); setFindOpen(false); }} aria-label={q ? "Clear search" : "Close search"}><Icon name="x" size={16} /></button>}
           </label>

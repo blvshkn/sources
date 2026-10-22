@@ -1,6 +1,6 @@
 /* Waivers search on phones (Zach): the full search field gives way to an icon button to the right of Watching and
    Sort. Tapping it opens the field over that row, focused, with an X to close; the row comes back when it closes
-   (the field stays open while there's a search in it). Tablet and desktop keep the field as it was. */
+   (the field stays open while there's a search in it). Dismissing the keyboard on an empty field closes it. Tablet and desktop keep the field as it was. */
 html:root:not(#_):not(#_):not(#_):not(#_) .wv2-bar > .wv3-find { display: none; }
 @media (max-width: 767.98px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar { flex-wrap: nowrap; }
@@ -10,7 +10,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .wv2-bar > .wv3-find { display: none; 
     transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
   }
   html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar > .wv3-find:active { transform: scale(0.94); transition-duration: 100ms; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar:not(.is-finding) > .wv-search { display: none; }
+  /* Closed, the field stays in the page but out of sight (not display: none), so the icon's tap can focus it in the
+     same gesture: iOS only raises the keyboard for a focus inside the tap itself */
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar { position: relative; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar:not(.is-finding) > .wv-search { position: absolute; left: 0; top: 0; width: 1px; height: 44px; opacity: 0; pointer-events: none; overflow: hidden; }
   html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar.is-finding > :is(.wv3-watching, .wv2-sort, .wv3-find) { display: none; }
   html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-bar.is-finding > .wv-search { flex: 1 1 100%; }
   @media (prefers-reduced-motion: no-preference) {
