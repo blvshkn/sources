@@ -183,7 +183,11 @@ html:root:not(#_):not(#_) .hp-gl { position: absolute; z-index: 2; pointer-event
   html:root:not(#_):not(#_) .hp-gl { animation: hp-gl-in calc(1100ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both; }
 }
 @keyframes hp-gl-in { from { opacity: 0; } }
-/* While the model loads, the CSS phones stand in; the render then fades in over them (Zach, Oct 22: loading) */
+/* While the model loads, the phones wait out of sight and arrive with the render (Zach, Oct 22: no CSS phones
+   flickering in first) */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone { opacity: 0; animation-play-state: paused; }
+/* No WebGL: just the screens, each with a plain dark edge */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-off .hp-scr { box-shadow: 0 0 0 calc(var(--pw) * 0.035) #1E1E20, 0 40px 60px -20px rgba(0, 0, 0, 0.8); }
 /* Drawn: the CSS body, buttons and the back phones' screens give way to the render */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.hp-body, .ph-chrome) { display: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-back .hp-scr { visibility: hidden; }

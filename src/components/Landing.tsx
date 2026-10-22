@@ -235,8 +235,8 @@ export function Landing({ onLive, onDemo }: {
   }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
-  // The 3D phones (phone3d.ts): tried wherever WebGL2 works. The CSS phones show while the model loads and stay as the
-  // fallback; once it has drawn, the render fades in over them.
+  // The 3D phones (phone3d.ts): tried wherever WebGL2 works. The phones wait, hidden, until the model has drawn, then
+  // arrive as the real render (Zach, Oct 22: no CSS phone flickering in first). Without WebGL the screens show alone.
   const [gl, setGl] = useState<"try" | "on" | "off">(() =>
     typeof window !== "undefined" && typeof WebGL2RenderingContext !== "undefined" && new URLSearchParams(location.search).get("gl") !== "0" ? "try" : "off");
   useEffect(() => {
@@ -488,8 +488,6 @@ export function Landing({ onLive, onDemo }: {
             ))}
           </div>
           <div className="hp-phone hp-back hp-left ld2-phone" aria-hidden="true" ref={setInert}>
-            <PhoneBody />
-            <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="trade" go={gl === "off" ? appsGo : "none"} front={false} />
@@ -498,8 +496,6 @@ export function Landing({ onLive, onDemo }: {
             </div>
           </div>
           <div className="hp-phone hp-back hp-right ld2-phone" aria-hidden="true" ref={setInert}>
-            <PhoneBody />
-            <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="waivers" go={gl === "off" ? appsGo : "none"} front={false} />
@@ -508,8 +504,6 @@ export function Landing({ onLive, onDemo }: {
             </div>
           </div>
           <div className="hp-phone hp-front ld2-phone">
-            <PhoneBody />
-            <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="wire" go={appsGo} front={true} />
@@ -986,13 +980,6 @@ function PhoneChrome() {
       <i className="ph-btn ph-action" /><i className="ph-btn ph-vol-up" /><i className="ph-btn ph-vol-dn" /><i className="ph-btn ph-power" />
     </span>
   );
-}
-
-/** The hero phones' depth: the body's outline stacked back along Z, so a phone turned at an angle shows its metal
- *  edge the way a render would. Rounded like the body, so the edge follows the corners. */
-const BODY_LAYERS = Array.from({ length: 22 }, (_, i) => i + 1);
-function PhoneBody() {
-  return <span className="hp-body" aria-hidden="true">{BODY_LAYERS.map((i) => <i key={i} style={{ ["--z" as string]: i }} />)}</span>;
 }
 
 /** The real app inside a hero phone: the sample league in an embedded frame, opened on `tab`, drawn at 390 wide under
