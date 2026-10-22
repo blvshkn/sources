@@ -126,7 +126,6 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
     if (inSheet || !el || el.parentElement?.className.split(" ").indexOf("main-inner") === -1) return;
     el.classList.add("pt-sticky");
     const root = document.documentElement;
-    let io: IntersectionObserver | null = null;
     const measure = () => {
       const bar = document.querySelector<HTMLElement>(".topbar");
       const barH = bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().height : 0;
@@ -135,17 +134,23 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
       el.style.setProperty("--pt-top", `${Math.round(barH)}px`);
       el.style.setProperty("--pt-l", `${Math.max(0, Math.round(pr.left - mr.left))}px`);
       el.style.setProperty("--pt-r", `${Math.max(0, Math.round(mr.right - pr.right))}px`);
-      io?.disconnect();
-      const stickAt = parseFloat(getComputedStyle(el).top) || 0;
-      io = new IntersectionObserver(([e]) => {
-        const stuck = e.intersectionRatio < 1 && e.boundingClientRect.top <= stickAt + 1;
-        el.classList.toggle("is-stuck", stuck); root.toggleAttribute("data-tabs-stuck", stuck);
-      }, { rootMargin: `${-(stickAt + 1)}px 0px 0px 0px`, threshold: [1] });
-      io.observe(el);
+      stickAt = parseFloat(getComputedStyle(el).top) || 0;
+      check();
     };
+    // Stuck is read straight from where the tabs sit: pinned at their sticky line once the page has moved. A position
+    // check on scroll works the same in every browser and inside the landing's scaled phone frames, where an
+    // intersection threshold of exactly 1 can be missed (Zach, Oct 22: the band didn't show there).
+    let stickAt = 0, raf = 0;
+    const check = () => {
+      raf = 0;
+      const stuck = window.scrollY > 0 && el.getBoundingClientRect().top <= stickAt + 0.5;
+      if (stuck !== el.classList.contains("is-stuck")) { el.classList.toggle("is-stuck", stuck); root.toggleAttribute("data-tabs-stuck", stuck); }
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
+    window.addEventListener("scroll", onScroll, { passive: true });
     measure();
     const ro = new ResizeObserver(measure); ro.observe(document.body);
-    return () => { ro.disconnect(); io?.disconnect(); root.removeAttribute("data-tabs-stuck"); };
+    return () => { ro.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); root.removeAttribute("data-tabs-stuck"); };
   }, [inSheet]);
   const pick = (v: T) => {
     if (v === value) return;
