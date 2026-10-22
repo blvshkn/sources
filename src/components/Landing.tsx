@@ -49,6 +49,9 @@ const TAG_STACK: (string | { p: number } | { icon: "trade" | "send" | "group" })
   "AROUND", "WHAT", "THE", "OTHER", "MANAGER", { p: 2 }, "NEEDS.",
 ];
 
+/** Each hero player's depth: 0 near (large, sharp, kept clear of the screens), 1 middle, 2 far (small, blurred) */
+const HEAD_DEPTH = [0, 2, 1, 0, 1, 2, 2];
+
 /** What follows YOUR in the banner under the hero */
 const YOURS = ["Fantasy Source", "trades", "lineup", "waivers", "league"];
 
@@ -137,6 +140,37 @@ export function Landing({ onLive, onDemo }: {
   // The FAQ's "Still have a question?" opens the app's Ask screen as a sheet; its mark waves on view and on hover
   const [askOpen, setAskOpen] = useState(false);
   const [askWave, setAskWave] = useState(0);
+  // Hero phones: each screen draws the app at its 390px width and scales it to fit (--hp-s)
+  const phonesRef = useRef<HTMLDivElement>(null);
+  const foSec = useRef<HTMLElement>(null);
+  // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
+  // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
+  const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
+  useEffect(() => {
+    const stage = phonesRef.current;
+    if (!stage) return;
+    let idle = 0, io: IntersectionObserver | null = null;
+    const start = () => {
+      io = new IntersectionObserver((es) => {
+        if (!es.some((e) => e.isIntersecting)) return;
+        io?.disconnect();
+        const go = () => setAppsGo(matchMedia("(min-width: 1024px)").matches ? "all" : "front");
+        idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 1200) as unknown as number;
+      }, { rootMargin: "200px 0px" });
+      io.observe(stage);
+    };
+    if (document.readyState === "complete") start(); else window.addEventListener("load", start, { once: true });
+    return () => { io?.disconnect(); window.removeEventListener("load", start); if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle); clearTimeout(idle); };
+  }, []);
+  useEffect(() => {
+    const stage = phonesRef.current;
+    if (!stage) return;
+    const scrs = [...stage.querySelectorAll<HTMLElement>(".hp-scr")];
+    const fit = () => scrs.forEach((s) => s.style.setProperty("--hp-s", String(s.clientWidth / 390)));
+    fit();
+    const ro = new ResizeObserver(fit); scrs.forEach((s) => ro.observe(s));
+    return () => ro.disconnect();
+  }, []);
   // The YOUR banner moves with the scroll: its track shifts left as the page goes down, wrapping by one run's width.
   const bandRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -235,6 +269,7 @@ export function Landing({ onLive, onDemo }: {
   const env = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLElement>(null);
   useEffect(() => (hero.current ? heroDepth(hero.current, env.current) : undefined), []);
+  useEffect(() => (foSec.current ? heroDepth(foSec.current, null) : undefined), []);
 
   // The trade idea's buttons start the sample league the way "Or explore a sample league" does, then the app opens
   // this deal: in the builder, or with its pitch written (demoHandoff.ts). A handoff left from an earlier visit is dropped.
@@ -294,32 +329,74 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Source reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
           <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
-          {/* This week's face-off from the sample league, the same card as Wire, before kickoff, live and final */}
-          <FaceOffStates you={demo.you} partner={demo.mike.manager} />
         </div>
 
-        <div className="ld2-stage">
-        <div className="ld2-heads" aria-hidden="true">
-          {cast.map((p, i) => (
-            <span key={p.id} className={`ld2-head h${i}`} style={{ ["--i" as string]: i }}>
-              <span className="ld2-head-in"><Avatar p={p} size={64} /><b>{p.name.split(" ").slice(-1)[0]}</b></span>
-            </span>
-          ))}
-        </div>
-        <div className="hd-card hd-trade" data-hd-pin=".ti-actions">
-        <div className="hd-tilt"><div className="hd-pose">
-        <div className="ld-preview ld2-preview">
-          {demo.trade && (
-            <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
-              <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
-              {/* Styled as the card heading it is (h3), but read as level 2: it's the first heading after the h1 */}
-              <h3 aria-level={2}>{demo.mike.name} needs <em>a TE.</em></h3>
-              <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
-            </article>
-          )}
-        </div>
-        </div></div>
-        </div>
+        {/* Our phone, three times (Zach, Oct 22): the trade idea face on, Sunday live and Set optimal lineup behind it at
+            angles. Real components from the sample league, drawn at the app's 390 width and scaled to each screen. Players
+            float around them at different depths, the near ones sharp, the far ones small and soft. */}
+        <div className="ld2-stage hp-stage" ref={phonesRef}>
+          <div className="hp-heads" aria-hidden="true">
+            {cast.map((p, i) => (
+              <span key={p.id} className={`hp-head d${HEAD_DEPTH[i] ?? 2} h${i}`} style={{ ["--i" as string]: i }}>
+                <Avatar p={p} size={96} badge={false} />
+              </span>
+            ))}
+          </div>
+          <div className="hp-phone hp-back hp-left ld2-phone" aria-hidden="true" ref={setInert}>
+            <PhoneBody />
+            <PhoneChrome />
+            <div className="hp-scr">
+              <PhoneStatus />
+              <PhoneApp tab="matchup" go={appsGo} front={false} />
+              <div className="hp-app">
+                <p className="hp-title">Sunday, live</p>
+                <div className="lu-list hp-live">
+                  {liveRows.slice(0, 4).map((p) => {
+                    const g = gameNow(showLive, p.id, p.nfl);
+                    return (
+                      <div key={p.id} className={`lu-row${playCls(g)}`}>
+                        <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
+                        <Avatar p={p} size={40} />
+                        <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span></span></span>
+                        <PtsCell id={`hp-${p.id}`} g={g} proj={eff(p, true)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="hp-phone hp-back hp-right ld2-phone" aria-hidden="true" ref={setInert}>
+            <PhoneBody />
+            <PhoneChrome />
+            <div className="hp-scr">
+              <PhoneStatus />
+              <PhoneApp tab="roster" go={appsGo} front={false} />
+              <div className="hp-app">
+                <p className="hp-title">Set optimal lineup</p>
+                {optDemo.swaps.length > 0 ? <SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /> : <p className="ld2-opt-none">{optDemo.summary}</p>}
+              </div>
+            </div>
+          </div>
+          <div className="hp-phone hp-front ld2-phone">
+            <PhoneBody />
+            <PhoneChrome />
+            <div className="hp-scr">
+              <PhoneStatus />
+              <PhoneApp tab="wire" go={appsGo} front={true} />
+              <div className="hp-app">
+                <p className="hp-title" aria-hidden="true">Trade ideas</p>
+                {demo.trade && (
+                  <article className="card nudge ld2-idea ld2-card c2">
+                    <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
+                    {/* Styled as the card heading it is (h3), but read as level 2: it's the first heading after the h1 */}
+                    <h3 aria-level={2}>{demo.mike.name} needs <em>a TE.</em></h3>
+                    <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
+                  </article>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -334,6 +411,13 @@ export function Landing({ onLive, onDemo }: {
           ))}
         </div>
         <p className="sr-only">Your Fantasy Source: your trades, your lineup, your waivers, your league.</p>
+      </section>
+
+      {/* The matchup in its own section (Zach, Oct 22: the hero was too busy). The same Wire card, before kickoff, live
+          and final, with room around it. */}
+      <section className="ld-section ld2-fosec" aria-labelledby="ld-fo" ref={foSec}>
+        <SplitHead id="ld-fo" a="Your matchup," b="before, during, after." />
+        <FaceOffStates you={demo.you} partner={demo.mike.manager} />
       </section>
 
       <section className="ld2-tagwrap" aria-label="What Source does">
@@ -743,6 +827,37 @@ function PhoneChrome() {
     <span className="ph-chrome" aria-hidden="true">
       <i className="ph-btn ph-action" /><i className="ph-btn ph-vol-up" /><i className="ph-btn ph-vol-dn" /><i className="ph-btn ph-power" />
     </span>
+  );
+}
+
+/** The hero phones' depth: the body's outline stacked back along Z, so a phone turned at an angle shows its metal
+ *  edge the way a render would. Rounded like the body, so the edge follows the corners. */
+const BODY_LAYERS = Array.from({ length: 22 }, (_, i) => i + 1);
+function PhoneBody() {
+  return <span className="hp-body" aria-hidden="true">{BODY_LAYERS.map((i) => <i key={i} style={{ ["--z" as string]: i }} />)}</span>;
+}
+
+/** The real app inside a hero phone: the sample league in an embedded frame, opened on `tab`, drawn at 390 wide under
+ *  the status bar and scaled with the screen (--hp-s). The static screen beside it is the poster until it has drawn.
+ *  Only the front phone takes input; the two behind it are pictures of the app running. */
+function PhoneApp({ tab, go, front }: { tab: string; go: "none" | "front" | "all"; front: boolean }) {
+  const [ready, setReady] = useState(false);
+  if (go === "none" || (go === "front" && !front)) return null;
+  return (
+    <iframe className={`hp-frame${ready ? " on" : ""}`} src={`/?frame=demo#${tab}`} title={front ? "Source, the sample league" : ""}
+      tabIndex={front ? undefined : -1} aria-hidden={front ? undefined : true} loading="lazy"
+      onLoad={(e) => { const f = e.currentTarget; window.setTimeout(() => setReady(true), 900); try { f.contentWindow?.document.documentElement.classList.add(front ? "frame-front" : "frame-back"); } catch { /* cross origin: fine */ } }} />
+  );
+}
+
+/** The phone's status bar: time, the island and the glyphs */
+function PhoneStatus() {
+  return (
+    <div className="ph-status" aria-hidden="true">
+      <span className="ph-time">9:41</span>
+      <span className="ph-island"><i /></span>
+      <StatusGlyphs />
+    </div>
   );
 }
 

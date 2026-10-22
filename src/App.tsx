@@ -23,14 +23,20 @@ const PullRefresh = lazy(() => loadShell().then((m) => ({ default: m.PullRefresh
 /** Start fetching the app chunk now (a saved session, or someone heading into the app). Safe to call often. */
 let shellAsked = false;
 const prefetchShell = () => { if (shellAsked) return; shellAsked = true; loadShell().catch(() => { shellAsked = false; }); };
+/** The landing's phones embed the real app (?frame=demo): the sample league, opened straight in, with its session
+ *  kept in memory so it never signs this browser in or out of anything. */
+export const IN_FRAME = typeof location !== "undefined" && new URLSearchParams(location.search).get("frame") === "demo";
+if (IN_FRAME && typeof document !== "undefined") document.documentElement.classList.add("in-frame");
 // A saved session opens straight into the app: ask for its chunk while React is still starting up
-if (store.get<{ mode?: string }>("session", { mode: "none" }).mode !== "none") prefetchShell();
+if (IN_FRAME || store.get<{ mode?: string }>("session", { mode: "none" }).mode !== "none") prefetchShell();
 
 /** Session wrapper: picks demo or live Sleeper, loads the league, runs first-run setup. */
 export default function App() {
   useEffect(() => installIconTooltips(), []);
   // Older single-account sessions are rewritten into the accounts list on first read, so nobody is signed out.
-  const [session, setSession] = usePersist<Session>("session", { mode: "none" }, normalizeSession);
+  const [saved, setSaved] = usePersist<Session>("session", { mode: "none" }, normalizeSession);
+  const [framed, setFramed] = useState<Session>({ mode: "demo" });
+  const [session, setSession] = IN_FRAME ? [framed, setFramed] as const : [saved, setSaved] as const;
   // First-run setup loads in its own chunk; on the landing, fetch it once the page is idle (components/lazy.tsx).
   // Anyone signed in, or on their way in, gets the app chunk fetched too.
   const [start, setStart] = useState<FirstRunStart | null>(null);
