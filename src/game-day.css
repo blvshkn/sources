@@ -57,9 +57,10 @@ html:root:not(#_):not(#_) .gd-pill > .gd-morph { position: relative; }
 html:root:not(#_):not(#_) .gd-pill > .gd-morph > .gd-m-out { position: absolute; justify-self: center; white-space: nowrap; }
 
 /* ---- Counter ---------------------------------------------------------------------- */
-/* Every character, the decimal point too, gets a full 1ch cell, so the number spaces evenly */
-html:root:not(#_):not(#_) .gd-odo { display: inline-flex; white-space: nowrap; }
-html:root:not(#_):not(#_) .gd-c { position: relative; display: inline-block; width: 1ch; text-align: center; }
+/* Each cell is as wide as its own glyph, so the number keeps the font's natural spacing (Geist on the face-off, Geist
+   Mono elsewhere, where every glyph is already the same width). The leaving glyph sits over the arriving one. */
+html:root:not(#_):not(#_) .gd-odo { display: inline-flex; white-space: nowrap; font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_) .gd-c { position: relative; display: inline-block; text-align: center; }
 html:root:not(#_):not(#_) .gd-g { display: block; }
 html:root:not(#_):not(#_) .gd-g.gd-out { position: absolute; inset: 0; }
 /* The face-off keeps its Geist digits (monoNumbers would set each cell mono) */

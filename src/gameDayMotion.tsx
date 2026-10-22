@@ -238,7 +238,7 @@ export function MorphPill({ word, className, ...rest }: { word: string; classNam
   return <span ref={el} className={`${className} gd-pill`} {...rest}><Morph k={word}>{word}</Morph></span>;
 }
 
-/** One character cell of the counter: a full 1ch wide, so the decimal point spaces like a digit. A changed digit
+/** One character cell of the counter, as wide as its glyph. A changed digit
  *  rolls (up for a rise, down for a drop); the old one leaves the other way. */
 function Cell({ ch, dir }: { ch: string; dir: number }) {
   const [st, setSt] = useState({ cur: ch, old: null as string | null, n: 0, dir: 0 });
