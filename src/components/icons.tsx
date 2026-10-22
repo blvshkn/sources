@@ -154,13 +154,13 @@ export function iconMotion() {
   // inbox is quiet, so clicks no longer ring it.
 }
 
-/** The 16-bit check: a one-pixel line on a 9 by 6 grid, centered in a square box, crisp at any size. */
-export const PIXEL_CHECK = ["........x", ".......x.", "x.....x..", ".x...x...", "..x.x....", "...x....."];
+/** The 16-bit check: a one-pixel line on an 8 by 6 grid with a short left arm, centered in a square box, crisp at any size. */
+export const PIXEL_CHECK = [".......x", "......x.", ".....x..", "x...x...", ".x.x....", "..x....."];
 export function PixelCheck({ size = 16, className = "" }: { size?: number; className?: string }) {
   const cells: ReactElement[] = [];
   PIXEL_CHECK.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "x") cells.push(<rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" />); }));
   return (
-    <svg className={`ic ic-check px-check ${className}`.trim()} width={size} height={size} viewBox="0 -1.5 9 9" fill="currentColor" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+    <svg className={`ic ic-check px-check ${className}`.trim()} width={size} height={size} viewBox="-0.5 -1.5 9 9" fill="currentColor" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
       {cells}
     </svg>
   );
