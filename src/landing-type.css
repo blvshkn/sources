@@ -386,7 +386,5 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask { align-items: flex-start
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask .ld2-faq-ask-mark { display: grid; place-items: center; height: 24px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask > svg:last-child { align-self: center; }
 
-}
-
 /* No bottom edge blur on phones (Zach, Oct 22) */
 @media (max-width: 767px) { html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur { display: none; } }
