@@ -17,3 +17,5 @@ html:root:not(#_):not(#_) .seg-thumb {
   html:root:not(#_):not(#_) details.wt-none[open] > :not(summary) { animation: mp-fade-up var(--dur-fast) var(--ease-out) both; }
   @keyframes mp-fade-up { from { opacity: 0; transform: translateY(4px); } }
 }
+/* Round icon X buttons press to 0.94 like every other icon button (the 0.97 above is for text buttons) */
+html:root:not(#_):not(#_):not(#_) :is(.ps-x, .ibx-x, .qs-x, .saved-x):active:not(:disabled) { transform: scale(0.94) !important; }
