@@ -10,7 +10,7 @@
 // Run (Playwright and Chromium must be installed; PLAYWRIGHT points at the module if it isn't resolvable):
 //   node scripts/check-dismiss.mjs                      builds dist with Vite into a temp dir and serves it
 //   node scripts/check-dismiss.mjs --html build.html    a single-file build (the shim build agents use)
-//   node scripts/check-dismiss.mjs --url https://sources-orpin.vercel.app
+//   node scripts/check-dismiss.mjs --url https://fantasysource.app
 //   options: --shots <dir> saves dismiss-<overlay>-<width>.png of each overlay open; --only <text> filters by name;
 //            --widths 390,1440
 import { spawnSync } from "node:child_process";

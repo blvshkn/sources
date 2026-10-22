@@ -32,7 +32,7 @@ const APP_URL: Record<LeagueApp, string> = {
   ESPN: "https://fantasy.espn.com/football/",
   Yahoo: "https://football.fantasysports.yahoo.com/",
 };
-export const CARD_LINK = "sources-orpin.vercel.app";
+export const CARD_LINK = "fantasysource.app";
 
 const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
   const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => res(i); i.onerror = () => res(null); i.src = src;

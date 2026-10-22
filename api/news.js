@@ -9,7 +9,7 @@
 // kind: status | move | role | recap | outlook | feature. score ranks fantasy impact (status changes high, lifestyle low).
 // Cached at the edge for 10 minutes per URL. Any source that fails or changes shape just contributes nothing.
 
-const UA = { "user-agent": "SourcesFantasy/1.0 (+https://sources-orpin.vercel.app)" };
+const UA = { "user-agent": "SourceFantasy/1.0 (+https://fantasysource.app)" };
 const RSS = [
   ["RotoWire", ["https://www.rotowire.com/rss/news.php?sport=NFL"]],
   ["ESPN", ["https://www.espn.com/espn/rss/nfl/news"]],
