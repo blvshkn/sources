@@ -9,10 +9,10 @@
   --ld-cap: 200;    /* latest start, so a page settles by --ld-cap + --ld-dur = calc(290ms * var(--mo, 1)), inside the calc(300ms * var(--mo, 1)) budget */
   --ld-rise: 10;    /* px */
   /* The app's first appearance (after the loading screen, or the demo opening): once a session, so a fuller beat */
-  --ld-first-dur: 520;
-  --ld-first-step: 70;
-  --ld-first-cap: 320;
-  --ld-first-rise: 16;
+  --ld-first-dur: 640;
+  --ld-first-step: 90;
+  --ld-first-cap: 540;
+  --ld-first-rise: 14;
   --ld-near: 120;  /* px below the fold still counted as on screen */
 }
 

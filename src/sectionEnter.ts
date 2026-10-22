@@ -11,7 +11,7 @@
  *  Timings (tokens in loadin.css, read once): 200ms per card, 30ms apart, the last start capped at 90ms, so a page
  *  is settled quickly. Each section enters once per visit: coming back to one you already opened shows it settled.
  *  The app's first appearance gets a fuller version once a
- *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
+ *  session (enterApp: the shell fades in first, then 14px rise, 90ms apart, 640ms each, sharpening from a 4px blur), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
 import { EASE_OUT } from "./motion";
@@ -24,6 +24,8 @@ const FIXED = ".deal-tray";
 /** Not part of the page: the desktop bell sits on the frame, outside the section */
 const SKIP = ".desk-bell, .sr-only, script, style";
 /** Entrances some cards play by themselves when they mount */
+/** How long the shell leads the cards on the full page load */
+const SHELL_LEAD = 160;
 const OWN = new Set(["rise", "fade", "fade-up", "rm-fade"]);
 
 type Tokens = { dur: number; step: number; cap: number; rise: number; near: number; first: { dur: number; step: number; cap: number; rise: number } };
@@ -80,12 +82,16 @@ function enter(root: HTMLElement, first: boolean | "soft" = false) {
   if (!list.length) return;
   const last = reduce ? 0 : Math.min((list.length - 1) * t.step, t.cap);
   const dur = reduce ? 160 : t.dur;
-  mark(last + dur + 40);
+  mark(last + dur + 40 + (first === true ? SHELL_LEAD : 0));
   list.forEach(({ el }, i) => {
     // A card that eases in on its own (a nudge's rise) lands settled instead, so the two don't stack
     el.getAnimations().forEach((a) => { if (a instanceof CSSAnimation && OWN.has(a.animationName)) a.finish(); });
-    const frames: Keyframe[] = reduce ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, translate: `0 ${t.rise}px` }, { opacity: 1, translate: "0 0" }];
-    el.animate(frames, { duration: dur, delay: reduce ? 0 : Math.min(i * t.step, t.cap), easing: EASE, fill: "backwards" });
+    // The full page load (first === true) also sharpens each card from a slight blur, and starts after the shell fades in
+    const full = first === true && !reduce;
+    const frames: Keyframe[] = reduce ? [{ opacity: 0 }, { opacity: 1 }]
+      : full ? [{ opacity: 0, translate: `0 ${t.rise}px`, filter: "blur(4px)" }, { opacity: 1, translate: "0 0", filter: "blur(0)" }]
+      : [{ opacity: 0, translate: `0 ${t.rise}px` }, { opacity: 1, translate: "0 0" }];
+    el.animate(frames, { duration: dur, delay: reduce ? 0 : (full ? SHELL_LEAD : 0) + Math.min(i * t.step, t.cap), easing: EASE, fill: "backwards" });
   });
 }
 
@@ -96,7 +102,15 @@ export function enterApp() {
   if (appIn) return;
   appIn = true;
   const root = document.querySelector<HTMLElement>(".main-inner");
-  if (root && !document.hidden) enter(root, true); else mark(1000);
+  if (root && !document.hidden) {
+    // The full page load (Zach approved the paced version): the shell (sidebar, top bar, tab bar) fades in first so the
+    // frame is there at once, then the header and each card rise in reading order, 90ms apart, sharpening from a blur.
+    // Opacity only on the shell: it holds fixed and sticky pieces that a transform would unpin.
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.querySelectorAll<HTMLElement>(".nav, .topbar, .tabbar").forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, easing: EASE, fill: "backwards" }));
+    }
+    enter(root, true);
+  } else mark(1000);
 }
 
 /** Call once in the app shell with the current section. */
