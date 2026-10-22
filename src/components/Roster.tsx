@@ -702,7 +702,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
-            <section ref={(el) => { luList.current = el; listEl.current = el; }} className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
+            <section ref={(el) => { (luList as { current: HTMLElement | null }).current = el; (listEl as { current: HTMLElement | null }).current = el; }} className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
               {week !== WEEK ? (wErr ? <WeekSkel week={week} msg={wErr} /> : weekReady ? <WeekPanel v={weekReady} menu={menu} onInfo={openPlayer} onCompare={setSwapCmp} /> : <WeekSkel week={week} />) : <>
               {/* Nothing to do (lineup already optimal, final or locked): no Start / Sit block at all (Zach) */}
