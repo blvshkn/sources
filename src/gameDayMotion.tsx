@@ -206,11 +206,66 @@ export function StoneLock({ at }: { at: number }) {
 const SPK_C = { w: "#FFF6D6", y: "#F2BE55" };
 const SPARK_BIG: Grid = ["...w...", "...w...", "..wyw..", "wwyyyww", "..wyw..", "...w...", "...w..."];
 const SPARK: Grid = ["..w..", "..w..", "wwyww", "..w..", "..w.."];
+// The cheer, in whole frames (steps): a two pixel hop, one rock each way, a small rock back, down. Origin at its base.
+const STEP = "steps(1, end)";
+const CHEER: Keyframe[] = [
+  { transform: "none", easing: STEP },
+  { transform: "translateY(-1px)", offset: 0.14, easing: STEP },
+  { transform: "translateY(-2px)", offset: 0.28, easing: STEP },
+  { transform: "translateY(-2px) rotate(-10deg)", offset: 0.42, easing: STEP },
+  { transform: "translateY(-1px) rotate(10deg)", offset: 0.58, easing: STEP },
+  { transform: "rotate(-4deg)", offset: 0.74, easing: STEP },
+  { transform: "none", offset: 0.88 },
+  { transform: "none" },
+];
+// A sparkle pops off the rim: small, full, drifting out, gone. `dx` is the way it drifts.
+const pop = (dx: number): Keyframe[] => [
+  { opacity: 1, transform: "scale(0.4)", easing: STEP },
+  { opacity: 1, transform: "scale(1)", offset: 0.34, easing: STEP },
+  { opacity: 1, transform: `translate(${dx}px, -2px) scale(0.6)`, offset: 0.67, easing: STEP },
+  { opacity: 0, transform: `translate(${dx}px, -2px) scale(0.6)` },
+];
+
+/** The trophy's cheer: it hops, rocks once and settles while two pixel sparkles pop off its rim (the big one top left,
+ *  a small one on the right). Plays once per call and ignores calls while it's playing. Reduced motion: nothing. */
+export function cheer(w: HTMLElement) {
+  if (reduce() || w.dataset.cheer !== undefined) return;
+  const cup = w.querySelector<SVGElement>(".gd-troph svg");
+  if (!cup?.animate) return;
+  w.dataset.cheer = "";
+  const hop = cup.animate(CHEER, { duration: mo(320) });
+  const done = () => { delete w.dataset.cheer; };
+  hop.onfinish = done;
+  hop.oncancel = done;
+  w.querySelector(".gd-spk.s1")?.animate(pop(-1), { duration: mo(160), delay: mo(90) });
+  w.querySelector(".gd-spk.s2")?.animate(pop(1), { duration: mo(160), delay: mo(140) });
+}
+
+/** For a face-off drawn inert (the landing's decorative demos), where the trophy itself gets no pointer events: put
+ *  this on a live wrapper's onPointerMove and onPointerDown. A mouse cheers the trophy once as it moves onto it; a tap
+ *  or click on it cheers it. Only a trophy that is showing counts. */
+export function trophyPointer(e: { clientX: number; clientY: number; pointerType: string; type: string; currentTarget: EventTarget }) {
+  const root = e.currentTarget as Element;
+  root.querySelectorAll<HTMLElement>(".gd-trw").forEach((w) => {
+    const r = w.getBoundingClientRect();
+    const on = r.width > 0 && getComputedStyle(w).visibility !== "hidden" && e.clientX >= r.left - 2 && e.clientX <= r.right + 2 && e.clientY >= r.top - 2 && e.clientY <= r.bottom + 2;
+    if (e.type === "pointerdown") { if (on) cheer(w); return; }
+    if (e.pointerType !== "mouse") return;
+    if (on && w.dataset.over === undefined) cheer(w);
+    if (on) w.dataset.over = ""; else delete w.dataset.over;
+  });
+}
+
 /** The small trophy beside the winner's name: the pixel trophy from the icon set (Zach, Oct 22), in gold. When the week goes final while you watch, it spins out from the
- *  name and settles, then three pixel sparkles blink once around it. Already final at mount: it just sits there. */
+ *  name and settles, then three pixel sparkles blink once around it. Already final at mount: it just sits there.
+ *  It cheers (see cheer) on hover with a mouse, on a tap, and when a Final face-off it sits in is shown: the stylesheet
+ *  (icon-motion.css, px-cue) starts a 1ms cue animation on arrival, and its start event plays the cheer. Never on its own. */
 export const PixelTrophy = () => (
-  <span className="gd-trw" aria-hidden="true">
-    <span className="gd-troph"><svg className="px-ic" viewBox={PX.trophy[0]} width="100%" height="100%" fill="#F0C75E" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX.trophy[1] }} /></span>
+  <span className="gd-trw" aria-hidden="true"
+    onAnimationStart={(e) => { if (e.animationName === "px-cue" && e.target === e.currentTarget) cheer(e.currentTarget); }}
+    onPointerEnter={(e) => { if (e.pointerType === "mouse") cheer(e.currentTarget); }}
+    onPointerDown={(e) => { if (e.pointerType !== "mouse") cheer(e.currentTarget); }}>
+    <span className="gd-troph"><svg className="px-ic" viewBox={PX.trophy[0]} width="100%" height="100%" fill="#F0C75E" style={{ transformOrigin: "50% 100%" }} aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX.trophy[1] }} /></span>
     <span className="gd-spk s1"><Px rows={SPARK_BIG} colors={SPK_C} /></span>
     <span className="gd-spk s2"><Px rows={SPARK} colors={SPK_C} /></span>
     <span className="gd-spk s3"><Px rows={SPARK} colors={SPK_C} /></span>

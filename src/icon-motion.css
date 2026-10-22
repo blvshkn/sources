@@ -109,6 +109,19 @@ html:root:not(#_):not(#_) .trophy.fo-won { position: relative; }
   100% { opacity: 0; transform: translate(calc(var(--sx) * 2), -5px) scale(0.5); }
 }
 
+/* The winner's pixel trophy (gameDayMotion.tsx PixelTrophy) cheers in script: a hop, one rock and two pixel sparkles in
+   whole frames, once, on hover, on a tap, and when a Final face-off it sits in comes on screen. This is that last cue: the
+   landing's face-off keeps every state mounted and shows one (.hd-face.on), so the Final one never changes state. The
+   rule starts a 1ms animation each time Final is shown (after the face's fade has begun), and its animationstart plays
+   the cheer once. A hidden face never matches, so nothing plays off screen. Reduced motion: no cue, no cheer. */
+/* The name's ellipsis rule (.fo-name > span, matchup-card.css) also lands on the tooltip wrapper around the trophy and
+   would clip its hop and sparkles; the trophy's own box never overflows the name, so let it draw outside. */
+html:root:not(#_):not(#_):not(#_) .fo-name > .tt-wrap:has(> .gd-trw) { overflow: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .hd-face.on .fo-side.is-won .gd-trw { animation: px-cue 1ms calc(140ms * var(--mo, 1)) both; }
+}
+@keyframes px-cue { from, to { opacity: 1; } }
+
 /* Pixel icons drawn large get heavier lines: the same 1px shapes traced with a stroke in their own color (--px-sw, in
    16-grid units, from icons.tsx pxWeight). Round joins keep the rounded pixel corners. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) svg.px-ic.px-heavy path {

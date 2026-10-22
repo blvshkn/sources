@@ -28,7 +28,8 @@ import { lockedIn, resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
-import { useIconStroke } from "./iconStroke";
+import { PX } from "./pixelIcons";
+import { trophyPointer } from "../gameDayMotion";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
 import { LandingLive } from "./LandingLive";
@@ -887,6 +888,7 @@ function FaceOffStates({ you, partner }: { you: TeamNeeds; partner: string }) {
     <div ref={wrap} className="hd-states ld2-in" style={{ ["--i" as string]: 6 }}
       onPointerEnter={(e) => { if (e.pointerType === "mouse") setHold((h) => ({ ...h, hover: true })); }}
       onPointerLeave={() => setHold((h) => ({ ...h, hover: false }))}
+      onPointerMove={trophyPointer} onPointerDown={trophyPointer}
       onFocus={() => setHold((h) => ({ ...h, focus: true }))}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHold((h) => ({ ...h, focus: false })); }}>
       <div className="ld2-fo hd-card hd-fo" aria-hidden="true" ref={setInert}>
@@ -1002,12 +1004,7 @@ function StatusGlyphs() {
 
 /** Video call: Lucide video (ISC), on the nav icons' line (set by drawn size, iconStroke.ts). */
 function VideoIcon() {
-  const stroke = useIconStroke(24);
-  return (
-    <svg ref={stroke.ref} style={stroke.style} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" />
-    </svg>
-  );
+  return <svg className="px-ic" width="24" height="24" viewBox={PX.video[0]} fill="currentColor" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX.video[1] }} />;
 }
 
 /** The landing's trade readout: Trade.tsx's builder card for one deal, without the editing. */
