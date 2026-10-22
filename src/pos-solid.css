@@ -1,0 +1,8 @@
+/* Player sheet header (Zach): the position badge sat on a 13% tint, so the team logo showed through it. It now sits on
+   the sheet's solid surface first, with the same tint on top: the same color, fully opaque. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-QB { background: linear-gradient(var(--qb-bg), var(--qb-bg)), #1A1D1B; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-RB { background: linear-gradient(var(--rb-bg), var(--rb-bg)), #1A1D1B; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-WR { background: linear-gradient(var(--wr-bg), var(--wr-bg)), #1A1D1B; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-TE { background: linear-gradient(var(--te-bg), var(--te-bg)), #1A1D1B; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-K { background: linear-gradient(var(--k-bg), var(--k-bg)), #1A1D1B; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-meta, .ph-mini, .ph-bar) .pos.pos-DEF { background: linear-gradient(var(--def-bg), var(--def-bg)), #1A1D1B; }

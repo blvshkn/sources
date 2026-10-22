@@ -3,7 +3,8 @@
 // scrolling body above the sticky tabs; once its name scrolls away, the sheet top's compact bar (PlayerBar) fades in. Every number here comes from the app's own data: bios from Sleeper (playerBio.ts),
 // ranks from the Values board, rostered % and adds from the waiver feed. Anything without a source is left out.
 import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { FREE_AGENTS, LEAGUE, SPECIAL_FREE_AGENTS, isDemo, type BoardRow } from "../data";
+import { FREE_AGENTS, LEAGUE, PLAYERS, SPECIAL_FREE_AGENTS, WEEK, isDemo, type BoardRow } from "../data";
+import { eff } from "../engine";
 import { teamColors } from "../jersey";
 import { feet, useBio } from "../playerBio";
 import { Avatar, AvatarPhotos, teamLogo, teamLogoHi } from "./Avatar";
@@ -40,6 +41,18 @@ export function ranksFor(s: HeroSubject): Stat[] {
   const fa = [...FREE_AGENTS, ...SPECIAL_FREE_AGENTS].find((f) => f.id === s.id);
   if (fa?.rostered !== undefined) out.push({ k: "Rostered", v: `${fa.rostered}%`, tip: isDemo() ? "Demo league figure: the share of leagues that roster him." : "The share of Sleeper leagues that roster him." });
   if (fa?.adds) out.push({ k: "Adds 7d", v: compact(fa.adds), tip: isDemo() ? "Demo league figure: adds across Sleeper over the last 7 days." : "Adds across Sleeper over the last 7 days, from Sleeper's trending feed." });
+  // A rostered player has no waiver numbers, so the row fills with this week's projection rank and his value trend
+  // (Zach: the row showed only two)
+  const me = PLAYERS[s.id];
+  if (out.length < 4 && me && !special) {
+    const pool = Object.values(PLAYERS).filter((p) => p.pos === s.pos).map((p) => ({ id: p.id, v: eff(p, true) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
+    const wr = pool.findIndex((x) => x.id === s.id);
+    if (wr >= 0) out.push({ k: `Wk ${WEEK} ${s.pos}`, v: `#${wr + 1}`, tip: `By this week's projected points among the ${s.pos}s in your league and on its wire.` });
+  }
+  const row = i >= 0 ? list[i] : null;
+  if (out.length < 4 && row && !special && row.trend) {
+    out.push({ k: "Value trend", v: `${row.trend > 0 ? "+" : "−"}${compact(Math.abs(row.trend))}`, tip: isDemo() ? "Demo league figure: how his trade value has moved lately." : "How his trade value has moved lately, the same figure as League > Values risers and fallers." });
+  }
   return out;
 }
 

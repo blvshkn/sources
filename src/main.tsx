@@ -126,6 +126,7 @@ import "./tooltip-touch.css";
 import "./sheet-detents.css";
 import "./motion-tokens.css";
 import "./motion-polish.css";
+import "./pos-solid.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
