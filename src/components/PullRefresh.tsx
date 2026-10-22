@@ -20,7 +20,6 @@ import { EASE_OUT, mo } from "../motion";
  */
 const PULL = 70, REST = 46, SIZE = 30;
 const PHONE = "(max-width: 767.98px)";
-const SLAM = "cubic-bezier(0.5, 0, 0.75, 0)";
 const TRACE = "cubic-bezier(0.45, 0, 0.55, 1)";
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 // dismiss-exempt: only reads whether an overlay is open; this renders none
@@ -153,13 +152,13 @@ export function PullRefresh({ onSync }: { onSync: () => Promise<() => void> }) {
           if (!calm) mark.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }], { duration: mo(183), easing: EASE_OUT });
         }
         later(calm ? 400 : mo(240), () => {
-          // Done: the mark lifts away and the page settles back up
-          if (!calm) mark.animate([
-            { transform: "translateY(0)", opacity: 1, filter: "blur(0px)" },
-            { transform: "translateY(-22px)", opacity: 0, filter: "blur(3px)" },
-          ], { duration: mo(240), easing: SLAM, fill: "forwards" });
-          else mark.style.opacity = "0";
-          tween(mo(263), (t) => shift(REST * (1 - t)), () => {
+          // Done: the mark rides up with the page on the same clock, fading as it goes, so the two stay in sync (Zach)
+          mark.getAnimations().forEach((x) => x.cancel());
+          if (calm) mark.style.opacity = "0";
+          tween(mo(263), (t) => {
+            shift(REST * (1 - t));
+            if (!calm) { mark.style.transform = `translateY(${-Math.round(REST * t)}px)`; mark.style.opacity = String(Math.max(0, 1 - t * 1.8)); }
+          }, () => {
             shift(0); reset(); busy = false;
             apply?.();
           });
