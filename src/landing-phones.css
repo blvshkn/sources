@@ -144,7 +144,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-fosec .hd-states { max-width: 640px; }
    The frame is the app at 390 x 795, under the status bar, scaled with the screen. It fades in over the poster once
    it has drawn; the poster then steps out of the way. The back phones don't take input. */
 html:root:not(#_):not(#_) .hp-frame {
-  position: absolute; left: 0; top: 0; z-index: 2; width: 390px; height: 795px; border: 0; margin-top: calc(50px * var(--hp-s, 0.7));
+  position: absolute; left: 0; top: 0; z-index: 2; width: 390px; height: calc(var(--hp-h, 845) * 1px - 50px); border: 0; margin-top: calc(50px * var(--hp-s, 0.7));
   transform: scale(var(--hp-s, 0.7)); transform-origin: 0 0; background: var(--scr, #0A0B0B);
   opacity: 0; transition: opacity calc(600ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
 }
@@ -178,3 +178,8 @@ html:root:not(#_):not(#_) .sc-d0 { display: none; }
   html:root:not(#_):not(#_) .sc-d1 { --sz: 44px; }
   html:root:not(#_):not(#_) .sc-d2 { --sz: 30px; }
 }
+
+/* The iPhone's home bar over every screen, the app's tab bar running under it to the bottom of the glass */
+html:root:not(#_):not(#_):not(#_) .hp-scr .hp-home { z-index: 6; bottom: calc(8 * var(--u)); }
+/* Inside the frame there's no safe area, so give the tab bar the room iOS would: its icons sit above the home bar */
+html.in-frame .tabbar { padding-bottom: 30px !important; }

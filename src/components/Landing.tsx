@@ -174,7 +174,12 @@ export function Landing({ onLive, onDemo }: {
     const stage = phonesRef.current;
     if (!stage) return;
     const scrs = [...stage.querySelectorAll<HTMLElement>(".hp-scr")];
-    const fit = () => scrs.forEach((s) => s.style.setProperty("--hp-s", String(s.clientWidth / 390)));
+    const fit = () => scrs.forEach((s) => {
+      const k = s.clientWidth / 390;
+      s.style.setProperty("--hp-s", String(k));
+      // The screen's height in app pixels, so the embedded app reaches the very bottom of the glass
+      s.style.setProperty("--hp-h", String(s.clientHeight / k));
+    });
     fit();
     const ro = new ResizeObserver(fit); scrs.forEach((s) => ro.observe(s));
     return () => ro.disconnect();
@@ -383,6 +388,7 @@ export function Landing({ onLive, onDemo }: {
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="matchup" go={appsGo} front={false} />
+              <span className="ph-home hp-home" aria-hidden="true" />
               <div className="hp-app">
                 <p className="hp-title">Sunday, live</p>
                 <div className="lu-list hp-live">
@@ -407,6 +413,7 @@ export function Landing({ onLive, onDemo }: {
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="roster" go={appsGo} front={false} />
+              <span className="ph-home hp-home" aria-hidden="true" />
               <div className="hp-app">
                 <p className="hp-title">Set optimal lineup</p>
                 {optDemo.swaps.length > 0 ? <SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /> : <p className="ld2-opt-none">{optDemo.summary}</p>}
@@ -419,6 +426,7 @@ export function Landing({ onLive, onDemo }: {
             <div className="hp-scr">
               <PhoneStatus />
               <PhoneApp tab="wire" go={appsGo} front={true} />
+              <span className="ph-home hp-home" aria-hidden="true" />
               <div className="hp-app">
                 <p className="hp-title" aria-hidden="true">Trade ideas</p>
                 {demo.trade && (
