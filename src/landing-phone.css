@@ -6,7 +6,7 @@
      bezel, an island with a lens dot, slim side buttons, a minimal status bar and a home bar. No brand marks.
    - Everything inside is sized in --u, 1/400 of the phone's width, so the whole device scales as one picture: it
      never clips, it just gets smaller on a narrow phone.
-   - Header: Messages' layout in Sources' language. A centered avatar, the name in a pill with a small chevron, the
+   - Header: Messages' layout in Source's language. A centered avatar, the name in a pill with a small chevron, the
      team under it, round back and video buttons in the icon button style (chalk 7%), and a soft blurred edge in place
      of a divider. The conversation sits at the bottom like a real thread.
    - The share card shows whole (it was cropped to 4:5 with object-fit: cover, which cut its top row and its rounded
@@ -167,7 +167,7 @@ html:root:not(#_):not(#_) .ld2-phone .ph-home {
   transform: translateX(-50%); border-radius: 999px; background: rgba(242, 244, 241, 0.88);
 }
 
-/* Compose bar, Messages' layout in Sources' language: a round plus in the icon button style, then a pill field with
+/* Compose bar, Messages' layout in Source's language: a round plus in the icon button style, then a pill field with
    the border token, muted placeholder and a mic at its end. Decorative (aria-hidden, nothing focusable). It sits
    clear of the home bar with room to breathe, and the thread ends above it. */
 html:root:not(#_):not(#_) .ld2-phone .sms-compose {

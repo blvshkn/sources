@@ -1,4 +1,4 @@
-// Sent offers. Sleeper's public API can't see pending trade offers, so Sources keeps its own list: every time a pitch
+// Sent offers. Sleeper's public API can't see pending trade offers, so Source keeps its own list: every time a pitch
 // is shared or copied (or marked as sent), the deal is saved here. Kept per league in this browser under a
 // versioned key (App.tsx persists it as `sources.<league>.sentOffers.v1`, wrapped in try/catch like every other key).
 // In a live league the list also syncs to the Sleeper user across devices (offerSync.ts, api/offers.js).
@@ -116,7 +116,7 @@ export interface TradeTxn { type: string; status: string; roster_ids: (number | 
 /**
  * Offers a completed trade in the league matches: same partner, every player you sent went to them and every player
  * you asked for came to you, finished after the offer went out (a minute of slack for clocks). Sleeper's team ids are
- * roster ids, which is what Sources uses as team ids in a live league. Returns the ids of the versions to mark accepted.
+ * roster ids, which is what Source uses as team ids in a live league. Returns the ids of the versions to mark accepted.
  */
 export function acceptedFrom(list: SentOffer[], txns: TradeTxn[], youId: string): { id: string; at: number }[] {
   const out: { id: string; at: number }[] = [];

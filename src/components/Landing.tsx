@@ -58,7 +58,7 @@ export function Landing({ onLive, onDemo }: {
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => {
     const prev = document.title;
-    document.title = "Sources: fantasy football trades for Sleeper leagues";
+    document.title = "Source: fantasy football trades for Sleeper leagues";
     return () => { document.title = prev; };
   }, []);
   const live = useLive();
@@ -76,7 +76,7 @@ export function Landing({ onLive, onDemo }: {
   }, []);
 
   // Ask, answered by the engine on the sample league: one of the app's own starter questions and the same trade math.
-  // On a real league Sources AI writes the words around these numbers. It sits far below the fold, so it's worked out
+  // On a real league Source AI writes the words around these numbers. It sits far below the fold, so it's worked out
   // after the page has loaded, once the reader is within a screen or so of it (idle.whenNear), off the hero's path.
   const [askDemo, setAskDemo] = useState<{ q: string; a: Answer; deal?: Trade } | null>(null);
   const askCell = useRef<HTMLElement>(null);
@@ -162,25 +162,25 @@ export function Landing({ onLive, onDemo }: {
           placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
         <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Finding your leagues…" : "Find my leagues"}</button>
       </form>
-      <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Sources can't change anything in Sleeper."}</p>
+      <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Source can't change anything in Sleeper."}</p>
     </>
   );
   const tagline = "Every offer judged by both starting lineups, then pitched around what the other manager needs.";
   // Each answer stands on its own, so search and AI answers can quote it without the question
   const faqs: [string, string][] = [
-    ["What is Sources?", "Sources is a free trade tool for Sleeper fantasy football leagues. It reads your league, measures what every team needs at each starting slot, and builds trades that raise both teams' starting points. It also drafts the pitch, lineup fixes and waiver bids."],
-    ["Is Sources free?", "Yes. Sources is free. Connect your Sleeper league with your username and use every screen, from trade ideas to waiver bids, at no cost."],
-    ["Do you need my Sleeper password?", "No. Sources only needs your Sleeper username. League data comes from Sleeper's public API, so there's no password and nothing to sign into."],
-    ["Can Sources make moves in my league?", "No. Sources is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
-    ["Where do trade values come from?", "Sources blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
-    ["How does Ask work?", "Sources AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Sources' own engine, and once in a while the AI cracks a joke. There's a daily limit, and past it Ask gives the built-in answer."],
+    ["What is Source?", "Source is a free trade tool for Sleeper fantasy football leagues. It reads your league, measures what every team needs at each starting slot, and builds trades that raise both teams' starting points. It also drafts the pitch, lineup fixes and waiver bids."],
+    ["Is Source free?", "Yes. Source is free. Connect your Sleeper league with your username and use every screen, from trade ideas to waiver bids, at no cost."],
+    ["Do you need my Sleeper password?", "No. Source only needs your Sleeper username. League data comes from Sleeper's public API, so there's no password and nothing to sign into."],
+    ["Can Source make moves in my league?", "No. Source is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
+    ["Where do trade values come from?", "Source blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
+    ["How does Ask work?", "Source AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Source's own engine, and once in a while the AI cracks a joke. There's a daily limit, and past it Ask gives the built-in answer."],
     ["What does Set optimal lineup check?", "It starts from your best projected lineup, then reads player news, injury and practice reports, Vegas lines and kickoff weather. Every suggested move comes with its reason. You make the moves in Sleeper."],
-    ["Does a pitch send on its own?", "No. Sources writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
+    ["Does a pitch send on its own?", "No. Source writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
     ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers sync to your phone, tablet and desktop. A key that lives on your devices protects them, and a new device joins with a one-time code from Settings. The sample league stays on one device."],
-    ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Sources never shows them to other managers."],
-    ["What data does Sources keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved so they can sync, readable only with your device key. Delete my data in Settings clears this browser and the synced copies."],
-    ["Does the win chance match Sleeper?", "Closely. Sources uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
-    ["Which platforms work?", "Sources works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
+    ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Source never shows them to other managers."],
+    ["What data does Source keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved so they can sync, readable only with your device key. Delete my data in Settings clears this browser and the synced copies."],
+    ["Does the win chance match Sleeper?", "Closely. Source uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
+    ["Which platforms work?", "Source works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
   const faqLd = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) });
 
@@ -193,8 +193,8 @@ export function Landing({ onLive, onDemo }: {
         <div className="env-field"><div className="env-turf" /></div>
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
-      <nav className="ld-nav ld2-nav" aria-label="Sources">
-        <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={40} word={22} tagline tag={9.5} label="Sources" stage /></div>
+      <nav className="ld-nav ld2-nav" aria-label="Source">
+        <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={40} word={22} tagline tag={9.5} label="Source" stage /></div>
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
       </nav>
 
@@ -203,7 +203,7 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-copy">
           <span className="ld2-eyebrow ld2-in"><PlatformLogo size={14} />For Sleeper leagues</span>
           <h1 className="ld2-h1 ld2-typed"><TypedHeadline lines={HEADLINES} /></h1>
-          <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Sources reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
+          <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Source reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
           <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
           {/* This week's face-off from the sample league, the same card as Wire, before kickoff, live and final */}
@@ -235,7 +235,7 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </header>
 
-      <section className="ld2-tagwrap" aria-label="What Sources does">
+      <section className="ld2-tagwrap" aria-label="What Source does">
         <p className="ld2-tag">{tagline.split(" ").map((w, i) => <span key={i}>{w} </span>)}</p>
       </section>
 
@@ -313,7 +313,7 @@ export function Landing({ onLive, onDemo }: {
           {demo.trade && (
             <article className="card ld-cell ld2-reveal wide">
               <h3>Ideas both sides say yes to</h3>
-              <p>Tell Sources what a league mate said. It reads your notes, checks both lineups, tests the deals and keeps only the ones where both teams gain points.</p>
+              <p>Tell Source what a league mate said. It reads your notes, checks both lineups, tests the deals and keeps only the ones where both teams gain points.</p>
               <div className="ld2-notes">
                 <span className="ld2-notes-k">Your notes on {demo.mike.manager}</span>
                 <ul>{demo.notes.map((t) => <li key={t.id} className={t.kind === "wants" ? "want" : "no"}>{t.text}</li>)}</ul>
@@ -350,7 +350,7 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-new-grid">
           <article className="card ld-cell ld2-reveal ld2-ask-cell" ref={askCell}>
             <h3>Ask anything about your league</h3>
-            <p>Sources AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
+            <p>Source AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
             {askDemo && <div className="ld2-ask" ref={setInert}>
               <div className="ask-you-row"><p className="ask-you">{askDemo.q}</p></div>
               <div className="ask-card">
@@ -392,7 +392,7 @@ export function Landing({ onLive, onDemo }: {
         <ul className="ld-trust-list">
           <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
           <li className="ld2-reveal"><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
-          <li className="ld2-reveal"><Icon name="send" size={22} /><div><b>Nothing sends on its own</b><p>Sources drafts the offer. You decide if and where it goes.</p></div></li>
+          <li className="ld2-reveal"><Icon name="send" size={22} /><div><b>Nothing sends on its own</b><p>Source drafts the offer. You decide if and where it goes.</p></div></li>
         </ul>
       </section>
 
@@ -405,7 +405,7 @@ export function Landing({ onLive, onDemo }: {
           <div className="ld2-faq-askwrap ld2-reveal">
             <button type="button" className="ld2-faq-ask" onClick={() => { try { history.replaceState(null, "", "#ask"); } catch { /* ignore */ } onDemo(); }}>
               <AiMark size={20} className="ld2-faq-ask-mark" />
-              <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask Sources about the sample league and see how it answers.</span></span>
+              <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask Source about the sample league and see how it answers.</span></span>
               <Icon name="chev" size={16} />
             </button>
           </div>
@@ -429,15 +429,15 @@ export function Landing({ onLive, onDemo }: {
       </main>
 
       <footer className="ld-foot">
-        <span>Sources. Your fantasy insider.</span>
+        <span>Source. Your fantasy insider.</span>
         <nav className="ld2-legal" aria-label="Legal">
           <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>Terms and privacy</button>
-          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Sources works</button>
+          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
         </nav>
         <span>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</span>
       </footer>
       {doc && (
-        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Sources works" : "Terms and legal"}</h2>}>
+        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
           <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
         </DetailSheet>
       )}
@@ -449,7 +449,7 @@ export function Landing({ onLive, onDemo }: {
 // Inline so the stylesheet has no url() and Vite skips its PostCSS pass
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
-/** Everything Sources does, one headline at a time. The first is the promise; the rest rotate in behind it. */
+/** Everything Source does, one headline at a time. The first is the promise; the rest rotate in behind it. */
 const HEADLINES = [
   "Trades your league\nwill actually accept.",
   "Lineups set\nbefore kickoff.",

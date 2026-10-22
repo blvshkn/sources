@@ -5,8 +5,8 @@
    Loads before frame.css. */
 
 /* ---------- Pull to refresh (phones) ----------
-   The Sources mark rides down with the page and draws itself stroke by stroke as you pull. PullRefresh.tsx sets the
-   pull on the paths and the box; these rules hold the resting state, the sync outline and the lock. While Sources
+   The Source mark rides down with the page and draws itself stroke by stroke as you pull. PullRefresh.tsx sets the
+   pull on the paths and the box; these rules hold the resting state, the sync outline and the lock. While Source
    syncs, the mark dims to a faint outline (0.22) and a trace runs over every stroke on one clock (script). */
 html:root:not(#_):not(#_):not(#_) { --ptr-mark: 30px; }
 @media (max-width: 767.98px) {

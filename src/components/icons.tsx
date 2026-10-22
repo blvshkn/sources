@@ -1,4 +1,4 @@
-// Sources icon family: pixel icons (Zach, Oct 22). Each is the old Lucide-based line icon traced onto a 16 x 16 pixel
+// Source icon family: pixel icons (Zach, Oct 22). Each is the old Lucide-based line icon traced onto a 16 x 16 pixel
 // grid, with touching pixels merged into one shape and their outer corners rounded (pixelIcons.ts, generated from the
 // approved review sheet). The star is icons8's "pixel star" on its 25 grid; the Settings gear rests turned 60 degrees.
 // Animated parts carry m1 to m4 classes (icon-motion.css).
@@ -21,7 +21,7 @@ const MOTION: Partial<Record<IconName, "nav" | "any">> = {
 };
 
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
-  // Ask, and the mark on anything Sources writes, is the two chat bubbles with their own hover beat (AskIcon)
+  // Ask, and the mark on anything Source writes, is the two chat bubbles with their own hover beat (AskIcon)
   if (name === "spark" || name === "ask") return <AskIcon size={size} active={active} />;
   // The 5 x 5 dot grid fills its box edge to edge, so it runs a touch smaller to sit even with the others
   if (name === "ai") return <AiMark size={Math.round(size * 0.82)} />;

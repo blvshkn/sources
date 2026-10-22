@@ -1,7 +1,7 @@
 // Vendored from the npm package "loader-buttons" v0.1.0 by Jaimin Kataria
 // (https://github.com/Appllama/25-unique-loaders, packages/loader-buttons).
 // License: Apache-2.0, per the package.json. See the NOTICE section in README.md.
-// Changed from the package: colors (the --lb-ink and --lb-paper lines in the style block) and, for Sources' pixel
+// Changed from the package: colors (the --lb-ink and --lb-paper lines in the style block) and, for Source's pixel
 // icons (Oct 22), each dot's shape: a pixel circle (a 4 x 4 block with its corners cut) instead of a round dot,
 // and the timing: frames step at 12 a second (PIXEL_FPS) instead of every display frame.
 
@@ -111,7 +111,7 @@ export default {
         width: 100%;
         height: 100%;
         contain: paint;
-        /* Sources recolor: the dots take the app's ink, their flipped faces the surface they sit on */
+        /* Source recolor: the dots take the app's ink, their flipped faces the surface they sit on */
         --lb-ink-c: var(--lb-ink, var(--ink, rgb(31, 31, 30)));
         --lb-paper-c: var(--lb-paper, var(--surface, rgb(255, 255, 252)));
       }
@@ -301,7 +301,7 @@ export default {
     return {
       render(timeSeconds, deltaSeconds) {
         void deltaSeconds;
-        // Sources pixel motion (Zach, Oct 22): the flip wave advances in 16-bit frames, 12 a second, instead of
+        // Source pixel motion (Zach, Oct 22): the flip wave advances in 16-bit frames, 12 a second, instead of
         // gliding, so the pixel dots step the way the pixel icons do.
         applyFrame(Math.floor(timeSeconds * PIXEL_FPS) / PIXEL_FPS);
       },

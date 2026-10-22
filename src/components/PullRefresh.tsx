@@ -4,8 +4,8 @@ import { EASE_OUT, mo } from "../motion";
 
 /**
  * Pull to refresh on phones (Zach's motion pick, no words). At the very top of the page, pull down and the page rides
- * down while the Sources mark draws itself stroke by stroke above it. Let go past 70px and the page eases back to a
- * 46px gap while the mark moves up into it, from a soft blur to sharp. While Sources syncs with Sleeper the mark dims
+ * down while the Source mark draws itself stroke by stroke above it. Let go past 70px and the page eases back to a
+ * 46px gap while the mark moves up into it, from a soft blur to sharp. While Source syncs with Sleeper the mark dims
  * to a faint outline and every stroke traces over it together on one clock, start to end, then clears the same way,
  * for as long as the sync runs (never otherwise). When it's done the trace finishes, the mark locks solid with one
  * small press, then lifts away as the page settles. Let go short of 70px and the page just eases back.

@@ -72,8 +72,8 @@ export function StoryCard({ n, impact }: { n: NewsItem; impact?: string | null }
         <div className="nx-imp">
           <div className="nx-imp-k">
             <i aria-hidden="true" />What it means for you
-            <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
-              <span className="nx-imp-by"><AiMark size={14} />Sources</span>
+            <Tooltip focusable content="Source's own read, from your league's lineups, projections and schedule. Not from the article.">
+              <span className="nx-imp-by"><AiMark size={14} />Source</span>
             </Tooltip>
           </div>
           <p>{impact}</p>
@@ -158,8 +158,8 @@ function Intel({ text }: { text: string }) {
     <div className="nx-imp nxr-intel">
       <div className="nx-imp-k">
         <i aria-hidden="true" />What it means for you
-        <Tooltip focusable content="Sources' own read, from your league's lineups, projections and schedule. Not from the article.">
-          <span className="nx-imp-by"><AiMark size={14} />Sources</span>
+        <Tooltip focusable content="Source's own read, from your league's lineups, projections and schedule. Not from the article.">
+          <span className="nx-imp-by"><AiMark size={14} />Source</span>
         </Tooltip>
       </div>
       <p>{text}</p>

@@ -1,5 +1,5 @@
 /* One card corner everywhere (Zach: "all cards"): every card, top level or nested, takes the matchup card's 16px.
-   That covers the Sources AI and what-if cards in Lineup, the Settings note, the compare sheet's player cards and
+   That covers the Source AI and what-if cards in Lineup, the Settings note, the compare sheet's player cards and
    week readout, and the player cards in the full matchup. Pills and chips keep their own shapes. */
 html:root:not(#_):not(#_) { --r: 16px; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.lu-ai, .lu-wi, .note-good, .cmp-col, .cmp-read) { border-radius: 16px !important; }

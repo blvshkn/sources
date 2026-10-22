@@ -1,4 +1,4 @@
-// The thinking trace: one line that says what Sources is doing and for how long, over a timeline of the real steps
+// The thinking trace: one line that says what Source is doing and for how long, over a timeline of the real steps
 // (think.ts). While it thinks, the plan streams in under the line. While it works, the timeline is open and the
 // running step carries the working loader (Braille Flipwave). When it's done it folds to "Worked 1.4s" with a chevron that opens the
 // steps again. The head line is always there. When the steps fold or open, the trace changes height in one step and

@@ -41,7 +41,7 @@ const loadImg = (src: string) => new Promise<HTMLImageElement | null>((res) => {
 
 /**
  * Draws the shareable trade card: a 4:5 portrait graphic written from the other manager's side, so it
- * reads as an offer to them. It links back to Sources, which is how the growth loop starts.
+ * reads as an offer to them. It links back to Source, which is how the growth loop starts.
  */
 /**
  * The landing's field, projected the same way: a turf plane tipped back in perspective. Long lines run away
@@ -117,7 +117,7 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
 
   // Header
-  // The logo, as in Figma's "Logo": the two-lane mark, 4/56 of its size apart from SOURCES in Clash Grotesk Medium at
+  // The logo, as in Figma's "Logo": the two-lane mark, 4/56 of its size apart from SOURCE in Clash Grotesk Medium at
   // 24/56 of it. The mark's artwork starts a fifth of the way into its square, so the square sits that far left of X
   // and the artwork lines up with everything under it.
   const MK = 80, mx = X - MK * 0.2, my = 92 - MK / 2;
@@ -190,7 +190,7 @@ export async function drawCard(t: Trade, accentRgb?: string, opts: { photos?: bo
   }
 
   // Footer
-  g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Sources · ${CARD_LINK}`, X, H - X - 4);
+  g.fillStyle = FAINT; g.font = F(500, 22); g.fillText(`Made with Source · ${CARD_LINK}`, X, H - X - 4);
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
 
@@ -383,7 +383,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
       shared.then(
         async () => {
           haptic(); record("text");
-          onSent((await copied) ? "Sent with the card. The text is copied too. Sources will ask tomorrow if they replied." : "Sent with the card. Sources will ask tomorrow if they replied.", "text");
+          onSent((await copied) ? "Sent with the card. The text is copied too. Source will ask tomorrow if they replied." : "Sent with the card. Source will ask tomorrow if they replied.", "text");
         },
         (e: unknown) => {
           if (e instanceof DOMException && e.name === "AbortError") return; // closed the share sheet: nothing to say
@@ -465,7 +465,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
             <Seg<LeagueApp> label="League app" value={app} onChange={setApp} options={[{ v: "Sleeper", label: "Sleeper" }, { v: "ESPN", label: "ESPN" }, { v: "Yahoo", label: "Yahoo" }]} />
           </div>
         )}
-        {method === "app" && app === "Sleeper" && <p className="tiny muted">Sleeper's API is read-only, so Sources can't propose the trade inside Sleeper. It copies the pitch and opens Sleeper for you.</p>}
+        {method === "app" && app === "Sleeper" && <p className="tiny muted">Sleeper's API is read-only, so Source can't propose the trade inside Sleeper. It copies the pitch and opens Sleeper for you.</p>}
 
         <div className="sa2">
           <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>

@@ -2,7 +2,7 @@
 //
 // Sleeper's public API has no live projection or win probability field. Its web app computes both in the
 // browser from three feeds: /projections (each player's projection for the week), /stats (points so far)
-// and the scores feed (quarter and clock). These functions reproduce that math, so Sources shows the same
+// and the scores feed (quarter and clock). These functions reproduce that math, so Source shows the same
 // projected totals and win % as the Sleeper matchup page. Checked against three live readings of week 6, 2026.
 
 export type GameState = "pre_game" | "in_game" | "complete";

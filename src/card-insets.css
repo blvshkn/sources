@@ -22,7 +22,7 @@ html:root:not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end { just
 
 /* ---------- Row chevrons at a card's right edge (Where to improve, Quick moves, Settings, Slot report, threats) ----
    The 16px chevron box sat on the token, but its glyph is narrow and drawn in the middle of the box, so it ended
-   about 6px inside: Where to improve and About Sources, where the chevrons are the outermost thing on the right,
+   about 6px inside: Where to improve and About Source, where the chevrons are the outermost thing on the right,
    read 6px narrower than every other card (22 / 32 / 34). The glyph now ends on the token, in every card, so the
    chevron column lines up from card to card. The hover pills don't move. */
 html:root:not(#_):not(#_):not(#_) .main-inner .card :is(.brief-row, .wk-row, .wk-more, .set-link, .sr-main) > svg.ic-chev:last-child { translate: 5.5px 0; }

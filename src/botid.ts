@@ -1,6 +1,6 @@
 // Vercel BotID (https://vercel.com/docs/botid): runs an invisible challenge in the page and attaches its result to
 // the app's own fetches to these paths. The functions behind them (api/_lib/guard.js) call checkBotId and refuse
-// anything that looks automated before spending on Sources AI or Odds API credits. Nothing for people to click.
+// anything that looks automated before spending on Source AI or Odds API credits. Nothing for people to click.
 // Imported first in main.tsx so it's in place before any fetch. vercel.json carries the rewrites BotID needs.
 // Basic mode by default. If Deep Analysis is turned on in the dashboard, set VITE_BOTID_CHECK_LEVEL=deepAnalysis
 // (and BOTID_CHECK_LEVEL=deepAnalysis for the functions) so both sides ask for the same level.

@@ -84,7 +84,7 @@ html:root:not(#_):not(#_) .st-sheet :is(.st-eval, .st-roster) h3 { margin: 0; fo
 html:root:not(#_):not(#_) .st-sheet .st-pp { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 html:root:not(#_):not(#_) .st-sheet .st-rk { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-/* ---------- Docs (How Sources works, Terms) ---------- */
+/* ---------- Docs (How Source works, Terms) ---------- */
 html:root:not(#_):not(#_) .doc-sheet .doc { padding: 0; }
 html:root:not(#_):not(#_) .doc-sheet .doc > section:first-of-type { padding-top: 0; }
 html:root:not(#_):not(#_) .doc-sheet .doc-updated { margin: 0 0 4px; font-size: 0.8125rem; color: var(--muted); }

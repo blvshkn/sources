@@ -52,19 +52,19 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
     start(optimalJob(live)).catch(() => {
       // Something broke mid-run: the engine's lineup is still the answer, never an error
       const cur = sleeperNow().mine;
-      const r = resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off", null, "Sources AI couldn't finish, so this is your best lineup by projection.");
+      const r = resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off", null, "Source AI couldn't finish, so this is your best lineup by projection.");
       keepOptimal(r); setKept(r);
     });
   };
   const dismiss = () => { setOpen(false); setKept(null); keepOptimal(null); onMarks(null); };
   // The moves lock at the earliest kickoff among the players in them
   const lockBy = res ? moveLock(...res.swaps.flatMap((w) => [playerById(w.start), playerById(w.bench)])) : "";
-  const where = (id: string) => (res?.swaps.some((w) => w.start === id) ? "Sources AI says start" : "Sources AI says bench");
+  const where = (id: string) => (res?.swaps.some((w) => w.start === id) ? "Source AI says start" : "Source AI says bench");
 
   return (
     <div className={`lu-ai${open ? " is-open" : ""}`} aria-label="Set optimal lineup">
       <div className="lu-ai-bar">
-        <p className="lu-ai-txt"><b>Sources AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
+        <p className="lu-ai-txt"><b>Source AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
         <button type="button" className="btn btn-sm lu-ai-go" onClick={go} aria-busy={running || undefined} aria-disabled={locked || running || undefined}>
           {running ? <WorkingLoader size={16} /> : <AiMark size={16} />}Set optimal lineup
         </button>

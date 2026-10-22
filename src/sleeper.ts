@@ -769,8 +769,8 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       trade: td && td < 99 ? `Trade deadline Week ${td}` : "No trade deadline",
     },
     byeTeams, teams, players, sleeperSet, slotHistory,
-    // Sleeper's own suggested bid only reaches its mobile app through a signed-in private endpoint, so Sources sizes it
-    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Sources" },
+    // Sleeper's own suggested bid only reaches its mobile app through a signed-in private endpoint, so Source sizes it
+    faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Source" },
     faabHistory, freeAgents, specialFreeAgents, faSearch, specialBids, trades, activity, claimResults, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     commish: users.filter((u) => u.is_owner).map((u) => ({ userId: u.user_id, name: u.display_name || u.username || "Commish" })),

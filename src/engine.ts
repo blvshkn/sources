@@ -1283,12 +1283,12 @@ export const bidDollars = (pct: number, exact = false) => {
 export const bidRange = (b: [number, number] | number[]) => { const lo = bidDollars(b[0]), hi = bidDollars(b[1]); return lo === hi ? `$${hi}` : `$${lo}-$${hi}`; };
 /** Where the Sugg. bid numbers come from, for the note beside them. */
 export const bidSourceNote = () => FAAB.source === "Sleeper" ? "From Sleeper."
-  : `From Sources. Sized to your $${FAAB.budget.toLocaleString("en-US")} budget, how fast he's being added and what your lineup needs.`;
+  : `From Source. Sized to your $${FAAB.budget.toLocaleString("en-US")} budget, how fast he's being added and what your lineup needs.`;
 
 // ---- Sugg. bid ----------------------------------------------------------------
 // Sized the way Sleeper sizes its own suggested bid: what the player is worth, how fast he's being added across the
 // platform and how much your lineup needs him, scaled to how high winning bids run in your league. Sleeper shows
-// its number only in its mobile app, from a signed-in private endpoint, so Sources computes its own and tunes it to
+// its number only in its mobile app, from a signed-in private endpoint, so Source computes its own and tunes it to
 // land near Sleeper's (Tyrone Tracy, $100-$200 in a $1,000 league, week 7 of 2026).
 const POS_FLOOR: Record<string, number> = { QB: 12, RB: 5, WR: 5, TE: 4 };
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -1370,7 +1370,7 @@ export function parseTag(text: string, teamId?: string): ParsedTag {
   // Same folding as the pickers: "jamarr", "st brown", "aj brown", "ken walker", "cook's". A shared last name goes to this pool's order.
   const player = playersInText(s, pool.map(playerById).filter(Boolean), (p) => p.name, { skip: named ? [named.span] : undefined, names: playerWords().names })[0]?.item;
   const pos = POS_WORDS.find(([re]) => re.test(s))?.[1];
-  if (!player && !pos) return { tag: null, reason: "Name a player or a position so Sources knows what it applies to." };
+  if (!player && !pos) return { tag: null, reason: "Name a player or a position so Source knows what it applies to." };
   const subject = player ? player.name : `their ${pos}`;
   const label = kind === "wants" ? (player ? `Wants ${player.name}` : `Looking for ${pos} help`) : kind === "refuses" ? `Won't move ${player ? player.name : `his ${pos}`}` : `Not interested in ${subject.replace("their", "your")}`;
   return { tag: { teamId: team.id, kind, playerId: player?.id, pos: player ? undefined : pos, text: label, weeksOld: 0 } };
@@ -1409,11 +1409,11 @@ export type AskShow =
   | { kind: "waiver"; fa: WaiverFA; gain: number; bid?: string; drop?: string };
 export interface Answer {
   text: string; points: string[]; links: { label: string; tab: string; teamId?: string; trade?: Trade }[]; show?: AskShow;
-  /** A dry one-liner from Sources AI, shown under the answer. */
+  /** A dry one-liner from Source AI, shown under the answer. */
   quip?: string;
-  /** "ai" when Sources AI wrote it, "off" when it was unavailable and this is the built-in answer. Unset: built-in only. */
+  /** "ai" when Source AI wrote it, "off" when it was unavailable and this is the built-in answer. Unset: built-in only. */
   by?: "ai" | "off";
-  /** With by "off": why Sources AI didn't answer ("cap": today's AI budget is spent, "limit": out of calls today). */
+  /** With by "off": why Source AI didn't answer ("cap": today's AI budget is spent, "limit": out of calls today). */
   offWhy?: "cap" | "limit" | "offline";
   /** The engine had no rule for this question (its catch-all reply). */
   generic?: boolean;

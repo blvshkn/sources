@@ -88,7 +88,7 @@ function EnterCode({ user, onDone }: { user: string; onDone: () => void }) {
     const r = await redeemCode(user, v);
     setBusy(false);
     if (r.ok) { setPaired(true); window.setTimeout(onDone, 1200); return; }
-    setError(r.status === 429 ? tryAgainIn(r.retryAfter) : r.status === 401 ? "That code didn't work. It may have expired or been used. Get a new one and try again." : "Couldn't reach Sources. Check your connection and try again.");
+    setError(r.status === 429 ? tryAgainIn(r.retryAfter) : r.status === 401 ? "That code didn't work. It may have expired or been used. Get a new one and try again." : "Couldn't reach Source. Check your connection and try again.");
   };
   return (
     <form className="sync-body" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
@@ -125,7 +125,7 @@ export function SyncDevicesRow({ user, demo }: { user: string; demo: boolean }) 
     setBusy(true); setMsg("");
     const r = await f();
     setBusy(false);
-    setMsg(r.ok ? done : r.status === 429 ? tryAgainIn(r.retryAfter) : r.status === 401 ? "This device isn't paired anymore. Enter a code to pair it again." : "Couldn't reach Sources. Try again in a moment.");
+    setMsg(r.ok ? done : r.status === 429 ? tryAgainIn(r.retryAfter) : r.status === 401 ? "This device isn't paired anymore. Enter a code to pair it again." : "Couldn't reach Source. Try again in a moment.");
   };
   return (
     <>

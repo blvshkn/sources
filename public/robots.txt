@@ -1,4 +1,4 @@
-# Sources: people are welcome. AI crawlers and scrapers are not.
+# Source: people are welcome. AI crawlers and scrapers are not.
 # This file is a request, not a lock. Well-behaved crawlers honor it.
 
 User-agent: GPTBot

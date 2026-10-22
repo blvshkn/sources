@@ -1,4 +1,4 @@
-// The Ask icon, and the mark for anything Sources writes: Lucide's messages-square (ISC), two chat bubbles, the back one
+// The Ask icon, and the mark for anything Source writes: Lucide's messages-square (ISC), two chat bubbles, the back one
 // tucked behind the front one, no typing dots and no cut-outs, every outline closed. 24 grid, a line set by drawn size (iconStroke.ts), round
 // ends and joins. Still at rest. Hovering or focusing the control that holds it plays one short beat (icon-lucide.css):
 // the pair pops from the front bubble's tail, so the back bubble swings out down and right while the front one swells.

@@ -1,6 +1,6 @@
 /* Icon buttons, from Zach's Figma ("Icon buttons": the Icon button set and "Every icon button in the app").
    One round button for every icon-only control in the list: the inbox bell (phone header and desktop), settings,
-   Ask Sources (the inbox's ask box), close on sheets, modals and the inbox, dismiss, search a player, previous and
+   Ask Source (the inbox's ask box), close on sheets, modals and the inbox, dismiss, search a player, previous and
    next week, save tag or reason, and voice note.
    - 40px round, a 24px icon on a 1.5 line (the 24px weight from iconStroke.ts; no stroke rule here). Each glyph is centered optically by its own offset (icons.tsx), so the
      button itself centers the 24px box exactly.

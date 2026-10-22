@@ -1,4 +1,4 @@
-// Ask, answered by Sources AI (api/ask.js) from a compact snapshot of the league as loaded. The rule engine still
+// Ask, answered by Source AI (api/ask.js) from a compact snapshot of the league as loaded. The rule engine still
 // runs first for the questions it computes exactly (who has, cost to get, needs, start/sit, waivers, trade
 // partners, team reads): its result goes to the model as computed facts and its inline content (the deal, the
 // swaps, the waiver card, the links) stays on the answer. When the model can't be reached, the engine's answer is
@@ -166,7 +166,7 @@ export const turnText = (a: Answer) => [a.text, ...a.points,
 
 export type AiReply = { text: string; points: string[]; playerIds?: string[]; teamId?: string; quip?: string };
 
-/** Ask the server. Resolves to the reply, or null when Sources AI is unavailable for any reason (`onOff` hears why). */
+/** Ask the server. Resolves to the reply, or null when Source AI is unavailable for any reason (`onOff` hears why). */
 export async function askServer(question: string, context: Record<string, unknown>, history: AskTurnLog[], signal?: AbortSignal, onOff?: (why: AiOff) => void): Promise<AiReply | null> {
   let r: Response | null = null;
   try {
@@ -240,7 +240,7 @@ async function play(g: Steps<Answer>, first: IteratorResult<TraceEv, Answer>, tr
 }
 
 /**
- * One Ask turn as real work: read the league, run the engine when it has a rule for the question, ask Sources AI,
+ * One Ask turn as real work: read the league, run the engine when it has a rule for the question, ask Source AI,
  * and fall back to the engine's answer if the AI is unavailable. Each step reports its real counts.
  */
 export function askJob(q: string, engine: (q: string) => Steps<Answer>, history: AskTurnLog[], live?: Live) {
@@ -251,18 +251,18 @@ export function askJob(q: string, engine: (q: string) => Steps<Answer>, history:
     const second = first.done ? first : g.next();
     const ruled = !(second.done && second.value.generic);
     const plan = !first.done && first.value.t === "think" ? first.value.text : "";
-    await tr.think(ruled && plan ? plan : "I'll read your whole league, then ask Sources AI to answer from it.");
+    await tr.think(ruled && plan ? plan : "I'll read your whole league, then ask Source AI to answer from it.");
     const playerCount = TEAMS.reduce((n, t) => n + t.roster.length + (t.ir?.length ?? 0) + (t.taxi?.length ?? 0), 0);
     await tr.step("Reading your league", `Read your league (${TEAMS.length} teams, ${playerCount} players)`, { chips: [{ label: LEAGUE.name, kind: "team" }] });
     const league = leagueContext(live);
     const base = ruled ? await play(g, second, tr) : (second.done ? second.value : null);
     // Start/sit: the same signals and AI check as Set optimal lineup, so both give the same moves and reasons
     if (base?.lineup && live) return lineupAnswer(await optimalJob(live, { intro: false })(tr), base);
-    await tr.step("Asking Sources AI", "Asked Sources AI");
+    await tr.step("Asking Source AI", "Asked Source AI");
     let offWhy = "offline" as AiOff;
     const ai = await askServer(q, ruled && base ? { league, facts: factsOf(base) } : { league }, history, undefined, (why) => { offWhy = why; });
     if (!ai) {
-      tr.state.steps[tr.state.steps.length - 1].done = offWhy === "cap" ? "Sources AI is resting for today, used the built-in answer" : "Sources AI is unavailable, used the built-in answer";
+      tr.state.steps[tr.state.steps.length - 1].done = offWhy === "cap" ? "Source AI is resting for today, used the built-in answer" : "Source AI is unavailable, used the built-in answer";
       await tr.finish();
       return { ...(base ?? { text: "", points: [], links: [] }), by: "off", offWhy };
     }

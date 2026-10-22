@@ -401,7 +401,7 @@ export const ROOKIES = new Set([
 ]);
 
 // ---- Your lineup as currently set in Sleeper (read-only API) --------------
-// Sources compares this to the optimal lineup and flags the difference.
+// Source compares this to the optimal lineup and flags the difference.
 const DEMO_SLEEPER_SET: Record<string, string[]> = {
   QB: ["josh-allen"], RB: ["james-cook", "chuba-hubbard"], WR: ["zay-flowers", "jalen-coker", "deebo-samuel"],
   TE: ["tyler-warren"], FLEX: ["jaylen-warren"],
@@ -425,7 +425,7 @@ export interface SpecialFreeAgent extends Omit<FreeAgent, "pos" | "rookie"> { po
 /** Anything the Waivers screen can list. */
 export type WaiverFA = FreeAgent | SpecialFreeAgent;
 export const isSpecialFA = (fa: WaiverFA): fa is SpecialFreeAgent => fa.pos === "K" || fa.pos === "DEF";
-const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64, source: "Sources" };
+const DEMO_FAAB: Faab = { enabled: true, budget: 100, remaining: 64, source: "Source" };
 const DEMO_FREE_AGENTS: FreeAgent[] = [
   { id: "sean-tucker", name: "Sean Tucker", pos: "RB", nfl: "TB", proj: 13.1, rostered: 22, adds: 48210, trend: "up", why: "The Bucs backup just became the starter. Bucky Irving left Sunday with a shoulder injury." },
   { id: "jalen-tolbert", name: "Jalen Tolbert", pos: "WR", nfl: "DAL", proj: 10.4, rostered: 18, adds: 21640, trend: "up", why: "Runs every route with Lamb questionable. 9 targets last week." },
@@ -509,7 +509,7 @@ const DEMO_OFFERS: Record<string, number> = { mike: 7, dan: 9, jake: 11, chris: 
 
 export type SlotKey = "QB" | "RB" | "WR" | "TE" | "FLEX" | "SF";
 export interface SlotHistory { slot: SlotKey; you: number[]; avg: number[] }
-export interface Faab { enabled: boolean; budget: number; remaining: number; /** Who makes the Sugg. bid numbers: the platform's own when we can read them, else Sources. */ source: "Sleeper" | "Sources"; /** Rolling waiver order, 1 is first. Priority leagues only. */ priority?: number }
+export interface Faab { enabled: boolean; budget: number; remaining: number; /** Who makes the Sugg. bid numbers: the platform's own when we can read them, else Source. */ source: "Sleeper" | "Source"; /** Rolling waiver order, 1 is first. Priority leagues only. */ priority?: number }
 export interface BidTier { tier: "Starter" | "Flex" | "Depth" | "Stash"; bids: number[]; estimated?: boolean }
 export interface Slate { opp: Record<string, Record<number, string>>; proj: Record<string, Record<number, number>>; pts: Record<string, Record<number, number>> }
 export interface LeagueFormat { scoring: "ppr" | "half" | "std"; superflex: boolean; tePremium: boolean }
@@ -631,7 +631,7 @@ export const TEAMS: Team[] = [];
 export let YOU: Team;
 export let SLEEPER_SET: Record<string, string[]> = {};
 export let SLOT_HISTORY: SlotHistory[] = [];
-export let FAAB: Faab = { enabled: true, budget: 100, remaining: 100, source: "Sources" };
+export let FAAB: Faab = { enabled: true, budget: 100, remaining: 100, source: "Source" };
 export let FAAB_HISTORY: BidTier[] = [];
 export let FREE_AGENTS: FreeAgent[] = [];
 export let SPECIAL_FREE_AGENTS: SpecialFreeAgent[] = [];

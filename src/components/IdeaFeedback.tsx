@@ -22,7 +22,7 @@ export type IdeaReason =
   | { kind: "value" }
   | { kind: "note"; text: string };
 
-/** Tell Sources why an idea won't work. Every answer hides this idea and teaches future ones. */
+/** Tell Source why an idea won't work. Every answer hides this idea and teaches future ones. */
 export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick: (r: IdeaReason) => void; onClose: () => void }) {
   const them = teamById(trade.partnerId);
   const [shown, setShown] = useState(false);
@@ -68,7 +68,7 @@ export function IdeaFeedback({ trade, onPick, onClose }: { trade: Trade; onPick:
         <header className="fb-head">
           <span>
             <b id="fb-title">Why won't this work?</b>
-            <small>Sources hides this idea and uses your answer for the next ones.</small>
+            <small>Source hides this idea and uses your answer for the next ones.</small>
           </span>
           <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
         </header>

@@ -1,4 +1,4 @@
-// "What it means for you": a short read on a news story, written by Sources from this league's data,
+// "What it means for you": a short read on a news story, written by Source from this league's data,
 // never from the article. Status, your lineup, the matchup and the market. Returns null when there's
 // nothing specific to say, so the card shows no block instead of filler.
 import { LEAGUE, OPPONENT_ID, Player, TEAMS, Team, WEEK, YOU, onBye, playerById } from "./data";

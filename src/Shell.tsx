@@ -60,7 +60,7 @@ import "./appStyles";
 
 export { PullRefresh } from "./components/PullRefresh";
 
-/** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
+/** A player's name for any id Source might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
   ?? id.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -71,10 +71,10 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "trade", label: "Build a Deal", short: "Trade", icon: "trade", main: true },
   { id: "roster", label: "Lineup", short: "Lineup", icon: "helmet", main: true },
   { id: "waivers", label: "Waivers", short: "Waivers", icon: "waivers", main: true },
-  { id: "ask", label: "Ask Sources", short: "Ask", icon: "spark", main: false },
+  { id: "ask", label: "Ask Source", short: "Ask", icon: "spark", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
   { id: "matchup", label: "Matchup", short: "Matchup", icon: "helmet", main: false, hidden: true },
-  { id: "how", label: "How Sources works", short: "How it works", icon: "spark", main: false, hidden: true },
+  { id: "how", label: "How Source works", short: "How it works", icon: "spark", main: false, hidden: true },
   { id: "legal", label: "Terms and legal", short: "Legal", icon: "lock", main: false, hidden: true },
 ];
 /** The phone tab bar: the five main tabs, then Ask */
@@ -101,7 +101,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   const demo = isDemo();
   // The demo's own saved lists (Sent offers, Watching) start with sample entries; see demoFixtures.ts
   if (demo) seedDemo();
-  // Sources AI's daily limits go by Sleeper user when a league is connected, by visitor in the demo
+  // Source AI's daily limits go by Sleeper user when a league is connected, by visitor in the demo
   setAiUser(!demo && session.mode === "live" ? session.userId : "");
   const scope = demo ? "demo" : LEAGUE.id;
   const username = activeAccount(session)?.username ?? "";
@@ -292,12 +292,12 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   const passPlayer = useCallback((p: { id: string; name: string }) => {
     setPassed((c) => [...c.filter((x) => x !== p.id), p.id]);
     haptic();
-    setToast(`Got it. Sources won't suggest ${p.name} again.`, () => setPassed((c) => c.filter((x) => x !== p.id)));
+    setToast(`Got it. Source won't suggest ${p.name} again.`, () => setPassed((c) => c.filter((x) => x !== p.id)));
   }, [setPassed, setToast]);
   const snoozePlayer = useCallback((p: { id: string; name: string }) => {
     setSnoozed((c) => ({ ...c, [p.id]: WEEK }));
     haptic();
-    setToast(`Okay. Sources won't suggest ${p.name} again this week.`, () => setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; }));
+    setToast(`Okay. Source won't suggest ${p.name} again this week.`, () => setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; }));
   }, [setSnoozed, setToast]);
   const unsnoozePlayer = useCallback((p: { id: string; name: string }) => {
     setSnoozed((c) => { const n = { ...c }; delete n[p.id]; return n; });
@@ -415,7 +415,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     active.filter((t) => t.weeksOld >= 3).slice(0, 1).forEach((t) => list.push({
       id: `stale-${t.id}`, kind: "stale", teamId: t.teamId, tagId: t.id,
       headline: `${teamById(t.teamId).manager} said "${t.text.toLowerCase()}" ${t.weeksOld} weeks ago.`, emph: "Still true?",
-      why: "Interest changes week to week. Keep the tag and Sources keeps respecting it. Clear it and that player comes back into trade ideas.",
+      why: "Interest changes week to week. Keep the tag and Source keeps respecting it. Clear it and that player comes back into trade ideas.",
       trades: [], time: "Today",
     }));
     // Patterns
@@ -440,7 +440,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
     ok: {
       lineup: lineupNow.final ? `Week ${WEEK} is final. Next week's lineup is ready to set.` : !diff.length && !lineupNow.blocked ? "Your best projected lineup is set in Sleeper." : undefined,
-      trade: partners[0]?.t ? undefined : "Nothing helps both sides yet. Build a deal and Sources grades it.",
+      trade: partners[0]?.t ? undefined : "Nothing helps both sides yet. Build a deal and Source grades it.",
       waiver: topRec ? undefined : `Nobody on the wire beats your starters.${Object.keys(watch).length ? ` Watching ${Object.keys(watch).length}.` : ""}`,
     },
   };
@@ -619,7 +619,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     setTags((cur) => cur.filter((t) => t.id !== id));
     setToast("Tag cleared. That player is back in trade ideas.", () => setTags(prev));
   };
-  /** "Won't work": hide the idea, then teach Sources the reason so similar ideas stop showing up. */
+  /** "Won't work": hide the idea, then teach Source the reason so similar ideas stop showing up. */
   const ideaFeedback = (t: Trade, r: IdeaReason) => {
     const them = teamById(t.partnerId);
     const before = { tags, myTags, hiddenIdeas, pausedTeams, passed };
@@ -633,11 +633,11 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
       if (hit) r = { kind: "pass", playerId: hit };
     }
     setHiddenIdeas((c) => [...c.filter((k) => k !== t.key), t.key]);
-    let msg = "Hidden. Sources will skip ideas like this.";
+    let msg = "Hidden. Source will skip ideas like this.";
     if (r.kind === "refuses") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "refuses", playerId: r.playerId, text: `Won't move ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${playerById(r.playerId).name} is off the table in ideas with ${them.manager}.`; }
     if (r.kind === "notInterested") { setTags((c) => [...c, { id: `u${Date.now()}`, teamId: them.id, kind: "notInterested", playerId: r.playerId, text: `Not interested in ${playerById(r.playerId).name}`, weeksOld: 0 }]); msg = `Got it. ${them.manager} won't see ${playerById(r.playerId).name} in ideas.`; }
     if (r.kind === "keeping") { setMyTags((c) => ({ ...c, [r.playerId]: "untouchable" })); msg = `${playerById(r.playerId).name} marked untouchable. He's out of every trade idea.`; }
-    if (r.kind === "pass") { const id = r.playerId; setPassed((c) => [...c.filter((x) => x !== id), id]); msg = `Got it. Sources won't suggest ${playerById(id).name} again.`; }
+    if (r.kind === "pass") { const id = r.playerId; setPassed((c) => [...c.filter((x) => x !== id), id]); msg = `Got it. Source won't suggest ${playerById(id).name} again.`; }
     if (r.kind === "paused") { setPausedTeams((c) => [...c.filter((x) => x !== them.id), them.id]); msg = `No more ideas with ${them.manager} for now. Turn it back on in Settings.`; }
     if (r.kind === "note") { const parsed = parseTag(`${them.manager} ${r.text}`); if (parsed.tag) { setTags((c) => [...c, { ...parsed.tag!, id: `u${Date.now()}` }]); msg = `Saved: ${parsed.tag.text}. Ideas now follow it.`; } }
     haptic();
@@ -759,7 +759,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   };
   const bellLabel = `Inbox${unread ? `, ${unread} unread` : ""}`;
   const markRead = (id: string) => setReadIds((c) => (c.includes(id) ? c : [...c, id].slice(-200)));
-  // "Not right now" skips an item for this week only. It never teaches Sources to show fewer like it.
+  // "Not right now" skips an item for this week only. It never teaches Source to show fewer like it.
   const dismissItem = (it: InboxItem) => {
     markRead(it.id);
     setIbxSkipped((c) => ({ ...c, [it.id]: WEEK }));
@@ -775,7 +775,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
       <AppBackdrop />
       <aside className="side">
         <div className="brand">
-          <button type="button" className="side-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Sources" stage /></button>
+          <button type="button" className="side-logo" aria-label="Source home" onClick={goHome}><BrandLogo layout="row" mark={48} word={25.29} tagline tag={10} lineGap={0} label="Source" stage /></button>
         </div>
         <button className="league-pill lsw-btn" onClick={() => setSwitching("list")} aria-haspopup="dialog">
           <ManagerAvatar key={LEAGUE.id} src={[LEAGUE.userAvatar, LEAGUE.userPhoto]} name={meName} size={32} className="tp-av lsw-me" alt={meName} />
@@ -810,7 +810,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
       </aside>
 
       <header className="topbar">
-        <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" stage /></button>
+        <button type="button" className="top-logo" aria-label="Source home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Source" stage /></button>
         <div className="row top-acts">
           <button className="btn btn-icon btn-ghost top-bell" data-ring={bellRing || undefined} aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
             <Icon key={bellRing ? `r${bellRing}` : "b"} name="bell" size={20} />{bellDot && <span key={`d${bellRing}`} className={`ibx-badge${bellRing ? " is-new" : ""}`} aria-hidden="true">{unread}</span>}
@@ -871,7 +871,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
               paused={pausedTeams.map((id) => ({ id, manager: teamById(id).manager }))} onResume={(id) => { setPausedTeams((c) => c.filter((x) => x !== id)); setToast(`Trade ideas with ${teamById(id).manager} are back.`); }}
               hiddenCount={hiddenIdeas.length} onUnhide={() => { const prev = hiddenIdeas; setHiddenIdeas([]); setToast("Hidden trade ideas are back.", () => setHiddenIdeas(prev)); }}
               passed={passed.map((id) => ({ id, name: playerName(id) }))} onBringBack={(p) => unpassPlayer(p)}
-              onClearPassed={() => { const prev = passed; setPassed([]); setToast(`Cleared. Sources can suggest ${prev.length === 1 ? "that player" : `those ${prev.length} players`} again.`, () => setPassed(prev)); }}
+              onClearPassed={() => { const prev = passed; setPassed([]); setToast(`Cleared. Source can suggest ${prev.length === 1 ? "that player" : `those ${prev.length} players`} again.`, () => setPassed(prev)); }}
               onReplay={onReconnect} />
           )}
           </Fragment>

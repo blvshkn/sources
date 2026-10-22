@@ -21,7 +21,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl {
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl b { font: 500 0.875rem/1.1 var(--font-mono) !important; color: var(--ink) !important; letter-spacing: 0 !important; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl .tiny { font-size: 0.75rem !important; line-height: 1.1 !important; color: var(--muted) !important; }
 
-/* Lineup: even space around the Sources AI card (Zach: 4px above it, about 24px below). 20px from the week switcher
+/* Lineup: even space around the Source AI card (Zach: 4px above it, about 24px below). 20px from the week switcher
    (or the Start / Sit block) to the card, and 20px from the card to the Starters heading's text. */
 html:root:not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-ai { margin-top: 16px; margin-bottom: 6px; }
 /* Starters heading: "Lineup set" sits under Proj when there's nothing to change (the Start / Sit block is hidden then) */

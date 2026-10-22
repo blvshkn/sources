@@ -1,4 +1,4 @@
-// The what-if lineup: swaps tried inside Sources, shared by the Lineup page and the full matchup (page and sheet), so
+// The what-if lineup: swaps tried inside Source, shared by the Lineup page and the full matchup (page and sheet), so
 // a swap made in one shows in the other. Nothing here writes to Sleeper. This week keeps skill slots and K/DEF slots
 // apart (the way the matchup always has); weeks ahead keep one id per starter slot in Sleeper's lineup order.
 // A tiny module store read through useSyncExternalStore; it resets when the league changes.

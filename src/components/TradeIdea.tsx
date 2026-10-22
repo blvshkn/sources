@@ -55,7 +55,7 @@ export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade)
         <button className="btn btn-sm ti-btn" onClick={() => onOpen(t)}>Open in builder</button>
         <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(t)}><Icon name="pen" size={15} />Write pitch</button>
       </div>
-      {feedback && <button className="ti-nope" onClick={() => feedback(t)}>Won't work? Tell Sources why</button>}
+      {feedback && <button className="ti-nope" onClick={() => feedback(t)}>Won't work? Tell Source why</button>}
     </article>
   );
 }

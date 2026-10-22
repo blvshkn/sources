@@ -7,7 +7,7 @@ import { Select } from "./Select";
 
 type SR = { start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null; lang: string; interimResults: boolean };
 
-/** "Tags from what people say": type or dictate a line, Sources turns it into an intent tag. */
+/** "Tags from what people say": type or dictate a line, Source turns it into an intent tag. */
 export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { onSave: (t: Omit<ManagerTag, "id">) => void; placeholder?: string; compact?: boolean; teamId?: string; onTeam?: (id: string) => void }) {
   const others = TEAMS.filter((t) => !t.you);
   // Who said it stays put, so you only type what they said. Tap the name to switch managers.
@@ -63,7 +63,7 @@ export function TagCapture({ onSave, placeholder, compact, teamId, onTeam }: { o
             <Icon name="mic" size={18} />
           </button>
         )}
-        <button className="composer-btn send" onClick={(e) => (parsed?.tag ? save() : deny(e.currentTarget, text.trim() ? "Sources can't read a tag from that yet. Name a player or position." : "Type what they said first, like \"won't move his RB\"."))} aria-disabled={!parsed?.tag || undefined} aria-label="Save tag">
+        <button className="composer-btn send" onClick={(e) => (parsed?.tag ? save() : deny(e.currentTarget, text.trim() ? "Source can't read a tag from that yet. Name a player or position." : "Type what they said first, like \"won't move his RB\"."))} aria-disabled={!parsed?.tag || undefined} aria-label="Save tag">
           <Icon name="check" size={16} />
         </button>
       </div>

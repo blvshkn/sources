@@ -1,6 +1,6 @@
 /* Action motion (Oct 22 picks from the motion preview, ported to the real components).
    Zach's rule: animate when you act, when something actually changes, or on first arrival. Never loop (the AI sheen
-   runs only while Sources is thinking). Nothing animates on mount for a state that already existed: the scripts that
+   runs only while Source is thinking). Nothing animates on mount for a state that already existed: the scripts that
    set these classes (WatchStar, Arrived, Decrypt, SwipeToast, App's bell, actionMotion.ts) only set them on a change.
    Durations are the preview's times at the app's pace: calc(Nms * var(--mo)) with N = preview ms / 1.75.
    Loads before frame.css. */
@@ -70,7 +70,7 @@ html:root:not(#_):not(#_) .toast.swipe-toast.is-drag { transition: none !importa
 @keyframes act-clap { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-10deg); } 30% { transform: rotate(9deg); } 45% { transform: rotate(-6deg); } 60% { transform: rotate(3deg); } 75% { transform: rotate(-1deg); } }
 @keyframes act-dot-in { from { scale: 0; } }
 
-/* ---------- Shiny text: a slow sheen while Sources is thinking ----------
+/* ---------- Shiny text: a slow sheen while Source is thinking ----------
    The Ask trace's label and the AI summary label while an answer is still being written. The class comes off when
    the answer lands, so the sheen stops there. */
 html:root:not(#_):not(#_):not(#_) :is(.thk .thk-word.shim, .ai-shine) {

@@ -1,4 +1,4 @@
-/** The Sources logo from Zach's updated Figma ("Logo / Mark", "Logo / Wordmark", "Logo"): the two-lane mark, the
+/** The Source logo from Zach's updated Figma ("Logo / Mark", "Logo / Wordmark", "Logo"): the two-lane mark, the
  *  uppercase wordmark set as live text in Clash Grotesk Medium (loaded by src/fonts.ts, Geist until it arrives),
  *  and the mono tagline. Static: nothing here animates.
  *  - stack: mark over wordmark over tagline, centered (the loading screen: mark 88, wordmark 40, tagline 13).
@@ -10,7 +10,7 @@ import { Mark } from "./Logo";
 import { Tooltip } from "./Tooltip";
 
 /** The wordmark text, for places that draw it themselves (the share image's canvas). */
-export const WORDMARK = "SOURCES";
+export const WORDMARK = "SOURCE";
 export const TAGLINE = "Your fantasy insider";
 /** The wordmark's font stack and weight, shared with the canvas so both draw the same letters. */
 export const WORD_FONT = `"Clash Grotesk", Geist, system-ui, sans-serif`;
@@ -20,11 +20,11 @@ export function BrandWordmark({ size = 40, className = "" }: { size?: number; cl
   return <span className={`bl-word ${className}`.trim()} style={{ fontSize: size }} aria-hidden="true">{WORDMARK}</span>;
 }
 
-/** The release stage, shown as a small pill after the wordmark while Sources is in alpha */
+/** The release stage, shown as a small pill after the wordmark while Source is in alpha */
 export const STAGE = "Alpha";
-const STAGE_TIP = "Sources is in alpha. Things may change or break while we build it out, and your feedback shapes what comes next.";
+const STAGE_TIP = "Source is in alpha. Things may change or break while we build it out, and your feedback shapes what comes next.";
 
-export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Sources", className = "", stage = false }: {
+export function BrandLogo({ layout = "stack", mark = 88, word = 40, tagline = false, tag = 13, lineGap, label = "Source", className = "", stage = false }: {
   layout?: "stack" | "row";
   /** Mark size in px (the square it's drawn in, as in Figma) */
   mark?: number;

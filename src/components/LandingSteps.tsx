@@ -171,7 +171,7 @@ export function LandingSteps({ trade }: { trade?: Trade }) {
   const go = (i: number) => seen[i] && (i === 0 || done[i - 1]);
   const steps = [
     { h: "Enter your username", p: "Your Sleeper username, nothing else. No password, no sign up form.", demo: <UserDemo go={go(0)} onDone={() => finish(0)} /> },
-    { h: "Pick your league", p: "Sources loads rosters, projections, trades and waivers for the league you choose.", demo: <LeagueDemo go={go(1)} onDone={() => finish(1)} /> },
+    { h: "Pick your league", p: "Source loads rosters, projections, trades and waivers for the league you choose.", demo: <LeagueDemo go={go(1)} onDone={() => finish(1)} /> },
     { h: "Get your moves", p: "Trade ideas that help both sides, lineup fixes and waiver bids, refreshed through the week.", demo: trade ? <TradeDemo go={go(2)} t={trade} /> : null },
   ];
   return (

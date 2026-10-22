@@ -51,7 +51,7 @@ export const cantLabel = (fa: WaiverFA, avail: Avail) => (avail === "bye" ? "Bye
 export const lockWhyText = (fa: WaiverFA, avail: Avail): string | null => !avail ? null
   : avail === "played" ? (gameNow(fa.nfl) === "in_game" ? `${fa.name} is playing now, so Sleeper locks him until waivers run.` : `${fa.name} already played this week, so Sleeper locks him until waivers run.`)
   : avail === "bye" ? `${fa.name} is on bye this week. Step to Week ${WEEK + 1} to plan a claim.`
-  : `${fa.name} is ${avail === "ir" ? "on IR" : "out"} this week, so Sources isn't suggesting a claim.`;
+  : `${fa.name} is ${avail === "ir" ? "on IR" : "out"} this week, so Source isn't suggesting a claim.`;
 /** `later`: claim details for a player whose game already started, used once you look past this week. */
 /** `only`: found through search, outside the suggested list. `noTeam`: no NFL team, so nothing to claim for points. */
 type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later?: WaiverRec; only?: boolean; noTeam?: boolean };
@@ -525,7 +525,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           // Every row carries the same cells in the same order, so the columns never shift between rows, tabs or weeks
           const cant = kind === "current" && !r ? cantLabel(e.fa, e.avail) : null;
           const stats: ReactNode = e.noTeam && !e.no && !skip ? <span className="ps-again-line"><span>No NFL team. Nothing to claim for points.</span></span>
-            : e.no ? <span className="ps-again-line"><span>Sources won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
+            : e.no ? <span className="ps-again-line"><span>Source won't suggest him.</span><button className="linkish ps-again" onClick={() => unpass(e)}>Interested again</button></span>
             : skip ? <span className="ps-again-line"><span>Skipped this week.</span><button className="linkish ps-again" onClick={() => unsnooze(e)}>Suggest again</button></span> : <>
             <span className="wv-c-lu"><i>Your lineup</i><b className={!cant && e.gain > 0.05 ? "good" : "flat"}>{cant ?? (loading ? "–" : e.pts === null ? "Bye" : e.gain > 0.05 ? fmt(e.gain) : "No change")}</b></span>
             <span className="wv-c-bid"><i>{FAAB.enabled ? SUGG_BID : "Tier"}</i><b>{bidCell(e.fa, r)}</b></span>
@@ -604,7 +604,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                     <div><span className="eyebrow">{FAAB.enabled ? SUGG_BID : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b className="sugg-bid-amt">{bidText(r.bid, r.fa)}</b>. Kickers and defenses rarely draw real bids.</> : <><b className="sugg-bid-amt">{bidText(r.bid)}</b>. {bidSourceNote()}</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
-                  <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. Claims are placed in your league app. Sources never bids for you.</p>
+                  <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. Claims are placed in your league app. Source never bids for you.</p>
                 </div>
                 </>);
                 }}

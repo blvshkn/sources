@@ -13,7 +13,7 @@ import type { Check } from "../gameDay";
 import { NewsItem, ago, requestPlayer } from "../news";
 import { AiMark } from "./WorkingLoader";
 
-/** One thing Sources wants you to see. Every item has the same parts: an icon, a short title, when it happened, an
+/** One thing Source wants you to see. Every item has the same parts: an icon, a short title, when it happened, an
  *  optional line of context (a deadline or a source), the body, and one move to make about it. */
 export interface InboxItem {
   id: string;
@@ -29,7 +29,7 @@ export interface InboxItem {
   urgent?: boolean;
   ai?: boolean;
   action: { label: string; run: () => void };
-  /** Nudges teach Sources what you don't want; game-day items just leave the list. */
+  /** Nudges teach Source what you don't want; game-day items just leave the list. */
   nudge?: Nudge;
   /** "Not right now" for a suggested player: skips him in suggestions this week only (the Overview briefing's pattern) */
   skip?: () => void;
@@ -248,12 +248,12 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
           );
         })}
       </div>
-      {/* Sends the question to Ask Sources, where the work shows as a thinking trace */}
+      {/* Sends the question to Ask Source, where the work shows as a thinking trace */}
       <form className="ibx-ask" onSubmit={(e) => { e.preventDefault(); onAsk(q.trim()); setQ(""); }}>
         <AskIcon size={18} />
         <label htmlFor="ibx-q" className="sr-only">Ask about your league</label>
         <input id="ibx-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about your league" autoComplete="off" />
-        <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Sources"><Icon name="ask" size={16} /></button>
+        <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Source"><Icon name="ask" size={16} /></button>
       </form>
     </>
   );

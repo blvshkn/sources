@@ -1,4 +1,4 @@
-/* Ask with Sources AI: the one-liner under an answer, and the note when the AI is offline. Imported after ask.css. */
+/* Ask with Source AI: the one-liner under an answer, and the note when the AI is offline. Imported after ask.css. */
 
 /* The dry one-liner: set apart by a thin rule and italics, in the answer's ink so it reads as part of it */
 html:root:not(#_):not(#_) .ask-card .ask-quip {

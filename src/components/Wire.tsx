@@ -322,7 +322,7 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
               Won't move {playerById(id).name.split(" ").slice(-1)[0]}
             </button>
           ))}
-          <button className="chip-btn ghost" onClick={() => onResolve(f.id, "Got it. Sources will ask again tomorrow.")}>No reply yet</button>
+          <button className="chip-btn ghost" onClick={() => onResolve(f.id, "Got it. Source will ask again tomorrow.")}>No reply yet</button>
         </div>
       ) : (
         <div className="coach">
@@ -482,7 +482,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         <span className="sample-note">{level === "light" ? "Light: top nudges only" : level === "hands" ? "Hands-on: every nudge" : "Standard nudges"} · <button className="linkish" onClick={() => onGo("settings:nudges")}>Change</button></span>
       </div>
 
-      {nudges.length === 0 && <p className="empty-deal">You're caught up. Sources will nudge you when something changes.</p>}
+      {nudges.length === 0 && <p className="empty-deal">You're caught up. Source will nudge you when something changes.</p>}
 
       {visible.map((n) => (
         <article key={n.id} className={`card nudge nudge-${n.kind}${leaving.includes(n.id) ? " leaving" : ""}`}>

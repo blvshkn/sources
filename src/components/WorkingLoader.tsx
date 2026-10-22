@@ -32,7 +32,7 @@ export function WorkingLoader({ size = 16, run = true, label, className = "" }: 
 }
 
 /** The loader standing still: its 5 by 5 dots at rest, the first frame of Braille Flipwave. Marks AI work inline
- *  (AI tags, Sources tips) without moving, so a page full of them stays calm. Takes the text color around it. */
+ *  (AI tags, Source tips) without moving, so a page full of them stays calm. Takes the text color around it. */
 export function AiMark({ size = 14, className = "" }: { size?: number; className?: string }) {
   // Pixel circles (Zach, Oct 22): the same 5 by 5 grid, each dot a 4 by 4 pixel circle at half scale
   return <svg className={`ai-mark ${className}`.trim()} width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX_AI }} />;

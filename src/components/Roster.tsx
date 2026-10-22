@@ -212,7 +212,7 @@ const SlotAt = ({ slot, children }: { slot: string; children: ReactNode }) => <s
 /** The menu sits in a zero-height anchor right after its row, so rows stay siblings and keep their dividers. */
 const PickAt = ({ show, children }: { show: boolean; children: ReactNode }) => <SwapAnchor show={show} className="lu-pick-at">{children}</SwapAnchor>;
 
-/** Under the starters: swaps here are a what-if (Sources can't write to Sleeper), with the way back and the way there. */
+/** Under the starters: swaps here are a what-if (Source can't write to Sleeper), with the way back and the way there. */
 function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { changed: boolean; delta: number; locked: boolean; base: string; resetLabel: string; onReset: (el: Element) => void }) {
   return (
     <div className={!changed && locked ? "lu-wi is-locked" : "lu-wi"}>
@@ -762,7 +762,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "price" && <section className="card wt" aria-labelledby="wt-title">
         <header className="wt-head">
           <h2 className="section-title" id="wt-title">What would it take?</h2>
-          <p>Set an asking price on anyone you'd move. Sources finds the cheapest offer from each team that meets it, and trade ideas never go below it.</p>
+          <p>Set an asking price on anyone you'd move. Source finds the cheapest offer from each team that meets it, and trade ideas never go below it.</p>
         </header>
         {(movable.length > 0 || untouch.length > 0) && (
           <ul className="wt-quick" aria-label="Tagged players without a price">

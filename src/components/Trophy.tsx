@@ -10,7 +10,7 @@ export const championLabel = (teamId: string) => (isChampion(teamId) ? `${LEAGUE
 
 /**
  * Small gold crown next to last season's league champion. The cup is kept for a matchup win (WinCup), so the
- * two never read as the same thing. Sources line family, with a soft fill in the crown so it reads at 11 to 13px.
+ * two never read as the same thing. Source line family, with a soft fill in the crown so it reads at 11 to 13px.
  */
 export function Trophy({ teamId, size = 15, focusable = false }: { teamId: string; size?: number; focusable?: boolean }) {
   const label = championLabel(teamId);

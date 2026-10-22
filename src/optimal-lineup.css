@@ -1,4 +1,4 @@
-/* Set optimal lineup (OptimalLineup.tsx): the Sources AI block under the Starters header on the Lineup tab, its trace,
+/* Set optimal lineup (OptimalLineup.tsx): the Source AI block under the Starters header on the Lineup tab, its trace,
    the swaps with their reasons (SwapRows.tsx, shared with Ask), the way into Sleeper, and the marks it leaves on the
    lineup rows until dismissed. Loads just before frame.css. Every rule is scoped to .lu-ai, .lu-list rows or the
    reason line inside .ask-show: nothing here styles bare .card, .btn or .row. Mobile first, then by the block's own width. */

@@ -1,4 +1,4 @@
-/* Lines: every structural border and divider is one color, the Figma variable color/surface-2 (#202322, Sources
+/* Lines: every structural border and divider is one color, the Figma variable color/surface-2 (#202322, Source
    tokens). --line already drives almost every hairline in the app (card and sheet edges, row dividers drawn as
    borders, inset shadows or ::before rules, inputs, chips, the composer), so it now points at --surface-2 and those
    follow. --surface-2 itself is untouched because it is also a background.

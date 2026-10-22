@@ -104,7 +104,7 @@ function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onD
   onFollow: (q: string) => void;
 }) {
   const { trace, result: a, start } = useTrace<Answer>();
-  // Sources AI answers; the engine runs first when it has a rule for the question, and is the answer if the AI is down
+  // Source AI answers; the engine runs first when it has a rule for the question, and is the answer if the AI is down
   useEffect(() => { start(askJob(q, (x) => answer(x, ctx), history, live)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Headline, then each point, then the one-liner, as one stream
   const counts = a ? [wordCount(a.text), ...a.points.map(wordCount), ...(a.quip ? [wordCount(a.quip)] : [])] : [];
@@ -384,11 +384,11 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     <>
       <header className="page-head">
         <div>
-          <LeagueSwitch title="Ask Sources" meta={<>Ask about your league</>} />
+          <LeagueSwitch title="Ask Source" meta={<>Ask about your league</>} />
         </div>
       </header>
 
-      <section className="ask-page" ref={page} aria-label="Ask Sources">
+      <section className="ask-page" ref={page} aria-label="Ask Source">
         <div className="ask-thread" ref={thread} onScroll={onScroll} aria-live="polite"
           onWheel={mine} onTouchMove={mine} onKeyDown={onKeyDown} onPointerDown={(e) => { if (e.target === e.currentTarget) mine(); }}>
           <div className="ask-col" ref={col}>
@@ -396,7 +396,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
               <div className="ask-empty">
                 <div className="ask-intro">
                   <span className="ask-mark"><Icon name="spark" size={32} /></span>
-                  <h2 className="ask-title">Ask Sources</h2>
+                  <h2 className="ask-title">Ask Source</h2>
                   <p className="ask-sub">Trades, lineups, waivers, or anything else about your league. I run the numbers on your real rosters and show my work.</p>
                 </div>
                 <div className="ask-groups">
@@ -433,7 +433,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
               {working ? <WorkingLoader size={18} /> : <ArrowUp />}
             </button>
           </form>
-          <p className="ask-note">Sources only reads your league's public rosters and the tags you log.<span className="ask-wide"> It never scans private group chats.</span></p>
+          <p className="ask-note">Source only reads your league's public rosters and the tags you log.<span className="ask-wide"> It never scans private group chats.</span></p>
         </div>
       </section>
       {sheet && <PlayerSheet p={sheet} where={whereOf(sheet)} onClose={() => setSheet(null)} />}

@@ -103,7 +103,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
         {step === "team" && (
           <div className="ob-step" key="s2">
             <h1 id="ob-title" className="ob-title">Is this your team?</h1>
-            <p className="ob-sub">{LEAGUE_NAME} · {TEAMS.length} teams. Sources reads every roster, but only you see your tags.</p>
+            <p className="ob-sub">{LEAGUE_NAME} · {TEAMS.length} teams. Source reads every roster, but only you see your tags.</p>
             <div className="ob-teams">
               {[...TEAMS].sort((a, b) => Number(!!b.you) - Number(!!a.you)).map((t) => (
                 <div key={t.id} className={`ob-option static${t.you ? " selected" : ""}`} style={t.you ? undefined : { opacity: 0.55 }}>
@@ -130,7 +130,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 <div className="idea-swap"><span>Your {intel.opener.give.map((id) => playerById(id).name).join(" + ")}</span><span className="arrow">for</span><span>{teamById(intel.opener.partnerId).manager}'s {intel.opener.get.map((id) => playerById(id).name).join(" + ")}</span></div>
                 <div className="idea-nums"><span>You gain <Delta n={intel.opener.youDelta} />/wk</span><span>They gain <Delta n={intel.opener.themDelta} />/wk</span></div>
               </div>
-            ) : <p className="small muted">No trade helps both sides right now. Sources will tell you when one opens up.</p>}
+            ) : <p className="small muted">No trade helps both sides right now. Source will tell you when one opens up.</p>}
             <AiLabel />
             <button className="btn btn-primary" onClick={() => setStep("untouchables")}>Continue</button>
           </div>

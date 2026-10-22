@@ -1,6 +1,6 @@
 // Set optimal lineup. The engine sets the floor: the projection-best lineup that leaves locked players where they are
 // (lineupWhatIf.bestUnderLocks, the same one Use optimal lineup applies). Then the app gathers this week's signals
-// (api/lineup-signals.js: news, injuries, Vegas lines, weather, licensed rankings when configured), asks Sources AI
+// (api/lineup-signals.js: news, injuries, Vegas lines, weather, licensed rankings when configured), asks Source AI
 // (api/lineup.js) whether any of them should change a call, and checks every slot of what comes back before showing it.
 // If the AI is unavailable or its lineup fails a check, the engine's lineup is the answer with the engine's reasons.
 // Nothing here writes to Sleeper: the result is a list of moves to make there.
@@ -21,11 +21,11 @@ export type Why = SignalKind | "projection" | "out" | "bye";
 export interface OptSwap { start: string; bench: string; slot: SlotName; gain: number; why: string; signal: Why }
 export interface OptimalResult {
   league: string; week: number;
-  /** "ai" when Sources AI checked the lineup, "off" when this is the engine's lineup alone. */
+  /** "ai" when Source AI checked the lineup, "off" when this is the engine's lineup alone. */
   by: "ai" | "off";
   /** Why it's the engine's lineup, shown small and muted. */
   note?: string;
-  /** With by "off" because Sources AI refused: why ("cap": today's AI budget is spent, "limit": out of calls today). */
+  /** With by "off" because Source AI refused: why ("cap": today's AI budget is spent, "limit": out of calls today). */
   offWhy?: AiOff;
   slots: SkillSlot[]; swaps: OptSwap[];
   total: number; currentTotal: number; summary: string;
@@ -178,7 +178,7 @@ async function fetchPart(part: Part, body: object): Promise<SignalReply | null> 
   } catch { return null; }
 }
 
-/** Ask Sources AI. Resolves the lineup, or null when it's unavailable for any reason (`onOff` hears why). */
+/** Ask Source AI. Resolves the lineup, or null when it's unavailable for any reason (`onOff` hears why). */
 export async function askLineup(body: object, onOff?: (why: AiOff) => void): Promise<AiLineup | null> {
   try {
     const r = await fetch("/api/lineup", { method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) });
@@ -205,7 +205,7 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
     const current = sleeperNow().mine;
     const roster = YOU.roster.map(playerById).filter(Boolean);
     if (intro) {
-      await tr.think("I'll start from your best projected lineup, then check news, injury reports, Vegas lines and weather, and ask Sources AI whether any of it should change a call.");
+      await tr.think("I'll start from your best projected lineup, then check news, injury reports, Vegas lines and weather, and ask Source AI whether any of it should change a call.");
       await tr.step("Reading your roster", `Read your roster (${roster.length} players)`, { chips: [{ label: YOU.name, kind: "team" }] });
     }
     const base = bestUnderLocks(current, locked);
@@ -260,7 +260,7 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
       say(r?.status === "ok" ? `Read rankings for ${rkRows.length} of your players` : "Couldn't reach the rankings feed");
     }
 
-    await tr.step("Asking Sources AI", "Asked Sources AI");
+    await tr.step("Asking Source AI", "Asked Source AI");
     let offWhy = "offline" as AiOff;
     const ai = await askLineup({
       week: WEEK,
@@ -280,7 +280,7 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
       },
     }, (why) => { offWhy = why; });
     if (!ai) {
-      say(offWhy === "cap" ? "Sources AI is resting for today, used your projections" : "Sources AI is offline, used your projections");
+      say(offWhy === "cap" ? "Source AI is resting for today, used your projections" : "Source AI is offline, used your projections");
       await tr.finish();
       return { ...resultFor(current, base, "off", null, offNote(offWhy, "lineup")), offWhy };
     }
@@ -291,9 +291,9 @@ export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {
       proj: (id) => eff(playerById(id), true), out: (id) => isOut(playerById(id), true), pos: (id) => playerById(id).pos,
     });
     if ("error" in checked) {
-      say("Sources AI's lineup failed a check, used your projections");
+      say("Source AI's lineup failed a check, used your projections");
       await tr.finish();
-      return resultFor(current, base, "off", null, "Sources AI's lineup didn't pass the checks, so this is your best lineup by projection.");
+      return resultFor(current, base, "off", null, "Source AI's lineup didn't pass the checks, so this is your best lineup by projection.");
     }
     say(checked.reverted
       ? `Checked every slot, kept the projection pick in ${plural(checked.reverted, "slot")}`

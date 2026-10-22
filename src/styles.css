@@ -1,4 +1,4 @@
-/* Sources design system: "Press Box". See DESIGN.md.
+/* Source design system: "Press Box". See DESIGN.md.
    Graphite neutrals with one accent (Press Box Amber). Geist for everything, tabular numbers.
    Layout: sidebar + main + wire rail on desktop, single column + floating tab bar on phones. */
 :root {
@@ -3705,7 +3705,7 @@ html:root:not(#_) .wv2-pos { align-items: center; }
 html:root:not(#_) .wv2-bar .wv-search input { min-width: 0; }
 @media (max-width: 380px) { html:root:not(#_) .wv2-sort select { padding: 0 30px 0 12px; font-size: 0.8125rem; } }
 
-/* ==== Brand color stays Sources lime on every platform. The connected app shows up as its
+/* ==== Brand color stays Source lime on every platform. The connected app shows up as its
    logo and name, never as a recolor of the whole interface. ==== */
 html:root:not(#_)[data-platform][data-tab] { --tab-rgb: var(--lime-rgb); }
 
@@ -4106,7 +4106,7 @@ html:root:not(#_) .ld2-nav .btn, html:root:not(#_) .ld2-again { min-height: 44px
   html:root:not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { opacity: 0.75; }
 }
 
-/* The landing wears Sources' own lime. The platform accent only takes over once a league is connected. */
+/* The landing wears Source's own lime. The platform accent only takes over once a league is connected. */
 html:root:not(#_) .ld2 {
   --lime: #D8F24A; --lime-rgb: 216, 242, 74;
   --stamp: #D8F24A; --stamp-ink: #121413; --stamp-soft: rgba(216, 242, 74, 0.10);

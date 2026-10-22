@@ -131,7 +131,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
             {accounts.length > 1 && <p className="tiny muted">To remove @{username}, switch to a league on another account first.</p>}
           </div>
         )}
-        <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Sources connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
+        <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Source connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
         <p className="tiny muted">Next up: {PLATFORMS.filter((p) => p.when === "v1").map((p) => p.name).join(" and ")}. Later: {PLATFORMS.filter((p) => p.when !== "v1" && p.when !== "MVP" && p.when !== "n/a").map((p) => p.name).join(" and ")}.</p>
         <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={demo || !onSwitchLeague ? onReplay : onSwitchLeague}>{demo ? "Run setup again" : "Switch league"}</button>
       </section>
@@ -144,7 +144,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
       <section className="card settings-group">
         <h2 className="section-title">League format</h2>
         <div className="set-row">
-          <span className="grow"><b>Scoring</b><span className="small muted" style={{ display: "block" }}>{demo ? "Changes every projection, need and trade." : `Your league is set to ${formatLabel(leagueFormat)}. Changing it here only changes how Sources scores.`}</span></span>
+          <span className="grow"><b>Scoring</b><span className="small muted" style={{ display: "block" }}>{demo ? "Changes every projection, need and trade." : `Your league is set to ${formatLabel(leagueFormat)}. Changing it here only changes how Source scores.`}</span></span>
           <Seg<Scoring> label="Scoring" value={format.scoring} onChange={(v) => setFormat({ ...format, scoring: v })}
             options={[{ v: "ppr", label: "PPR" }, { v: "half", label: "Half" }, { v: "std", label: "Standard" }]} />
         </div>
@@ -174,11 +174,11 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <li><b>Hands-on:</b> everything, including patterns and stale-tag checks.</li>
         </ul>
         <div className="set-row">
-          <span className="grow"><b>What Sources learned</b><span className="small muted" style={{ display: "block" }}>{muted.length ? `Showing fewer: ${muted.join(", ")} nudges.` : "Tap \"Not useful\" on a nudge and Sources shows fewer like it."}</span></span>
+          <span className="grow"><b>What Source learned</b><span className="small muted" style={{ display: "block" }}>{muted.length ? `Showing fewer: ${muted.join(", ")} nudges.` : "Tap \"Not useful\" on a nudge and Source shows fewer like it."}</span></span>
           {muted.length > 0 && <button className="btn btn-sm" onClick={resetDismissed}>Reset</button>}
         </div>
         <div className="set-row ps-set">
-          <span className="grow"><b>Players you passed on</b><span className="small muted" style={{ display: "block" }}>{passed.length ? "Sources won't suggest them in trade ideas, waiver picks or nudges. They still show on Waivers, dimmed." : "Tap \"Not interested\" on any suggestion and Sources stops suggesting that player."}</span></span>
+          <span className="grow"><b>Players you passed on</b><span className="small muted" style={{ display: "block" }}>{passed.length ? "Source won't suggest them in trade ideas, waiver picks or nudges. They still show on Waivers, dimmed." : "Tap \"Not interested\" on any suggestion and Source stops suggesting that player."}</span></span>
           {passed.length > 1 && onClearPassed && <button className="btn btn-sm" onClick={onClearPassed}>Clear all</button>}
         </div>
         {passed.length > 0 && (
@@ -189,7 +189,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           </ul>
         )}
         <div className="set-row">
-          <span className="grow"><b>Trade ideas you passed on</b><span className="small muted" style={{ display: "block" }}>{hiddenCount ? `${hiddenCount} hidden after you said they won't work.` : "Tap \"Won't work\" on a trade idea to tell Sources why."}</span></span>
+          <span className="grow"><b>Trade ideas you passed on</b><span className="small muted" style={{ display: "block" }}>{hiddenCount ? `${hiddenCount} hidden after you said they won't work.` : "Tap \"Won't work\" on a trade idea to tell Source why."}</span></span>
           {hiddenCount > 0 && <button className="btn btn-sm" onClick={onUnhide}>Show again</button>}
         </div>
         {paused.map((p) => (
@@ -223,7 +223,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <li><b>One tap to leave.</b> Disconnect, or delete your data, any time.</li>
           <li><b>No selling data.</b> Said plainly in the privacy policy.</li>
           <li><b>Show our work.</b> Every verdict explains why, and every value shows when it last changed.</li>
-          <li><b>Nothing sends on its own.</b> Sources preps the message. You tap send.</li>
+          <li><b>Nothing sends on its own.</b> Source preps the message. You tap send.</li>
         </ul>
         <div className="set-row danger-row">
           <span className="grow"><b>Delete your data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device, plus your synced offers, watchlist and sync key. Paired devices stop syncing. This can't be undone.</span></span>
@@ -236,13 +236,13 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
 
       {view === "about" && <>
       <section className="card settings-group">
-        <h2 className="section-title">About Sources</h2>
-        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("how")}><span className="grow"><b>How Sources works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
+        <h2 className="section-title">About Source</h2>
+        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("how")}><span className="grow"><b>How Source works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
         <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
       </section>
       </>}
       {doc && (
-        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Sources works" : "Terms and legal"}</h2>}>
+        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
           <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
         </DetailSheet>
       )}
