@@ -94,6 +94,54 @@ function pageView() {
   return { top, bottom };
 }
 
+// ---- Rows that make room -----------------------------------------------------
+/** Everything laid out after `el` in its scroll area: its later siblings, then each ancestor's later siblings, up to
+ *  the page's main column or a sheet's scroll body. Fixed and sticky layers stay out; they don't move with the flow. */
+function flowAfter(el: HTMLElement): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  for (let n: HTMLElement | null = el; n && n.id !== "main" && n !== document.body && !n.hasAttribute("data-sheet-scroll"); n = n.parentElement) {
+    for (let s = n.nextElementSibling; s; s = s.nextElementSibling) {
+      if (s instanceof HTMLElement && s.getClientRects().length && !/fixed|sticky/.test(getComputedStyle(s).position)) out.push(s);
+    }
+  }
+  return out;
+}
+const still = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+/** FLIP: the rows just moved by `dy` in layout; play them from where they were to where they are now, 160ms on the
+ *  house curve. Additive, so a second move mid-way (another row opening) stacks instead of snapping. */
+function slideFrom(els: HTMLElement[], dy: number) {
+  if (Math.abs(dy) < 0.5 || still()) return;
+  for (const e of els) e.animate?.([{ transform: `translateY(${-dy}px)` }, { transform: "none" }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)", composite: "add" });
+}
+/** Lineup: where every row of the list, and everything after the list, sits on screen right now. Taken just before an
+ *  open or close commits, so the rows can play from these spots to their new ones (the opened row grows, its anchor
+ *  takes the list's height, a closed row shrinks back). Null with reduced motion or outside Lineup. */
+function snapRows(list: HTMLElement | null | undefined): Map<HTMLElement, number> | null {
+  if (!list || still()) return null;
+  const m = new Map<HTMLElement, number>();
+  for (const e of [...list.children, ...flowAfter(list)]) if (e instanceof HTMLElement) m.set(e, e.getBoundingClientRect().top);
+  return m;
+}
+
+/** A Lineup anchor whose list is closing keeps its room until the list's 160ms exit has played, then gives it back and
+ *  the rows below slide up into it. If the exit removes the anchor first, the slide starts in that same frame. */
+function releaseAnchor(a: HTMLElement) {
+  if (!a.style.height || a.dataset.swRelease) return;
+  a.dataset.swRelease = "";
+  const h = a.offsetHeight, rows = flowAfter(a), parent = a.parentElement;
+  let t = 0;
+  const done = () => {
+    if (!t) return;
+    window.clearTimeout(t); t = 0; mo.disconnect(); delete a.dataset.swRelease;
+    if (a.isConnected && "swOpen" in a.dataset) return;  // the same row opened again mid-exit: keep the room
+    a.style.height = "";
+    slideFrom(rows.filter((r) => r.isConnected), -h);
+  };
+  const mo = new MutationObserver(() => { if (!a.isConnected) done(); });
+  if (parent) mo.observe(parent, { childList: true });
+  t = window.setTimeout(done, 160);
+}
+
 /**
  * Open the swap menu below its row when it fits, above it when it doesn't, so it never reaches past the end of the
  * scroll area. A menu that hung past the end made the area taller while open; closing it took that height away and
@@ -155,7 +203,13 @@ export function placeSwap(menu: HTMLElement): number {
   // The matchup only flips at the content's end. Lineup rows (prev) also flip when the menu would open below the
   // screen but fits above it, since the page doesn't scroll to show it.
   // Lineup: the anchor holds the list's height below the row (it hangs pb + 1px into the row), plus a 4px gap
-  const push = () => { if (prev) host.style.height = `${Math.max(0, menu.offsetHeight - parseFloat(host.style.getPropertyValue("--sw-pb") || "4") - 1 + 4)}px`; return 0; };
+  // (useSwapMenu slides the rows below into their new places, so this height never reads as a jump)
+  const push = () => {
+    if (!prev) return 0;
+    host.style.height = `${Math.max(0, menu.offsetHeight - parseFloat(host.style.getPropertyValue("--sw-pb") || "4") - 1 + 4)}px`;
+    host.dataset.swOpen = "";
+    return 0;
+  };
   if (prev ? h <= below || (h <= floor - m.top - 8 && h > above) : h <= floor - m.top - 8) return push();
   // Doesn't fit below: take the side with more room on screen, never past the content's top or end
   if (above > below) {
@@ -183,9 +237,11 @@ export function useSwapMenu<K extends string | number>() {
   const [open, setOpenState] = useState<K | null>(null);
   const hold = useRef<{ el: HTMLElement; top: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const rows = useRef<Map<HTMLElement, number> | null>(null);
   const setOpen = (k: K | null, from?: Element | null) => {
     const el = scrollerOf(from ?? menuRef.current);
     hold.current = { el, top: el.scrollTop };
+    rows.current = snapRows(from?.closest<HTMLElement>(".lu-list") ?? menuRef.current?.closest<HTMLElement>(".lu-list"));
     setOpenState(k);
   };
   useLayoutEffect(() => {
@@ -200,11 +256,18 @@ export function useSwapMenu<K extends string | number>() {
       delete r.dataset.sw;
       if (r.style.marginTop) { shift -= parseFloat(r.style.marginTop) || 0; r.style.marginTop = ""; }
     });
-    document.querySelectorAll<HTMLElement>(".lu-pick-at").forEach((a) => { if (a !== at) a.style.height = ""; });
-    if (menuRef.current) shift += placeSwap(menuRef.current);
+    // A closing anchor holds the rows apart through its 160ms exit, then they slide up together (releaseAnchor)
+    // (A closing menu keeps menuRef until it unmounts, so on a close its anchor is released too, not placed again.)
+    const live = open === null ? null : at;
+    document.querySelectorAll<HTMLElement>(".lu-pick-at").forEach((a) => { if (a !== live) { delete a.dataset.swOpen; releaseAnchor(a); } });
+    if (menuRef.current && open !== null) shift += placeSwap(menuRef.current);
     const h = hold.current;
     hold.current = null;
     if (h && Math.abs(h.el.scrollTop - (h.top + shift)) > 0.5) h.el.scrollTop = h.top + shift;
+    // FLIP: rows that moved (the list opening below a row, the row itself growing or shrinking) slide from where they were
+    const snap = rows.current;
+    rows.current = null;
+    snap?.forEach((top, e) => { if (e.isConnected) slideFrom([e], e.getBoundingClientRect().top - top); });
   }, [open]);
   // Only the bordered box that opened the list (aria-expanded) and the list itself keep it open. A tap or click
   // anywhere else closes it, and so does Escape (useDismiss). A sheet opened from the list (Compare) stacks on top, so taps
