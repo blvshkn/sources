@@ -31,3 +31,12 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-dock { display: no
   }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts :is(.ph-snooze, .snooze-btn) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; border: 0 !important; }
 }
+
+/* Phone dock (Zach): every button gets the same 16px of padding on each side, and the row's spare width is shared out
+   equally, so the inner padding stays equal from button to button; 6px between them */
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock { display: flex !important; gap: 6px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock > * { flex: 1 1 auto !important; width: auto !important; padding: 0 16px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock > :not(button):not(a):has(> button) { padding: 0 !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock > * > button { width: 100% !important; padding: 0 16px !important; }
+}
