@@ -14,7 +14,7 @@
  *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
-import { EASE_OUT, mo } from "./motion";
+import { EASE_OUT } from "./motion";
 import { firstTime } from "./motionOnce";
 
 const EASE = EASE_OUT;
@@ -71,9 +71,10 @@ function pieces(root: HTMLElement, t: Tokens) {
   return out.sort((a, b) => (Math.abs(a.top - b.top) < 24 ? a.left - b.left : a.top - b.top));
 }
 
-function enter(root: HTMLElement, first = false) {
+function enter(root: HTMLElement, first: boolean | "soft" = false) {
   const base = read();
-  const t = first ? { ...base, ...base.first } : base;
+  // "soft": coming back to a section this visit, the same order but quick and close (Zach: soft and quick, not a blink)
+  const t = first === "soft" ? { ...base, dur: 280, step: 40, cap: 160, rise: 4 } : first ? { ...base, ...base.first } : base;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const list = pieces(root, t);
   if (!list.length) return;
@@ -117,10 +118,10 @@ export function useSectionEnter(section: string) {
     // Once per section per visit (Zach): the first time you open a section it comes in; coming back to one you've
     // already seen this visit shows it settled, charts included (chartReveal reads data-revisit)
     if (!firstTime(`section:${section}`)) {
-      // Coming back: no stagger, just a short fade of the whole page, so the switch still registers (Zach)
+      // Coming back: the same order, soft and quick, so the switch registers without replaying the full entrance (Zach)
       document.documentElement.dataset.revisit = "";
       const page = document.querySelector<HTMLElement>(".main-inner");
-      if (page && !document.hidden) page.animate([{ opacity: 0 }, { opacity: 1 }], { duration: mo(140), easing: EASE });
+      if (page && !document.hidden) enter(page, "soft");
       return;
     }
     delete document.documentElement.dataset.revisit;
