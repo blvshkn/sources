@@ -18,12 +18,15 @@ const initials = (name: string) => name.replace(/\b(Jr|Sr|II|III|IV)\.?$/i, "").
 export const AvatarPhotos = createContext(true);
 
 /** Player headshot with a team badge, or a team mark for defenses. Falls back to initials in team colors. */
-export function Avatar({ p, size = 40, ring, badge = true }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad"; badge?: boolean; text?: string }) {
+export function Avatar({ p, size = 40, ring, badge = true, cut = false }: { p: Pick<Player, "id" | "name" | "nfl">; size?: number; ring?: "warn" | "bad"; badge?: boolean; text?: string;
+  /** Sheets and modals: a large cutout headshot (no circle, fading out at the bottom, the full-size photo). Its box
+   *  size comes from CSS (headshots.css) so every sheet shows heads at the same optical size. */
+  cut?: boolean }) {
   useJerseys();
   const photos = useContext(AvatarPhotos);
   const [failed, setFailed] = useState(false);
   const [hiFailed, setHiFailed] = useState(false);
-  const hi = size >= 80 && !hiFailed;
+  const hi = (cut || size >= 80) && !hiFailed;
   const [logoFailed, setLogoFailed] = useState(false);
   const [c1, c2] = teamColors(p.nfl);
   const team = isTeam(p.id);
@@ -31,7 +34,7 @@ export function Avatar({ p, size = 40, ring, badge = true }: { p: Pick<Player, "
   const showPhoto = photos && !team && sid && !failed;
   const showTeamMark = photos && team && !logoFailed;
   return (
-    <span className={`av${ring ? ` ring-${ring}` : ""}${team ? " av-team" : ""}`} style={{ width: size, height: size, ["--team" as string]: c1 }} role="img" aria-label={team ? `${p.nfl} defense` : p.name}>
+    <span className={`av${ring ? ` ring-${ring}` : ""}${team ? " av-team" : ""}${cut && showPhoto ? " av-cut" : ""}`} style={{ width: size, height: size, ["--team" as string]: c1 }} role="img" aria-label={team ? `${p.nfl} defense` : p.name}>
       {showPhoto ? (
         <img className="av-photo" src={hi ? headshotHi(sid!) : headshot(sid!)} alt="" loading="lazy" decoding="async" width={size} height={size} onError={() => (hi ? setHiFailed(true) : setFailed(true))} />
       ) : showTeamMark ? (

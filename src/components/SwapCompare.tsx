@@ -285,7 +285,7 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
                 const o = s ? shown[s - 1] : null, bye = byeWeek(c);
                 const who = (
                   <>
-                    <Avatar p={c} size={36} text={c.avText} />
+                    <Avatar p={c} size={36} text={c.avText} cut />
                     <span className="cmp-n"><b>{c.name}</b><small>{c.pos} · {c.nfl}</small></span>
                   </>
                 );

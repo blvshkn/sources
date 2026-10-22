@@ -154,7 +154,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
       <Select className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`} value={p.id} onChange={set} aria-label={`${side === "a" ? "First player" : "Second player"}: ${p.name}`}
         searchPlaceholder="Search your players"
         options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId), why: `${o.name} is already in the other spot. Pick someone else to compare.` }))}>
-        <Avatar p={p} size={44} />
+        <Avatar p={p} size={44} cut />
         <b className="sx-name">{p.name}</b>
         <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` ${s.game}` : ""}</small>
         <span className="sx-status">{loading ? null : s.avail ? <Tooltip content={s.avail.kind === "bye" ? <>On bye in week <span className="num">{week}</span></> : p.note || (s.avail.kind === "ir" ? "On injured reserve" : s.avail.pill)}><span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`}>{s.avail.pill}</span></Tooltip> : null}</span>
