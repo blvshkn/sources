@@ -8,7 +8,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut {
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut > .av-photo {
   border-radius: 0 !important; background: none !important; object-fit: contain; object-position: 50% 100%;
-  -webkit-mask-image: radial-gradient(ellipse 72% 92% at 50% 34%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 72% 92% at 50% 34%, #000 62%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 74% at 50% 30%, #000 56%, transparent 100%); mask-image: radial-gradient(ellipse 80% 74% at 50% 30%, #000 56%, transparent 100%);
 }
 @media (min-width: 768px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut { width: 184px !important; height: 154px !important; }
