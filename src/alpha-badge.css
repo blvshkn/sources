@@ -13,3 +13,9 @@ html:root:not(#_):not(#_) .bl .bl-stage {
   box-shadow: none; white-space: nowrap; cursor: default; user-select: none;
 }
 html:root:not(#_):not(#_) .bl .bl-stage > span { display: inline-block; margin-right: -0.08em; transform: translate(var(--stage-dx, -0.04em), var(--stage-dy, 1.5px)); }
+/* Where the browser can trim the line box to the caps (Safari 18.2+, Chrome 133+), center on the caps themselves
+   instead of a measured nudge: the 1.5px drop was tuned in Chrome and read low on iPhone (Zach). Geist Mono's cap metric runs a touch taller than its ink, so the word still drops 0.75px (measured equal above and below at 4x). */
+@supports (text-box: trim-both cap alphabetic) {
+  html:root:not(#_):not(#_) .bl .bl-stage { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+  html:root:not(#_):not(#_) .bl .bl-stage > span { text-box: trim-both cap alphabetic; transform: translate(var(--stage-dx, -0.04em), 0.75px); }
+}

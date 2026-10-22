@@ -321,7 +321,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           why={kd ? kd.line : top.fit ?? (!/^Projects /.test(top.fa.why) ? top.fa.why : null)}
           plan={kd?.fix ? <span>Fills your {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "bye-week" : "injured"} {top.fa.pos} slot. <b>{fmt(top.gain)} pts</b> this week.</span>
             : starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>} />;
-      })() : <EmptyTop label="Top pickup" text="Nobody on the wire fixes a weak spot this week." />)}
+      })() : null /* Nothing worth claiming: no card at all (Zach) */)}
       {kind !== "current" && (topRow ? (() => {
         const x = topRow, r = x.r!, starts = x.gain > 0.05, past = topKind === "past", week = topWeek;
         return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ? (past ? x.c.opp : oppAt(r.fa.nfl, x.c.opp, week)) : ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} onSnooze={() => snooze(x)}
@@ -334,7 +334,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
         <TopCard skel rec={nowTop} irMove={irMove?.name} onToast={onToast} starts={false} onSnooze={() => {}}
           eyebrow={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} stat={{ dt: `Week ${week}`, dd: "0.0" }}
           why={nowTop.fit ?? nowTop.fa.why} plan={<span>Starts for you in week {week}. <b>+0.0 pts</b>.</span>} />
-      ) : <EmptyTop label={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} text={loading ? `Loading week ${week}` : sel.err ?? (kind === "past" ? "Nobody on the wire to claim for that week." : `Nobody on the wire fixes a weak spot in week ${week}.`)} />)}
+      ) : !loading && sel.err ? <EmptyTop label={kind === "past" ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} text={sel.err} /> : null)}
       </aside>
 
       <section className="card wv-card" aria-label="Waiver targets">

@@ -1,0 +1,10 @@
+/* Loading screen (Zach: the chip row under "Valuing players" read oddly). Chips were inline text with negative
+   margins, so a wrapped row started 8px in and rode up into the label above. Now the label and each chip are flex
+   items: the chips travel as one group, after the label when they fit, otherwise on a row of their own that starts flush with the
+   label, 6px below it. A step with chips sets its text on the chip's height so the dot or loader stays centered on
+   the first line. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0; line-height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-chip { margin: 0; flex: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step:has(.thk-chip) .thk-label { line-height: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .boot3-trace .thk-step.active:has(.thk-chip) .thk-label { line-height: 23px; }
