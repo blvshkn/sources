@@ -131,9 +131,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav {
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav::before {
   content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%);
-  background: color-mix(in srgb, var(--bg, #0D0E0D) 78%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--line, #2A2D2B) 70%, transparent);
+  /* The app's bar surface: the same as its top and bottom navs */
+  background: rgba(15, 17, 16, 0.9);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
   opacity: 0; transition: opacity calc(320ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
   pointer-events: none;
 }
@@ -236,3 +237,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 :is(.ld
   html:root:not(#_):not(#_):not(#_):not(#_) .hp-front { --pw: 260px; }
   html:root:not(#_):not(#_):not(#_):not(#_) .hp-back { --pw: 208px; }
 }
+
+/* The landing phones' status bar strip takes the app's top bar color (Zach, Oct 22), so the bar reads as one piece
+   from the clock down through the logo */
+html:root:not(#_):not(#_):not(#_) .hp-scr .ph-status { background: #0F1110; }

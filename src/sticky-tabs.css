@@ -1,6 +1,6 @@
 /* Page tabs stick on scroll (Zach, Oct 22), on every page (ui.tsx PageTabs marks them .pt-sticky and measures).
    Phones: just under the sticky top bar. Tablet and desktop, where there's no top bar: 8px from the top.
-   Once stuck, a band in the top bar's own scrolled color (#0D0E0D at 90% with a light blur) runs behind the chips to
+   Once stuck, a band in the bottom nav's surface, which the scrolled top bar shares (#0F1110 at 90%, 24px blur), runs behind the chips to
    the page column's edges, so rows don't show through between them. On phones the top bar drops its shadow while the
    tabs are stuck, so bar and tabs read as one header. Sheets keep their own tabs as they were. */
 html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky {
@@ -9,7 +9,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky {
 html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::before {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
   top: -8px; bottom: -8px; left: calc(-1 * var(--pt-l, 0px)); right: calc(-1 * var(--pt-r, 0px));
-  background: rgba(13, 14, 13, 0.9); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  /* The bottom nav's surface (nav.css .tabbar.ix), the same one the scrolled top bar takes (top-nav-match.css) */
+  background: rgba(15, 17, 16, 0.9); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
   box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
   opacity: 0; transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out);
 }

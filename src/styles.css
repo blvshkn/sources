@@ -3738,8 +3738,9 @@ html:root:not(#_) { --surface: rgba(30, 33, 31, 0.78); }
 /* Frosted glass: top bar, deal tray, sheets (fixed layers only, so blur stays cheap). The bottom nav's glass is defined
    once, in nav.css (.tabbar.ix), and src/top-nav-match.css gives the scrolled top bar the same surface. */
 html:root:not(#_) .topbar {
-  background: rgba(16, 18, 17, 0.62) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(160%) !important; backdrop-filter: blur(22px) saturate(160%) !important;
+  /* One surface for every bar (Zach, Oct 22): the bottom nav's #0F1110 at 90% with a 24px blur */
+  background: rgba(15, 17, 16, 0.9) !important;
+  -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
 }
 html:root:not(#_) .deal-tray { background: rgba(24, 27, 25, 0.72) !important; -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); }
 /* Sheets and their scrim are solid: a full-screen blur under a sliding sheet cost frames on phones, and the sheet was
