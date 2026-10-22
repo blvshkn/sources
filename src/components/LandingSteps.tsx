@@ -3,6 +3,7 @@
 // trace step ("Loaded 10 teams from Sleeper"), and a real trade idea from the sample league lands with its points.
 // A rail joins the number chips and fills as you scroll; each chip lights when the fill reaches it. Each demo plays
 // once when it scrolls into view, after the one before it. Reduced motion shows every end state at once.
+import { SplitHead } from "./SplitHead";
 import { setInert } from "../inert";
 import { useEffect, useRef, useState } from "react";
 import { LEAGUE, LEAGUE_NAME, TEAMS, playerById, teamById } from "../data";
@@ -176,7 +177,7 @@ export function LandingSteps({ trade }: { trade?: Trade }) {
   ];
   return (
     <section className="ld-section lds" aria-labelledby="ld-steps">
-      <h2 id="ld-steps" className="ld-h2 ld2-reveal">Up and running in a minute.</h2>
+      <SplitHead id="ld-steps" a="Up and running" b="in a minute." />
       <div className="lds-wrap">
         <span className="lds-rail" ref={rail} aria-hidden="true"><i /></span>
         <ol className="lds-ol" ref={ol}>

@@ -32,6 +32,7 @@ import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
+import { SplitHead, useSplitHeads } from "./SplitHead";
 import { heroDepth } from "../heroDepth";
 import { clearHandoff, setHandoff } from "../demoHandoff";
 import { sampleWeek, matchNow } from "../live";
@@ -212,6 +213,8 @@ export function Landing({ onLive, onDemo }: {
 
   // Fade sections up as they enter the viewport, and light the tagline one word at a time
   const root = useRef<HTMLDivElement>(null);
+  // Section headings converge as they scroll in (SplitHead.tsx, after getdropset.app)
+  useSplitHeads(root);
   useEffect(() => {
     const el = root.current; if (!el) return;
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -12% 0px" });
@@ -333,7 +336,7 @@ export function Landing({ onLive, onDemo }: {
       <LandingSteps trade={demo.trade} />
 
       <section className="ld-section" aria-labelledby="ld-how">
-        <h2 id="ld-how" className="ld-h2 ld2-reveal">Built on your league, not a value chart.</h2>
+        <SplitHead id="ld-how" a="Built on your league," b="not a value chart." />
         <div className="ld-bento">
           <article className="card ld-cell ld2-reveal tall">
             <h3>Know who needs what</h3>
@@ -437,7 +440,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld-section ld2-new" aria-labelledby="ld-new">
-        <h2 id="ld-new" className="ld-h2 ld2-reveal">Ask it. Set it. Take it anywhere.</h2>
+        <SplitHead id="ld-new" a="Ask it. Set it." b="Take it anywhere." />
         <div className="ld2-new-grid">
           <article className="card ld-cell ld2-reveal ld2-ask-cell" ref={askCell}>
             <h3>Ask anything about your league</h3>
@@ -479,7 +482,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld-trust ld2-trust" aria-labelledby="ld-private">
-        <h2 id="ld-private" className="ld-h2 ld2-reveal">Private by default.</h2>
+        <SplitHead id="ld-private" a="Private" b="by default." />
         <ul className="ld-trust-list">
           <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
           <li className="ld2-reveal"><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
@@ -491,7 +494,7 @@ export function Landing({ onLive, onDemo }: {
         {/* Heading and the Ask card stick together on tablet and desktop. On phones this wrapper drops out of the box
             tree, so the card can sit after the questions. */}
         <div className="ld2-faq-side">
-          <h2 id="ld-faq" className="ld-h2 ld2-reveal">Questions, answered.</h2>
+          <SplitHead id="ld-faq" a="Questions," b="answered." />
           {/* Opens Ask as a sheet. Asking leads to connect or the sample league, with the question carried in (LandingAsk) */}
           <div className="ld2-faq-askwrap ld2-reveal">
             <button type="button" className="ld2-faq-ask" aria-haspopup="dialog" onClick={() => setAskOpen(true)}

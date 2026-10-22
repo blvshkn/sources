@@ -218,3 +218,27 @@ html:root:not(#_):not(#_) .ld2-yband-item {
 html:root:not(#_):not(#_) .ld2-yband-item b { font-weight: 600; margin-right: 0.22em; letter-spacing: -0.04em; }
 /* A pixel-square dot between phrases, in the 16-bit spirit of the icons */
 html:root:not(#_):not(#_) .ld2-yband-dot { display: inline-block; width: 0.16em; height: 0.16em; margin: 0 0.55em; background: currentColor; border-radius: 0.03em; }
+
+/* Section headings in two lines (SplitHead.tsx, Zach Oct 22, after getdropset.app). Clash Semibold at display size;
+   the second line indented and muted. --p (0 to 1, from scroll) slides the lines together from opposite sides and
+   brings them up from dim to full. Ease-out on --p so they settle rather than stop. */
+html:root:not(#_):not(#_):not(#_) .ld-h2.ld2-split {
+  --q: calc(1 - var(--p, 1));
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0; max-width: none; text-wrap: balance;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
+  font-size: clamp(2.6rem, 7vw, 6.5rem); line-height: 0.98; letter-spacing: -0.04em;
+}
+html:root:not(#_):not(#_) .ld2-split > span { display: block; will-change: transform; }
+html:root:not(#_):not(#_) .ld2-split-a {
+  color: color-mix(in srgb, var(--ink) calc(30% + 70% * var(--p, 1)), transparent);
+  transform: translate3d(calc(var(--q) * var(--q) * 22vw), 0, 0);
+}
+html:root:not(#_):not(#_) .ld2-split-b {
+  margin-left: 0.55em; color: color-mix(in srgb, var(--muted) calc(30% + 70% * var(--p, 1)), transparent);
+  transform: translate3d(calc(var(--q) * var(--q) * -22vw), 0, 0);
+}
+/* The FAQ heading sits in a narrow side column: same treatment, smaller */
+html:root:not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.4rem, 4.6vw, 4.25rem); }
+@media (max-width: 600px) {
+  html:root:not(#_):not(#_) .ld2-split-b { margin-left: 0.35em; }
+}
