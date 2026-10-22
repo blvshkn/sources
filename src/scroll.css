@@ -75,10 +75,10 @@ html:root:not(#_):not(#_) .sa-track:is([data-hot], [data-drag]) .sa-thumb { scal
 html:root:not(#_):not(#_) .table-wrap::-webkit-scrollbar-track:horizontal { margin: 0 12px; }
 
 /* ---------- Side-scrolling rows: no bar, an edge fade only where there's more ---------- */
-html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
   scrollbar-width: none; overscroll-behavior-x: contain;
 }
-html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg)::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 @property --sb-fl { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @property --sb-fr { syntax: "<length>"; inherits: false; initial-value: 0px; }
@@ -90,7 +90,7 @@ html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2
   100% { --sb-fl: 28px; --sb-fr: 0px; }
 }
 @supports (animation-timeline: scroll()) {
-  html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos.wv2-pos-7, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
+  html:root:not(#_):not(#_) :is(.chips, .dt-chips, .wv-pos, .sch-row, .wv2-pos, .partner-scroll, .mt-to, .mt-ptabs, :is(.page-head, .page-tabs) .seg) {
     -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
     mask-image: linear-gradient(to right, transparent, #000 var(--sb-fl), #000 calc(100% - var(--sb-fr)), transparent);
     animation: sb-edge linear both;

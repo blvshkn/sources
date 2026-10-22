@@ -21,3 +21,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button[aria-pres
 @media (max-width: 520px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos { margin: 4px 0 14px !important; padding: 2px var(--pad-card-x, 16px) !important; scroll-padding-inline: var(--pad-card-x, 16px); }
 }
+/* Eight chips with Flex: a little less side padding on wider screens so the whole row fits without scrolling */
+@media (min-width: 521px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button { padding: 0 14px !important; }
+}

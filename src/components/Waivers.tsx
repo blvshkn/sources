@@ -65,8 +65,12 @@ function searchEntry(fa: WaiverFA): Entry {
   const { rec, later } = recFor(YOU, fa);
   return { fa, value: rec?.value ?? searchValue(fa), avail: availOf(fa), rec, later, only: true };
 }
-type Tab = "ALL" | WaiverPos;
-const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"];
+type Tab = "ALL" | "FLEX" | WaiverPos;
+const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "FLEX", "K", "DEF"];
+/** Flex (Zach, Oct 22): everyone who can fill a flex spot, running backs, receivers and tight ends together */
+const FLEX_POS = ["RB", "WR", "TE"];
+const inTab = (t: Tab, p: string) => t === "ALL" || (t === "FLEX" ? FLEX_POS.includes(p) : p === t);
+const tabName = (t: Tab) => (t === "ALL" ? "All" : t === "FLEX" ? "Flex" : t);
 /** The game line for any free agent: skill players carry it in PLAYERS, kickers and defenses on the entry itself. */
 const gameOf = (fa: WaiverFA) => kickLine(isSpecialFA(fa) ? fa : PLAYERS[fa.id] ?? {});
 /** A list row's game: the opponent, then "· Sun 1 PM" (or the day) as a separate piece that never splits. */
@@ -255,7 +259,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
-    const list = rows.filter((e) => (pos === "ALL" || e.fa.pos === pos) && (!onlyWatch || watched(e.fa.id)) && (!term || !!matchPlayer(term, e.fa.name, { pos: e.fa.pos, team: e.fa.nfl })));
+    const list = rows.filter((e) => inTab(pos, e.fa.pos) && (!onlyWatch || watched(e.fa.id)) && (!term || !!matchPlayer(term, e.fa.name, { pos: e.fa.pos, team: e.fa.nfl })));
     const num = (e: Row) => (typeof e.pts === "number" ? e.pts : -1);
     const sorted = sort === "trend" ? [...list].sort((a, b) => (b.fa.trend === "up" ? 1 : 0) - (a.fa.trend === "up" ? 1 : 0) || (b.fa.rostered ?? 0) - (a.fa.rostered ?? 0))
       : sort === "proj" ? [...list].sort((a, b) => num(b) - num(a))
@@ -480,12 +484,12 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
         </div>
         <div ref={posRef} className={`wv2-pos wv2-pos-${tabs.length}`} role="group" aria-label="Position">
           {tabs.map((p) => {
-            const n = all.filter((e) => p === "ALL" || e.fa.pos === p).length;
-            return <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}><span>{p === "ALL" ? "All" : p}</span><small>{n}</small></button>;
+            const n = all.filter((e) => inTab(p, e.fa.pos)).length;
+            return <button key={p} aria-pressed={pos === p} onClick={() => setPos(p)}><span>{tabName(p)}</span><small>{n}</small></button>;
           })}
         </div>
         <div ref={listRef} className={`wv3-list k-${kind}`} aria-busy={loading}>
-        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos}`} yet. Tap the star on a player to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos} available right now. Check back after waivers run.`}</p>}
+        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos === "FLEX" ? "flex" : pos}`} yet. Tap the star on a player to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos === "FLEX" ? "flex players" : pos} available right now. Check back after waivers run.`}</p>}
         {shown.map((e) => {
           const r = e.r;
           const isOpen = !!r && open === e.fa.id;
