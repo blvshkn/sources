@@ -3,7 +3,7 @@
    src/components/icons.tsx sets [data-play] for a beat, so these only apply under (hover: hover) and (pointer: fine).
    A tab tap never replays one: the active color change is the feedback. A new inbox item swings the bell on any
    device (action-motion.css). The pixel ones move in whole pixels a few frames at a time (steps), so nothing lands
-   between pixels; Overview keeps its smooth motion (Zach). Origins are in the icon's 16-unit box.
+   between pixels; Origins are in the icon's 16-unit box.
    Transform and opacity only, on parts inside the svg, so the icon box never changes size.
    Reduced motion: none of this applies. The active color change is the only feedback. */
 
@@ -25,21 +25,13 @@ html:root:not(#_) svg.ic-helmet .m3 { opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
 
-  /* Overview (Zach: keep today's): the tall panel opens out from its left edge, then the two cells slide in beside it, top first. */
-  html:root:not(#_) .ic-overview[data-play] .m1 { transform-origin: 1.5px 8px; animation: lp-open calc(420ms * var(--mo, 1)) both; }
-  html:root:not(#_) .ic-overview[data-play] :is(.m2, .m3) { animation: lp-cell calc(420ms * var(--mo, 1)) both calc(70ms * var(--mo, 1)); }
-  html:root:not(#_) .ic-overview[data-play] .m3 { animation-delay: calc(130ms * var(--mo, 1)); }
-  @keyframes lp-open {
-    0%   { transform: scaleX(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    30%  { transform: scaleX(0.72); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1); }
-    70%  { transform: scaleX(1.06); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
-    100% { transform: scaleX(1); }
-  }
-  @keyframes lp-cell {
-    0%   { transform: translateX(0); opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
-    30%  { transform: translateX(1.67px); opacity: 0.4; animation-timing-function: var(--ease-out); }
-    100% { transform: translateX(0); opacity: 1; }
-  }
+  /* Overview (Zach, Oct 22: the 16-bit version): the tall panel opens out from its left edge in a few frames, then the
+     two cells step a pixel or two out and back beside it, top first. */
+  html:root:not(#_) .ic-overview[data-play] .m1 { transform-origin: 1.5px 8px; animation: px-lp calc(600ms * var(--mo, 1)) steps(1, end) both; }
+  html:root:not(#_) .ic-overview[data-play] :is(.m2, .m3) { animation: px-cell calc(600ms * var(--mo, 1)) steps(1, end) both calc(80ms * var(--mo, 1)); }
+  html:root:not(#_) .ic-overview[data-play] .m3 { animation-delay: calc(160ms * var(--mo, 1)); }
+  @keyframes px-lp { 0% { transform: scaleX(1); } 15% { transform: scaleX(0.8); } 30% { transform: scaleX(0.66); } 50% { transform: scaleX(1.17); } 70%, 100% { transform: scaleX(1); } }
+  @keyframes px-cell { 0% { transform: translateX(0); } 15% { transform: translateX(1px); } 30% { transform: translateX(2px); } 55% { transform: translateX(1px); } 75%, 100% { transform: translateX(0); } }
 
   /* League: the four columns drop and rise back in turn, left to right, under a still roof. */
   html:root:not(#_) .ic-league[data-play] :is(.m1, .m2, .m3, .m4) { transform-origin: 8px 12.5px; animation: px-rise calc(600ms * var(--mo, 1)) steps(1, end) both; }
