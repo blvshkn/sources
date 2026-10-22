@@ -47,8 +47,8 @@ export const Phase = (_: { v: "MVP" | "v1" | "Later" }) => null;
 
 /**
  * Segmented control. One thumb slides under the picked option instead of each button lighting up on its own: it is
- * placed at the picked button, and on a change it plays from the old spot and width to the new one (a FLIP on
- * transform alone, 200ms on the house curve). Reduced motion: the thumb fades in at its new spot. Page tabs (PageTabs)
+ * placed at the picked button, and on a change it plays from the old spot and width to the new one, stretching across both on the way and springing in (a FLIP on
+ * transform alone). Reduced motion: the thumb fades in at its new spot. Page tabs (PageTabs)
  * are separate chips, not one track, so they keep their own highlight (thumb={false}).
  */
 export function Seg<T extends string>({ value, options, onChange, label, thumb = true }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void; label: string; thumb?: boolean }) {
@@ -72,7 +72,17 @@ export function Seg<T extends string>({ value, options, onChange, label, thumb =
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       el.getAnimations().forEach((a) => a.cancel());
       if (reduce) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: mo(160), easing: "ease-out" });
-      else el.animate([{ transform: `translateX(${prev.x}px) scaleX(${prev.w / now.w})` }, { transform: `translateX(${now.x}px)` }], { duration: mo(200), easing: EASE_OUT });
+      else {
+        // Rubber segment: on the way the thumb stretches to span a little more than both tabs' edges, then springs
+        // into the new one with a small overshoot (Motion Picks, approved)
+        const l = Math.min(prev.x, now.x), r = Math.max(prev.x + prev.w, now.x + now.w);
+        const mid = { x: l + (r - l) * 0.04, w: (r - l) * 0.92 };
+        el.animate([
+          { transform: `translateX(${prev.x}px) scaleX(${prev.w / now.w})` },
+          { transform: `translateX(${mid.x}px) scaleX(${mid.w / now.w})`, offset: 0.45 },
+          { transform: `translateX(${now.x}px)` },
+        ], { duration: mo(320), easing: "cubic-bezier(0.34, 1.3, 0.64, 1)" });
+      }
     }
     // A resize (fonts landing, the row reflowing) re-places it without motion
     const ro = new ResizeObserver(() => { last.current = place(); });
