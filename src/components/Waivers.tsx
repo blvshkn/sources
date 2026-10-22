@@ -452,11 +452,11 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                 : lockWhy ? <button className="wv-row wv-locked" aria-disabled="true" onClick={denyOn(lockWhy)}>{inner}</button>
                 : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
-                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="star" size={16} /></button>
+                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="star" size={16} /><span className="wv-act-t" aria-hidden="true">{isWatched ? "Watching" : "Watch"}</span></button>
               </Tooltip>
               {!shelved && <span className="ps-end">
                 <Tooltip content="Not right now. Skips him this week">
-                  <button className="ps-x" aria-label={`Not right now: skip ${e.fa.name} this week`} onClick={() => snooze(e)}><Icon name="x" size={16} /></button>
+                  <button className="ps-x" aria-label={`Not right now: skip ${e.fa.name} this week`} onClick={() => snooze(e)}><Icon name="x" size={16} /><span className="wv-act-t" aria-hidden="true">Not now</span></button>
                 </Tooltip>
               </span>}
               {isOpen && r && !shelved && (
