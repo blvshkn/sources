@@ -73,7 +73,6 @@ import "./row-spacing.css?app";
 import "./icon-buttons.css?app";
 import "./landing-phone.css?app";
 import "./watch-icon.css";
-import "./icon-air-vent.css";
 import "./lines.css?app";
 import "./optimal-lineup.css?app";
 import "./landing-refresh.css?app";

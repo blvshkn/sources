@@ -1,7 +1,8 @@
 // Vendored from the npm package "loader-buttons" v0.1.0 by Jaimin Kataria
 // (https://github.com/Appllama/25-unique-loaders, packages/loader-buttons).
 // License: Apache-2.0, per the package.json. See the NOTICE section in README.md.
-// Changed from the package: colors only (see the --lb-ink and --lb-paper lines in the style block).
+// Changed from the package: colors (the --lb-ink and --lb-paper lines in the style block) and, for Sources' pixel
+// icons (Oct 22), each dot's shape: a pixel circle (a 4 x 4 block with its corners cut) instead of a round dot.
 
 const DURATION = 2.9;
 const FLIP_DURATION = 0.31;
@@ -170,7 +171,8 @@ export default {
         content: "";
         position: absolute;
         inset: 0;
-        border-radius: inherit;
+        border-radius: 0;
+        clip-path: polygon(25% 0, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%, 0 25%, 25% 25%);
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
       }

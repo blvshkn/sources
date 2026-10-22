@@ -12,7 +12,7 @@ html:root:not(#_):not(#_):not(#_) .wstar { display: inline-grid; place-items: ce
 html:root:not(#_):not(#_):not(#_) .wstar > svg { display: block; overflow: visible; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar[data-on] > svg { color: var(--lime); stroke: var(--lime); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar[data-on] > svg path { fill: var(--lime); stroke: var(--lime); }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar:not([data-on]) > svg path { fill: transparent; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar:not([data-on]) > svg path.st-f { fill: transparent; }
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_):not(#_):not(#_) button[data-slam] .wstar { animation: act-slam calc(297ms * var(--mo)) both; }
   html:root:not(#_):not(#_):not(#_):not(#_) button[data-slam] { animation: act-impact calc(137ms * var(--mo)) var(--ease-out) calc(131ms * var(--mo)); }
@@ -62,8 +62,8 @@ html:root:not(#_):not(#_) .toast.swipe-toast.is-drag { transition: none !importa
    App sets data-ring for one beat when something new arrives this visit (never on mount, never on open). The dome
    swings from its crown and damps out; the clapper lags. The dot scales in on a spring. */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 2px; animation: act-ring calc(514ms * var(--mo)) var(--ease-out) both; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17px; animation: act-clap calc(514ms * var(--mo)) var(--ease-out) calc(23ms * var(--mo)) both; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m1 { transform-box: view-box; transform-origin: 8px 1px; animation: act-ring calc(514ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m2 { transform-box: view-box; transform-origin: 8px 14px; animation: act-clap calc(514ms * var(--mo)) var(--ease-out) calc(23ms * var(--mo)) both; }
   html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge.is-new { animation: act-dot-in calc(240ms * var(--mo)) var(--ease-spring) calc(114ms * var(--mo)) both; }
 }
 @keyframes act-ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }

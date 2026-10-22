@@ -6,11 +6,13 @@ html:root:not(#_):not(#_) svg.askic { flex: none; overflow: visible; }
 /* The pair moves as one: the back bubble's ends sit on the front bubble's outline, and any motion of one without the
    other opens a gap at those joins. Scaling the pair from the front bubble's tail (bottom left) keeps the old beat:
    the front swells from its tail and the back bubble, farther from that point, travels out down and right. */
-html:root:not(#_):not(#_) svg.askic .askic-pair { transform-box: fill-box; transform-origin: 0% 66%; }
+/* Pixel bubbles (Zach, Oct 22): left to right, the front bubble (m1) steps in and fades up, then the back one (m2)
+   right after. */
+html:root:not(#_):not(#_) svg.askic :is(.m1, .m2) { transform-box: view-box; }
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) svg.askic[data-play] .askic-pair { animation: askic-swell calc(340ms * var(--mo, 1)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .m1 { animation: askic-in calc(300ms * var(--mo, 1)) steps(3, end) both; }
+  html:root:not(#_):not(#_) svg.askic[data-play] .m2 { animation: askic-in calc(300ms * var(--mo, 1)) steps(3, end) both calc(180ms * var(--mo, 1)); }
 }
-@keyframes askic-swell {
-  0%, 100% { transform: scale(1); }
+@keyframes askic-in { from { opacity: 0; transform: translateX(-2px); } to { opacity: 1; transform: translateX(0); } }
   40% { transform: scale(1.08); }
 }

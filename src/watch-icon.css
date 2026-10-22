@@ -1,13 +1,13 @@
 /* Waivers "Watching": the star on the filter button and on every row's toggle.
    Watched reads the way the bookmark did: the row toggle turns lime and both stars go solid (the fill rule in
-   waivers-weeks.css), the filter button's in ink with its lime ring and count. The star is Lucide's, one closed
-   outline, so the solid star has no notch.
+   waivers-weeks.css), the filter button's in ink with its lime ring and count. The star is the pixel star: an outline (.st-o)
+   and its filled shape (.st-f), which only shows when watched.
    Hover and press move at calc(160ms * var(--mo, 1)) on the house curve. Loads before frame.css. */
 
-html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-star path {
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-star path.st-f {
   transition: fill calc(160ms * var(--mo, 1)) var(--ease-out);
 }
-html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching):not([aria-pressed="true"]) svg.ic-star path { fill: transparent; }
+html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching):not([aria-pressed="true"]) svg.ic-star path.st-f { fill: transparent; }
 
 html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) {
   transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out), color calc(160ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out);
@@ -15,3 +15,6 @@ html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) {
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching), html:root:not(#_):not(#_) :is(.wv3-watch, .wv3-watching) svg.ic-star path { transition: none; }
 }
+
+/* Anywhere else the pixel star is the outline only, unless a watched rule fills it */
+:where(svg.ic-star) path.st-f { fill: transparent; }

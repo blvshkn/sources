@@ -6,6 +6,7 @@
 // It is DOM and CSS 3D, not WebGL, so any number of them can run without using a GL context.
 import { useEffect, useRef } from "react";
 import { mountLoader, type LoaderInstance } from "../vendor/loader-buttons/loader.js";
+import { PX_AI } from "./pixelIcons";
 
 export function WorkingLoader({ size = 16, run = true, label, className = "" }: {
   size?: number;
@@ -33,11 +34,6 @@ export function WorkingLoader({ size = 16, run = true, label, className = "" }: 
 /** The loader standing still: its 5 by 5 dots at rest, the first frame of Braille Flipwave. Marks AI work inline
  *  (AI tags, Sources tips) without moving, so a page full of them stays calm. Takes the text color around it. */
 export function AiMark({ size = 14, className = "" }: { size?: number; className?: string }) {
-  const dots = [];
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) dots.push(<circle key={r * 5 + c} cx={2.3 + c * 4.6} cy={2.3 + r * 4.6} r={1.5} />);
-  return (
-    <svg className={`ai-mark ${className}`.trim()} width={size} height={size} viewBox="0 0 23 23" fill="currentColor" aria-hidden="true" focusable="false">
-      {dots}
-    </svg>
-  );
+  // Pixel circles (Zach, Oct 22): the same 5 by 5 grid, each dot a 4 by 4 pixel circle at half scale
+  return <svg className={`ai-mark ${className}`.trim()} width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX_AI }} />;
 }

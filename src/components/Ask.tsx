@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { PX } from "./pixelIcons";
 import type { Steps } from "../steps";
 import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
@@ -12,7 +13,6 @@ import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
 import { offNote } from "../aiClient";
 import { useLive, type Live } from "../live";
-import { useIconStroke } from "./iconStroke";
 import { AskShowBlock, DealNumbers, type OpenPlayer } from "./AskShow";
 // What an answer shows lives in its own module so the landing can show it; importers still find it here
 export { AskShowBlock, DealNumbers };
@@ -31,14 +31,10 @@ function topicOf(q: string): Topic {
   return "Trades";
 }
 
-/** The arrow on the send button: Lucide arrow-up (ISC), 24 box, the line set by drawn size (iconStroke.ts), round ends and joins. */
+/** The arrow on the send button: the pixel send arrow (Zach, Oct 22), the same one the icon set uses. */
 function ArrowUp({ size = 18 }: { size?: number }) {
-  const stroke = useIconStroke(size);
-  return (
-    <svg ref={stroke.ref} style={stroke.style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m5 12 7-7 7 7" /><path d="M12 19V5" />
-    </svg>
-  );
+  const [box, html] = PX.send;
+  return <svg className="px-ic" width={size} height={size} viewBox={box} fill="currentColor" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /** The way out of Ask for each answer, by the tab it opens. Only this link (or a "take me there" question) leaves. */
