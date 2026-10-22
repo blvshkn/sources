@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { LEAGUE, Player, WEEK, YOU, onBye, playerById } from "../data";
 import { kickLine, oppAt, useKickoffs } from "../kickoff";
 import { eff, round1, scored } from "../engine";
@@ -6,7 +6,11 @@ import { seasonFor } from "../schedule";
 import { WeekView, loadWeek, peekWeek } from "../weeks";
 import { Avatar } from "./Avatar";
 import { Icon } from "./ui";
-import { Select } from "./Select";
+import { Marked } from "./Marked";
+import { useDismiss } from "./useDismiss";
+import { useKeyboardInset } from "./useKeyboardInset";
+import { rankPlayers } from "../search";
+import { deny } from "../deny";
 import { WeekStepper } from "./WeekStepper";
 import { Tooltip } from "./Tooltip";
 
@@ -107,16 +111,92 @@ function verdictFor(A: Side, B: Side, w: number): { text: string; flip: boolean;
   return { flip: false, lead: lead.p.id, text: `Start ${lead.p.name}. He projects ${gap.toFixed(1)} more points than ${other.p.name} for ${wk}${but}.` };
 }
 
-/** One compare row: two bars growing out from the middle, the bigger one lit. */
+/** One compare row: label on top, two thin bars growing out from the middle, values at the outer ends. The bigger
+ *  side is lit green and its value is set bolder. */
 function Bars({ label, a, b, at, bt, wk, dim }: { label: string; a: number; b: number; at: string; bt: string; wk?: boolean; dim?: boolean }) {
   const max = Math.max(a, b, 0.0001);
+  const aw = a > b ? " win" : "", bw = b > a ? " win" : "";
   return (
     <div className={`sx-row${wk ? " sx-wk" : ""}${dim ? " sx-loading" : ""}`}>
       <span className="sx-label">{label}</span>
       <div className="sx-bars">
-        <span className={`sx-bar a${a > b ? " win" : ""}`}><i style={{ "--v": a / max } as CSSProperties} /><b>{at}</b></span>
-        <span className={`sx-bar b${b > a ? " win" : ""}`}><i style={{ "--v": b / max } as CSSProperties} /><b>{bt}</b></span>
+        <b className={`sx-val a${aw}`}>{at}</b>
+        <span className={`sx-bar a${aw}`}><i style={{ "--v": a / max } as CSSProperties} /></span>
+        <span className={`sx-bar b${bw}`}><i style={{ "--v": b / max } as CSSProperties} /></span>
+        <b className={`sx-val b${bw}`}>{bt}</b>
       </div>
+    </div>
+  );
+}
+
+/** The search field on each pick: focus it and the roster drops down, type to narrow it, pick in one step.
+ *  Same matcher as every other player search (search.ts). Arrows move, Enter picks, Escape or a tap outside closes. */
+function PlayerFind({ pool, value, other, irIds, onPick, label }: { pool: Player[]; value: string; other: string; irIds: Set<string>; onPick: (id: string) => void; label: string }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(-1);
+  const field = useRef<HTMLLabelElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const uid = useId().replace(/:/g, "");
+  const hits = rankPlayers(q, pool, (p) => ({ name: p.name, pos: p.pos, team: p.nfl }));
+  const ok = (i: number) => i >= 0 && i < hits.length && hits[i].item.id !== other;
+  const firstOk = () => { for (let i = 0; i < hits.length; i++) if (ok(i) && hits[i].item.id !== value) return i; return hits.findIndex((_, i) => ok(i)); };
+  const close = () => { setOpen(false); setQ(""); setHi(-1); };
+  const listMax = useKeyboardInset(field, list, open);
+  // A tap outside the field and the list closes it, and so does Escape. Focus stays in the field.
+  useDismiss(list, close, { open, keep: (t) => !!field.current?.contains(t), restoreFocus: false });
+  // A new query puts the best match up top and active
+  useEffect(() => { if (open) { setHi(firstOk()); if (list.current) list.current.scrollTop = 0; } }, [q, open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const el = hi >= 0 ? document.getElementById(`sx-${uid}-${hi}`) : null;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [hi, uid]);
+  const pick = (i: number) => {
+    const p = hits[i]?.item;
+    if (!p) return;
+    if (p.id === other) { deny(document.getElementById(`sx-${uid}-${i}`), `${p.name} is already on the other side. Pick someone else to compare.`); return; }
+    if (p.id !== value) onPick(p.id);
+    close();
+    input.current?.blur();
+  };
+  const step = (dir: 1 | -1) => setHi((h) => { for (let i = h + dir; i >= 0 && i < hits.length; i += dir) if (ok(i)) return i; return h; });
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); if (!open) setOpen(true); else step(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); if (open) step(-1); }
+    else if (e.key === "Enter") { e.preventDefault(); if (!open) setOpen(true); else pick(hi); }
+    else if (e.key === "Tab") close();
+  };
+  const listId = `sx-${uid}-list`;
+  return (
+    <div className="sx-find">
+      <label className="sx-find-field" ref={field}>
+        <Icon name="search" size={16} />
+        <span className="sr-only">{label}</span>
+        <input ref={input} value={q} placeholder="Search your roster" autoComplete="off" spellCheck={false} enterKeyHint="go"
+          onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} onClick={() => setOpen(true)} onKeyDown={onKey}
+          role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list"
+          aria-activedescendant={open && hi >= 0 ? `sx-${uid}-${hi}` : undefined} />
+        {q && <button type="button" className="sx-find-x" aria-label="Clear search" onMouseDown={(e) => e.preventDefault()} onClick={() => { setQ(""); input.current?.focus(); }}><Icon name="x" size={14} /></button>}
+      </label>
+      {open && (
+        <ul className="sx-ta-list" id={listId} role="listbox" ref={list} aria-label={label} style={listMax ? { maxHeight: listMax } : undefined}>
+          {hits.map(({ item: o, match }, i) => {
+            const taken = o.id === other, on = o.id === value;
+            return (
+              <li key={o.id} id={`sx-${uid}-${i}`} role="option" aria-selected={on} aria-disabled={taken || undefined}>
+                <button type="button" tabIndex={-1} className={`${i === hi ? "on" : ""}${taken ? " off" : ""}`}
+                  onMouseDown={(e) => e.preventDefault()} onPointerMove={() => { if (!taken && hi !== i) setHi(i); }} onClick={() => pick(i)}>
+                  <b className={`lu-pos p-${o.pos}`}>{o.pos}</b>
+                  <span className="sx-ta-n"><span><Marked name={o.name} marks={match.marks} /></span><small>{o.nfl}{irIds.has(o.id) ? ", IR slot" : ""}{taken ? ", other side" : ""}</small></span>
+                  {on ? <Icon name="check" size={16} /> : <span className="sx-ta-p">{eff(o, true).toFixed(1)}</span>}
+                </button>
+              </li>
+            );
+          })}
+          {!hits.length && <li className="sx-ta-none" role="presentation">{`Nothing on your roster matches "${q.trim()}"`}</li>}
+        </ul>
+      )}
     </div>
   );
 }
@@ -150,16 +230,18 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
 
   const Pick = ({ s, set, side }: { s: Side; set: (v: string) => void; side: "a" | "b" }) => {
     const p = s.p;
+    const lead = p.id === leadId;
     return (
-      <Select className={`sx-pick ${side}${p.id === leadId ? " lead" : ""}`} value={p.id} onChange={set} aria-label={`${side === "a" ? "First player" : "Second player"}: ${p.name}`}
-        searchPlaceholder="Search your players"
-        options={pool.map((o) => ({ value: o.id, label: o.name, hint: `${o.pos}${onIr.has(o.id) ? ", IR slot" : ""}`, match: { pos: o.pos, team: o.nfl }, disabled: o.id === (side === "a" ? bId : aId), why: `${o.name} is already in the other spot. Pick someone else to compare.` }))}>
-        <Avatar p={p} size={44} cut />
-        <b className="sx-name">{p.name}</b>
-        <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` ${s.game}` : ""}</small>
-        <span className="sx-status">{loading ? null : s.avail ? <Tooltip content={s.avail.kind === "bye" ? <>On bye in week <span className="num">{week}</span></> : p.note || (s.avail.kind === "ir" ? "On injured reserve" : s.avail.pill)}><span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`}>{s.avail.pill}</span></Tooltip> : null}</span>
-        <span className="sx-change">Change<Icon name="chev" size={12} /></span>
-      </Select>
+      <div className={`sx-pick ${side}${lead ? " lead" : ""}`}>
+        <Avatar p={p} size={56} cut />
+        <div className="sx-who">
+          <b className="sx-name">{p.name}</b>
+          <small className="sx-game">{p.pos} · {p.nfl}{s.game ? ` ${s.game}` : ""}</small>
+          <span className="sx-status">{lead && <span className="sx-lead"><Icon name="check" size={12} />{week < WEEK ? "Scored more" : "Start"}</span>}{loading ? null : s.avail ? <Tooltip content={s.avail.kind === "bye" ? <>On bye in week <span className="num">{week}</span></> : p.note || (s.avail.kind === "ir" ? "On injured reserve" : s.avail.pill)}><span className={`status status-${s.avail.kind === "bye" ? "BYE" : s.avail.kind === "q" ? "Q" : "O"}`}>{s.avail.pill}</span></Tooltip> : null}</span>
+        </div>
+        <PlayerFind pool={pool} value={p.id} other={side === "a" ? bId : aId} irIds={onIr} onPick={set}
+          label={`${side === "a" ? "First player" : "Second player"}, now ${p.name}. Search your roster to change`} />
+      </div>
     );
   };
 

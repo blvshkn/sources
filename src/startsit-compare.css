@@ -1,0 +1,171 @@
+/* Start / Sit compare, Oct 22 pass (Zach): more air, horizontal picks on wide cards, a search field on each pick
+   instead of a Change menu, and thin rounded bars with the values set beside them.
+   The card is its own container ("sx"), so the layout follows the card's width, wherever the page puts it. */
+
+html:root:not(#_):not(#_):not(#_) .card.sx { container: sx / inline-size; gap: 28px; }
+html:root:not(#_):not(#_):not(#_) .sx-head p { margin: 0; }
+
+/* ---------- The two picks ---------- */
+html:root:not(#_):not(#_):not(#_) .sx-picks { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 12px; }
+html:root:not(#_):not(#_):not(#_) .sx-pick {
+  position: relative; min-width: 0; cursor: default; outline: none;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr; justify-items: center; align-content: start;
+  row-gap: 16px; padding: 24px 16px 16px; text-align: center;
+  border-radius: 16px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 4%, transparent), transparent 70%), var(--surface-2);
+  transition: border-color calc(200ms * var(--mo, 1)) var(--ease-out), background-color calc(200ms * var(--mo, 1)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .sx-pick.lead {
+  border-color: rgba(var(--good-rgb), 0.4);
+  background: linear-gradient(180deg, rgba(var(--good-rgb), 0.12), transparent 75%), var(--surface-2);
+}
+html:root:not(#_):not(#_):not(#_) .sx-pick:focus-within { outline: none; }
+html:root:not(#_):not(#_):not(#_) .sx-pick .av { grid-area: auto; }
+html:root:not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 136px !important; height: 99px !important; margin-bottom: -8px; }
+html:root:not(#_):not(#_):not(#_) .sx-who { display: grid; gap: 6px; justify-items: center; min-width: 0; max-width: 100%; }
+html:root:not(#_):not(#_):not(#_) .sx-name { font-size: 1.0625rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; }
+html:root:not(#_):not(#_):not(#_) .sx-pick small.sx-game { font-size: 0.8125rem; line-height: 1.35; color: var(--muted); display: block; }
+html:root:not(#_):not(#_):not(#_) .sx-status { min-height: 22px; }
+html:root:not(#_):not(#_):not(#_) .sx-find { align-self: end; }
+
+/* Who the verdict backs: a small green tag beside the status pill */
+html:root:not(#_):not(#_):not(#_) .sx-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+html:root:not(#_):not(#_):not(#_) .sx-lead {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 22px; padding: 0 8px; border-radius: 999px; background: var(--good-soft); color: var(--good);
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+}
+
+/* VS: a small round chip between the picks */
+html:root:not(#_):not(#_):not(#_) .sx-vs {
+  align-self: center; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font: 600 0.6875rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.06em;
+}
+
+/* ---------- The search field on each pick ---------- */
+html:root:not(#_):not(#_):not(#_) .sx-find { position: relative; width: 100%; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .sx-find-field {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 6px 0 14px; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); cursor: text;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow calc(160ms * var(--mo, 1)) var(--ease-out), background-color calc(160ms * var(--mo, 1)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .sx-find-field > .ic, html:root:not(#_):not(#_):not(#_) .sx-find-field > svg { flex: none; }
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_) .sx-find-field:hover { background: color-mix(in srgb, var(--ink) 9%, transparent); }
+}
+html:root:not(#_):not(#_):not(#_) .sx-find-field:focus-within { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 40%, transparent); color: var(--ink); background: var(--surface); }
+html:root:not(#_):not(#_):not(#_) .sx-find-field input {
+  flex: 1; min-width: 0; height: 42px; border: 0; padding: 0; background: none; color: var(--ink);
+  font: 400 0.9375rem/1.2 var(--font-body); outline: none; text-overflow: ellipsis;
+}
+html:root:not(#_):not(#_):not(#_) .sx-find-field input::placeholder { color: var(--muted); opacity: 1; }
+html:root:not(#_):not(#_):not(#_) .sx-find-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+/* Phones: 16px text so iOS doesn't zoom into the field */
+@media (hover: none) and (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_) .sx-find-field input { font-size: 1rem; }
+}
+
+/* The results float over the card; they never push it */
+html:root:not(#_):not(#_):not(#_) .sx-ta-list {
+  position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none;
+  max-height: 320px; overflow-y: auto; overscroll-behavior: contain; text-align: left;
+  border-radius: 16px; background: var(--surface-2); box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line);
+  transform-origin: top center; animation: sx-ta-in calc(160ms * var(--mo, 1)) var(--ease-out);
+}
+@keyframes sx-ta-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .sx-ta-list { animation: none; } }
+html:root:not(#_):not(#_):not(#_) .sx-ta-list button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--ink); text-align: left; cursor: pointer;
+  transition: background-color calc(120ms * var(--mo, 1)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .sx-ta-list button.on { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+html:root:not(#_):not(#_):not(#_) .sx-ta-list button.off { cursor: not-allowed; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-list button.off :is(.sx-ta-n, .lu-pos, .sx-ta-p) { opacity: 0.45; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-list .lu-pos { flex: none; width: 28px; font-size: 0.75rem; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-n { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.9375rem; font-weight: 500; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-n > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-n small { flex: none; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-p { flex: none; font: 500 0.8125rem/1 "Geist Mono", ui-monospace, monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_):not(#_) .sx-ta-list button > svg, html:root:not(#_):not(#_):not(#_) .sx-ta-list button > .ic { flex: none; color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .sx-ta-none { padding: 12px; font-size: 0.875rem; color: var(--muted); }
+
+/* ---------- Wide cards: each pick lies on its side, headshot left, name and game right, search along the bottom ---------- */
+@container sx (min-width: 560px) {
+  html:root:not(#_):not(#_):not(#_) .sx-pick {
+    grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; justify-items: start; align-items: center;
+    column-gap: 16px; row-gap: 20px; padding: 24px 20px 20px; text-align: left;
+  }
+  html:root:not(#_):not(#_):not(#_) .sx-pick .av { justify-self: center; }
+  html:root:not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 112px !important; height: 81px !important; margin: 0 -4px -6px -8px; }
+  html:root:not(#_):not(#_):not(#_) .sx-who { justify-items: start; }
+  html:root:not(#_):not(#_):not(#_) .sx-status { justify-content: flex-start; }
+  html:root:not(#_):not(#_):not(#_) .sx-find { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_):not(#_) .sx-picks { gap: 16px; }
+}
+
+/* ---------- Phone-width cards: the picks sit one above the other, VS between ---------- */
+@container sx (max-width: 439px) {
+  html:root:not(#_):not(#_):not(#_) .sx-picks { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  html:root:not(#_):not(#_):not(#_) .sx-vs { justify-self: center; margin: -10px 0; position: relative; z-index: 1; }
+  html:root:not(#_):not(#_):not(#_) .sx-pick { padding: 24px 16px 16px; }
+  /* The upper pick's results sit above the lower pick and its VS chip */
+  html:root:not(#_):not(#_):not(#_) .sx-pick:focus-within { z-index: 2; }
+}
+
+/* ---------- Verdict ---------- */
+html:root:not(#_):not(#_):not(#_) .sx-verdict { font-size: 0.9375rem; line-height: 1.45; text-wrap: pretty; }
+
+/* ---------- Bars: thin rounded bars out from the middle, values at the outer ends ---------- */
+html:root:not(#_):not(#_):not(#_) .sx-rows { display: grid; gap: 22px; padding-top: 4px; }
+html:root:not(#_):not(#_):not(#_) .sx-row { display: grid; gap: 10px; }
+html:root:not(#_):not(#_):not(#_) .sx-label { font-size: 0.8125rem; line-height: 1.2; color: var(--muted); text-align: center; }
+html:root:not(#_):not(#_):not(#_) .sx-wk .sx-label { color: var(--ink); font-weight: 600; }
+html:root:not(#_):not(#_):not(#_) .sx-bars {
+  display: grid; grid-template-columns: 4.75rem minmax(0, 1fr) minmax(0, 1fr) 4.75rem; align-items: center; gap: 0;
+}
+html:root:not(#_):not(#_):not(#_) .sx-val {
+  font: 500 0.9375rem/1.2 "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color calc(200ms * var(--mo, 1)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .sx-val.a { text-align: right; padding-right: 12px; }
+html:root:not(#_):not(#_):not(#_) .sx-val.b { text-align: left; padding-left: 12px; }
+html:root:not(#_):not(#_):not(#_) .sx-val.win { color: var(--ink); font-weight: 700; }
+/* The winning side gets a small green dot beside its number */
+html:root:not(#_):not(#_):not(#_) .sx-val.a.win::before,
+html:root:not(#_):not(#_):not(#_) .sx-val.b.win::after {
+  content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--good); vertical-align: 0.15em;
+}
+html:root:not(#_):not(#_):not(#_) .sx-val.a.win::before { margin-right: 6px; }
+html:root:not(#_):not(#_):not(#_) .sx-val.b.win::after { margin-left: 6px; }
+
+html:root:not(#_):not(#_):not(#_) .sx-bar {
+  position: relative; display: block; height: 8px; border-radius: 999px; overflow: visible;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+html:root:not(#_):not(#_):not(#_) .sx-bar.a { margin-right: 2px; }
+html:root:not(#_):not(#_):not(#_) .sx-bar.b { margin-left: 2px; }
+/* Each fill spans its half and is clipped to its share (--v, 0 to 1), rounded at both ends. Yours is anchored at the
+   middle on its right edge, theirs on its left, so both grow outward (the grow-in scales from the same edge). */
+html:root:not(#_):not(#_):not(#_) .sx-bar i {
+  display: block; width: 100%; height: 100%; margin: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 26%, transparent); background-size: auto;
+}
+html:root:not(#_):not(#_):not(#_) .sx-bar.a i { transform-origin: 100% 50%; clip-path: inset(0 0 0 calc((1 - var(--v, 1)) * 100%) round 999px); }
+html:root:not(#_):not(#_):not(#_) .sx-bar.b i { transform-origin: 0 50%; clip-path: inset(0 calc((1 - var(--v, 1)) * 100%) 0 0 round 999px); }
+html:root:not(#_):not(#_):not(#_) .sx-bar.win i { background: var(--good); }
+/* The middle: a short axis line the two bars grow out from */
+html:root:not(#_):not(#_):not(#_) .sx-bar.a::after {
+  content: ""; position: absolute; right: -3px; top: -4px; width: 2px; height: 16px; border-radius: 1px; background: var(--line);
+}
+html:root:not(#_):not(#_):not(#_) .sx-row.sx-loading .sx-bar { border-radius: 999px; }
+
+@container sx (max-width: 439px) {
+  html:root:not(#_):not(#_):not(#_) .sx-bars { grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1fr) 4rem; }
+  html:root:not(#_):not(#_):not(#_) .sx-val { font-size: 0.875rem; }
+  html:root:not(#_):not(#_):not(#_) .sx-val.a { padding-right: 10px; }
+  html:root:not(#_):not(#_):not(#_) .sx-val.b { padding-left: 10px; }
+}

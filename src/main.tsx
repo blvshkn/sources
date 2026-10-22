@@ -136,6 +136,7 @@ import "./quick-moves.css";
 import "./matchup-sheet-air.css";
 import "./whatif-note.css";
 import "./skeleton-wave.css";
+import "./startsit-compare.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

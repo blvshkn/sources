@@ -9,8 +9,6 @@ html:root:not(#_):not(#_) .sel-trigger:not(.sel-custom) {
 }
 /* Custom trigger content (Start/Sit player cards): the call site styles the whole button */
 html:root:not(#_):not(#_) .sel-trigger.sel-custom { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-html:root:not(#_):not(#_) .sel-trigger.sel-custom.sx-pick { width: 100%; text-align: center; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
-html:root:not(#_):not(#_) .sel-trigger.sx-pick:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 html:root:not(#_):not(#_) .sel-trigger:disabled { opacity: 0.5; cursor: default; }
 html:root:not(#_):not(#_) .sel-trigger:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 html:root:not(#_):not(#_) .sel-trigger:active:not(:disabled) { transform: scale(0.98); transition-duration: var(--dur-press); }
