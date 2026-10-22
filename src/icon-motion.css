@@ -81,3 +81,30 @@ html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .sb2) [data-pl
   @keyframes px-charge { 0% { transform: translateX(0); } 10% { transform: translateX(-1px); } 22% { transform: translateX(-2px); } 32% { transform: translateX(1px); } 42% { transform: translateX(2px); } 56% { transform: translateX(-1px); } 70%, 100% { transform: translateX(0); } }
   @keyframes px-speed { 0%, 28% { opacity: 0; transform: translateX(0); } 32% { opacity: 1; transform: translateX(0); } 42% { opacity: 1; transform: translateX(-1px); } 52% { opacity: 0.5; transform: translateX(-2px); } 60%, 100% { opacity: 0; } }
 }
+
+/* Winner's cup (Trophy.tsx WinCup): a 16-bit cheer the moment the cup appears, so it plays on arrival and on a change
+   to final, never again on its own. It hops, rocks once each way and settles; two pixel sparkles pop off its rim. */
+html:root:not(#_):not(#_) .trophy.fo-won { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .trophy.fo-won svg { transform-origin: 50% 100%; animation: px-cheer calc(560ms * var(--mo, 1)) steps(1, end) calc(120ms * var(--mo, 1)) both; }
+  html:root:not(#_):not(#_) .trophy.fo-won::before, html:root:not(#_):not(#_) .trophy.fo-won::after {
+    content: ""; position: absolute; top: 0; width: 2px; height: 2px; border-radius: 0.5px; background: currentColor; opacity: 0; pointer-events: none;
+    animation: px-spark calc(480ms * var(--mo, 1)) steps(1, end) calc(220ms * var(--mo, 1)) both;
+  }
+  html:root:not(#_):not(#_) .trophy.fo-won::before { left: -2px; --sx: -3px; }
+  html:root:not(#_):not(#_) .trophy.fo-won::after { right: -2px; --sx: 3px; }
+}
+@keyframes px-cheer {
+  0% { transform: none; }
+  15% { transform: translateY(-12%); }
+  35% { transform: translateY(-12%) rotate(-10deg); }
+  55% { transform: translateY(-6%) rotate(10deg); }
+  75% { transform: rotate(-4deg); }
+  90%, 100% { transform: none; }
+}
+@keyframes px-spark {
+  0% { opacity: 1; transform: none; }
+  34% { opacity: 1; transform: translate(var(--sx), -3px); }
+  67% { opacity: 1; transform: translate(calc(var(--sx) * 2), -5px) scale(0.5); }
+  100% { opacity: 0; transform: translate(calc(var(--sx) * 2), -5px) scale(0.5); }
+}

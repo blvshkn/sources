@@ -49,6 +49,14 @@ const TAG_STACK: (string | { p: number } | { icon: "trade" | "send" | "group" })
   "AROUND", "WHAT", "THE", "OTHER", "MANAGER", { p: 2 }, "NEEDS.",
 ];
 
+/** The page-wide scatter: how far down the page (%), which side, how far in, and depth (0 near, 1 middle, 2 far) */
+const SCATTER: { top: number; side: "l" | "r"; x: string; d: 0 | 1 | 2 }[] = [
+  { top: 9, side: "r", x: "6%", d: 2 }, { top: 14, side: "l", x: "-34px", d: 0 }, { top: 21, side: "r", x: "3%", d: 1 },
+  { top: 28, side: "l", x: "9%", d: 2 }, { top: 35, side: "r", x: "-30px", d: 0 }, { top: 43, side: "l", x: "2%", d: 1 },
+  { top: 51, side: "r", x: "11%", d: 2 }, { top: 58, side: "l", x: "-36px", d: 0 }, { top: 66, side: "r", x: "2%", d: 1 },
+  { top: 74, side: "l", x: "7%", d: 2 }, { top: 82, side: "r", x: "-32px", d: 0 }, { top: 90, side: "l", x: "4%", d: 1 },
+];
+
 /** Each hero player's depth: 0 near (large, sharp, kept clear of the screens), 1 middle, 2 far (small, blurred) */
 const HEAD_DEPTH = [0, 2, 1, 0, 1, 2, 2];
 
@@ -219,6 +227,24 @@ export function Landing({ onLive, onDemo }: {
     return TEAMS.flatMap((t) => t.roster).map(playerById).filter((p): p is Player => !!p && !/^[A-Z]{2,3}$/.test(p.id))
       .sort((a, b) => b.proj - a.proj).filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, 7);
   }, []);
+  // Players for the page-wide scatter: the next best players after the hero's cast, at set spots and depths
+  const scatter = useMemo(() => {
+    const used = new Set(cast.map((p) => p.id));
+    const pool = TEAMS.flatMap((t) => t.roster).map(playerById).filter((p): p is Player => !!p && !/^[A-Z]{2,3}$/.test(p.id) && !used.has(p.id))
+      .sort((a, b) => b.proj - a.proj).filter((p, i, a) => a.findIndex((q) => q.id === p.id) === i);
+    return SCATTER.map((s, i) => ({ ...s, p: pool[i] })).filter((s) => s.p);
+  }, [cast]);
+  const scatterRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scatterRef.current;
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const paint = () => { raf = 0; el.style.setProperty("--sy", String(window.scrollY)); };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    window.addEventListener("scroll", kick, { passive: true });
+    paint();
+    return () => { window.removeEventListener("scroll", kick); cancelAnimationFrame(raf); };
+  }, []);
 
   // The same trade card and message the app's pitch sheet makes. It's below the fold, so it's drawn after the page has
   // loaded, once the reader is within a screen or so of it; its skeleton holds the card's exact size until then.
@@ -322,6 +348,15 @@ export function Landing({ onLive, onDemo }: {
       </nav>
 
       <main id="ld-main" tabIndex={-1}>
+      {/* Players scattered down the page (Zach, Oct 22): near ones large and sharp out in the margins, far ones small,
+          blurred and faint behind the sections. They drift at their own rate as the page scrolls. */}
+      <div className="sc-layer" ref={scatterRef} aria-hidden="true">
+        {scatter.map(({ p, top, side, x, d }, i) => (
+          <span key={p.id} className={`sc-p sc-d${d} sc-${side}`} style={{ top: `${top}%`, [side === "l" ? "left" : "right"]: x, ["--i" as string]: i }}>
+            <Avatar p={p} size={120} badge={false} />
+          </span>
+        ))}
+      </div>
       <header className="ld-hero ld2-hero" ref={hero}>
         <div className="ld2-copy">
           <span className="ld2-eyebrow ld2-in"><PlatformLogo size={14} />For Sleeper leagues</span>
