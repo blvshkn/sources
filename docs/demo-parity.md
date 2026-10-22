@@ -160,3 +160,5 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 - Waivers, tablet and desktop: when nobody beats your starters, the Top pickup card shows "Your lineup is covered" with the best stash, the watch list and a look ahead to next week. The demo shows it only when its engine finds no pick.
 - Player header figures: Rostered, Started and Claims 7d (live: Sleeper's research and trending feeds). The demo's Started is a demo figure derived from its Rostered, labeled as demo in the tip.
 - Overview, Quick moves: every row shows. Covered rows (lineup optimal, no two-way trade, nobody on the wire) read with a green check and open their page; an Ask row starts Ask with a league question. The demo has a move in every row, so it shows the Ask row on top of them.
+- Lineup what-if note: tighter padding; the buttons fill the width under the text, and sit right of it (up to 400) only on a very wide card.
+- Skeletons pulse as a wave, row by row. Player header position badge uses the sheet slot chip. Revisiting a section fades the page in quickly instead of replaying the entrance.

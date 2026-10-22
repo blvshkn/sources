@@ -134,6 +134,8 @@ import "./figma-oct21.css";
 import "./waiver-nopick.css";
 import "./quick-moves.css";
 import "./matchup-sheet-air.css";
+import "./whatif-note.css";
+import "./skeleton-wave.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

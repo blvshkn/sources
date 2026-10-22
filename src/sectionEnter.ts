@@ -14,7 +14,7 @@
  *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
-import { EASE_OUT } from "./motion";
+import { EASE_OUT, mo } from "./motion";
 import { firstTime } from "./motionOnce";
 
 const EASE = EASE_OUT;
@@ -116,7 +116,13 @@ export function useSectionEnter(section: string) {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     // Once per section per visit (Zach): the first time you open a section it comes in; coming back to one you've
     // already seen this visit shows it settled, charts included (chartReveal reads data-revisit)
-    if (!firstTime(`section:${section}`)) { document.documentElement.dataset.revisit = ""; return; }
+    if (!firstTime(`section:${section}`)) {
+      // Coming back: no stagger, just a short fade of the whole page, so the switch still registers (Zach)
+      document.documentElement.dataset.revisit = "";
+      const page = document.querySelector<HTMLElement>(".main-inner");
+      if (page && !document.hidden) page.animate([{ opacity: 0 }, { opacity: 1 }], { duration: mo(140), easing: EASE });
+      return;
+    }
     delete document.documentElement.dataset.revisit;
     if (document.hidden) return;
     const root = document.querySelector<HTMLElement>(".main-inner");

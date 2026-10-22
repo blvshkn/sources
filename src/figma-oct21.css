@@ -7,8 +7,8 @@ html:root:not(#_):not(#_):not(#_) .lu-row { grid-template-columns: 45px 44px min
 
 /* Slot chip in sheets and rows (Figma "Sheet modal/Slot chip"): the Lineup chip's type and colors, sized to its label.
    16 tall, 7px each side, Geist Mono Medium 11 at 0.06em, its position color on the same color at 13%.
-   Used by the sheet's compact bar and the waiver rows. */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-bar-meta .pos, .ps-wv .wv-meta .lu-pos) {
+   Used by the sheet's compact bar, the player header (Zach, Oct 22) and the waiver rows. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-bar-meta .pos, .ph-meta .pos, .ps-wv .wv-meta .lu-pos) {
   display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; flex: none;
   width: auto; height: 16px; margin: 0; padding: 0 7px; border-radius: 999px;
   font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase;

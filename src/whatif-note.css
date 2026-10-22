@@ -1,0 +1,13 @@
+/* Lineup what-if note (Zach, Oct 22): less vertical padding, and the button follows the room it has. Under the text
+   (phones, tablets, most desktops) Open Sleeper, or Reset with Open Sleeper, fills the full width. On a very wide page
+   it moves to the right of the text and stops growing at 400. The locked note keeps its own one-row layout. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; padding: 12px 14px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) > .lu-wi-txt { flex: 1 1 100%; min-height: 0; margin: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) > .lu-wi-btns { flex: 1 1 100%; justify-content: stretch; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) > .lu-wi-btns > .btn { flex: 1 1 0; max-width: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list { container: lulist / inline-size; }
+@container lulist (min-width: 900px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) { flex-wrap: nowrap; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) > .lu-wi-txt { flex: 1 1 auto; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.lu-list > .lu-wi:not(.is-locked) > .lu-wi-btns { flex: 0 1 400px; margin-left: auto; }
+}
