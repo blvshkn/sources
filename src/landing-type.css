@@ -347,3 +347,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-split-b { margin-left: 0 !importa
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-form { border-radius: 34px; padding: 8px; }
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-form input { padding: 0 18px; }
 }
+
+/* Phone landing nav gets room above and below the logo and button (Zach, Oct 22): 16px top and bottom */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 { --navh: 84px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-nav.ld2-nav { height: auto; min-height: 84px; padding-block: 16px; box-sizing: border-box; }
+}
