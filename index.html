@@ -30,10 +30,10 @@
     <meta property="og:description" content="Per sources, this team needs a TE. Sources finds fantasy football trades both sides will accept." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..700&family=Big+Shoulders:wght@700;800&family=Chakra+Petch:wght@600;700&family=Fjalla+One&family=League+Gothic&family=Oswald:wght@500;640&family=Pathway+Gothic+One&family=Rajdhani:wght@700&family=Tomorrow:wght@600;700&display=swap"
-    />
+    <!-- Geist and Geist Mono only, loaded without blocking the first paint: the system stack shows until they land (display=swap) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..700&display=swap" /></noscript>
     <!-- Clash Grotesk for headers. src/fonts.ts registers these with FontFace; Vite rewrites the hrefs to the built files -->
     <link rel="preload" href="/src/assets/fonts/ClashGrotesk-Medium.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/src/assets/fonts/ClashGrotesk-Semibold.woff2" as="font" type="font/woff2" crossorigin />
