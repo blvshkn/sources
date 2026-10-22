@@ -1,6 +1,6 @@
 /** Waiver results (approved Oct 22, motion-picks.html "Waiver results"): your claims from the latest run, on Waivers.
  *  The first time a result shows this visit it plays once. Won: a 16-bit check stamps in, the bid turns green and
- *  "Claimed for $12. $64 left to spend." morphs in. Outbid: the bid gets a red strike and the line says by how much and who
+ *  "Claimed for $12." morphs in. Outbid: the bid gets a red strike and the line says by how much and who
  *  got him, so you learn something. Seen already this visit, or reduced motion: the result, settled. */
 import { useEffect, useState } from "react";
 import { DEADLINES, FAAB, LEAGUE, TEAMS, type ClaimResult } from "../data";
@@ -18,8 +18,8 @@ const runDay = (at: number) => (LEAGUE.mode === "demo" ? "Ran Wednesday" : `Ran 
 
 function line(c: ClaimResult): string {
   const faab = FAAB.enabled;
-  // Won: what it cost and what's left to spend, the one thing worth knowing next (Zach: "He's yours" read generic)
-  if (c.won) return faab ? `Claimed for ${money(c.bid)}. ${money(FAAB.remaining)} left to spend.` : "Claimed.";
+  // Won: just what it cost (Zach removed "He's yours" and then the budget left)
+  if (c.won) return faab ? `Claimed for ${money(c.bid)}.` : "Claimed.";
   const who = c.winnerId ? TEAMS.find((t) => t.id === c.winnerId)?.manager : undefined;
   if (faab && c.winBid !== undefined && who) return `Outbid by ${money(Math.max(0, c.winBid - c.bid))}. He went to ${who} for ${money(c.winBid)}.`;
   if (who) return `${who} got him first.`;
