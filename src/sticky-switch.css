@@ -6,6 +6,12 @@
   html:root:not(#_):not(#_):not(#_) .rosters .side-switch {
     background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; box-shadow: none; isolation: isolate;
   }
+  /* The track and the selected tab are solid (Zach): the fade sits behind them, nothing shows through them. A
+     ::after paints the track so the full-width ::before fade can stay underneath. */
+  html:root:not(#_):not(#_):not(#_) .rosters .side-switch::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: #191C1B; pointer-events: none;
+  }
+  html:root:not(#_):not(#_):not(#_) .rosters .side-switch button[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 10%, #191C1B); }
   html:root:not(#_):not(#_):not(#_) .rosters .side-switch::before {
     content: ""; position: absolute; z-index: -1; pointer-events: none;
     top: -1px; bottom: -28px; left: 50%; width: 100vw; transform: translateX(-50%);
