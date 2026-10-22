@@ -5,7 +5,7 @@
  *  entrance (sectionEnter.ts sets <html data-entering> while one plays). Mounted by an in-page tab, a week step or a
  *  filter, it's drawn at full size right away (.seen-still), so a tab swap never animates in. Sheets and modals keep
  *  their grow-in, and a chart further down still grows when you scroll to it. */
-export const CHART_BARS = ".ps-bar span i, .slot-bars .sb-you, .ps-bar b, .sx-bar i, .vb-bar > span, .bar-fill, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i, .tc-bar > span, .tc-market-bar > span";
+export const CHART_BARS = ".ps-bar span i, .srx-wk > i, .ps-bar b, .sx-bar i, .vb-bar > span, .bar-fill, .mw-bar i, .sb2-bar > span, .mu-bar > span, .lu-mx-bar i, .tc-bar > span, .tc-market-bar > span";
 const OVERLAY = '[role="dialog"], [aria-modal="true"], .ps-wrap, .scrim-wrap, .sheet';
 
 export function chartReveal(root: HTMLElement) {

@@ -140,6 +140,7 @@ import "./startsit-compare.css";
 import "./action-motion.css";
 import "./game-day.css";
 import "./live-bar.css";
+import "./slot-report.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

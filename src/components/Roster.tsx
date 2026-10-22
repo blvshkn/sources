@@ -421,8 +421,8 @@ function SlotGlance({ onOpen }: { onOpen: () => void }) {
 }
 
 function SlotReport({ lineup }: { lineup: Lineup }) {
-  const max = Math.max(...SLOT_HISTORY.flatMap((h) => [...h.you, ...h.avg]));
   const weak = weakSlots();
+  const target = weak[0]?.slot ?? null;
   const [openSlot, setOpenSlot] = useState<string | null>(null);
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   const rows = SLOT_HISTORY.map((h) => {
@@ -432,58 +432,63 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
       best: Math.max(...h.you), worst: Math.min(...h.you), trend: (() => { const g = h.you.map((v, i) => v - h.avg[i]); return mean(g.slice(-half)) - mean(g.slice(0, half)); })(),
       now, nowProj: now.reduce((a, p) => a + eff(p, true), 0) };
   });
+  // One scale for every slot: the biggest weekly swing either way fills half a chart, so slots compare honestly
+  const swing = Math.max(1, ...SLOT_HISTORY.flatMap((h) => h.you.map((v, i) => Math.abs(v - h.avg[i]))));
   const total = rows.reduce((a, r) => a + r.gap, 0);
   const ranked = [...rows].sort((a, b) => b.gap - a.gap);
   const weeks = SLOT_HISTORY[0]?.you.length ?? 0;
+  const r1 = (x: number) => fmt(Math.round(x * 10) / 10);
+  const tone = (x: number) => (x >= 0 ? "up" : "down");
   return (
-    <section className="card card-pad slot-report">
-      <div className="row wrap" style={{ justifyContent: "space-between" }}>
-        <h2 className="section-title">Slot report</h2>
-        <span className="tiny muted">Weeks 1 to {weeks} · you vs league average</span>
+    <section className="card card-pad slot-report srx">
+      <div className="srx-head">
+        <div className="srx-title">
+          <h2 className="section-title">Slot report</h2>
+          <span className="tiny muted">Weeks 1 to {weeks}, you vs the league average</span>
+        </div>
+        {weak.length > 0 && (
+          <p className="small srx-lede"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} pts a week). Trade ideas target it.</p>
+        )}
       </div>
-      {weak.length > 0 && (
-        <p className="small"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} pts a week). Trade ideas target it.</p>
-      )}
-      <div className="slot-grid">
-        {SLOT_HISTORY.map((h) => {
-          const isWeak = weak.some((w) => w.slot === h.slot);
-          return (
-            <div key={h.slot} className={`slot-col${isWeak ? " weak" : ""}`}>
-              <div className="slot-bars" role="img" aria-label={`${h.slot}: ${h.you.filter((v, i) => v >= h.avg[i]).length} of 6 weeks at or above average`}>
-                {h.you.map((v, i) => (
-                  <span key={i} className="sb" style={{ ["--i" as string]: i }}>
-                    <span className={`sb-you${v < h.avg[i] ? " under" : ""}`} style={{ height: `${(v / max) * 100}%` }} />
-                    <span className="sb-avg" style={{ bottom: `${(h.avg[i] / max) * 100}%` }} />
-                  </span>
-                ))}
-              </div>
-              <span className="slot-name">{h.slot}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="legend"><span className="row"><span className="lg-sw you" />At or above avg</span><span className="row"><span className="lg-sw under" />Below avg</span><span className="row"><span className="lg-line" />League avg</span></div>
 
-      {rows.length > 0 && <dl className="sr-sum">
-        <div><dt>Vs league</dt><dd className={total >= 0 ? "up" : "down"}>{fmt(Math.round(total * 10) / 10)}</dd></div>
-        <div><dt>Strongest</dt><dd>{ranked[0].h.slot}<small className="up">{fmt(Math.round(ranked[0].gap * 10) / 10)}</small></dd></div>
-        <div><dt>Weakest</dt><dd>{ranked[ranked.length - 1].h.slot}<small className={ranked[ranked.length - 1].gap >= 0 ? "up" : "down"}>{fmt(Math.round(ranked[ranked.length - 1].gap * 10) / 10)}</small></dd></div>
+      {rows.length > 0 && <dl className="srx-tiles">
+        <div className="srx-tile"><dt>Vs league</dt><dd className={tone(total)}>{r1(total)}</dd><small>pts a week</small></div>
+        <div className="srx-tile"><dt>Strongest</dt><dd>{ranked[0].h.slot}</dd><small className={tone(ranked[0].gap)}>{r1(ranked[0].gap)}<span className="srx-aw"> a week</span></small></div>
+        <div className="srx-tile"><dt>Weakest</dt><dd>{ranked[ranked.length - 1].h.slot}</dd><small className={tone(ranked[ranked.length - 1].gap)}>{r1(ranked[ranked.length - 1].gap)}<span className="srx-aw"> a week</span></small></div>
       </dl>}
 
-      <div className="sr-list">
-        <div className="sr-list-head"><span>Slot</span><span>You</span><span>League</span><span>Beat avg</span></div>
-        {rows.map((r) => {
-          const isOpen = openSlot === r.h.slot;
+      <div className="srx-slots">
+        {rows.map((r, b) => {
+          const isTarget = r.h.slot === target;
           return (
-            <div key={r.h.slot} className="sr-row">
-              <button className="sr-main" onClick={() => setOpenSlot(r.h.slot)} aria-haspopup="dialog" aria-label={`${r.h.slot}: you ${r.you.toFixed(1)}, league ${r.lg.toFixed(1)}, beat average ${r.above} of ${r.n} weeks. Details`}>
-                <span className={`sr-slot${r.gap < 0 ? " down" : ""}`}>{r.h.slot}<small className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</small></span>
-                <span className="sr-num">{r.you.toFixed(1)}</span>
-                <span className="sr-num muted">{r.lg.toFixed(1)}</span>
-                <span className={`sr-beat ${r.above * 2 >= r.n ? "up" : "down"}`}>{r.above}/{r.n}</span>
-                <Icon name="chev" size={14} />
+            <div key={r.h.slot} className={`srx-slot${isTarget ? " target" : ""}`}>
+              <button className="srx-main" onClick={() => setOpenSlot(r.h.slot)} aria-haspopup="dialog" aria-label={`${r.h.slot}: you ${r.you.toFixed(1)}, league ${r.lg.toFixed(1)}, beat average ${r.above} of ${r.n} weeks. Details`}>
+                <span className="srx-top">
+                  <b className="srx-name">{r.h.slot}</b>
+                  {isTarget && <span className="srx-tag">Trade target</span>}
+                  <Icon name="chev" size={14} />
+                </span>
+                <span className={`srx-gap ${tone(r.gap)}`}>{r1(r.gap)}<small>a week</small></span>
+                <span className="srx-chart" style={{ ["--b" as string]: b }}>
+                  <span className="srx-plot">
+                    {r.h.you.map((v, i) => {
+                      const d = v - r.h.avg[i];
+                      return (
+                        <NumTip key={i} label={`Week ${i + 1}: ${v.toFixed(1)} vs ${r.h.avg[i].toFixed(1)} avg`} note={`${fmt(round1(d))} pts`}>
+                          <span className={`srx-wk ${d >= 0 ? "up" : "down"}`} style={{ ["--h" as string]: Math.min(1, Math.abs(d) / swing), ["--i" as string]: i }}><i /></span>
+                        </NumTip>
+                      );
+                    })}
+                  </span>
+                  <span className="srx-axis" aria-hidden="true">{r.h.you.map((_, i) => <span key={i}>{i === 0 || i === r.h.you.length - 1 ? `W${i + 1}` : ""}</span>)}</span>
+                </span>
+                <span className="srx-stats">
+                  <span><small>You</small><b>{r.you.toFixed(1)}</b></span>
+                  <span><small>League</small><b className="muted">{r.lg.toFixed(1)}</b></span>
+                  <span><small>Beat avg</small><b className={r.above * 2 >= r.n ? "up" : "down"}>{r.above}/{r.n}</b></span>
+                </span>
               </button>
-              {isOpen && (
+              {openSlot === r.h.slot && (
                 <DetailSheet className="sr-sheet" label={`${r.h.slot} slot, week by week`} onClose={() => setOpenSlot(null)} title={
                   <span className="srs-head"><b className="srs-slot">{r.h.slot}</b><span className="srs-who"><b>{r.h.slot} slot</b><small>You <span className="num">{r.you.toFixed(1)}</span> · League <span className="num">{r.lg.toFixed(1)}</span> · <span className={r.gap >= 0 ? "up" : "down"}>{fmt(Math.round(r.gap * 10) / 10)}</span></small></span></span>
                 }>
@@ -511,6 +516,8 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
           );
         })}
       </div>
+
+      <p className="srx-key"><span className="srx-dot up" />Above the league average<span className="srx-dot down" />Below it<span className="srx-key-note">Each bar is one week, measured from the average line.</span></p>
     </section>
   );
 }

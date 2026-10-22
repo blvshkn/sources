@@ -1,0 +1,164 @@
+/* Slot report, Oct 22 refresh (Zach): each starting slot is its own small chart. Every week is a thin rounded bar
+   that grows up from the league average line when you beat it (green) and down from it when you came up short (red).
+   One shared scale across slots. The slot the trade ideas target sits on a soft red fill.
+   The card is its own container ("srx"): the slots stack as rows on narrow cards and stand side by side on wide ones. */
+
+html:root:not(#_):not(#_):not(#_) .card.slot-report.srx { container: srx / inline-size; display: flex; flex-direction: column; gap: 28px; }
+
+/* ---------- Head ---------- */
+html:root:not(#_):not(#_):not(#_) .srx-head { display: grid; gap: 14px; }
+html:root:not(#_):not(#_):not(#_) .srx-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+html:root:not(#_):not(#_):not(#_) .srx-title .section-title { margin: 0; }
+html:root:not(#_):not(#_):not(#_) .srx-lede { margin: 0; max-width: 62ch; line-height: 1.5; text-wrap: pretty; }
+
+/* ---------- Summary tiles: soft fill, big mono figure, small label ---------- */
+html:root:not(#_):not(#_):not(#_) .srx-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+html:root:not(#_):not(#_):not(#_) .srx-tile {
+  display: grid; align-content: start; gap: 8px; min-width: 0; padding: 16px 14px;
+  border-radius: 14px; background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+html:root:not(#_):not(#_):not(#_) .srx-tile dt { font-size: 0.75rem; line-height: 1.2; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .srx-tile dd {
+  margin: 0; font: 600 1.625rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap;
+}
+html:root:not(#_):not(#_):not(#_) .srx-tile small { font: 500 0.75rem/1.2 "Geist Mono", ui-monospace, monospace; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root:not(#_):not(#_):not(#_) .srx-tile :is(dd, small).up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .srx-tile :is(dd, small).down { color: var(--bad); }
+
+/* ---------- The slots ---------- */
+html:root:not(#_):not(#_):not(#_) .srx-slots { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+html:root:not(#_):not(#_):not(#_) .srx-slot { min-width: 0; }
+/* Narrow cards: name and gap on the left over the three figures, the chart on the right */
+html:root:not(#_):not(#_):not(#_) .srx-main {
+  display: grid; width: 100%; min-width: 0; margin: 0; border: 0; text-align: left; color: inherit; cursor: pointer;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  grid-template-areas: "top chart" "gap chart" "stats stats";
+  grid-template-rows: auto 1fr auto; column-gap: 20px; row-gap: 6px;
+  padding: 16px 16px 16px 18px; border-radius: 16px;
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: background-color calc(200ms * var(--mo, 1)) var(--ease-out), box-shadow calc(200ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out);
+}
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_) .srx-main:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  html:root:not(#_):not(#_):not(#_) .srx-main:hover .srx-top > svg { transform: translateX(2px); color: var(--ink); }
+}
+html:root:not(#_):not(#_):not(#_) .srx-main:active { transform: scale(0.99); }
+html:root:not(#_):not(#_):not(#_) .srx-main:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 40%, transparent); }
+
+/* The slot the trade ideas target: a soft red wash from the top and a thin red rim */
+html:root:not(#_):not(#_):not(#_) .srx-slot.target .srx-main {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 12%, transparent), color-mix(in srgb, var(--bad) 3%, transparent) 80%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bad) 28%, transparent);
+}
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_) .srx-slot.target .srx-main:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 16%, transparent), color-mix(in srgb, var(--bad) 5%, transparent) 80%); }
+}
+
+html:root:not(#_):not(#_):not(#_) .srx-top { grid-area: top; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 22px; }
+html:root:not(#_):not(#_):not(#_) .srx-name { font: 600 0.8125rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.04em; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .srx-slot.target .srx-name { color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) .srx-tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; white-space: nowrap;
+  background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.01em;
+}
+html:root:not(#_):not(#_):not(#_) .srx-top > svg { flex: none; margin-left: auto; color: var(--muted); transition: transform calc(200ms * var(--mo, 1)) var(--ease-out), color calc(200ms * var(--mo, 1)) var(--ease-out); }
+
+html:root:not(#_):not(#_):not(#_) .srx-gap {
+  grid-area: gap; align-self: center; display: flex; align-items: baseline; gap: 6px;
+  font: 600 1.75rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+html:root:not(#_):not(#_):not(#_) .srx-gap small { font: 500 0.6875rem/1 var(--font-body, "Geist", sans-serif); letter-spacing: 0; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .srx-gap.up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .srx-gap.down { color: var(--bad); }
+
+html:root:not(#_):not(#_):not(#_) .srx-stats { grid-area: stats; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_):not(#_) .srx-stats > span { display: grid; gap: 4px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .srx-stats small { font-size: 0.6875rem; line-height: 1; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .srx-stats b { font: 600 0.875rem/1 "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) .srx-stats b.muted { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .srx-stats b.up { color: var(--good); }
+html:root:not(#_):not(#_):not(#_) .srx-stats b.down { color: var(--bad); }
+
+/* ---------- The chart: a capsule track per week, the average line through the middle ---------- */
+html:root:not(#_):not(#_):not(#_) .srx-chart { grid-area: chart; display: grid; grid-template-rows: 1fr auto; gap: 8px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .srx-plot { position: relative; display: flex; align-items: stretch; height: 92px; }
+/* The league average: the zero line every bar grows from */
+html:root:not(#_):not(#_):not(#_) .srx-plot::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-0.5px);
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+html:root:not(#_):not(#_):not(#_) .srx-wk { position: relative; flex: 1; min-width: 0; height: 100%; }
+html:root:not(#_):not(#_):not(#_) .srx-wk::before {
+  content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 8px; margin-left: -4px; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 4.5%, transparent);
+}
+html:root:not(#_):not(#_):not(#_) .srx-wk > i {
+  position: absolute; left: 50%; width: 8px; margin-left: -4px; border-radius: 999px;
+  height: max(6px, calc(var(--h, 0) * 50%));
+}
+/* Above: anchored on the line, brightest at the tip */
+html:root:not(#_):not(#_):not(#_) .srx-wk.up > i {
+  bottom: 50%; transform-origin: 50% 100%;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--good) 30%, transparent), var(--good));
+}
+/* Below: hangs from the line, brightest at the tip */
+html:root:not(#_):not(#_):not(#_) .srx-wk.down > i {
+  top: 50%; transform-origin: 50% 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 30%, transparent), var(--bad));
+}
+html:root:not(#_):not(#_):not(#_) .srx-axis { display: flex; text-align: center; font: 500 0.625rem/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.04em; color: var(--muted); opacity: 0.8; }
+
+/* ---------- Key ---------- */
+html:root:not(#_):not(#_):not(#_) .srx-axis > span { flex: 1; min-width: 0; }
+
+html:root:not(#_):not(#_):not(#_) .srx-key { display: flex; flex-wrap: wrap; max-width: none; align-items: center; gap: 8px 6px; margin: -8px 0 0; font-size: 0.75rem; line-height: 1.3; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .srx-dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; }
+html:root:not(#_):not(#_):not(#_) .srx-dot + .srx-dot, html:root:not(#_):not(#_):not(#_) .srx-key .srx-dot.down { margin-left: 10px; }
+html:root:not(#_):not(#_):not(#_) .srx-dot.up { background: var(--good); }
+html:root:not(#_):not(#_):not(#_) .srx-dot.down { background: var(--bad); }
+html:root:not(#_):not(#_):not(#_) .srx-key-note { margin-left: 12px; }
+
+/* ---------- Wide cards: the five slots stand side by side, each a column ---------- */
+@container srx (min-width: 760px) {
+  html:root:not(#_):not(#_):not(#_) .srx-slots { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 12px; }
+  html:root:not(#_):not(#_):not(#_) .srx-main {
+    height: 100%; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "gap" "chart" "stats";
+    grid-template-rows: auto auto 1fr auto; row-gap: 0; padding: 18px 16px 18px;
+  }
+  html:root:not(#_):not(#_):not(#_) .srx-gap { margin-top: 14px; }
+  html:root:not(#_):not(#_):not(#_) .srx-chart { margin-top: 22px; }
+  html:root:not(#_):not(#_):not(#_) .srx-gap { align-self: start; }
+  html:root:not(#_):not(#_):not(#_) .srx-plot { height: 128px; }
+  html:root:not(#_):not(#_):not(#_) .srx-stats { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 14px; padding-top: 14px; }
+  html:root:not(#_):not(#_):not(#_) .srx-stats > span { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  html:root:not(#_):not(#_):not(#_) .srx-tiles { gap: 12px; }
+  html:root:not(#_):not(#_):not(#_) .srx-tile { padding: 20px; }
+  html:root:not(#_):not(#_):not(#_) .srx-tile dd { font-size: 2rem; }
+}
+
+/* Phone-width cards: the tiles drop "a week" (each slot below says it) */
+@container srx (max-width: 479px) {
+  html:root:not(#_):not(#_):not(#_) .srx-aw { display: none; }
+  html:root:not(#_):not(#_):not(#_) .srx-key-note { flex-basis: 100%; margin-left: 0; }
+}
+
+/* Narrow phones: the figures under the gap get a touch smaller */
+@container srx (max-width: 359px) {
+  html:root:not(#_):not(#_):not(#_) .srx-main { column-gap: 14px; padding: 14px; }
+  html:root:not(#_):not(#_):not(#_) .srx-stats { gap: 6px 12px; }
+  html:root:not(#_):not(#_):not(#_) .srx-tile { padding: 14px 12px; }
+  html:root:not(#_):not(#_):not(#_) .srx-tile dd { font-size: 1.375rem; }
+}
+
+/* ---------- Motion: each bar grows out of the line once, week by week, slot by slot ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_) .srx-wk > i {
+    animation: srx-grow var(--dur-data, calc(300ms * var(--mo, 1))) var(--ease-out) both;
+    animation-delay: calc(var(--b, 0) * calc(50ms * var(--mo, 1)) + var(--i, 0) * calc(30ms * var(--mo, 1)) + calc(80ms * var(--mo, 1)));
+  }
+  /* Held at the start until scrolled into view (src/chartReveal.ts) */
+  html:root:not(#_):not(#_):not(#_) .srx-wk > i:not(.seen) { animation-play-state: paused; }
+  @keyframes srx-grow { from { transform: scaleY(0.04); opacity: 0.4; } }
+}
