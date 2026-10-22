@@ -129,12 +129,12 @@ export function GameLogTab({ s }: { s: Subject }) {
   return (
     <section className="gl" aria-label="Game log" aria-busy={log.state === "loading"}>
       <div className="gl-bar">
-        <div className="page-tabs gl-years">
-          <div className="seg" role="group" aria-label="Season">
-            {years.map((y) => <button key={y} aria-pressed={season === y} onClick={() => setSeason(y)}>{y}</button>)}
-            {years.length < seasons.length && <button className="gl-more" aria-pressed={false} onClick={() => setAllYears(true)} aria-label={`More seasons, back to ${seasons[seasons.length - 1]}`}>More</button>}
-          </div>
-        </div>
+        {/* The season's numbers first, then the season pills (Zach); while it loads the row holds its place */}
+        {log.state === "loading" ? (
+          <dl className="gl-sum" aria-hidden="true">
+            {["Games", "Avg", "Best", "Beat proj"].map((k) => <div key={k}><dt>{k}</dt><dd className="sk-text">00.0</dd></div>)}
+          </dl>
+        ) : null}
         {log.state === "ready" && played.length > 0 && (
           <dl className="gl-sum">
             <div><dt>Games</dt><dd>{played.length}</dd></div>
@@ -143,6 +143,12 @@ export function GameLogTab({ s }: { s: Subject }) {
             {withProj > 0 && <div><dt>Beat proj</dt><dd>{beat}/{withProj}</dd></div>}
           </dl>
         )}
+        <div className="page-tabs gl-years">
+          <div className="seg" role="group" aria-label="Season">
+            {years.map((y) => <button key={y} aria-pressed={season === y} onClick={() => setSeason(y)}>{y}</button>)}
+            {years.length < seasons.length && <button className="gl-more" aria-pressed={false} onClick={() => setAllYears(true)} aria-label={`More seasons, back to ${seasons[seasons.length - 1]}`}>More</button>}
+          </div>
+        </div>
       </div>
       {log.state === "loading" ? <Skel rows={8} />
         : log.state === "none" ? <p className="ps-none">{log.why}</p>

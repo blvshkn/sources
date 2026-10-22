@@ -1,0 +1,14 @@
+/* Player header headshot (Zach): no circle. The photo stands on the team wash by itself, larger, and fades into the
+   background at the bottom so it reads as a cutout rather than a framed avatar. Only when there's a photo: initials
+   and defense logos keep their circle. Phones 112px, wider screens 136px. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) {
+  width: 112px !important; height: 112px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
+  margin: -12px 0 -8px -6px;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av > .av-photo {
+  border-radius: 0 !important; background: none !important; object-fit: contain; object-position: 50% 100%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%); mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+}
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) { width: 136px !important; height: 136px !important; }
+}

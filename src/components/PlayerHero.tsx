@@ -20,7 +20,7 @@ function boards() {
   if (boardMemo?.league !== LEAGUE) boardMemo = { league: LEAGUE, board: LEAGUE.board?.length ? LEAGUE.board : demoBoard(), specials: specialBoard() };
   return boardMemo;
 }
-const compact = (n: number) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+const compact = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M` : n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 interface Stat { k: string; v: string; tip: string }
 /** Position and overall rank by trade value (the same order as League > Values), then rostered % and adds when the
