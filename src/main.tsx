@@ -130,6 +130,7 @@ import "./pos-solid.css";
 import "./pitch-sheet.css";
 import "./hero-cutout.css";
 import "./headshots.css";
+import "./figma-oct21.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

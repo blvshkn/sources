@@ -1,0 +1,28 @@
+/* Zach's Figma pass, Oct 21 (file BdSnZFKoxtKwrP4Az0I6Kt, pages "Slot chips", "Oct 21 components", "Headshot fade").
+   Mobile first: every rule holds at every width unless a media query says otherwise. */
+
+/* Lineup slot chip: 45 x 16 (was 44 x 20), so SFLX fits with 8px each side. The chip column follows it. */
+html:root:not(#_):not(#_):not(#_) .lu-slot { width: 45px; height: 16px !important; }
+html:root:not(#_):not(#_):not(#_) .lu-row { grid-template-columns: 45px 44px minmax(0, 1fr) auto; }
+
+/* Slot chip in sheets and rows (Figma "Sheet modal/Slot chip"): the Lineup chip's type and colors, sized to its label.
+   16 tall, 7px each side, Geist Mono Medium 11 at 0.06em, its position color on the same color at 13%.
+   Used by the sheet's compact bar and the waiver rows. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-bar-meta .pos, .ps-wv .wv-meta .lu-pos) {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; flex: none;
+  width: auto; height: 16px; margin: 0; padding: 0 7px; border-radius: 999px;
+  font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-wv .wv-meta .lu-pos { background: color-mix(in srgb, currentColor 13%, transparent); }
+
+/* Player header pills (injury, whose he is): 16 tall, was 20. Padding, radius and type stay. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-tags :is(.status, .ps-where) { height: 16px; }
+
+/* Headshot fade from Zach's mask: solid through 71%, then a soft tail to nothing at the bottom edge. The ellipse is
+   wide and centered above the photo, so the sides stay solid and only the shoulders fade. Every cutout uses it. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .av-photo {
+  -webkit-mask-image: radial-gradient(ellipse 201% 122% at 50% -22%, #000 71.2%, rgba(0, 0, 0, 0.21) 86.1%, rgba(0, 0, 0, 0.1) 90.7%, transparent 100%);
+  mask-image: radial-gradient(ellipse 201% 122% at 50% -22%, #000 71.2%, rgba(0, 0, 0, 0.21) 86.1%, rgba(0, 0, 0, 0.1) 90.7%, transparent 100%);
+}
+/* Player header: the photo sits 8px further left; the name and team line stay where they were. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut { margin-left: -28px; margin-right: -42px; }
