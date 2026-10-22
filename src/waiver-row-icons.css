@@ -1,0 +1,14 @@
+/* Waiver rows, 1024px and up (Zach, Oct 22): the X read massive and the star small, and both sat pinned 16px from the
+   top, so on a taller row (photo plus a kickoff line) they floated above the middle. Now they share one size, a 32px
+   circle, with a 16px X and an 18px star (a star's points leave more empty space than an X, so it runs a touch
+   bigger to look the same size), and both sit on the row's middle line. Phones keep the labeled Watch / Not now
+   buttons and tablets below 1024 keep their layout. Rows open a sheet, never expand, so the row is the box. */
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv .wv3-watch {
+    top: calc(50% - 16px) !important; width: 32px !important; height: 32px !important; left: calc(var(--pad-card-x, 16px) - 6px);
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv .wv3-watch svg { width: 18px !important; height: 18px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end { top: calc(50% - 16px) !important; width: 32px; height: 32px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end .ps-x { width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .card.wv-card .wv3-list > .wv > .ps-end .ps-x > svg { width: 16px !important; height: 16px !important; }
+}
