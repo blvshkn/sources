@@ -2,6 +2,9 @@
    content width with the label centered, and uses the same columns icon as the tablet icon button. */
 @container lucol (max-width: 519.98px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { grid-column: 1 / -1; justify-self: stretch; justify-content: center; margin: 8px 0 2px; }
+  /* Opening the card adds a second grid row; hold the first at the closed row's content height (68px min less 20px of
+     padding) so the player doesn't nudge up 2px on every tap */
+  html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row:has(> .sw-cmp) { grid-template-rows: minmax(48px, auto); }
 }
 @container mu (max-width: 679.98px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp { justify-self: stretch; justify-content: center; margin: 0 12px 8px; }
