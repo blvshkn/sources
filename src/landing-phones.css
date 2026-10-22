@@ -102,19 +102,19 @@ html:root:not(#_):not(#_):not(#_) .hp-phone { --u: calc(var(--pw) / 400); }
 html:root:not(#_):not(#_):not(#_) .hp-back { filter: none; }
 html:root:not(#_):not(#_) .hp-body { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
 /* iPhone 18 Pro Max in matte black (Zach): the Pro Max's 6.9-inch proportions (the device is already 400:838.7) and
-   its anodized aluminum in black, a soft black a step up from pure black, with a diffuse sheen where the edge rounds
+   its anodized aluminum in black (Zach's reference render): a soft charcoal body, the frame a lighter dark gray band around the glass, with a diffuse sheen where the edge rounds
    toward the light and no polished rim. */
 html:root:not(#_):not(#_) .hp-body i {
   position: absolute; inset: 0; border-radius: calc(64 * var(--u));
   transform: translateZ(calc(var(--depth) * var(--z) / -22));
-  background: linear-gradient(90deg, #2E3032 0%, #1C1D1F 7%, #1F2022 35%, #18191B 65%, #222325 93%, #34363A 100%);
+  background: linear-gradient(90deg, #3A3A3D 0%, #232325 6%, #262628 35%, #1F1F21 65%, #29292B 94%, #3E3E41 100%);
 }
-html:root:not(#_):not(#_) .hp-body i:last-child { background: #19191B; box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.8); }
+html:root:not(#_):not(#_) .hp-body i:last-child { background: #1E1E20; box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.8); }
 /* The front: black glass to the edge, a hairline of the anodized band around it */
 html:root:not(#_):not(#_):not(#_) .hp-phone .ph-chrome {
   z-index: auto; transform: translateZ(0.5px);
   background: #050506;
-  box-shadow: inset 0 0 0 calc(2 * var(--u)) #232427, inset 0 0 0 calc(3 * var(--u)) #0B0B0C, 0 0 0 calc(1 * var(--u)) #2B2C2F;
+  box-shadow: inset 0 0 0 calc(2.5 * var(--u)) #2C2C2F, inset 0 0 0 calc(3.25 * var(--u)) #0A0A0B, 0 0 0 calc(1 * var(--u)) #3A3A3D;
 }
 html:root:not(#_):not(#_):not(#_) .hp-phone .ph-btn { transform: translateZ(calc(var(--depth) / -2)); background: linear-gradient(90deg, #2C2D30, #1A1B1D); }
 html:root:not(#_):not(#_):not(#_) .hp-scr { transform: translateZ(1px); }
