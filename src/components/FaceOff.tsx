@@ -60,7 +60,7 @@ function perGame(t: Team) {
  * width (phone, tablet, desktop), and every state draws the same rows at the same heights, so switching weeks moves
  * nothing. Cards hide it from assistive tech (their own label says it all); the matchup header passes `label`.
  */
-export function FaceOff({ you, them, state, chance, res, skel = false, msg, label, flat = false, countKey }: {
+export function FaceOff({ you, them, state, chance, res, skel = false, msg, label, flat = false, countKey, countChanges = true }: {
   you: FaceSide; them: FaceSide; week?: number; state: FaceState; chance: number | null; res: Result | null; skel?: boolean; msg?: string;
   /** Read as one image with this label, for a face-off that isn't inside a labelled button */
   label?: string;
@@ -69,6 +69,8 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
   /** Count the scores up from zero the first time this face-off shows this visit, with each win % bar growing at the
    *  same rate and stopping with its number (Zach). Later it animates only when a score changes. */
   countKey?: string;
+  /** Off: only the first arrival counts up; a later change (a week switch) just shows the new numbers */
+  countChanges?: boolean;
 }) {
   // One win % per side. A final is 100 or 0 (50 each on a tie); before and during games it's the model's chance.
   const mine = res ? (res.letter === "W" ? 100 : res.letter === "L" ? 0 : 50) : chance;
@@ -76,7 +78,7 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
   const final = !!res || state === "final";
   // First arrival counts up; after that a live score rolls its digits (RollNum) and the bars glide on their own
   const liveNow = !!(you.live || them.live) && !final;
-  const { vals: cv, running: counting } = useCountTogether(countKey, [you.pts ?? 0, them.pts ?? 0, mine ?? 0, theirs ?? 0], { ready: !skel && you.pts !== null, changes: !liveNow });
+  const { vals: cv, running: counting } = useCountTogether(countKey, [you.pts ?? 0, them.pts ?? 0, mine ?? 0, theirs ?? 0], { ready: !skel && you.pts !== null, changes: !liveNow && countChanges });
   const anim = (i: number) => (counting ? cv[i] : undefined);
   // The leader's score is ink and the trailer's muted at every moment, the count-up included (both sides count at
   // the same rate, so the order holds); before kickoff that's the projected totals. A tie dims neither.

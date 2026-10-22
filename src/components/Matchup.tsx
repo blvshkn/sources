@@ -143,7 +143,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
       <BackBtn onBack={onBack} />
       {stepper}
       <section className="card mu" aria-label={`Week ${WEEK} matchup${res ? `, final. ${res.long}` : ""}`}>
-        <FaceOff week={WEEK} state={res ? "final" : nowLive ? "live" : started ? "scored" : "pre"} chance={chance} res={res} flat
+        <FaceOff week={WEEK} state={res ? "final" : nowLive ? "live" : started ? "scored" : "pre"} countKey="matchup-faceoff" countChanges={false} chance={chance} res={res} flat
           label={`${changed ? "Your what-if" : "You"} ${(started ? round1(meS.scored) : myTotal).toFixed(1)}, ${opp.name} ${(started ? round1(oppS.scored) : oppTotal).toFixed(1)}. ${res ? `Final, ${res.short}` : `${chance} percent to win`}${started && !res ? `. ${toPlay(myCount) || "0 to play"} for you, ${toPlay(oppCount) || "0 to play"} for them` : ""}`}
           you={{ t: YOU, pts: started ? round1(meS.scored) : myTotal, live: started, dim: myTone === "trail", count: myCount,
             note: res ? undefined : started ? `${changed ? "what-if " : ""}${myTotal.toFixed(1)}` : changed ? "what-if" : undefined }}
@@ -302,7 +302,7 @@ function WeekMatchup({ week, onBack, stepper, inner }: { week: number; onBack?: 
     <>
       {back}{stepper}
       <section className={`card mu${fadeIn ? " sk-in" : ""}`} aria-label={`Week ${week} matchup`}>
-        <FaceOff week={week} state={past ? "final" : "pre"} chance={chance} res={res} flat
+        <FaceOff week={week} state={past ? "final" : "pre"} countKey="matchup-faceoff" countChanges={false} chance={chance} res={res} flat
           label={`${wi.changed && !past ? "Your what-if" : "You"} ${m.me.total.toFixed(1)}, ${opp.team.name} ${opp.total.toFixed(1)}. ${res ? `Final, ${res.short}` : `Projected, ${chance} percent to win`}`}
           you={{ t: YOU, pts: m.me.total, dim: wkTone === "trail", note: !past && wi.changed ? "what-if" : undefined }}
           them={{ t: opp.team, pts: opp.total, dim: flipTone(wkTone) === "trail" }} />

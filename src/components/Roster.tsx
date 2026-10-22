@@ -544,7 +544,7 @@ function WeekStrip({ week, onOpen }: { week: number; onOpen?: () => void }) {
     + (res ? `Final, ${res.long}` : past ? `Final ${m.me.total.toFixed(1)}` : `Projected ${m.me.total.toFixed(1)}${opp ? ` to ${opp.total.toFixed(1)}, ${chance} percent to win` : ""}`);
   return (
     <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open the Week ${week} matchup. ${label}`) : { "aria-label": label })}>
-      <FaceOff week={week} state={past ? "final" : "pre"} chance={opp && !past ? chance : null} res={res} msg={m.empty?.title ?? "No matchup"}
+      <FaceOff week={week} state={past ? "final" : "pre"} countKey="lineup-faceoff" countChanges={false} chance={opp && !past ? chance : null} res={res} msg={m.empty?.title ?? "No matchup"}
         you={{ t: YOU, pts: m.me.total, note: !past && wi.changed ? "what-if" : undefined, dim: wkTone === "trail" }}
         them={opp ? { t: opp.team, pts: opp.total, dim: wkTone === "lead" } : { t: null, pts: null, empty: m.empty?.title ?? "No matchup" }} />
     </section>
@@ -574,7 +574,7 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
     const label = `${YOU.name}, ${YOU.record}. Week ${WEEK}${opp ? ` vs ${opp.name}` : ""}. ${res ? `Final, ${res.long}` : `${inPlay ? `${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Projected ${myTotal.toFixed(1)}`}${opp ? `, ${chance} percent to win` : ""}`}`;
     return (
       <section className={`mw mwf${opp && onOpen ? " mc-press" : ""}`} {...(opp && onOpen ? pressProps(onOpen, `Open this week's matchup. ${label}`) : { "aria-label": label })}>
-        <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
+        <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} countKey="lineup-faceoff" countChanges={false} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
           you={{ t: YOU, pts: myPts, live: inPlay, note: res ? undefined : inPlay ? `${wi.changed ? "what-if " : ""}${myTotal.toFixed(1)}` : wi.changed ? "what-if" : undefined, dim: myTone === "trail", count: ms.me.count }}
           them={opp ? { t: opp, pts: oppPts, live: inPlay, note: inPlay && !res ? oppTotal!.toFixed(1) : undefined, dim: myTone === "lead", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
       </section>
@@ -582,7 +582,7 @@ export function MatchupStrip({ onOpen, mineOnly = false, week = WEEK }: { onOpen
   }
   const body = (
     <div className="lu-mx" aria-label={res ? `Final. ${res.long}` : `${inPlay ? `You have ${myNow!.toFixed(1)} points, on pace for ${myTotal.toFixed(1)}` : `Your best lineup projects ${myTotal.toFixed(1)} points`}${opp ? `. ${chance} percent to win` : ""}`}>
-      <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
+      <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} countKey="lineup-faceoff" countChanges={false} chance={opp && !res ? chance : null} res={opp ? res : null} msg="Bye week"
         you={{ t: YOU, pts: inPlay ? myNow! : myTotal, live: inPlay, note: inPlay && !res ? myTotal.toFixed(1) : undefined, dim: myTone === "trail", count: ms.me.count }}
         them={opp && oppTotal !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : oppTotal, live: inPlay, note: inPlay && !res ? oppTotal.toFixed(1) : undefined, dim: flipTone(myTone) === "trail", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
     </div>
