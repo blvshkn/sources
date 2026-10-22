@@ -1,0 +1,19 @@
+/* Motion polish: the segmented thumb and small reveals. Loads before frame.css. */
+
+/* Segmented control thumb (Seg in src/components/ui.tsx): one pill slides under the picked option. Its surface is the
+   picked button's old fill, so at rest the control looks exactly as before; the picked button itself goes clear and
+   sits above the thumb. The thumb's spot and width are set inline; only its transform animates. */
+html:root:not(#_):not(#_) .seg.has-thumb { position: relative; isolation: isolate; }
+html:root:not(#_):not(#_) .seg.has-thumb > button { position: relative; z-index: 1; }
+html:root:not(#_):not(#_) .seg.has-thumb > button[aria-pressed="true"] { background: transparent !important; box-shadow: none !important; }
+html:root:not(#_):not(#_) .seg-thumb {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  border-radius: 999px; background: rgba(244, 246, 242, 0.1);
+  transform-origin: 0 50%; will-change: transform;
+}
+
+/* "Why none" disclosure under Lineup's trade-price card: what it reveals rises 4px into place as it opens */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) details.wt-none[open] > :not(summary) { animation: mp-fade-up var(--dur-fast) var(--ease-out) both; }
+  @keyframes mp-fade-up { from { opacity: 0; transform: translateY(4px); } }
+}

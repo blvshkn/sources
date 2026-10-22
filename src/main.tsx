@@ -125,6 +125,7 @@ import "./week-switch.css";
 import "./tooltip-touch.css";
 import "./sheet-detents.css";
 import "./motion-tokens.css";
+import "./motion-polish.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

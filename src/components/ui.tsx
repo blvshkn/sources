@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
@@ -42,10 +42,44 @@ export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: ()
 /** Build-phase labels were for internal review. Users never see them. */
 export const Phase = (_: { v: "MVP" | "v1" | "Later" }) => null;
 
-export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void; label: string }) {
+/**
+ * Segmented control. One thumb slides under the picked option instead of each button lighting up on its own: it is
+ * placed at the picked button, and on a change it plays from the old spot and width to the new one (a FLIP on
+ * transform alone, 200ms on the house curve). Reduced motion: the thumb fades in at its new spot. Page tabs (PageTabs)
+ * are separate chips, not one track, so they keep their own highlight (thumb={false}).
+ */
+export function Seg<T extends string>({ value, options, onChange, label, thumb = true }: { value: T; options: { v: T; label: string; icon?: IconName }[]; onChange: (v: T) => void; label: string; thumb?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const th = useRef<HTMLSpanElement>(null);
+  const last = useRef<{ x: number; w: number } | null>(null);
+  useLayoutEffect(() => {
+    const seg = ref.current, el = th.current;
+    if (!thumb || !seg || !el) return;
+    const place = () => {
+      const b = seg.querySelector<HTMLElement>(':scope > button[aria-pressed="true"]');
+      if (!b) { el.style.opacity = "0"; return null; }
+      el.style.opacity = "";
+      el.style.top = `${b.offsetTop}px`; el.style.height = `${b.offsetHeight}px`; el.style.width = `${b.offsetWidth}px`;
+      el.style.transform = `translateX(${b.offsetLeft}px)`;
+      return { x: b.offsetLeft, w: b.offsetWidth };
+    };
+    const prev = last.current, now = place();
+    last.current = now;
+    if (prev && now && (prev.x !== now.x || prev.w !== now.w)) {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      el.getAnimations().forEach((a) => a.cancel());
+      if (reduce) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: "ease-out" });
+      else el.animate([{ transform: `translateX(${prev.x}px) scaleX(${prev.w / now.w})` }, { transform: `translateX(${now.x}px)` }], { duration: 200, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    }
+    // A resize (fonts landing, the row reflowing) re-places it without motion
+    const ro = new ResizeObserver(() => { last.current = place(); });
+    ro.observe(seg);
+    return () => ro.disconnect();
+  }, [value, thumb, options.length]);
   return (
-    <div className="seg" role="group" aria-label={label}>
+    <div ref={ref} className={`seg${thumb ? " has-thumb" : ""}`} role="group" aria-label={label}>
       {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.icon && <Icon name={o.icon} size={16} />}{o.label}</button>)}
+      {thumb && <span ref={th} className="seg-thumb" aria-hidden="true" />}
     </div>
   );
 }
@@ -88,7 +122,7 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
       window.scrollTo({ top: Math.max(0, target), behavior: "instant" as ScrollBehavior });
     });
   };
-  return <div ref={ref} className={`page-tabs ${className}`.trim()}><Seg label={label} value={value} onChange={pick} options={options} /></div>;
+  return <div ref={ref} className={`page-tabs ${className}`.trim()}><Seg label={label} value={value} onChange={pick} options={options} thumb={false} /></div>;
 }
 
 /** useState that survives a reload. Per-device convenience only; falls back to the default if storage is blocked. */
