@@ -1,3 +1,4 @@
+import type React from "react";
 // Source icon family: pixel icons (Zach, Oct 22). Each is the old Lucide-based line icon traced onto a 16 x 16 pixel
 // grid, with touching pixels merged into one shape and their outer corners rounded (pixelIcons.ts, generated from the
 // approved review sheet). The star is icons8's "pixel star" on its 25 grid; the Settings gear rests turned 60 degrees.
@@ -29,11 +30,16 @@ export function Icon({ name, size = 20, active = false }: { name: IconName; size
 }
 
 /** A pixel icon: filled shapes on its own grid, in the text color, crisp at any size. */
+/** Extra line weight for a pixel icon drawn large (Zach, Oct 22: "when the icons get bigger, increase the stroke"):
+ *  a stroke in viewBox units traced over the 1px lines, none at 24px and under, rising to 0.5 (a 1.5px line) by 64px. */
+export const pxWeight = (size: number) => Math.max(0, Math.min(0.5, (size - 24) / 80)).toFixed(3);
+
 function Glyph({ name, size }: { name: IconName; size: number }) {
   const [box, html] = PX[name] ?? PX.x;
   return (
     <svg width={size} height={size} viewBox={box} fill="currentColor" aria-hidden="true" focusable="false"
-      className={`ic px-ic ic-${name}`} data-m={MOTION[name]} dangerouslySetInnerHTML={{ __html: html }} />
+      className={`ic px-ic ic-${name}${size > 24 ? " px-heavy" : ""}`} style={size > 24 ? ({ ["--px-sw" as string]: pxWeight(size) } as React.CSSProperties) : undefined}
+      data-m={MOTION[name]} dangerouslySetInnerHTML={{ __html: html }} />
   );
 }
 

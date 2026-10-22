@@ -108,3 +108,11 @@ html:root:not(#_):not(#_) .trophy.fo-won { position: relative; }
   67% { opacity: 1; transform: translate(calc(var(--sx) * 2), -5px) scale(0.5); }
   100% { opacity: 0; transform: translate(calc(var(--sx) * 2), -5px) scale(0.5); }
 }
+
+/* Pixel icons drawn large get heavier lines: the same 1px shapes traced with a stroke in their own color (--px-sw, in
+   16-grid units, from icons.tsx pxWeight). Round joins keep the rounded pixel corners. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) svg.px-ic.px-heavy path {
+  stroke: currentColor !important; stroke-width: var(--px-sw, 0) !important; stroke-linejoin: round; paint-order: stroke;
+}
+/* The landing tagline's icon chips are sized by the type around them (about 48px), so they take the weight here */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-chip-ic svg.px-ic path { --px-sw: 0.35; }

@@ -417,7 +417,17 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </header>
 
-      {/* The banner under the hero (Zach, Oct 22, after northeasttomato.com's product strip): YOUR, over and over, in
+
+      {/* The matchup in its own section (Zach, Oct 22: the hero was too busy). The same Wire card, before kickoff, live
+          and final, with room around it. */}
+      <section className="ld-section ld2-fosec" aria-labelledby="ld-fo" ref={foSec}>
+        <SplitHead id="ld-fo" a="Your matchup," b="before, during, after." />
+        <FaceOffStates you={demo.you} partner={demo.mike.manager} />
+      </section>
+
+      {/* One screen: the YOUR banner over the stacked tagline (Zach, Oct 22) */}
+      <div className="ld2-yourscreen">
+      {/* The YOUR banner (Zach, Oct 22, after northeasttomato.com's product strip; moved down to sit over the tagline): YOUR, over and over, in
           Clash on lime. It slides with the page as you scroll and stops when you stop, so it never loops on its own. */}
       <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
         <div className="ld2-yband-track" ref={trackRef} aria-hidden="true">
@@ -429,14 +439,6 @@ export function Landing({ onLive, onDemo }: {
         </div>
         <p className="sr-only">Your Fantasy Source: your trades, your lineup, your waivers, your league.</p>
       </section>
-
-      {/* The matchup in its own section (Zach, Oct 22: the hero was too busy). The same Wire card, before kickoff, live
-          and final, with room around it. */}
-      <section className="ld-section ld2-fosec" aria-labelledby="ld-fo" ref={foSec}>
-        <SplitHead id="ld-fo" a="Your matchup," b="before, during, after." />
-        <FaceOffStates you={demo.you} partner={demo.mike.manager} />
-      </section>
-
       <section className="ld2-tagwrap" aria-label="What Source does">
         {/* Stacked caps with chips between the words (Zach, Oct 22, after maggie-app.com): headshots from the sample
             league and lime pixel-icon tiles. Each word and chip lights as it scrolls into the reading line. */}
@@ -449,6 +451,7 @@ export function Landing({ onLive, onDemo }: {
               </span>)}
         </p>
       </section>
+      </div>
 
       {/* The trade idea, large and in its own section (Zach, Oct 22: not in the phone, further down where trades are the
           subject). The same card as Overview, with the hero's depth: tilt on pointer, layers that lift apart. */}
