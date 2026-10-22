@@ -41,13 +41,6 @@ import { Trophy, WinCup } from "./Trophy";
 import { whenNear } from "../idle";
 import type { TeamNeeds } from "../engine";
 
-/** The tagline as stacked caps, with a chip after some words: a sample-league headshot (`p`, index into the hero's
- *  cast) or a pixel icon tile */
-const TAG_STACK: (string | { p: number } | { icon: "trade" | "send" | "group" })[] = [
-  "EVERY", "OFFER", { icon: "trade" }, "JUDGED", "BY", "BOTH", { p: 0 }, { p: 1 }, "STARTING", "LINEUPS,", "THEN", "PITCHED", { icon: "send" },
-  "AROUND", "WHAT", "THE", "OTHER", "MANAGER", { p: 2 }, "NEEDS.",
-];
-
 /** What follows YOUR in the banner under the hero */
 const YOURS = ["Fantasy Source", "trades", "lineup", "waivers", "league"];
 
@@ -334,16 +327,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld2-tagwrap" aria-label="What Source does">
-        {/* Stacked caps with chips between the words (Zach, Oct 22, after maggie-app.com): headshots from the sample
-            league and lime pixel-icon tiles. Each word and chip lights as it scrolls into the reading line. */}
-        <p className="ld2-tag ld2-tag-stack">
-          <span className="sr-only">{tagline}</span>
-          {TAG_STACK.map((s, i) => typeof s === "string"
-            ? <span key={i} aria-hidden="true">{s} </span>
-            : <span key={i} className={`ld2-chip${"icon" in s ? " ld2-chip-ic" : ""}`} aria-hidden="true">
-                {"icon" in s ? <Icon name={s.icon} size={64} /> : cast[s.p] ? <Avatar p={cast[s.p]} size={96} badge={false} /> : null}
-              </span>)}
-        </p>
+        <p className="ld2-tag">{tagline.split(" ").map((w, i) => <span key={i}>{w} </span>)}</p>
       </section>
 
       <LandingSteps trade={demo.trade} />

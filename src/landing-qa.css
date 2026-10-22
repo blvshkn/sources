@@ -218,26 +218,3 @@ html:root:not(#_):not(#_) .ld2-yband-item {
 html:root:not(#_):not(#_) .ld2-yband-item b { font-weight: 600; margin-right: 0.22em; letter-spacing: -0.04em; }
 /* A pixel-square dot between phrases, in the 16-bit spirit of the icons */
 html:root:not(#_):not(#_) .ld2-yband-dot { display: inline-block; width: 0.16em; height: 0.16em; margin: 0 0.55em; background: currentColor; border-radius: 0.03em; }
-
-/* The tagline as stacked caps with chips (Landing.tsx TAG_STACK, Zach Oct 22 after maggie-app.com). Centered Clash
-   Semibold, tight leading; a chip sits in the line at cap height: a sample-league headshot or a lime pixel-icon tile.
-   Words light as they reach the reading line (the existing observer); a chip pops in with stepped frames as it lights. */
-html:root:not(#_):not(#_):not(#_) .ld2-tag.ld2-tag-stack {
-  max-width: 15ch; margin: 0 auto; text-align: center; text-wrap: balance;
-  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
-  font-size: clamp(2.5rem, 7.4vw, 6.75rem); line-height: 0.92; letter-spacing: -0.035em;
-}
-html:root:not(#_):not(#_) .ld2-chip {
-  display: inline-flex; align-items: center; justify-content: center; vertical-align: 0.02em;
-  width: 1.3em; height: 0.74em; margin: 0 0.16em 0 0; border-radius: 0.2em; overflow: hidden;
-  background: var(--surface-2, #202322); box-shadow: inset 0 0 0 0.03em color-mix(in srgb, var(--ink) 14%, transparent);
-  color: var(--ink);
-}
-html:root:not(#_):not(#_) .ld2-chip .av { width: 100% !important; height: 100% !important; border-radius: 0 !important; background: transparent !important; }
-html:root:not(#_):not(#_) .ld2-chip .av-photo { width: 100% !important; height: 135% !important; object-fit: cover; object-position: 50% 12%; }
-html:root:not(#_):not(#_) .ld2-chip-ic { background: #D8F24A; color: #0D0E0D; box-shadow: none; }
-html:root:not(#_):not(#_):not(#_) .ld2-chip-ic svg { width: 0.46em !important; height: 0.46em !important; }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip { transform: translateY(0.18em) scale(0.6); opacity: 0; transition: transform calc(700ms * var(--mo, 1)) var(--ease-fluid), opacity calc(500ms * var(--mo, 1)) var(--ease-fluid); }
-  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip.on { transform: none; opacity: 1; }
-}
