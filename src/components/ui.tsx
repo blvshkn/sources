@@ -119,19 +119,53 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
     row.scrollTo({ left: Math.max(0, left), behavior: first.current || reduce ? ("instant" as ScrollBehavior) : "smooth" });
     first.current = false;
   }, [value]);
+  // Sticky on scroll (Zach, Oct 22): page tabs stay put under the phone top bar, or at the top on tablet and desktop.
+  // Measures where to stick, how far the backing band reaches to the page column's edges, and whether it's stuck.
+  useEffect(() => {
+    const el = ref.current;
+    if (inSheet || !el || el.parentElement?.className.split(" ").indexOf("main-inner") === -1) return;
+    el.classList.add("pt-sticky");
+    const root = document.documentElement;
+    let io: IntersectionObserver | null = null;
+    const measure = () => {
+      const bar = document.querySelector<HTMLElement>(".topbar");
+      const barH = bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().height : 0;
+      const main = el.closest<HTMLElement>(".main") ?? el.parentElement!;
+      const mr = main.getBoundingClientRect(), pr = el.parentElement!.getBoundingClientRect();
+      el.style.setProperty("--pt-top", `${Math.round(barH)}px`);
+      el.style.setProperty("--pt-l", `${Math.max(0, Math.round(pr.left - mr.left))}px`);
+      el.style.setProperty("--pt-r", `${Math.max(0, Math.round(mr.right - pr.right))}px`);
+      io?.disconnect();
+      const stickAt = parseFloat(getComputedStyle(el).top) || 0;
+      io = new IntersectionObserver(([e]) => {
+        const stuck = e.intersectionRatio < 1 && e.boundingClientRect.top <= stickAt + 1;
+        el.classList.toggle("is-stuck", stuck); root.toggleAttribute("data-tabs-stuck", stuck);
+      }, { rootMargin: `${-(stickAt + 1)}px 0px 0px 0px`, threshold: [1] });
+      io.observe(el);
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(document.body);
+    return () => { ro.disconnect(); io?.disconnect(); root.removeAttribute("data-tabs-stuck"); };
+  }, [inSheet]);
   const pick = (v: T) => {
     if (v === value) return;
     if (inSheet) { onChange(v); return; }
     const el = ref.current; const main = document.getElementById("main");
     if (!el || !main) { onChange(v); return; }
-    const top = el.getBoundingClientRect().top;
+    // Stuck: measure from where the tabs sit in the page, not where they're pinned, and land the new section's top
+    // right under them
+    const stuck = el.classList.contains("is-stuck");
+    const stickAt = parseFloat(getComputedStyle(el).top) || 0;
+    const prev = el.previousElementSibling as HTMLElement | null;
+    const gap = parseFloat(getComputedStyle(el.parentElement!).rowGap) || 0;
+    const top = stuck && prev ? prev.getBoundingClientRect().bottom + gap : el.getBoundingClientRect().top;
     const docTop = top + window.scrollY;
     const bar = (document.querySelector(".topbar, header.top") as HTMLElement | null)?.getBoundingClientRect().bottom ?? 0;
     // Enough room below the tabs that a short section can't pull the page up
     main.style.minHeight = `${Math.ceil(docTop - main.getBoundingClientRect().top - window.scrollY + window.innerHeight)}px`;
     onChange(v);
     requestAnimationFrame(() => {
-      const target = top < bar ? docTop - bar - 8 : docTop - top;
+      const target = stuck ? docTop - stickAt : top < bar ? docTop - bar - 8 : docTop - top;
       window.scrollTo({ top: Math.max(0, target), behavior: "instant" as ScrollBehavior });
     });
   };

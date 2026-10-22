@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
@@ -225,8 +225,32 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
   const detail = injuryDetail;
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [lockLine(), DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
+  // Key dates goes under whichever column is shorter (Zach, Oct 22), so the two sides end close to even instead of
+  // leaving an empty block under Game day. One column (phones): it stays last.
+  const colsRef = useRef<HTMLDivElement>(null);
+  const [datesLeft, setDatesLeft] = useState(false);
+  useLayoutEffect(() => {
+    const cols = colsRef.current; if (!cols) return;
+    const place = () => {
+      const main = cols.querySelector<HTMLElement>(".cc-main"), side = cols.querySelector<HTMLElement>(".cc-side");
+      const kd = cols.querySelector<HTMLElement>(".cc-dates");
+      if (!main || !side || !kd || getComputedStyle(cols).display !== "grid") { setDatesLeft(false); return; }
+      const gap = parseFloat(getComputedStyle(main).rowGap) || 0, k = kd.offsetHeight + gap;
+      const inLeft = main.contains(kd);
+      const mainH = main.offsetHeight - (inLeft ? k : 0), sideH = side.offsetHeight - (inLeft ? 0 : k);
+      setDatesLeft(mainH < sideH);
+    };
+    place();
+    const ro = new ResizeObserver(place); ro.observe(cols);
+    cols.querySelectorAll(".cc-col").forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, []);
+  const keyDates = dates.length > 0 && <section className="card wk cc-dates" aria-label="Key dates">
+        <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
+        {dates.map((d) => <div key={d} className="wk-date"><Icon name="clock" size={16} /><span>{d}</span></div>)}
+      </section>;
   return (
-    <div className="cc-cols">
+    <div className="cc-cols" ref={colsRef}>
       <div className="cc-col cc-main">
       <section className="card wk cc-days" aria-label="When your starters play">
         <div className="wk-head"><h2 className="section-title">Game day</h2><span className="tiny muted">Your starters</span></div>
@@ -243,6 +267,7 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
           </div>
         ))}
       </section>
+      {datesLeft && keyDates}
       </div>
 
       <div className="cc-col cc-side">
@@ -258,11 +283,7 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
         ))}
       </section>
 
-
-      {dates.length > 0 && <section className="card wk" aria-label="Key dates">
-        <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
-        {dates.map((d) => <div key={d} className="wk-date"><Icon name="clock" size={16} /><span>{d}</span></div>)}
-      </section>}
+      {!datesLeft && keyDates}
       </div>
     </div>
   );
