@@ -385,3 +385,13 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows 
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask { align-items: flex-start; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask .ld2-faq-ask-mark { display: grid; place-items: center; height: 24px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask > svg:last-child { align-self: center; }
+
+/* Phones: a tighter hero so the phones peek in at the bottom of the first screen (Zach, Oct 22) */
+@media (max-width: 599px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld-hero.ld2-hero { padding-top: 4px; row-gap: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-copy { gap: 16px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sub { font-size: 1rem !important; line-height: 1.5rem !important; margin: 0 0 12px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-help { margin-top: 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-link { margin-top: 0; min-height: 40px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .hp-stage { margin-top: 24px; }
+}
