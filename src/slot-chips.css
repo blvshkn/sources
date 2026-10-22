@@ -9,7 +9,9 @@ html:root:not(#_):not(#_) .lu-slot {
   box-shadow: none !important;
 }
 html:root:not(#_):not(#_) .lu-slot.s-FLEX .lu-wrt { letter-spacing: 0.18em; }
-html:root:not(#_):not(#_) .lu-slot.s-BN, html:root:not(#_):not(#_) .lu-slot.s-TX { background: transparent !important; }
+/* Neutral chips (Flex WRT, superflex, bench, taxi, IR) get a visible fill, ink at 7%, so they read as pills
+   like the position chips. Their text color stays as it was. */
+html:root:not(#_):not(#_) .lu-slot:is(.s-FLEX, .s-SF, .s-BN, .s-TX, .s-IR) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; }
 
 /* The chip column follows the chip. Phones under 360 keep their tighter gap. */
 html:root:not(#_):not(#_) .lu-row { grid-template-columns: 44px 44px minmax(0, 1fr) auto; }
