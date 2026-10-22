@@ -1,0 +1,8 @@
+/* Tooltip triggers on touch screens (Zach): pressing one used to select its text and raise iOS's Copy / Look Up menu.
+   Triggers can't be selected or long-press called out, and a tap no longer flashes the gray tap highlight. Labels
+   with a tip open it on a tap (Tooltip.tsx). Only triggers are affected; other text stays selectable. */
+@media (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_) .tt-wrap > :first-child, html:root:not(#_):not(#_):not(#_) [data-tt] {
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  }
+}

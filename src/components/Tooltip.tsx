@@ -4,8 +4,9 @@ import { createPortal } from "react-dom";
 /**
  * Branded tooltip. Hover opens after a short delay, keyboard focus opens right away, and once one tip
  * is showing its neighbours open with no delay (skip-delay). Escape, blur and mouseleave close it.
- * On touch, a long press shows it while the finger stays down; release or a tap elsewhere hides it, and the press never
- * reaches the card or button underneath. Leaving fades it out. The tip lives in a fixed layer on <body>, so cards never clip it.
+ * On touch, a plain label opens its tip on a tap and keeps it up until another tap, a tap elsewhere or a scroll. A tip
+ * inside something tappable (a card button, a link) opens on a long press instead, so the tap stays with the card;
+ * that press never reaches the card. Triggers can't be text-selected on touch (tooltip-touch.css). Leaving fades it out. The tip lives in a fixed layer on <body>, so cards never clip it.
  */
 
 const DELAY = 400;
@@ -76,6 +77,15 @@ export function Tooltip({ content, children, side = "top", focusable = false, de
   const touch = useRef(false);
   const openRef = useRef(false);
   openRef.current = open && !closing;
+  const start = useRef<{ x: number; y: number; at: number } | null>(null);
+  /** True when the trigger is plain text: not a control itself and not inside one. */
+  const tapMode = () => {
+    const el = triggerOf(wrap.current);
+    if (!el) return false;
+    // .tap and .mc-press are tappable rows and cards built from divs
+    const CTRL = "button, a[href], [role='button'], [role='tab'], label, summary, input, select, textarea, .tap, .mc-press";
+    return !el.matches(CTRL) && !wrap.current?.parentElement?.closest(CTRL);
+  };
 
   const gone = useRef(() => {});
   gone.current = () => { window.clearTimeout(fade.current); setClosing(false); setOpen(false); };
@@ -148,9 +158,13 @@ export function Tooltip({ content, children, side = "top", focusable = false, de
       onPointerLeave={(e) => { if (e.pointerType === "mouse") close.current(); }}
       onPointerDown={(e) => {
         if (e.pointerType === "mouse") { close.current(true); return; }
-        // Touch and pen: hold to read. The tip shows after the long press and stays while the finger is down.
-        pressed.current = false;
         touch.current = true;
+        start.current = { x: e.clientX, y: e.clientY, at: Date.now() };
+        // A plain label (jargon, a figure that isn't inside a button or card link) opens on a tap and stays until
+        // the next tap or a scroll (Zach: holding selected the text on iPhone). A tip inside something tappable keeps
+        // the long press, so the tap still belongs to the card or button around it.
+        if (tapMode()) return;
+        pressed.current = false;
         window.clearTimeout(timer.current);
         timer.current = window.setTimeout(() => { pressed.current = true; instant.current = false; reveal(); }, LONG_PRESS);
       }}
@@ -158,6 +172,12 @@ export function Tooltip({ content, children, side = "top", focusable = false, de
         if (e.pointerType === "mouse") return;
         touch.current = false;
         window.clearTimeout(timer.current);
+        if (tapMode()) {
+          const st = start.current;
+          const moved = !st || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 10;
+          if (!moved) { if (openRef.current) close.current(); else { instant.current = false; reveal(); } }
+          return;
+        }
         if (pressed.current) close.current();
       }}
       onPointerCancel={() => { touch.current = false; window.clearTimeout(timer.current); if (pressed.current) { pressed.current = false; close.current(); } }}
