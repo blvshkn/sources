@@ -257,3 +257,19 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0; }
+
+/* ---------- The message phone as the 3D iPhone (Landing.tsx smsPhone, phone3d.ts) ----------
+   The model's proportions and glass; the canvas sits under the screen. Until the render is ready the phone waits out
+   of sight; without WebGL the screen shows with a plain dark edge. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d { aspect-ratio: 78.968 / 163.353; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d .ld2-sms {
+  inset: 3.115cqi 3.761cqi 3.047cqi; border-radius: 11.4cqi; clip-path: inset(0 round 11.4cqi); z-index: 3;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-try { opacity: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d:is(.gl-try, .gl-on) .ph-chrome { visibility: hidden; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-on { animation: hp-gl-in calc(700ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-off .ld2-sms { box-shadow: 0 0 0 3.5cqi #1E1E20; }
+
+/* The landing's deal readout holds its full width from the first frame, and its bars are drawn full, not filled in */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv, .dv-main, .dv-read, .dv-rows) { width: 100%; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-accbar i) { transition: none !important; animation: none !important; }

@@ -1,0 +1,20 @@
+/* The cursor as a light on the tagline's words (Landing.tsx .ld2-tag-stack, Zach Oct 22: "the gradient needs to be on
+   the words here", "your cursor is the light that moves the gradient on the text and changes the gradients direction
+   smoothly"). The words take the display headings' white-to-gray fill (#FFFFFF to #9B9B9B, clipped to the text); the
+   chips keep their own look. useCursorLight.ts sets the variables:
+     --tl-a        the gradient's angle; 90deg (white on the left, like .ld2-h1) at rest and on touch
+     --tl-k        how far the white runs toward the pointer before it fades (0 to 45)
+     --tl-w/--tl-h the paragraph's size, set on the paragraph
+     --tl-ox/--tl-oy each word's offset inside the paragraph, set on the word
+   Every word paints a field the size of the whole paragraph, shifted back by its own offset, so the light reads as one
+   continuous gradient across all the words. The dim/lit opacity (landing-type.css) still applies on top. */
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack > span:not(.ld2-chip):not(.sr-only) {
+    background-image: linear-gradient(var(--tl-a, 90deg), #FFFFFF calc(var(--tl-k, 0) * 1%), #9B9B9B 100%);
+    background-repeat: no-repeat;
+    background-size: var(--tl-w, 100%) var(--tl-h, 100%);
+    background-position: calc(var(--tl-ox, 0px) * -1) calc(var(--tl-oy, 0px) * -1);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+}

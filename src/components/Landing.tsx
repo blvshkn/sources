@@ -6,6 +6,7 @@ import { activeTags, allNeeds, applyFormat, ask, DEFAULT_FORMAT, findTrades, fmt
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Icon, PosBadge } from "./ui";
 import { Scoreboard } from "./Scoreboard";
+import { useCursorLight } from "./useCursorLight";
 import { TradeIdea } from "./TradeIdea";
 import { TradeCompare } from "./TradeCompare";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
@@ -32,7 +33,7 @@ import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
-import { AcceptCell, DealRows, DealVerdict, PtsCell as DealPts, dealWhy } from "./Trade";
+import { AcceptCell, DealRows, PtsCell as DealPts, dealWhy } from "./Trade";
 import { acceptance, verdict } from "../engine";
 import type { Team } from "../data";
 import { SplitHead, useSplitHeads } from "./SplitHead";
@@ -186,6 +187,9 @@ export function Landing({ onLive, onDemo }: {
   // side like cloth in the wind and settles at the top, then the tagline lights word by word in the middle; both
   // leave together at the end. Everything here is driven by the scroll, so nothing moves while you're still.
   const yourRef = useRef<HTMLDivElement>(null);
+  // The tagline's words carry the display gradient, lit by the cursor (Zach, Oct 22; useCursorLight.ts)
+  const tagRef = useRef<HTMLParagraphElement>(null);
+  useCursorLight(tagRef);
   useEffect(() => {
     const el = yourRef.current;
     if (!el) return;
@@ -249,6 +253,26 @@ export function Landing({ onLive, onDemo }: {
       .then((p) => { if (!alive) { p.dispose(); return; } gone = p.dispose; window.clearTimeout(give); setGl("on"); p.kick(1800); })
       .catch(() => { if (alive) setGl("off"); });
     return () => { alive = false; window.clearTimeout(give); gone?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // The message phone in "Pitch it where you talk" is the same 3D iPhone (Zach, Oct 22: "This should be the rendered
+  // phone"), face on. It loads once the cell is near, and waits out of sight until it has drawn.
+  const smsPhone = useRef<HTMLDivElement>(null);
+  const [smsGl, setSmsGl] = useState<"try" | "on" | "off">(() => (typeof WebGL2RenderingContext !== "undefined" ? "try" : "off"));
+  useEffect(() => {
+    const el = smsPhone.current;
+    if (!el || smsGl !== "try") return;
+    let alive = true, gone: (() => void) | null = null, give = 0;
+    const io = new IntersectionObserver((es) => {
+      if (!es.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      give = window.setTimeout(() => { if (alive) setSmsGl("off"); }, 12000);
+      const body = el.querySelector<HTMLElement>(".ph-chrome")!;
+      import("./phone3d").then(({ mountPhones3D }) => mountPhones3D(el, [body], [null], [1]))
+        .then((p) => { if (!alive) { p.dispose(); return; } gone = p.dispose; window.clearTimeout(give); setSmsGl("on"); p.kick(600); })
+        .catch(() => { if (alive) setSmsGl("off"); });
+    }, { rootMargin: "600px 0px" });
+    io.observe(el);
+    return () => { alive = false; io.disconnect(); window.clearTimeout(give); gone?.(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
@@ -547,7 +571,7 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld2-tagwrap" aria-label="What Source does">
         {/* Stacked caps with chips between the words (Zach, Oct 22, after maggie-app.com): headshots from the sample
             league and lime pixel-icon tiles. Each word and chip lights as it scrolls into the reading line. */}
-        <p className="ld2-tag ld2-tag-stack">
+        <p className="ld2-tag ld2-tag-stack" ref={tagRef}>
           <span className="sr-only">{tagline}</span>
           {TAG_STACK.map((s, i) => typeof s === "string"
             ? <span key={i} aria-hidden="true">{s} </span>
@@ -611,7 +635,7 @@ export function Landing({ onLive, onDemo }: {
             <article className="card ld-cell ld2-reveal ld2-msg-cell">
               <h3>Pitch it where you talk</h3>
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
-              <div className="ld2-phone">
+              <div className={`ld2-phone ld2-phone3d gl-${smsGl}`} ref={smsPhone}>
                 <PhoneChrome />
                 <div className="ld2-sms">
                   <div className="ph-status" aria-hidden="true">
@@ -1055,7 +1079,8 @@ function LandingDeal({ trade, them, onOpen, onPitch }: { trade: Trade; them: Tea
         </div>
         <div className="dv">
           <div className="dv-main">
-            <div className="dv-read"><DealVerdict label={v.label} tone={v.tone} line={dealWhy(v.label, trade.youDelta, trade.adjGive, trade.adjGet, them.manager)} /></div>
+            {/* Already written (Zach, Oct 22: "it should already be filled"): no typing in, so nothing below it moves */}
+            <div className="dv-read"><div className={`dv-verdict ${v.tone === "warn" ? "neutral" : v.tone}`}><b>{v.label}</b><p>{dealWhy(v.label, trade.youDelta, trade.adjGive, trade.adjGet, them.manager)}</p></div></div>
             <DealRows
               cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
               rows={[

@@ -79,6 +79,7 @@ import "./sheet.css";
 import "./scroll.css";
 import "./icon-center.css";
 import "./nav.css";
+import "./tagline-light.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
