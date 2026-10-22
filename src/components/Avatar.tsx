@@ -1,12 +1,15 @@
 import { createContext, useContext, useState } from "react";
 import { Player } from "../data";
-import { sleeperId, teamColors, useJerseys } from "../jersey";
+import { espnId, sleeperId, teamColors, useJerseys } from "../jersey";
 import { avatarSrc } from "../sleeper";
 
 // Headshots and team marks come from Sleeper's image CDN, keyed by the same ids as the API.
 const headshot = (id: string) => `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`;
 /** Sleeper's full-size headshot, for big placements (the player header); falls back to the thumb if it fails */
 const headshotHi = (id: string) => `https://sleepercdn.com/content/nfl/players/${id}.jpg`;
+/** ESPN's official headshot: a transparent cutout, framed the same for every player and sharper than Sleeper's (Zach).
+ *  Loaded from ESPN like the team marks; Sleeper's photo is the fallback, then initials. */
+const headshotEspn = (id: string) => `https://a.espncdn.com/i/headshots/nfl/players/full/${id}.png`;
 export const teamLogo = (team: string) => `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png`;
 /** ESPN's 500px team marks, for big placements (the player header) where Sleeper's small logo goes soft. ESPN spells
  *  Washington "wsh"; every other code matches. Callers fall back to teamLogo if it fails to load. */
@@ -26,17 +29,20 @@ export function Avatar({ p, size = 40, ring, badge = true, cut = false }: { p: P
   const photos = useContext(AvatarPhotos);
   const [failed, setFailed] = useState(false);
   const [hiFailed, setHiFailed] = useState(false);
+  const [espnFailed, setEspnFailed] = useState(false);
   const hi = (cut || size >= 80) && !hiFailed;
   const [logoFailed, setLogoFailed] = useState(false);
   const [c1, c2] = teamColors(p.nfl);
   const team = isTeam(p.id);
   const sid = team ? undefined : sleeperId(p);
-  const showPhoto = photos && !team && sid && !failed;
+  const eid = team || espnFailed ? undefined : espnId(p);
+  const showPhoto = photos && !team && (eid || (sid && !failed));
   const showTeamMark = photos && team && !logoFailed;
   return (
     <span className={`av${ring ? ` ring-${ring}` : ""}${team ? " av-team" : ""}${cut && showPhoto ? " av-cut" : ""}`} style={{ width: size, height: size, ["--team" as string]: c1 }} role="img" aria-label={team ? `${p.nfl} defense` : p.name}>
       {showPhoto ? (
-        <img className="av-photo" src={hi ? headshotHi(sid!) : headshot(sid!)} alt="" loading="lazy" decoding="async" width={size} height={size} onError={() => (hi ? setHiFailed(true) : setFailed(true))} />
+        <img className="av-photo" src={eid ? headshotEspn(eid) : hi ? headshotHi(sid!) : headshot(sid!)} alt="" loading="lazy" decoding="async" width={size} height={size}
+          onError={() => (eid ? setEspnFailed(true) : !sid ? setFailed(true) : hi ? setHiFailed(true) : setFailed(true))} />
       ) : showTeamMark ? (
         <img className="av-logo" src={teamLogo(p.nfl)} alt="" loading="lazy" decoding="async" onError={() => setLogoFailed(true)} />
       ) : (
