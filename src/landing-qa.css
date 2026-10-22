@@ -225,18 +225,19 @@ html:root:not(#_):not(#_) .ld2-yband-dot { display: inline-block; width: 0.16em;
 html:root:not(#_):not(#_):not(#_) .ld-h2.ld2-split {
   --q: calc(1 - var(--p, 1));
   display: flex; flex-direction: column; align-items: flex-start; gap: 0; max-width: none; text-wrap: balance;
-  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
-  font-size: clamp(2.6rem, 7vw, 6.5rem); line-height: 0.98; letter-spacing: -0.04em;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500;
+  font-size: clamp(2.6rem, 7vw, 6.5rem); line-height: 1; letter-spacing: -0.02em;
 }
 html:root:not(#_):not(#_) .ld2-split > span { display: block; will-change: transform; }
-html:root:not(#_):not(#_) .ld2-split-a {
-  color: color-mix(in srgb, var(--ink) calc(30% + 70% * var(--p, 1)), transparent);
-  transform: translate3d(calc(var(--q) * var(--q) * 22vw), 0, 0);
+/* Same treatment as the closing heading (.ld2-h1): a white-to-gray gradient across the words, in place of a white
+   line over a gray one. Each line carries the gradient; scroll brings both up from dim. */
+html:root:not(#_):not(#_) .ld2-split > span {
+  background: linear-gradient(90deg, #FFFFFF, #9B9B9B); -webkit-background-clip: text; background-clip: text; color: transparent;
+  opacity: calc(0.3 + 0.7 * var(--p, 1));
 }
-html:root:not(#_):not(#_) .ld2-split-b {
-  margin-left: 0.55em; color: color-mix(in srgb, var(--muted) calc(30% + 70% * var(--p, 1)), transparent);
-  transform: translate3d(calc(var(--q) * var(--q) * -22vw), 0, 0);
-}
+html:root:not(#_):not(#_) .ld2-split-a { transform: translate3d(calc(var(--q) * var(--q) * 22vw), 0, 0); }
+html:root:not(#_):not(#_) .ld2-split-b { margin-left: 0.55em; transform: translate3d(calc(var(--q) * var(--q) * -22vw), 0, 0); }
+:root[data-theme="light"] .ld2-split > span { background-image: linear-gradient(90deg, #000000, #666666) !important; }
 /* The FAQ heading sits in a narrow side column: same treatment, smaller */
 html:root:not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.4rem, 4.6vw, 4.25rem); }
 @media (max-width: 600px) {
