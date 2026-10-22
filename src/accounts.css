@@ -24,10 +24,10 @@ html:root:not(#_):not(#_) .acc-addrow {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px 8px 8px;
   border: 1px dashed rgba(244, 246, 242, 0.16); border-radius: 16px; background: none;
   color: var(--ink); text-align: left; font: inherit; cursor: pointer;
-  transition: background-color 120ms ease-out, border-color 120ms ease-out, transform 120ms ease-out;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 @media (hover: hover) { html:root:not(#_):not(#_) .acc-addrow:hover { background: rgba(244, 246, 242, 0.04); border-color: rgba(216, 242, 74, 0.45); } }
-html:root:not(#_):not(#_) .acc-addrow:active { transform: scale(0.99); }
+html:root:not(#_):not(#_) .acc-addrow:active { transform: scale(0.99); transition-duration: var(--dur-press); }
 html:root:not(#_):not(#_) .acc-addrow:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 html:root:not(#_):not(#_) .acc-plus {
   flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;

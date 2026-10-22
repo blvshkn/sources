@@ -175,7 +175,7 @@ html:root:not(#_):not(#_) .nxr-g.open .nxr-chev svg { transform: rotate(-90deg);
 @media (hover: hover) and (pointer: fine) { html:root:not(#_):not(#_) .nxr-head:has(.nxr-tog:hover) .nxr-chev { color: var(--ink); } }
 
 /* Body: grows from 0fr to 1fr, so opening only pushes what's below. Hidden content leaves the tab order once closed. */
-html:root:not(#_):not(#_) .nxr-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms var(--st-ease, ease-out); }
+html:root:not(#_):not(#_) .nxr-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--dur-base) var(--ease-out); }
 html:root:not(#_):not(#_) .nxr-g.open > .nxr-body { grid-template-rows: 1fr; }
 html:root:not(#_):not(#_) .nxr-inner { min-height: 0; overflow: hidden; visibility: hidden; transition: visibility 0s linear 220ms; }
 html:root:not(#_):not(#_) .nxr-g.open .nxr-inner { visibility: visible; transition-delay: 0s; }

@@ -27,9 +27,9 @@ html:root:not(#_) .wv3-watching:focus-visible { outline: 2px solid var(--lime); 
 /* Watch toggle: sits over the old rank column, outside the row button so it works on every row */
 html:root:not(#_) .wv { position: relative; }
 html:root:not(#_) .wv-row > .wv-rank:empty { min-height: 1px; }
-html:root:not(#_) .wv3-watch { position: absolute; left: 9px; top: 16px; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--faint); cursor: pointer; transition: background-color 160ms ease, color 160ms ease; }
+html:root:not(#_) .wv3-watch { position: absolute; left: 9px; top: 16px; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--faint); cursor: pointer; transition: background-color 160ms ease, color 160ms ease, transform var(--dur-fast) var(--ease-out); }
 @media (hover: hover) { html:root:not(#_) .wv3-watch:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
-html:root:not(#_) .wv3-watch:active { transform: scale(0.92); }
+html:root:not(#_) .wv3-watch:active { transform: scale(0.94); transition-duration: var(--dur-press); }
 html:root:not(#_) .wv3-watch:focus-visible { outline: 2px solid var(--lime); outline-offset: 0; }
 html:root:not(#_) .wv3-watch[aria-pressed="true"] { color: var(--lime); }
 html:root:not(#_) .wv3-watch[aria-pressed="true"] svg path { fill: currentColor; }

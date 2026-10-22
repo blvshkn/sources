@@ -452,12 +452,15 @@ p { margin: 0; }
 
 /* ---------- Apple-style feel: instant press feedback, materials, sheet drag ---------- */
 .btn, .pick, .partner, .nav button, .tabbar button, .seg button {
-  transition: transform 120ms ease-out, background-color 120ms ease-out;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 .btn:active, .partner:active, .seg button:active { transform: scale(0.97); }
 .pick:active, .nav button:active, .tabbar button:active { transform: scale(0.985); }
+/* Presses land in 100ms; the release eases back on the 160ms house curve */
+.btn:active, .pick:active, .partner:active, .nav button:active, .tabbar button:active, .seg button:active, .chip-btn:active, .partner-card:active, .method:active, .ob-option:active { transition-duration: var(--dur-press); }
+html:root:not(#_) :is(.page-league, .wk-row, .sr-main, .mu-mine, .mu-opt, .lsw-row):active { transition-duration: var(--dur-press); }
 .page-title { letter-spacing: -0.005em; line-height: 0.92; }
 .nudge h3 { letter-spacing: -0.01em; }
 .brand-name { letter-spacing: -0.01em; }
@@ -528,7 +531,7 @@ p { margin: 0; }
 .coach { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--stamp-soft); }
 .followup { border-left: 3px solid var(--wr); }
 .chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip-btn { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 0.8125rem; font-weight: 600; transition: transform 120ms ease-out; }
+.chip-btn { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 0.8125rem; font-weight: 600; transition: transform var(--dur-fast) var(--ease-out); }
 .chip-btn:active { transform: scale(0.96); }
 .chip-btn.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
 .chip-btn.ghost { border-color: transparent; color: var(--muted); }
@@ -547,7 +550,7 @@ p { margin: 0; }
 /* league */
 .team-card.is-focus { outline: 2px solid var(--ink); outline-offset: -1px; }
 .partners { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.partner-card { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); transition: transform 120ms ease-out; }
+.partner-card { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); transition: transform var(--dur-fast) var(--ease-out); }
 .partner-card:active { transform: scale(0.98); }
 .partner-card:hover { border-color: var(--faint); }
 .partner-rank { font: 800 1.625rem/1 var(--font-display); color: var(--stamp); }
@@ -662,7 +665,7 @@ p { margin: 0; }
 .pitch-card .delta.up { color: #4ade80; } .pitch-card .delta.down { color: #f87171; }
 .pc-why { font-size: 0.75rem; color: #8d94a3; }
 .send-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.method { display: flex; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); transition: transform 120ms ease-out; }
+.method { display: flex; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); transition: transform var(--dur-fast) var(--ease-out); }
 .method:active { transform: scale(0.98); }
 .method small { display: block; font-size: 0.6875rem; color: var(--muted); }
 .method b { font-size: 0.8125rem; }
@@ -687,7 +690,7 @@ p { margin: 0; }
 .ob-input input { flex: 1; min-width: 0; border: 0; background: none; height: 40px; outline: none; }
 .ob-others { display: flex; gap: 8px; flex-wrap: wrap; }
 .ob-others .btn { gap: 6px; }
-.ob-option { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); transition: transform 120ms ease-out; width: 100%; }
+.ob-option { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); transition: transform var(--dur-fast) var(--ease-out); width: 100%; }
 .ob-option:active:not(:disabled) { transform: scale(0.98); }
 .ob-option.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .ob-option:disabled { opacity: 0.5; cursor: default; }
@@ -1735,7 +1738,7 @@ p, .page-sub { max-width: 65ch; }
 /* League team cards: a quiet text action instead of a full-width button on every card */
 .team-trade { justify-self: start; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--ink); font: 500 0.875rem/1 var(--font-body); cursor: pointer; }
 .team-trade svg { color: var(--muted); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
-@media (hover: hover) { .team-trade:hover svg { transform: translateX(2px); } }
+@media (hover: hover) and (pointer: fine) { .team-trade:hover svg { transform: translateX(2px); } }
 .team-trade:focus-visible { outline: 2px solid var(--lime, var(--you)); outline-offset: 2px; border-radius: 4px; }
 
 /* ==== Gradients with meaning ===================================================
@@ -1913,8 +1916,7 @@ body::after {
     left: 12px !important; right: 12px !important; bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
     padding: 6px !important; border-radius: 20px !important;
     border: 1px solid var(--line) !important;
-    background: color-mix(in srgb, var(--surface) 86%, transparent) !important;
-    backdrop-filter: blur(16px) saturate(160%) !important; -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+    /* (glass: one definition, nav.css .tabbar.ix) */
     box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
     isolation: isolate;
   }
@@ -2069,8 +2071,7 @@ body::after {
     display: grid; grid-template-columns: repeat(5, 1fr);
     padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)) !important;
     border-radius: 0 !important; border: 0 !important; border-top: 1px solid var(--line) !important; box-shadow: none !important;
-    background: color-mix(in srgb, var(--bg) 92%, transparent) !important;
-    backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
+    /* (glass: one definition, nav.css .tabbar.ix) */
   }
   :root:not(#_) .tabbar.ix::before { display: none !important; }
   :root:not(#_) .ix-rule {
@@ -2078,7 +2079,7 @@ body::after {
     width: calc((100% - 2 * max(8px, env(safe-area-inset-left, 0px))) / 5); height: 2px;
     display: flex; justify-content: center; pointer-events: none;
     transform: translateX(calc(var(--i, 0) * 100%));
-    transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1); opacity: 0;
+    transition: transform 180ms var(--ease-out); opacity: 0;
   }
   :root:not(#_) .ix-rule::after { content: ""; width: 28px; height: 2px; border-radius: 0 0 2px 2px; background: rgb(var(--tab-rgb)); transition: background-color 240ms ease; }
   :root:not(#_) .tabbar.ix[data-on] .ix-rule { opacity: 1; }
@@ -2172,7 +2173,7 @@ body::after {
 :root:not(#_) .nav-ix button:active { transform: scale(0.97); }
 :root:not(#_) .nav-ix button:focus-visible { outline: 2px solid rgb(var(--tab-rgb)); outline-offset: -2px; }
 .nav-rule { position: absolute; left: -12px; top: 10px; width: 3px; height: 24px; border-radius: 0 3px 3px 0; background: rgb(var(--tab-rgb)); opacity: 0; pointer-events: none;
-  transform: translateY(calc(var(--i, 0) * 46px)); transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1), background-color 240ms ease, opacity 200ms ease; }
+  transform: translateY(calc(var(--i, 0) * 46px)); transition: transform 180ms var(--ease-out), background-color 180ms ease, opacity 180ms ease; }
 .nav-main[data-on] .nav-rule { opacity: 1; }
 .nav-main[data-i="1"] { --i: 1; } .nav-main[data-i="2"] { --i: 2; } .nav-main[data-i="3"] { --i: 3; } .nav-main[data-i="4"] { --i: 4; }
 @media (prefers-reduced-motion: reduce) { .nav-rule, :root:not(#_) .nav-ix .ix-w::before { transition: none !important; } }
@@ -2578,8 +2579,8 @@ html:root:not(#_) .tp-facts { flex-direction: row; flex-wrap: wrap; }
 html:root:not(#_) .tp-facts li { width: auto; }
 /* Saved notes can be removed in one tap, no confirmation */
 html:root:not(#_) .saved-tag { padding: 0 0 0 12px; gap: 8px; min-height: 36px; border-radius: 999px; }
-.saved-x { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: color 140ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
-.saved-x:active { transform: scale(0.9); }
+.saved-x { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.saved-x:active { transform: scale(0.94); transition-duration: var(--dur-press); }
 @media (hover: hover) { .saved-x:hover { color: var(--ink); } }
 .saved-x:focus-visible { outline: 2px solid var(--lime); outline-offset: -4px; }
 
@@ -2946,10 +2947,7 @@ html:root:not(#_) .page-head .page-ic svg { width: 132px; height: 132px; }
 html:root:not(#_) .page-head h1 { position: static; }
 html:root:not(#_) .page-meta { display: inline-flex; align-items: center; gap: 8px; margin: 12px 0 0 !important; padding: 6px 12px 6px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 0.8125rem; line-height: 1.2; max-width: 100%; }
 html:root:not(#_) .page-meta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 3px rgba(var(--lime-rgb), 0.18); }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) .page-meta::before { animation: live-pulse 2.4s ease-in-out infinite; }
-  @keyframes live-pulse { 50% { box-shadow: 0 0 0 5px rgba(var(--lime-rgb), 0.06); } }
-}
+/* The dot by "PPR · Week" is a label, not a live signal, so it holds still (its old box-shadow pulse is gone) */
 html:root:not(#_) .page-meta { align-self: flex-start; width: fit-content; }
 html:root:not(#_) .page-head .page-ic, html:root:not(#_) .lu-hero .page-ic { width: 112px; height: 112px; top: -10px; right: -10px; }
 html:root:not(#_) .page-head .page-ic svg, html:root:not(#_) .lu-hero .page-ic svg { width: 112px; height: 112px; }
@@ -3255,7 +3253,7 @@ html:root:not(#_):not(#_) .boot3 .boot3-logo { flex: none; --brand-mark: #D8F24A
 /* Slim league selector: one line, fills the row, chevron at the right. */
 html:root:not(#_) .page-league { display: none; }
 @media (max-width: 860px) {
-  html:root:not(#_) .page-league { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 14px 0 16px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--ink); text-align: left; cursor: pointer; transition: transform 120ms ease-out; }
+  html:root:not(#_) .page-league { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 14px 0 16px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--ink); text-align: left; cursor: pointer; transition: transform var(--dur-fast) var(--ease-out); }
   html:root:not(#_) .page-league b { flex: 1; min-width: 0; font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   html:root:not(#_) .page-league > svg { flex: none; color: var(--muted); }
   html:root:not(#_) .page-league:active { transform: scale(0.98); }
@@ -3285,7 +3283,7 @@ html:root:not(#_) .wk-day { display: grid; }
 html:root:not(#_) .wk-day + .wk-day { margin-top: 10px; }
 html:root:not(#_) .wk-day-k { display: flex; align-items: center; gap: 8px; padding: 6px 0; font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 html:root:not(#_) .wk-day-k small { font: inherit; color: var(--faint, var(--muted)); opacity: 0.7; }
-html:root:not(#_) .wk-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; text-align: left; cursor: pointer; transition: transform 120ms ease-out; }
+html:root:not(#_) .wk-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; text-align: left; cursor: pointer; transition: transform var(--dur-fast) var(--ease-out); }
 html:root:not(#_) .wk-row:active { transform: scale(0.99); }
 html:root:not(#_) .wk-head + .wk-row { border-top: 0; }
 html:root:not(#_) .wk-row > .lu-pos { flex: none; width: 28px; font-size: 0.8125rem; }
@@ -3340,7 +3338,7 @@ html:root:not(#_) .sr-list-head { padding: 10px 0 6px; font: 500 0.625rem/1 var(
 html:root:not(#_) .sr-list-head span:not(:first-child) { text-align: right; }
 html:root:not(#_) .sr-list-head::after { content: ""; }
 html:root:not(#_) .sr-row { border-top: 1px solid var(--line); }
-html:root:not(#_) .sr-main { width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; transition: transform 120ms ease-out; }
+html:root:not(#_) .sr-main { width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; transition: transform var(--dur-fast) var(--ease-out); }
 html:root:not(#_) .sr-main:active { transform: scale(0.99); }
 html:root:not(#_) .sr-main > svg { color: var(--muted); transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 html:root:not(#_) .sr-row.open .sr-main > svg { transform: rotate(90deg); }
@@ -3403,7 +3401,7 @@ html:root:not(#_) .ld2-help, html:root:not(#_) .ld2-error { max-width: 480px; ma
 html:root:not(#_) .ld2-error { color: #FF7A66; }
 html:root:not(#_) .ld2-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 24px; padding: 8px 0; border: 0; background: none; color: var(--ink); font-size: 1rem; font-weight: 600; cursor: pointer; }
 html:root:not(#_) .ld2-link svg { color: var(--muted); transition: transform 300ms var(--ease-fluid); }
-html:root:not(#_) .ld2-link:hover svg { transform: translateX(4px); }
+@media (hover: hover) and (pointer: fine) { html:root:not(#_) .ld2-link:hover svg { transform: translateX(4px); } }
 html:root:not(#_) .ld2-link:focus-visible, html:root:not(#_) .ld2-faq summary:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; border-radius: 8px; }
 @media (max-width: 860px) {
   html:root:not(#_) .ld2-hero { padding-block: 24px 64px; }
@@ -3491,8 +3489,6 @@ html:root:not(#_) .lu-mx-open { display: block; width: 100%; padding: 0; border:
   html:root:not(#_) .toast.leaving { opacity: 0; }
 }
 html:root:not(#_) [data-bump] { display: inline-block; position: relative; }
-/* The dot by "PPR · Week" is a label, not a live signal. Hold it still. */
-html:root:not(#_) .page-meta::before { animation: none !important; }
 /* Accessibility fixes from the interface review */
 @media (pointer: coarse) {
   html:root:not(#_) .toast-undo { min-height: 44px; min-width: 44px; }
@@ -3502,8 +3498,7 @@ html:root:not(#_) .page-meta::before { animation: none !important; }
 }
 
 /* ==== Animation audit fixes ==== */
-/* Bottom nav is tapped all day: indicator moves fast, no delayed highlight, no icon nudge */
-html:root:not(#_) .ix-rule, html:root:not(#_) .nav-rule { transition-duration: 180ms !important; transition-delay: 0ms !important; }
+/* Bottom nav is tapped all day: indicator moves fast (180ms, set on .ix-rule and .nav-rule above), no delayed highlight, no icon nudge */
 html:root:not(#_) .ix-w::before { transition: none !important; }
 html:root:not(#_) .ix-ic { transition: color 200ms ease !important; }
 /* Deal tray no longer replays its slide in on every section tab switch */
@@ -3512,7 +3507,7 @@ html:root:not(#_) .deal-tray { animation: none; }
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_) .mu-swap { transform-origin: top center; animation: mu-swap-in 220ms var(--ease-out); }
   @keyframes mu-swap-in { from { opacity: 0; transform: translateY(-4px); } }
-  html:root:not(#_) .mu-mine, html:root:not(#_) .mu-opt, html:root:not(#_) .lsw-row { transition: transform 120ms ease-out, background-color 120ms ease-out; }
+  html:root:not(#_) .mu-mine, html:root:not(#_) .mu-opt, html:root:not(#_) .lsw-row { transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
   html:root:not(#_) .mu-mine:active, html:root:not(#_) .mu-opt:active, html:root:not(#_) .lsw-row:active { transform: scale(0.99); }
 }
 
@@ -3743,12 +3738,12 @@ html:root:not(#_) .card:not(.sb2):not(.mu):not(.topk) { box-shadow: inset 0 1px 
 /* Cards are slightly see-through so the ambient glow reads through them */
 html:root:not(#_) { --surface: rgba(30, 33, 31, 0.78); }
 
-/* Frosted glass: top bar, bottom nav, deal tray, sheets (fixed layers only, so blur stays cheap) */
-html:root:not(#_) .topbar, html:root:not(#_) .tabbar {
+/* Frosted glass: top bar, deal tray, sheets (fixed layers only, so blur stays cheap). The bottom nav's glass is defined
+   once, in nav.css (.tabbar.ix), and src/top-nav-match.css gives the scrolled top bar the same surface. */
+html:root:not(#_) .topbar {
   background: rgba(16, 18, 17, 0.62) !important;
   -webkit-backdrop-filter: blur(22px) saturate(160%) !important; backdrop-filter: blur(22px) saturate(160%) !important;
 }
-html:root:not(#_) .tabbar { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 html:root:not(#_) .deal-tray { background: rgba(24, 27, 25, 0.72) !important; -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); }
 /* Sheets and their scrim are solid: a full-screen blur under a sliding sheet cost frames on phones, and the sheet was
    already 90% opaque, so it read the same */

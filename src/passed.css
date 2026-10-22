@@ -4,9 +4,9 @@
 html:root:not(#_) .wv.ps-wv > .wv-row { padding-right: 52px; }
 html:root:not(#_) .ps-end { position: absolute; right: 8px; top: 16px; z-index: 1; display: flex; width: 36px; height: 36px; line-height: 0; }
 html:root:not(#_) .ps-end > * { display: flex; }
-html:root:not(#_):not(#_) .ps-x { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--faint); cursor: pointer; transition: background-color 160ms ease, color 160ms ease; }
+html:root:not(#_):not(#_) .ps-x { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--faint); cursor: pointer; transition: background-color 160ms ease, color 160ms ease, transform var(--dur-fast) var(--ease-out); }
 @media (hover: hover) { html:root:not(#_):not(#_) .ps-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
-html:root:not(#_) .ps-x:active { transform: scale(0.92); }
+html:root:not(#_) .ps-x:active { transform: scale(0.94); transition-duration: var(--dur-press); }
 html:root:not(#_) .ps-x:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
 
 /* Passed rows: still there to find, dimmed, with a way back. The way back stays full strength. */

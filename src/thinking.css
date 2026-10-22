@@ -29,7 +29,7 @@ html:root:not(#_):not(#_) .thk .shim {
 @keyframes thk-shim { to { background-position: -60% 0; } }
 
 /* The steps fold and unfold by height, so whatever sits under the trace slides instead of jumping */
-html:root:not(#_):not(#_) .thk-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 280ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+html:root:not(#_):not(#_) .thk-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--dur-base) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
 html:root:not(#_):not(#_) .thk-body.open { grid-template-rows: 1fr; opacity: 1; }
 html:root:not(#_):not(#_) .thk-clip { min-height: 0; overflow: hidden; }
 
