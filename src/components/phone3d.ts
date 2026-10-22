@@ -177,7 +177,18 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
       groups[i].children.forEach((c: Three) => { c.matrixWorldNeedsUpdate = true; });
     });
   };
-  const draw = () => { place(); renderer.render(scene, camera); };
+  // Stacking like the CSS phones (Zach, Oct 22): the phones behind are drawn first, then the front one over them
+  // with fresh depth, so an angled back phone's near edge never cuts into the front phone
+  renderer.autoClear = false;
+  const front = groups[groups.length - 1];
+  const draw = () => {
+    place();
+    renderer.clear();
+    front.visible = false; renderer.render(scene, camera);
+    renderer.clearDepth();
+    groups.forEach((g: Three) => { g.visible = g === front; }); renderer.render(scene, camera);
+    groups.forEach((g: Three) => { g.visible = true; });
+  };
 
   let raf = 0, until = 0;
   const loop = () => { draw(); raf = performance.now() < until ? requestAnimationFrame(loop) : 0; };

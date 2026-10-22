@@ -142,17 +142,17 @@ html:root:not(#_):not(#_) .ld2-navright { display: flex; align-items: center; ga
 
 /* The CTA slot: collapsed to nothing until the hero field is gone, then it grows in beside "Try the demo" */
 html:root:not(#_):not(#_) .ld2-navcta {
-  display: block; max-width: 0; margin-left: -8px; overflow: hidden; opacity: 0; transform: translateY(-4px); filter: blur(4px);
-  transition: max-width calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)), margin-left calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
+  display: block; max-width: 0; margin-right: -8px; overflow: hidden; opacity: 0; transform: translateY(-4px); filter: blur(4px);
+  transition: max-width calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)), margin-right calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
     opacity calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1), transform calc(420ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1),
     filter calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
 }
-html:root:not(#_):not(#_) .ld2-navcta.on { max-width: 220px; margin-left: 0; opacity: 1; transform: none; filter: none; }
+html:root:not(#_):not(#_) .ld2-navcta.on { max-width: 220px; margin-right: 0; opacity: 1; transform: none; filter: none; }
 html:root:not(#_):not(#_) .ld2-navcta > .btn { white-space: nowrap; }
 
 /* Phones: "Try the demo" steps aside once "Find my leagues" arrives, so the logo keeps its room */
 @media (max-width: 719px) {
-  html:root:not(#_):not(#_) .ld2-navright > .btn-ghost:has(+ .ld2-navcta.on) { display: none; }
+  html:root:not(#_):not(#_) .ld2-navcta.on + .btn-ghost { display: none; }
 }
 /* Find my leagues (Landing.tsx findOpen): the Ask modal's sheet, holding the hero's username form */
 html:root:not(#_):not(#_) .ldf-body { display: flex; flex-direction: column; gap: 16px; padding: 4px 0 8px; }
@@ -167,7 +167,6 @@ html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
 /* ---------- Hero holds still while the headline types (Zach, Oct 22: "it's auto scrolling down") ----------
    The headline types and erases between lines of different lengths. Its box keeps the height of the longest one, so
    the copy and the phones beside it never shift as it changes. */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 { min-height: 4lh; }
 
 /* ---------- The hero phones as the real iPhone 18 Pro Max (phone3d.ts) ----------
    The phone boxes take the model's proportions (78.97 x 163.35 mm) and the screens its glass: inset 2.46 mm top,
@@ -189,3 +188,52 @@ html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone { opacity: 
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.hp-body, .ph-chrome) { display: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-back .hp-scr { visibility: hidden; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-front .hp-scr { box-shadow: none; }
+
+
+/* ---------- The trade section: the builder's readout (Landing.tsx LandingDeal) ----------
+   Heading and line on top, then the deal the way the builder reads it, wide enough for its two columns. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-tradesec { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; align-content: center; gap: 48px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tradesec-copy { max-width: 720px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-deal { width: 100%; max-width: none; margin: 0; padding: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-deal .deal { width: 100%; max-width: none; box-sizing: border-box; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .deal { margin: 0; padding: 24px; text-align: left; }
+html:root:not(#_):not(#_) .ld2-deal-with { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; color: var(--muted); font-size: 0.875rem; line-height: 1.25rem; }
+html:root:not(#_):not(#_) .ld2-deal-with b { color: var(--text); font-weight: 500; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .ld2-deal-lists { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+@media (min-width: 720px) {
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .ld2-deal-lists { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .ld2-deal-side.get { padding-left: 40px; margin-left: -20px; box-shadow: inset 1px 0 0 var(--line); }
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .deal { padding: 32px; }
+}
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .ld2-deal-side.get .eyebrow { color: var(--good, #6FD38A); }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .qs-list { list-style: none; margin: 8px 0 0; padding: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal .dv { margin-top: 24px; }
+@media (max-width: 719px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-deal .deal { padding: 20px 16px; }
+  /* Phones: the same rows as desktop, label left and both teams right, in tighter columns */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-row { grid-template-columns: minmax(0, 1fr) repeat(2, max-content); column-gap: 16px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-l { font-size: 0.8125rem; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 1 1 100%; }
+}
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-deal.builder { display: block !important; grid-template-columns: none !important; }
+
+/* ---------- Hero headline: always its two written lines (Zach, Oct 22: "why are these wrapping weird?") ----------
+   Each headline has a line break where the thought breaks. The size fits the widest line (8.3em, "around their
+   needs.") to the copy column, so no headline wraps to a third or fourth line and all of them share one height. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-copy { container-type: inline-size; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 { font-size: min(var(--lt-display, 4.5rem), 11.6cqi) !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 :is(.ld2-typed-size, .ld2-typed-live) { white-space: pre; }
+/* The phones sit further right (Zach, Oct 22): a narrower track for the stage, which reaches past it into the right
+   margin, so the copy gets the width for its 72px headline */
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 32px; }
+}
+@media (min-width: 1280px) {
+  /* Out into the right margin by as much as the margin allows, up to 80px, so the right phone never meets the edge */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .hp-stage { width: 560px; max-width: none; justify-self: end; margin-right: calc(-1 * min(80px, (100vw - 1204px) / 2)); }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  /* The narrower stage track: the phones a size down so the right one stays on screen */
+  html:root:not(#_):not(#_):not(#_):not(#_) .hp-front { --pw: 260px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .hp-back { --pw: 208px; }
+}

@@ -37,12 +37,7 @@ html:root:not(#_):not(#_):not(#_) .hp-right { transform: translate(12%, -56%) ro
   html:root:not(#_):not(#_):not(#_) .hp-left { transform: translate(-120%, -42%) rotateY(26deg) rotateZ(-6deg); }
   html:root:not(#_):not(#_):not(#_) .hp-right { transform: translate(20%, -58%) rotateY(-28deg) rotateZ(7deg); }
 }
-/* The phones turn a little toward you when you point at the stage */
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_) .hp-stage:hover .hp-front { transform: translate(-50%, -51%) rotateY(-3deg) rotateX(1deg); }
-  html:root:not(#_):not(#_):not(#_) .hp-stage:hover .hp-left { transform: translate(-126%, -42%) rotateY(20deg) rotateZ(-7deg); }
-  html:root:not(#_):not(#_):not(#_) .hp-stage:hover .hp-right { transform: translate(26%, -58%) rotateY(-22deg) rotateZ(8deg); }
-}
+/* The phones hold still under the pointer (Zach, Oct 22: no parallax on the phones) */
 
 /* Screen: same inset and radius as the message phone, the app drawn at 390 and scaled */
 html:root:not(#_):not(#_) .hp-scr {

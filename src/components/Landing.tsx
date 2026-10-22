@@ -32,6 +32,9 @@ import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
+import { AcceptCell, DealRows, DealVerdict, PtsCell as DealPts, dealWhy } from "./Trade";
+import { acceptance, verdict } from "../engine";
+import type { Team } from "../data";
 import { SplitHead, useSplitHeads } from "./SplitHead";
 import { heroDepth } from "../heroDepth";
 import { clearHandoff, setHandoff } from "../demoHandoff";
@@ -424,11 +427,11 @@ export function Landing({ onLive, onDemo }: {
       <nav className={`ld-nav ld2-nav${stuck ? " stuck" : ""}`} aria-label="Source">
         <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={52} word={30} tagline tag={11} label="Source" stage /></div>
         <div className="ld2-navright">
-          <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
           {/* Once the hero's username field has scrolled away, the nav carries it: "Find my leagues" opens the same field here */}
           <div className={`ld2-navcta${navCta ? " on" : ""}`} aria-hidden={!navCta || undefined}>
             <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setFindOpen(true)} aria-haspopup="dialog">Find my leagues</button>
           </div>
+          <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
         </div>
       </nav>
 
@@ -541,17 +544,9 @@ export function Landing({ onLive, onDemo }: {
             <SplitHead id="ld-trades" a="Every deal," b="built for both sides." />
             <p className="ld2-tradesec-sub">Source finds the trade the other manager is already shopping for, checks it against both starting lineups, and only shows it when you both come out ahead.</p>
           </div>
-          <div className="hd-card hd-trade" data-hd-pin=".ti-actions">
-            <div className="hd-tilt"><div className="hd-pose">
-              <div className="ld-preview ld2-preview">
-                <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
-                  <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
-                  <h3>{demo.mike.name} needs <em>a TE.</em></h3>
-                  <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
-                </article>
-              </div>
-            </div></div>
-          </div>
+          {/* The deal the way the trade builder reads it (Zach, Oct 22: "so you can see it's a win win"): both sides,
+              the verdict, points and value for each team, and their odds. Same pieces as Trade.tsx, read only. */}
+          <LandingDeal trade={demo.trade} them={demo.mike} onOpen={() => openDeal("trade")(demo.trade!)} onPitch={() => openDeal("pitch")(demo.trade!)} />
         </section>
       )}
 
@@ -1013,5 +1008,58 @@ function VideoIcon() {
     <svg ref={stroke.ref} style={stroke.style} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke.strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" />
     </svg>
+  );
+}
+
+/** The landing's trade readout: Trade.tsx's builder card for one deal, without the editing. */
+function LandingDeal({ trade, them, onOpen, onPitch }: { trade: Trade; them: Team; onOpen: () => void; onPitch: () => void }) {
+  const v = verdict(trade);
+  const acc = trade.accept ?? acceptance(trade, YOU, them);
+  const side = (title: string, ids: string[], get?: boolean) => (
+    <div className={`qs ld2-deal-side${get ? " get" : ""}`}>
+      <span className="eyebrow">{title}</span>
+      <ul className="qs-list">
+        {ids.map((id) => { const p = playerById(id); return (
+          <li key={id} className="qs-item">
+            <span className="qs-av"><Avatar p={p} size={34} /></span>
+            <span className="qs-who"><span className="qs-pn">{p.name}</span><span className="qs-pm"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span aria-hidden="true">·</span>{p.nfl}</span></span>
+            <span className="qs-pts">{eff(p, true).toFixed(1)}</span>
+          </li>
+        ); })}
+      </ul>
+    </div>
+  );
+  return (
+    <div className="builder ld2-deal ld2-reveal">
+      <section className="card deal ttb-card" aria-label={`A trade with ${them.manager}`}>
+        <p className="ld2-deal-with"><ManagerAvatar src={them.avatar} name={them.manager} size={24} />Trading with <b>{them.name}</b></p>
+        <div className="ld2-deal-lists">
+          {side("You send", trade.give)}
+          {side("You get", trade.get, true)}
+        </div>
+        <div className="dv">
+          <div className="dv-main">
+            <div className="dv-read"><DealVerdict label={v.label} tone={v.tone} line={dealWhy(v.label, trade.youDelta, trade.adjGive, trade.adjGet, them.manager)} /></div>
+            <DealRows
+              cols={[{ id: "you", head: "You", you: true }, { id: them.id, head: them.manager }]}
+              rows={[
+                { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
+                  <DealPts key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
+                  <DealPts key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
+                { label: "Trade value", tip: "Market value, the plain sum of each player's value.", cells: [
+                  <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
+                  <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
+                  extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
+                { label: "Will they accept", cls: "dv-accrow", cells: [<span key="y" className="dv-v dv-none" />, <AcceptCell key="t" a={acc} />],
+                  extra: <span className={`dv-accbar ${acc.label === "Likely yes" ? "is-likely" : acc.label === "Worth a shot" ? "is-maybe" : "is-long"}`} aria-hidden="true"><i style={{ width: `${Math.round(acc.p * 100)}%` }} /></span> },
+              ]} />
+            <div className="dv-actions">
+              <button className="linkish small" onClick={onOpen}>Open in builder</button>
+              <button className="btn btn-primary" onClick={onPitch}><Icon name="pen" size={16} />Write pitch</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
