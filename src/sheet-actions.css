@@ -20,3 +20,14 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-dock { display: no
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock :is(.ph-snooze, .snooze-btn) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; border: 0 !important; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player):has(> .ph-dock) > [data-sheet-scroll] { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
 }
+
+/* Tablet and desktop (Zach): the header's actions share one height and one type size. Claim, Watch and Not now (or
+   Compare / Swap in Sleeper) are all 44px pills with 15px medium labels; only their widths differ. */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts > :is(a, button), html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts > * > button, html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts :is(.ph-cta, .ph-watch, .ph-snooze, .snooze-btn) {
+    height: 44px !important; min-height: 44px !important; padding: 0 18px !important; border-radius: 999px !important;
+    display: inline-flex !important; align-items: center; justify-content: center; gap: 8px;
+    font: 500 0.9375rem/1 var(--font-body) !important; letter-spacing: 0 !important;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts :is(.ph-snooze, .snooze-btn) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; border: 0 !important; }
+}
