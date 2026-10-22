@@ -242,3 +242,26 @@ html:root:not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: cl
 @media (max-width: 600px) {
   html:root:not(#_):not(#_) .ld2-split-b { margin-left: 0.35em; }
 }
+
+/* The tagline as stacked caps with chips (Landing.tsx TAG_STACK, Zach Oct 22 after maggie-app.com). Centered Clash
+   Semibold, tight leading; a chip sits in the line at cap height: a sample-league headshot or a lime pixel icon, round like
+   the app's icon buttons, no outline. Words light as they reach the reading line (the existing observer); a chip pops in with stepped frames as it lights. */
+html:root:not(#_):not(#_):not(#_) .ld2-tag.ld2-tag-stack {
+  max-width: 15ch; margin: 0 auto; text-align: center; text-wrap: balance;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
+  font-size: clamp(2.5rem, 7.4vw, 6.75rem); line-height: 0.92; letter-spacing: -0.035em;
+}
+html:root:not(#_):not(#_) .ld2-chip {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: 0.02em;
+  width: 0.78em; height: 0.78em; margin: 0 0.16em 0 0; border-radius: 50%; overflow: hidden;
+  background: var(--surface-2, #202322); box-shadow: none;
+  color: var(--ink);
+}
+html:root:not(#_):not(#_):not(#_) .ld2-chip .av { width: 100% !important; height: 100% !important; border-radius: 50% !important; box-shadow: none !important; border: 0 !important; outline: 0 !important; }
+html:root:not(#_):not(#_) .ld2-chip .av-photo { width: 100% !important; height: 100% !important; object-fit: cover; object-position: 50% 15%; }
+html:root:not(#_):not(#_) .ld2-chip-ic { background: #D8F24A; color: #0D0E0D; box-shadow: none; }
+html:root:not(#_):not(#_):not(#_) .ld2-chip-ic svg { width: 0.46em !important; height: 0.46em !important; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip { transform: translateY(0.18em) scale(0.6); opacity: 0; transition: transform calc(700ms * var(--mo, 1)) var(--ease-fluid), opacity calc(500ms * var(--mo, 1)) var(--ease-fluid); }
+  html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip.on { transform: none; opacity: 1; }
+}
