@@ -27,3 +27,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .wv-act-t { display: none; }
   /* Watching keeps the lime star it had as an icon */
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps-wv .wv3-watch[aria-pressed="true"] > svg { color: var(--lime); fill: var(--lime); }
 }
+/* Tablet and desktop: the name column is narrow beside the stats, so the meta line (position, team, game, Rookie)
+   wraps to a second line instead of cutting a word off */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ps-wv .wv-row .wv-meta { flex-wrap: wrap; row-gap: 2px; white-space: normal; overflow: visible; }
+}
