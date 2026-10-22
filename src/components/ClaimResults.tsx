@@ -9,7 +9,7 @@ import { mo } from "../motion";
 import { Morph, Px } from "../gameDayMotion";
 import { Avatar } from "./Avatar";
 
-const CHECK = ["........g", ".......gg", "......gg.", "g....gg..", "gg..gg...", ".gggg....", "..gg....."];
+const CHECK = ["........g", ".......g.", "g.....g..", ".g...g...", "..g.g....", "...g....."];
 const CHECK_C = { g: "#7BE08F" };
 const reduce = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const money = (n: number) => `$${n}`;

@@ -2,6 +2,7 @@
 // line weight follows the drawn size (iconStroke.ts), not Lucide's 2. Where Lucide has no fitting glyph (the Lineup
 // helmet, the air vent) the drawing is ours, with every outline continuous. The football ("roster") is the logo mark.
 // Animated parts carry m1 to m4 classes (icon-motion.css); lines that draw in carry pathLength 1.
+import type { ReactElement } from "react";
 import { AskIcon } from "./AskIcon";
 import { AiMark } from "./WorkingLoader";
 import { useIconStroke } from "./iconStroke";
@@ -100,6 +101,8 @@ const inked = (name: IconName) => { const o = OFFSET[name]; return o ? `<g trans
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   // Ask, and the mark on anything Sources writes, is the chat bubbles icon with its own hover beat (AskIcon)
   if (name === "spark" || name === "ask") return <AskIcon size={size} active={active} />;
+  // Every check in the app is the 16-bit check from Waiver results (Zach, Oct 22): one pixel thick, in the text color
+  if (name === "check") return <PixelCheck size={size} />;
   // The dot grid fills its box edge to edge, so it runs a touch smaller to sit even with the line icons
   if (name === "ai") return <AiMark size={Math.round(size * 0.82)} />;
   return <Glyph name={name} size={size} />;
@@ -149,4 +152,16 @@ export function iconMotion() {
 
   // A new inbox item swinging the bell and springing its dot is App's (data-ring, action-motion.css). Opening the
   // inbox is quiet, so clicks no longer ring it.
+}
+
+/** The 16-bit check: a one-pixel line on a 9 by 6 grid, centered in a square box, crisp at any size. */
+export const PIXEL_CHECK = ["........x", ".......x.", "x.....x..", ".x...x...", "..x.x....", "...x....."];
+export function PixelCheck({ size = 16, className = "" }: { size?: number; className?: string }) {
+  const cells: ReactElement[] = [];
+  PIXEL_CHECK.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "x") cells.push(<rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" />); }));
+  return (
+    <svg className={`ic ic-check px-check ${className}`.trim()} width={size} height={size} viewBox="0 -1.5 9 9" fill="currentColor" shapeRendering="crispEdges" aria-hidden="true" focusable="false">
+      {cells}
+    </svg>
+  );
 }
