@@ -3,15 +3,15 @@
    and defense logos keep their circle. Phones 124x136 (Zach's drawn size, from just under the handle to the bio row), wider screens 160x172; the
    photo fills the box, cropped from the top, and only the last fifth fades. Uses Sleeper's full-size headshot. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut {
-  width: 124px !important; height: 136px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
-  margin: -30px -36px -8px -4px;
+  width: 148px !important; height: 124px !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible;
+  margin: -14px -34px -6px -10px;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut > .av-photo {
-  border-radius: 0 !important; background: none !important; object-fit: cover; object-position: 50% 0%;
+  border-radius: 0 !important; background: none !important; object-fit: contain; object-position: 50% 100%;
   -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%); mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 @media (min-width: 768px) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut { width: 160px !important; height: 172px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut { width: 184px !important; height: 154px !important; }
 }
 
 /* The header sits higher (Zach): it starts 24px sooner, right under the close button (which moves up 8px), and the team logo rides higher behind it, bleeding off the sheet's top edge. */

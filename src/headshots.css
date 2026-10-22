@@ -1,19 +1,19 @@
-/* Headshots in sheets and modals (Zach: one optical size, and large). Every cutout uses the same box shape (11:12)
-   and the same crop (the full-size photo covering the box from the top), so heads come out the same size from one
+/* Headshots in sheets and modals (Zach: one optical size, and large). Every cutout uses the same box shape (6:5, close to
+   Sleeper's photos) and shows the whole full-size photo (contain, sitting on the bottom edge, nothing cropped), so heads come out the same size from one
    sheet to the next; only the box scale differs by place. The circle is gone and the bottom fifth fades out.
    Player header: hero-cutout.css. Compare columns and start/sit picks: here. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut { border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible; flex: none; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .av-photo {
   width: 100% !important; height: 100% !important; border-radius: 0 !important; background: none !important;
-  object-fit: cover; object-position: 50% 0%;
+  object-fit: contain; object-position: 50% 100%;
   -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%); mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .av-badge { display: none; }
 /* Compare sheet: the headshot sits above the name in each column */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .cmp-info:has(> .av-cut) { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .av.av-cut { width: 88px !important; height: 96px !important; margin: -4px 0 -6px -6px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .av.av-cut { width: 104px !important; height: 88px !important; margin: 0 0 -4px -10px; }
 /* Start/sit picks */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 88px !important; height: 96px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 104px !important; height: 88px !important; }
 /* The two start/sit picks match heights, with Change pinned to the bottom of each */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :has(> .sx-pick) { align-items: stretch !important; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick { align-self: stretch !important; }
