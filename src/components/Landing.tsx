@@ -41,6 +41,9 @@ import { Trophy, WinCup } from "./Trophy";
 import { whenNear } from "../idle";
 import type { TeamNeeds } from "../engine";
 
+/** What follows YOUR in the banner under the hero */
+const YOURS = ["Fantasy Source", "trades", "lineup", "waivers", "league"];
+
 /**
  * Public landing. Everything on the right side and in the feature grid is a real
  * component running on the demo league, not a mock screenshot.
@@ -126,6 +129,46 @@ export function Landing({ onLive, onDemo }: {
   // The FAQ's "Still have a question?" opens the app's Ask screen as a sheet; its mark waves on view and on hover
   const [askOpen, setAskOpen] = useState(false);
   const [askWave, setAskWave] = useState(0);
+  // The YOUR banner moves with the scroll: its track shifts left as the page goes down, wrapping by one run's width.
+  const bandRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const band = bandRef.current, track = trackRef.current;
+    if (!band || !track || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0, on = false;
+    const paint = () => {
+      raf = 0;
+      const run = (track.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0;
+      if (!run) return;
+      const x = ((window.scrollY * 0.45) % run + run) % run;
+      track.style.transform = `translate3d(${-x}px, 0, 0)`;
+    };
+    const onScroll = () => { if (on && !raf) raf = requestAnimationFrame(paint); };
+    const io = new IntersectionObserver((es) => { on = es.some((e) => e.isIntersecting); if (on) onScroll(); }, { rootMargin: "200px 0px" });
+    io.observe(band);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    paint();
+    return () => { io.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, []);
+  // The sign-off's YOUR fills the page's width exactly: measured once Clash has loaded and on every resize. Its letters
+  // rise into place once, in stepped frames, when the footer first comes into view.
+  const signRef = useRef<HTMLElement>(null);
+  const wordRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const el = wordRef.current, foot = signRef.current;
+    if (!el || !foot) return;
+    const fit = () => {
+      el.style.fontSize = "100px";
+      const cs = getComputedStyle(foot), room = foot.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), w = el.scrollWidth;
+      if (w && room) el.style.fontSize = `${(100 * room) / w}px`;
+    };
+    fit();
+    document.fonts?.ready.then(fit).catch(() => {});
+    const ro = new ResizeObserver(fit); ro.observe(foot);
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { foot.classList.add("in"); io.disconnect(); } }, { threshold: 0.35 });
+    io.observe(foot);
+    return () => { ro.disconnect(); io.disconnect(); };
+  }, []);
 
   // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
   const cast = useMemo(() => {
@@ -268,6 +311,19 @@ export function Landing({ onLive, onDemo }: {
         </div>
         </div>
       </header>
+
+      {/* The banner under the hero (Zach, Oct 22, after northeasttomato.com's product strip): YOUR, over and over, in
+          Clash on lime. It slides with the page as you scroll and stops when you stop, so it never loops on its own. */}
+      <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
+        <div className="ld2-yband-track" ref={trackRef} aria-hidden="true">
+          {[0, 1, 2].map((k) => (
+            <span key={k} className="ld2-yband-run">
+              {YOURS.map((w) => <span key={w} className="ld2-yband-item"><b>YOUR</b> {w}<i className="ld2-yband-dot" /></span>)}
+            </span>
+          ))}
+        </div>
+        <p className="sr-only">Your Fantasy Source: your trades, your lineup, your waivers, your league.</p>
+      </section>
 
       <section className="ld2-tagwrap" aria-label="What Source does">
         <p className="ld2-tag">{tagline.split(" ").map((w, i) => <span key={i}>{w} </span>)}</p>
@@ -453,14 +509,6 @@ export function Landing({ onLive, onDemo }: {
         </div>
       </section>
 
-      {/* The brand line (Zach, Oct 22): YOUR in Clash Semibold at poster size, then the name and the address. The same
-          lockup the ads use. */}
-      <section className="ld2-yours ld2-reveal" aria-label="Your fantasy Source">
-        <p className="ld2-yours-big" aria-hidden="true">YOUR</p>
-        <p className="ld2-yours-name"><span className="sr-only">Your </span>fantasy Source.</p>
-        <p className="ld2-yours-url">fantasysource.app</p>
-      </section>
-
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
         <div className="ld2-endfield" aria-hidden="true"><div className="env-turf" /></div>
         <FinalCtaPanel>
@@ -471,15 +519,26 @@ export function Landing({ onLive, onDemo }: {
       </section>
       </main>
 
-      <footer className="ld-foot">
-        <span>Source. Your fantasy insider.</span>
-        <nav className="ld2-legal" aria-label="Legal">
-          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>Terms and privacy</button>
-          <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
-        </nav>
-        <span>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</span>
+      {/* The sign-off (Zach, Oct 22): a few small lines over YOUR set edge to edge across the bottom of the page, in
+          Clash Grotesk Semibold. An impact statement, not a link: people reading it are already here. */}
+      <footer className="ld-foot ld2-sign" ref={signRef}>
+        <div className="ld2-sign-top">
+          <p className="ld2-sign-lede">Built for the manager who reads the waiver wire at midnight. Trades both sides will take, lineups set before lock and bids sized to your budget, for the league you actually play in.</p>
+          <div className="ld2-sign-col">
+            <nav className="ld2-legal" aria-label="Legal">
+              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
+              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>Terms and privacy</button>
+            </nav>
+            <p>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</p>
+          </div>
+        </div>
+        <div className="ld2-sign-row">
+          <span>Your fantasy <b>Source.</b></span>
+          <span>© {new Date().getFullYear()} Source</span>
+        </div>
+        <p className="ld2-sign-word" ref={wordRef} aria-hidden="true">{"YOUR".split("").map((c, i) => <span key={i} style={{ ["--i" as string]: i }}>{c}</span>)}</p>
       </footer>
-      {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} />}
+      {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} faqs={faqs} />}
       {doc && (
         <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
           <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>

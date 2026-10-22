@@ -150,21 +150,64 @@ html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
   html:root:not(#_):not(#_) .ld2-nav > .brand { zoom: 0.82; }
 }
 
-/* "YOUR fantasy Source." (Zach, Oct 22): one word at poster size in Clash Grotesk Semibold, the boldest cut loaded,
-   then the name and the address in the app's own type. It arrives with the page's usual reveal, once. */
-html:root:not(#_):not(#_) .ld2-yours {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-  width: min(1200px, 100% - 32px); margin: clamp(48px, 10vw, 120px) auto clamp(32px, 6vw, 72px);
+/* The sign-off footer (Landing.tsx, Zach Oct 22, after Union's footer): small lines up top, YOUR across the full width
+   at the bottom, flush to the page's last pixel. Clash Grotesk Semibold, the boldest cut loaded. The word is sized in
+   JS to fill the width exactly; 26vw is the stand-in until then. */
+html:root:not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign {
+  display: flex; flex-direction: column; align-items: stretch; gap: 0;
+  max-width: none; margin: clamp(80px, 12vw, 160px) 0 0; padding: 0 clamp(16px, 2vw, 28px);
+  overflow: hidden; color: var(--muted);
 }
-html:root:not(#_):not(#_) .ld2-yours-big {
-  margin: 0; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
-  font-size: clamp(5.5rem, 24vw, 19rem); line-height: 0.82; letter-spacing: -0.045em; color: var(--ink, #F4F6F2);
+html:root:not(#_):not(#_) .ld2-sign-top {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px;
+  padding-top: 28px; border-top: 1px solid var(--line, #202322);
 }
-html:root:not(#_):not(#_) .ld2-yours-name {
-  margin: 0; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500;
-  font-size: clamp(1.75rem, 5vw, 3.5rem); line-height: 1; letter-spacing: -0.02em; color: #D8F24A;
+html:root:not(#_):not(#_) .ld2-sign-lede { margin: 0; max-width: 34ch; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500; font-size: clamp(1.25rem, 2.1vw, 1.75rem); line-height: 1.18; letter-spacing: -0.01em; color: var(--ink); text-wrap: pretty; }
+html:root:not(#_):not(#_) .ld2-sign-col { display: flex; flex-direction: column; gap: 14px; font-size: 0.875rem; line-height: 1.45; }
+html:root:not(#_):not(#_) .ld2-sign-col p { margin: 0; max-width: 36ch; }
+html:root:not(#_):not(#_) .ld2-sign .ld2-legal { flex-direction: column; align-items: flex-start; gap: 6px; }
+html:root:not(#_):not(#_) .ld2-sign .ld2-legal button { font-size: 1rem; color: var(--ink); min-height: 32px; padding: 0; }
+html:root:not(#_):not(#_) .ld2-sign-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  margin-top: clamp(64px, 14vw, 220px); font-size: 0.9375rem; color: var(--muted);
 }
-html:root:not(#_):not(#_) .ld2-yours-url {
-  margin: 10px 0 0; font-family: var(--font-mono, "Geist Mono", ui-monospace, monospace); font-size: clamp(0.8125rem, 1.4vw, 1rem);
-  letter-spacing: 0.06em; color: var(--muted);
+html:root:not(#_):not(#_) .ld2-sign-row b { font-weight: 500; color: #D8F24A; }
+html:root:not(#_):not(#_) .ld2-sign-word {
+  display: flex; width: max-content; margin: 0.06em 0 -0.035em -0.04em; white-space: nowrap;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600; font-size: 26vw;
+  line-height: 0.86; letter-spacing: -0.045em; color: var(--ink, #F4F6F2); user-select: none;
 }
+html:root:not(#_):not(#_) .ld2-sign-word > span { display: block; }
+/* Arrival: each letter rises from below the page edge in four hard steps, a beat apart, then stays */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .ld2-sign:not(.in) .ld2-sign-word > span { transform: translateY(60%); opacity: 0; }
+  html:root:not(#_):not(#_) .ld2-sign.in .ld2-sign-word > span {
+    animation: ld2-rise calc(420ms * var(--mo, 1)) steps(4, end) both;
+    animation-delay: calc(var(--i) * 90ms * var(--mo, 1));
+  }
+}
+@keyframes ld2-rise { from { transform: translateY(60%); opacity: 0; } 25% { opacity: 1; } to { transform: none; opacity: 1; } }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_) .ld2-sign-top { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 48px; }
+}
+@media (min-width: 1100px) {
+  html:root:not(#_):not(#_) .ld2-sign-top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.5fr); }
+}
+
+/* The YOUR banner under the hero (Landing.tsx). Full bleed, lime, one line of Clash at display size. The track is
+   three identical runs; Landing.tsx shifts it with the page's scroll and wraps by one run, so it reads as endless
+   without ever moving on its own. */
+html:root:not(#_):not(#_) .ld2-yband {
+  position: relative; width: 100%; overflow: hidden; background: #D8F24A; color: #0D0E0D;
+  margin: clamp(24px, 4vw, 56px) 0 0; padding: clamp(14px, 1.6vw, 22px) 0;
+}
+html:root:not(#_):not(#_) .ld2-yband-track { display: flex; width: max-content; will-change: transform; }
+html:root:not(#_):not(#_) .ld2-yband-run { display: flex; flex: none; }
+html:root:not(#_):not(#_) .ld2-yband-item {
+  display: inline-flex; align-items: center; white-space: nowrap;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500;
+  font-size: clamp(2rem, 5.2vw, 4.75rem); line-height: 1; letter-spacing: -0.03em;
+}
+html:root:not(#_):not(#_) .ld2-yband-item b { font-weight: 600; margin-right: 0.22em; letter-spacing: -0.04em; }
+/* A pixel-square dot between phrases, in the 16-bit spirit of the icons */
+html:root:not(#_):not(#_) .ld2-yband-dot { display: inline-block; width: 0.16em; height: 0.16em; margin: 0 0.55em; background: currentColor; border-radius: 0.03em; }

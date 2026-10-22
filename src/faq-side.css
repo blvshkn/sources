@@ -88,3 +88,7 @@ html:root:not(#_):not(#_) .lda-back { align-self: flex-start; min-height: 44px; 
 html:root:not(#_):not(#_):not(#_) .lda-sheet .ask-groups { flex-direction: column; gap: 14px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .lda-sheet .ask-group { flex: none; gap: 8px; padding: 0 !important; background: none; border: 0; border-radius: 0; }
 html:root:not(#_):not(#_):not(#_) .lda-sheet .ask-group .ask-chips { flex-direction: row; gap: 8px; }
+/* A question about Source answers right in the sheet, then the way in follows as the next step */
+html:root:not(#_):not(#_) .lda-answer { display: flex; flex-direction: column; gap: 8px; }
+html:root:not(#_):not(#_) .lda-answer-more { margin: 0; color: var(--muted); font-size: 0.9375rem; line-height: 1.5; text-wrap: pretty; }
+html:root:not(#_):not(#_) .lda-gate-soft h3 { font-size: 1.0625rem; }
