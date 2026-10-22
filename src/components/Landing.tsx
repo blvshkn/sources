@@ -524,7 +524,7 @@ export function Landing({ onLive, onDemo }: {
           Clash Grotesk Semibold. An impact statement, not a link: people reading it are already here. */}
       <footer className="ld-foot ld2-sign" ref={signRef}>
         <div className="ld2-sign-top">
-          <p className="ld2-sign-lede">Built for the manager who reads the waiver wire at midnight. Trades both sides will take, lineups set before lock and bids sized to your budget, for the league you actually play in.</p>
+          <p className="ld2-sign-lede">Every league has an insider. Make it you. Source reads every roster in your Sleeper league, so you know who needs what before the group chat does.</p>
           <div className="ld2-sign-col">
             <nav className="ld2-legal" aria-label="Legal">
               <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
