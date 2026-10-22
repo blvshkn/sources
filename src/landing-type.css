@@ -1,0 +1,77 @@
+/* Landing type, linted against the product (Zach, Oct 22: "make sure it's the same and not all over the place; how
+   type comes in should be how we are doing it for the product"). One scale, the app's families and weights:
+   - Display: Clash Grotesk Medium, one size for the hero headline, every section heading, the tagline and the final
+     call to action (it was 66, 100, 68 and 66px, with the section heads outranking the hero). 72px at desktop.
+   - Card titles: Clash Medium 20/28, like the app's headers (Medium, never Semibold).
+   - Lede 18/28, body 16/24, small 14/20, all Geist; emphasis tops out at 600 as in the app.
+   - Labels: Geist Mono Medium 11px, uppercase, 0.08em, the app's page-meta and card-kind labels.
+   - Entrance: the app's (sectionEnter.ts, loadin.css): a small rise sharpening from a 4px blur, ease-out, the heading
+     first and then the items in reading order. The scroll-driven moments Zach asked for (converging headings, the
+     word-lit tagline, the moving banner) stay as they are.
+   Loads last among the landing sheets. */
+
+html:root { --lt-display: clamp(2.5rem, 5vw, 4.5rem); --lt-display-lh: 1.02; }
+
+/* ---------- Display ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-h1, .ld-h2.ld2-split) {
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif !important; font-weight: 500 !important;
+  font-size: var(--lt-display) !important; line-height: var(--lt-display-lh) !important; letter-spacing: -0.02em !important;
+}
+/* The tagline is the same display size in caps; on short screens it also fits the screen's height */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
+  font-weight: 500 !important; font-size: min(var(--lt-display), 7.6vh) !important; line-height: 0.96 !important; letter-spacing: -0.02em !important;
+}
+/* The FAQ's side column keeps the display face, a step down so it fits beside the list */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.25rem, 3.6vw, 3.75rem) !important; }
+
+/* ---------- Card and step titles ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > h3, .ld-cell .ld2-live-head h3, .lds h3, .ld-trust-list b) {
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif !important; font-weight: 500 !important;
+  font-size: 1.25rem !important; line-height: 1.75rem !important; letter-spacing: -0.01em !important; color: var(--ink);
+}
+
+/* ---------- Lede, body, small ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-sub, .ld2-tradesec-sub) { font: 400 1.125rem/1.75rem var(--font-body) !important; letter-spacing: normal !important; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > p, .ld-cell .ld2-live-head p, .lds p, .ld-trust-list p, .ld2-faq-list p) {
+  font: 400 1rem/1.5rem var(--font-body) !important; color: var(--muted);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-faq-list summary { font: 500 1.125rem/1.75rem var(--font-body) !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-lede { font-size: 1.5rem !important; line-height: 2rem !important; font-weight: 500 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-help, .ld2-sign-col) { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+
+/* ---------- Labels ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-eyebrow, .ld2-notes-k) {
+  font: 500 0.6875rem/1rem var(--font-mono) !important; letter-spacing: 0.08em !important; text-transform: uppercase;
+}
+
+/* ---------- Emphasis: 600 at most, as in the app (the needs bars' team names were Bold) ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .bars b.small { font-weight: 600 !important; }
+
+/* ---------- Entrance: the app's ---------- */
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal {
+  transform: translateY(14px); filter: blur(4px);
+  transition: opacity calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), filter calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal.in { transform: none; filter: none; }
+/* Items after a heading follow it in reading order, 90ms apart (the app's first-load step) */
+html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(1) { transition-delay: calc(90ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(2) { transition-delay: calc(180ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(3) { transition-delay: calc(270ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(n+4) { transition-delay: calc(330ms * var(--mo, 1)); }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal { transform: none; filter: none; transition: opacity 160ms linear; transition-delay: 0s !important; }
+}
+/* The hero's opening lines: the same rise and blur */
+@keyframes ld3-up { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-in {
+  animation: ld3-up calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both;
+  animation-delay: calc((120ms + var(--i, 0) * 90ms) * var(--mo, 1));
+}
+/* The sign-off's letters come in the same way, one after another */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-sign .ld2-sign-word > span {
+    transform: translateY(14%); filter: blur(4px);
+    transition: opacity calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), filter calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+    transition-delay: calc(var(--i) * 90ms * var(--mo, 1));
+  }
+}

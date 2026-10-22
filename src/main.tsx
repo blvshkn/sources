@@ -37,6 +37,7 @@ import "./row-spacing.css";
 import "./icon-buttons.css";
 import "./landing-phone.css";
 import "./landing-phones.css";
+import "./landing-type.css";
 import "./lines.css";
 import "./optimal-lineup.css";
 import "./landing-refresh.css";
