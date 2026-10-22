@@ -2360,6 +2360,9 @@ button.sb2-open { display: grid; width: 100%; padding: 0; margin: 0; border: 0; 
 .ps-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
 .ps-scrim { position: absolute; inset: 0; background: rgba(8, 10, 9, 0.55); opacity: 0; transition: opacity 220ms ease; }
 .ps-wrap.in .ps-scrim { opacity: 1; }
+/* Closing: a shorter exit than the 320ms entrance, and the sheets unmount at 240ms, so nothing vanishes mid-slide */
+.ps-wrap.out .ps-scrim { transition: opacity 240ms cubic-bezier(0.23, 1, 0.32, 1); }
+@media (max-width: 767.98px) { .ps-wrap.out .ps { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1); } }
 .ps { position: relative; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; display: grid; gap: 16px; padding: 10px 18px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0; background: var(--surface); border: 1px solid var(--line); border-bottom: 0;
   transform: translateY(100%); transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1); }
 .ps-wrap.in .ps { transform: translateY(0); }
@@ -3752,10 +3755,11 @@ html:root:not(#_) .topbar, html:root:not(#_) .tabbar {
 }
 html:root:not(#_) .tabbar { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 html:root:not(#_) .deal-tray { background: rgba(24, 27, 25, 0.72) !important; -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); }
-html:root:not(#_) .ps-scrim, html:root:not(#_) .scrim { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); background: rgba(8, 10, 9, 0.45); }
+/* Sheets and their scrim are solid: a full-screen blur under a sliding sheet cost frames on phones, and the sheet was
+   already 90% opaque, so it read the same */
+html:root:not(#_) .ps-scrim, html:root:not(#_) .scrim { background: rgba(8, 10, 9, 0.55); }
 html:root:not(#_) .ps, html:root:not(#_) .sheet {
-  background: linear-gradient(180deg, rgba(var(--lime-rgb), 0.08), transparent 160px), rgba(26, 29, 27, 0.9) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(150%); backdrop-filter: blur(24px) saturate(150%);
+  background: linear-gradient(180deg, rgba(var(--lime-rgb), 0.08), transparent 160px), #1A1D1B !important;
 }
 html:root:not(#_) .toast { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 

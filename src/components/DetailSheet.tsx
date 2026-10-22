@@ -20,17 +20,20 @@ const isSheet = () => typeof window !== "undefined" && window.innerWidth < MODAL
  * The header (title slot plus the close button) stays put; only the body scrolls.
  * `children` can be a function that gets `close(after)`, for actions that should close the sheet and then go somewhere.
  */
-export function DetailSheet({ title, label, className = "", onClose, children, bar }: {
+export function DetailSheet({ title, label, className = "", onClose, children, bar, foot }: {
   title: ReactNode;
   /** Optional row under the title that stays put with it (tabs, say). Only the body below scrolls. */
   bar?: ReactNode;
   /** Accessible name when the title slot isn't plain text */
   label?: string;
   className?: string;
+  /** Optional row pinned to the sheet's bottom edge, outside the scrolling body (the player sheet's docked actions) */
+  foot?: ReactNode;
   onClose: () => void;
   children: ReactNode | ((close: (after?: () => void) => void) => ReactNode);
 }) {
   const [shown, setShown] = useState(false);
+  const [out, setOut] = useState(false);
   const sheet = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
@@ -44,8 +47,10 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
     const el = sheet.current;
     if (el) { el.style.transition = ""; el.style.transform = ""; }
     if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
+    // Out on a shorter 240ms ease (styles.css .ps-wrap.out) and unmounted only once it has fully left
+    setOut(true);
     setShown(false);
-    window.setTimeout(() => { onClose(); after?.(); }, 220);
+    window.setTimeout(() => { onClose(); after?.(); }, 240);
   };
 
   useEffect(() => {
@@ -65,7 +70,7 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
   usePullToDismiss(sheet, { scrim, enabled: isSheet, onDismiss: () => close() });
 
   return createPortal(
-    <div className={`ps-wrap ds-wrap${shown ? " in" : ""}`}>
+    <div className={`ps-wrap ds-wrap${shown ? " in" : ""}${out ? " out" : ""}`}>
       <div ref={scrim} className="ps-scrim" onClick={() => close()} aria-hidden="true" />
       <section ref={sheet} className={`ps ps-detail ${className}`.trim()} role="dialog" aria-modal="true" {...(label ? { "aria-label": label } : { "aria-labelledby": titleId })}>
         <div className="ds-top">
@@ -77,6 +82,7 @@ export function DetailSheet({ title, label, className = "", onClose, children, b
         <ScrollArea className="ds-body" data-sheet-scroll>
           {typeof children === "function" ? children(close) : children}
         </ScrollArea>
+        {foot}
       </section>
     </div>,
     document.body,

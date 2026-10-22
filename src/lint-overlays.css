@@ -32,10 +32,13 @@ html:root:not(#_):not(#_) .tp > .tp-pop {
   border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-lg);
   transform-origin: top center;
 }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .tp > .tp-pop { animation: lo-menu-in 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+/* Opens with a transition from @starting-style, so a quick close mid-open reverses from where it is */
+html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+@starting-style { html:root:not(#_):not(#_) .tp > .tp-pop { opacity: 0; transform: scale(0.98) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .tp > .tp-pop { transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+  @starting-style { html:root:not(#_):not(#_) .tp > .tp-pop { opacity: 0; transform: none; } }
 }
-@keyframes lo-menu-in { from { opacity: 0; transform: scale(0.98) translateY(-4px); } }
 html:root:not(#_):not(#_) .tp > .tp-pop > .tp-list {
   position: static; z-index: auto; min-height: 0; max-height: 440px; margin: 0; padding: 6px;
   overflow-y: auto; overscroll-behavior: contain;
@@ -72,19 +75,16 @@ html:root:not(#_):not(#_) :is(.tp-pop, .mt-menu) .tp-list:focus { outline: none;
 /* FirstRun takes focus on open (so Tab and Escape work); the dialog itself shows no ring */
 html:root:not(#_):not(#_) .onboard:focus { outline: none; }
 
-/* ---------- Player sheet: the body fades under the fixed header and the bottom edge ----------
+/* ---------- Player sheet: the body fades at the bottom edge ----------
    Its last visible row (Pass TD at 1440x900) was cut straight through. The thumb lives beside the body, so it isn't masked. */
 html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="end"] {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
 }
-html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="top"] {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20px);
-  mask-image: linear-gradient(to bottom, transparent, #000 20px);
-}
+/* No top fade: the hero's team wash runs to the sheet's top edge, and the sticky tabs sit on a solid surface */
 html:root:not(#_):not(#_) .ps.ps-player > .ps-body[data-fade="both"] {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 32px), transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 20px, #000 calc(100% - 32px), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
 }
 
 /* ---------- Trade: add-player picker ----------

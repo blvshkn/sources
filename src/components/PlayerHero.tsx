@@ -1,9 +1,8 @@
 // The one header for the player sheet and the waiver claim sheet: headshot in front of his team's logo, name, position,
 // team and jersey number, injury status, a bio row, a rankings row and the sheet's actions. It sits in the sheet's
-// fixed top with the tabs, so only the body below scrolls. On phones it folds to a slim bar once you scroll the body,
-// and opens again back at the top. Every number here comes from the app's own data: bios from Sleeper (playerBio.ts),
+// scrolling body above the sticky tabs; once its name scrolls away, the sheet top's compact bar (PlayerBar) fades in. Every number here comes from the app's own data: bios from Sleeper (playerBio.ts),
 // ranks from the Values board, rostered % and adds from the waiver feed. Anything without a source is left out.
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { FREE_AGENTS, LEAGUE, SPECIAL_FREE_AGENTS, isDemo, type BoardRow } from "../data";
 import { teamColors } from "../jersey";
 import { feet, useBio } from "../playerBio";
@@ -44,71 +43,85 @@ export function ranksFor(s: HeroSubject): Stat[] {
   return out;
 }
 
-// ---- Slim on scroll (phones) ----------------------------------------------------------------
-const PHONE = "(max-width: 767px)";
-/** Call before a tab switch scrolls the body back to the top, so the header keeps its size and the tabs don't move. */
-export function holdHeader(scroller: HTMLElement | null | undefined) {
-  if (!scroller) return;
-  scroller.dataset.phHold = "1";
-  window.setTimeout(() => { delete scroller.dataset.phHold; }, 180);
+// ---- Large title (iOS pattern) ----------------------------------------------------------------
+// The hero and the tab row scroll with the body; the tabs stick under the sheet's top. The top never changes height:
+// it holds the grab handle, the close button and a compact bar (headshot, name, position and team) that fades in once
+// the hero's name has scrolled under it. Nothing above the body resizes, so the list never jumps.
+
+/** Where the tab row starts sticking, in the scroller's content coordinates. */
+function stickAt(sc: HTMLElement): number | null {
+  const hero = sc.querySelector<HTMLElement>(":scope > .ph"), stick = sc.querySelector<HTMLElement>(":scope > .ph-stick");
+  if (!hero || !stick) return null;
+  const cs = getComputedStyle(sc), ss = getComputedStyle(stick);
+  // Below the hero: the body's row gap (grid) plus the margin between them (block margins collapse to the larger)
+  const between = (parseFloat(cs.rowGap) || 0) + Math.max(parseFloat(getComputedStyle(hero).marginBottom) || 0, parseFloat(ss.marginTop) || 0);
+  const natural = hero.getBoundingClientRect().bottom - sc.getBoundingClientRect().top - sc.clientTop + sc.scrollTop + between;
+  // Sticky offsets count from inside the scroller's padding
+  return Math.max(0, Math.round(natural - (parseFloat(cs.paddingTop) || 0) - (parseFloat(ss.top) || 0)));
 }
-function useSlim(ref: React.RefObject<HTMLDivElement | null>) {
-  const [slim, setSlim] = useState(false);
-  const full = useRef(0);
-  const prevH = useRef(0);
-  const first = useRef(true);
-  // Fold and unfold as one motion instead of a snap (Zach: it read janky on iPhone). After the swap, the header is set
-  // back to its old height and eased to the new one, so the tabs and list below glide with it; the bottom edge is
-  // clipped meanwhile so a growing header never paints over the tabs. The new content fades up as it lands.
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (first.current) { first.current = false; return; }
-    if (!el || !prevH.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const to = el.offsetHeight, from = prevH.current;
-    if (Math.abs(to - from) < 2) return;
-    const ease = "cubic-bezier(0.32, 0.72, 0, 1)";
-    const a = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 260, easing: ease });
-    el.style.clipPath = "inset(-120px -100vw 0 -100vw)";
-    a.onfinish = a.oncancel = () => { el.style.clipPath = ""; };
-    for (const c of el.querySelectorAll<HTMLElement>(":scope > .ph-art, :scope > .ph-who, :scope > .ph-acts")) {
-      c.animate([{ opacity: 0.4, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
-    }
-  }, [slim, ref]);
+/** Call before a tab or week switch swaps the body: keeps the tab row exactly where it is. Scrolled past the hero, the
+ *  tabs stay stuck; above that, nothing moves. Room is reserved first so a shorter tab can't pull the scroll back. */
+export function keepTabs(sc: HTMLElement | null | undefined) {
+  if (!sc) return;
+  const at = stickAt(sc);
+  if (at === null) return;
+  sc.style.setProperty("--ph-fill", `${sc.clientHeight}px`);
+  if (sc.scrollTop > at) sc.scrollTop = at;
+  requestAnimationFrame(() => requestAnimationFrame(() => sc.dispatchEvent(new Event("ph-fit"))));
+}
+function useLargeTitle(ref: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const el = ref.current;
-    const sc = el?.closest(".ps")?.querySelector<HTMLElement>("[data-sheet-scroll]");
-    if (!el || !sc) return;
-    const mq = window.matchMedia(PHONE);
-    const on = () => {
-      prevH.current = el.offsetHeight;
-      if (!mq.matches) { setSlim(false); return; }
-      if (sc.dataset.phHold) return;
-      const t = sc.scrollTop;
-      setSlim((cur) => {
-        if (!cur) {
-          if (t <= 56) return false;
-          // Only fold when the body stays scrolled after it grows by the height the header gives up; otherwise the
-          // scroll would clamp to the top and the header would bounce open again
-          full.current = el.offsetHeight;
-          const room = sc.scrollHeight - sc.clientHeight - (full.current - 64);
-          return room > t + 8;
-        }
-        return t > 4;
-      });
+    const sc = el?.closest<HTMLElement>("[data-sheet-scroll]");
+    const sheet = el?.closest<HTMLElement>(".ps");
+    const name = el?.querySelector<HTMLElement>(".ph-name");
+    if (!el || !sc || !sheet || !name) return;
+    // The compact bar shows once the name is fully under the sheet's top (the body runs under it)
+    const topH = parseFloat(getComputedStyle(sc).paddingTop) || 0;
+    const io = new IntersectionObserver(([e]) => sheet.toggleAttribute("data-ph-compact", !e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0) + topH),
+      { root: sc, rootMargin: `-${Math.round(topH)}px 0px 0px 0px` });
+    io.observe(name);
+    // Room under a short tab so the tab row can always reach its stuck spot (a pseudo-element sized by --ph-fill)
+    const fit = () => {
+      const at = stickAt(sc);
+      if (at === null) return;
+      const kids = [...sc.children].filter((k) => !k.classList.contains("sa-track"));
+      const last = kids[kids.length - 1];
+      if (!last) return;
+      const end = last.getBoundingClientRect().bottom - sc.getBoundingClientRect().top - sc.clientTop + sc.scrollTop + (parseFloat(getComputedStyle(sc).paddingBottom) || 0);
+      const fill = Math.max(0, Math.ceil(sc.clientHeight - (end - at)));
+      sc.style.setProperty("--ph-fill", `${fill}px`);
     };
-    sc.addEventListener("scroll", on, { passive: true });
-    mq.addEventListener("change", on);
-    return () => { sc.removeEventListener("scroll", on); mq.removeEventListener("change", on); };
+    let raf = 0;
+    const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+    const ro = new ResizeObserver(later);
+    const watch = () => { ro.disconnect(); ro.observe(sc); for (const k of sc.children) ro.observe(k); };
+    watch();
+    const mo = new MutationObserver(() => { watch(); later(); });
+    mo.observe(sc, { childList: true });
+    sc.addEventListener("ph-fit", fit);
+    return () => { io.disconnect(); ro.disconnect(); mo.disconnect(); cancelAnimationFrame(raf); sc.removeEventListener("ph-fit", fit); sheet.removeAttribute("data-ph-compact"); };
   }, [ref]);
-  /** A tap on the slim bar opens the header again: back to the top of the tab */
-  const open = () => {
-    const sc = ref.current?.closest(".ps")?.querySelector<HTMLElement>("[data-sheet-scroll]");
-    if (ref.current) prevH.current = ref.current.offsetHeight;
-    if (!sc || sc.scrollTop < 4) { setSlim(false); return; }
+}
+
+/** The sheet top's compact bar: headshot, name, position and team. Hidden until the hero's name scrolls away; a tap
+ *  goes back to the top. Never any actions: on phones they're docked at the bottom, wider up they stay in the hero. */
+export function PlayerBar({ s }: { s: HeroSubject }) {
+  const toTop = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const sc = e.currentTarget.closest(".ps")?.querySelector<HTMLElement>("[data-sheet-scroll]");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    sc.scrollTo({ top: 0, behavior: reduce ? ("instant" as ScrollBehavior) : "smooth" });
+    sc?.scrollTo({ top: 0, behavior: reduce ? ("instant" as ScrollBehavior) : "smooth" });
   };
-  return [slim, open] as const;
+  const team = s.nfl && s.nfl !== "FA";
+  return (
+    <button type="button" className="ph-bar" onClick={toTop} aria-label={`${s.name}. Back to top`}>
+      <Avatar p={s} size={36} badge={false} />
+      <span className="ph-bar-who">
+        <b>{s.name}</b>
+        <span className="ph-bar-meta"><PosBadge pos={s.pos} />{team && <span>{s.nfl}</span>}</span>
+      </span>
+    </button>
+  );
 }
 
 // ---- Header ----------------------------------------------------------------------------------
@@ -122,11 +135,12 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   meta?: ReactNode;
   /** Whose he is ("Your bench", "Mike's WR") */
   where?: string;
-  /** Primary action, Watch, and any small text action. Always visible, the slim bar included. */
+  /** Primary action, Watch, and any small text action. Shown in the hero from 768px; on phones the sheet docks the
+   *  same actions to its bottom edge (.ph-dock) and the hero's copy is hidden. */
   actions?: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [slim, open] = useSlim(ref);
+  useLargeTitle(ref);
   const photos = useContext(AvatarPhotos);
   // 0: ESPN's 500px mark, 1: Sleeper's smaller one, 2: none
   const [logoTry, setLogoTry] = useState(0);
@@ -148,21 +162,23 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   const num = b?.number;
 
   return (
-    <div ref={ref} className={`ph${slim ? " ph-slim" : ""}${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
+    <div ref={ref} className={`ph${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
       {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
-      <span className="ph-art"><Avatar p={s} size={slim ? 40 : def ? 76 : 84} badge={false} /></span>
+      <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} /></span>
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>
         <div className="ph-meta">
           <PosBadge pos={s.pos} />
           {team && <span className="ph-team">{s.nfl}{num !== undefined && <span className="ph-num">#{num}</span>}</span>}
           {meta && <span className="ph-game">{meta}</span>}
-          {status}
         </div>
-        {where && <span className={`ps-where ph-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
+        {/* Injury and whose he is: one row of same-size pills, each in its own colors */}
+        {(status || where) && <div className="ph-tags">
+          {status}
+          {where && <span className={`ps-where ph-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
+        </div>}
       </div>
-      {slim && <button className="ph-open" onClick={open} aria-label="Show player details"><Icon name="chev" size={16} /></button>}
       {!def && (bio === "loading" ? <span className="ph-bio ph-skel" aria-hidden="true"><i /><i /><i /><i /></span>
         : facts.length > 0 && (
           <dl className="ph-bio" aria-label="Bio">

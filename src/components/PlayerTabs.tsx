@@ -1,6 +1,6 @@
 // Tabs for the player sheet and the waiver claim sheet: the sheet's own view, a game log and the team depth chart.
-// The tab row sits in the sheet's fixed top, so switching never moves it or the header; only the body swaps, with no
-// entrance animation. The last tab picked is remembered per sheet type for the session.
+// The tab row sticks under the sheet's top and keeps its place on a switch; the incoming tab fades in over 160ms with
+// no movement (player-hero.css), and so does a list replacing its loading skeleton. The last tab picked is remembered per sheet type for the session.
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { teamNick } from "../data";
 import { useLive } from "../live";
@@ -22,7 +22,7 @@ export function useSheetTab(kind: "player" | "waiver", allowed: SheetTab[]): [Sh
   const set = (n: SheetTab) => { setT(n); mem[kind] = n; try { sessionStorage.setItem(`sources.sheetTab.${kind}`, n); } catch { /* ignore */ } };
   return [allowed.includes(t) ? t : "main", set];
 }
-/** The League page's tabs (icon and label pills, no track behind the row), in the sheet's fixed top. */
+/** The League page's tabs (icon and label pills, no track behind the row), sticky under the sheet's top. */
 export function SheetTabs({ value, onChange, options }: { value: SheetTab; onChange: (t: SheetTab) => void; options: { v: SheetTab; label: string; icon?: IconName }[] }) {
   return <PageTabs inSheet className="st-tabs" label="Sheet section" value={value} onChange={onChange} options={options} />;
 }

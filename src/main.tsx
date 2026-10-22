@@ -123,6 +123,7 @@ import "./sheet-actions.css";
 import "./waiver-find.css";
 import "./week-switch.css";
 import "./tooltip-touch.css";
+import "./sheet-detents.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

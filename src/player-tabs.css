@@ -1,7 +1,7 @@
 /* Tabs in the player sheet and the waiver claim sheet (PlayerTabs.tsx): the tab row, the game log table and the depth
    chart. Mobile first. Loads just before frame.css. Every rule is scoped to .st-tabs, .gl, .dc, .pt-body or .pt-sheet. */
 
-/* ---------- Tab row: the League page's pills (PageTabs), edge to edge in the sheet's fixed top ---------- */
+/* ---------- Tab row: the League page's pills (PageTabs), edge to edge, sticky under the sheet's top (player-hero.css) ---------- */
 html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs { min-width: 0; margin: 8px 0 0; }
 html:root:not(#_):not(#_):not(#_) :is(.page-tabs.st-tabs, .page-tabs.gl-years) > .seg {
   margin: 0 calc(-1 * var(--pad-card-x, 16px)) !important; padding: 2px var(--pad-card-x, 16px) !important;
@@ -9,11 +9,8 @@ html:root:not(#_):not(#_):not(#_) :is(.page-tabs.st-tabs, .page-tabs.gl-years) >
 }
 html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs > .seg { gap: 6px !important; }
 html:root:not(#_):not(#_):not(#_) .page-tabs.st-tabs > .seg button { height: 36px; padding: 0 12px; }
-html:root:not(#_):not(#_) .ps-detail > .ds-top > .st-tabs { margin-top: 0; }
-/* The weeks stepper follows the tabs on Overview only */
-html:root:not(#_):not(#_) .ps.ps-player > .pd-top > .st-tabs + .pd-weeknav { margin-top: 4px; }
 
-/* The claim sheet holds one height whatever the tab, so the header and tabs never move */
+/* The claim sheet holds one height whatever the tab */
 html:root:not(#_):not(#_) .ps.ps-detail.pt-sheet { height: 88vh; height: 88dvh; }
 @media (min-width: 768px) {
   html:root:not(#_):not(#_) .ps.ps-detail.pt-sheet { height: min(85vh, 760px); max-width: 640px; }

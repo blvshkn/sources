@@ -10,7 +10,7 @@ import { kickLine, useKickoffs } from "../kickoff";
 import { eff, fmt, round1, scored } from "../engine";
 import { Icon, StatusPill } from "./ui";
 import { PlatformLogo } from "./PlatformLogo";
-import { PlayerHero, WatchButton, holdHeader } from "./PlayerHero";
+import { PlayerBar, PlayerHero, WatchButton, keepTabs } from "./PlayerHero";
 import { toggleWatch, useWatchApi, waiverWeek } from "./watchCtx";
 import { usePullToDismiss } from "./sheetDrag";
 import { useFocusTrap } from "./focusTrap";
@@ -29,11 +29,11 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const [p, setP] = useState(first);
   const other = p.id !== first.id;
   const where = other ? undefined : firstWhere, note = other ? undefined : firstNote, onCompare = other ? undefined : firstCompare;
-  // Overview, Game log, Depth chart. The tab row sits in the fixed top with the header, so neither moves on a switch.
+  // Overview, Game log, Depth chart. The tab row sticks under the sheet's top; a switch keeps it exactly where it is.
   const [tab, setTab] = useSheetTab("player", ["main", "log", "depth"]);
-  const pick = (t: typeof tab) => { holdHeader(body.current); setTab(t); body.current?.scrollTo({ top: 0 }); };
+  const pick = (t: typeof tab) => { keepTabs(body.current); setTab(t); };
   const openOther = (id: string) => { const n = PLAYERS[id]; if (!n) return; setP(n); setWeek(WEEK); setTab("main"); body.current?.scrollTo({ top: 0 }); };
-  // Which week the sheet shows. The header and stepper stay put; the body below them swaps.
+  // Which week the sheet shows. The tabs and stepper stay put; the content below them swaps.
   const [week, setWeek] = useState(WEEK);
   useKickoffs(week);
   const cur = week === WEEK;
@@ -44,7 +44,9 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
     const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
-  const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setShown(false); window.setTimeout(onClose, 220); };
+  // Out on a shorter 240ms ease (styles.css .ps-wrap.out), unmounted only once it has fully left
+  const [out, setOut] = useState(false);
+  const close = () => { const el = sheet.current; if (el) { el.style.transition = ""; el.style.transform = ""; } if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; } setOut(true); setShown(false); window.setTimeout(onClose, 240); };
   const sheet = useRef<HTMLElement>(null);
   useFocusTrap(sheet);
   const body = useRef<HTMLDivElement>(null);
@@ -72,34 +74,40 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const call = owner?.you && !onCompare ? lineupCall(p, nowFor(live, p)) : null;
   const swap = !!call && (/in Sleeper|Sleeper still has him/.test(call.line) || call.head === "Take him out of your lineup");
   const primary = onCompare
-    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}><Icon name="columns2" size={16} />Compare</button>
+    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 240); }}><Icon name="columns2" size={16} />Compare</button>
     : swap
       ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       : !owner && p.nfl !== "FA"
         ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Claim</a>
         : null;
 
+  const actions = (primary || watchApi) ? <>
+    {primary}
+    {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
+  </> : null;
+
   // Portaled to body: rendered in place it inherited the page's stacking (Lineup's sticky side column made it a
   // z-index 0 layer), so the docked inbox and the desk bell painted over the sheet and its scrim.
   return createPortal(
-    <div className={`ps-wrap pl-wrap${shown ? " in" : ""}`}>
+    <div className={`ps-wrap pl-wrap${shown ? " in" : ""}${out ? " out" : ""}`}>
       <div ref={scrim} className="ps-scrim" onClick={close} aria-hidden="true" />
       <section ref={sheet} className="ps ps-player" role="dialog" aria-modal="true" aria-labelledby="ps-name">
+        {/* One constant height: the handle, the compact bar (shown once the hero's name scrolls away) and close */}
         <div className="pd-top">
-        <span className="ps-handle" aria-hidden="true" />
+          <span className="ps-handle" aria-hidden="true" />
+          <PlayerBar key={p.id} s={p} />
+          <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
+        </div>
+        {/* Only this scrolls: the hero, then the tabs (sticky), then the tab's content */}
+        <ScrollArea ref={body} className={`ps-body${tab === "main" ? "" : " pt-body"}`} data-sheet-scroll>
         <PlayerHero key={p.id} s={p} nameId="ps-name" where={where}
           meta={onBye(p.nfl) ? undefined : kickLine(p) || undefined}
           status={<StatusPill p={p} />}
-          actions={<>
-            {primary}
-            {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
-          </>} />
-        <button ref={closeBtn} className="ps-x" onClick={close} aria-label="Close"><Icon name="x" size={18} /></button>
-        <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview", icon: "overview" }, { v: "log", label: "Game log", icon: "table" }, { v: "depth", label: "Depth chart", icon: "listOrdered" }]} />
-        {tab === "main" && <WeekStepper week={week} onChange={(w) => { holdHeader(body.current); setWeek(w); body.current?.scrollTo({ top: 0 }); }} className="pd-weeknav" />}
+          actions={actions} />
+        <div className="ph-stick">
+          <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview", icon: "overview" }, { v: "log", label: "Game log", icon: "table" }, { v: "depth", label: "Depth chart", icon: "listOrdered" }]} />
+          {tab === "main" && <WeekStepper week={week} onChange={(w) => { keepTabs(body.current); setWeek(w); }} className="pd-weeknav" />}
         </div>
-        {/* Only this scrolls; the shell clips it to the rounded corners and the header above stays put */}
-        <ScrollArea ref={body} className={`ps-body${tab === "main" ? "" : " pt-body"}`} data-sheet-scroll>
         {tab === "log" && <GameLogTab key={p.id} s={p} />}
         {tab === "depth" && <DepthTab key={p.id} s={p} onOpen={openOther} />}
         {tab === "main" && <>
@@ -169,6 +177,8 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
 
         </>}
         </ScrollArea>
+        {/* Phones: the same actions, docked to the bottom edge (sheet-actions.css) */}
+        {actions && <div className="ph-dock">{actions}</div>}
       </section>
     </div>,
     document.body,

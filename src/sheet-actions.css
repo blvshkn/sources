@@ -1,21 +1,22 @@
-/* Player sheets on phones (Zach): the header's actions (Claim, Watch, Not now; Compare or Swap in Sleeper) leave the
-   header and dock to the bottom of the sheet as equal-width buttons, always in reach of a thumb. The bar sits on the
-   sheet's own surface with a short fade above it, and the scrolling body gets matching room at the bottom so the last
-   row is never hidden. Tablet and desktop keep the actions in the header. */
+/* Player sheets on phones (Zach): the actions (Claim, Watch, Not now; Compare or Swap in Sleeper) dock to the bottom of
+   the sheet as equal-width buttons, always in reach of a thumb. The dock (.ph-dock) is the sheet's own child, outside
+   the scrolling body, on the sheet's solid surface with a short fade above it; the body gets matching room at the
+   bottom so the last row is never hidden. The hero keeps its own copy of the actions for tablet and desktop. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-dock { display: none; }
 @media (max-width: 767.98px) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph .ph-acts, html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph.ph-slim .ph-acts {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0 !important;
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) .ph .ph-acts { display: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    background: var(--surface);
-    box-shadow: 0 -16px 16px -4px var(--surface), 0 -1px 0 var(--line);
+    background: var(--ph-bg, #1A1D1B);
+    box-shadow: 0 -16px 16px -4px var(--ph-bg, #1A1D1B), 0 -1px 0 var(--line);
   }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph .ph-acts > *, html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph .ph-acts > * > button, html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph.ph-slim .ph-acts :is(.ph-cta, .ph-watch, .ph-snooze) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock > *, html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock > * > button {
     display: flex !important; align-items: center; justify-content: center; gap: 8px;
     width: 100% !important; height: 48px !important; min-height: 48px !important; min-width: 0 !important; padding: 0 10px !important;
     border-radius: 999px !important; font: 500 0.9375rem/1 var(--font-body) !important; white-space: nowrap;
   }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph .ph-acts :is(.ph-snooze, .snooze-btn) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; border: 0 !important; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph.ph-slim .ph-watch-l { display: inline !important; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps:has(.ph-acts) [data-sheet-scroll], html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-player:has(.ph-acts) .pd-body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > .ph-dock :is(.ph-snooze, .snooze-btn) { background: color-mix(in srgb, var(--ink) 7%, transparent) !important; color: var(--ink) !important; border: 0 !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player):has(> .ph-dock) > [data-sheet-scroll] { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
 }

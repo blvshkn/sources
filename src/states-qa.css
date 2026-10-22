@@ -180,7 +180,6 @@ html:root:not(#_):not(#_) .mu-swap {
 html:root:not(#_):not(#_) :is(.tp-list, .wv-ta-list) { background: var(--surface-2) !important; box-shadow: var(--shadow-md) !important; border: 0 !important; }
 html:root:not(#_):not(#_) .main-inner > .psr > .psr-list { background: var(--surface-2); border-color: transparent; box-shadow: var(--shadow-md); }
 html:root:not(#_):not(#_) .ps { border-color: transparent !important; box-shadow: var(--shadow-lg); }
-html:root:not(#_):not(#_) .ps-wrap .ps-scrim { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 html:root:not(#_):not(#_) .deal-tray { box-shadow: var(--shadow-md) !important; }
 html:root:not(#_):not(#_) .toast { box-shadow: var(--shadow-md); }
 html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }

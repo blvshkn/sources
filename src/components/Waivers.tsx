@@ -20,7 +20,7 @@ import { matchPlayer, pieces, rankPlayers } from "../search";
 import { DepthTab, GameLogTab, SheetTabs, useSheetTab, type SheetTab } from "./PlayerTabs";
 import { PlayerSheet } from "./lazy";
 import { waiverWeek } from "./watchCtx";
-import { PlayerHero, WatchButton, holdHeader } from "./PlayerHero";
+import { PlayerBar, PlayerHero, WatchButton, keepTabs } from "./PlayerHero";
 import type { Player } from "../data";
 
 /** Why a free agent can't help this week, or null when he can. */
@@ -449,6 +449,14 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           // the tap: it shakes and says why instead of doing nothing (deny.ts)
           const lockWhy = kind === "current" && !r && !shelved ? lockWhyText(e.fa, e.avail) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
+          // The claim sheet's actions: in the hero from 768px, docked to the sheet's bottom edge on phones
+          const claimActs = isOpen && r && !shelved ? <>
+            <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
+              <PlatformLogo size={16} />Claim
+            </a>
+            <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
+            <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
+          </> : null;
           return (
             <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${shelved ? " ps-no" : ""}`}>
               {r && !shelved ? <button className="wv-row" onClick={() => setOpen(e.fa.id)} aria-haspopup="dialog">{inner}</button>
@@ -463,27 +471,25 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                 </Tooltip>
               </span>}
               {isOpen && r && !shelved && (
-                <DetailSheet className="wv-sheet pt-sheet ph-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)} title={
+                <DetailSheet className="wv-sheet pt-sheet ph-sheet" label={`${r.fa.name}, claim details`} onClose={() => setOpen(null)}
+                  title={<PlayerBar s={e.fa} />} foot={<div className="ph-dock">{claimActs}</div>}>
+                {(closeSheet) => {
+                const subj = { id: e.fa.id, name: e.fa.name, pos: e.fa.pos, nfl: e.fa.nfl, proj: e.fa.proj, rookie: "rookie" in e.fa ? e.fa.rookie : undefined };
+                const tabOpts: { v: SheetTab; label: string; icon: IconName }[] = [{ v: "main", label: "Claim", icon: "userPlus" }, { v: "log", label: "Game log", icon: "table" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart", icon: "listOrdered" as IconName }])];
+                // The hero and the tabs scroll with the body; the tabs stick under the sheet's top and hold their place on a switch
+                const lead = <>
                   <PlayerHero s={e.fa}
                     meta={kind === "current" ? (gameOf(e.fa) || undefined) : undefined}
                     status={<StatusPill p={PLAYERS[e.fa.id] ?? { id: e.fa.id, name: e.fa.name, pos: "WR", nfl: e.fa.nfl, proj: e.fa.proj, status: isSpecialFA(e.fa) ? e.fa.status : undefined }} />}
-                    actions={<>
-                      <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
-                        <PlatformLogo size={16} />Claim
-                      </a>
-                      <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
-                      <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
-                    </>} />
-                } bar={(() => {
-                  const opts: { v: SheetTab; label: string; icon: IconName }[] = [{ v: "main", label: "Claim", icon: "userPlus" }, { v: "log", label: "Game log", icon: "table" }, ...(e.fa.pos === "DEF" ? [] : [{ v: "depth" as SheetTab, label: "Depth chart", icon: "listOrdered" as IconName }])];
-                  return <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={opts} onChange={(t) => { const b = document.querySelector<HTMLElement>(".pt-sheet .ds-body"); holdHeader(b); setSheetTab(t); b?.scrollTo({ top: 0 }); }} />;
-                })()}>
-                {(closeSheet) => {
-                const subj = { id: e.fa.id, name: e.fa.name, pos: e.fa.pos, nfl: e.fa.nfl, proj: e.fa.proj, rookie: "rookie" in e.fa ? e.fa.rookie : undefined };
+                    actions={claimActs} />
+                  <div className="ph-stick">
+                    <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={tabOpts} onChange={(t) => { keepTabs(document.querySelector<HTMLElement>(".pt-sheet .ds-body")); setSheetTab(t); }} />
+                  </div>
+                </>;
                 const t = e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab;
-                if (t === "log") return <GameLogTab key={e.fa.id} s={subj} />;
-                if (t === "depth") return <DepthTab key={e.fa.id} s={subj} onOpen={(id) => { const n = PLAYERS[id]; if (n) closeSheet(() => setOther(n)); }} />;
-                return (
+                if (t === "log") return <>{lead}<GameLogTab key={e.fa.id} s={subj} /></>;
+                if (t === "depth") return <>{lead}<DepthTab key={e.fa.id} s={subj} onOpen={(id) => { const n = PLAYERS[id]; if (n) closeSheet(() => setOther(n)); }} /></>;
+                return (<>{lead}
                 <div className="wv-detail">
                   {e.fit && !kd && <p className="small ps-fit">{e.fit}</p>}
                   <p className="small">{kind === "current" ? (kd ? kd.line : r.fa.why)
@@ -498,7 +504,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
                   <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. Claims are placed in your league app. Sources never bids for you.</p>
                 </div>
-                );
+                </>);
                 }}
                 </DetailSheet>
               )}
