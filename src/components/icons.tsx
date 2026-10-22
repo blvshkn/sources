@@ -3,11 +3,12 @@
 // helmet, the air vent) the drawing is ours, with every outline continuous. The football ("roster") is the logo mark.
 // Animated parts carry m1 to m4 classes (icon-motion.css); lines that draw in carry pathLength 1.
 import { AskIcon } from "./AskIcon";
+import { AiMark } from "./WorkingLoader";
 import { useIconStroke } from "./iconStroke";
 
 export type IconName =
   | "overview" | "headset" | "hatGlasses" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
-  | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "clock" | "eye" | "helmet" | "pen"
+  | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "ai" | "clock" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
   | "download" | "image" | "mail" | "star" | "airVent"
   | "userPlus" | "table" | "listOrdered" | "columns2";
@@ -27,6 +28,7 @@ const ICONS: Record<IconName, string> = {
   // Waivers: Lucide square-text (the old Wire glyph). The three lines (m1 to m3, pathLength 1) write in, top to bottom.
   waivers: "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path class=\"m1\" pathLength=\"1\" d=\"M7 8h8\"/><path class=\"m2\" pathLength=\"1\" d=\"M7 12h10\"/><path class=\"m3\" pathLength=\"1\" d=\"M7 16h6\"/>", // square-text
   spark: "", // drawn by AskIcon (Lucide messages-square)
+  ai: "", // drawn by AiMark, the dot grid on everything Sources AI writes
   app: "<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M10 4v4\"/><path d=\"M2 8h20\"/><path d=\"M6 4v4\"/>", // app-window
   clock: "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>", // clock
   // Bell: Lucide bell. The dome (m1) swings from its crown at (12, 2); the clapper (m2) hangs from the lip at (12, 17).
@@ -98,6 +100,8 @@ const inked = (name: IconName) => { const o = OFFSET[name]; return o ? `<g trans
 export function Icon({ name, size = 20, active = false }: { name: IconName; size?: number; active?: boolean }) {
   // Ask, and the mark on anything Sources writes, is the chat bubbles icon with its own hover beat (AskIcon)
   if (name === "spark" || name === "ask") return <AskIcon size={size} active={active} />;
+  // The dot grid fills its box edge to edge, so it runs a touch smaller to sit even with the line icons
+  if (name === "ai") return <AiMark size={Math.round(size * 0.82)} />;
   return <Glyph name={name} size={size} />;
 }
 

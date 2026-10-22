@@ -614,7 +614,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
         </div>
       )}
 
-      <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "spark" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }, { v: "sent", label: sentCount ? `Sent (${sentCount})` : "Sent", icon: "send" }]} />
+      <PageTabs value={view} onChange={setView} options={[{ v: "build", label: "Build", icon: "trade" }, { v: "ideas", label: suggestions.length ? `Ideas (${suggestions.length})` : "Ideas", icon: "ai" }, { v: "notes", label: theirTags.length ? `Notes (${theirTags.length})` : "Notes", icon: "msg" }, { v: "sent", label: sentCount ? `Sent (${sentCount})` : "Sent", icon: "send" }]} />
 
       {view === "sent" && (
         <SentOffers offers={sent} synced={sentSynced} syncUser={syncUser} onReopen={(o) => { setView("build"); onReopenSent?.(o); }}
