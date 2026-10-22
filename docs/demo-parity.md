@@ -134,6 +134,23 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 | Phone header, tab bar, sidebar, background | Same as live | OK |
 | Landing "Try the demo" | Opens first-run setup on the demo league, then the app | OK |
 
+### October 21 pass
+
+| Change | In the demo | Status |
+| --- | --- | --- |
+| Full-width Compare button with the columns icon (phones) | Lineup swap card, Full matchup | OK |
+| Taller compare chart with a tap-a-week readout above it | Compare sheet | OK |
+| Swap card opens without nudging the player row | Lineup | OK |
+| Top nav matches the bottom tab bar when scrolled | All pages | OK |
+| Trade roster switch: solid track and tab over a fade from the nav | Trade | OK |
+| Practice weighed by day (final practice counts, early-week DNPs are routine) | Demo notes now name the day: Deebo "limited Saturday" (Monday game), Bigsby "missed Friday practice", Lamb "sat Wednesday, full Friday"; Sources AI and Ask read the same rule | Seeded |
+| Start/sit close calls go to the healthy player | Lineup > Compare, e.g. Deebo Samuel vs Jalen Coker | OK |
+| Full matchup groups split by space; only tappable cards outlined | Full matchup | OK |
+| Empty Top pickup card hidden | Waivers (the demo always has a pick, so the card shows) | OK |
+| Loading chips wrap as a group | Live sign-in only: the demo has nothing to fetch, so it skips the loading screen | Live only |
+| Alpha tag centered on its caps | Phone header and sidebar | OK |
+| 16px corners on every card | All pages and sheets | OK |
+
 ## Known gaps
 
 - The Slot report's weekly bars (`DEMO_SLOT_HISTORY` in data.ts) are their own fixture, not summed from the demo season.
