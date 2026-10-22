@@ -12,3 +12,17 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av > .av-ph
 @media (min-width: 768px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av:has(> .av-photo) { width: 136px !important; height: 136px !important; }
 }
+
+/* The header sits higher (Zach): it starts 24px sooner, right under the close button (which moves up 8px), and the team logo rides higher behind it, bleeding off the sheet's top edge. */
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) { padding-top: 44px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-top, .pd-top) > .ps-x { top: 10px; }
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-logo { top: -104px; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-logo { top: -120px; }
+}
+/* Phones: the actions live in the bottom dock, so the header drops its empty actions row (and the gap above it) */
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps .ph:not(.ph-slim) { grid-template-areas: "art who" "bio bio" "rank rank"; }
+}
