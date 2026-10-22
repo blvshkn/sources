@@ -387,7 +387,7 @@ export function Landing({ onLive, onDemo }: {
             <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
-              <PhoneApp tab="matchup" go={appsGo} front={false} />
+              <PhoneApp tab="trade" go={appsGo} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
               <div className="hp-app">
                 <p className="hp-title">Sunday, live</p>
@@ -412,7 +412,7 @@ export function Landing({ onLive, onDemo }: {
             <PhoneChrome />
             <div className="hp-scr">
               <PhoneStatus />
-              <PhoneApp tab="roster" go={appsGo} front={false} />
+              <PhoneApp tab="waivers" go={appsGo} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
               <div className="hp-app">
                 <p className="hp-title">Set optimal lineup</p>

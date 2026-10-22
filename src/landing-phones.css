@@ -183,3 +183,5 @@ html:root:not(#_):not(#_) .sc-d0 { display: none; }
 html:root:not(#_):not(#_):not(#_) .hp-scr .hp-home { z-index: 6; bottom: calc(8 * var(--u)); }
 /* Inside the frame there's no safe area, so give the tab bar the room iOS would: its icons sit above the home bar */
 html.in-frame .tabbar { padding-bottom: 30px !important; }
+/* The phones behind are pictures of the app running: nothing in them takes a click, a hover or focus */
+html:root:not(#_):not(#_):not(#_) .hp-back, html:root:not(#_):not(#_):not(#_) .hp-back * { pointer-events: none !important; }
