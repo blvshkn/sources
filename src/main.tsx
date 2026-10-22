@@ -77,6 +77,7 @@ import "./sheet.css";
 import "./scroll.css";
 import "./icon-center.css";
 import "./nav.css";
+import "./landing-oct22.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";

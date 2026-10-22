@@ -185,6 +185,15 @@ export function Landing({ onLive, onDemo }: {
     return TEAMS.flatMap((t) => t.roster).map(playerById).filter((p): p is Player => !!p && !/^[A-Z]{2,3}$/.test(p.id))
       .sort((a, b) => b.proj - a.proj).filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, 7);
   }, []);
+  // The live sample Sunday for the hero's angled phone
+  const liveWeek = useMemo(() => sampleWeek("live"), []);
+  // The crowd scattered down the rest of the page (Zach, Oct 22): the next players in the sample league, never the
+  // hero's seven, each placed at a depth from CROWD
+  const crowd = useMemo(() => {
+    const seen = new Set<string>(cast.map((p) => p.id));
+    return TEAMS.flatMap((t) => t.roster).map(playerById).filter((p): p is Player => !!p && !/^[A-Z]{2,3}$/.test(p.id))
+      .sort((a, b) => b.proj - a.proj).filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, CROWD.length);
+  }, [cast]);
 
   // The same trade card and message the app's pitch sheet makes. It's below the fold, so it's drawn after the page has
   // loaded, once the reader is within a screen or so of it; its skeleton holds the card's exact size until then.
@@ -235,6 +244,12 @@ export function Landing({ onLive, onDemo }: {
   const env = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLElement>(null);
   useEffect(() => (hero.current ? heroDepth(hero.current, env.current) : undefined), []);
+  // The game-day section's face-off keeps the same tilt and parallax it had in the hero (the page background is the hero's)
+  const game = useRef<HTMLElement>(null);
+  useEffect(() => (game.current ? heroDepth(game.current, null) : undefined), []);
+  // The crowd scattered down the page drifts with the scroll at its own depth
+  const crowdRef = useRef<HTMLDivElement>(null);
+  useEffect(() => (crowdRef.current ? crowdDepth(crowdRef.current) : undefined), []);
 
   // The trade idea's buttons start the sample league the way "Or explore a sample league" does, then the app opens
   // this deal: in the builder, or with its pitch written (demoHandoff.ts). A handoff left from an earlier visit is dropped.
@@ -281,6 +296,18 @@ export function Landing({ onLive, onDemo }: {
         <div className="env-field"><div className="env-turf" /></div>
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
+      {/* Players scattered through the page at three depths: near ones big and sharp, far ones small and soft */}
+      <div className="ld2-crowd" ref={crowdRef} aria-hidden="true">
+        {crowd.map((p, i) => {
+          const c = CROWD[i];
+          return (
+            <span key={p.id} className={`ld2-crowd-p is-${c.z}`}
+              style={{ top: `${c.top}%`, [c.side]: `${c.x}%`, ["--i" as string]: i }}>
+              <span className="ld2-crowd-in"><Avatar p={p} size={CROWD_SIZE[c.z]} badge={false} /></span>
+            </span>
+          );
+        })}
+      </div>
       <nav className="ld-nav ld2-nav" aria-label="Source">
         <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={52} word={30} tagline tag={11} label="Source" stage /></div>
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
@@ -294,8 +321,6 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sub ld2-in" style={{ ["--i" as string]: 3 }}>Source reads your Sleeper league, learns what every team needs, and builds deals that help both sides.</p>
           <div className="ld2-in" style={{ ["--i" as string]: 4 }}>{form("ld-user")}</div>
           <button className="ld2-link ld2-in" style={{ ["--i" as string]: 5 }} onClick={onDemo}>Or explore a sample league<Icon name="chev" size={14} /></button>
-          {/* This week's face-off from the sample league, the same card as Wire, before kickoff, live and final */}
-          <FaceOffStates you={demo.you} partner={demo.mike.manager} />
         </div>
 
         <div className="ld2-stage">
@@ -306,8 +331,43 @@ export function Landing({ onLive, onDemo }: {
             </span>
           ))}
         </div>
+        {/* Two more phones angled behind the main one (Zach, Oct 22): the live face-off and a team's needs. Pictures
+            only, so they're hidden from readers and can't take focus. */}
+        <div className="ld2-phones-back" aria-hidden="true" ref={setInert}>
+          <div className="ld2-phone ld2-phone-l">
+            <div className="ld2-phone-screen">
+              <PhoneBar />
+              <Scoreboard you={demo.you} partner={demo.mike.manager} extras={false} at={liveWeek} />
+            </div>
+          </div>
+          {demo.thin[0] && (
+            <div className="ld2-phone ld2-phone-r">
+              <div className="ld2-phone-screen">
+                <PhoneBar />
+                <article className="card ld2-phone-needs">
+                  <div className="row" style={{ justifyContent: "space-between" }}><b className="small">{demo.thin[0].team.name}</b><span className="row small muted">Needs <PosBadge pos={demo.thin[0].need} /></span></div>
+                  {groupsFor().slice(0, 4).map((g) => {
+                    const d = demo.thin[0].groups[g];
+                    const w = Math.min(Math.abs(d.pct) * 140, 50);
+                    return (
+                      <div key={g} className="bar-row">
+                        <span className="bar-label">{g}</span>
+                        <span className="bar-track"><span className="bar-mid" /><span className={`bar-fill ${d.diff >= 0.05 ? "up" : d.diff <= -0.05 ? "down" : "flat"}`} style={{ width: `${w}%` }} /></span>
+                        <span className="bar-val" style={{ color: d.diff >= 0.05 ? "var(--good)" : d.diff <= -0.05 ? "var(--bad)" : "var(--muted)" }}>{fmt(d.diff)}</span>
+                      </div>
+                    );
+                  })}
+                </article>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="hd-card hd-trade" data-hd-pin=".ti-actions">
         <div className="hd-tilt"><div className="hd-pose">
+        {/* The trade idea on the phone it'll be read on */}
+        <div className="ld2-phone ld2-phone-main">
+        <div className="ld2-phone-screen">
+        <PhoneBar />
         <div className="ld-preview ld2-preview">
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
@@ -317,6 +377,8 @@ export function Landing({ onLive, onDemo }: {
               <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
             </article>
           )}
+        </div>
+        </div>
         </div>
         </div></div>
         </div>
@@ -334,6 +396,19 @@ export function Landing({ onLive, onDemo }: {
           ))}
         </div>
         <p className="sr-only">Your Fantasy Source: your trades, your lineup, your waivers, your league.</p>
+      </section>
+
+      {/* The face-off, out of the hero and into a section of its own (Zach, Oct 22: the hero was too busy). Card on
+          the left, copy on the right, so it reads as a second beat instead of the hero's footnote. */}
+      <section className="ld2-hero ld2-game" ref={game} aria-labelledby="ld-game">
+        <div className="ld2-copy ld2-game-copy ld2-reveal">
+          <span className="ld2-eyebrow"><Icon name="trophy" size={14} />Game day</span>
+          <SplitHead id="ld-game" a="Your matchup," b="kickoff to final." />
+          <p className="ld2-sub">The same face-off you'll see in Source, before kickoff, live and final. The win chance follows Sleeper's and refreshes every 15 seconds while games are on.</p>
+        </div>
+        <div className="ld2-copy ld2-game-stage ld2-reveal">
+          <FaceOffStates you={demo.you} partner={demo.mike.manager} />
+        </div>
       </section>
 
       <section className="ld2-tagwrap" aria-label="What Source does">
@@ -573,6 +648,52 @@ export function Landing({ onLive, onDemo }: {
 
 // Inline so the stylesheet has no url() and Vite skips its PostCSS pass
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
+
+/** A phone's status bar and island, drawn in CSS so the hero phones need no image */
+function PhoneBar() {
+  return (
+    <div className="ld2-phone-bar" aria-hidden="true">
+      <span className="ld2-phone-time">1:00</span>
+      <i className="ld2-phone-island" />
+      <span className="ld2-phone-sys"><i /><i /><i /></span>
+    </div>
+  );
+}
+
+/** The crowd down the page: where each player sits (top as a percent of the whole landing, x as a percent in from its
+ *  side) and how far away. Kept to the outer gutters so no one sits over copy; near and far alternate so it never
+ *  reads as a column. */
+type Depth = "near" | "mid" | "far";
+const CROWD: { top: number; side: "left" | "right"; x: number; z: Depth }[] = [
+  { top: 9, side: "right", x: 3, z: "far" },
+  { top: 13, side: "left", x: 2, z: "near" },
+  { top: 18, side: "right", x: 6, z: "mid" },
+  { top: 24, side: "left", x: 7, z: "far" },
+  { top: 29, side: "right", x: 1, z: "near" },
+  { top: 34, side: "left", x: 4, z: "mid" },
+  { top: 40, side: "right", x: 8, z: "far" },
+  { top: 46, side: "left", x: 1, z: "near" },
+  { top: 52, side: "right", x: 4, z: "mid" },
+  { top: 57, side: "left", x: 8, z: "far" },
+  { top: 63, side: "right", x: 2, z: "near" },
+  { top: 69, side: "left", x: 5, z: "far" },
+  { top: 75, side: "right", x: 7, z: "mid" },
+  { top: 81, side: "left", x: 2, z: "near" },
+  { top: 87, side: "right", x: 5, z: "far" },
+];
+const CROWD_SIZE: Record<Depth, number> = { near: 112, mid: 64, far: 44 };
+
+/** Scroll parallax for the crowd: --sy is the page's scroll, and each depth multiplies it by its own rate in CSS
+ *  (far drifts with the page a little, near slides past it). Reduced motion leaves everyone still. */
+function crowdDepth(el: HTMLElement): () => void {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
+  let raf = 0;
+  const paint = () => { raf = 0; el.style.setProperty("--sy", String(Math.round(scrollY))); };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+  paint();
+  addEventListener("scroll", kick, { passive: true });
+  return () => { removeEventListener("scroll", kick); cancelAnimationFrame(raf); };
+}
 
 /** Everything Source does, one headline at a time. The first is the promise; the rest rotate in behind it. */
 const HEADLINES = [
