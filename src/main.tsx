@@ -112,6 +112,7 @@ import "./slot-chips.css";
 import "./matchup-pill.css";
 import "./tag-chip.css";
 import "./compare-fill.css";
+import "./sticky-switch.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
