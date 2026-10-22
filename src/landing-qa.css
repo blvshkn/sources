@@ -265,3 +265,6 @@ html:root:not(#_):not(#_):not(#_) .ld2-chip-ic svg { width: 0.46em !important; h
   html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip { transform: translateY(0.18em) scale(0.6); opacity: 0; transition: transform calc(700ms * var(--mo, 1)) var(--ease-fluid), opacity calc(500ms * var(--mo, 1)) var(--ease-fluid); }
   html:root:not(#_):not(#_) .ld2-tag-stack > .ld2-chip.on { transform: none; opacity: 1; }
 }
+
+/* Hero player circles: no ring around them (Zach, Oct 22). The soft drop shadow stays so they still float. */
+html:root:not(#_):not(#_):not(#_) .ld2-head .av { box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.7); }
