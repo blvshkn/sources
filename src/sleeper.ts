@@ -608,7 +608,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     const wk = p.wk ? p.wk.ppr : 0;
     return {
       id: p.id, name: p.name, pos: p.pos, nfl: p.nfl, proj: p.proj, rookie: p.rookie, trend: t ? "up" : "flat", adds: t,
-      why: t ? `Added in ${t.toLocaleString()} Sleeper leagues in the last day. Projects ${wk.toFixed(1)} this week.`
+      why: t ? `Added in ${t.toLocaleString()} Sleeper leagues over the last 7 days. Projects ${wk.toFixed(1)} this week.`
         : byeSet.has(p.nfl) ? `On bye this week, but projects ${p.proj.toFixed(1)} a week going forward.`
         : p.wk === null ? `No projection for this week yet. Projects ${p.proj.toFixed(1)} a week going forward.`
         : `Projects ${wk.toFixed(1)} this week and ${p.proj.toFixed(1)} a week going forward.`,
