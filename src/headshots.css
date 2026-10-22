@@ -1,5 +1,5 @@
-/* Headshots in sheets and modals (Zach: one optical size, and large). Every cutout uses the same box shape (6:5, close to
-   Sleeper's photos) and shows the whole full-size photo (contain, sitting on the bottom edge, nothing cropped), so heads come out the same size from one
+/* Headshots in sheets and modals (Zach: one optical size, and large). Every cutout uses the same box shape (600:436, ESPN's
+   headshot frame) and shows the whole full-size photo (contain, sitting on the bottom edge, nothing cropped), so heads come out the same size from one
    sheet to the next; only the box scale differs by place. The circle is gone and the bottom fifth fades out.
    Player header: hero-cutout.css. Compare columns and start/sit picks: here. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut { border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible; flex: none; }
@@ -11,9 +11,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .av-photo
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .av-badge { display: none; }
 /* Compare sheet: the headshot sits above the name in each column */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .cmp-info:has(> .av-cut) { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .av.av-cut { width: 104px !important; height: 88px !important; margin: 0 0 -4px -10px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .cmp-sheet .av.av-cut { width: 136px !important; height: 99px !important; margin: 0 0 -4px -14px; }
 /* Start/sit picks */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 104px !important; height: 88px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick .av.av-cut { width: 136px !important; height: 99px !important; }
 /* The two start/sit picks match heights, with Change pinned to the bottom of each */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :has(> .sx-pick) { align-items: stretch !important; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .sx-pick { align-self: stretch !important; }
