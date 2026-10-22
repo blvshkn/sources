@@ -146,6 +146,7 @@ import "./slot-report.css";
 import "./trade-accept.css";
 import "./gesture-motion.css?app";
 import "./new-moments.css?app";
+import "./wv-pos-chips.css";
 import "./frame.css?app";
 import "./sheet.css?app";
 import "./scroll.css?app";

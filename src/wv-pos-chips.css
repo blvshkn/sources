@@ -1,0 +1,23 @@
+/* Waivers position filter (Zach, Oct 22): the same chips as the Trade section tabs on phones, at every width.
+   Separate rounded pills in one row, 8px apart, 36px tall. The picked one lifts to a lighter fill with ink text;
+   the rest stay dim. The row scrolls sideways when it doesn't fit (scroll.css fades the edge), never wraps.
+   Counts stay as small mono numbers; the picked count takes the accent, like the Trade tab's icon. */
+html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos {
+  display: flex !important; flex-wrap: nowrap; gap: 8px; grid-template-columns: none; grid-auto-flow: initial;
+  margin: 4px var(--pad-card-x, 16px) 14px !important; padding: 2px 0 !important; border-radius: 0; background: none; box-shadow: none;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0;
+  height: 36px !important; min-height: 36px !important; padding: 0 16px !important; border: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent); box-shadow: none; color: var(--muted); font-weight: 500; white-space: nowrap;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--ink) 9%, transparent); box-shadow: none; color: var(--ink);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button small { font: 500 0.75rem/1 var(--font-mono); color: var(--muted); opacity: 1; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos > button[aria-pressed="true"] small { color: var(--logo-mark, #D8F24A); }
+/* Phones: the row runs to the card's edges so chips scroll under the fade, inset by padding instead */
+@media (max-width: 520px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-card > .wv2-pos { margin: 4px 0 14px !important; padding: 2px var(--pad-card-x, 16px) !important; scroll-padding-inline: var(--pad-card-x, 16px); }
+}
