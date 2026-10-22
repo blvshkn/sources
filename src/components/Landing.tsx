@@ -42,12 +42,18 @@ import { Trophy, WinCup } from "./Trophy";
 import { whenNear } from "../idle";
 import type { TeamNeeds } from "../engine";
 
-/** The tagline as stacked caps, with a chip after some words: a sample-league headshot (`p`, index into the hero's
- *  cast) or a pixel icon tile */
-const TAG_STACK: (string | { p: number } | { icon: "trade" | "send" | "group" })[] = [
-  "EVERY", "OFFER", { icon: "trade" }, "JUDGED", "BY", "BOTH", { p: 0 }, { p: 1 }, "STARTING", "LINEUPS,", "THEN", "PITCHED", { icon: "send" },
-  "AROUND", "WHAT", "THE", "OTHER", "MANAGER", { p: 2 }, "NEEDS.",
-];
+/** The tagline as stacked caps with chips set inside the lines, each beside the word it shows (Zach, Oct 22: they had
+ *  all landed at the right edge): the trade icon in "every offer", a player on each side of "starting lineups" (both
+ *  sides' lineups), the send icon in "then pitched", the other manager's photo in "other manager". `br` ends a line. */
+const TAG_STACK: (string | { p: number } | { icon: "trade" | "send" | "group" } | { mgr: true } | { br: true })[] = [
+  "EVERY", { icon: "trade" }, "OFFER", { br: true },
+  "JUDGED BY BOTH", { br: true },
+  { p: 0 }, "STARTING", { p: 1 }, "LINEUPS,", { br: true },
+  "THEN", { icon: "send" }, "PITCHED", { br: true },
+  "AROUND WHAT THE", { br: true },
+  "OTHER", { mgr: true }, "MANAGER", { br: true },
+  "NEEDS.",
+]
 
 /** The page-wide scatter: how far down the page (%), which side, how far in, and depth (0 near, 1 middle, 2 far) */
 const SCATTER: { top: number; side: "l" | "r"; x: string; d: 0 | 1 | 2 }[] = [
@@ -152,6 +158,58 @@ export function Landing({ onLive, onDemo }: {
   const phonesRef = useRef<HTMLDivElement>(null);
   const foSec = useRef<HTMLElement>(null);
   const tradeSec = useRef<HTMLElement>(null);
+  // The sticky nav (Zach, Oct 22): it stays with the logo all the way down, takes a backdrop once the page moves, and
+  // once the hero's username field is out of sight it offers "Find my leagues", which opens that field in the nav.
+  const [stuck, setStuck] = useState(false);
+  const [navCta, setNavCta] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const navBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const heroForm = document.getElementById("ld-user")?.closest(".ld2-in");
+    let io: IntersectionObserver | undefined;
+    if (heroForm) {
+      io = new IntersectionObserver(([en]) => {
+        const gone = !en.isIntersecting && en.boundingClientRect.top < 0;
+        setNavCta(gone);
+        if (!gone) setNavOpen(false);
+      }, { rootMargin: "-72px 0px 0px 0px" });
+      io.observe(heroForm);
+    }
+    return () => { window.removeEventListener("scroll", onScroll); io?.disconnect(); };
+  }, []);
+  // The banner screen (Zach, Oct 22): a pinned stretch. While it scrolls through, the YOUR banner blows in from the
+  // side like cloth in the wind and settles at the top, then the tagline lights word by word in the middle; both
+  // leave together at the end. Everything here is driven by the scroll, so nothing moves while you're still.
+  const yourRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = yourRef.current;
+    if (!el) return;
+    const words = [...el.querySelectorAll<HTMLElement>(".ld2-tag-stack > span")];
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still) { el.style.setProperty("--yin", "1"); words.forEach((w) => w.classList.add("on")); return; }
+    let raf = 0, lit = -1;
+    const paint = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect(), vh = window.innerHeight;
+      // 0 as the screen's top reaches the bottom of the window, 1 once it has scrolled through its pinned length
+      const run = Math.max(1, r.height - vh);
+      const enter = Math.min(1, Math.max(0, (vh - r.top) / vh));
+      const p = Math.min(1, Math.max(0, -r.top / run));
+      const ease = 1 - Math.pow(1 - enter, 3);
+      el.style.setProperty("--yin", ease.toFixed(3));
+      // The flutter: a wave that follows the scroll position and calms as the banner settles
+      el.style.setProperty("--ywave", (Math.sin(window.scrollY / 70) * (1 - ease)).toFixed(3));
+      const n = Math.round(Math.min(1, Math.max(0, (p - 0.05) / 0.75)) * words.length);
+      if (n !== lit) { lit = n; words.forEach((w, i) => w.classList.toggle("on", i < n)); }
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    window.addEventListener("scroll", kick, { passive: true }); window.addEventListener("resize", kick);
+    paint();
+    return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); cancelAnimationFrame(raf); };
+  }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
@@ -293,7 +351,7 @@ export function Landing({ onLive, onDemo }: {
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -12% 0px" });
     el.querySelectorAll(".ld2-reveal").forEach((n) => io.observe(n));
     const words = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("on", e.isIntersecting || e.boundingClientRect.top < 0)), { rootMargin: "0px 0px -45% 0px" });
-    el.querySelectorAll(".ld2-tag > span").forEach((n) => words.observe(n));
+    el.querySelectorAll(".ld2-tag:not(.ld2-tag-stack) > span").forEach((n) => words.observe(n));
     return () => { io.disconnect(); words.disconnect(); };
   }, []);
 
@@ -349,9 +407,33 @@ export function Landing({ onLive, onDemo }: {
         <div className="env-field"><div className="env-turf" /></div>
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
-      <nav className="ld-nav ld2-nav" aria-label="Source">
+      <nav className={`ld-nav ld2-nav${stuck ? " stuck" : ""}`} aria-label="Source">
         <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={52} word={30} tagline tag={11} label="Source" stage /></div>
-        <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
+        <div className="ld2-navright">
+          <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
+          {/* Once the hero's username field has scrolled away, the nav carries it: "Find my leagues" opens the same field here */}
+          <div className={`ld2-navcta${navCta ? " on" : ""}${navOpen ? " open" : ""}`} aria-hidden={!navCta || undefined}>
+            {navOpen ? (
+              <div className="ld2-navpop">
+                <form className="ld2-form ld2-navform" onSubmit={(e) => { setErrFor("ld-nav-user"); connect(e); }} noValidate
+                  onKeyDown={(e) => { if (e.key === "Escape") { setNavOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); } }}>
+                  <label htmlFor="ld-nav-user" className="sr-only">Your Sleeper username</label>
+                  <span className="at" aria-hidden="true">@</span>
+                  <input id="ld-nav-user" autoFocus value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} name="username"
+                    aria-invalid={!!error && errFor === "ld-nav-user"} aria-describedby="ld-nav-user-help"
+                    placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
+                  <button className="btn btn-sm btn-primary" type="submit" disabled={busy}>{busy ? "Finding…" : "Find my leagues"}</button>
+                  <button type="button" className="ld2-navx" aria-label="Close" onClick={() => { setNavOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }}><Icon name="x" size={16} /></button>
+                </form>
+                <p id="ld-nav-user-help" className={error && errFor === "ld-nav-user" ? "ld2-error ld2-navhelp" : "ld2-help ld2-navhelp"} role={error && errFor === "ld-nav-user" ? "alert" : undefined}>
+                  {(errFor === "ld-nav-user" && error) || "Free. No password. Read only."}
+                </p>
+              </div>
+            ) : (
+              <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setNavOpen(true)} aria-expanded={false}>Find my leagues</button>
+            )}
+          </div>
+        </div>
       </nav>
 
       <main id="ld-main" tabIndex={-1}>
@@ -381,6 +463,7 @@ export function Landing({ onLive, onDemo }: {
             {cast.map((p, i) => (
               <span key={p.id} className={`hp-head d${HEAD_DEPTH[i] ?? 2} h${i}`} style={{ ["--i" as string]: i }}>
                 <Avatar p={p} size={96} badge={false} />
+                {(HEAD_DEPTH[i] ?? 2) < 2 && <b>{p.name.split(" ").slice(-1)[0]}</b>}
               </span>
             ))}
           </div>
@@ -426,7 +509,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       {/* One screen: the YOUR banner over the stacked tagline (Zach, Oct 22) */}
-      <div className="ld2-yourscreen">
+      <div className="ld2-yourscreen" ref={yourRef}>
       {/* The YOUR banner (Zach, Oct 22, after northeasttomato.com's product strip; moved down to sit over the tagline): YOUR, over and over, in
           Clash on lime. It slides with the page as you scroll and stops when you stop, so it never loops on its own. */}
       <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
@@ -446,8 +529,9 @@ export function Landing({ onLive, onDemo }: {
           <span className="sr-only">{tagline}</span>
           {TAG_STACK.map((s, i) => typeof s === "string"
             ? <span key={i} aria-hidden="true">{s} </span>
+            : "br" in s ? <br key={i} />
             : <span key={i} className={`ld2-chip${"icon" in s ? " ld2-chip-ic" : ""}`} aria-hidden="true">
-                {"icon" in s ? <Icon name={s.icon} size={64} /> : cast[s.p] ? <Avatar p={cast[s.p]} size={96} badge={false} /> : null}
+                {"icon" in s ? <Icon name={s.icon} size={64} /> : "mgr" in s ? <ManagerAvatar src={demo.mike.avatar} name={demo.mike.manager} size={96} className="ld2-chip-mgr" /> : cast[s.p] ? <Avatar p={cast[s.p]} size={96} badge={false} /> : null}
               </span>)}
         </p>
       </section>

@@ -163,9 +163,9 @@ function Side({ s, side, pct, other, won, lost = false, chip, state, tips = true
   // Ahead or behind on win %: the leader's % and bar go green, the trailer's go red. Even stays neutral.
   const tone = pct === null || other === null || pct === other ? "even" : pct > other ? "up" : "down";
   const handle = !t ? null : t.manager === "You" ? "You" : t.manager;
-  // The matchup winner's 16-bit trophy sits beside the team name; otherwise last season's champion keeps his cup
-  // before the handle (with its tooltip). One cup either way.
-  const cup = !t || won ? null : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
+  // Last season's champion always keeps his crown before the handle (Zach, Oct 22: "the crown should stay next to
+  // Jake's name"); the matchup winner's pixel trophy sits beside the team name.
+  const cup = t && isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
   const end = t ? s.note ?? perGame(t) : "";
   const left = chip && t ? toPlay(s.count) : "";
   const st = state ?? "pre";

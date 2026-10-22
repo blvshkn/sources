@@ -75,3 +75,125 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-in {
     transition-delay: calc(var(--i) * 90ms * var(--mo, 1));
   }
 }
+/* Tagline chips: the manager's photo fills its circle like the headshots */
+html:root:not(#_):not(#_):not(#_) .ld2-chip .ld2-chip-mgr { width: 100% !important; height: 100% !important; border-radius: 50%; object-fit: cover; font-size: 0.3em !important; }
+
+/* ---------- The banner screen: pinned, the banner blowing in, the tagline lit by scroll (Landing.tsx yourRef) ----------
+   The screen is two and a half windows tall. The banner sticks to the top and the tagline sticks in the space under
+   it, so the page appears to hold still while you scroll; the words light in reading order across that stretch and
+   both leave together when it ends. Coming in, the banner flies from the right at an angle, rippling like cloth
+   (--ywave, from the scroll), and lies flat as it pins (--yin). */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-yourscreen {
+  display: block; align-content: start; min-height: 250svh; padding: 0; gap: 0; position: relative;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband {
+  position: sticky; top: var(--navh, 64px); z-index: 5; margin: 0;
+  --q: calc(1 - var(--yin, 1));
+  transform-origin: 0% 50%;
+  transform: translate3d(calc(var(--q) * 60vw), calc(var(--q) * 18vh), 0) rotate(calc(var(--q) * -9deg + var(--ywave, 0) * 4deg)) skewY(calc(var(--ywave, 0) * 3deg)) scaleY(calc(1 + var(--ywave, 0) * 0.08));
+  will-change: transform;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap {
+  position: sticky; top: calc(var(--navh, 64px) + clamp(72px, 12vh, 120px)); height: calc(100svh - var(--navh, 64px) - clamp(72px, 12vh, 120px)); box-sizing: border-box;
+  display: grid; align-content: center; padding: clamp(32px, 6vh, 72px) 16px 0; margin: 0 auto;
+}
+/* Words before they light: the app's muted ink; lighting uses the app's ease */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag-stack > span:not(.ld2-chip) {
+  opacity: 0.28; transition: opacity calc(320ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag-stack > span:not(.ld2-chip).on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { transform: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-yourscreen { min-height: 100svh; }
+}
+
+/* ---------- Hero players' names (they had dropped off in the redesign) ---------- */
+html:root:not(#_):not(#_) .hp-head { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+html:root:not(#_):not(#_) .hp-head b {
+  padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--surface-2, #202322) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  font: 500 0.6875rem/1rem var(--font-mono); letter-spacing: 0.04em; color: var(--muted); white-space: nowrap;
+}
+
+/* ---------- Footer: SOURCE in the display gradient, the field running down from the box above ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-sign .ld2-sign-word > span {
+  background: linear-gradient(180deg, #FFFFFF 0%, #9B9B9B 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-final { overflow: visible; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-endfield { bottom: auto; top: 62%; height: 1600px; z-index: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { position: relative; z-index: 1; background: transparent; }
+
+/* ---------- Sticky nav (Zach, Oct 22) ----------
+   The nav rides along with the logo. Once the page moves it takes a full-width backdrop, and once the hero's username
+   field has scrolled out of sight "Find my leagues" joins "Try the demo". Tapping it opens the field right in the nav. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav {
+  position: sticky; top: 0; z-index: 40; isolation: isolate;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav::before {
+  content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%);
+  background: color-mix(in srgb, var(--bg, #0D0E0D) 78%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line, #2A2D2B) 70%, transparent);
+  opacity: 0; transition: opacity calc(320ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+  pointer-events: none;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav.stuck::before { opacity: 1; }
+html:root:not(#_):not(#_) .ld2-navright { display: flex; align-items: center; gap: 8px; position: relative; }
+
+/* The CTA slot: collapsed to nothing until the hero field is gone, then it grows in beside "Try the demo" */
+html:root:not(#_):not(#_) .ld2-navcta {
+  display: block; max-width: 0; margin-left: -8px; overflow: hidden; opacity: 0; transform: translateY(-4px); filter: blur(4px);
+  transition: max-width calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)), margin-left calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
+    opacity calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1), transform calc(420ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1),
+    filter calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
+}
+html:root:not(#_):not(#_) .ld2-navcta.on { max-width: 220px; margin-left: 0; opacity: 1; transform: none; filter: none; }
+html:root:not(#_):not(#_) .ld2-navcta.on.open { max-width: 480px; overflow: visible; }
+html:root:not(#_):not(#_) .ld2-navcta > .btn { white-space: nowrap; }
+
+/* The field, opened: same pill as the hero's, sized for the nav, unrolling from the button's right edge */
+html:root:not(#_):not(#_) .ld2-navpop { position: relative; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform {
+  display: flex; align-items: center; gap: 4px; width: min(420px, 46vw); min-height: 44px; margin: 0; padding: 4px 4px 4px 14px; box-sizing: border-box;
+  animation: ld2-navunroll calc(460ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both;
+}
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform input { flex: 1; min-width: 0; height: 36px; font-size: 16px; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform .btn { min-height: 36px; height: 36px; white-space: nowrap; font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; padding-inline: 14px; }
+html:root:not(#_):not(#_) .ld2-navx {
+  display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 999px;
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: background calc(160ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1), color calc(160ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
+}
+html:root:not(#_):not(#_) .ld2-navx:hover { background: var(--surface-2, #202322); color: var(--text); }
+html:root:not(#_):not(#_) .ld2-navx:active { transform: scale(0.96); }
+html:root:not(#_):not(#_) .ld2-navx:focus-visible { outline: 2px solid var(--accent, #D8F24A); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navhelp {
+  position: absolute; top: calc(100% + 8px); right: 8px; margin: 0; white-space: nowrap;
+  font-size: 0.75rem; line-height: 1rem;
+  animation: ld2-navhelp calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1) calc(160ms * var(--mo, 1)) both;
+}
+@keyframes ld2-navunroll {
+  from { clip-path: inset(0 0 0 calc(100% - 150px) round 999px); opacity: 0.6; }
+  to { clip-path: inset(0 0 0 0 round 999px); opacity: 1; }
+}
+@keyframes ld2-navhelp { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* Phones: the logo keeps its spot, and the open field drops under the nav across the full width */
+@media (max-width: 719px) {
+  html:root:not(#_):not(#_) :is(.ld2-navpop, .ld2-navright) { position: static; }
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform {
+    position: absolute; top: calc(100% + 8px); left: 16px; right: 16px; width: auto; z-index: 2;
+    background: var(--surface-1, #171918); box-shadow: 0 12px 32px rgb(0 0 0 / 0.45), inset 0 0 0 1px var(--line, #2A2D2B);
+    border-radius: 999px; flex-direction: row !important; flex-wrap: nowrap !important; height: 52px; padding: 6px 6px 6px 14px;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-navform .btn { width: auto !important; flex: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-navform .at { display: block; }
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navhelp { top: calc(100% + 68px); left: 32px; right: 32px; white-space: normal; text-align: left; }
+  html:root:not(#_):not(#_) .ld2-navright > .btn-ghost:has(+ .ld2-navcta.on) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .ld2-navcta { transition: opacity 200ms ease; transform: none; filter: none; }
+  html:root:not(#_):not(#_):not(#_) .ld2 .ld2-navform { animation: none; }
+}
+html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
+@media (min-width: 600px) { html:root:not(#_):not(#_) .ld2 { --navh: 72px; } }

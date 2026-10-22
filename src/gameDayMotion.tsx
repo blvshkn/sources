@@ -5,6 +5,7 @@
  *  that was already in its state when a row mounted renders settled. useTurnedAt records when a value changes while
  *  the component is mounted; useFresh turns that into "play now" for whatever draws it, so a row that remounts a
  *  moment later (a branch switch) still plays once, and one that mounts later shows the settled state. */
+import { PX } from "./components/pixelIcons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { EASE_OUT, mo } from "./motion";
@@ -61,8 +62,6 @@ const LOCK: Grid[] = [
   [".........", "..ddddd..", ".d.....d.", ".d.....d.", ".d.....d.", ...BODY],
   [".........", ".........", "..ddddd..", ".d.....d.", ".d.....d.", ...BODY],
 ];
-const TROPHY: Grid = ["ooyyyyyoo", "o.yyyyy.o", "o.yyyyy.o", ".oyyyyyo.", "..yyyyy..", "...yyy...", "....y....", "...ooo...", "..ooooo.."];
-const TC = { y: "#F2BE55", o: "#C98A2A" };
 
 // Heating up (approved Oct 22): an ember that smokes, then rests as a faint wisp. Same 8x10 grid as the flame, so
 // the smoke can catch into it.
@@ -207,11 +206,11 @@ export function StoneLock({ at }: { at: number }) {
 const SPK_C = { w: "#FFF6D6", y: "#F2BE55" };
 const SPARK_BIG: Grid = ["...w...", "...w...", "..wyw..", "wwyyyww", "..wyw..", "...w...", "...w..."];
 const SPARK: Grid = ["..w..", "..w..", "wwyww", "..w..", "..w.."];
-/** The small 16-bit trophy beside the winner's name. When the week goes final while you watch, it spins out from the
+/** The small trophy beside the winner's name: the pixel trophy from the icon set (Zach, Oct 22), in gold. When the week goes final while you watch, it spins out from the
  *  name and settles, then three pixel sparkles blink once around it. Already final at mount: it just sits there. */
 export const PixelTrophy = () => (
   <span className="gd-trw" aria-hidden="true">
-    <span className="gd-troph"><Px rows={TROPHY} colors={TC} /></span>
+    <span className="gd-troph"><svg className="px-ic" viewBox={PX.trophy[0]} width="100%" height="100%" fill="#F0C75E" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX.trophy[1] }} /></span>
     <span className="gd-spk s1"><Px rows={SPARK_BIG} colors={SPK_C} /></span>
     <span className="gd-spk s2"><Px rows={SPARK} colors={SPK_C} /></span>
     <span className="gd-spk s3"><Px rows={SPARK} colors={SPK_C} /></span>
