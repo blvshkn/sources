@@ -8,10 +8,10 @@
  *  you scroll to them. While it runs, <html data-entering> is set; chartReveal reads it so charts only grow in as part
  *  of a section entrance or when scrolled to, never on a tab or week swap.
  *
- *  Timings (tokens in loadin.css, read once): 240ms per card, 35ms apart, the last start capped at 160ms, so a page
- *  is settled by 400ms. Going back to a section you left less than 8 seconds ago skips it: flipping between two pages
- *  to compare them shouldn't replay the same entrance. The first section after the app loads doesn't play it either:
- *  the boot screen (live) or the demo hand-off already brought the app in. Reduced motion gets a 160ms fade, no rise,
+ *  Timings (tokens in loadin.css, read once): 200ms per card, 30ms apart, the last start capped at 90ms, so a page
+ *  is settled by 290ms. Going back to a section you left less than 8 seconds ago skips it: flipping between two pages
+ *  to compare them shouldn't replay the same entrance. The app's first appearance gets a fuller version once a
+ *  session (enterApp: 12px rise, 40ms apart, 240ms each), under the lifting loading screen or on the demo's first paint. Reduced motion gets a 160ms fade, no rise,
  *  no stagger. */
 import { useLayoutEffect, useRef } from "react";
 
@@ -26,13 +26,14 @@ const SKIP = ".desk-bell, .sr-only, script, style";
 /** Entrances some cards play by themselves when they mount */
 const OWN = new Set(["rise", "fade", "fade-up", "rm-fade"]);
 
-type Tokens = { dur: number; step: number; cap: number; rise: number; near: number };
+type Tokens = { dur: number; step: number; cap: number; rise: number; near: number; first: { dur: number; step: number; cap: number; rise: number } };
 let tokens: Tokens | null = null;
 const read = (): Tokens => {
   if (tokens) return tokens;
   const cs = getComputedStyle(document.documentElement);
   const n = (k: string, d: number) => { const v = parseFloat(cs.getPropertyValue(k)); return Number.isFinite(v) ? v : d; };
-  tokens = { dur: n("--ld-dur", 240), step: n("--ld-step", 35), cap: n("--ld-cap", 160), rise: n("--ld-rise", 8), near: n("--ld-near", 120) };
+  tokens = { dur: n("--ld-dur", 200), step: n("--ld-step", 30), cap: n("--ld-cap", 90), rise: n("--ld-rise", 6), near: n("--ld-near", 120),
+    first: { dur: n("--ld-first-dur", 240), step: n("--ld-first-step", 40), cap: n("--ld-first-cap", 140), rise: n("--ld-first-rise", 12) } };
   return tokens;
 };
 
@@ -70,8 +71,9 @@ function pieces(root: HTMLElement, t: Tokens) {
   return out.sort((a, b) => (Math.abs(a.top - b.top) < 24 ? a.left - b.left : a.top - b.top));
 }
 
-function enter(root: HTMLElement) {
-  const t = read();
+function enter(root: HTMLElement, first = false) {
+  const base = read();
+  const t = first ? { ...base, ...base.first } : base;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const list = pieces(root, t);
   if (!list.length) return;
@@ -86,6 +88,16 @@ function enter(root: HTMLElement) {
   });
 }
 
+let appIn = false;
+/** The app's first appearance, once a session: the loading screen calls it as it lifts, and the first paint calls it
+ *  when there was no loading screen (the demo). */
+export function enterApp() {
+  if (appIn) return;
+  appIn = true;
+  const root = document.querySelector<HTMLElement>(".main-inner");
+  if (root && !document.hidden) enter(root, true); else mark(1000);
+}
+
 /** Call once in the app shell with the current section. */
 export function useSectionEnter(section: string) {
   const prev = useRef<string | null>(null);
@@ -94,7 +106,11 @@ export function useSectionEnter(section: string) {
     const from = prev.current;
     prev.current = section;
     // First paint of the app: no stagger, but charts on it still grow in as they always have
-    if (from === null) { mark(1000); return; }
+    if (from === null) {
+      // The loading screen is up: it calls enterApp as it lifts. Otherwise (the demo) the app comes in now.
+      if (document.querySelector(".boot3")) mark(1000); else enterApp();
+      return;
+    }
     if (from === section) return;
     // Shell scrolls to the top after paint; do it now so the first frame and the measuring below see the top
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
