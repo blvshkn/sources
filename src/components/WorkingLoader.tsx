@@ -4,7 +4,7 @@
 // answer is built, and the league loading screen. Mounted while it's on screen, destroyed when it leaves.
 // `run={false}` freezes it on the current frame. Reduced motion freezes it too (the package handles that).
 // It is DOM and CSS 3D, not WebGL, so any number of them can run without using a GL context.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mountLoader, type LoaderInstance } from "../vendor/loader-buttons/loader.js";
 import { PX_AI } from "./pixelIcons";
 
@@ -36,4 +36,35 @@ export function WorkingLoader({ size = 16, run = true, label, className = "" }: 
 export function AiMark({ size = 14, className = "" }: { size?: number; className?: string }) {
   // Pixel circles (Zach, Oct 22): the same 5 by 5 grid, each dot a 4 by 4 pixel circle at half scale
   return <svg className={`ai-mark ${className}`.trim()} width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: PX_AI }} />;
+}
+
+/** One full Braille Flipwave cycle in ms. The wave ends where it starts, on the still 5 by 5 grid, so the loader can
+ *  hand back to AiMark without a jump. */
+const WAVE_MS = 2900;
+
+/** The AI mark that comes alive for one wave and settles: once when it first scrolls into view, and again each time
+ *  `replay` changes (a hover, a sheet opening). Never loops (Zach's motion rule). Reduced motion keeps it still. */
+export function AiMarkPlay({ size = 16, replay = 0, className = "" }: { size?: number; replay?: number; className?: string }) {
+  const host = useRef<HTMLSpanElement>(null);
+  const [on, setOn] = useState(false);
+  const timer = useRef(0);
+  const play = () => {
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (timer.current) return; // already mid-wave: let it finish
+    setOn(true);
+    timer.current = window.setTimeout(() => { timer.current = 0; setOn(false); }, WAVE_MS);
+  };
+  useEffect(() => {
+    const el = host.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); play(); } }, { threshold: 0.6 });
+    io.observe(el);
+    return () => { io.disconnect(); clearTimeout(timer.current); timer.current = 0; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (replay) play(); }, [replay]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <span ref={host} className={`ai-play ${className}`.trim()} style={{ width: size, height: size }} aria-hidden="true">
+      {on ? <WorkingLoader size={size} /> : <AiMark size={size} />}
+    </span>
+  );
 }

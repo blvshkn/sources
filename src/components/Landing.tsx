@@ -19,9 +19,10 @@ import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
 import { PtsCell, gameNow, playCls, PlayCount } from "./LivePts";
-import { useLive, startersOf, playCount } from "../live";
+import { useLive, startersOf, playCount, type Live } from "../live";
 import { eff } from "../engine";
-import { AiMark } from "./WorkingLoader";
+import { AiMark, AiMarkPlay } from "./WorkingLoader";
+import { LandingAsk } from "./LandingAsk";
 import { AskShowBlock, DealNumbers } from "./AskShow";
 import { SwapRows } from "./SwapRows";
 import { lockedIn, resultFor } from "../optimalLineup";
@@ -65,6 +66,36 @@ export function Landing({ onLive, onDemo }: {
   const starters = startersOf(YOU).map(playerById);
   const order = { in_game: 0, complete: 1, pre_game: 2 } as Record<string, number>;
   const liveRows = [...starters].sort((a, b) => (order[gameNow(live, a.id, a.nfl).state ?? "pre_game"] ?? 3) - (order[gameNow(live, b.id, b.nfl).state ?? "pre_game"] ?? 3)).slice(0, 5);
+  // Sunday, live plays its game-day moments once when it scrolls into view (Zach, Oct 22): the first live player heats
+  // up (the smoke), then catches fire, and the second goes cold. The sample's points and clock are scripted through four
+  // beats so the real PtsCell turns hot and cold on its own. Reduced motion lands on the last beat with nothing playing.
+  const liveCard = useRef<HTMLElement>(null);
+  const [heatBeat, setHeatBeat] = useState(0);
+  useEffect(() => {
+    const el = liveCard.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setHeatBeat(3); return; }
+    const timers: number[] = [];
+    const io = new IntersectionObserver((es) => {
+      if (!es.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setHeatBeat(3); return; }
+      [1100, 2500, 3900].forEach((ms, i) => timers.push(window.setTimeout(() => setHeatBeat(i + 1), ms)));
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => { io.disconnect(); timers.forEach(clearTimeout); };
+  }, []);
+  const showLive = useMemo((): Live | undefined => {
+    if (!live) return live;
+    const [hot, cold] = liveRows.filter((p) => gameNow(live, p.id, p.nfl).state === "in_game");
+    if (!hot) return live;
+    // Share of the game left, and each player's points as a share of his projection, at each beat
+    const LEFT = [0.55, 0.4, 0.3, 0.25], HOT = [0.5, 0.82, 1.06, 1.06], COLD = [0.5, 0.62, 0.72, 0.72];
+    const pts = (p: Player, r: number) => Math.round(eff(p, true) * r * 10) / 10;
+    const points = { ...live.points, [hot.id]: pts(hot, HOT[heatBeat]) };
+    const left = { ...live.left, [hot.nfl]: LEFT[heatBeat] };
+    if (cold) { points[cold.id] = pts(cold, COLD[heatBeat]); left[cold.nfl] = LEFT[heatBeat]; }
+    return { ...live, points, left };
+  }, [live, heatBeat]); // eslint-disable-line react-hooks/exhaustive-deps
   const demo = useMemo(() => {
     const tags = activeTags(INITIAL_MANAGER_TAGS, 4);
     const needs = allNeeds();
@@ -92,6 +123,9 @@ export function Landing({ onLive, onDemo }: {
   }, [live]);
   const watched = useMemo(() => waiverRecs(YOU).find((r) => r.pick)?.fa ?? null, []);
   const [doc, setDoc] = useState<"legal" | "how" | null>(null);
+  // The FAQ's "Still have a question?" opens the app's Ask screen as a sheet; its mark waves on view and on hover
+  const [askOpen, setAskOpen] = useState(false);
+  const [askWave, setAskWave] = useState(0);
 
   // The cast floating around the hero: the best players in the sample league, real Sleeper headshots
   const cast = useMemo(() => {
@@ -323,14 +357,14 @@ export function Landing({ onLive, onDemo }: {
               </FinderDemo>
             </article>
           )}
-          <article className="card ld-cell ld2-reveal wide ld2-live">
+          <article className="card ld-cell ld2-reveal wide ld2-live" ref={liveCard}>
             <div className="ld2-live-head">
               <div><h3>Sunday, live</h3><p>Points so far, where each player is on pace to finish, and a win chance that tracks Sleeper's. Players heat up when they're beating their projection, cool off when they're not, and finals are set in stone.</p></div>
               <PlayCount c={playCount(live, starters.map((p) => p.nfl))} />
             </div>
             <div className="lu-list ld2-live-rows">
               {liveRows.map((p) => {
-                const g = gameNow(live, p.id, p.nfl);
+                const g = gameNow(showLive, p.id, p.nfl);
                 return (
                   <div key={p.id} className={`lu-row${playCls(g)}`}>
                     <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
@@ -401,10 +435,11 @@ export function Landing({ onLive, onDemo }: {
             tree, so the card can sit after the questions. */}
         <div className="ld2-faq-side">
           <h2 id="ld-faq" className="ld-h2 ld2-reveal">Questions, answered.</h2>
-          {/* The sample league path, opened on Ask: Shell reads its first tab from the hash */}
+          {/* Opens Ask as a sheet. Asking leads to connect or the sample league, with the question carried in (LandingAsk) */}
           <div className="ld2-faq-askwrap ld2-reveal">
-            <button type="button" className="ld2-faq-ask" onClick={() => { try { history.replaceState(null, "", "#ask"); } catch { /* ignore */ } onDemo(); }}>
-              <AiMark size={20} className="ld2-faq-ask-mark" />
+            <button type="button" className="ld2-faq-ask" aria-haspopup="dialog" onClick={() => setAskOpen(true)}
+              onPointerEnter={(e) => { if (e.pointerType === "mouse") setAskWave((w) => w + 1); }} onFocus={(e) => { if (e.currentTarget.matches(":focus-visible")) setAskWave((w) => w + 1); }}>
+              <AiMarkPlay size={20} replay={askWave} className="ld2-faq-ask-mark" />
               <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask Source about the sample league and see how it answers.</span></span>
               <Icon name="chev" size={16} />
             </button>
@@ -436,6 +471,7 @@ export function Landing({ onLive, onDemo }: {
         </nav>
         <span>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</span>
       </footer>
+      {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} />}
       {doc && (
         <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
           <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>

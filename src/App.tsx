@@ -7,7 +7,7 @@ import { IDLE, tracer, type TraceState } from "./think";
 import { Mark } from "./components/Logo";
 import type { FirstRunStart } from "./components/FirstRun";
 import { Landing } from "./components/Landing";
-import { clearHandoff } from "./demoHandoff";
+import { clearAskHandoff, clearHandoff } from "./demoHandoff";
 import { FirstRun, preloadFirstRun, warmFirstRun } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { enterApp } from "./sectionEnter";
@@ -143,7 +143,7 @@ export default function App() {
         </Suspense>
       ) : <Landing onLive={(st) => setStart({ kind: "live", ...st })} onDemo={() => { setLeague(demoLeague()); setStart({ kind: "demo" }); }} />}
       {session.mode === "none" && start && (
-        <FirstRun start={start} onClose={() => { clearHandoff(); setStart(null); setLeague(demoLeague()); }}
+        <FirstRun start={start} onClose={() => { clearHandoff(); clearAskHandoff(); setStart(null); setLeague(demoLeague()); }}
           onLive={(s, myTags) => {
             setInitialMyTags(myTags); justLoaded.current = true;
             const added: Account = { username: s.username, userId: s.userId, name: start.kind === "live" ? start.user.name : undefined };

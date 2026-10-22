@@ -34,7 +34,7 @@ import { Waivers } from "./components/Waivers";
 import { Ask } from "./components/Ask";
 import { Settings, Level } from "./components/Settings";
 import { PlatformLogo } from "./components/PlatformLogo";
-import { clearHandoff, peekHandoff } from "./demoHandoff";
+import { clearAskHandoff, clearHandoff, peekAskHandoff, peekHandoff } from "./demoHandoff";
 import { LeagueSwitcher, PitchSheet, preloadOverlays } from "./components/lazy";
 import { Account, Session, activeAccount, mergeAccounts } from "./accounts";
 import { DeclineWhy, SENT_KEY, SentOffer, acceptedFrom, readSent, recordSent, sentDeals } from "./sentOffers";
@@ -123,6 +123,8 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     setToast(`Removed @${gone.username}. Its leagues are out of the switcher.`, () => onAccounts(prev));
   };
   const [tab, setTab] = useState<Tab>(() => {
+    // A question from the landing's Ask sheet opens Ask, already working on it
+    if (peekAskHandoff()) return "ask";
     const h = typeof location !== "undefined" ? hashTab(location.hash.slice(1)) : "";
     return (TAB_IDS as string[]).includes(h) ? (h as Tab) : "wire";
   });
@@ -195,7 +197,9 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   const [readIds, setReadIds] = usePersist<string[]>(`${scope}.inboxRead`, []);
   // Inbox "Not right now": hidden for the rest of this week, then back if it still applies
   const [ibxSkipped, setIbxSkipped] = usePersist<Record<string, number>>(`${scope}.inboxSkipped`, {});
-  const [askSeed, setAskSeed] = useState("");
+  const [askSeed, setAskSeed] = useState(() => peekAskHandoff() ?? "");
+  // The shell mounts twice as a league starts, so each mount reads the landing's question and the one that stays up clears it
+  useEffect(() => { if (!peekAskHandoff()) return; const done = window.setTimeout(clearAskHandoff, 1000); return () => clearTimeout(done); }, []);
   const [navKey, setNavKey] = useState(0);
   const live = useLive();
 

@@ -28,3 +28,24 @@ export function peekHandoff(): Handoff | null {
     return { to: h.to, partnerId: h.partnerId, give: h.give, get: h.get };
   } catch { return null; }
 }
+
+/** A question asked on the landing's Ask sheet, carried into the app so Ask opens already working on it (the sample
+ *  league or the user's own once they connect). Same rules: this tab only, read once, gone after a few minutes. */
+const ASK_KEY = "sources.askHandoff";
+
+export function setAskHandoff(q: string) {
+  try { sessionStorage.setItem(ASK_KEY, JSON.stringify({ q: q.trim().slice(0, 300), at: Date.now() })); } catch { /* blocked */ }
+}
+
+export function clearAskHandoff() {
+  try { sessionStorage.removeItem(ASK_KEY); } catch { /* blocked */ }
+}
+
+export function peekAskHandoff(): string | null {
+  try {
+    const raw = sessionStorage.getItem(ASK_KEY);
+    const h = raw ? (JSON.parse(raw) as { q?: unknown; at?: number }) : null;
+    if (!h || typeof h.q !== "string" || !h.q.trim() || !h.at || Date.now() - h.at > TTL) return null;
+    return h.q;
+  } catch { return null; }
+}
