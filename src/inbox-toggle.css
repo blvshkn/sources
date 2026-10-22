@@ -2,7 +2,7 @@
    - Phones and tablets (to 860px): the top bar bell opens the slide-over, as before.
    - 861px up: the same bell sits top right of the page, on the page header row. On Trade it sits beside search.
    - 1241px up (Trade from 1600px): the bell opens and closes the docked panel. Closed, the page takes the room.
-     The panel slides in from the right while the page column eases its width, calc(240ms * var(--mo, 1)). Reduced motion is instant. */
+     The panel slides in from the right while the page column eases its width on the same clock. Reduced motion is instant. */
 
 /* ---------- The bell: one control everywhere ---------- */
 html:root:not(#_):not(#_) .top-bell {
@@ -66,7 +66,9 @@ html:root:not(#_):not(#_) .desk-bell { display: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   @media (min-width: 1241px) {
-    /* The grid's columns switch in one frame (animating them would lay the page out every frame); the rail's slide carries the motion */
+    /* Desktop (Zach): the page eases over as the panel slides in, on the same clock, instead of jumping. The grid's
+       third track eases between 0 and the panel's width; tablets and phones keep the overlay below 1241px */
+    html:root:not(#_):not(#_) .shell { transition: grid-template-columns var(--dur-drawer) var(--ease-drawer); }
     html:root:not(#_):not(#_) .shell:not(.wide) .rail.ibx { transition: transform var(--dur-drawer) var(--ease-drawer), visibility 0s; }
     html:root:not(#_):not(#_) .shell.dock-off:not(.wide) .rail.ibx { transition: transform var(--dur-drawer) var(--ease-drawer), visibility 0s linear var(--dur-drawer); }
   }
