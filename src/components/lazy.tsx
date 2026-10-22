@@ -3,18 +3,23 @@
 // They load in their own chunks so the first paint doesn't parse them, and preloadOverlays() fetches every one of them
 // once the app is idle after its first render, so by the time anyone taps they're already here. Until a chunk has
 // arrived the overlay renders nothing (no spinner, no placeholder), then opens exactly as it always has.
+//
+// The landing only ever opens first-run setup. Its code is fetched once the landing has loaded and gone idle
+// (preloadFirstRun). Its stylesheets are the app's (appStyles.ts), and applying those makes the browser restyle the
+// whole landing, so they wait for the first sign someone is heading in: a hover, tap or focus (warmFirstRun).
 import { Suspense, lazy, type ComponentProps, type ComponentType } from "react";
 import { loadSheetSpring } from "./sheetDrag";
-import { preloadSwapSpring } from "./SwapPicker";
+import { afterLoadIdle } from "../idle";
 
 const loaders = {
   pitch: () => import("./PitchSheet"),
   player: () => import("./PlayerSheet"),
   switcher: () => import("./LeagueSwitcher"),
-  firstRun: () => import("./FirstRun"),
+  // First-run setup opens once both its code and the app's stylesheets are here
+  firstRun: () => Promise.all([import("./FirstRun"), import("../appStyles")]).then(([m]) => m),
   // Motion's springs: the sheets' pull to dismiss and the Lineup swap menu
   sheetSpring: () => loadSheetSpring(),
-  swapSpring: () => preloadSwapSpring(),
+  swapSpring: () => import("./SwapSpring"),
 };
 
 /** A named export as a lazy component with its own invisible Suspense boundary. */
@@ -32,6 +37,21 @@ export const LeagueSwitcher = lazyNamed(loaders.switcher, "LeagueSwitcher");
 export const FirstRun = lazyNamed(loaders.firstRun, "FirstRun");
 /** The trade card as an image, for the landing page's sample card. */
 export const drawCard = (...args: Parameters<typeof import("./PitchSheet").drawCard>) => loaders.pitch().then((m) => m.drawCard(...args));
+
+let firstRunAsked = false;
+/** First-run setup's code (not its stylesheets), fetched once the landing has loaded and gone idle. */
+export function preloadFirstRun() {
+  if (firstRunAsked) return;
+  firstRunAsked = true;
+  afterLoadIdle(() => { import("./FirstRun").catch(() => { firstRunAsked = false; }); }, 4000);
+}
+let warmAsked = false;
+/** Someone is reaching for a control on the landing: fetch and apply first-run setup's stylesheets and code now. */
+export function warmFirstRun() {
+  if (warmAsked) return;
+  warmAsked = true;
+  loaders.firstRun().catch(() => { warmAsked = false; });
+}
 
 let preloaded = false;
 /** Fetch every overlay chunk in the background, once, when the browser is idle. */

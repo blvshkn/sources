@@ -5,7 +5,7 @@ import { MyTag, TEAMS, YOU, playerById, LEAGUE_NAME, setLeague, teamById } from 
 import { Trade, TeamNeeds, allNeeds, applyFormat, eff, findTrades, fmt, formatLabel, lineupFor } from "../engine";
 import { SLeague, SleeperError, leagueType, loadLeague } from "../sleeper";
 import { AiLabel, Delta, Icon, PosBadge, Stamp } from "./ui";
-import { needCopy } from "./Wire";
+import { needCopy } from "../needCopy";
 import { Select } from "./Select";
 
 type Live = { username: string; userId: string; leagueId: string };

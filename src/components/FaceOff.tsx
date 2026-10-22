@@ -2,7 +2,7 @@ import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react"
 import type { Team } from "../data";
 import type { PlayCount, Result } from "../liveMath";
 import { Morph, PixelTrophy, RollNum, isFresh, useTurnedAt } from "../gameDayMotion";
-import { TeamAvatar } from "./TeamPicker";
+import { TeamAvatar } from "./Avatar";
 import { Trophy, isChampion } from "./Trophy";
 import { NumTip as Tip, Tooltip } from "./Tooltip";
 import { useCountTogether } from "../motionOnce";

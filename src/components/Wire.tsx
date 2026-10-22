@@ -1,11 +1,9 @@
-import { Fragment, useContext, useState } from "react";
+import { Fragment, useState } from "react";
 import { denyOn } from "../deny";
-import { scoreTone, flipTone } from "../liveMath";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
 import { LeagueSwitch } from "./LeagueSwitch";
-import { IdeaFeedbackCtx } from "./IdeaFeedback";
-import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
+import { playerById, teamById, YOU, TEAMS, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../engine";
 import { Arrived } from "./Arrived";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
@@ -14,17 +12,21 @@ import { PlayerSheet } from "./lazy";
 import { TeamAvatar } from "./TeamPicker";
 import { NumTip, Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
-import { useLive, onPace, startersOf, matchNow, type Live } from "../live";
+import { useLive, onPace, startersOf } from "../live";
 import { WeekPlayer } from "../weeks";
 import { useLineupWeek, useWeekMatch } from "../weekMatch";
 import { gameInAt, lockLine, oppAt, useKickoffs } from "../kickoff";
 import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
-import { FaceOff } from "./FaceOff";
 import { heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag, PROJ_TIP, soFarTip, paceTip } from "./Roster";
 import { SentLine, dealStatus } from "./SentOffers";
 import { useNewSince } from "../newSince";
 import type { SentDeal, SentOffer } from "../sentOffers";
+import { TradeIdea } from "./TradeIdea";
+import { Scoreboard } from "./Scoreboard";
+// The two cards the landing shows live in their own modules; Overview's importers still find them here
+export { TradeIdea, Scoreboard };
+export { needCopy } from "../needCopy";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
 export interface Nudge {
@@ -56,113 +58,11 @@ export interface Briefing { /** Null once the week is final: no lineup advice th
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
-function IdeaSide({ label, ids, tone }: { label: string; ids: string[]; tone: "send" | "get" }) {
-  return (
-    <section className={`tx-side ${tone}`} aria-label={label}>
-      <header><span>{label}</span><small>{ids.length} {ids.length === 1 ? "player" : "players"}</small></header>
-      <ul>
-        {ids.map((id) => {
-          const p = playerById(id);
-          return (
-            <li key={id}>
-              <Avatar p={p} size={40} />
-              <span className="tx-pl"><b>{p.name}</b><small>{p.pos} · {p.nfl}</small></span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-export function TradeIdea({ t, onOpen, onPitch }: { t: Trade; onOpen: (t: Trade) => void; onPitch: (t: Trade) => void }) {
-  // "Their lineup +x/wk" repeats the number shown above, so it's left out
-  const reasons = (t.accept?.reasons ?? []).filter((r) => !/lineup/i.test(r)).map((r) => r.charAt(0).toUpperCase() + r.slice(1));
-  // Their odds are their call, not good or bad for you, so they read in neutral ink
-  const tone = "neutral";
-  const feedback = useContext(IdeaFeedbackCtx);
-  return (
-    <article className="ti">
-      <div className="tx">
-        <IdeaSide label="You send" ids={t.give} tone="send" />
-        <span className="tx-swap" aria-hidden="true"><Icon name="trade" size={16} /></span>
-        <IdeaSide label="You get" ids={t.get} tone="get" />
-      </div>
-      <dl className="ti-stats">
-        {t.accept && (
-          <div className={`ti-stat odds ${tone}`}>
-            <dt><Tooltip focusable content={<>Chance they accept, from their needs, notes and trade history. {t.accept.label === "Likely yes" ? "Likely yes is 65% and up." : t.accept.label === "Worth a shot" ? "Worth a shot is 50 to 64%." : "Long shot is under 50%."}</>}><span className="tt-term">{t.accept.label}</span></Tooltip></dt>
-            <dd>{Math.round(t.accept.p * 100)}<small>%</small></dd>
-            <span className="ti-meter" aria-hidden="true"><i style={{ width: `${Math.round(t.accept.p * 100)}%` }} /></span>
-          </div>
-        )}
-        <div className="ti-stat"><dt>You gain</dt><dd><Delta n={t.youDelta} /><small>/wk</small></dd></div>
-        <div className="ti-stat"><dt>They gain</dt><dd><Delta n={t.themDelta} /><small>/wk</small></dd></div>
-      </dl>
-      {reasons.length > 0 && <p className="ti-why">{reasons.join(". ")}.</p>}
-      <div className="ti-actions">
-        <button className="btn btn-sm ti-btn" onClick={() => onOpen(t)}>Open in builder</button>
-        <button className="btn btn-primary btn-sm ti-btn" onClick={() => onPitch(t)}><Icon name="pen" size={15} />Write pitch</button>
-      </div>
-      {feedback && <button className="ti-nope" onClick={() => feedback(t)}>Won't work? Tell Sources why</button>}
-    </article>
-  );
-}
-
 const KIND: Record<NudgeKind, { label: string; icon: IconName }> = {
   ir: { label: "Injured reserve", icon: "alert" },
   need: { label: "Trade idea", icon: "trade" }, offer: { label: "Offer received", icon: "send" }, news: { label: "News", icon: "alert" },
   stale: { label: "Check in", icon: "clock" }, lineup: { label: "Lineup", icon: "roster" }, waiver: { label: "Waivers", icon: "waivers" }, slot: { label: "Pattern", icon: "spark" },
 };
-/** This week's matchup card: the shared face-off (FaceOff.tsx). The whole card opens the full matchup. */
-export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true, at }: { you: TeamNeeds; partner: string | null; onPartner?: () => void; onMatchup?: () => void; extras?: boolean;
-  /** A fixed moment of the week to show instead of live scoring (the landing's Projected, Live and Final states) */
-  at?: Live }) {
-  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
-  // Expected finishes from the lineups actually set in Sleeper (K/DEF included); win chance from what's left to play
-  // One score per team, the same one the full matchup and the Lineup strip read (live.matchNow): Sleeper's team
-  // score, projected finish, and win % that turns into the result once every starter is done
-  const shared = useLive();
-  const live = at ?? shared;
-  const ms = matchNow(live);
-  const mine = ms.me.proj;
-  const theirs = ms.opp ? ms.opp.proj : null;
-  const chance = ms.chance;
-  const pt = partner ? TEAMS.find((t) => t.manager === partner || t.name === partner) : undefined;
-  const need = you.groups[you.need].diff;
-  // Once games start, the big numbers are points scored and the projection drops to a footnote
-  const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
-  const nowLive = Object.values(live.games).some((x) => x === "in_game");
-  const myNow = started ? ms.me.scored : undefined, oppNow = started && ms.opp ? ms.opp.scored : undefined;
-  const inPlay = started && myNow !== undefined && (!opp || oppNow !== undefined);
-  const res = ms.result;
-  // Score tones (liveMath.scoreTone): the side ahead now, or the winner once final, stays bright; pregame both do
-  const myTone = scoreTone(myNow ?? mine, oppNow ?? theirs, res ? "final" : inPlay ? "live" : "pre");
-  return (
-    <section className="card sb2" aria-label="This week">
-      <button className="sb2-rows sb2-open mc-press" onClick={onMatchup ?? denyOn(`No matchup in Week ${WEEK}, so there's nothing to open.`)} aria-disabled={!onMatchup || undefined} aria-label={`Open this week's matchup${res ? `. Final: ${res.long}` : `${inPlay ? `. You ${myNow!.toFixed(1)}${oppNow !== undefined ? `, them ${oppNow.toFixed(1)}` : ""}` : ""}${chance !== null ? `. ${chance} percent to win` : ""}`}`}>
-        <FaceOff week={WEEK} state={res ? "final" : inPlay && nowLive ? "live" : inPlay ? "scored" : "pre"} chance={opp ? chance : null} res={opp ? res : null} msg="Bye week" countKey="overview-faceoff"
-          you={{ t: YOU, pts: inPlay ? myNow! : mine, live: inPlay, note: inPlay && !res ? mine.toFixed(1) : undefined, dim: myTone === "trail", count: ms.me.count }}
-          them={opp && theirs !== null ? { t: opp, pts: inPlay && oppNow !== undefined ? oppNow : theirs, live: inPlay, note: inPlay && !res ? theirs.toFixed(1) : undefined, dim: flipTone(myTone) === "trail", count: ms.opp?.count } : { t: null, pts: null, empty: "No matchup" }} />
-      </button>
-      {extras && <>
-      <dl className="ti-stats sb2-stats">
-        <div className="ti-stat"><dt><Tooltip focusable content="Starting lineup strength against the other teams. 1 is strongest."><span className="tt-term">Power rank</span></Tooltip></dt><dd>#{you.rank}<small>of {TEAMS.length}</small></dd></div>
-        <div className="ti-stat"><dt>Weakest spot</dt><dd>{you.need}<span className={`sb2-need ${need < 0 ? "down" : "up"}`}>{fmt(need)}</span></dd></div>
-      </dl>
-      {partner && onPartner ? (
-        <button className="sb2-partner" onClick={onPartner} aria-label={`Build a trade with ${partner}`}>
-          {pt && <TeamAvatar t={pt} size={36} />}
-          <span className="sb2-who"><small>Best trade partner</small><b>{partner}{pt && <Trophy teamId={pt.id} />}</b></span>
-          <span className="sb2-go">Build a deal<Icon name="chev" size={16} /></span>
-        </button>
-      ) : (
-        <p className="sb2-none">No clear trade partner yet.</p>
-      )}
-      </>}
-    </section>
-  );
-}
 
 /** Where your team is thin and who can fix it: power rank, weakest slots, best trade partner. Each row opens the right screen. */
 function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: string | null; partnerId: string | null; onGo: (t: string, teamId?: string) => void }) {
@@ -607,8 +507,4 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
       </>}
     </>
   );
-}
-
-export function needCopy(pos: Pos) {
-  return pos === "TE" ? "a TE" : pos === "QB" ? "a QB" : `${pos === "RB" ? "an RB" : "a WR"}`;
 }

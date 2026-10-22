@@ -5,8 +5,9 @@ import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById
 import { activeTags, allNeeds, applyFormat, ask, DEFAULT_FORMAT, findTrades, fmt, groupsFor, waiverRecs } from "../engine";
 import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Icon, PosBadge } from "./ui";
-import { Scoreboard, TradeIdea } from "./Wire";
-import { TradeCompare } from "./Trade";
+import { Scoreboard } from "./Scoreboard";
+import { TradeIdea } from "./TradeIdea";
+import { TradeCompare } from "./TradeCompare";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
 import { Avatar, AvatarPhotos, ManagerAvatar } from "./Avatar";
 import { drawCard } from "./lazy";
@@ -17,11 +18,11 @@ import type { Answer, Trade } from "../engine";
 import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
-import { PtsCell, gameNow, playCls, PlayCount } from "./Roster";
+import { PtsCell, gameNow, playCls, PlayCount } from "./LivePts";
 import { useLive, startersOf, playCount } from "../live";
 import { eff } from "../engine";
 import { AiMark } from "./WorkingLoader";
-import { AskShowBlock, DealNumbers } from "./Ask";
+import { AskShowBlock, DealNumbers } from "./AskShow";
 import { SwapRows } from "./SwapRows";
 import { lockedIn, resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
@@ -36,6 +37,7 @@ import { sampleWeek, matchNow } from "../live";
 import { LEAGUE, OPPONENT_ID } from "../data";
 import { Seg } from "./ui";
 import { Trophy, WinCup } from "./Trophy";
+import { whenNear } from "../idle";
 import type { TeamNeeds } from "../engine";
 
 /**
@@ -74,16 +76,15 @@ export function Landing({ onLive, onDemo }: {
   }, []);
 
   // Ask, answered by the engine on the sample league: one of the app's own starter questions and the same trade math.
-  // On a real league Sources AI writes the words around these numbers. Worked out after first paint, off the hero's path.
+  // On a real league Sources AI writes the words around these numbers. It sits far below the fold, so it's worked out
+  // after the page has loaded, once the reader is within a screen or so of it (idle.whenNear), off the hero's path.
   const [askDemo, setAskDemo] = useState<{ q: string; a: Answer; deal?: Trade } | null>(null);
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      const q = "Who should I trade with?";
-      const a = ask(q, demo.tags, INITIAL_MY_TAGS, {}, []);
-      setAskDemo({ q, a, deal: a.links.find((l) => l.trade)?.trade });
-    }, 600);
-    return () => clearTimeout(id);
-  }, [demo.tags]);
+  const askCell = useRef<HTMLElement>(null);
+  useEffect(() => whenNear(askCell.current, () => {
+    const q = "Who should I trade with?";
+    const a = ask(q, demo.tags, INITIAL_MY_TAGS, {}, []);
+    setAskDemo({ q, a, deal: a.links.find((l) => l.trade)?.trade });
+  }), [demo.tags]);
   // Set optimal lineup without the network: the engine's lineup and its own reasons (out, bye, projection)
   const optDemo = useMemo(() => {
     const cur = sleeperNow().mine;
@@ -99,13 +100,17 @@ export function Landing({ onLive, onDemo }: {
       .sort((a, b) => b.proj - a.proj).filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, 7);
   }, []);
 
-  // The same trade card and message the app's pitch sheet makes
+  // The same trade card and message the app's pitch sheet makes. It's below the fold, so it's drawn after the page has
+  // loaded, once the reader is within a screen or so of it; its skeleton holds the card's exact size until then.
   const [cardUrl, setCardUrl] = useState<string | null>(null);
+  const cardFig = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!demo.trade) return;
     let url: string | null = null, alive = true;
-    drawCard(demo.trade, "216, 242, 74", { photos: false }).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
-    return () => { alive = false; if (url) URL.revokeObjectURL(url); };
+    const cancel = whenNear(cardFig.current, () => {
+      drawCard(demo.trade!, "216, 242, 74", { photos: false }).then((b) => { if (b && alive) { url = URL.createObjectURL(b); setCardUrl(url); } });
+    });
+    return () => { alive = false; cancel(); if (url) URL.revokeObjectURL(url); };
   }, [demo.trade]);
   const cardIn = useLoadedIn(!cardUrl);
 
@@ -219,7 +224,8 @@ export function Landing({ onLive, onDemo }: {
           {demo.trade && (
             <article className="card nudge ld-preview-2 ld2-idea ld2-card c2">
               <span className="nudge-kind"><Icon name="trade" size={15} />Trade idea</span>
-              <h3>{demo.mike.name} needs <em>a TE.</em></h3>
+              {/* Styled as the card heading it is (h3), but read as level 2: it's the first heading after the h1 */}
+              <h3 aria-level={2}>{demo.mike.name} needs <em>a TE.</em></h3>
               <TradeIdea t={demo.trade} onOpen={openDeal("trade")} onPitch={openDeal("pitch")} />
             </article>
           )}
@@ -290,7 +296,7 @@ export function Landing({ onLive, onDemo }: {
                   </div>
                   <div className="sms-feed">
                     <span className="sms-day">Today</span>
-                    <figure className="sms-img">{cardUrl ? <img className={cardIn ? "tcard-in" : undefined} src={cardUrl} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" style={demo.trade ? { aspectRatio: `1080 / ${cardHeight(demo.trade)}` } : undefined} />}</figure>
+                    <figure className="sms-img" ref={cardFig}>{cardUrl ? <img className={cardIn ? "tcard-in" : undefined} src={cardUrl} width={1080} height={cardHeight(demo.trade)} alt={`Trade offer card for ${demo.mike.manager}`} /> : <div className="tcard-skel" style={demo.trade ? { aspectRatio: `1080 / ${cardHeight(demo.trade)}` } : undefined} />}</figure>
                     <p className="sms-out">{draftPitch(demo.trade, "friendly")}</p>
                     <span className="sms-meta">Delivered</span>
                     <span className="sms-typing" role="img" aria-label={`${demo.mike.manager} is typing`}><i /><i /><i /></span>
@@ -342,7 +348,7 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld-section ld2-new" aria-labelledby="ld-new">
         <h2 id="ld-new" className="ld-h2 ld2-reveal">Ask it. Set it. Take it anywhere.</h2>
         <div className="ld2-new-grid">
-          <article className="card ld-cell ld2-reveal ld2-ask-cell">
+          <article className="card ld-cell ld2-reveal ld2-ask-cell" ref={askCell}>
             <h3>Ask anything about your league</h3>
             <p>Sources AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
             {askDemo && <div className="ld2-ask" ref={setInert}>

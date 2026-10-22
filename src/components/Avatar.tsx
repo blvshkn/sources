@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { Player } from "../data";
+import { Player, Team } from "../data";
 import { espnId, sleeperId, teamColors, useJerseys } from "../jersey";
 import { avatarSrc } from "../sleeper";
 import { viaEdge } from "../imgProxy";
@@ -77,4 +77,9 @@ export function ManagerAvatar({ src, name, size = 40, className = "tp-av", alt =
   return url
     ? <img className={className} style={style} src={url} alt={alt} width={size} height={size} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed((f) => [...f, url])} />
     : <span className={`${className} tp-av-ini`} style={{ ...style, fontSize: size * 0.36 }} aria-hidden="true">{nameInitials(name)}</span>;
+}
+
+/** Manager avatar from Sleeper (team picture, then account picture), or initials when they haven't set one or it fails to load. */
+export function TeamAvatar({ t, size = 40 }: { t: Pick<Team, "name" | "avatar" | "photo">; size?: number }) {
+  return <ManagerAvatar src={[t.avatar, t.photo]} name={t.name} size={size} />;
 }

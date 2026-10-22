@@ -2,7 +2,9 @@ import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } fr
 import { Team } from "../data";
 import { Icon } from "./ui";
 import { Trophy } from "./Trophy";
-import { ManagerAvatar } from "./Avatar";
+import { TeamAvatar } from "./Avatar";
+// TeamAvatar lives with the other avatars, so the landing's face-off needs no picker. Importers still find it here.
+export { TeamAvatar };
 import { roomBelow, useEdgeFade } from "./edgeFade";
 import { Marked } from "./Marked";
 import { useKeyboardInset } from "./useKeyboardInset";
@@ -48,11 +50,6 @@ export function TeamSearchField({ q, setQ, onKey, input, label, wrap }: {
       {q && <button type="button" className="sel-search-x" aria-label="Clear search" onMouseDown={(e) => e.preventDefault()} onClick={() => { setQ(""); input.current?.focus(); }}><Icon name="x" size={14} /></button>}
     </label>
   );
-}
-
-/** Manager avatar from Sleeper (team picture, then account picture), or initials when they haven't set one or it fails to load. */
-export function TeamAvatar({ t, size = 40 }: { t: Pick<Team, "name" | "avatar" | "photo">; size?: number }) {
-  return <ManagerAvatar src={[t.avatar, t.photo]} name={t.name} size={size} />;
 }
 
 /** Trade partner dropdown: the selected team's avatar, name and record, opening a list of every other team. */
