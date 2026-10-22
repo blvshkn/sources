@@ -503,7 +503,8 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
           <Icon name="chev" size={16} />
         </button>
         {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
-        <div className="ps-brief">
+        {/* No pickup worth making: no Waiver add row at all (Zach) */}
+        {briefing.waiverPass && <div className="ps-brief">
           <button className="brief-row" onClick={() => onGo("waivers")}>
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
           </button>
@@ -512,7 +513,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
               <button className="brief-snooze" aria-label={`Not right now: skip ${briefing.waiverPass.name} this week`} onClick={() => onSnooze(briefing.waiverPass!)}>Not right now</button>
             </Tooltip>
           )}
-        </div>
+        </div>}
       </section>
       <Improve you={you} partner={partner} partnerId={partnerId} onGo={onGo} />
       </div>}
