@@ -353,3 +353,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-split-b { margin-left: 0 !importa
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2 { --navh: 84px; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-nav.ld2-nav { height: auto; min-height: 84px; padding-block: 16px; box-sizing: border-box; }
 }
+
+/* The username form's focus ring sits on the inside edge, so nothing around it can clip it (Zach, Oct 22: the green
+   border was getting cut off on iPhone) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-form:focus-within { box-shadow: inset 0 0 0 2px var(--lime); }
