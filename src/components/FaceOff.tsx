@@ -1,9 +1,9 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react";
 import type { Team } from "../data";
 import type { PlayCount, Result } from "../liveMath";
-import { LiveNum } from "./ui";
+import { Morph, PixelTrophy, RollNum, isFresh, useTurnedAt } from "../gameDayMotion";
 import { TeamAvatar } from "./TeamPicker";
-import { Trophy, WinCup, isChampion } from "./Trophy";
+import { Trophy, isChampion } from "./Trophy";
 import { NumTip as Tip, Tooltip } from "./Tooltip";
 import { useCountTogether } from "../motionOnce";
 
@@ -74,27 +74,43 @@ export function FaceOff({ you, them, state, chance, res, skel = false, msg, labe
   const mine = res ? (res.letter === "W" ? 100 : res.letter === "L" ? 0 : 50) : chance;
   const theirs = mine === null || !them.t ? null : 100 - mine;
   const final = !!res || state === "final";
-  const { vals: cv, running: counting } = useCountTogether(countKey, [you.pts ?? 0, them.pts ?? 0, mine ?? 0, theirs ?? 0], { ready: !skel && you.pts !== null });
+  // First arrival counts up; after that a live score rolls its digits (RollNum) and the bars glide on their own
+  const liveNow = !!(you.live || them.live) && !final;
+  const { vals: cv, running: counting } = useCountTogether(countKey, [you.pts ?? 0, them.pts ?? 0, mine ?? 0, theirs ?? 0], { ready: !skel && you.pts !== null, changes: !liveNow });
   const anim = (i: number) => (counting ? cv[i] : undefined);
+  // The leader's score is ink and the trailer's muted at every moment, the count-up included (both sides count at
+  // the same rate, so the order holds); before kickoff that's the projected totals. A tie dims neither.
+  const ya = anim(0) ?? you.pts, ta = anim(1) ?? them.pts;
+  const both = ya !== null && ta !== null && !!them.t && !skel;
+  const cmp = both ? Math.round(ya! * 10) - Math.round(ta! * 10) : 0;
+  const youDim = both ? cmp < 0 : !!you.dim, themDim = both ? cmp > 0 : !!them.dim;
+  // Final whistle: the week went final while this face-off was up (already final at mount shows it settled)
+  const finalAt = useTurnedAt(final, (v) => v);
+  const whistle = isFresh(finalAt, 2000);
+  const lost = (s: "you" | "them") => !!res && res.letter !== "T" && (s === "you" ? res.letter === "L" : res.letter === "W");
   // What the week is (under the badge) and what happened (under that, or alone under both sides on a phone)
   const tag = !them.t ? null : final ? "Final" : state === "pre" ? "Projected" : state === "scored" ? "Scored" : null;
   const line = res ? (res.letter === "T" ? "Tied" : res.short)
     : !them.t ? msg ?? "No matchup"
     : state === "live" ? <span className="fo-live"><i />Live</span> : null;
   const chips = !final && (state === "live" || state === "scored");
+  // The week's label and line morph when the state changes (Projected, Scored, Live, Final); the result rises in
+  const lineKey = res ? "res" : !them.t ? `m:${msg ?? ""}` : state === "live" ? "live" : "none";
+  const footKey = res ? "res" : !them.t ? `m:${msg ?? ""}` : state === "live" ? "live" : `t:${tag ?? ""}`;
+  const lineV = whistle ? "rise" : "blur";
   return (
-    <span className={`fo fo-st-${final ? "final" : state}${flat ? " fo-flat" : ""}${skel ? " is-skel" : ""}`} {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}>
+    <span className={`fo fo-st-${final ? "final" : state}${flat ? " fo-flat" : ""}${skel ? " is-skel" : ""}${whistle ? " gd-fw" : ""}`} {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}>
       <span className="fo-in">
-        <Side s={you} side="you" pct={mine} other={theirs} won={res?.letter === "W"} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} ap={anim(0)} apct={anim(2)} />
+        <Side s={{ ...you, dim: youDim }} side="you" pct={mine} other={theirs} won={res?.letter === "W"} lost={lost("you")} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} ap={anim(0)} apct={anim(2)} />
         <span className="fo-mid">
           <span className="fo-vs">VS</span>
-          <span className="fo-tag">{tag}</span>
-          <span className="fo-line">{res ? <ResultTip res={res} focus={!!label}>{line}</ResultTip> : line}</span>
+          <span className="fo-tag"><Morph k={tag ?? ""}>{tag}</Morph></span>
+          <span className="fo-line"><Morph k={lineKey} variant={lineV}>{res ? <ResultTip res={res} focus={!!label}>{line}</ResultTip> : line}</Morph></span>
         </span>
-        <Side s={them} side="them" pct={theirs} other={mine} won={res?.letter === "L" && !!them.t} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} ap={anim(1)} apct={anim(3)} />
+        <Side s={{ ...them, dim: themDim }} side="them" pct={theirs} other={mine} won={res?.letter === "L" && !!them.t} lost={lost("them") && !!them.t} chip={chips} state={final ? "final" : state} tips={!skel} focus={!!label} ap={anim(1)} apct={anim(3)} />
         <span className="fo-foot">
           <Chip c={chips ? you.count : undefined} />
-          <span className="fo-line">{res ? <ResultTip res={res}>{line}</ResultTip> : line ?? tag}</span>
+          <span className="fo-line"><Morph k={footKey} variant={lineV}>{res ? <ResultTip res={res}>{line}</ResultTip> : line ?? tag}</Morph></span>
           <Chip c={chips && them.t ? them.count : undefined} />
         </span>
       </span>
@@ -138,15 +154,16 @@ function endTip(note: string | undefined) {
   return { label: "Season average", note: "Points per game" };
 }
 
-function Side({ s, side, pct, other, won, chip, state, tips = true, focus = false, ap, apct }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; chip: boolean; state?: FaceState; tips?: boolean; focus?: boolean;
+function Side({ s, side, pct, other, won, lost = false, chip, state, tips = true, focus = false, ap, apct }: { s: FaceSide; side: "you" | "them"; pct: number | null; other: number | null; won: boolean; lost?: boolean; chip: boolean; state?: FaceState; tips?: boolean; focus?: boolean;
   /** Mid count-up: the score and win % to draw this frame (the bar follows the same progress, with its transition off) */
   ap?: number; apct?: number }) {
   const t = s.t;
   // Ahead or behind on win %: the leader's % and bar go green, the trailer's go red. Even stays neutral.
   const tone = pct === null || other === null || pct === other ? "even" : pct > other ? "up" : "down";
   const handle = !t ? null : t.manager === "You" ? "You" : t.manager;
-  // One cup before the handle: the matchup winner's, or else last season's champion's (with its tooltip)
-  const cup = !t ? null : won ? <Tooltip content="Won this matchup"><WinCup size={11} /></Tooltip> : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
+  // The matchup winner's 16-bit trophy sits beside the team name; otherwise last season's champion keeps his cup
+  // before the handle (with its tooltip). One cup either way.
+  const cup = !t || won ? null : isChampion(t.id) ? <Trophy teamId={t.id} size={11} /> : null;
   const end = t ? s.note ?? perGame(t) : "";
   const left = chip && t ? toPlay(s.count) : "";
   const st = state ?? "pre";
@@ -157,12 +174,13 @@ function Side({ s, side, pct, other, won, chip, state, tips = true, focus = fals
     pct === null ? null : <NumTip key="w" focusable={focus} {...winTip(pct, st, false)}><b className="fo-pct">{apct !== undefined ? Math.round(apct) : pct}%</b></NumTip>,
     t ? <NumTip key="r" focusable={focus} label="Season record" note={parts > 2 ? "Wins, losses and ties" : "Wins and losses"}><span>{t.record}</span></NumTip> : null,
   ].filter(Boolean);
-  const pts = s.pts === null ? null : ap !== undefined ? <span className="fo-pts">{ap.toFixed(1)}</span> : s.live ? <LiveNum className="fo-pts" v={s.pts} /> : <span className="fo-pts">{s.pts.toFixed(1)}</span>;
+  // One counter for every frame: the count-up draws straight through it, a later live change rolls its digits
+  const pts = s.pts === null ? null : <RollNum className="fo-pts" v={ap ?? s.pts} roll={ap === undefined && !!s.live} />;
   return (
-    <span className={`fo-side ${side} ${tone}${s.dim ? " is-dim" : ""}`}>
+    <span className={`fo-side ${side} ${tone}${s.dim ? " is-dim" : ""}${won ? " is-won" : ""}${lost ? " is-lost" : ""}`}>
       <span className="fo-av">{t ? <TeamAvatar t={t} size={48} /> : <span className="fo-av-none" />}</span>
       <span className="fo-handle">{cup}<span>{handle ?? ""}</span></span>
-      <b className={`fo-name${t ? "" : " muted"}`}><span>{t ? t.name : s.empty ?? "No matchup"}</span></b>
+      <b className={`fo-name${t ? "" : " muted"}`}><span>{t ? t.name : s.empty ?? "No matchup"}</span>{won && t && <Tooltip content="Won this matchup"><PixelTrophy /></Tooltip>}</b>
       <span className="fo-score">
         {pts === null ? <span className="fo-pts muted">--</span> : t ? <NumTip focusable={focus} {...scoreTip(st, s.note)}>{pts}</NumTip> : pts}
       </span>

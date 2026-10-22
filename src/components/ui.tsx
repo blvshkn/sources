@@ -7,6 +7,7 @@ import { Icon, type IconName } from "./icons";
 import { Tooltip } from "./Tooltip";
 import { AiMark } from "./WorkingLoader";
 import { EASE_OUT, mo } from "../motion";
+import { MorphPill, RollNum } from "../gameDayMotion";
 export { Icon };
 export type { IconName } from "./icons";
 
@@ -18,7 +19,8 @@ export function StatusPill({ p }: { p: Player }) {
   const tip = p.injury === "IR" ? "On injured reserve. Can move to an IR slot." : p.injury === "PUP" ? "On the PUP list." : p.injury === "Sus" ? "Suspended." : p.status === "O" ? "Ruled out this week." : p.injury === "Doubtful" ? "Doubtful. Unlikely to play." : "Questionable. Check his status before lock.";
   // Same word Sleeper uses, so IR, PUP and Doubtful don't all read as Out or Questionable
   const word = p.injury === "IR" ? "IR" : p.injury === "PUP" ? "PUP" : p.injury === "Sus" ? "Suspended" : p.injury === "Doubtful" ? "Doubtful" : p.status === "O" ? "Out" : "Questionable";
-  return <Tooltip content={p.note ? <>{tip}<small>{p.note}</small></> : tip}><span className={`status status-${p.status}`}>{word}</span></Tooltip>;
+  // A status that changes while the pill is up (Questionable to Out) morphs its word and shifts its color
+  return <Tooltip content={p.note ? <>{tip}<small>{p.note}</small></> : tip}><MorphPill className={`status status-${p.status}`} word={word} /></Tooltip>;
 }
 
 export function Delta({ n, suffix = "" }: { n: number; suffix?: string }) {
@@ -139,11 +141,8 @@ export function useSticky<T extends string>(key: string, initial: T, allowed?: r
   return [v, set];
 }
 
-/** A live score. When it goes up, it ticks lime for a moment so you notice the change. Alternates two
- *  animation names so back to back updates restart the tick. data-v feeds the lime copy that fades out on top. */
+/** A live score. When it changes, the digits that changed morph into place (up for a rise), so you see the points
+ *  arrive. It mounts settled. */
 export function LiveNum({ v, className }: { v: number; className?: string }) {
-  const prev = useRef(v);
-  const [bump, setBump] = useState(0);
-  useEffect(() => { if (v > prev.current + 0.05) setBump((b) => b + 1); prev.current = v; }, [v]);
-  return <span className={className} data-bump={bump ? (bump % 2 ? "a" : "b") : undefined} data-v={v.toFixed(1)}>{v.toFixed(1)}</span>;
+  return <RollNum v={v} className={className} />;
 }

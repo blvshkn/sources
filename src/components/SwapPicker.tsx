@@ -16,6 +16,7 @@ import { deny } from "../deny";
 import type { CmpWho } from "./SwapCompare";
 import { MetaParts, gameParts } from "./Meta";
 import { EASE_OUT, mo as moT } from "../motion";
+import { Morph, useTurnedAt } from "../gameDayMotion";
 
 // ---- Locks ------------------------------------------------------------------
 /** Sleeper locks a player at his game's kickoff: "live" while it's on, "final" once it's over, null before. Byes
@@ -290,24 +291,32 @@ const teamGame = (nfl: string, game: string | null | undefined): ReactNode[] => 
 };
 /** One side of a row this week: headshot, name, position, team and game. Module level, so a re-render (a toast, a
  *  live update) keeps the same rows instead of mounting every one of them again. */
-export function Who({ p, side, slot }: { p: Player | null; side: "you" | "them"; slot?: string }) {
+/** "Locked at kickoff" where the kickoff time was, once his game kicks off while the row is up. Rows that were already
+ *  locked when they mounted read as before. */
+function useKickNote(stone: boolean) {
+  const at = useTurnedAt(stone, (v) => v);
+  return at > 0 && stone ? <Morph k="locked" variant="swap" enter className="gd-kick">Locked at kickoff</Morph> : null;
+}
+export function Who({ p, side, slot, stone = false }: { p: Player | null; side: "you" | "them"; slot?: string; stone?: boolean }) {
   useKickoffs();
+  const note = useKickNote(stone);
   return p ? (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...teamGame(p.nfl, onBye(p.nfl) ? null : kickLine(p))]} /><StatusPill p={p} /></small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...teamGame(p.nfl, onBye(p.nfl) ? null : kickLine(p)), note]} /><StatusPill p={p} /></small></span>
     </span>
   ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
 }
 
 /** A K/DEF. One Sleeper left empty shows our best-projected pick, labeled Suggested. */
-export function SpecialWho({ p, side, suggested, slot }: { p: SpecialPlayer | null; side: "you" | "them"; suggested?: boolean; slot?: string }) {
+export function SpecialWho({ p, side, suggested, slot, stone = false }: { p: SpecialPlayer | null; side: "you" | "them"; suggested?: boolean; slot?: string; stone?: boolean }) {
   useKickoffs();
+  const note = useKickNote(stone);
   if (!p) return <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
   return (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...(onBye(p.nfl) ? [p.nfl, "Bye"] : teamGame(p.nfl, p.opp ? oppAt(p.nfl, p.opp) : null)), suggested && <span className="muted">Suggested</span>]} /></small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...(onBye(p.nfl) ? [p.nfl, "Bye"] : teamGame(p.nfl, p.opp ? oppAt(p.nfl, p.opp) : null)), note, suggested && <span className="muted">Suggested</span>]} /></small></span>
     </span>
   );
 }

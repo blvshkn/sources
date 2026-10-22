@@ -92,7 +92,7 @@ const anyLive = (g: Record<string, GameState>) => Object.values(g).some((s) => s
 const anyLeft = (g: Record<string, GameState>) => Object.values(g).some((s) => s !== "complete");
 
 function seed(): Live {
-  if (LEAGUE?.mode === "demo") return demo();
+  if (LEAGUE?.mode === "demo") { const fx = fixture(); return demo(fx === "final-week", fx === "last-game" ? lastGameTweak() : tweak); }
   // Every roster's points from this week's matchups, loaded with the league. The history entry only has your
   // own players' points, so it's the fallback for a league saved before weekMatchups existed.
   if (LEAGUE?.weekMatchups?.length) return { ...fromMatchups(LEAGUE.weekMatchups), games: LEAGUE.games ?? {}, left: {}, at: Date.now() };
@@ -104,7 +104,8 @@ function seed(): Live {
 
 /** Demo only: localStorage sources.fixture = "final-week" turns the sample Sunday into a finished week, every
  *  game final, with the matchup rows ordered opponent first, the way a real league's roster_ids can fall. */
-const finalFixture = () => { try { return localStorage.getItem("sources.fixture") === "final-week"; } catch { return false; } };
+const fixture = () => { try { return localStorage.getItem("sources.fixture"); } catch { return null; } };
+const finalFixture = () => fixture() === "final-week";
 
 /** The sample Sunday, game by game (keyed by the home team of the demo slate in data.ts), about 3:50 PM Eastern.
  *  Thursday's game and three of the 1:00 games are final, the other three 1:00 games are deep in the fourth quarter
@@ -115,8 +116,16 @@ const DEMO_SUNDAY: Record<string, { st: GameState; left?: number }> = {
   MIA: { st: "in_game", left: 0.12 }, CLE: { st: "in_game", left: 0.08 }, PHI: { st: "in_game", left: 0.18 },
 };
 
+/** Demo only: how the sample Sunday has moved on since the app opened (the demo ticker below). Games that kicked off
+ *  (`kicked`, starting from zero), clocks that ran down (`left`), points scored since (`bonus`), and games that ended
+ *  (`done`; `closing` games are in their last minutes, a little short of their final line). In a game that kicked off,
+ *  players score their line in proportion to the clock, except `quiet` ones still on zero. Never used by a live league. */
+interface DemoTweak { kicked: Set<string>; left: Record<string, number>; bonus: Record<string, number>; done: Set<string>; closing: Set<string>; quiet: Set<string> }
+const freshTweak = (): DemoTweak => ({ kicked: new Set(), left: {}, bonus: {}, done: new Set(), closing: new Set(), quiet: new Set() });
+const tweak: DemoTweak = freshTweak();
+
 /** Sample data so the demo league shows what a Sunday looks like: some games final, some in progress, some to come. */
-function demo(fin = finalFixture()): Live {
+function demo(fin = finalFixture(), tw?: DemoTweak): Live {
   const games: Record<string, GameState> = {};
   const points: Record<string, number> = {};
   const teamPts: Record<string, number> = {};
@@ -126,11 +135,25 @@ function demo(fin = finalFixture()): Live {
     const g: { st: GameState; left?: number } = fin ? { st: "complete" } : DEMO_SUNDAY[home] ?? { st: "pre_game" };
     games[away] = games[home] = g.st;
     if (g.st === "in_game" && g.left !== undefined) left[away] = left[home] = g.left;
+    if (tw?.kicked.has(home) || tw?.closing.has(home)) { games[away] = games[home] = "in_game"; left[away] = left[home] = tw.left[home] ?? 0.98; }
+    if (tw && tw.left[home] !== undefined && games[home] === "in_game") left[away] = left[home] = tw.left[home];
+    if (tw?.done.has(home)) { games[away] = games[home] = "complete"; delete left[away]; delete left[home]; }
   }
   // Spread outcomes so the sample Sunday shows every state: some past their projection, some close, some short
-  const outcome = (id: string, proj: number, g: GameState) => {
+  const base = (id: string, proj: number, g: GameState) => {
     const h = [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) / 4294967295;
     return Math.round(proj * (g === "complete" ? 0.6 + h * 0.9 : 0.35 + h * 0.8) * 10) / 10;
+  };
+  const nflOf = (id: string) => LEAGUE.players[id]?.nfl ?? FREE_AGENTS.find((f) => f.id === id)?.nfl ?? "";
+  const homeOf = (nfl: string) => DEMO_SLATE.find(([a, h]) => a === nfl || h === nfl)?.[1] ?? "";
+  const outcome = (id: string, proj: number, g: GameState) => {
+    const home = homeOf(nflOf(id));
+    // A game that kicked off since the app opened starts from zero; one in its closing minutes sits a bit short of its final
+    const played = Math.min(1, Math.max(0, (1 - (left[home] ?? 1)) / 0.85));
+    const pts = tw?.kicked.has(home) && !tw.done.has(home) ? (tw.quiet.has(id) ? 0 : Math.round(base(id, proj, "in_game") * played * 10) / 10)
+      : tw?.closing.has(home) && g === "in_game" ? Math.round(base(id, proj, "complete") * 0.9 * 10) / 10
+      : base(id, proj, g);
+    return Math.round((pts + (tw?.bonus[id] ?? 0)) * 10) / 10;
   };
   const sideTotal = (ids: string[]) => ids.reduce((a, id) => {
     const p = LEAGUE.players[id]; if (!p) return a;
@@ -168,6 +191,7 @@ function demo(fin = finalFixture()): Live {
  *  the projections and the model's pregame chance), the sample Sunday as the demo shows it, or the same week final
  *  (the "final-week" fixture). Read only; it never touches the shared live state the app uses. */
 export function sampleWeek(at: "pre" | "live" | "final"): Live {
+  // (Untweaked: the landing always shows the sample Sunday as it starts)
   if (at !== "pre") return demo(at === "final");
   const games: Record<string, GameState> = {};
   const nfls = new Set([...Object.values(LEAGUE.players).map((p) => p.nfl), ...Object.values(LEAGUE.specials ?? {}).map((p) => p.nfl)]);
@@ -217,6 +241,99 @@ function schedule() {
   }, wait);
 }
 
+// ---- Demo ticker ------------------------------------------------------------------------
+// The demo league stands still at its sample Sunday, about 3:50 PM Eastern. So game day motion shows in the demo too,
+// a few things happen soon after it opens, once each, the way they would next on a real Sunday: a 4:05 game with one
+// of your starters kicks off (his row locks), a live starter scores a touchdown that puts him past his projection
+// (he catches fire, the scores roll), the clock runs down in a 1:00 game until someone falls well off his pace (he
+// goes cold), and a questionable player is ruled out. With sources.fixture = "last-game" the demo opens instead on
+// Monday night's closing minutes with everything else final, and the last game ends a few seconds in (the final
+// whistle). Demo data only, never shown for a live league.
+const LATE_WINDOWS = [["SEA", "LAR", "SF", "ARI"], ["LAC", "LV", "HOU", "JAX", "NO", "ATL", "MIN", "GB"]];
+const homeTeam = (nfl: string) => DEMO_SLATE.find(([a, h]) => a === nfl || h === nfl)?.[1];
+const r1 = (n: number) => Math.round(n * 10) / 10;
+/** Everyone whose points count this week: both teams' starters and kickers and defenses. */
+const demoStarters = () => {
+  const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
+  const out: { id: string; nfl: string; proj: number; mine: boolean }[] = [];
+  for (const t of opp ? [YOU, opp] : [YOU]) {
+    for (const id of startersOf(t)) { const p = PLAYERS[id]; if (p) out.push({ id, nfl: p.nfl, proj: isOut(p, true) ? 0 : eff(p, true), mine: t.id === YOU.id }); }
+    for (const sp of specialsOf(t)) if (sp) out.push({ id: sp.id, nfl: sp.nfl, proj: specialPts(sp), mine: t.id === YOU.id });
+  }
+  return out;
+};
+/** The last game of the week that has a starter in it: the one the "last-game" fixture leaves for the final whistle. */
+function lastGameTweak(): DemoTweak {
+  const tw = freshTweak();
+  const nfls = new Set(demoStarters().map((s) => s.nfl));
+  const last = [...DEMO_SLATE].reverse().find(([a, h]) => nfls.has(a) || nfls.has(h)) ?? DEMO_SLATE[DEMO_SLATE.length - 1];
+  for (const [, h] of DEMO_SLATE) if (h !== last[1]) tw.done.add(h);
+  tw.closing.add(last[1]); tw.left[last[1]] = 0.03;
+  Object.assign(tweak, tw);
+  return tweak;
+}
+let ticking = false, kickPick = "";
+function demoTicker() {
+  if (ticking) return;
+  ticking = true;
+  const fx = fixture();
+  if (fx === "final-week") return;
+  const push = () => { if (LEAGUE?.mode !== "demo") return; current = demo(false, tweak); subs.forEach((f) => f(current!)); };
+  const at = (ms: number, fn: () => boolean | void) => {
+    const run = () => { if (LEAGUE?.mode !== "demo") return; if (document.visibilityState !== "visible") { window.setTimeout(run, 1000); return; } if (fn() !== false) push(); };
+    window.setTimeout(run, ms);
+  };
+  if (fx === "last-game") {
+    at(6000, () => { tweak.closing.forEach((h) => tweak.done.add(h)); tweak.closing.clear(); });
+    return;
+  }
+  // A 4:05 (else 4:25) game with one of your starters kicks off
+  at(6000, () => {
+    const games = current?.games ?? {};
+    // Only Sunday's late windows can kick off next; Sunday and Monday night stay to come
+    const mine = [...demoStarters().filter((s) => s.mine), ...YOU.roster.map((id) => PLAYERS[id]).filter(Boolean)].filter((s) => games[s.nfl] === "pre_game");
+    const pick = LATE_WINDOWS.map((w) => mine.find((s) => w.includes(s.nfl))).find(Boolean);
+    const h = pick && homeTeam(pick.nfl);
+    if (!h) return false;
+    tweak.kicked.add(h); tweak.left[h] = 0.98;
+    kickPick = pick.id;
+  });
+  // A live starter of yours scores a touchdown that takes him past his projection
+  at(11000, () => {
+    const l = current; if (!l) return false;
+    const live = demoStarters().filter((s) => s.mine && l.games[s.nfl] === "in_game" && s.proj > 0 && !tweak.kicked.has(homeTeam(s.nfl) ?? ""));
+    const gap = (s: { id: string; proj: number }) => s.proj - (l.points[s.id] ?? 0);
+    const pick = live.filter((s) => gap(s) > 0 && gap(s) < 9).sort((a, b) => gap(a) - gap(b))[0] ?? live[0];
+    if (!pick) return false;
+    tweak.bonus[pick.id] = r1((tweak.bonus[pick.id] ?? 0) + Math.min(9.8, Math.max(6.4, gap(pick) + 1.2)));
+  });
+  // The clock runs down in a live game until a starter falls well off his pace
+  at(16000, () => {
+    const l = current; if (!l) return false;
+    // Yours first, so it shows on Lineup too
+    const live = demoStarters().filter((s) => l.games[s.nfl] === "in_game" && s.proj > 0 && !tweak.kicked.has(homeTeam(s.nfl) ?? "")).sort((a, b) => Number(b.mine) - Number(a.mine));
+    // The game that just kicked off reaches the end of the first quarter, and your player there hasn't scored yet
+    const kp = kickPick && PLAYERS[kickPick], kh = kp && homeTeam(kp.nfl);
+    if (kp && kh && eff(kp, true) > 0) { tweak.left[kh] = 0.74; tweak.quiet.add(kp.id); return; }
+    const cold = (s: { id: string; nfl: string; proj: number }, left: number) => { const pts = l.points[s.id] ?? 0, pace = onPace(pts, s.proj, left); return pts < s.proj && pace !== null && pace < s.proj * 0.85; };
+    for (const s of live) {
+      const now = l.left[s.nfl];
+      if (now === undefined || cold(s, now)) continue;
+      for (let left = now - 0.02; left >= 0.02; left -= 0.02) if (cold(s, left)) { const h = homeTeam(s.nfl); if (h) { tweak.left[h] = r1(left * 10) / 10; return; } }
+    }
+    return false;
+  });
+  // A questionable player is ruled out
+  at(21000, () => {
+    const games = current?.games ?? {};
+    const ids = [...YOU.roster, ...(OPPONENT_ID ? teamById(OPPONENT_ID).roster : [])];
+    const p = ids.map((id) => PLAYERS[id]).find((x) => x && x.status === "Q" && !x.injury && games[x.nfl] === "pre_game");
+    if (!p) return false;
+    p.status = "O"; p.injury = "Out";
+    p.note = `${(p.note ?? "").split(",")[0] || "Injury"}, ruled out`;
+  });
+}
+
 let seeding = false;
 /** This week's live state, seeded on first use for the loaded league (and again when the league or week changes). */
 function ensure(): Live {
@@ -225,6 +342,7 @@ function ensure(): Live {
     seeding = true;
     try { current = seed(); } finally { seeding = false; }
     currentLeague = `${LEAGUE.id}:${WEEK}`; schedule();
+    if (LEAGUE.mode === "demo") demoTicker();
     // Fetch every team's points (and the clock) right away instead of waiting for the first poll. A finished
     // week gets this one read too, so a league saved mid-week still ends on Sleeper's final scores.
     if (LEAGUE.mode === "live") poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });

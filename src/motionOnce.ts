@@ -21,10 +21,10 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 /**
  * Counts a group of numbers up together and reports the shared eased progress, so bars tied to them grow at the
  * same rate and stop when the numbers stop. Runs from zero the first time `key` shows this visit, and from the old
- * values whenever the targets change by more than `min`. Otherwise it returns the targets as they are.
+ * values whenever the targets change by more than `min` (unless `changes` is off). Otherwise it returns the targets as they are.
  * `ready` false (a loading skeleton) waits without spending the key.
  */
-export function useCountTogether(key: string | undefined, targets: number[], { ready = true, ms = 1100, min = 0.05 } = {}) {
+export function useCountTogether(key: string | undefined, targets: number[], { ready = true, ms = 1100, min = 0.05, changes = true } = {}) {
   const [vals, setVals] = useState<number[]>(() => targets);
   const [running, setRunning] = useState(false);
   const shown = useRef<number[]>(targets);
@@ -36,7 +36,8 @@ export function useCountTogether(key: string | undefined, targets: number[], { r
     // A first count that hasn't finished (the card remounted while data settled) starts over instead of being lost
     const first = pending.has(key) || firstTime(key);
     if (first) pending.add(key);
-    const changed = !first && targets.some((t, i) => Math.abs(t - (shown.current[i] ?? t)) > min);
+    // `changes` off: later changes don't count (live scores roll their digits instead, gameDayMotion.RollNum)
+    const changed = !first && changes && targets.some((t, i) => Math.abs(t - (shown.current[i] ?? t)) > min);
     if ((!first && !changed) || reduce()) { shown.current = targets; setVals(targets); setRunning(false); return; }
     const from = first ? targets.map(() => 0) : shown.current.slice();
     const dur = first ? mo(ms) : mo(ms * 0.6);

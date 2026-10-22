@@ -1,0 +1,144 @@
+/* Game day motion (gameDayMotion.tsx), ported from the approved preview. Timings are the preview's, written as
+   calc(Nms * var(--mo)) so they keep the app's one pace (preview ms / 1.75). Nothing here loops. Every animation sits
+   behind prefers-reduced-motion: no-preference; with reduced motion each piece shows its settled state.
+   Pixel art is inline SVG in the components, never a CSS background. */
+html:root:not(#_):not(#_) { --gd-spring: cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* ---- Fire and cold ---------------------------------------------------------------- */
+/* The pixel flame and snowflake replace the line icons next to live points */
+html:root:not(#_):not(#_) :is(.gd-flame, .gd-snow) { display: grid; place-items: center; flex: none; width: 16px; height: 18px; -webkit-text-fill-color: initial; }
+html:root:not(#_):not(#_) .gd-flame svg { display: block; width: 14.4px; height: 18px; }
+html:root:not(#_):not(#_) .gd-snow svg { display: block; width: 14px; height: 14px; }
+/* The old flame's looping glow copy and flicker stay off: the corner glow is the lasting cue now */
+html:root:not(#_):not(#_):not(#_) :is(.lu-pts, .wk-pts).heat-fire b::after { content: none; animation: none; }
+html:root:not(#_):not(#_) :is(.lu-pts, .wk-pts).heat-fire b { filter: none; }
+/* On fire the number keeps its flame gradient, painted per digit: a gradient clipped to the whole line can't reach
+   the counter's cells, so the line itself drops it */
+html:root:not(#_):not(#_):not(#_) .lu-pts.heat-fire b:has(.gd-odo) { background: none; -webkit-text-fill-color: initial; color: #FFB04A; }
+html:root:not(#_):not(#_):not(#_) .lu-pts.heat-fire b .gd-g {
+  background: linear-gradient(180deg, #FFD166, #FF8A3D 55%, #FF5A36); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* Corner weather: a soft radial glow in the row's top-right, painted under the row's content. The row is the
+   positioned box (isolation keeps the glow above the row's own fill and below its text). */
+html:root:not(#_):not(#_) :is(.lu-row, .mu-mine, .mu-theirs):has(.gd-wx) { position: relative; isolation: isolate; }
+html:root:not(#_):not(#_) .gd-wx { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; }
+html:root:not(#_):not(#_) .gd-wx-glow { position: absolute; top: -46px; right: -46px; width: 150px; height: 96px; border-radius: 50%; opacity: 0.4; }
+html:root:not(#_):not(#_) .gd-wx-hot .gd-wx-glow { background: radial-gradient(closest-side, rgba(232, 64, 42, 0.42), rgba(255, 138, 42, 0.14) 60%, transparent); }
+html:root:not(#_):not(#_) .gd-wx-cold .gd-wx-glow { background: radial-gradient(closest-side, rgba(120, 190, 255, 0.36), rgba(169, 216, 255, 0.12) 60%, transparent); }
+html:root:not(#_):not(#_) .gd-wx-c {
+  position: absolute; top: 0; right: 0; width: 120px; height: 100%; image-rendering: pixelated;
+  -webkit-mask-image: radial-gradient(120px 70px at 100% 0, #000 30%, transparent 75%); mask-image: radial-gradient(120px 70px at 100% 0, #000 30%, transparent 75%);
+}
+
+/* ---- Set in stone ----------------------------------------------------------------- */
+/* The lock sits right before the points, in the same line, so it centers on them */
+html:root:not(#_):not(#_) .gd-lock { display: grid; place-items: center; flex: none; width: 18px; height: 22px; margin-right: 4px; -webkit-text-fill-color: initial; }
+html:root:not(#_):not(#_) .gd-lock svg { display: block; width: 16px; height: 22px; }
+/* Optical centering: the closing frames drop their top rows, so they ride up by the rows they dropped */
+html:root:not(#_):not(#_) .gd-lock[data-f="1"] svg { transform: translateY(-1px); }
+html:root:not(#_):not(#_) .gd-lock[data-f="2"] svg { transform: translateY(-2px); }
+/* The color drains a little from a locked row's headshot */
+html:root:not(#_):not(#_) :is(.lu-row, .mu-mine):has(.gd-lock) .av { filter: saturate(0.6); }
+/* The stone lock replaces the lock badge that used to show on a tap */
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.lu-row, .mu-mine):has(.gd-lock) :is(.lu-lockic, .mu-lockic) { display: none; }
+html:root:not(#_):not(#_) .gd-kick { color: var(--muted); }
+
+/* ---- Morphs ----------------------------------------------------------------------- */
+html:root:not(#_):not(#_) .gd-morph { display: inline-grid; justify-items: center; align-items: center; }
+html:root:not(#_):not(#_) .gd-morph > * { grid-area: 1 / 1; min-width: 0; }
+html:root:not(#_):not(#_) .gd-morph.gd-kick { justify-items: start; }
+html:root:not(#_):not(#_) .gd-m-out { pointer-events: none; }
+/* Injury pills (MorphPill): lighter type at the same size; the word swap holds the old word out of flow so the pill
+   can hug the new one while its width eases over (the component sets the width transition) */
+html:root:not(#_):not(#_):not(#_) .status.gd-pill { box-sizing: border-box; overflow: hidden; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-tags .status.gd-pill { font-weight: 600; letter-spacing: 0.01em; }
+html:root:not(#_):not(#_) .gd-pill > .gd-morph { position: relative; }
+html:root:not(#_):not(#_) .gd-pill > .gd-morph > .gd-m-out { position: absolute; justify-self: center; white-space: nowrap; }
+
+/* ---- Counter ---------------------------------------------------------------------- */
+/* Every character, the decimal point too, gets a full 1ch cell, so the number spaces evenly */
+html:root:not(#_):not(#_) .gd-odo { display: inline-flex; white-space: nowrap; }
+html:root:not(#_):not(#_) .gd-c { position: relative; display: inline-block; width: 1ch; text-align: center; }
+html:root:not(#_):not(#_) .gd-g { display: block; }
+html:root:not(#_):not(#_) .gd-g.gd-out { position: absolute; inset: 0; }
+/* The face-off keeps its Geist digits (monoNumbers would set each cell mono) */
+html:root:not(#_):not(#_):not(#_) .gd-odo [data-n] { font-family: inherit !important; }
+
+/* ---- Final whistle ---------------------------------------------------------------- */
+html:root:not(#_):not(#_) .fo-name:has(.gd-trw) { display: flex; align-items: center; gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_) .fo-side.them .fo-name:has(.gd-trw) { justify-content: flex-end; }
+html:root:not(#_):not(#_) .gd-trw { position: relative; display: block; flex: none; width: 14px; height: 14px; perspective: 120px; }
+html:root:not(#_):not(#_) .gd-troph { position: absolute; inset: 0; }
+html:root:not(#_):not(#_) .gd-troph svg { display: block; width: 14px; height: 14px; }
+html:root:not(#_):not(#_) .gd-spk { position: absolute; width: 7px; height: 7px; opacity: 0; pointer-events: none; }
+html:root:not(#_):not(#_) .gd-spk svg { display: block; width: 100%; height: 100%; }
+html:root:not(#_):not(#_) .gd-spk.s1 { left: -6px; top: -5px; }
+html:root:not(#_):not(#_) .gd-spk.s2 { right: -7px; top: -2px; width: 5px; height: 5px; }
+html:root:not(#_):not(#_) .gd-spk.s3 { right: -4px; bottom: -5px; width: 5px; height: 5px; }
+/* The losing side steps back once the week is final */
+html:root:not(#_):not(#_) .fo-side { transition: opacity calc(343ms * var(--mo)) var(--ease-out); }
+html:root:not(#_):not(#_) .fo-st-final .fo-side.is-lost { opacity: 0.55; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Fire: springs in, then the component steps the frames */
+  html:root:not(#_):not(#_) .gd-flame.gd-play { animation: gd-flame-in calc(400ms * var(--mo)) var(--gd-spring) both; }
+  @keyframes gd-flame-in { from { opacity: 0; transform: scale(0.3) translateY(6px); } to { opacity: 1; transform: none; } }
+  /* Cold: springs in and builds out from the center pixel, then one white twinkle */
+  html:root:not(#_):not(#_) .gd-snow.gd-play { animation: gd-flake-in calc(457ms * var(--mo)) var(--gd-spring) both; }
+  @keyframes gd-flake-in { from { opacity: 0; transform: scale(0.3) rotate(-90deg); } to { opacity: 1; transform: none; } }
+  html:root:not(#_):not(#_) .gd-snow.gd-play rect { animation: gd-px-in 1ms linear both; animation-delay: calc(var(--d) * 40ms * var(--mo)); }
+  html:root:not(#_):not(#_) .gd-snow.gd-play rect.tw { animation: gd-px-in 1ms linear both, gd-twinkle calc(514ms * var(--mo)) steps(2) calc((var(--d) * 40ms + 286ms) * var(--mo)) 2; }
+  @keyframes gd-px-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes gd-twinkle { 50% { fill: #A9D8FF; } }
+  /* The corner glow peaks, then settles to its resting 0.4 */
+  html:root:not(#_):not(#_) .gd-wx.gd-play .gd-wx-glow { animation: gd-corner calc(1371ms * var(--mo)) var(--ease-out) both; }
+  @keyframes gd-corner { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0.4; } }
+
+  /* Kickoff: the lock drops in with weight (the component closes the shackle and thuds the row) */
+  html:root:not(#_):not(#_) .gd-lock.gd-play { animation: gd-lock-drop calc(297ms * var(--mo)) var(--gd-spring) both; }
+  @keyframes gd-lock-drop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+
+  /* Blur morph: the week label under VS, status pills */
+  html:root:not(#_):not(#_) :is(.gd-morph-blur, .gd-morph-rise) > .gd-m-out { animation: gd-blur-out calc(240ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) .gd-morph-blur > .gd-m-in { animation: gd-blur-in calc(240ms * var(--mo)) var(--ease-out) both; }
+  @keyframes gd-blur-out { from { opacity: 1; filter: blur(0); transform: none; } to { opacity: 0; filter: blur(6px); transform: scale(0.96); } }
+  @keyframes gd-blur-in { from { opacity: 0; filter: blur(6px); transform: scale(0.96); } to { opacity: 1; filter: blur(0); transform: none; } }
+  /* Rise: the final result morphs in as it rises, after a beat */
+  html:root:not(#_):not(#_) .gd-morph-rise > .gd-m-in { animation: gd-rise calc(354ms * var(--mo)) var(--ease-out) calc(400ms * var(--mo)) both; }
+  @keyframes gd-rise { 0% { opacity: 0; filter: blur(6px); transform: translateY(12px) scale(0.96); } 84% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
+  /* Swap: the kickoff line slides out up and the new words slide in from below */
+  html:root:not(#_):not(#_) .gd-morph-swap > .gd-m-out { animation: gd-swap-out calc(149ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) .gd-morph-swap > .gd-m-in { animation: gd-swap-in calc(149ms * var(--mo)) var(--ease-out) both; }
+  @keyframes gd-swap-out { to { opacity: 0; transform: translateY(-4px); } }
+  @keyframes gd-swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* Counter: a changed digit morphs in as it moves (up for a rise), the old one blurs away the other way */
+  html:root:not(#_):not(#_) .gd-g.gd-in.up { animation: gd-num-in-up calc(297ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) .gd-g.gd-in.down { animation: gd-num-in-down calc(297ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) .gd-g.gd-out.up { animation: gd-num-out-up calc(297ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_) .gd-g.gd-out.down { animation: gd-num-out-down calc(297ms * var(--mo)) var(--ease-out) both; }
+  @keyframes gd-num-in-up { 0% { opacity: 0; filter: blur(6px); transform: translateY(45%) scale(0.96); } 80% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
+  @keyframes gd-num-in-down { 0% { opacity: 0; filter: blur(6px); transform: translateY(-45%) scale(0.96); } 80% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
+  @keyframes gd-num-out-up { 80% { opacity: 0; filter: blur(6px); } 100% { opacity: 0; filter: blur(6px); transform: translateY(-45%) scale(0.96); } }
+  @keyframes gd-num-out-down { 80% { opacity: 0; filter: blur(6px); } 100% { opacity: 0; filter: blur(6px); transform: translateY(45%) scale(0.96); } }
+
+  /* Final whistle: the trophy spins out from the winner's name and settles, then three pixel sparkles blink once */
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-troph { animation: gd-troph-spin calc(434ms * var(--mo)) both calc(257ms * var(--mo)); }
+  @keyframes gd-troph-spin {
+    0% { opacity: 0; transform: translateX(-28px) scale(0.3) rotateY(0deg); animation-timing-function: var(--ease-out); }
+    20% { opacity: 1; }
+    80% { opacity: 1; transform: translateX(1px) scale(1.12) rotateY(700deg); animation-timing-function: var(--ease-out); }
+    100% { opacity: 1; transform: none; }
+  }
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-spk { animation: gd-spark calc(240ms * var(--mo)) steps(3, jump-none) both; }
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-spk.s1 { animation-delay: calc(571ms * var(--mo)); }
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-spk.s2 { animation-delay: calc(651ms * var(--mo)); }
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-spk.s3 { animation-delay: calc(731ms * var(--mo)); }
+  @keyframes gd-spark { 0% { opacity: 1; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.3); } }
+  /* The Live dot shrinks away as the word blurs out */
+  html:root:not(#_):not(#_) .fo-line .gd-m-out .fo-live > i { animation: gd-dot-away calc(240ms * var(--mo)) var(--ease-out) both; }
+  @keyframes gd-dot-away { to { width: 0; margin: 0; opacity: 0; transform: scale(0.4); } }
+  html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .fo-bar { animation: gd-thud-bar calc(149ms * var(--mo)) var(--ease-out) calc(411ms * var(--mo)); }
+  @keyframes gd-thud-bar { 40% { transform: translateY(1px); } }
+}

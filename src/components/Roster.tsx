@@ -30,6 +30,7 @@ import { DetailSheet } from "./DetailSheet";
 import { OptimalLineup, type AiMarks } from "./OptimalLineup";
 import { strokeFor } from "./iconStroke";
 import { CompareBtn, CmpWho, SwapCompare, cmpNow, cmpWeek } from "./SwapCompare";
+import { HeatWx, KickNote, PixelFlame, PixelSnow, RollNum, StoneLock, denyLock, useTurnedAt } from "../gameDayMotion";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -121,34 +122,14 @@ export const heatOf = (pts: number, proj: number, pace: number | null): "fire" |
 /** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. Each moving part is its own
  *  HTML layer so the browser can animate it with transform and opacity alone, off the main thread. */
 const HEAT_TIP = { fire: "Past his projection already", heating: "On pace to beat his projection", cold: "On pace to finish 15% or more under projection" };
-export const HeatMark = ({ heat }: { heat: "fire" | "heating" | "cold" }) => <Tooltip content={HEAT_TIP[heat]}>{heatSvg(heat)}</Tooltip>;
+/** Fire and cold are 16-bit (gameDayMotion): `at` is when he turned, so the icon plays once; 0 shows it settled. */
+export const HeatMark = ({ heat, at = 0 }: { heat: "fire" | "heating" | "cold"; at?: number }) => <Tooltip content={HEAT_TIP[heat]}>{heat === "fire" ? <PixelFlame at={at} /> : heat === "cold" ? <PixelSnow at={at} /> : heatSvg(heat)}</Tooltip>;
 const WAVE = (x: number) => `M${x} 20c-1.5-2 1.5-4 0-6s1.5-4 0-6`;
-// Cold streak: Lucide snowflake (ISC)
-const ICE = ["m10 20-1.25-2.5L6 18", "M10 4 8.75 6.5 6 6", "m14 20 1.25-2.5L18 18", "m14 4 1.25 2.5L18 6", "m17 21-3-6h-4", "m17 3-3 6 1.5 3", "M2 12h6.5L10 9", "m20 10-1.5 2 1.5 2", "M22 12h-6.5L14 15", "m4 10 1.5 2L4 14", "m7 21 3-6-1.5-3", "m7 3 3 6h4"];
-const iceSvg = (stroke: string) => (
-  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={stroke} strokeWidth={strokeFor(14)} strokeLinecap="round" strokeLinejoin="round">{ICE.map((d) => <path key={d} d={d} />)}</svg>
-);
-const heatSvg = (heat: "fire" | "heating" | "cold") => heat === "fire" ? <Flame /> : heat === "heating" ? (
+const heatSvg = (heat: "heating") => heat === "heating" && (
   <span className="heatwave" aria-hidden="true">
     {[7, 12, 17].map((x) => (
       <span key={x} className="hw-line"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFB547" strokeWidth={strokeFor(14)} strokeLinecap="round"><path d={WAVE(x)} /></svg></span>
     ))}
-  </span>
-) : (
-  <span className="ice" aria-hidden="true"><span className="ice-glow">{iceSvg("#CFEFFF")}</span>{iceSvg("#9AD8FF")}</span>
-);
-
-/** A small flame, drawn in the logo's line family, that flickers while a player is heating up. The bright core is
- *  a separate layer on top so it can pulse on its own. */
-export const Flame = () => (
-  <span className="flame" aria-hidden="true">
-    <svg viewBox="0 0 24 24" width="14" height="14">
-      <defs><linearGradient id="flame-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stopColor="#FF5A36" /><stop offset="0.6" stopColor="#FF9A3D" /><stop offset="1" stopColor="#FFD166" /></linearGradient></defs>
-      <path className="flame-outer" d="M12 22c-4.1 0-7-2.8-7-6.6 0-3.1 1.9-5.2 3.6-7 .4 1.7 1.3 2.8 2.4 3.3C11 7.6 12.6 4.6 15.4 2c-.3 3.4 1 5.6 2.4 7.6 1.1 1.6 1.7 3.4 1.2 5.8C18.4 19.5 15.5 22 12 22z" fill="url(#flame-g)" />
-    </svg>
-    <span className="flame-inner">
-      <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 20.5c-1.9 0-3.2-1.3-3.2-3 0-1.6 1.1-2.7 2.1-3.6.2 1 .7 1.6 1.4 1.8.1-1.6.9-3 2.1-4.1-.1 1.6.6 2.7 1.1 3.6.5.8.6 1.6.4 2.6-.3 1.6-1.9 2.7-3.9 2.7z" fill="#FFE8A3" /></svg>
-    </span>
   </span>
 );
 
@@ -158,30 +139,38 @@ export const markLive = (id: string) => wasLive.add(id);
 
 /** A final score set in stone: the number sits engraved on a small slab. If you watched the game go final, it stamps
  *  down once; finals that were already final when you opened the app just sit there, and tab switches never replay it. */
-export function FinalPts({ id, pts, proj, cls }: { id: string; pts: number; proj: number; cls: string }) {
+export function FinalPts({ id, pts, proj, cls, lock }: { id: string; pts: number; proj: number; cls: string; lock?: ReactNode }) {
   const stamp = useRef(wasLive.has(id) && !stamped.has(id));
   if (stamp.current) stamped.add(id);
   return (
     <span className={`${cls} final cemented${stamp.current ? " stamp" : ""}`} aria-label={`Final, ${pts.toFixed(1)} points, projected ${proj.toFixed(1)}`}>
-      <b><NumTip label="Points scored" note="Final"><span>{pts.toFixed(1)}</span></NumTip></b><small>proj {proj.toFixed(1)}</small>
+      <b>{lock}<NumTip label="Points scored" note="Final"><span>{pts.toFixed(1)}</span></NumTip></b><small>proj {proj.toFixed(1)}</small>
     </span>
   );
 }
 
-/** `them`: an opponent's player, where beating his projection is bad for you, so the pace color flips. */
-export function PtsCell({ id, g, proj, cls = "lu-pts", them = false }: { id: string; g: GameNow; proj: number; cls?: string; them?: boolean }) {
-  if (g.state === "in_game") {
+/** `them`: an opponent's player, where beating his projection is bad for you, so the pace color flips. `stone`: the
+ *  row is locked because his game kicked off, so the 16-bit stone lock sits before the points. Turning hot or cold,
+ *  locking at kickoff and new points all animate only when they happen while the row is up (gameDayMotion). */
+export function PtsCell({ id, g, proj, cls = "lu-pts", them = false, stone = false }: { id: string; g: GameNow; proj: number; cls?: string; them?: boolean; stone?: boolean }) {
+  const live = g.state === "in_game";
+  const pace = live ? onPace(g.pts, proj, g.left) : null, heat = live ? heatOf(g.pts, proj, pace) : null;
+  const wx = heat === "fire" ? "hot" : heat === "cold" ? "cold" : null;
+  const heatAt = useTurnedAt(wx, (v) => v !== null);
+  const lockAt = useTurnedAt(stone, (v) => v);
+  const lock = stone ? <StoneLock at={lockAt} /> : null;
+  if (live) {
     markLive(id);
-    const pace = onPace(g.pts, proj, g.left), heat = heatOf(g.pts, proj, pace);
     const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
-        <b data-pts={g.pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{g.pts.toFixed(1)}</span></NumTip></b>
+        {wx && <HeatWx key={`${wx}${heatAt}`} kind={wx} at={heatAt} />}
+        <b data-pts={g.pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} at={heatAt} />}<NumTip {...soFarTip(proj)}><RollNum v={g.pts} /></NumTip></b>
         {pace !== null ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
   }
-  if (g.state === "complete") return <FinalPts id={id} pts={g.pts} proj={proj} cls={cls} />;
+  if (g.state === "complete") return <FinalPts id={id} pts={g.pts} proj={proj} cls={cls} lock={lock} />;
   return <span className={cls}><NumTip {...PROJ_TIP}><span>{proj.toFixed(1)}</span></NumTip></span>;
 }
 
@@ -214,8 +203,9 @@ const kicked = (g: GameNow) => g.state === "in_game" || g.state === "complete";
 const TeamOpp = ({ nfl, opp }: { nfl: string; opp?: string }) => <span>{nfl}{opp && <> <span className="lu-game">{oppText(opp)}</span></>}</span>;
 
 /** Replaces the kickoff time once the game starts. */
-function GameTag({ g, fallback }: { g: GameNow; fallback: string | null }) {
-  if (g.state === "in_game") return <span className="lu-live"><i aria-hidden="true" />Live</span>;
+function GameTag({ g, fallback, lockAt = 0 }: { g: GameNow; fallback: string | null; lockAt?: number }) {
+  // Kicked off while you watched: "Locked at kickoff" takes the time's place for a moment, then the Live tag
+  if (g.state === "in_game") return <KickNote at={lockAt} after={<span className="lu-live"><i aria-hidden="true" />Live</span>} />;
   if (g.state === "complete") return <span className="lu-final">Final</span>;
   return fallback ? <span className="lu-game"><Kick when={fallback} /></span> : null;
 }
@@ -226,8 +216,8 @@ type RowTap = { onTap: (el: Element) => void; lock: boolean; expanded: boolean; 
 // dismiss-exempt: opener props only; the swap menu they open closes through useSwapMenu in Roster
 const tapProps = (t: RowTap) => ({
   role: "button", tabIndex: 0, "aria-disabled": t.lock ? true : undefined, "aria-expanded": t.lock ? undefined : t.expanded, "aria-label": t.label,
-  onClick: (e: { currentTarget: Element }) => t.onTap(e.currentTarget),
-  onKeyDown: (e: { key: string; target: unknown; currentTarget: Element; preventDefault: () => void }) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); t.onTap(e.currentTarget); } },
+  onClick: (e: { currentTarget: Element }) => { if (t.lock) denyLock(e.currentTarget); t.onTap(e.currentTarget); },
+  onKeyDown: (e: { key: string; target: unknown; currentTarget: Element; preventDefault: () => void }) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); if (t.lock) denyLock(e.currentTarget); t.onTap(e.currentTarget); } },
 });
 const tapCls = (t?: RowTap) => (!t ? "" : t.lock ? " is-locked" : ` tap${t.expanded ? " is-open" : ""}`);
 const LockIc = ({ t }: { t?: RowTap }) => (t?.lock ? <span className="lu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span> : null);
@@ -238,6 +228,9 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   const sheet = !tap && onOpen;
+  // Set in stone: a row you can't move because his game kicked off
+  const stone = !!tap?.lock && kicked(g);
+  const lockAt = useTurnedAt(stone, (v) => v);
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
       {...(tap ? tapProps(tap) : sheet ? { role: "button", tabIndex: 0, onClick: () => onOpen(p, where),
@@ -251,9 +244,9 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
             {(g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
           </span>
         )}</span>
-        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
+        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} lockAt={lockAt} />}</span>
       </span>
-      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} />}
+      {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={stone} />}
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
@@ -272,15 +265,17 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
   useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
+  const stone = !!tap?.lock && kicked(g);
+  const lockAt = useTurnedAt(stone, (v) => v);
   return (
     <div className={`lu-row${bench ? " bench" : ""}${swapTo ? " has-swap" : ""}${tapCls(tap)}${playCls(g, bye)}`} {...(tap ? tapProps(tap) : {})}>
       <span className={`lu-slot s-${slot}`}>{slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}{p.status === "Q" && <b className="lu-tag warn">Q</b>}</span>
-        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} />}</span>
+        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} lockAt={lockAt} />}</span>
       </span>
-      {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} />}
+      {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} stone={stone} />}
       {swapTo && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />

@@ -9,6 +9,10 @@ import { Icon } from "./ui";
 import { useLive, expect, sideScore, scoreMatch, startersOf } from "../live";
 import { finalPct, resultOf, scoreTone, flipTone } from "../liveMath";
 import { PtsCell, gameNow, playCls } from "./Roster";
+import { denyLock } from "../gameDayMotion";
+
+/** His game has started or finished. */
+const kickedOff = (g: { state: string | null }) => g.state === "in_game" || g.state === "complete";
 import { FaceOff, toPlay } from "./FaceOff";
 import { PlatformLogo } from "./PlatformLogo";
 import { deny, denyOn } from "../deny";
@@ -130,7 +134,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
   const useBest = (e: { currentTarget: Element }) => { setMine(best.slots); setOpen(null, e.currentTarget); };
   // A tap on one of your starters: locked shakes and says why; otherwise it opens or closes that slot's swap menu
   const tapStarter = (idx: number, lock: string | null) => (e: { currentTarget: Element }) => {
-    if (lock) { if (open !== null) setOpen(null, e.currentTarget); deny(e.currentTarget, lock); }
+    if (lock) { if (open !== null) setOpen(null, e.currentTarget); denyLock(e.currentTarget); deny(e.currentTarget, lock); }
     else setOpen(open === idx ? null : idx, e.currentTarget);
   };
 
@@ -169,6 +173,8 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
           const them = theirs[i]?.id ? playerById(theirs[i].id!) : null;
           const e = edges[i];
           const lock = starterLock(me);
+          // Set in stone: locked because his game kicked off (not a finished week's lock on a row that never played)
+          const stone = !!lock && !!me && kickedOff(gameNow(live, me.id, me.nfl));
           const options: SwapOption[] = bench.filter((p) => fits(s.slot, p.pos)).sort((a, b) => eff(b, true) - eff(a, true)).map((p) => {
             // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
             const d = eff(p, true) - pts(s.id);
@@ -183,8 +189,8 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
               <button className={`mu-mine${rowCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined}
                 onClick={tapStarter(i, lock)}
                 aria-expanded={lock ? undefined : open === i} aria-label={lock ? `${me?.name ?? "Empty"} at ${s.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${s.slot}`}>
-                <Who p={me} side="you" slot={s.slot} />
-                {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
+                <Who p={me} side="you" slot={s.slot} stone={stone} />
+                {me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={proj(me.id)} cls="lu-pts mu-pts" stone={stone} /> : <span className="mu-pts">0.0</span>}
                 {lock && <span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span>}
               </button>
               {cmp}
@@ -199,6 +205,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
           // or DEF on your roster, through the same menu
           const them = oppK[i] ?? null, e = kEdges[i], idx = mine.length + i, me = x.player;
           const lock = starterLock(me);
+          const stone = !!lock && !!me && kickedOff(gameNow(live, me.id, me.nfl));
           const options: SwapOption[] = benchK.filter((p) => p.pos === x.slot).sort((a, b) => spPts(live, b) - spPts(live, a)).map((p) => {
             const d = round1(spPts(live, p) - spPts(live, me));
             return { key: p.id, who: <SpecialWho p={p} side="you" />, name: p.name, pts: spPts(live, p), delta: d, up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swapK(i, p, from), cmp: cmpNow(p, spPts(live, p)) };
@@ -210,7 +217,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
               <span className="mu-slot">{x.slot}</span>
               <button className={`mu-mine${spCls(me)}${lock ? " is-locked" : ""}`} aria-disabled={lock ? true : undefined} onClick={tapStarter(idx, lock)}
                 aria-expanded={lock ? undefined : open === idx} aria-label={lock ? `${me?.name ?? "Empty"} at ${x.slot}, locked` : `Swap ${me?.name ?? "empty"} at ${x.slot}`}>
-                <SpecialWho p={x.player} suggested={x.suggested} side="you" slot={x.slot} />{me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={specialPts(me)} cls="lu-pts mu-pts" /> : <span className="mu-pts">0.0</span>}
+                <SpecialWho p={x.player} suggested={x.suggested} side="you" slot={x.slot} stone={stone} />{me ? <PtsCell id={me.id} g={gameNow(live, me.id, me.nfl)} proj={specialPts(me)} cls="lu-pts mu-pts" stone={stone} /> : <span className="mu-pts">0.0</span>}
                 {lock && <span className="mu-lockic" aria-hidden="true"><Icon name="lock" size={12} /></span>}
               </button>
               {cmp}
