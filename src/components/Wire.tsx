@@ -22,7 +22,8 @@ import { RosterNews } from "./News";
 import { MatchupSheet } from "./MatchupSheet";
 import { FaceOff } from "./FaceOff";
 import { heatOf, HeatMark, FinalPts, markLive, injuryDetail, injuryTag, PROJ_TIP, soFarTip, paceTip } from "./Roster";
-import { SentLine } from "./SentOffers";
+import { SentLine, dealStatus } from "./SentOffers";
+import { useNewSince } from "../newSince";
 import type { SentDeal, SentOffer } from "../sentOffers";
 
 export type NudgeKind = "ir" | "need" | "offer" | "news" | "stale" | "lineup" | "waiver" | "slot";
@@ -477,6 +478,10 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
   // "See the full matchup" on the face-off opens it over Overview (sheet or modal) instead of leaving the page
   const [matchupOpen, setMatchupOpen] = useState(false);
   const visible = showAll ? nudges : nudges.slice(0, 2);
+  // New since you looked: a new top trade idea, or your offer going through, slides in and keeps a dot until opened
+  const t = briefing.trade;
+  const newTrade = useNewSince("radar-trade", t ? `${t.partnerId}:${t.give.join()}>${t.get.join()}` : null);
+  const newSent = useNewSince("radar-sent", sent && dealStatus(sent) === "accepted" ? sent.head.deal : null);
   const leave = (n: Nudge) => {
     setLeaving((c) => [...c, n.id]);
     window.setTimeout(() => { onDismiss(n); setLeaving((c) => c.filter((x) => x !== n.id)); }, 200);
@@ -510,15 +515,16 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         <Arrived k="ok-lineup" on={briefing.lineup === null && !!briefing.ok?.lineup}>{(play) => <button className={`brief-row is-ok${play ? " ck-pop" : ""}`} onClick={() => onGo("roster")}>
           <span className="brief-k"><Icon name="check" size={14} />Lineup</span><span className="grow">{briefing.ok!.lineup}</span><Icon name="chev" size={16} />
         </button>}</Arrived>
-        {briefing.trade ? <button className="brief-row" onClick={() => briefing.trade && onOpen(briefing.trade)}>
+        {briefing.trade ? <button className={`brief-row${newTrade.slide ? " nm-fresh" : ""}`} onClick={() => { newTrade.open(); if (briefing.trade) onOpen(briefing.trade); }}>
           <span className="brief-k">Top trade</span>
           <span className="grow"><>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></></span>
+          {newTrade.dot && <i className="nm-dot" role="img" aria-label="New" />}
           <Icon name="chev" size={16} />
         </button> : null}
         <Arrived k="ok-trade" on={!briefing.trade && !!briefing.ok?.trade}>{(play) => <button className={`brief-row is-ok${play ? " ck-pop" : ""}`} onClick={() => onGo("trade")}>
           <span className="brief-k"><Icon name="check" size={14} />Trades</span><span className="grow">{briefing.ok!.trade}</span><Icon name="chev" size={16} />
         </button>}</Arrived>
-        {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
+        {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} fresh={newSent} />}
         {briefing.waiverPass ? <div className="ps-brief">
           <button className="brief-row" onClick={() => onGo("waivers")}>
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />

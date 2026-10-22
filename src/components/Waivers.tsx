@@ -28,6 +28,7 @@ import { DepthTab, GameLogTab, SheetTabs, useSheetTab, type SheetTab } from "./P
 import { PlayerSheet } from "./lazy";
 import { waiverWeek } from "./watchCtx";
 import { PlayerBar, PlayerHero, WatchButton, keepTabs } from "./PlayerHero";
+import { ClaimResults } from "./ClaimResults";
 import type { Player } from "../data";
 
 /** Why a free agent can't help this week, or null when he can. */
@@ -395,6 +396,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
         <span className="faab-row-top"><b className="num">${Math.round(faabNow)}<span className="muted">/{FAAB.budget}</span></b><span className="muted">FAAB left</span></span>
         <span className="faab-track"><span style={{ width: `${(faabNow / FAAB.budget) * 100}%`, ...(faabCounting ? { transition: "none" } : {}) }} /></span>
       </div>}
+
+      <ClaimResults />
 
       {kind === "current" && (nowTop ? (() => {
         const top = nowTop;

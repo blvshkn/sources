@@ -3,6 +3,7 @@ import { GameState, LEAGUE, WEEK, YOU, OPPONENT_ID, teamById, playerById, PLAYER
 import { eff, isOut, lineupFor, scored, specialPts, startedSpecials } from "./engine";
 import { countPlays, fromMatchups, isFinal, passScore, resultOf, sleeperLiveProj, weekPast, winPct, type PlayCount, type Result, type SleeperMatchupRow } from "./liveMath";
 import { getState } from "./sleeper";
+import { onRetry, reportSync } from "./syncHealth";
 import { demoKDefPts } from "./demoKDef";
 export type { PlayCount, Result } from "./liveMath";
 
@@ -235,6 +236,7 @@ function schedule() {
   timer = window.setTimeout(async () => {
     if (document.visibilityState === "visible") {
       const next = await poll();
+      reportSync(!!next);
       if (next) { current = next; subs.forEach((f) => f(next)); }
     }
     schedule();
@@ -345,12 +347,20 @@ function ensure(): Live {
     if (LEAGUE.mode === "demo") demoTicker();
     // Fetch every team's points (and the clock) right away instead of waiting for the first poll. A finished
     // week gets this one read too, so a league saved mid-week still ends on Sleeper's final scores.
-    if (LEAGUE.mode === "live") poll().then((n) => { if (n) { current = n; subs.forEach((f) => f(n)); } });
+    if (LEAGUE.mode === "live") poll().then((n) => { reportSync(!!n); if (n) { current = n; subs.forEach((f) => f(n)); } });
   }
   return current!;
 }
 // Lineup advice outside React (engine.sleeperDiff, the inbox checks) reads the same game states as the rows
 setWeekGames(() => { const l = ensure(); return { games: l.games, past: l.past }; });
+
+// Retry on the sync line reads live scoring again right away (live leagues only; the demo never reads)
+onRetry(async () => {
+  if (LEAGUE?.mode !== "live") return true;
+  const n = await poll();
+  if (n) { current = n; subs.forEach((f) => f(n)); schedule(); }
+  return !!n;
+});
 
 /** Live scoring that refreshes itself while games are on. Shared across every component that uses it. */
 export function useLive(): Live {
@@ -358,7 +368,7 @@ export function useLive(): Live {
   useEffect(() => {
     subs.add(setV);
     // Catch up right away when the app comes back to the foreground on game day
-    const vis = async () => { if (document.visibilityState === "visible" && LEAGUE.mode === "live" && current && anyLeft(current.games)) { const n = await poll(); if (n) { current = n; subs.forEach((f) => f(n)); schedule(); } } };
+    const vis = async () => { if (document.visibilityState === "visible" && LEAGUE.mode === "live" && current && anyLeft(current.games)) { const n = await poll(); reportSync(!!n); if (n) { current = n; subs.forEach((f) => f(n)); schedule(); } } };
     document.addEventListener("visibilitychange", vis);
     return () => { subs.delete(setV); document.removeEventListener("visibilitychange", vis); };
   }, []);

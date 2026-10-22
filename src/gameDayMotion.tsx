@@ -64,18 +64,54 @@ const LOCK: Grid[] = [
 const TROPHY: Grid = ["ooyyyyyoo", "o.yyyyy.o", "o.yyyyy.o", ".oyyyyyo.", "..yyyyy..", "...yyy...", "....y....", "...ooo...", "..ooooo.."];
 const TC = { y: "#F2BE55", o: "#C98A2A" };
 
-/** The pixel flame. When he catches fire it springs in and flickers through its three frames for about two seconds
- *  (125ms a frame), then holds the first frame. Already on fire when the row mounted: just the first frame. */
-export function PixelFlame({ at }: { at: number }) {
-  const play = useFresh(at);
-  const [f, setF] = useState(0);
+// Heating up (approved Oct 22): an ember that smokes, then rests as a faint wisp. Same 8x10 grid as the flame, so
+// the smoke can catch into it.
+const SMC = { d: "#4A4F4C", s: "#6E746F", l: "#9AA09C", e: "#E8402A", o: "#FF8A2A" };
+const SMOKE: Grid[] = [
+  ["........", "........", "...ll...", "..llll..", "..lssl..", "...ss...", "..sss...", "..dss...", "...dd...", "..oeeo.."],
+  ["...ll...", "..llll..", "..ls.l..", ".lss....", "..sss...", "...ss...", "..dss...", "...dd...", "...d....", "..oeeo.."],
+  ["..ll....", ".llll.l.", ".l..l...", "...sl...", "..sss...", "..ss....", "..dss...", "...dd...", "...d....", "..oeeo.."],
+];
+const WISP: Grid = ["........", "........", "........", "...l....", "..ll....", "..ls....", "...ss...", "...sd...", "...dd...", "..oeeo.."];
+const CATCH: Grid = ["....l...", "...l....", "...s....", "...s.r..", "..rr.r..", ".rorr...", ".rooor..", "rroyoor.", ".royyor.", "..rrrr.."];
+const CATCH_C = { ...SMC, ...FC };
+type Frame = { rows: Grid; c: Record<string, string> };
+
+/** Runs a list of [ms, frame] steps once, from when `play` turns on. Returns the frame to draw. */
+function useFrames(play: number, rest: Frame, steps: () => [number, Frame][], after?: (t: number[]) => void): Frame {
+  const [fr, setFr] = useState<Frame>(rest);
   useEffect(() => {
-    if (!play || reduce()) return;
-    let n = 0;
-    const t = window.setInterval(() => { n++; if (n >= 16) { window.clearInterval(t); setF(0); } else setF(n % 3); }, mo(71));
-    return () => { window.clearInterval(t); setF(0); };
-  }, [play]);
-  return <span key={play} className={`gd-flame${play ? " gd-play" : ""}`} aria-hidden="true"><Px rows={FIRE[f]} colors={FC} /></span>;
+    if (!play || reduce()) { setFr(rest); return; }
+    const ts = steps().map(([ms, f]) => window.setTimeout(() => setFr(f), ms));
+    after?.(ts);
+    return () => { ts.forEach((t) => window.clearTimeout(t)); setFr(rest); };
+  }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
+  return fr;
+}
+
+/** Heating up: the ember smokes through its three frames twice (200ms a frame on screen), then rests as a wisp.
+ *  Already heating when the row mounted: just the wisp. Never loops. */
+export function PixelSmoke({ at }: { at: number }) {
+  const play = useFresh(at);
+  const rest: Frame = { rows: WISP, c: SMC };
+  const fr = useFrames(play, rest, () => [...[0, 1, 2, 0, 1, 2].map((f, k): [number, Frame] => [k * mo(114), { rows: SMOKE[f], c: SMC }]), [6 * mo(114), rest]]);
+  return <span className="gd-flame gd-smoke" aria-hidden="true"><Px rows={fr.rows} colors={fr.c} /></span>;
+}
+
+/** The pixel flame. When he catches fire it springs in and flickers through its three frames for about two seconds
+ *  (125ms a frame), then holds the first frame. `caught`: he was heating up first, so the smoke catches instead: one
+ *  smoke frame, the catch frame, a small 1.25 step pop, then 12 flicker frames and rest. Already on fire when the row
+ *  mounted: just the first frame. */
+export function PixelFlame({ at, caught = false }: { at: number; caught?: boolean }) {
+  const play = useFresh(at);
+  const el = useRef<HTMLSpanElement>(null);
+  const rest: Frame = { rows: FIRE[0], c: FC };
+  const fr = useFrames(play, rest, () => caught
+    ? [[0, { rows: SMOKE[1], c: SMC }], [mo(86), { rows: CATCH, c: CATCH_C }],
+      ...Array.from({ length: 12 }, (_, k): [number, Frame] => [mo(171) + k * mo(71), { rows: FIRE[k % 3], c: FC }]), [mo(171) + 12 * mo(71), rest]]
+    : [...Array.from({ length: 15 }, (_, k): [number, Frame] => [(k + 1) * mo(71), { rows: FIRE[(k + 1) % 3], c: FC }]), [16 * mo(71), rest]],
+  (ts) => { if (caught) ts.push(window.setTimeout(() => el.current?.animate([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: mo(137), easing: "steps(3)" }), mo(171))); });
+  return <span ref={el} key={play} className={`gd-flame${play && !caught ? " gd-play" : ""}`} aria-hidden="true"><Px rows={fr.rows} colors={fr.c} /></span>;
 }
 
 /** The pixel snowflake: builds out from its center pixel by pixel, and the center twinkles white. Settled when he was

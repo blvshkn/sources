@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRowsArrive } from "../rowsArrive";
 import { SlideNum } from "./SlideNum";
@@ -30,9 +30,9 @@ import { FaceOff, pressProps } from "./FaceOff";
 import { MatchupSheet } from "./MatchupSheet";
 import { DetailSheet } from "./DetailSheet";
 import { OptimalLineup, type AiMarks } from "./OptimalLineup";
-import { strokeFor } from "./iconStroke";
 import { CompareBtn, CmpWho, SwapCompare, cmpNow, cmpWeek } from "./SwapCompare";
-import { HeatWx, KickNote, PixelFlame, PixelSnow, RollNum, StoneLock, denyLock, useTurnedAt } from "../gameDayMotion";
+import { flipSwap } from "../swapFlip";
+import { HeatWx, KickNote, PixelFlame, PixelSmoke, PixelSnow, RollNum, StoneLock, denyLock, useTurnedAt } from "../gameDayMotion";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -121,19 +121,11 @@ export const gameNow = (live: Live | undefined, id: string, nfl: string): GameNo
 export const heatOf = (pts: number, proj: number, pace: number | null): "fire" | "heating" | "cold" | null =>
   pts >= proj && proj > 0 ? "fire" : pace === null || proj <= 0 ? null : pace >= proj ? "heating" : pace < proj * 0.85 ? "cold" : null;
 
-/** Small marks drawn in the logo's line family: rising heat lines and an ice crystal. Each moving part is its own
- *  HTML layer so the browser can animate it with transform and opacity alone, off the main thread. */
 const HEAT_TIP = { fire: "Past his projection already", heating: "On pace to beat his projection", cold: "On pace to finish 15% or more under projection" };
-/** Fire and cold are 16-bit (gameDayMotion): `at` is when he turned, so the icon plays once; 0 shows it settled. */
-export const HeatMark = ({ heat, at = 0 }: { heat: "fire" | "heating" | "cold"; at?: number }) => <Tooltip content={HEAT_TIP[heat]}>{heat === "fire" ? <PixelFlame at={at} /> : heat === "cold" ? <PixelSnow at={at} /> : heatSvg(heat)}</Tooltip>;
-const WAVE = (x: number) => `M${x} 20c-1.5-2 1.5-4 0-6s1.5-4 0-6`;
-const heatSvg = (heat: "heating") => heat === "heating" && (
-  <span className="heatwave" aria-hidden="true">
-    {[7, 12, 17].map((x) => (
-      <span key={x} className="hw-line"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FFB547" strokeWidth={strokeFor(14)} strokeLinecap="round"><path d={WAVE(x)} /></svg></span>
-    ))}
-  </span>
-);
+/** All three are 16-bit (gameDayMotion): `at` is when he turned, so the icon plays once; 0 shows it settled. Heating
+ *  up is an ember that smokes and rests as a wisp; `caught` means he went from heating up to on fire, so the smoke
+ *  catches into the flame. */
+export const HeatMark = ({ heat, at = 0, caught = false }: { heat: "fire" | "heating" | "cold"; at?: number; caught?: boolean }) => <Tooltip content={HEAT_TIP[heat]}>{heat === "fire" ? <PixelFlame at={at} caught={caught} /> : heat === "cold" ? <PixelSnow at={at} /> : <PixelSmoke at={at} />}</Tooltip>;
 
 /** Players whose game was live while you had the app open, and finals that have already stamped. */
 const wasLive = new Set<string>(), stamped = new Set<string>();
@@ -159,6 +151,10 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false, stone = fal
   const pace = live ? onPace(g.pts, proj, g.left) : null, heat = live ? heatOf(g.pts, proj, pace) : null;
   const wx = heat === "fire" ? "hot" : heat === "cold" ? "cold" : null;
   const heatAt = useTurnedAt(wx, (v) => v !== null);
+  // Heating up has its own clock (the smoke), and on fire right after heating up catches from the smoke
+  const smokeAt = useTurnedAt(heat, (v) => v === "heating");
+  const was = useRef(heat), caught = useRef(false);
+  if (was.current !== heat) { caught.current = was.current === "heating" && heat === "fire"; was.current = heat; }
   const lockAt = useTurnedAt(stone, (v) => v);
   const lock = stone ? <StoneLock at={lockAt} /> : null;
   if (live) {
@@ -167,7 +163,7 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false, stone = fal
     return (
       <span className={`${cls} live${heat ? ` heat-${heat}` : ""}`} aria-label={`${g.pts.toFixed(1)} points so far${pace !== null ? `, on pace for ${pace.toFixed(1)}` : ""}, projected ${proj.toFixed(1)}${note}`}>
         {wx && <HeatWx key={`${wx}${heatAt}`} kind={wx} at={heatAt} />}
-        <b data-pts={g.pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} at={heatAt} />}<NumTip {...soFarTip(proj)}><RollNum v={g.pts} /></NumTip></b>
+        <b data-pts={g.pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} at={heat === "heating" ? smokeAt : heatAt} caught={heat === "fire" && caught.current} />}<NumTip {...soFarTip(proj)}><RollNum v={g.pts} /></NumTip></b>
         {pace !== null ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip> : <small>proj {proj.toFixed(1)}</small>}
       </span>
     );
@@ -234,7 +230,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
   const stone = !!tap?.lock && kicked(g);
   const lockAt = useTurnedAt(stone, (v) => v);
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
+    <div data-pid={p.id} className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
       {...(tap ? tapProps(tap) : sheet ? { role: "button", tabIndex: 0, onClick: () => onOpen(p, where),
         onKeyDown: (e: { key: string; preventDefault: () => void }) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p, where); } } } : {})}>
       <SlotTag slot={slot} />
@@ -270,7 +266,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
   const stone = !!tap?.lock && kicked(g);
   const lockAt = useTurnedAt(stone, (v) => v);
   return (
-    <div className={`lu-row${bench ? " bench" : ""}${swapTo ? " has-swap" : ""}${tapCls(tap)}${playCls(g, bye)}`} {...(tap ? tapProps(tap) : {})}>
+    <div data-pid={p.id} className={`lu-row${bench ? " bench" : ""}${swapTo ? " has-swap" : ""}${tapCls(tap)}${playCls(g, bye)}`} {...(tap ? tapProps(tap) : {})}>
       <span className={`lu-slot s-${slot}`}>{slot}</span>
       <Avatar p={p} size={44} />
       <span className="lu-who">
@@ -675,7 +671,11 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
     lock: !!lock, expanded: open === key, label: lock ? `${label}, locked` : label,
     onTap: (el) => { if (lock) { if (open !== null) setOpen(null, el); deny(el, lock); } else setOpen(open === key ? null : key, el); },
   });
-  const pick = (fn: () => void) => (from: Element) => { fn(); setOpen(null, from); };
+  // A swap you pick glides the two players past each other once it renders (swapFlip.ts)
+  const flip = useRef<[string, string] | null>(null);
+  const listEl = useRef<HTMLElement>(null);
+  useLayoutEffect(() => { const f = flip.current; if (!f) return; flip.current = null; flipSwap(listEl.current, f[0], f[1]); });
+  const pick = (fn: () => void, pair?: [string, string | null | undefined]) => (from: Element) => { if (pair?.[1]) flip.current = [pair[0], pair[1]]; fn(); setOpen(null, from); };
   const info = (p: Player, where: string) => () => { setOpen(null); openPlayer(p, where); };
   // Compare, from an open swap card's header row
   const [swapCmp, setSwapCmp] = useState<CmpOpen | null>(null);
@@ -702,7 +702,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
-            <section ref={luList} className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
+            <section ref={(el) => { luList.current = el; listEl.current = el; }} className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
               {week !== WEEK ? (wErr ? <WeekSkel week={week} msg={wErr} /> : weekReady ? <WeekPanel v={weekReady} menu={menu} onInfo={openPlayer} onCompare={setSwapCmp} /> : <WeekSkel week={week} />) : <>
               {/* Nothing to do (lineup already optimal, final or locked): no Start / Sit block at all (Zach) */}
@@ -733,13 +733,13 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 const tap = tapFor(key, starterLock(p), p ? `Swap ${p.name} at ${label}` : `Fill the empty ${label} slot`);
                 const options: SwapOption[] = benchNow.filter((b) => fits(x.slot, b.pos)).map((b) => {
                   const d = eff(b, true) - expect(live, x.id);
-                  return { key: b.id, who: <Who p={b} side="you" />, name: b.name, pts: eff(b, true), delta: round1(d), up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMine((cur) => swapInto(cur, i, b.id))), cmp: cmpP(b, "On your bench") };
+                  return { key: b.id, who: <Who p={b} side="you" />, name: b.name, pts: eff(b, true), delta: round1(d), up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMine((cur) => swapInto(cur, i, b.id)), [b.id, x.id]), cmp: cmpP(b, "On your bench") };
                 });
                 const title = `Swap in at ${label}`, role = `Starting at ${label}`, subject = p ? cmpP(p, role) : null;
                 const extra = cmpBtn(open === key, subject, options, (from) => setSwapCmp({ subject: subject!, role, options, title, swapLabel: "Swap in", from }));
                 return (
                   <Fragment key={key}>
-                    {p ? <LineupRow p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} ai={aiMarks?.[p.id]} extra={extra} />
+                    {p ? <LineupRow key={p.id} p={p} slot={x.slot} swap={hintFor(p.id)} live={live} tap={tap} ai={aiMarks?.[p.id]} extra={extra} />
                       : <div className={`lu-row${tapCls(tap)}`} {...tapProps(tap)}><SlotTag slot={x.slot} /><span className="ir-empty" aria-hidden="true" /><span className="lu-who"><span className="lu-name muted">Empty</span></span><span /><LockIc t={tap} /></div>}
                     <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`No bench player can play ${label}.`} options={options} /></PickAt>
                   </Fragment>
@@ -751,13 +751,13 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 const tap = tapFor(key, starterLock(p), `Swap ${p.name} at ${sk.slot}`);
                 const options: SwapOption[] = benchK.filter((b) => b.pos === sk.slot).map((b) => {
                   const d = round1(spPts(live, b) - spPts(live, p));
-                  return { key: b.id, who: <SpecialWho p={b} side="you" />, name: b.name, pts: spPts(live, b), delta: d, up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMineK((cur) => cur.map((y, j) => (j === i ? b : y)))), cmp: cmpNow(b, spPts(live, b)) };
+                  return { key: b.id, who: <SpecialWho p={b} side="you" />, name: b.name, pts: spPts(live, b), delta: d, up: d >= 0, lock: candidateLock(b), onPick: pick(() => now.setMineK((cur) => cur.map((y, j) => (j === i ? b : y))), [b.id, p.id]), cmp: cmpNow(b, spPts(live, b)) };
                 });
                 const title = `Swap in at ${sk.slot}`, role = `Starting at ${sk.slot}`, subject = cmpNow(p, spPts(live, p));
                 const extra = cmpBtn(open === key, subject, options, (from) => setSwapCmp({ subject, role, options, title, swapLabel: "Swap in", from }));
                 return (
                   <Fragment key={key}>
-                    <SpecialRow p={p} slot={sk.slot} swapTo={kHint(p, sk.slot)} live={live} tap={tap} extra={extra} />
+                    <SpecialRow key={p.id} p={p} slot={sk.slot} swapTo={kHint(p, sk.slot)} live={live} tap={tap} extra={extra} />
                     <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`No other ${sk.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} /></PickAt>
                   </Fragment>
                 );
@@ -769,7 +769,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 const tap = tapFor(key, candidateLock(p), `Start ${p.name}`);
                 const options: SwapOption[] = now.mine.map((x, i) => ({ x, i })).filter(({ x }) => fits(x.slot, p.pos)).map(({ x, i }) => {
                   const cur = x.id ? playerById(x.id) : null, label = lbl(x.slot), d = eff(p, true) - expect(live, x.id);
-                  return { key: `${i}`, who: <SlotAt slot={label}><Who p={cur} side="you" /></SlotAt>, name: `${label}, ${cur?.name ?? "empty"}`, pts: cur ? expect(live, cur.id) : 0, delta: round1(d), up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMine((c) => swapInto(c, i, p.id))), cmp: cur ? cmpP(cur, `Starting at ${label}`) : undefined };
+                  return { key: `${i}`, who: <SlotAt slot={label}><Who p={cur} side="you" /></SlotAt>, name: `${label}, ${cur?.name ?? "empty"}`, pts: cur ? expect(live, cur.id) : 0, delta: round1(d), up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMine((c) => swapInto(c, i, p.id)), [p.id, x.id]), cmp: cur ? cmpP(cur, `Starting at ${label}`) : undefined };
                 });
                 const title = `Start ${p.name} over`, subject = cmpP(p, "On your bench");
                 const extra = cmpBtn(open === key, subject, options, (from) => setSwapCmp({ subject, role: "On your bench", options, title, swapLabel: "Start here", from }));
@@ -785,7 +785,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 const tap = tapFor(key, candidateLock(p), `Start ${p.name}`);
                 const options: SwapOption[] = now.base.k.map((sk, i) => ({ sk, i })).filter(({ sk }) => sk.slot === p.pos).map(({ sk, i }) => {
                   const cur = now.mineK[i] ?? null, d = round1(spPts(live, p) - spPts(live, cur));
-                  return { key: `${i}`, who: <SlotAt slot={sk.slot}><SpecialWho p={cur} side="you" /></SlotAt>, name: `${sk.slot}, ${cur?.name ?? "empty"}`, pts: spPts(live, cur), delta: d, up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMineK((c) => c.map((y, j) => (j === i ? p : y)))), cmp: cur ? cmpNow(cur, spPts(live, cur)) : undefined };
+                  return { key: `${i}`, who: <SlotAt slot={sk.slot}><SpecialWho p={cur} side="you" /></SlotAt>, name: `${sk.slot}, ${cur?.name ?? "empty"}`, pts: spPts(live, cur), delta: d, up: d >= 0, lock: starterLock(cur), onPick: pick(() => now.setMineK((c) => c.map((y, j) => (j === i ? p : y))), [p.id, cur?.id]), cmp: cur ? cmpNow(cur, spPts(live, cur)) : undefined };
                 });
                 const subject = cmpNow(p, spPts(live, p));
                 const extra = cmpBtn(open === key, subject, options, (from) => setSwapCmp({ subject, role: "On your bench", options, title: `Start ${p.name} over`, swapLabel: "Start here", from }));

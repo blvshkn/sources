@@ -186,3 +186,18 @@ Motion plays when you act, when something actually changes, or on first arrival.
 - Lineup, Slot report: each starting slot is its own small chart. Every week is a thin rounded bar that grows up from the league average line (green, beat it) or down from it (red, came up short), on one shared scale, with the week and both scores on hover or long press. Each slot shows its gap a week, You, League and Beat avg, and opens the same week-by-week sheet as before. The slot trade ideas target sits on a soft red fill with a Trade target tag. Summary tiles replace the divided row, and the table is folded into the slots. The demo draws the same charts from DEMO_SLOT_HISTORY.
 - Pull to refresh (phones, PullRefresh.tsx): in the demo the sync reloads the demo league in place (nothing is fetched), so the mark traces one full pass, locks and lifts. Watching, skipped and passed lists are saved, so they come through the refresh. A live league runs the same league load as Settings, Refresh, without the loading screen.
 - Swipe row, pinned list and the Watching filter star (Waivers) use the demo free agents as they are; no demo data was added for them.
+
+### New moments (Oct 22)
+
+Six approved moments from the motion picks doc (new-moments.css). Each plays once, when the thing happens; already
+decided, seen or settled shows still. How to see each one in the demo:
+
+| Effect | In the demo | Status |
+| --- | --- | --- |
+| Offer accepted: pill morphs Waiting to Accepted and hugs the word, thin green edge, 16-bit confetti from the pill | Plays when a waiting offer turns accepted while Trade's Sent tab is open. The demo never syncs or reads Sleeper's trades, so nothing turns accepted on its own there; the settled look (green edge, Accepted pill) shows on any accepted offer | OK, live only for the change |
+| Offer declined: pill morphs to red Declined, the deal dims to 0.62 and steps down 2px, no confetti | Trade, Sent: Mark declined on Pat's waiting offer | OK |
+| Waiver results: won stamps a 16-bit check, bid goes green, "Claimed for $12. He's yours." morphs in; outbid strikes the bid red, "Outbid by $4. He went to Jake for $35." | Seeded, demo data: `DEMO_CLAIMS` in data.ts, your claims from Wednesday's run (won Romeo Doubs for $12, lost Parker Washington to Jake, $31 against $35). Matching waiver rows were added to `DEMO_ACTIVITY` so the league feed agrees. Plays the first time Waivers shows them each visit. A live league reads its own claims from Sleeper's transactions (sleeper.ts `claimResults`, latest run in the last 6 days) | Seeded |
+| Lineup swap: slot labels stay, the two players glide past each other (FLIP) | Lineup, tap Rashid Shaheed on the bench and start him over Deebo Samuel | OK |
+| Heating up: ember smokes (three frames twice) and rests as a wisp; on fire after heating, the smoke catches into the flame with a small pop and flickers once | The ticker's touchdown at about 11s takes a live starter past his projection; if he was heating up first, the smoke catches. Rows already heating show the wisp, settled | OK |
+| New since you looked: a new top trade idea, or your offer going through, slides in on On your radar with a faint ink tint and keeps a dot until you open it; new inbox items slide in the same way | Needs a sync to bring something new, which the demo never does; the inbox's seeded Mike offer (about 20s after your first tap) slides into the inbox | OK |
+| Sync error and recovery: icon nudges once, line morphs to "Couldn't reach Sleeper. Your last sync is still here." with Retry; success morphs to "Synced just now" with a check | Live only: the demo never reads Sleeper, so it never fails. The sidebar footer and Settings keep the plain "Updated" line | Live only |

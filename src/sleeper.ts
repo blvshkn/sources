@@ -2,7 +2,7 @@
 // Everything here runs in the user's browser; nothing is stored on a server.
 import type { Chip } from "./steps";
 import { byeTeamsFrom } from "./bye";
-import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, WaiverFA, Activity, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
+import { BoardRow, SpecialPlayer, SpecialFreeAgent, WeekHistory, defName, BidTier, FreeAgent, WaiverFA, Activity, ClaimResult, LeagueData, PastTrade, Player, Pos, Pts, SlotHistory, SlotKey, Status, Team } from "./data";
 
 const API = "https://api.sleeper.app";
 const SKILL: Pos[] = ["QB", "RB", "WR", "TE"];
@@ -739,8 +739,23 @@ export async function loadLeague(leagueId: string, userId: string, username: str
       at: t.status_updated ?? t.created ?? 0,
     }));
 
+  // Your claims from the latest waiver run: won ones are complete, lost ones failed. A lost claim names who got him
+  // and for how much when that claim is in the same run. Only a run from the last 6 days counts.
+  const whenOf = (t: STxn) => t.status_updated ?? t.created ?? 0;
+  const myClaims = txns.filter((t) => t.type === "waiver" && (t.status === "complete" || t.status === "failed") && t.adds
+    && Object.values(t.adds).some((r) => String(r) === you.id));
+  const lastRun = Math.max(0, ...myClaims.map(whenOf));
+  const claimResults: ClaimResult[] = Date.now() - lastRun > 6 * 864e5 ? [] : myClaims
+    .filter((t) => lastRun - whenOf(t) < 12 * 3600e3)
+    .flatMap((t) => Object.entries(t.adds!).filter(([, r]) => String(r) === you.id).map(([id]) => {
+      const won = t.status === "complete";
+      const got = won ? undefined : txns.find((x) => x.type === "waiver" && x.status === "complete" && x.adds?.[id] !== undefined && Math.abs(whenOf(x) - whenOf(t)) < 12 * 3600e3);
+      return { id: `${t.transaction_id ?? whenOf(t)}-${id}`, player: { ...infoOf(id), teamId: won ? you.id : got ? String(got.adds![id]) : "" }, bid: t.settings?.waiver_bid ?? 0, won,
+        winnerId: got ? String(got.adds![id]) : undefined, winBid: got?.settings?.waiver_bid, at: whenOf(t) };
+    }));
+
   // This week's opponent
-  const mine = thisWeek.find((m) => String(m.roster_id) === you.id);
+  const mine =thisWeek.find((m) => String(m.roster_id) === you.id);
   const opp = mine?.matchup_id ? thisWeek.find((m) => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : undefined;
 
   const wd = league.settings.waiver_day_of_week;
@@ -756,7 +771,7 @@ export async function loadLeague(leagueId: string, userId: string, username: str
     byeTeams, teams, players, sleeperSet, slotHistory,
     // Sleeper's own suggested bid only reaches its mobile app through a signed-in private endpoint, so Sources sizes it
     faab: { enabled: faabEnabled, budget, remaining: Math.max(0, budget - (myRoster.settings.waiver_budget_used ?? 0)), priority: myRoster.settings.waiver_position, source: "Sources" },
-    faabHistory, freeAgents, specialFreeAgents, faSearch, specialBids, trades, activity, offers: null, username, type: leagueType(league),
+    faabHistory, freeAgents, specialFreeAgents, faSearch, specialBids, trades, activity, claimResults, offers: null, username, type: leagueType(league),
     opponentId: opp ? String(opp.roster_id) : undefined,
     commish: users.filter((u) => u.is_owner).map((u) => ({ userId: u.user_id, name: u.display_name || u.username || "Commish" })),
     userPhoto: avatarSrc(userBy.get(userId)?.avatar) ?? undefined,

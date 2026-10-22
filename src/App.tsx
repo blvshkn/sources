@@ -54,6 +54,8 @@ import { WatchCtx } from "./components/watchCtx";
 import { forgetSync, knownLeagues } from "./syncKey";
 import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchSet } from "./watchMerge.js";
 import { leagueTransactions } from "./sleeper";
+import { reportSync } from "./syncHealth";
+import { SyncLine } from "./components/SyncLine";
 import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
 import { SwipeToast } from "./components/SwipeToast";
@@ -608,8 +610,10 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     const open = sent.filter((o) => o.status !== "accepted");
     const from = Math.max(1, WEEK - 3, Math.min(...open.map((o) => o.week || WEEK)));
     const weeks = Array.from({ length: Math.max(1, WEEK - from + 1) }, (_, i) => from + i);
-    Promise.all(weeks.map((w) => leagueTransactions(LEAGUE.id, w).catch(() => []))).then((rs) => {
+    Promise.all(weeks.map((w) => leagueTransactions(LEAGUE.id, w).catch(() => null))).then((all) => {
       if (!alive) return;
+      reportSync(all.every((r) => r !== null));
+      const rs = all.map((r) => r ?? []);
       const hits = acceptedFrom(sent, rs.flat(), YOU.id);
       if (!hits.length) return;
       setSent((c) => c.map((x) => { const h = hits.find((y) => y.id === x.id); return h ? { ...x, status: "accepted", statusAt: h.at } : x; }));
@@ -829,7 +833,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
           ) : (
             <p className="sf-who"><span className="sf-from">Live from <span className="sf-chip">Sleeper<PlatformLogo size={16} /></span></span> connected as @{username},</p>
           )}
-          {refreshed && <p className="sf-when">{refreshed}</p>}
+          <SyncLine className="sf-when" idle={refreshed} />
         </div>
       </aside>
 

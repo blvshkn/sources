@@ -3604,10 +3604,7 @@ html:root:not(#_) :is(.hw-line, .ice-glow) { position: absolute; inset: 0; }
 html:root:not(#_) :is(.heatwave, .ice) svg { position: absolute; inset: 0; display: block; overflow: visible; }
 html:root:not(#_) .ice-glow { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  /* 2 units of the 24-unit drawing is 7/6px at 14px */
-  html:root:not(#_) .hw-line { animation: heat-rise 1.2s ease-in-out infinite; }
-  html:root:not(#_) .hw-line:nth-child(2) { animation-delay: calc(200ms * var(--mo, 1)); } html:root:not(#_) .hw-line:nth-child(3) { animation-delay: calc(400ms * var(--mo, 1)); }
-  @keyframes heat-rise { 0% { transform: translateY(1.1667px); opacity: 0.35; } 50% { opacity: 1; } 100% { transform: translateY(-1.1667px); opacity: 0.35; } }
+  /* The looping heat lines are gone: heating up is the 16-bit smoke now (gameDayMotion PixelSmoke), which plays once */
   /* Frost: the crystal brightens and a pre-blurred light copy beneath it fades up, peaking at 80% */
   html:root:not(#_) .ice { animation: ice-glint 2.8s ease-in-out infinite; }
   html:root:not(#_) .ice-glow { display: block; filter: blur(1.5px); opacity: 0; animation: ice-frost 2.8s ease-in-out infinite; }

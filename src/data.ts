@@ -483,6 +483,8 @@ export interface Activity {
   bid?: number;
   at: number;
 }
+/** One of your waiver claims once claims ran: what you bid, and when you lost it, who got him and for how much. */
+export interface ClaimResult { id: string; player: ActivityPlayer; bid: number; won: boolean; winnerId?: string; winBid?: number; at: number }
 export interface BoardRow { id: string; name: string; pos: string; nfl: string; age?: number; value: number; trend: number; ownerId?: string; market?: number; model?: number }
 export interface PastTrade { week: string; a: string; b: string; aGot: { name: string; pos: Pos; rookie?: boolean }[]; bGot: { name: string; pos: Pos; rookie?: boolean }[] }
 const DEMO_TRADES: PastTrade[] = [
@@ -571,6 +573,8 @@ export interface LeagueData {
   trades: PastTrade[];
   /** Recent league transactions, newest first. */
   activity?: Activity[];
+  /** Your claims from the latest waiver run (the last 6 days), won or lost. Empty or missing when there's nothing to say. */
+  claimResults?: ClaimResult[];
   /** Offers each manager received. Sleeper doesn't expose this, so it's null for live leagues. */
   offers: Record<string, number> | null;
   /** Where market values come from, shown in the UI. */
@@ -682,11 +686,19 @@ const hoursAgo = (h: number) => Date.UTC(2026, 9, 15, 16) - h * 3600e3;
 const ap = (name: string, pos: string, nfl: string, teamId: string) => ({ id: slug(name), name, pos, nfl, teamId });
 const DEMO_ACTIVITY: Activity[] = [
   { id: "a1", kind: "free_agent", teamIds: ["mike"], adds: [ap("Kenneth Gainwell", "RB", "TB", "mike")], drops: [ap("Will Shipley", "RB", "PHI", "mike")], at: hoursAgo(2) },
+  { id: "a7", kind: "waiver", teamIds: ["jake"], adds: [ap("Parker Washington", "WR", "JAX", "jake")], drops: [ap("Calvin Austin III", "WR", "PIT", "jake")], bid: 35, at: hoursAgo(13) },
+  { id: "a8", kind: "waiver", teamIds: ["you"], adds: [ap("Romeo Doubs", "WR", "NE", "you")], drops: [ap("Will Dissly", "TE", "LAC", "you")], bid: 12, at: hoursAgo(13) },
   { id: "a2", kind: "waiver", teamIds: ["chris"], adds: [ap("Jalen Tolbert", "WR", "DAL", "chris")], drops: [ap("Ashton Dulin", "WR", "IND", "chris")], bid: 18, at: hoursAgo(14) },
   { id: "a3", kind: "trade", teamIds: ["mike", "kev"], adds: [ap("Javonte Williams", "RB", "DAL", "mike"), ap("Hunter Henry", "TE", "NE", "kev")], drops: [], at: hoursAgo(30) },
   { id: "a4", kind: "free_agent", teamIds: ["sam"], adds: [ap("Kirk Cousins", "QB", "LV", "sam")], drops: [], at: hoursAgo(41) },
   { id: "a5", kind: "free_agent", teamIds: ["pat"], adds: [], drops: [ap("Tyreek Hill", "WR", "FA", "pat")], at: hoursAgo(50) },
   { id: "a6", kind: "waiver", teamIds: ["dan"], adds: [ap("Sean Tucker", "RB", "TB", "dan")], drops: [ap("Kalif Raymond", "WR", "CHI", "dan")], bid: 31, at: hoursAgo(62) },
+];
+/** Demo only: your two claims from Wednesday's run, shown on Waivers. Romeo Doubs is on your roster and Parker
+ *  Washington on Jake's, so the results match the rosters. Illustrative bids, like every demo number. */
+const DEMO_CLAIMS: ClaimResult[] = [
+  { id: "demo-claim-1", player: ap("Romeo Doubs", "WR", "NE", "you"), bid: 12, won: true, at: hoursAgo(13) },
+  { id: "demo-claim-2", player: ap("Parker Washington", "WR", "JAX", "jake"), bid: 31, won: false, winnerId: "jake", winBid: 35, at: hoursAgo(13) },
 ];
 
 /** Demo scoring: Sleeper's default full PPR settings, so the demo scores weeks the same way a live league does. */
@@ -713,7 +725,7 @@ export function demoLeague(): LeagueData {
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,
     faab: DEMO_FAAB, faabHistory: DEMO_FAAB_HISTORY, freeAgents: DEMO_FREE_AGENTS, specialFreeAgents: demoSpecialFreeAgents(), faSearch: [...DEMO_SEARCH_FA, ...demoSpecialFreeAgents(DEMO_SEARCH_SPECIAL)], specialBids: [0, 1, 0, 0, 2, 1],
-    trades: DEMO_TRADES, activity: DEMO_ACTIVITY, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
+    trades: DEMO_TRADES, activity: DEMO_ACTIVITY, claimResults: DEMO_CLAIMS, offers: DEMO_OFFERS, type: "redraft", opponentId: "jake",
     userAvatar: teams.find((t) => t.you)?.avatar,
     commish: [{ userId: "jake", name: "Jake" }],
     champion: { teamId: "jake", season: "2025" },

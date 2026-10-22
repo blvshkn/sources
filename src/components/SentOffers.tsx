@@ -6,6 +6,8 @@ import { TeamAvatar } from "./TeamPicker";
 import { PairPrompt } from "./SyncDevices";
 import { useSyncStatus } from "../syncKey";
 import { Icon } from "./ui";
+import { MorphPill, useFresh, useTurnedAt } from "../gameDayMotion";
+import { confetti } from "../confetti";
 
 /** The clock for "sent 2h ago": ticks once a minute while something shows it. */
 export function useNow(every = 60000) {
@@ -111,12 +113,23 @@ function Row({ d, now, onReopen, onDecline, onClear, onWhy, pause, onResume }: {
   // The pause shows on the offer whose reason started it
   const myPause = pause && pause.offerId === head.id ? pause : null;
   const fx = head.why ? whyEffect(head.why, head.partnerId, "him", myPause) : null;
+  // He said yes while you're looking: 16-bit confetti once, out of the pill. Never on mount (gameDayMotion.useTurnedAt)
+  const yes = useFresh(useTurnedAt(st, (v) => v === "accepted"));
+  const li = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const pill = li.current?.querySelector(".so-status"), host = li.current?.closest<HTMLElement>(".so-card");
+    if (!yes || !pill || !host) return;
+    // Two frames on, so the pill has started easing to "Accepted" and the burst leaves from its new spot
+    let stop = () => {};
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => { stop = confetti(host, pill.getBoundingClientRect()); }));
+    return () => { cancelAnimationFrame(r); stop(); };
+  }, [yes]);
   return (
-    <li className={`so-row is-${st}`}>
+    <li ref={li} className={`so-row is-${st}`}>
       <button type="button" className="so-open" onClick={() => onReopen(head)} aria-label={`Open your offer to ${managerOf(head.partnerId)} in the builder`}>
         {team ? <TeamAvatar t={team} size={36} /> : <span className="so-av-empty" aria-hidden="true" />}
         <span className="so-main">
-          <span className="so-top"><b className="so-name">{managerOf(head.partnerId)}</b><span className={`so-status is-${st}`}>{LABEL[st]}</span></span>
+          <span className="so-top"><b className="so-name">{managerOf(head.partnerId)}</b><MorphPill word={LABEL[st]} className={`so-status is-${st}`} /></span>
           <span className="so-line"><span className="so-k">Out</span><span className="so-p">{names(head.give)}</span></span>
           <span className="so-line"><span className="so-k">In</span><span className="so-p">{names(head.get)}</span></span>
           <When o={head} now={now} />
@@ -188,15 +201,16 @@ export function SentOffers({ offers, synced = false, syncUser = "", onReopen, on
 }
 
 /** The Wire's line about your latest offer: still out, or just accepted. */
-export function SentLine({ d, onOpen }: { d: SentDeal; onOpen: (o: SentOffer) => void }) {
+export function SentLine({ d, onOpen, fresh }: { d: SentDeal; onOpen: (o: SentOffer) => void; /** New since you looked (newSince.ts) */ fresh?: { slide: boolean; dot: boolean; open: () => void } }) {
   const now = useNow();
   const who = managerOf(d.head.partnerId);
   const st = dealStatus(d);
   const acc = [d.head, ...d.earlier].find((o) => o.status === "accepted");
   return (
-    <button type="button" className="brief-row so-wire" onClick={() => onOpen(d.head)}>
+    <button type="button" className={`brief-row so-wire${fresh?.slide ? " nm-fresh" : ""}`} onClick={() => { fresh?.open(); onOpen(d.head); }}>
       <span className="brief-k">{st === "accepted" ? "Accepted" : "Offer out"}</span>
       <span className="grow">{st === "accepted" ? `${who} accepted your offer ${ago(acc?.statusAt ?? d.head.sentAt, now)}` : `You sent ${who} an offer ${ago(d.head.sentAt, now)}`}</span>
+      {fresh?.dot && <i className="nm-dot" role="img" aria-label="New" />}
       <Icon name="chev" size={16} />
     </button>
   );
