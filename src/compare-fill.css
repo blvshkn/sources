@@ -1,0 +1,28 @@
+/* Compare button on narrow swap cards (phones, and the Full matchup sheet below its wide layout): it spans the card's
+   content width with the label centered, and uses the same columns icon as the tablet icon button. */
+@container lucol (max-width: 519.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row > .sw-cmp { grid-column: 1 / -1; justify-self: stretch; justify-content: center; margin: 8px 0 2px; }
+}
+@container mu (max-width: 679.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .mu-row > .sw-cmp { justify-self: stretch; justify-content: center; margin: 0 12px 8px; }
+}
+
+/* Compare chart on touch: taller plot (set in RecentChart), thicker marks, and a readout strip above the plot so the
+   thumb never covers the values. The strip keeps its height with or without a pick, so nothing moves. */
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-skel { height: 180px; }
+@media (max-width: 519.98px) { html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-skel { height: 232px; } }
+@media (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-line { stroke-width: 2.5; }
+  html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-ax { font-size: 11px; }
+}
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-read {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; min-height: 64px; margin: 0 0 10px; padding: 10px 12px;
+  border-radius: 10px; background: color-mix(in srgb, var(--ink) 5%, transparent); font-size: 0.8125rem; color: var(--ink); align-content: start;
+}
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-read > b { grid-column: 1 / -1; font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-read > span { display: flex; align-items: center; gap: 6px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-read-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_) .cmp-sheet .cmp-read em { margin-left: auto; font: 600 0.8125rem/1 var(--font-mono); font-style: normal; font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_) .cmp-sheet .cmp-skel { height: 254px; } }
+@media (pointer: coarse) and (max-width: 519.98px) { html:root:not(#_):not(#_):not(#_):not(#_) .cmp-sheet .cmp-skel { height: 306px; } }
+html:root:not(#_):not(#_):not(#_):not(#_) .cmp-sheet .cmp-read em.is-miss { font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.06em; color: var(--muted); }

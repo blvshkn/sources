@@ -136,6 +136,8 @@ const KEY: Record<MissWhy["kind"], string> = { bye: "bye week", out: "ruled out"
 /** Up to four players: the row's player and three from his list. Series colors go by position in the comparison
  *  (never by rank): blue, amber, magenta, lavender (swap-card.css). No lime, no green or red. */
 const MAX = 4;
+/** "James Cook III" -> "Cook": the touch readout has room for a surname only */
+const lastName = (n: string) => { const p = n.split(" ").filter((x) => !/^(Jr\.?|Sr\.?|II|III|IV|V)$/.test(x)); return p[p.length - 1] ?? n; };
 
 function RecentChart({ names, weeks, rows, why, hide }: {
   names: string[]; weeks: number[]; rows: (number | undefined)[][];
@@ -147,6 +149,9 @@ function RecentChart({ names, weeks, rows, why, hide }: {
   const box = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(320);
   const [hover, setHover] = useState<number | null>(null);
+  // Touch: a thumb covers whatever floats beside it, so the week's values read out in a strip above the plot instead,
+  // and the pick stays after the thumb lifts (tap a week to read it)
+  const [touch] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches);
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
@@ -154,7 +159,7 @@ function RecentChart({ names, weeks, rows, why, hide }: {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const h = 156, L = 30, R = 12, T = 12, B = 24;
+  const h = w < 520 ? 232 : 180, L = 30, R = 12, T = 12, B = 24;
   const vals = rows.flat().filter((v): v is number => typeof v === "number");
   const top = Math.max(10, Math.ceil(Math.max(0, ...vals) / 10) * 10);
   const x = (i: number) => L + (weeks.length < 2 ? (w - L - R) / 2 : (i * (w - L - R)) / (weeks.length - 1));
@@ -174,8 +179,17 @@ function RecentChart({ names, weeks, rows, why, hide }: {
   };
   return (
     <div className="cmp-chart" ref={box}>
+      {touch && (
+        <div className="cmp-read" aria-hidden="true">
+          <b>{hover === null ? "Tap a week" : `Week ${weeks[hover]}`}</b>
+          {names.map((n, s) => hide[s] ? null : (
+            <span key={n + s}><i className={`cmp-key s${s + 1}`} /><span className="cmp-read-n">{lastName(n)}</span>
+              <em className={hover !== null && typeof rows[s][hover] !== "number" ? "is-miss" : undefined}>{hover === null ? "" : typeof rows[s][hover] === "number" ? (rows[s][hover] as number).toFixed(1) : why[s][hover]?.label ?? "--"}</em></span>
+          ))}
+        </div>
+      )}
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`Fantasy points, weeks ${weeks[0]} to ${weeks[weeks.length - 1]}. The table below lists every value.`}
-        onPointerMove={near} onPointerDown={near} onPointerLeave={() => setHover(null)}>
+        onPointerMove={near} onPointerDown={near} onPointerLeave={() => { if (!touch) setHover(null); }}>
         {[0, top / 2, top].map((t) => (
           <g key={t}>
             <line className="cmp-grid-ln" x1={L} x2={w - R} y1={y(t)} y2={y(t)} />
@@ -185,7 +199,7 @@ function RecentChart({ names, weeks, rows, why, hide }: {
         {weeks.map((wk, i) => <text key={wk} className="cmp-ax" x={x(i)} y={h - 6} textAnchor="middle">W{wk}</text>)}
         {hover !== null && <line className="cmp-cross" x1={x(hover)} x2={x(hover)} y1={T} y2={h - B} />}
         {paths.map((d, s) => <path key={names[s] + s} className={`cmp-line s${s + 1}`} d={d} />)}
-        {rows.map((r, s) => r.map((v, i) => typeof v === "number" ? <circle key={`${s}-${i}`} className={`cmp-dot s${s + 1}`} cx={x(i)} cy={y(v)} r={hover === i ? 5 : 4} /> : null))}
+        {rows.map((r, s) => r.map((v, i) => typeof v === "number" ? <circle key={`${s}-${i}`} className={`cmp-dot s${s + 1}`} cx={x(i)} cy={y(v)} r={hover === i ? 6 : 4.5} /> : null))}
         {/* Each gap names its reason at the foot of the chart, stacked by series, so a break in a line reads as a bye or an injury */}
         {weeks.map((_, i) => {
           const marks = rows.map((r, s) => (!hide[s] && typeof r[i] !== "number" && why[s][i] ? { s, w: why[s][i]! } : null)).filter((m): m is { s: number; w: MissWhy } => !!m);
@@ -197,7 +211,7 @@ function RecentChart({ names, weeks, rows, why, hide }: {
           ));
         })}
       </svg>
-      {hover !== null && (
+      {!touch && hover !== null && (
         <div className={`cmp-tip${x(hover) > w / 2 ? " left" : ""}`} style={{ left: `${x(hover)}px` }} aria-hidden="true">
           <b>Week {weeks[hover]}</b>
           {names.map((n, s) => (
@@ -347,7 +361,7 @@ export function CompareBtn({ name, onOpen }: { name: string; onOpen: (el: Elemen
   return (
     <button type="button" className="btn btn-sm sw-cmp" aria-label={`Compare ${name} with the swap list`} data-tip="Compare with the swap list"
       onClick={(e) => { e.stopPropagation(); onOpen(e.currentTarget); }}>
-      <span className="sw-cmp-ic" aria-hidden="true"><Icon name="switch" size={14} /></span>
+      <span className="sw-cmp-ic" aria-hidden="true"><Icon name="columns2" size={16} /></span>
       <span className="sw-cmp-ic2" aria-hidden="true"><Icon name="columns2" size={24} /></span>
       <span className="sw-cmp-t">Compare</span>
     </button>

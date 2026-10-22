@@ -72,7 +72,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   const call = owner?.you && !onCompare ? lineupCall(p, nowFor(live, p)) : null;
   const swap = !!call && (/in Sleeper|Sleeper still has him/.test(call.line) || call.head === "Take him out of your lineup");
   const primary = onCompare
-    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}><Icon name="switch" size={16} />Compare</button>
+    ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, 220); }}><Icon name="columns2" size={16} />Compare</button>
     : swap
       ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       : !owner && p.nfl !== "FA"
