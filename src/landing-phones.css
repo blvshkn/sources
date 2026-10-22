@@ -139,7 +139,9 @@ html:root:not(#_):not(#_):not(#_) .ld2-fosec .hd-states { max-width: 640px; }
    The frame is the app at 390 x 795, under the status bar, scaled with the screen. It fades in over the poster once
    it has drawn; the poster then steps out of the way. The back phones don't take input. */
 html:root:not(#_):not(#_) .hp-frame {
-  position: absolute; left: 0; top: 0; z-index: 2; width: 390px; height: calc(var(--hp-h, 845) * 1px - 50px); border: 0; margin-top: calc(50px * var(--hp-s, 0.7));
+  /* The whole glass, status bar included: the app's own top bar runs up under the clock (styles.css html.in-frame),
+     so bar, status strip and stuck tabs are one surface (Zach, Oct 22: "just make one shape") */
+  position: absolute; left: 0; top: 0; z-index: 2; width: 390px; height: calc(var(--hp-h, 845) * 1px); border: 0; margin-top: 0;
   transform: scale(var(--hp-s, 0.7)); transform-origin: 0 0; background: var(--scr, #0A0B0B);
   opacity: 0; transition: opacity calc(600ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
 }

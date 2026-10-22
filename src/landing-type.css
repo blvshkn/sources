@@ -90,7 +90,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband {
   position: sticky; top: var(--navh, 64px); z-index: 5; margin: 0;
   --q: calc(1 - var(--yin, 1));
   transform-origin: 0% 50%;
-  transform: translate3d(calc(var(--q) * 60vw), calc(var(--q) * 18vh), 0) rotate(calc(var(--q) * -9deg + var(--ywave, 0) * 4deg)) skewY(calc(var(--ywave, 0) * 3deg)) scaleY(calc(1 + var(--ywave, 0) * 0.08));
+  transform: translate3d(calc(var(--q) * 60vw), calc(var(--q) * 18vh), 0) rotate(calc(var(--q) * -9deg));
   will-change: transform;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap {
@@ -238,6 +238,18 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero .ld2-h1 :is(.ld
   html:root:not(#_):not(#_):not(#_):not(#_) .hp-back { --pw: 208px; }
 }
 
-/* The landing phones' status bar strip takes the app's top bar color (Zach, Oct 22), so the bar reads as one piece
-   from the clock down through the logo */
-html:root:not(#_):not(#_):not(#_) .hp-scr .ph-status { background: #0F1110; }
+/* The landing phones' status bar is clear: the app's own top bar runs up under it (one surface) */
+html:root:not(#_):not(#_):not(#_) .hp-scr .ph-status { background: transparent; }
+
+/* The banner's lime lives on its letters (Landing.tsx .yl), so the strip can ripple as it blows in. The band itself is
+   clear and only clips side to side, so the wave can rise and dip past its edges. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { background: transparent; padding: 0; overflow-x: clip; overflow-y: visible; }
+html:root:not(#_):not(#_):not(#_) .ld2-yband-item { gap: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
+  display: inline-block; background: #D8F24A; padding-block: clamp(14px, 1.6vw, 22px);
+  margin-right: -0.5px; padding-right: 0.5px; box-shadow: 0 0 0 1px #D8F24A; /* no hairline seams between pieces, even tipped */
+  transform-origin: 50% 50%; will-change: transform; white-space: pre;
+}
+html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
+html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
+html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0; }

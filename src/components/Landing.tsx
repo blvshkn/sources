@@ -192,7 +192,27 @@ export function Landing({ onLive, onDemo }: {
     const words = [...el.querySelectorAll<HTMLElement>(".ld2-tag-stack > span")];
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (still) { el.style.setProperty("--yin", "1"); words.forEach((w) => w.classList.add("on")); return; }
-    let raf = 0, lit = -1;
+    let raf = 0, lit = -1, flat = false;
+    const letters = [...el.querySelectorAll<HTMLElement>(".ld2-yband .yl")];
+    const run = el.querySelector<HTMLElement>(".ld2-yband-run");
+    let xs: number[] = [];
+    const measure = () => { xs = letters.map((l) => (l.offsetParent === run ? 0 : (l.offsetParent as HTMLElement | null)?.offsetLeft ?? 0) + l.offsetLeft + l.offsetWidth / 2 + ((l.closest(".ld2-yband-run") as HTMLElement | null)?.offsetLeft ?? 0)); };
+    const wave = (k: number) => {
+      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); flat = true; } return; }
+      flat = false;
+      if (!xs.length) measure();
+      const w = run?.offsetWidth || 1;
+      const shift = ((window.scrollY * 0.45) % w + w) % w; // the track's own scroll offset (the band effect above)
+      const amp = Math.min(28, window.innerWidth * 0.022) * k, len = Math.max(420, window.innerWidth * 0.42), ph = window.scrollY / 90;
+      const f = (2 * Math.PI) / len;
+      letters.forEach((l, i) => {
+        const x = xs[i] - shift;
+        const y = amp * Math.sin(x * f - ph);
+        const r = Math.atan(amp * f * Math.cos(x * f - ph));
+        l.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0) rotate(${r.toFixed(4)}rad)`;
+      });
+    };
+    window.addEventListener("resize", () => { xs = []; }, { passive: true });
     const paint = () => {
       raf = 0;
       const r = el.getBoundingClientRect(), vh = window.innerHeight;
@@ -202,8 +222,9 @@ export function Landing({ onLive, onDemo }: {
       const p = Math.min(1, Math.max(0, -r.top / run));
       const ease = 1 - Math.pow(1 - enter, 3);
       el.style.setProperty("--yin", ease.toFixed(3));
-      // The flutter: a wave that follows the scroll position and calms as the banner settles
-      el.style.setProperty("--ywave", (Math.sin(window.scrollY / 70) * (1 - ease)).toFixed(3));
+      // The wave (Zach, Oct 22): while it blows in, the strip ripples along its length, each letter's piece of lime
+      // riding the curve and tipped to its slope. It flattens as the strip's left end reaches the screen's edge.
+      wave(1 - ease);
       const n = Math.round(Math.min(1, Math.max(0, (p - 0.05) / 0.75)) * words.length);
       if (n !== lit) { lit = n; words.forEach((w, i) => w.classList.toggle("on", i < n)); }
     };
@@ -515,7 +536,15 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-yband-track" ref={trackRef} aria-hidden="true">
           {[0, 1, 2].map((k) => (
             <span key={k} className="ld2-yband-run">
-              {YOURS.map((w) => <span key={w} className="ld2-yband-item"><b>YOUR</b> {w}<i className="ld2-yband-dot" /></span>)}
+              {/* Letter by letter, each on its own piece of lime, so the strip can ripple like cloth as it blows in */}
+              {YOURS.map((w) => (
+                <span key={w} className="ld2-yband-item">
+                  {[..."YOUR"].map((c, i) => <span key={`b${i}`} className="yl yl-b">{c}</span>)}
+                  {[..." " + w + " "].map((c, i) => <span key={`w${i}`} className="yl">{c === " " ? "\u00a0" : c}</span>)}
+                  <span className="yl yl-dot"><i className="ld2-yband-dot" /></span>
+                  <span className="yl">{"\u00a0"}</span>
+                </span>
+              ))}
             </span>
           ))}
         </div>

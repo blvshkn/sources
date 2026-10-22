@@ -8,7 +8,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky {
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::before {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
-  top: -8px; bottom: -8px; left: calc(-1 * var(--pt-l, 0px)); right: calc(-1 * var(--pt-r, 0px));
+  /* Up to the screen's top edge, under the top bar, so bar and tabs are one surface instead of two layers stacked */
+  top: calc(-1 * (var(--pt-top, 0px) + 8px)); bottom: -8px; left: calc(-1 * var(--pt-l, 0px)); right: calc(-1 * var(--pt-r, 0px));
   /* The bottom nav's surface (nav.css .tabbar.ix), the same one the scrolled top bar takes (top-nav-match.css) */
   background: rgba(15, 17, 16, 0.9); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
   box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
@@ -16,7 +17,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::be
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky.is-stuck::before { opacity: 1; }
 @media (max-width: 767px) {
-  html[data-tabs-stuck]:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::after { box-shadow: none !important; }
+  /* Stuck: the band carries the whole header's surface, so the bar's own layer and its fade step aside */
+  html[data-tabs-stuck]:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::after { box-shadow: none !important; background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  html[data-tabs-stuck]:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::before { opacity: 0 !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::before { transition: none; }
