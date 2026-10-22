@@ -150,7 +150,7 @@ export function Landing({ onLive, onDemo }: {
     paint();
     return () => { io.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
   }, []);
-  // The sign-off's YOUR fills the page's width exactly: measured once Clash has loaded and on every resize. Its letters
+  // The sign-off's SOURCE runs past the page's width: measured once Clash has loaded and on every resize. Its letters
   // rise into place once, in stepped frames, when the footer first comes into view.
   const signRef = useRef<HTMLElement>(null);
   const wordRef = useRef<HTMLParagraphElement>(null);
@@ -159,7 +159,8 @@ export function Landing({ onLive, onDemo }: {
     if (!el || !foot) return;
     const fit = () => {
       el.style.fontSize = "100px";
-      const cs = getComputedStyle(foot), room = foot.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), w = el.scrollWidth;
+      // 112% of the page's width, centered, so S and E bleed off both sides (Zach: cropped, bleeding off the edges)
+      const room = foot.clientWidth * 1.12, w = el.scrollWidth;
       if (w && room) el.style.fontSize = `${(100 * room) / w}px`;
     };
     fit();
@@ -519,7 +520,7 @@ export function Landing({ onLive, onDemo }: {
       </section>
       </main>
 
-      {/* The sign-off (Zach, Oct 22): a few small lines over YOUR set edge to edge across the bottom of the page, in
+      {/* The sign-off (Zach, Oct 22): a few small lines over SOURCE, oversized so it bleeds off the sides and bottom, in
           Clash Grotesk Semibold. An impact statement, not a link: people reading it are already here. */}
       <footer className="ld-foot ld2-sign" ref={signRef}>
         <div className="ld2-sign-top">
@@ -536,7 +537,9 @@ export function Landing({ onLive, onDemo }: {
           <span>Your fantasy <b>Source.</b></span>
           <span>© {new Date().getFullYear()} Source</span>
         </div>
-        <p className="ld2-sign-word" ref={wordRef} aria-hidden="true">{"YOUR".split("").map((c, i) => <span key={i} style={{ ["--i" as string]: i }}>{c}</span>)}</p>
+        <div className="ld2-sign-bleed" aria-hidden="true">
+          <p className="ld2-sign-word" ref={wordRef}>{"SOURCE".split("").map((c, i) => <span key={i} style={{ ["--i" as string]: i }}>{c}</span>)}</p>
+        </div>
       </footer>
       {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} faqs={faqs} />}
       {doc && (

@@ -154,8 +154,8 @@ html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
    at the bottom, flush to the page's last pixel. Clash Grotesk Semibold, the boldest cut loaded. The word is sized in
    JS to fill the width exactly; 26vw is the stand-in until then. */
 html:root:not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign {
-  display: flex; flex-direction: column; align-items: stretch; gap: 0;
-  max-width: none; margin: clamp(80px, 12vw, 160px) 0 0; padding: 0 clamp(16px, 2vw, 28px);
+  display: block;
+  max-width: 100%; min-width: 0; width: 100%; box-sizing: border-box; margin: clamp(80px, 12vw, 160px) 0 0; padding: 0 clamp(16px, 2vw, 28px);
   overflow: hidden; color: var(--muted);
 }
 html:root:not(#_):not(#_) .ld2-sign-top {
@@ -172,9 +172,15 @@ html:root:not(#_):not(#_) .ld2-sign-row {
   margin-top: clamp(64px, 14vw, 220px); font-size: 0.9375rem; color: var(--muted);
 }
 html:root:not(#_):not(#_) .ld2-sign-row b { font-weight: 500; color: #D8F24A; }
+/* SOURCE runs past the page: the bleed box spans the footer edge to edge (out past its padding) and centers the word,
+   so both ends crop evenly, and the bottom of the letters drops below the page's last pixel */
+html:root:not(#_):not(#_) .ld2-sign-bleed {
+  display: block; overflow: hidden; min-width: 0; max-width: none;
+  margin-inline: calc(-1 * clamp(16px, 2vw, 28px)); margin-top: 0.4em;
+}
 html:root:not(#_):not(#_) .ld2-sign-word {
-  display: flex; width: max-content; margin: 0.06em 0 -0.035em -0.04em; white-space: nowrap;
-  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600; font-size: 26vw;
+  display: flex; width: max-content; margin: 0 0 -0.24em 50%; transform: translateX(-50%); white-space: nowrap;
+  font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600; font-size: 25vw;
   line-height: 0.86; letter-spacing: -0.045em; color: var(--ink, #F4F6F2); user-select: none;
 }
 html:root:not(#_):not(#_) .ld2-sign-word > span { display: block; }

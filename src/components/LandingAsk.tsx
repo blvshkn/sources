@@ -24,7 +24,7 @@ function faqFor(q: string, faqs: [string, string][]): string | null {
   const exact = faqs.find(([fq]) => fq.toLowerCase() === q.trim().toLowerCase());
   if (exact) return exact[1];
   const qw = new Set(words(q));
-  if (q.trim().toLowerCase().replace(/[?!. ]+$/, "") === "what is source") return faqs[0]?.[1] ?? null;
+  if (/^(what('s| is| does) (source|this|it)( do)?|what can (it|you) do|who are you|tell me about (source|it))$/.test(q.trim().toLowerCase().replace(/[?!. ]+$/, ""))) return faqs[0]?.[1] ?? null;
   let best: [number, string] | null = null;
   for (const [fq, fa] of faqs) {
     const hits = words(fq).filter((w) => qw.has(w)).length;
@@ -94,12 +94,18 @@ export function LandingAsk({ onClose, onDemo, form, faqs }: {
       {asked ? (
         <div className="lda-body lda-asked">
           <div className="ask-you-row"><p className="ask-you">{asked}</p></div>
-          {answer && (
-            <div className="ask-card lda-answer">
-              <p className="ask-head">{answer.split(/(?<=\.)\s/)[0]}</p>
-              {answer.split(/(?<=\.)\s/).slice(1).join(" ") && <p className="lda-answer-more">{answer.split(/(?<=\.)\s/).slice(1).join(" ")}</p>}
-            </div>
-          )}
+          {answer && (() => {
+            // The answer's first sentence is the headline; a one-word one ("Yes.", "No.") takes the next sentence along
+            const parts = answer.split(/(?<=\.)\s/);
+            const n = parts[0].split(" ").length <= 3 && parts.length > 1 ? 2 : 1;
+            const head = parts.slice(0, n).join(" "), rest = parts.slice(n).join(" ");
+            return (
+              <div className="ask-card lda-answer">
+                <p className="ask-head">{head}</p>
+                {rest && <p className="lda-answer-more">{rest}</p>}
+              </div>
+            );
+          })()}
           <section className={`lda-gate${answer ? " lda-gate-soft" : ""}`} aria-labelledby="lda-gate-h">
             <span className="lda-gate-mark"><AiMarkPlay size={24} replay={wave} /></span>
             <h3 id="lda-gate-h" ref={gate} tabIndex={-1}>{answer ? "Now ask about your own league." : "Pick a league and I'll answer this."}</h3>
