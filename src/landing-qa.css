@@ -273,3 +273,6 @@ html:root:not(#_):not(#_):not(#_) .ld2-head .av { box-shadow: 0 16px 32px -12px 
    only the chip itself lights. The chip's insides always show at full strength; the chip's own reveal does the rest. */
 html:root:not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip span { opacity: 1 !important; transition: none !important; }
 html:root:not(#_):not(#_):not(#_) .ld2-tag-stack > .ld2-chip { opacity: 1 !important; }
+/* Split headings in Clash Medium, the same weight as the closing heading (.ld2-h1). headers.css sets every .ld-h2 to
+   Semibold with !important, so this answers it at a higher specificity. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld-h2.ld2-split { font-weight: 500 !important; letter-spacing: -0.02em !important; }
