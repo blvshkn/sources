@@ -194,7 +194,7 @@ export function Landing({ onLive, onDemo }: {
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
       <nav className="ld-nav ld2-nav" aria-label="Source">
-        <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={40} word={22} tagline tag={9.5} label="Source" stage /></div>
+        <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={52} word={30} tagline tag={11} label="Source" stage /></div>
         <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
       </nav>
 

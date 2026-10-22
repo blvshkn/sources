@@ -143,3 +143,9 @@ html:root:not(#_):not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { transform: 
    starts level with the first stage card. */
 html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
 @media (min-width: 1100px) { html:root:not(#_):not(#_) .ld2-copy { padding-top: 0; } }
+
+/* Landing header logo (mark 52, wordmark 30, Zach Oct 22). Below 380px it shares the row with Try the demo, so the
+   whole lockup scales down a step there instead of pushing the button off the edge. */
+@media (max-width: 379px) {
+  html:root:not(#_):not(#_) .ld2-nav > .brand { zoom: 0.82; }
+}
