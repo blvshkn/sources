@@ -1,0 +1,22 @@
+/* Week switcher, everywhere it appears (Zach picked option C, adjusted): a quiet caption instead of a big control.
+   "Week 7" over "This week" sits at the left like a section label; two round arrows sit at the right with room
+   between them. No container behind it. The arrows are 40px, comfortably tappable, on the same faint fill as
+   other secondary icon buttons. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) 40px 40px !important; grid-template-areas: "l p n";
+  align-items: center !important; column-gap: 8px !important; height: auto !important; min-height: 40px !important;
+  padding: 0 !important; background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav > .btn-icon:first-child { grid-area: p; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav > .btn-icon:last-child { grid-area: n; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav > .btn-icon {
+  width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important;
+  background: color-mix(in srgb, var(--ink) 6%, transparent) !important; color: var(--muted) !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav > .btn-icon svg { width: 16px !important; height: 16px !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl {
+  grid-area: l; display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: center !important;
+  gap: 3px !important; text-align: left !important; width: auto !important; min-width: 0; padding: 0 !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl b { font: 500 0.875rem/1.1 var(--font-mono) !important; color: var(--ink) !important; letter-spacing: 0 !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav-lbl .tiny { font-size: 0.75rem !important; line-height: 1.1 !important; color: var(--muted) !important; }
