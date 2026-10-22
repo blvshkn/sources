@@ -1,0 +1,108 @@
+/* Trade finder (TradeFinder.tsx): Trade, Ideas, All teams. Tiers, idea cards with points gain and playoff odds,
+   filter chips. Phone first; two columns of cards from 1100px. */
+
+html:root:not(#_):not(#_) .tf-scope { margin: 4px 0 14px; }
+html:root:not(#_):not(#_) .tf-scope .seg { width: 100%; }
+html:root:not(#_):not(#_) .tf-scope .seg > button { flex: 1 1 0; min-width: 0; }
+
+html:root:not(#_):not(#_) .tf { display: grid; gap: 20px; min-width: 0; }
+html:root:not(#_):not(#_) .tf-ctl { display: grid; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .tf-ctl .seg { width: 100%; }
+html:root:not(#_):not(#_) .tf-ctl .seg > button { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+html:root:not(#_):not(#_) .tf-chips .tf-chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; min-height: 36px; padding: 0 14px; border-radius: 999px; max-width: 100%; }
+html:root:not(#_):not(#_) .tf-chips .tf-chip-l { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-chips .tf-chip-k { font-weight: 500; opacity: 0.72; }
+html:root:not(#_):not(#_) .tf-meta { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+
+/* Tiers */
+html:root:not(#_):not(#_) .tf-tier { display: grid; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .tf-th h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.0625rem; line-height: 1.25; }
+html:root:not(#_):not(#_) .tf-th p { margin: 4px 0 0; font-size: 0.8125rem; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-th .tf-n { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font: 600 0.75rem/1 var(--font-mono); }
+html:root:not(#_):not(#_) .tf-tier.tier-both .tf-th h3::before,
+html:root:not(#_):not(#_) .tf-tier.tier-fair .tf-th h3::before,
+html:root:not(#_):not(#_) .tf-tier.tier-long .tf-th h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+html:root:not(#_):not(#_) .tf-tier.tier-fair .tf-th h3::before { background: var(--muted); }
+html:root:not(#_):not(#_) .tf-tier.tier-long .tf-th h3::before { background: var(--bad); }
+html:root:not(#_):not(#_) .tf-none { margin: 0; padding: 14px 16px; border-radius: var(--r-inner, 14px); border: 1px dashed var(--line); font-size: 0.875rem; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-foot { margin: 0; }
+
+/* Card */
+html:root:not(#_):not(#_) .tf-card { display: grid; gap: 14px; min-width: 0; padding: 16px; border-radius: var(--r-inner, 14px); background: var(--surface); border: 1px solid var(--line); }
+html:root:not(#_):not(#_) .tf-ch { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-width: 0; }
+html:root:not(#_):not(#_) .tf-team { display: flex; align-items: center; gap: 10px; min-width: 0; }
+html:root:not(#_):not(#_) .tf-team > span:last-child { display: grid; min-width: 0; }
+html:root:not(#_):not(#_) .tf-team b { font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-team small { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-gain { display: grid; justify-items: end; gap: 2px; flex: none; text-align: right; }
+html:root:not(#_):not(#_) .tf-gain-n { display: inline-flex; align-items: baseline; gap: 4px; font: 600 1.375rem/1.1 var(--font-mono); }
+html:root:not(#_):not(#_) .tf-gain-n small { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-gain-k { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-gain-k .delta { font-family: var(--font-mono); font-weight: 600; }
+
+html:root:not(#_):not(#_) .tf-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html:root:not(#_):not(#_) .tf-badge { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+html:root:not(#_):not(#_) .tf-badge.fair { background: var(--good-soft); color: var(--good); }
+html:root:not(#_):not(#_) .tf-balk { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 3px 10px; border-radius: 999px; background: var(--bad-soft); color: var(--bad); font-size: 0.8125rem; font-weight: 600; }
+html:root:not(#_):not(#_) .tf-balk svg { flex: none; }
+
+html:root:not(#_):not(#_) .tf-pts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+html:root:not(#_):not(#_) .tf-pts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .tf-pts dt { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-pts dd { margin: 0; font-family: var(--font-mono); font-size: 0.875rem; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-pts dd small { color: var(--muted); font-size: 0.6875rem; }
+
+/* Odds: who, make playoffs, win it all. Before > after, then the change in points */
+html:root:not(#_):not(#_) .tf-odds { display: grid; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; }
+html:root:not(#_):not(#_) .tf-or { display: grid; grid-template-columns: minmax(56px, 0.8fr) 1fr 1fr; align-items: center; gap: 8px; padding: 8px 12px; }
+html:root:not(#_):not(#_) .tf-or + .tf-or { border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .tf-oh { background: var(--surface-2); font-size: 0.6875rem; font-weight: 600; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-oh > span:not(:first-child) { text-align: right; }
+html:root:not(#_):not(#_) .tf-who { font-size: 0.8125rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-or > [role="cell"] { display: flex; justify-content: flex-end; min-width: 0; }
+html:root:not(#_):not(#_) .tf-oc { display: inline-grid; justify-items: end; gap: 1px; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.2; }
+html:root:not(#_):not(#_) .tf-oc-v { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-oc-v svg { color: var(--faint); }
+html:root:not(#_):not(#_) .tf-oc-b { color: var(--muted); }
+html:root:not(#_):not(#_) .tf-oc-d { font-size: 0.6875rem; font-weight: 600; }
+html:root:not(#_):not(#_) .tf-oc-d.up { color: var(--good); }
+html:root:not(#_):not(#_) .tf-oc-d.down { color: var(--bad); }
+html:root:not(#_):not(#_) .tf-oc-d.flat { color: var(--muted); }
+/* Still running: a fixed-size ghost, so the row doesn't change height when the numbers land */
+html:root:not(#_):not(#_) .tf-oc.tf-ghost { width: 72px; height: 30px; border-radius: 6px; background: var(--surface-2); }
+html:root:not(#_):not(#_) .tf-odds:not(.is-wait) .tf-oc { animation: tf-in calc(220ms * var(--mo, 1)) var(--ease-out) both; }
+@keyframes tf-in { from { opacity: 0; } to { opacity: 1; } }
+
+html:root:not(#_):not(#_) .tf-actions { flex-wrap: wrap; gap: 10px; }
+
+/* Show N similar */
+html:root:not(#_):not(#_) .tf-more { display: inline-flex; align-items: center; justify-self: start; gap: 6px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--muted); font: 600 0.8125rem/1 var(--font-body); cursor: pointer; transition: color calc(120ms * var(--mo, 1)) var(--ease-out); }
+html:root:not(#_):not(#_) .tf-more:hover { color: var(--ink); }
+html:root:not(#_):not(#_) .tf-more svg { transform: rotate(90deg); transition: transform calc(160ms * var(--mo, 1)) var(--ease-out); }
+html:root:not(#_):not(#_) .tf-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
+html:root:not(#_):not(#_) .tf-sim { display: grid; gap: 0; margin: -6px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+html:root:not(#_):not(#_) .tf-sim li { border-bottom: 1px solid var(--line); }
+html:root:not(#_):not(#_) .tf-sim-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+html:root:not(#_):not(#_) .tf-sim-row > svg { flex: none; color: var(--faint); }
+html:root:not(#_):not(#_) .tf-sim-txt { display: grid; flex: 1 1 auto; min-width: 0; font-size: 0.875rem; }
+html:root:not(#_):not(#_) .tf-sim-txt > span, html:root:not(#_):not(#_) .tf-sim-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_) .tf-sim-txt small { font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-sim-n { flex: none; font-family: var(--font-mono); font-size: 0.875rem; }
+html:root:not(#_):not(#_) .tf-sim-n small { margin-left: 3px; font-size: 0.6875rem; color: var(--muted); }
+html:root:not(#_):not(#_) .tf-sim { animation: tf-in calc(180ms * var(--mo, 1)) var(--ease-out) both; }
+
+/* Waiting for the first run */
+html:root:not(#_):not(#_) .tf-wait { display: grid; gap: 12px; }
+html:root:not(#_):not(#_) .tf-ghost-card { display: block; height: 260px; background: var(--surface-2); border-color: transparent; }
+
+@media (min-width: 1100px) {
+  html:root:not(#_):not(#_) .tf-tier { grid-template-columns: 1fr 1fr; align-items: start; }
+  html:root:not(#_):not(#_) .tf-tier > .tf-th, html:root:not(#_):not(#_) .tf-tier > .tf-none { grid-column: 1 / -1; }
+  html:root:not(#_):not(#_) .tf-ctl { grid-template-columns: minmax(0, 420px) 1fr; align-items: center; }
+  html:root:not(#_):not(#_) .tf-ctl .tf-meta { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .tf-odds .tf-oc, html:root:not(#_):not(#_) .tf-sim { animation: none; }
+}

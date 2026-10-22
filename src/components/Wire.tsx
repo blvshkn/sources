@@ -56,7 +56,7 @@ export interface Briefing { /** Null once the week is final: no lineup advice th
 
 const swap = (ids: string[]) => ids.map((id) => playerById(id).name).join(" + ");
 
-function IdeaSide({ label, ids, tone }: { label: string; ids: string[]; tone: "send" | "get" }) {
+export function IdeaSide({ label, ids, tone }: { label: string; ids: string[]; tone: "send" | "get" }) {
   return (
     <section className={`tx-side ${tone}`} aria-label={label}>
       <header><span>{label}</span><small>{ids.length} {ids.length === 1 ? "player" : "players"}</small></header>

@@ -7,6 +7,7 @@ import { Avatar } from "./Avatar";
 import { TeamAvatar } from "./TeamPicker";
 import { Trophy, championLabel } from "./Trophy";
 import { Tooltip } from "./Tooltip";
+import { recordWins, simulate as simSeason } from "../playoffSim";
 
 const POS = ["QB", "RB", "WR", "TE"] as const;
 const ord = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
@@ -18,36 +19,9 @@ export const winsOf = (record: string) => Number(record.split("-")[0]) || 0;
 /** Standings order: wins, then points for. Shared by the table, the side panel and League Needs. */
 export const byStandings = (a: { record: string; pf: number }, b: { record: string; pf: number }) => winsOf(b.record) - winsOf(a.record) || b.pf - a.pf;
 
-/** Small seeded RNG so the odds don't jump around between renders. */
-function rng(seed: number) {
-  return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
-
-/**
- * Playoff odds by simulation. Each remaining regular-season week, teams are paired at random and score
- * around their projected weekly total. Seeds go by wins, then points for.
- */
+/** Playoff odds from the shared season sim (playoffSim.ts), 3,000 runs. */
 function simulate(needs: TeamNeeds[], weeksLeft: number, spots: number, runs = 3000) {
-  const n = needs.length;
-  const rec = needs.map((x) => { const [w = 0, l = 0, t = 0] = x.team.record.split("-").map(Number); return { w: w + t / 2, l }; });
-  const playoff = new Array(n).fill(0), top = new Array(n).fill(0);
-  const rand = rng(n * 7919 + weeksLeft * 104729 + Math.round(needs.reduce((a, x) => a + x.lineup.total, 0)));
-  const gauss = () => Math.sqrt(-2 * Math.log(rand() || 1e-9)) * Math.cos(2 * Math.PI * rand());
-  for (let r = 0; r < runs; r++) {
-    const wins = rec.map((x) => x.w), pf = needs.map((x) => x.team.pf);
-    for (let wk = 0; wk < weeksLeft; wk++) {
-      const order = [...Array(n).keys()].sort(() => rand() - 0.5);
-      for (let i = 0; i + 1 < n; i += 2) {
-        const a = order[i], b = order[i + 1];
-        const sa = needs[a].lineup.total + gauss() * 22, sb = needs[b].lineup.total + gauss() * 22;
-        pf[a] += sa; pf[b] += sb; wins[sa >= sb ? a : b] += 1;
-      }
-    }
-    const seeds = [...Array(n).keys()].sort((a, b) => wins[b] - wins[a] || pf[b] - pf[a]);
-    seeds.slice(0, spots).forEach((i) => (playoff[i] += 1));
-    top[seeds[0]] += 1;
-  }
-  return needs.map((_, i) => ({ playoff: playoff[i] / runs, top: top[i] / runs }));
+  return simSeason(needs.map((x) => ({ w: recordWins(x.team.record), pf: x.team.pf, total: x.lineup.total })), weeksLeft, spots, runs);
 }
 
 export function Standings({ needs }: { needs: TeamNeeds[] }) {

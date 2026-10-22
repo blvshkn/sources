@@ -63,6 +63,8 @@ import { enterApp, useSectionEnter } from "./sectionEnter";
 import { seedDemo } from "./demoFixtures";
 import { useDismiss } from "./components/useDismiss";
 import { mo } from "./motion";
+import { finderSteps, topIdea } from "./tradeFinder";
+import { useIdleSteps } from "./idleSteps";
 
 /** A player's name for any id Sources might hold: rostered, a free agent, or a kicker or defense. */
 const playerName = (id: string) => PLAYERS[id]?.name ?? FREE_AGENTS.find((f) => f.id === id)?.name ?? SPECIAL_FREE_AGENTS.find((f) => f.id === id)?.name
@@ -286,6 +288,12 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     TEAMS.filter((t) => !t.you).forEach((t) => (out[t.id] = pausedTeams.includes(t.id) || whyPauses[t.id] ? [] : scannedByTeam[t.id].filter((x) => !hiddenIdeas.includes(x.key) && !x.get.some((id) => passed.includes(id)))));
     return out;
   }, [scannedByTeam, hiddenIdeas, pausedTeams, whyPauses, passed]);
+  // The trade finder: a wider search sorted into Both sides win, Fair and Long shots (tradeFinder.ts). It runs in idle
+  // slices after the page paints, off the same inputs as the scan above, and the same hides, passes and pauses filter it.
+  const finderRun = useIdleSteps(scannedByTeam, () => finderSteps(YOU, TEAMS.filter((t) => !t.you), active, myTags, prices, Object.values(scannedByTeam).flat()));
+  const finderIdeas = useMemo(() => finderRun.result?.ideas.filter((x) => !pausedTeams.includes(x.t.partnerId) && !whyPauses[x.t.partnerId]
+    && !hiddenIdeas.includes(x.t.key) && !x.t.get.some((id) => passed.includes(id))) ?? null, [finderRun.result, pausedTeams, whyPauses, hiddenIdeas, passed]);
+  const finderTop = useMemo(() => (finderIdeas ? topIdea(finderIdeas) : null), [finderIdeas]);
   // What Ask says about a paused manager: it skips him when picking partners, and answers about him with a heads up
   const askPaused = useMemo(() => {
     const out: Record<string, string> = {};
@@ -463,12 +471,14 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   const briefing: Briefing = {
     // No lineup line when there's nothing to change (final week, or already optimal); locks that blocked a helpful move say so plainly
     lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : lineupNow.blocked ? LOCKED_LINE : null,
-    trade: partners[0]?.t ?? null,
+    // A two-way idea first; with none, the finder's best Both sides win or Fair idea. Never a long shot.
+    trade: partners[0]?.t ?? finderTop?.t ?? null,
     waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
     ok: {
       lineup: lineupNow.final ? `Week ${WEEK} is final. Next week's lineup is ready to set.` : !diff.length && !lineupNow.blocked ? "Your best projected lineup is set in Sleeper." : undefined,
-      trade: partners[0]?.t ? undefined : "Nothing helps both sides yet. Build a deal and Sources grades it.",
+      // While the finder is still running there's no verdict yet, so the row waits instead of saying nothing works
+      trade: partners[0]?.t || finderTop || !finderIdeas ? undefined : "Nothing helps both sides yet. Build a deal and Sources grades it.",
       waiver: topRec ? undefined : `Nobody on the wire beats your starters.${Object.keys(watch).length ? ` Watching ${Object.keys(watch).length}.` : ""}`,
     },
   };
@@ -876,7 +886,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
               clear={() => { setGive([]); setGet([]); setExtra((c) => c.map((l) => ({ ...l, give: [], get: [] }))); setReopened(null); }} trade={trade}
               sent={sent} sentSynced={offerSync.state === "synced"} syncUser={syncUser} onReopenSent={reopenSent} onDeclineSent={declineSent} onClearSent={clearSent} onWhySent={whySent}
               pauses={whyPauses} onResumePause={resumeWhy} valueAsks={asks}
-              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []} ideasByTeam={suggestionsByTeam}
+              extra={extra} multi={multi} addPartner={addPartner} removePartner={removePartner} onProfile={openProfile} profileOpen={panelOpen} suggestions={suggestionsByTeam[partnerId] ?? []} ideasByTeam={suggestionsByTeam} finder={finderIdeas} finderStats={finderRun.result}
               tags={active} myTags={myTags} prices={prices} tip={tip} coach={coach} onPitch={setPitch} onLoad={loadTrade} onAddTag={addTag} onRemoveTag={clearTag} />
           )}
           {tab === "roster" && (

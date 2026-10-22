@@ -201,3 +201,19 @@ decided, seen or settled shows still. How to see each one in the demo:
 | Heating up: ember smokes (three frames twice) and rests as a wisp; on fire after heating, the smoke catches into the flame with a small pop and flickers once | The ticker's touchdown at about 11s takes a live starter past his projection; if he was heating up first, the smoke catches. Rows already heating show the wisp, settled | OK |
 | New since you looked: a new top trade idea, or your offer going through, slides in on On your radar with a faint ink tint and keeps a dot until you open it; new inbox items slide in the same way | Needs a sync to bring something new, which the demo never does; the inbox's seeded Mike offer (about 20s after your first tap) slides into the inbox | OK |
 | Sync error and recovery: icon nudges once, line morphs to "Couldn't reach Sleeper. Your last sync is still here." with Retry; success morphs to "Synced just now" with a check | Live only: the demo never reads Sleeper, so it never fails. The sidebar footer and Settings keep the plain "Updated" line | Live only |
+
+### Trade finder (Oct 22)
+
+Trade, Ideas, All teams (`TradeFinder.tsx`, engine in `tradeFinder.ts`, sims in `playoffSim.ts`). With Mike is the old
+per-partner Ideas view, unchanged.
+
+| Feature | In the demo | Status |
+| --- | --- | --- |
+| Three tiers: Both sides win, Fair, Long shots | All three populated: 2 Both (Mike, capped at 2 per partner), 5 Fair (Mike, Pat, Taylor), 3 Long shots (Kev, Dan, Chris) | OK |
+| Long shot reason line | "They'd lose a starter at WR/RB" on the demo's top three | OK |
+| Show N similar | Most cards fold 1 to 9 near copies | OK |
+| Playoff odds before and after, make playoffs and win it all | Demo records, points for and projections; same sim as Standings | OK |
+| Whole season / Regular season / Playoffs | Demo only: the demo league has no `playoffStart`, `lastWeek` or `playoffTeams`, so it uses the defaults (weeks 15 to 17, 6 teams; Week 7 leaves 8 regular season weeks). Demo players have no playoff-week projection, so the Playoffs number averages the demo season's own projections for weeks 15 to 17 (`demoCell` in schedule.ts), scaled to the league's scoring. Live leagues use Sleeper's `playoff` average per player | Demo data |
+| Filters: Fair offers only, Buy, Sell, Improve | Any demo player or position | OK |
+| On your radar, Top trade from the finder | The demo has two-way ideas with Mike, so Top trade shows one of those. To see the finder fill it, pause Mike (Trade, Ideas, With Mike, Won't work, "Mike isn't trading right now"): Top trade becomes Pat's Terry McLaurin, a Fair idea | OK |
+| "Checked N swaps ... in the demo league" | Status line names the demo | OK |

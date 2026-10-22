@@ -7,7 +7,9 @@ import { PlayerSearch } from "./PlayerSearch";
 import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
 import { kickLine } from "../kickoff";
 import { DealLeg, MultiTrade, FAIR_GAP, Lineup, Trade as TradeT, eff, pct, groupPoints, groupsFor, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, Acceptance, packageValue, sumValue, valueEdge, valueRatio } from "../engine";
-import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
+import { AiLabel, Delta, Icon, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
+import { TradeFinder } from "./TradeFinder";
+import type { FinderIdea, FinderResult } from "../tradeFinder";
 import { Avatar } from "./Avatar";
 import { TradeIdea } from "./Wire";
 import { PausedLine, SentOffers } from "./SentOffers";
@@ -473,7 +475,7 @@ export function lockMap(myTags: Record<string, MyTag>) {
 
 const NO_IDEAS: Record<string, TradeT[]> = {};
 const NO_PAUSES: Record<string, WhyPause> = {};
-export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent, onWhySent, pauses = NO_PAUSES, onResumePause, valueAsks = [] }: {
+export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, trade, suggestions, ideasByTeam = NO_IDEAS, tags, myTags, prices = {}, tip, coach, onPitch, onLoad, onAddTag, onRemoveTag, extra = [], multi = null, addPartner, removePartner, onProfile, sent = [], sentSynced = false, syncUser = "", onReopenSent, onDeclineSent, onClearSent, onWhySent, pauses = NO_PAUSES, onResumePause, valueAsks = [], finder = null, finderStats = null }: {
   partnerId: string; setPartner: (id: string) => void;
   give: string[]; get: string[]; toggle: (side: "give" | "get", id: string, teamId?: string) => void; clear: () => void;
   /** Partners beyond the first in a 3 or 4 team deal, and the read of the whole deal once every team has a player. */
@@ -499,6 +501,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   pauses?: Record<string, WhyPause>; onResumePause?: (teamId: string) => void;
   /** Managers who passed for wanting more value, so ideas with them lean their way */
   valueAsks?: string[];
+  /** The trade finder's ideas with every team (null while it runs), for Ideas, All teams */
+  finder?: FinderIdea[] | null; finderStats?: FinderResult | null;
 }) {
   const them = TEAMS.find((t) => t.id === partnerId)!;
   const isMulti = extra.length > 0;
@@ -519,6 +523,9 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   const [why, setWhy] = useState(false);
   const [view, setView] = useSticky<"build" | "ideas" | "notes" | "sent">("trade.view", "build", ["build", "ideas", "notes", "sent"]);
   const sentCount = new Set(sent.map((o) => o.deal)).size;
+  // Ideas covers every team (the trade finder) or just this partner (the two-way scan with its trace)
+  const [scope, setScope] = useSticky<"all" | "one">("trade.ideas.scope", "all", ["all", "one"]);
+  const one = scope === "one";
   // Re-run the finder visibly whenever what it reads has changed: a new or removed note, or a new partner
   const sig = `${partnerId}|${theirTags.map((t) => t.id).join(",")}`;
   const seen = useRef<Record<string, { sig: string; keys: string[] }>>({});
@@ -622,22 +629,28 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       )}
 
       {view === "ideas" && (
+        <div className="tf-scope">
+          <Seg label="Which teams" value={scope} onChange={setScope} options={[{ v: "all", label: "All teams" }, { v: "one", label: `With ${them.manager}` }]} />
+        </div>
+      )}
+      {view === "ideas" && !one && <TradeFinder ideas={finder} stats={finderStats} onOpen={onLoad} onPitch={onPitch} />}
+      {view === "ideas" && one && (
         <div className="tr-scout" aria-label={`How ${them.manager} trades`}>
           <span className="eyebrow">How {them.manager} trades</span>
           <p>{scoutFacts.join(" · ")}</p>
           {scoutTip && <p className="tr-tip"><AiMark size={14} /><span>{scoutTip}.</span></p>}
         </div>
       )}
-      {view === "ideas" && pause && (
+      {view === "ideas" && one && pause && (
         <section className="card why-paused-card" aria-label={`Trade ideas with ${them.manager}`}>
           <PausedLine until={pause.until} onResume={onResumePause ? () => onResumePause(them.id) : undefined} />
         </section>
       )}
-      {view === "ideas" && !pause && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
-      {view === "ideas" && !pause && !scanning && suggestions.length === 0 && (
+      {view === "ideas" && one && !pause && (scanning || shownScan === sig) && <IdeaScan key={sig} run={(d) => ideaSteps(them, tags, myTags, prices, 3, d)} onDone={finishScan} />}
+      {view === "ideas" && one && !pause && !scanning && suggestions.length === 0 && (
         <WhyNone them={them} diag={diags.current[sig]} tags={tags} myTags={myTags} prices={prices} ideasByTeam={ideasByTeam} onOpen={loadIdea} onTeam={setPartner} />
       )}
-      {view === "ideas" && !scanning && suggestions.length > 0 && (
+      {view === "ideas" && one && !scanning && suggestions.length > 0 && (
         <section className="card nudge">
           <div className="row wrap"><span className="stamp">Per sources</span><span className="small muted">Win-win trades built around what {them.manager} wants</span></div>
           {fresh.length > 0
