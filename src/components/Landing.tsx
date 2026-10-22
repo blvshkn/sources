@@ -214,15 +214,15 @@ export function Landing({ onLive, onDemo }: {
   }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
-  // The 3D phones (phone3d.ts): tried wherever WebGL2 works; the CSS phones stay as the fallback. "try" holds the
-  // phones back until the model has drawn, so the arrival plays once, on the real thing.
+  // The 3D phones (phone3d.ts): tried wherever WebGL2 works. The CSS phones show while the model loads and stay as the
+  // fallback; once it has drawn, the render fades in over them.
   const [gl, setGl] = useState<"try" | "on" | "off">(() =>
     typeof window !== "undefined" && typeof WebGL2RenderingContext !== "undefined" && new URLSearchParams(location.search).get("gl") !== "0" ? "try" : "off");
   useEffect(() => {
     const stage = phonesRef.current;
     if (!stage || gl !== "try") return;
     let alive = true, gone: (() => void) | null = null;
-    const give = window.setTimeout(() => { if (alive) setGl("off"); }, 7000);
+    const give = window.setTimeout(() => { if (alive) setGl("off"); }, 12000);
     const phones = [".hp-left", ".hp-right", ".hp-front"].map((s) => stage.querySelector<HTMLElement>(s)!);
     import("./phone3d").then(({ mountPhones3D }) => mountPhones3D(stage, phones, ["/phones/trade-screen.webp", "/phones/waivers-screen.webp", null], [0.62, 0.62, 1]))
       .then((p) => { if (!alive) { p.dispose(); return; } gone = p.dispose; window.clearTimeout(give); setGl("on"); p.kick(1800); })

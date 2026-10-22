@@ -182,8 +182,7 @@ html:root:not(#_):not(#_) .hp-gl { position: absolute; z-index: 2; pointer-event
   html:root:not(#_):not(#_) .hp-gl { animation: hp-gl-in calc(1100ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) both; }
 }
 @keyframes hp-gl-in { from { opacity: 0; } }
-/* Waiting on the model: the phones hold their arrival until it has drawn */
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone { opacity: 0; animation-play-state: paused; }
+/* While the model loads, the CSS phones stand in; the render then fades in over them (Zach, Oct 22: loading) */
 /* Drawn: the CSS body, buttons and the back phones' screens give way to the render */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.hp-body, .ph-chrome) { display: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-back .hp-scr { visibility: hidden; }

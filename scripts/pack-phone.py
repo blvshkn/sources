@@ -1,6 +1,9 @@
 # Packs the iPhone GLB into the landing's compact format: int16 positions, int8 normals, float16 UVs, uint16 indices,
-# PBR material params, and the embedded images. Usage: python3 -I pack.py in.glb out.bin
-import json, struct, sys, array
+# PBR material params, and the embedded images, gzipped (phone3d.ts inflates it with DecompressionStream).
+# Parts the hero never shows (the back, camera bump, port, screws, speaker grilles) and textures nothing kept uses are
+# left out, and so is the screen texture (the screen shows the app instead). Usage: python3 -I pack-phone.py in.glb out.pack
+import json, struct, sys, array, gzip
+HIDDEN = ('Back_', 'USB_', 'Screws', 'Side_Panel_Speakers', 'Holes')
 src = open(sys.argv[1], 'rb').read()
 L = struct.unpack('<I', src[12:16])[0]
 g = json.loads(src[20:20 + L])
@@ -27,8 +30,17 @@ def put(b):
     o = len(body); body.extend(b); return o
 meshes = []
 for m in g['meshes']:
+    if (m.get('name') or '').startswith(HIDDEN): continue
     p = m['primitives'][0]; at = p['attributes']
     pos = view(at['POSITION']); nrm = view(at['NORMAL']); ind = view(p['indices'])
+    uvs = view(at['TEXCOORD_0']) if 'TEXCOORD_0' in at else None
+    # Triangles facing away (normals pointing back past 60 degrees) never show: the hero turns phones 30 degrees at most
+    tri = [tuple(ind[i + k][0] for k in range(3)) for i in range(0, len(ind), 3)]
+    tri = [f for f in tri if max(nrm[v][2] for v in f) > -0.5]
+    keep = sorted({v for f in tri for v in f}); remap = {v: i for i, v in enumerate(keep)}
+    pos = [pos[v] for v in keep]; nrm = [nrm[v] for v in keep]
+    if uvs is not None: uvs = [uvs[v] for v in keep]
+    ind = [(remap[v],) for f in tri for v in f]
     q = array.array('h')
     for v in pos:
         for k in range(3): q.append(round((v[k] - lo[k]) / (hi[k] - lo[k]) * 65535) - 32768)
@@ -36,8 +48,11 @@ for m in g['meshes']:
     for v in nrm:
         for k in range(3): nq.append(max(-127, min(127, round(v[k] * 127))))
     rec = {'name': m.get('name'), 'mat': p.get('material', 0), 'n': len(pos), 'pos': put(q.tobytes()), 'nrm': put(nq.tobytes())}
-    if 'TEXCOORD_0' in at:
-        uv = view(at['TEXCOORD_0'])
+    mt = g['materials'][p.get('material', 0)]
+    textured = 'normalTexture' in mt or 'occlusionTexture' in mt or 'emissiveTexture' in mt or 'baseColorTexture' in mt.get('pbrMetallicRoughness', {})
+    # UVs only where a texture reads them (the screen keeps its own: the phones behind show their screens through it)
+    if 'TEXCOORD_0' in at and (textured or m.get('name') == 'Front_Screen'):
+        uv = uvs
         rec['uv'] = put(b''.join(struct.pack('<ee', *v) for v in uv))
     ii = array.array('H', [i[0] for i in ind])
     rec['ind'] = put(ii.tobytes()); rec['ni'] = len(ii)
@@ -59,12 +74,22 @@ for m in g['materials']:
         x = ex['KHR_materials_iridescence']; o['ir'] = [x.get('iridescenceFactor', 0), x.get('iridescenceIor', 1.3), x.get('iridescenceThicknessMaximum', 400)]
     if 'KHR_materials_anisotropy' in ex: o['an'] = ex['KHR_materials_anisotropy'].get('anisotropyStrength', 0)
     mats.append(o)
+used = set()
+for r in meshes:
+    o = mats[r['mat']]
+    o.pop('emap', None) if o['name'] == 'COLOUR_Black_Screen' else None
+    for k in ('map', 'nmap', 'ao', 'emap'):
+        if k in o: used.add(o[k])
 imgs = []
-for t in g['textures']:
+for ti, t in enumerate(g['textures']):
+    if ti not in used:
+        imgs.append({'mime': 'image/png', 'off': 0, 'len': 0, 'skip': 1}); continue
     im = g['images'][t['source']]; v = g['bufferViews'][im['bufferView']]
     b = BIN[v.get('byteOffset', 0): v.get('byteOffset', 0) + v['byteLength']]
     imgs.append({'mime': im['mimeType'], 'off': put(b), 'len': len(b), 'name': t.get('name')})
 head = json.dumps({'lo': lo, 'hi': hi, 'meshes': meshes, 'materials': mats, 'textures': imgs}, separators=(',', ':')).encode()
 while (len(head) + 4) % 4: head += b' '
-open(sys.argv[2], 'wb').write(struct.pack('<I', len(head)) + head + bytes(body))
+raw = struct.pack('<I', len(head)) + head + bytes(body)
+open(sys.argv[2], 'wb').write(gzip.compress(raw, 9))
+print('raw', len(raw))
 print('meshes', len(meshes), 'bytes', 4 + len(head) + len(body))

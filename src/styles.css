@@ -4236,4 +4236,4 @@ html:root:not(#_) .wk-more { display: block; width: 100%; margin-top: 4px; paddi
 
 /* The app inside the landing's phones (App.tsx IN_FRAME): there's no safe area in a frame, so the tab bar takes the
    room iOS gives the home indicator. Its background runs to the bottom of the glass and the icons sit clear of the bar. */
-html.in-frame .tabbar { padding-bottom: 36px !important; }
+html.in-frame .tabbar { padding-bottom: 52px !important; }

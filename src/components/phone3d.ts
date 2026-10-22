@@ -23,17 +23,20 @@ type Head = {
   meshes: { name: string; mat: number; n: number; pos: number; nrm: number; uv?: number; ind: number; ni: number }[];
   materials: { name: string; c: number[]; m: number; r: number; map?: number; nmap?: number; ns?: number; ao?: number; e?: number[]; emap?: number;
     blend?: 1; ds?: 1; ior?: number; cc?: number[]; ir?: number[]; an?: number }[];
-  textures: { mime: string; off: number; len: number }[];
+  textures: { mime: string; off: number; len: number; skip?: 1 }[];
 };
 
 async function loadModel(T: Three, url: string) {
-  const buf = await (await fetch(url)).arrayBuffer();
+  // Gzipped by scripts/pack-phone.py, so it travels small whatever the host does with .pack files
+  const res = await fetch(url);
+  const buf = await new Response(res.body!.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
   const hl = new DataView(buf).getUint32(0, true);
   const head: Head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
   const base = 4 + hl;
   const srgb = new Set<number>();
   head.materials.forEach((m) => { if (m.map != null) srgb.add(m.map); if (m.emap != null) srgb.add(m.emap); });
   const tex = await Promise.all(head.textures.map(async (t, i) => {
+    if (t.skip) return null;
     const bmp = await createImageBitmap(new Blob([new Uint8Array(buf, base + t.off, t.len)], { type: t.mime }));
     const tx = new T.Texture(bmp);
     tx.flipY = false; tx.wrapS = tx.wrapT = T.RepeatWrapping;
@@ -113,7 +116,7 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
   const key = new T.DirectionalLight(0xffffff, 1.2); key.position.set(-400, 600, 900); scene.add(key);
 
   const [{ geos, mats, head }, screenTex] = await Promise.all([
-    loadModel(T, "/models/iphone-18-pro-max.bin"),
+    loadModel(T, "/models/iphone-18-pro-max.pack"),
     Promise.all(screens.map((src) => src ? new T.TextureLoader().loadAsync(src).then((t: Three) => { t.colorSpace = T.SRGBColorSpace; t.flipY = false; return t; }) : null)),
   ]);
   const screenMesh = head.meshes.findIndex((m) => m.name === "Front_Screen");

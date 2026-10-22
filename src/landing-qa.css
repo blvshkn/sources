@@ -156,11 +156,12 @@ html:root:not(#_):not(#_) .ld2-eyebrow { vertical-align: top; }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign {
   display: block;
   max-width: 100%; min-width: 0; width: 100%; box-sizing: border-box; margin: clamp(80px, 12vw, 160px) 0 0; padding: 0 clamp(16px, 2vw, 28px);
-  overflow: hidden; color: var(--muted);
+  overflow: visible; color: var(--muted);
 }
+/* No divider and no clipping (Zach, Oct 22): the page's background and the field run on through the footer */
 html:root:not(#_):not(#_) .ld2-sign-top {
   display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px;
-  padding-top: 28px; border-top: 1px solid var(--line, #202322);
+  padding-top: 28px;
 }
 html:root:not(#_):not(#_) .ld2-sign-lede { margin: 0; max-width: 34ch; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 500; font-size: clamp(1.25rem, 2.1vw, 1.75rem); line-height: 1.18; letter-spacing: -0.01em; color: var(--ink); text-wrap: pretty; }
 html:root:not(#_):not(#_) .ld2-sign-col { display: flex; flex-direction: column; gap: 14px; font-size: 0.875rem; line-height: 1.45; }
