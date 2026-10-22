@@ -7,7 +7,6 @@ import { SLeague, SleeperError, findLeagues, findUser } from "../sleeper";
 import { Icon, PosBadge } from "./ui";
 import { Scoreboard } from "./Scoreboard";
 import { useCursorLight } from "./useCursorLight";
-import { TradeIdea } from "./TradeIdea";
 import { TradeCompare } from "./TradeCompare";
 import { PlatformLogo, PlatformName } from "./PlatformLogo";
 import { Avatar, AvatarPhotos, ManagerAvatar } from "./Avatar";
@@ -19,8 +18,7 @@ import type { Answer, Trade } from "../engine";
 import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
-import { PtsCell, gameNow, playCls, PlayCount } from "./LivePts";
-import { useLive, startersOf, playCount, type Live } from "../live";
+import { useLive } from "../live";
 import { eff } from "../engine";
 import { AiMark, AiMarkPlay } from "./WorkingLoader";
 import { LandingAsk } from "./LandingAsk";
@@ -33,6 +31,8 @@ import { HowItWorksDoc, LegalDoc } from "./About";
 import { useIconStroke } from "./iconStroke";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
+import { LandingLive } from "./LandingLive";
+import { LandingNotesCard } from "./LandingNotesCard";
 import { AcceptCell, DealRows, PtsCell as DealPts, dealWhy } from "./Trade";
 import { acceptance, verdict } from "../engine";
 import type { Team } from "../data";
@@ -95,39 +95,6 @@ export function Landing({ onLive, onDemo }: {
     return () => { document.title = prev; };
   }, []);
   const live = useLive();
-  const starters = startersOf(YOU).map(playerById);
-  const order = { in_game: 0, complete: 1, pre_game: 2 } as Record<string, number>;
-  const liveRows = [...starters].sort((a, b) => (order[gameNow(live, a.id, a.nfl).state ?? "pre_game"] ?? 3) - (order[gameNow(live, b.id, b.nfl).state ?? "pre_game"] ?? 3)).slice(0, 5);
-  // Sunday, live plays its game-day moments once when it scrolls into view (Zach, Oct 22): the first live player heats
-  // up (the smoke), then catches fire, and the second goes cold. The sample's points and clock are scripted through four
-  // beats so the real PtsCell turns hot and cold on its own. Reduced motion lands on the last beat with nothing playing.
-  const liveCard = useRef<HTMLElement>(null);
-  const [heatBeat, setHeatBeat] = useState(0);
-  useEffect(() => {
-    const el = liveCard.current;
-    if (!el || typeof IntersectionObserver === "undefined") { setHeatBeat(3); return; }
-    const timers: number[] = [];
-    const io = new IntersectionObserver((es) => {
-      if (!es.some((e) => e.isIntersecting)) return;
-      io.disconnect();
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setHeatBeat(3); return; }
-      [1100, 2500, 3900].forEach((ms, i) => timers.push(window.setTimeout(() => setHeatBeat(i + 1), ms)));
-    }, { threshold: 0.5 });
-    io.observe(el);
-    return () => { io.disconnect(); timers.forEach(clearTimeout); };
-  }, []);
-  const showLive = useMemo((): Live | undefined => {
-    if (!live) return live;
-    const [hot, cold] = liveRows.filter((p) => gameNow(live, p.id, p.nfl).state === "in_game");
-    if (!hot) return live;
-    // Share of the game left, and each player's points as a share of his projection, at each beat
-    const LEFT = [0.55, 0.4, 0.3, 0.25], HOT = [0.5, 0.82, 1.06, 1.06], COLD = [0.5, 0.62, 0.72, 0.72];
-    const pts = (p: Player, r: number) => Math.round(eff(p, true) * r * 10) / 10;
-    const points = { ...live.points, [hot.id]: pts(hot, HOT[heatBeat]) };
-    const left = { ...live.left, [hot.nfl]: LEFT[heatBeat] };
-    if (cold) { points[cold.id] = pts(cold, COLD[heatBeat]); left[cold.nfl] = LEFT[heatBeat]; }
-    return { ...live, points, left };
-  }, [live, heatBeat]); // eslint-disable-line react-hooks/exhaustive-deps
   const demo = useMemo(() => {
     const tags = activeTags(INITIAL_MANAGER_TAGS, 4);
     const needs = allNeeds();
@@ -615,6 +582,9 @@ export function Landing({ onLive, onDemo }: {
         </section>
       )}
 
+      {/* Sunday live, its own section (Zach, Oct 22: "show live things and celebrate the sweat"; LandingLive.tsx) */}
+      <LandingLive />
+
       <LandingSteps trade={demo.trade} />
 
       <section className="ld-section" aria-labelledby="ld-how">
@@ -686,38 +656,9 @@ export function Landing({ onLive, onDemo }: {
               </div>
             </article>
           )}
-          {demo.trade && (
-            <article className="card ld-cell ld2-reveal wide">
-              <h3>Ideas both sides say yes to</h3>
-              <p>Tell Source what a league mate said. It reads your notes, checks both lineups, tests the deals and keeps only the ones where both teams gain points.</p>
-              <div className="ld2-notes">
-                <span className="ld2-notes-k">Your notes on {demo.mike.manager}</span>
-                <ul>{demo.notes.map((t) => <li key={t.id} className={t.kind === "wants" ? "want" : "no"}>{t.text}</li>)}</ul>
-              </div>
-              <FinderDemo run={() => ideaSteps(demo.mike, demo.tags, INITIAL_MY_TAGS, {}, 1)}>
-                <TradeIdea t={demo.trade} onOpen={() => onDemo()} onPitch={() => onDemo()} />
-              </FinderDemo>
-            </article>
-          )}
-          <article className="card ld-cell ld2-reveal wide ld2-live" ref={liveCard}>
-            <div className="ld2-live-head">
-              <div><h3>Sunday, live</h3><p>Points so far, where each player is on pace to finish, and a win chance that tracks Sleeper's. Players heat up when they're beating their projection, cool off when they're not, and finals are set in stone.</p></div>
-              <PlayCount c={playCount(live, starters.map((p) => p.nfl))} />
-            </div>
-            <div className="lu-list ld2-live-rows">
-              {liveRows.map((p) => {
-                const g = gameNow(showLive, p.id, p.nfl);
-                return (
-                  <div key={p.id} className={`lu-row${playCls(g)}`}>
-                    <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
-                    <Avatar p={p} size={40} />
-                    <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{g.state === "in_game" ? <span className="lu-live"><i aria-hidden="true" />Live</span> : g.state === "complete" ? <span className="lu-final">Final</span> : null}</span></span>
-                    <PtsCell id={p.id} g={g} proj={eff(p, true)} />
-                  </div>
-                );
-              })}
-            </div>
-          </article>
+          {/* Notes, the offer he turned down and why, and asking Source to make it work (Zach, Oct 22; the trade
+              itself now lives in the trade section's readout) */}
+          <LandingNotesCard them={demo.mike} notes={demo.notes} tags={demo.tags} avoid={demo.trade} onOpen={openDeal("trade")} />
         </div>
       </section>
 

@@ -1,0 +1,98 @@
+/* The landing's live section (LandingLive.tsx): copy and the moments list beside a big live board (the Wire face-off
+   over the Lineup rows). Phones stack it, copy first. The game-day pixels and their motion are game-day.css; this sheet
+   only sizes them up for the landing. Nothing here loops: the moment buttons ease their fill on a change or a tap. */
+
+/* ---- Layout ----------------------------------------------------------------------- */
+/* Phones: heading, the line under it, the board, then the moments. Desktop: the heading across the top, the line
+   and the moments in the left column, the board large on the right. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-livesec,
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "sub" "board" "mo"; align-items: start; align-content: center; gap: 24px;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ld-h2.ld2-split { grid-area: head; margin: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ll-sub { grid-area: sub; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ll-board { grid-area: board; margin-top: 16px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ll-moments { grid-area: mo; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-sub {
+  margin: 0; max-width: 44ch; font: 400 1rem/1.5rem var(--font-body); color: var(--muted); text-wrap: pretty;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-k {
+  font: 500 0.6875rem/1rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- Moments ---------------------------------------------------------------------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-moments { display: flex; flex-direction: column; gap: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-moments ol { list-style: none; margin: 0 -12px; padding: 0; display: grid; gap: 4px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: var(--ink); cursor: pointer; text-decoration: none;
+  font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+  transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(160ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay:active { transform: scale(0.97); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 14px; width: 100%; padding: 10px 12px;
+  border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--ink); text-align: left; cursor: pointer;
+  transition: background-color calc(200ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), border-color calc(200ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(160ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo:active { transform: scale(0.99); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo.on { background: var(--surface-2); border-color: var(--line); }
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay:hover,
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo:not(.on):hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo.on .ll-mo-ic { background: var(--bg, #0c0d0c); }
+/* The 16-bit marks at twice their row size, still on whole pixels of their grid */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic :is(.gd-flame, .gd-snow) { width: 24px; height: 28px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-flame svg { width: 19.2px; height: 24px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-snow svg { width: 21px; height: 21px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock { width: 20px; height: 26px; margin: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock svg { width: 18px; height: 26px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock[data-f="1"] svg { transform: translateY(-2px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock[data-f="2"] svg { transform: translateY(-3px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t b { font: 600 1rem/1.5rem var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t small { font: 400 0.875rem/1.25rem var(--font-body); color: var(--muted); text-wrap: pretty; }
+
+/* ---- The board -------------------------------------------------------------------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-board { display: flex; flex-direction: column; min-width: 0; padding: 0; overflow: hidden; }
+/* The face-off sits flat on the board: one surface, not a card in a card */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-fo .sb2 { margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 16px 16px 8px; border-top: 1px solid var(--line);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows { margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row {
+  grid-template-columns: 34px 48px minmax(0, 1fr) auto; gap: 10px; min-height: 76px; padding: 12px 14px;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-who { min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-name { display: block; font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-pts b { font-size: 1.25rem; line-height: 1.75rem; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-pts small { font-size: 0.6875rem; }
+/* Row-size pixel marks a step bigger to match the larger points */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows :is(.gd-flame, .gd-snow) { width: 20px; height: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-flame svg { width: 17.6px; height: 22px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-snow svg { width: 18px; height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-lock { width: 15px; height: 20px; margin-right: 6px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-lock svg { width: 13.5px; height: 19.5px; }
+
+/* ---- Tablet and up ---------------------------------------------------------------- */
+@media (min-width: 640px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-sub { font-size: 1.125rem; line-height: 1.75rem; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows-head { padding: 20px 24px 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-row { grid-template-columns: 52px 48px minmax(0, 1fr) auto; gap: 16px; min-height: 84px; padding: 14px 24px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-name { font-size: 1.0625rem; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-pts b { font-size: 1.5rem; line-height: 2rem; }
+}
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-livesec,
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto auto 1fr; grid-template-areas: "head head" "sub board" "mo board"; gap: 32px 64px;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ld-h2.ld2-split { margin-bottom: 16px; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ll-board { margin-top: 0; }
+}

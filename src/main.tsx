@@ -80,6 +80,8 @@ import "./scroll.css";
 import "./icon-center.css";
 import "./nav.css";
 import "./tagline-light.css";
+import "./landing-live.css";
+import "./landing-notes.css";
 import { monoNumbers } from "./monoNumbers";
 import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
