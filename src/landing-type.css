@@ -19,7 +19,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-h1, .ld-h2.ld2-split) {
 }
 /* The tagline is the same display size in caps; on short screens it also fits the screen's height */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
-  font-weight: 500 !important; font-size: min(var(--lt-display), 7.6vh) !important; line-height: 0.96 !important; letter-spacing: -0.02em !important;
+  font-weight: 500 !important; font-size: clamp(2.25rem, min(9vw, 8.5vh), 6.75rem) !important; line-height: 0.96 !important; letter-spacing: -0.02em !important;
 }
 /* The FAQ's side column keeps the display face, a step down so it fits beside the list */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.25rem, 3.6vw, 3.75rem) !important; }
@@ -261,6 +261,10 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
 html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks { position: relative; width: max-content; will-change: transform; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks > .yb-tx { position: absolute; left: 0; top: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { background: #D8F24A; box-shadow: 0 0 0 3px #D8F24A; color: transparent; }
+/* Each lime piece reaches well into its neighbors (padding out, margin back, so the layout matches the words above it),
+   so the strip stays whole however much it bunches and tips (Zach, Oct 22: chunks missing on tablet) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { padding-inline: 0.18em; margin-inline: -0.18em; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl-dot { padding-inline: calc(0.55em + 0.18em); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .ld2-yband-dot { visibility: hidden; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
