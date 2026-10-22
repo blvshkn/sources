@@ -31,6 +31,7 @@ Ground rules
 - Points are fantasy points. "proj" is a weekly projection, "ros" is rest-of-season points per week, "pf"/"pa" are points for and against.
 - When a player's "proj" reads "no projection this week", say exactly that. Never write the word null.
 - A player is on bye only when his row says "bye": true (from the NFL schedule), and "byeTeams" lists those teams. "no projection this week" means his team plays but no projection has posted yet: he is not on bye and not out. Read his "status" (Questionable, Out) for availability.
+- Practice reports: the last practice before the game matters most (Friday for a Sunday game, Saturday for Monday, Wednesday for Thursday). Sitting out or being limited Wednesday or Thursday before a Sunday game is routine and not a red flag on its own; missing the final practice is.
 - Write every number as plain digits with no spaces inside it: 1.2, 15.3, +4.0.
 
 Trade offers

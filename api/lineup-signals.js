@@ -59,11 +59,14 @@ const bare = (s) => norm(s).replace(/ (jr|sr|ii|iii|iv|v) /g, " ").replace(/\s+/
 /** Practice and game-status calls a story makes, read from its own words. Null when it makes none. */
 export function readStory(it) {
   const t = norm(`${it.title} ${it.summary}`);
-  const practice = /\b(did not practice|didn t practice|dnp|sat out practice|missed practice|not practicing)\b/.test(t) ? "DNP"
-    : /\b(limited (in )?practice|was limited|limited participant|practiced on a limited basis)\b/.test(t) ? "Limited"
+  const practice = /\b(did not practice|didn t practice|dnp|sat out (\w+ )?practice|missed (\w+ )?practice|absent from (\w+ )?practice|not practicing)\b/.test(t) ? "DNP"
+    : /\b(limited (in (\w+ )?)?practice|was limited|limited participant|practiced on a limited basis)\b/.test(t) ? "Limited"
       : /\b(full(y)? practic\w*|full participant|practiced in full|full go)\b/.test(t) ? "Full" : null;
   const inactive = /\b(inactive|ruled out|won t play|will not play|out for (sunday|monday|thursday|saturday|week))\b/.test(t);
-  return { ...(practice ? { practice } : {}), ...(inactive ? { inactive: true } : {}) };
+  // Which practice the story means matters: missing Wednesday or Thursday is routine (rest days, veterans), missing the
+  // last practice before the game (Friday for a Sunday game) is the real warning. Named day first, else none.
+  const day = practice ? t.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday)\b/)?.[1] : null;
+  return { ...(practice ? { practice } : {}), ...(day ? { practiceDay: day[0].toUpperCase() + day.slice(1) } : {}), ...(inactive ? { inactive: true } : {}) };
 }
 
 export async function newsPart(players, now = Date.now()) {
@@ -116,7 +119,9 @@ export async function injuriesPart(players) {
     };
     if (Object.keys(row).length > 1) items.push(row);
   }
-  return { status: "ok", practice: !!sl, items };
+  // Sleeper's participation field is its latest report, so say which day that is (Eastern, when reports come out)
+  const asOf = new Date().toLocaleDateString("en-US", { weekday: "long", timeZone: "America/New_York" });
+  return { status: "ok", practice: !!sl, ...(sl ? { practiceAsOf: asOf } : {}), items };
 }
 
 // ---- Vegas -------------------------------------------------------------------

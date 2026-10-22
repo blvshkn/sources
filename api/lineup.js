@@ -29,14 +29,15 @@ What you get (JSON in the user turn)
 - "signals": what was gathered this week. "news" (recent stories, with practice reports and inactive calls), "injuries" (Sleeper status and practice participation), "odds" (game total, spread, implied team points, and where the total ranks on the slate), "weather" (kickoff-hour temperature, wind, gusts and rain at outdoor stadiums), "rankings" (expert positional ranks). A signal that is missing or empty was not available.
 
 How to decide
-- Start from "baseline". It is the math. Change a slot only when a signal gives a clear reason the projection misses, like a player who missed practice, a likely inactive, wind of 20 mph or more, heavy rain, or a much higher or lower game total.
+- Start from "baseline". It is the math. Change a slot only when a signal gives a clear reason the projection misses, like a player who missed his final practice, a likely inactive, wind of 20 mph or more, heavy rain, or a much higher or lower game total.
+- Weigh practice by day. The last practice before the game counts most: Friday for a Sunday game, Saturday for a Monday game, Wednesday for a Thursday game. Missing or being limited on Wednesday or Thursday ahead of a Sunday game is routine (rest days, veterans, maintenance) and is not a reason to bench on its own. A DNP on the final practice day, or no practice all week, is a real warning; limited on the final day is a mild one. "practiceDay" on a story and "practiceAsOf" on the injuries list say which day a report is from. When the day is unknown, treat the report as weak.
 - Never start anyone who is out, on bye or not on the roster. Never move a locked player. Every slot must be legal.
 - Close calls go to the higher projection.
 - Return all starters, one per slot, in the order of "slots".
 
 Swaps and reasons
 - "swaps" lists each change from "current" (Sleeper's lineup): who to start, who to bench, the slot, a one-line reason, and which signal it rests on.
-- The reason cites the signal plainly, under 12 words. Examples: "Questionable, missed Thursday practice". "Wind 20+ mph in Buffalo". "Game total 51.5, highest on the slate". "Projects 4.1 more than Jaylen Warren".
+- The reason cites the signal plainly, under 12 words. Examples: "Questionable, missed Friday practice". "Wind 20+ mph in Buffalo". "Game total 51.5, highest on the slate". "Projects 4.1 more than Jaylen Warren".
 - Use "projection" as the signal when the change is just the better projection, or when he replaces someone out or on bye.
 - Only cite a signal that appears in the data. Never make up a number, a stat, a report or a forecast. Every number in a reason must come from the data.
 - "summary": one short sentence on the lineup overall.
