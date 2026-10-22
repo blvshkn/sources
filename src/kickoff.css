@@ -1,5 +1,5 @@
-/* Kickoff times on game lines ("NO v PIT · Sun 1:00 PM"). Each piece stays whole: a narrow row moves a piece to the
-   next line instead of splitting "Sun 1:00 PM" or cutting it off. */
+/* Kickoff times on game lines ("NO v PIT · Sun 1 PM"). Each piece stays whole: a narrow row moves a piece to the
+   next line instead of splitting "Sun 1 PM" or cutting it off. */
 
 /* Lineup rows: team with opponent, then the kickoff (or Live / Final) */
 html:root:not(#_):not(#_) .lu-row .lu-meta > span:not(.lu-inj):not(.lu-st) { white-space: nowrap; }

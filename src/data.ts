@@ -708,7 +708,7 @@ export function demoLeague(): LeagueData {
     specialSlots: ["K", "DEF"], specials, sleeperSpecial: teams.find((t) => t.you)?.special,
     taxiSlots: 0,
     updated: "Projections updated 14 min ago",
-    deadlines: { waivers: "Waivers run Wed 3:00 AM ET", lock: "Lineups lock Sun 1:00 PM ET", trade: "Trade deadline Nov 18" },
+    deadlines: { waivers: "Waivers run Wed 3 AM ET", lock: "Lineups lock Sun 1 PM ET", trade: "Trade deadline Nov 18" },
     byeTeams: DEMO_BYES,
     teams, players,
     sleeperSet: DEMO_SLEEPER_SET, slotHistory: DEMO_SLOT_HISTORY,

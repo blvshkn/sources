@@ -13,9 +13,9 @@ export function Kick({ when }: { when: string }) {
   return <span className="kt"><span className="kt-l">{when}</span><span className="kt-s" aria-hidden="true">{short}</span></span>;
 }
 
-/** Splits "@ HOU · Sun 1:00 PM" (gameInAt, kickLine) into its parts, the kickoff as a Kick. */
+/** Splits "@ HOU · Sun 1 PM" (gameInAt, kickLine) into its parts, the kickoff as a Kick. */
 export const gameParts = (line: string): ReactNode[] =>
-  line.split(" · ").filter(Boolean).map((x, i) => (i > 0 && /\d:\d\d\s[AP]M$/.test(x) ? <Kick key={i} when={x} /> : x));
+  line.split(" · ").filter(Boolean).map((x, i) => (i > 0 && /\d(?::\d\d)?\s[AP]M$/.test(x) ? <Kick key={i} when={x} /> : x));
 
 /** The parts of an info line, each its own item so the dots between them can drop at a wrap. */
 export function MetaParts({ parts }: { parts: ReactNode[] }) {

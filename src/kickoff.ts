@@ -1,4 +1,4 @@
-// Kickoff times by NFL team and week, so game lines read "v ATL · Sun 1:00 PM" before the game.
+// Kickoff times by NFL team and week, so game lines read "v ATL · Sun 1 PM" before the game.
 // Source order matches the game clocks (live.ts): our /api/kickoffs route, then ESPN's scoreboard straight from the
 // browser. Each week is kept in memory, with a light localStorage copy so a reload draws times right away.
 // A time only shows when ESPN's opponent matches ours and the game hasn't kicked off; otherwise the line falls back
@@ -119,12 +119,13 @@ export function useKickoffs(...weeks: (number | null | undefined)[]): number {
 
 const fmtShort = new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
 const fmtZone = new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-/** "Sun 1:00 PM" in the viewer's time zone; with `zone`, "Sun 1:00 PM EDT". Minutes always show, so times line up. */
+/** "Sun 1 PM" in the viewer's time zone; with `zone`, "Sun 1 PM EDT". Minutes show only off the hour. */
 export function fmtKick(iso: string, zone = false): string {
   const parts = (zone ? fmtZone : fmtShort).formatToParts(new Date(iso));
   const p = (t: string) => parts.find((x) => x.type === t)?.value ?? "";
-  // A no-break space keeps "1:00 PM" together
-  return [p("weekday"), `${p("hour")}:${p("minute")} ${p("dayPeriod")}`, zone ? p("timeZoneName") : ""].filter(Boolean).join(" ");
+  // A no-break space keeps "1 PM" together. On the hour the minutes drop ("Sun 1 PM"); off it they stay ("Mon 8:15 PM")
+  const hm = p("minute") === "00" ? p("hour") : `${p("hour")}:${p("minute")}`;
+  return [p("weekday"), `${hm} ${p("dayPeriod")}`, zone ? p("timeZoneName") : ""].filter(Boolean).join(" ");
 }
 
 const oppTeam = (opp: string | undefined) => /([A-Z]{2,3})\s*$/.exec(opp ?? "")?.[1];
@@ -147,10 +148,10 @@ export function kickoffOf(team: string | undefined, week: number = WEEK, opp?: s
   return started(team, week, iso) ? undefined : iso;
 }
 
-// Lines read opponent first, then when: "v ATL · Sun 1:00 PM". The team goes right before the opponent with no
-// dot between them ("RB · NO v PIT · Sun 1:00 PM"), so callers write `${nfl} ${line}`.
+// Lines read opponent first, then when: "v ATL · Sun 1 PM". The team goes right before the opponent with no
+// dot between them ("RB · NO v PIT · Sun 1 PM"), so callers write `${nfl} ${line}`.
 
-/** An opponent with the kickoff after it when it's known and still ahead: "@ HOU · Sun 1:00 PM", else the opponent as given. */
+/** An opponent with the kickoff after it when it's known and still ahead: "@ HOU · Sun 1 PM", else the opponent as given. */
 export function oppAt(team: string | undefined, opp: string, week: number = WEEK): string {
   const iso = kickoffOf(team, week, opp);
   return iso ? `${opp} · ${fmtKick(iso)}` : opp;
@@ -159,7 +160,7 @@ export function oppAt(team: string | undefined, opp: string, week: number = WEEK
 /** This week's opponent as shown: "v ATL", "vs ATL" or "@ SEA" (Sleeper's live opponents come without home/away). */
 export const oppText = (opp: string | undefined) => (!opp ? "" : /^(vs|v|@)\s/.test(opp) ? opp : `v ${opp}`);
 
-/** When this week's game is: "Sun 1:00 PM" before kickoff when the time is known, else the day from the game date
+/** When this week's game is: "Sun 1 PM" before kickoff when the time is known, else the day from the game date
  *  ("Sun", read at noon so no time zone moves it), else empty. */
 export function kickWhen(x: { nfl?: string; opp?: string; gameDate?: string }): string {
   const iso = x.opp ? kickoffOf(x.nfl, WEEK, x.opp) : undefined;
@@ -168,15 +169,15 @@ export function kickWhen(x: { nfl?: string; opp?: string; gameDate?: string }): 
   return x.gameDate ? new Date(`${x.gameDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" }) : "";
 }
 
-/** The kickoff for a team's game in any week ("Sun 1:00 PM"), empty when unknown or already started. */
+/** The kickoff for a team's game in any week ("Sun 1 PM"), empty when unknown or already started. */
 export const kickWhenIn = (team: string, opp: string, week: number): string => { const iso = kickoffOf(team, week, opp); return iso ? fmtKick(iso) : ""; };
 
-/** This week's game line: "v ATL · Sun 1:00 PM", "v ATL · Sun" without a time, just "v ATL" without a date.
+/** This week's game line: "v ATL · Sun 1 PM", "v ATL · Sun" without a time, just "v ATL" without a date.
  *  Empty with no opponent. */
 export const kickLine = (x: { nfl?: string; opp?: string; gameDate?: string }): string =>
   !x.opp ? "" : [oppText(x.opp), kickWhen(x)].filter(Boolean).join(" · ");
 
-/** gameIn with the kickoff after it: "@ HOU · Sun 1:00 PM". Null on a bye, opponent only when no time is known. */
+/** gameIn with the kickoff after it: "@ HOU · Sun 1 PM". Null on a bye, opponent only when no time is known. */
 export function gameInAt(p: Parameters<typeof gameIn>[0], week: number): string | null {
   const g = gameIn(p, week);
   return g ? oppAt(p.nfl, g, week) : g;
@@ -190,7 +191,7 @@ export function lockWhen(p: { nfl?: string; opp?: string; gameDate?: string } | 
   if (iso) return fmtKick(iso);
   return started(p.nfl, WEEK, "9999-12-31T00:00:00Z") ? "" : kickWhen(p);
 }
-/** The earliest lock among the players in a move, the deadline for making it: "Sun 1:00 PM". */
+/** The earliest lock among the players in a move, the deadline for making it: "Sun 1 PM". */
 export function moveLock(...ps: ({ nfl?: string; opp?: string; gameDate?: string } | null | undefined)[]): string {
   const isos = ps.map((p) => (p?.nfl ? kickoffOf(p.nfl, WEEK, p.opp) : undefined)).filter((x): x is string => !!x).sort();
   if (isos.length) return fmtKick(isos[0]);

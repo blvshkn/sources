@@ -22,7 +22,7 @@ export interface InboxItem {
   title: string;
   /** When: "Now", "12 min ago", "Today". Sorts the item into Now, Today or Earlier this week. */
   time: string;
-  /** Context under the title: a deadline ("Locks Sun 1:00 PM ET") or a source. Optional. */
+  /** Context under the title: a deadline ("Locks Sun 1 PM ET") or a source. Optional. */
   meta?: string;
   text: string;
   /** Time-sensitive: before lock, or waivers about to run. The only items that get the warm accent. */
@@ -146,7 +146,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   });
 }
 
-/** "Locks Sun 1:00 PM ET" -> "Locks " + mono "Sun 1:00 PM ET". Dates and times are data, so they read in Geist Mono. */
+/** "Locks Sun 1 PM ET" -> "Locks " + mono "Sun 1 PM ET". Dates and times are data, so they read in Geist Mono. */
 function Meta({ s }: { s: string }) {
   const m = /^(.*?)((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Week)\b.*|\d.*)$/.exec(s);
   if (!m) return <>{s}</>;

@@ -25,7 +25,7 @@ export interface CmpWho {
   week: number;
   /** Projected points that week; null on a bye. */
   proj: number | null;
-  /** "v ATL · Sun 1:00 PM"; null on a bye. */
+  /** "v ATL · Sun 1 PM"; null on a bye. */
   game: string | null;
   status: { word: string; why: string; tone: "bad" | "warn" } | null;
   /** Opens his player sheet. */

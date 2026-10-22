@@ -64,7 +64,7 @@ type Tab = "ALL" | WaiverPos;
 const TABS: readonly Tab[] = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"];
 /** The game line for any free agent: skill players carry it in PLAYERS, kickers and defenses on the entry itself. */
 const gameOf = (fa: WaiverFA) => kickLine(isSpecialFA(fa) ? fa : PLAYERS[fa.id] ?? {});
-/** A list row's game: the opponent, then "· Sun 1:00 PM" (or the day) as a separate piece that never splits. */
+/** A list row's game: the opponent, then "· Sun 1 PM" (or the day) as a separate piece that never splits. */
 const GameBits = ({ opp, when }: { opp: string; when: string }) => <><span className="lu-game">{opp}</span>{when && <span className="lu-game wv-when"><i>· </i>{when}</span>}</>;
 /** "vs LAR" for a defense's matchup row. The row adds the kickoff after it when known. */
 const oppShort = (fa: WaiverFA) => (isSpecialFA(fa) && fa.opp ? (/^(vs|@)\s/.test(fa.opp) ? fa.opp : `vs ${fa.opp}`) : "");
