@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPE, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { useBackClose } from "../backClose";
@@ -20,9 +20,9 @@ import { WORDMARK, WORD_FONT, WORD_WEIGHT } from "./BrandLogo";
 /** Short tap on Android when the share goes through. iOS Safari ignores it. */
 const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
 
-// Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018)
-const project = (v: number, d = 0.998) => ((v / 1000) * d) / (1 - d);
-const rubberband = (x: number, dim: number, c = 0.55) => (x * dim * c) / (dim + c * Math.abs(x));
+/** Below this the pitch is a bottom sheet with detents (sheetDrag.ts, pitch-sheet.css); from here up a centered modal. */
+const MODAL_FROM = 768;
+const isPhone = () => typeof window !== "undefined" && window.innerWidth < MODAL_FROM;
 
 type Method = "text" | "group" | "app" | "share";
 type LeagueApp = "Sleeper" | "ESPN" | "Yahoo";
@@ -246,7 +246,6 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
   const [edited, setEdited] = useState(false);
-  const drag = useRef<{ start: number; hist: { y: number; t: number }[] } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
   // Our own share view traps focus while it's up, so this sheet lets go
   useFocusTrap(sheet, !shareOpen);
@@ -258,6 +257,11 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const stop = () => { run.current?.stop(); run.current = null; };
   const closing = useRef(false);
   const reduce = useReducedMotion() ?? false;
+  // Phones get the shared sheet (sheetDrag's managed form): CSS slides it in over 320ms and out over 240ms, and the
+  // hook owns the drag, the detents and the springs. Tablet and desktop keep the centered modal and its own spring.
+  const phone = useRef(isPhone()).current;
+  const [shown, setShown] = useState(false);
+  const [out, setOut] = useState(false);
 
   const height = () => (sheet.current?.offsetHeight ?? 600) + 40;
   const apply = (y: number) => {
@@ -274,13 +278,23 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const dismiss = (velocity = 0) => {
     if (closing.current) return;
     closing.current = true;
+    if (phone) {
+      // Same close as DetailSheet: hand the sheet back to its stylesheet, 240ms out, unmounted once it has left
+      const el = sheet.current;
+      if (el) { el.style.transition = ""; el.style.transform = ""; }
+      if (scrim.current) { scrim.current.style.transition = ""; scrim.current.style.opacity = ""; }
+      setOut(true); setShown(false);
+      window.setTimeout(onClose, 240);
+      return;
+    }
     if (reduce) { sheet.current?.classList.add("fading"); scrim.current?.classList.add("fading"); window.setTimeout(onClose, 160); return; }
     // Leave the way it came in: straight down, no bounce.
     springTo(height(), 1, 0.3, Math.max(velocity, 0), onClose);
   };
 
-  // Enter from below, critically damped.
+  // Enter from below: the stylesheet's slide on phones, a critically damped spring on the modal.
   useEffect(() => {
+    if (phone) { const id = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(id); }
     apply(reduce ? 0 : height());
     if (!reduce) springTo(0, 1, 0.35, 0);
     return stop;
@@ -301,34 +315,9 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   // Escape closes it (the share view first, when that's up on top) and focus goes back to the opener
   useDismiss(sheet, () => dismiss(), { outside: false });
 
-  const down = (e: RPE) => {
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    stop(); // grab it mid-flight: continue from where it is on screen
-    closing.current = false;
-    drag.current = { start: e.clientY - yRef.current, hist: [{ y: e.clientY, t: performance.now() }] };
-  };
-  const move = (e: RPE) => {
-    if (!drag.current) return;
-    const raw = e.clientY - drag.current.start;
-    apply(raw < 0 ? rubberband(raw, 200) : raw); // resist upward, track 1:1 downward
-    drag.current.hist = [...drag.current.hist.slice(-4), { y: e.clientY, t: performance.now() }];
-  };
-  const up = () => {
-    if (!drag.current) return;
-    const h = drag.current.hist;
-    const a = h[0], b = h[h.length - 1];
-    const v = b.t - a.t > 0 ? ((b.y - a.y) / (b.t - a.t)) * 1000 : 0; // px/s
-    drag.current = null;
-    const landing = yRef.current + project(v);
-    if (landing > Math.min(height() * 0.35, 240)) dismiss(v);
-    else springTo(0, 0.8, 0.3, v); // a flick earns a little bounce
-  };
-
-  // Pull down from anywhere on the sheet once it's scrolled to the top
   useBackClose(() => dismiss());
-  usePullToDismiss(sheet,
-    (y) => { stop(); closing.current = false; apply(y); },
-    (y, v) => { if (y + project(v) > Math.min(height() * 0.35, 240)) dismiss(v); else springTo(0, 0.8, 0.3, v); });
+  // Phones: pull down from anywhere once scrolled to the top, detents, grow on a swipe up. The modal stays put.
+  usePullToDismiss(sheet, { scrim, enabled: isPhone, onDismiss: () => dismiss() });
 
   const copy = async (): Promise<boolean> => {
     try { await navigator.clipboard.writeText(text); return true; } catch { textRef.current?.select(); return false; }
@@ -421,14 +410,15 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const primaryLabel = { text: "Open Messages", group: "Copy for group chat", app: `Copy and open ${app}`, share: "Share" }[method];
 
   return (
-    <div className="scrim-wrap">
+    <div className={`scrim-wrap pitch-wrap${shown ? " in" : ""}${out ? " out" : ""}`}>
       <div ref={scrim} className="scrim" onClick={() => dismiss()} aria-hidden="true" />
-      <div ref={sheet} className="sheet" role="dialog" aria-modal="true" aria-labelledby="pitch-title"
-        style={{ transform: reduce ? undefined : "translate3d(0, 100vh, 0)" }}>
-        <div className="sheet-handle" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-hidden="true" />
+      {/* The sheet is its own scroller (data-sheet-scroll), so a swipe up at medium grows it, then scrolls it */}
+      <div ref={sheet} className="sheet pitch-sheet" role="dialog" aria-modal="true" aria-labelledby="pitch-title" data-sheet-scroll
+        style={{ transform: reduce || phone ? undefined : "translate3d(0, 100vh, 0)" }}>
+        <div className="sheet-handle" aria-hidden="true" data-sheet-chrome />
         {/* Pinned in the corner while the sheet scrolls (icon-center.css) */}
         <button className="ps-x" onClick={() => dismiss()} aria-label="Close"><Icon name="x" size={18} /></button>
-        <div className="row sheet-grab" style={{ justifyContent: "space-between" }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        <div className="row sheet-grab" style={{ justifyContent: "space-between" }} data-sheet-chrome>
           <div>
             <span className="stamp">Pitch for {them.manager}</span>
             <h2 id="pitch-title" style={{ marginTop: 10 }}>Send the offer</h2>

@@ -1,0 +1,31 @@
+/* The pitch sheet (PitchSheet.tsx) on phones: the same shell motion as the player and detail sheets. It slides in
+   over 320ms and out over 240ms, its scrim fades with it, and sheetDrag.ts adds the detents (.ps-detent, --detent-y),
+   the drag and the springs. From 768px up it's the centered modal, which runs its own spring.
+   Scoped to .pitch-wrap and .pitch-sheet, which only PitchSheet sets. Loads just before frame.css. */
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap > .scrim { opacity: 0; transition: opacity 220ms ease; }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.in > .scrim { opacity: 1; }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.out > .scrim { opacity: 0; transition: opacity 240ms cubic-bezier(0.23, 1, 0.32, 1); }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap > .sheet.pitch-sheet {
+    transform: translate3d(0, 100%, 0); transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  /* At rest: home, or medium on a tall sheet (--detent-y, 0 at large) */
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.in > .sheet.pitch-sheet { transform: translate3d(0, var(--detent-y, 0px), 0); }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.out > .sheet.pitch-sheet { transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1); }
+  /* At medium the sheet doesn't scroll on its own: a vertical swipe grows it first. Sideways scrollers still work. */
+  html:root:not(#_):not(#_):not(#_) .sheet.pitch-sheet.ps-detent[data-detent="medium"] { touch-action: pan-x; }
+}
+@media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
+  /* No slide and no spring: it fades in and out, and a detent change is an instant snap */
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap > .sheet.pitch-sheet { transform: none; transition: opacity 160ms ease; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.in > .sheet.pitch-sheet { transform: translate3d(0, var(--detent-y, 0px), 0); }
+  html:root:not(#_):not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.out > .sheet.pitch-sheet { opacity: 0; transition: opacity 160ms ease; }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap > .scrim { transition: opacity 160ms ease; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap.out > .scrim { transition: opacity 160ms ease; }
+}
+/* Tablet: the centered modal it already is from 861px, so every overlay is a modal from 768px up */
+@media (min-width: 768px) and (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap { align-items: center; padding: 16px; }
+  html:root:not(#_):not(#_):not(#_) .scrim-wrap.pitch-wrap > .sheet.pitch-sheet { border-radius: 28px; max-height: calc(100vh - 32px); }
+  html:root:not(#_):not(#_):not(#_) .sheet.pitch-sheet > .sheet-handle { display: none; }
+}

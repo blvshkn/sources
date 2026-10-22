@@ -63,7 +63,7 @@ const liveY = (el: HTMLElement) => {
  *
  * Two forms:
  * - `usePullToDismiss(sheet, { scrim, enabled, onDismiss })`: the hook does the moving and the springs.
- * - `usePullToDismiss(sheet, onMove, onRelease)`: you do (PitchSheet runs its own springs). `onMove` gets the
+ * - `usePullToDismiss(sheet, onMove, onRelease)`: you do (you run your own springs). `onMove` gets the
  *   sheet's offset (already rubber-banded), `onRelease` the offset and velocity in px/s.
  */
 export function usePullToDismiss(sheet: Ref<HTMLElement>, opts: PullOptions): void;
@@ -127,10 +127,13 @@ export function usePullToDismiss(
     let startY = 0, startX = 0, origin = 0, dragging = false, decided = false, hist: { y: number; t: number }[] = [];
     // Growing from medium to large with the finger on the body: past large, the rest of the drag scrolls the body
     let inBody = false, scrollBase = 0;
-    // caught: held mid-animation (managed). pending: mid-animation, caught on the first move (PitchSheet's own springs).
+    // caught: held mid-animation (managed). pending: mid-animation, caught on the first move (the unmanaged form).
     let caught = false, pending = false, moved = false, reduce = prefersReduced();
-    // A sheet with a fixed header scrolls an inner body (marked data-sheet-scroll); read that one
+    // A sheet with a fixed header scrolls an inner body (marked data-sheet-scroll); read that one. A sheet that
+    // scrolls as a whole (PitchSheet) carries the mark itself; its handle and title row, marked data-sheet-chrome,
+    // still move the sheet like a fixed top would, and the rest counts as the body.
     let scroller: Element = el;
+    const selfScroll = () => el.hasAttribute("data-sheet-scroll");
     const skip = (t: EventTarget | null) => t instanceof Element && !!t.closest("textarea, input, select, [contenteditable], .no-pull");
     const scrim = () => managed?.scrim?.current ?? null;
     const on = () => !managed || (managed.enabled?.() ?? true);
@@ -200,10 +203,12 @@ export function usePullToDismiss(
     const start = (e: TouchEvent) => {
       if (e.touches.length !== 1 || skip(e.target) || !on()) { decided = true; dragging = false; return; }
       startY = e.touches[0].clientY; startX = e.touches[0].clientX;
-      scroller = el.querySelector("[data-sheet-scroll]") ?? el;
+      scroller = selfScroll() ? el : el.querySelector("[data-sheet-scroll]") ?? el;
       hist = [{ y: startY, t: performance.now() }];
       caught = false; pending = false; moved = false; reduce = prefersReduced();
-      inBody = e.target instanceof Node && scroller !== el && scroller.contains(e.target);
+      // On a sheet that scrolls as a whole, its own padding and gaps (between the handle and the title) count too
+      const chrome = e.target instanceof Element && (!!e.target.closest("[data-sheet-chrome]") || (e.target === el && selfScroll()));
+      inBody = !chrome && e.target instanceof Node && (scroller !== el || selfScroll()) && scroller.contains(e.target);
       const rest = managed ? restOf(det.current) : 0;
       origin = reduce ? rest : liveY(el);
       if (Math.abs(origin - rest) > 1) {
@@ -226,7 +231,7 @@ export function usePullToDismiss(
         // Down from the top of the body pulls the sheet; up at medium grows it to large before the body scrolls
         const grow = !!managed && d.on && d.at === "medium" && dy < 0 && vertical;
         // The handle and the fixed top always move the sheet; on the body, only once it's scrolled to the top
-        const onChrome = !!managed && scroller !== el && !inBody;
+        const onChrome = !!managed && (scroller !== el || selfScroll()) && !inBody;
         dragging = (dy > 0 && vertical && (scroller.scrollTop <= 0 || onChrome)) || grow;
         if (!dragging) return;
         if (grow && reduce) {
@@ -239,7 +244,7 @@ export function usePullToDismiss(
       }
       if (pending) {
         if (Math.abs(dy) < 1) return;
-        pending = false; origin = liveY(el); startY = y; // PitchSheet stops its spring in onMove
+        pending = false; origin = liveY(el); startY = y; // the caller stops its spring in onMove
       }
       if (Math.abs(dy) >= 6) moved = true;
       e.preventDefault();
@@ -254,7 +259,7 @@ export function usePullToDismiss(
     const end = () => {
       if (!dragging) return;
       dragging = false;
-      if (pending) { pending = false; return; } // a tap on a moving PitchSheet: its spring never stopped
+      if (pending) { pending = false; return; } // a tap on a moving unmanaged sheet: its spring never stopped
       if (caught && !moved) { settle(origin, 0, heading.current); return; }
       const first = hist[0], last = hist[hist.length - 1];
       // A finger that stopped before lifting carries no velocity
