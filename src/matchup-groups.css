@@ -1,0 +1,13 @@
+/* Full matchup (Zach): slot groups split by space, not lines. The hairline between groups was too faint to read, so
+   it goes and the gap between groups opens up. The one line under the "Slot / You, then them" header stays, a step
+   lighter. Your player cards are the only thing to tap here, so they carry a light outline at rest; locked and past
+   cards stay borderless because they can't be tapped. */
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu > .mu-row + .mu-row { border-top-color: transparent !important; margin-top: -6px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu > .mu-row:first-of-type,
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu > :not(.mu-row) + .mu-row { border-top-color: color-mix(in srgb, var(--ink) 12%, transparent); }
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu > .mu-row + .mu-foot { border-top-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu button.mu-mine:not(.is-locked):not(.mu-past) { border-color: color-mix(in srgb, var(--ink) 16%, transparent); }
+@media (hover: hover) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .card.mu button.mu-mine:not(.is-locked):not(.mu-past):hover { border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .card.mu button.mu-mine:is(.is-locked, .mu-past) { border-color: transparent !important; }

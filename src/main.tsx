@@ -114,6 +114,7 @@ import "./tag-chip.css";
 import "./compare-fill.css";
 import "./sticky-switch.css";
 import "./top-nav-match.css";
+import "./matchup-groups.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
