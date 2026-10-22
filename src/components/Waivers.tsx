@@ -13,6 +13,10 @@ import { useLive } from "../live";
 import { useCountTogether } from "../motionOnce";
 import { AiLabel, Icon, StatusPill, useSticky, type IconName } from "./ui";
 import { WatchStar } from "./WatchStar";
+import { SlideNum } from "./SlideNum";
+import { useRowsArrive } from "../rowsArrive";
+import { useSwipeRows } from "../swipeRow";
+import { mo } from "../motion";
 import { Avatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
 import { PlatformLogo } from "./PlatformLogo";
@@ -323,11 +327,38 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   const byes = shown.filter((e) => e.pts === null).length;
   // Marking a player: for the week you're looking at when it's ahead, otherwise the week waivers are working on
   const target = kind === "future" ? week : defWeek;
+  // Pinned list: watching a player pins him to the top. Where every row sat just before the change, so the rows can
+  // glide from there to their new places (FLIP) instead of jumping
+  const flipFrom = useRef<Map<string, number> | null>(null);
   const toggleWatch = (e: Row) => {
+    const rowsNow = listRef.current?.querySelectorAll<HTMLElement>(":scope > .wv");
+    flipFrom.current = rowsNow ? new Map(Array.from(rowsNow, (el) => [el.dataset.id ?? "", el.getBoundingClientRect().top])) : null;
     if (watched(e.fa.id)) { onWatch((w) => { const n = { ...w }; delete n[e.fa.id]; return n; }); onToast(`Stopped watching ${e.fa.name}.`); }
     else { onWatch((w) => ({ ...w, [e.fa.id]: target })); onToast(`Watching ${e.fa.name} for week ${target}.`); }
   };
   const watchCount = all.filter((e) => watched(e.fa.id)).length;
+  useLayoutEffect(() => {
+    const from = flipFrom.current, list = listRef.current;
+    flipFrom.current = null;
+    if (!from || !list || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const vh = window.innerHeight;
+    list.querySelectorAll<HTMLElement>(":scope > .wv").forEach((el) => {
+      const was = from.get(el.dataset.id ?? "");
+      if (was === undefined) return;
+      const top = el.getBoundingClientRect().top, dy = was - top;
+      // Rows that stay off screen the whole way just move
+      if (Math.abs(dy) < 1 || Math.max(was, top) < -200 || Math.min(was, top) > vh + 200) return;
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: mo(297), easing: "cubic-bezier(0.34, 1.2, 0.64, 1)" });
+    });
+  }, [watch]);
+  // Rows drift in the first time Waivers opens this visit; a week switch, a filter or a revisit shows them settled
+  useRowsArrive(listRef, "waivers", ":scope > .wv");
+  // Phones: swipe a row right to watch him, left for Not now (swipeRow.ts). The buttons stay.
+  useSwipeRows(listRef, {
+    watched,
+    onWatch: (id) => { const e = shown.find((x) => x.fa.id === id); if (e && !watched(id)) toggleWatch(e); },
+    onNotNow: (id) => { const e = shown.find((x) => x.fa.id === id); if (e && !e.no && !skipped(id)) snooze(e); },
+  });
 
   // This week's top pickup: the engine's best pick you haven't passed on
   const nowTop = recs.find((r) => r.pick && !no(r.fa.id) && !skipped(r.fa.id));
@@ -420,7 +451,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
             {(q || findOpen) && <button className="psr-clear" onClick={() => { setQ(""); setSuggest(false); setFindOpen(false); }} aria-label={q ? "Clear search" : "Close search"}><Icon name="x" size={16} /></button>}
           </label>
           <button className="wv3-watching" aria-pressed={onlyWatch} aria-label={`Show only players you're watching (${watchCount})`} onClick={() => setOnlyWatch(!onlyWatch)}>
-            <Icon name="star" size={16} /><span className="wv3-watching-l">Watching</span><small>{watchCount}</small>
+            <WatchStar on={onlyWatch} /><span className="wv3-watching-l">Watching</span><small><SlideNum text={String(watchCount)} /></small>
           </button>
           <Select className="wv2-sort" size="pill" chevron="switch" aria-label="Sort" header="Sort by" value={sort} onChange={setSort}
             options={[
@@ -527,6 +558,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
               <Tooltip content={watchLabel}>
                 <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><WatchStar on={isWatched} /><span className="wv-act-t" aria-hidden="true">{isWatched ? "Watching" : "Watch"}</span></button>
               </Tooltip>
+              {/* Swipe row (phones): the panels a sideways drag opens, Watch on the left and Not now on the right */}
+              {!shelved && <span className="sw-under" aria-hidden="true"><span className="sw-l"><Icon name="star" size={18} />{isWatched ? "Watching" : "Watch"}</span><span className="sw-r">Not now</span></span>}
               {!shelved && <span className="ps-end">
                 <Tooltip content="Not right now. Skips him this week">
                   <button className="ps-x" aria-label={`Not right now: skip ${e.fa.name} this week`} onClick={() => snooze(e)}><Icon name="x" size={16} /><span className="wv-act-t" aria-hidden="true">Not now</span></button>

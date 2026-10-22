@@ -18,6 +18,7 @@ import { installIconTooltips } from "./tooltips";
 import { Boot } from "./components/Boot";
 import { IDLE, tracer, type TraceState } from "./think";
 import { Mark } from "./components/Logo";
+import { PullRefresh } from "./components/PullRefresh";
 import { BrandLogo } from "./components/BrandLogo";
 import { LeagueCtx } from "./components/LeagueSwitch";
 import { ManagerAvatar } from "./components/Avatar";
@@ -988,6 +989,13 @@ export default function App() {
   }, [liveKey, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reload = () => setReloadTick((t) => t + 1);
+  /** Pull to refresh's sync: the same league load as reload, without the loading screen. It resolves with a function
+   *  that puts the new data on screen; PullRefresh calls it once its mark has lifted away. */
+  const quietSync = (): Promise<() => void> => {
+    const show = (d: Parameters<typeof setLeague>[0]) => () => { setLeague(d); setVersion((v) => v + 1); };
+    if (session.mode !== "live") return Promise.resolve(show(demoLeague()));
+    return loadLeague(session.leagueId, session.userId, activeAccount(session)?.username ?? "").then(show);
+  };
   /** Back to the landing. Connected accounts are remembered and merged with the next one. */
   const toLanding = () => setSession((s) => { const accounts = accountsOf(s); return accounts.length ? { mode: "none", accounts } : { mode: "none" }; });
 
@@ -1024,6 +1032,7 @@ export default function App() {
   return (
     <>
       {boot !== "off" && <Boot step={step} trace={bootTrace} leaving={boot === "leaving"} />}
+      {session.mode !== "none" && boot === "off" && <PullRefresh onSync={quietSync} />}
       {session.mode !== "none" ? (
         <Shell key={`${leagueKey()}:${version}`} session={session} initialMyTags={initialMyTags}
           onReconnect={toLanding}

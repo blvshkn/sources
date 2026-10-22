@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useRowsArrive } from "../rowsArrive";
+import { SlideNum } from "./SlideNum";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
 import { useLoadedIn } from "../loadedIn";
@@ -643,6 +645,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const weekReady = week !== WEEK ? (wv?.week === week ? wv : peekWeek(week)) : null;
   // A week that showed its skeleton fades its rows in when it lands; a cached week is just there (loadedIn.ts)
   const weekIn = useLoadedIn(week !== WEEK && !wErr && !weekReady, week);
+  // The rows drift in the first time the lineup shows this visit; a week switch swaps them in place (rowsArrive.ts)
+  const luList = useRef<HTMLElement>(null);
+  useRowsArrive(luList, "lineup", ":scope > .lu-row", view === "lineup" && week === WEEK);
   // The lineup shown this week is the shared what-if (lineupWhatIf): Sleeper's until you swap, here or in the matchup
   const now = useNowLineup();
   const ms = nowScore(live, now.mine, now.mineK, now.changed);
@@ -697,7 +702,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "lineup" && <div className="lu-grid">
         <div className="lu-col">
           {(
-            <section className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
+            <section ref={luList} className={`card lu-list${weekIn ? " lu-in" : ""}`} aria-label="Starters and bench">
               <WeekStepper week={week} onChange={setWeek} />
               {week !== WEEK ? (wErr ? <WeekSkel week={week} msg={wErr} /> : weekReady ? <WeekPanel v={weekReady} menu={menu} onInfo={openPlayer} onCompare={setSwapCmp} /> : <WeekSkel week={week} />) : <>
               {/* Nothing to do (lineup already optimal, final or locked): no Start / Sit block at all (Zach) */}
@@ -890,7 +895,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                     options={[{ v: "pts", label: "Points" }, { v: "pct", label: "% value" }]} />
                 </div>
                 <output className="wt-readout" htmlFor={`bar-${pid}`}>
-                  {pts ? <>+{price.amount.toFixed(1)}<small> pts a week</small></> : <>+{price.amount}%<small> over value</small></>}
+                  {/* The digits that change slide as you drag (SlideNum) */}
+                  {pts ? <>+<SlideNum text={price.amount.toFixed(1)} /><small> pts a week</small></> : <>+<SlideNum text={String(price.amount)} />%<small> over value</small></>}
                 </output>
                 <input id={`bar-${pid}`} className="wt-range" type="range" min={min} max={max} step={step} value={price.amount}
                   style={{ background: `linear-gradient(90deg, rgb(var(--tab-rgb)) ${fill}%, var(--surface-3) ${fill}%)` }}

@@ -4,7 +4,8 @@
  *  1. Highlight: in League standings and Player values, on a desktop pointer, one soft pill slides between rows
  *     instead of each row lighting up on its own. It takes the size and inset of the row's own hover pill
  *     (states-qa.css), so it lands exactly where that pill would have, and action-motion.css hides the row's own pill
- *     while the sliding one is showing. Touch keeps the row's own press state.
+ *     while the sliding one is showing. On touch it becomes the press: it appears under the row you touch, follows
+ *     your finger to the next row, and lets go when you lift or start to scroll.
  *  2. Auto height: text disclosures (<details>) grow to their real height and shrink back, instead of popping. */
 import { EASE_OUT, mo } from "./motion";
 
@@ -45,7 +46,54 @@ function slideHighlight() {
     if (fresh) { void hl.offsetWidth; hl.classList.remove("place"); }
     hl.classList.add("on");
   }, { passive: true });
+  // Phones: no hover, so the pill is the press. It fades in under the row you touch (90ms), slides with your finger to
+  // the next row, and lets go when you lift, or the moment the page starts to scroll (Zach's pick)
+  let held: { list: Element; hl: HTMLElement; id: number } | null = null;
+  const placeAt = (hl: HTMLElement, row: HTMLElement) => {
+    const pill = getComputedStyle(row, "::after");
+    const t = parseFloat(pill.top) || 0, b = parseFloat(pill.bottom) || 0, l = parseFloat(pill.left) || 0, r = parseFloat(pill.right) || 0;
+    hl.style.width = `${row.offsetWidth - l - r}px`;
+    hl.style.height = `${row.offsetHeight - t - b}px`;
+    hl.style.transform = `translate(${row.offsetLeft + l}px, ${row.offsetTop + t}px)`;
+  };
+  const letGo = (now = false) => {
+    if (!held) return;
+    const { list, hl } = held;
+    held = null;
+    const off = () => { if (held?.list === list) return; hl.classList.remove("on", "touch"); list.removeAttribute("data-hl-touch"); };
+    if (now) off(); else window.setTimeout(off, mo(80));
+  };
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" || !e.isPrimary) return;
+    const row = (e.target as Element | null)?.closest?.<HTMLElement>(ROWS);
+    const list = row?.parentElement?.closest(LISTS);
+    if (!row || !list || row.parentElement !== list || row.getAttribute("aria-disabled") === "true") return;
+    letGo(true);
+    const hl = pillOf(list);
+    hl.classList.add("touch", "place");
+    placeAt(hl, row);
+    void hl.offsetWidth;
+    hl.classList.remove("place");
+    hl.classList.add("on");
+    list.setAttribute("data-hl-touch", "");
+    held = { list, hl, id: e.pointerId };
+  }, { passive: true });
+  document.addEventListener("pointermove", (e) => {
+    if (!held || e.pointerId !== held.id) return;
+    const { list, hl } = held;
+    const row = Array.from(list.children).find((c): c is HTMLElement => {
+      if (!(c instanceof HTMLElement) || !c.matches(ROWS)) return false;
+      const b = c.getBoundingClientRect();
+      return e.clientY >= b.top && e.clientY < b.bottom;
+    });
+    if (row) placeAt(hl, row);
+  }, { passive: true });
+  document.addEventListener("pointerup", (e) => { if (held && e.pointerId === held.id) letGo(); }, { passive: true });
+  document.addEventListener("pointercancel", (e) => { if (held && e.pointerId === held.id) letGo(true); }, { passive: true });
+  window.addEventListener("scroll", () => letGo(true), { passive: true, capture: true });
+
   document.addEventListener("pointerout", (e) => {
+    if (e.pointerType !== "mouse") return;
     const row = (e.target as Element | null)?.closest?.(ROWS);
     const list = row?.parentElement;
     if (!row || !list?.hasAttribute("data-hl")) return;

@@ -1,0 +1,96 @@
+/* Gesture motion (the rest of Zach's Oct 22 motion picks): pull to refresh, the touch highlight, swipe rows on
+   Waivers, the Watching filter star, sliding numbers and the pinned watch list.
+   Durations are the preview's on-screen times at the app's pace: calc(Nms * var(--mo)) with N = preview ms / 1.75.
+   Scripts set every state here only when you act (PullRefresh.tsx, actionMotion.ts, swipeRow.ts, SlideNum.tsx).
+   Loads before frame.css. */
+
+/* ---------- Pull to refresh (phones) ----------
+   The Sources mark rides down with the page and draws itself stroke by stroke as you pull. PullRefresh.tsx sets the
+   pull on the paths and the box; these rules hold the resting state, the sync outline and the lock. While Sources
+   syncs, the mark dims to a faint outline (0.22) and a trace runs over every stroke on one clock (script). */
+html:root:not(#_):not(#_):not(#_) { --ptr-mark: 30px; }
+@media (max-width: 767.98px) {
+  /* The app draws its own pull, so the browser's pull (Chrome's reload, Safari's bounce at the top) stays out of it */
+  html[data-ptr]:root:not(#_):not(#_):not(#_) { overscroll-behavior-y: none; }
+  html[data-ptr]:root:not(#_):not(#_):not(#_) body { overscroll-behavior-y: none; }
+}
+html:root:not(#_):not(#_):not(#_) .ptr-mark {
+  position: fixed; left: 50%; top: 0; z-index: 30; width: var(--ptr-mark); height: var(--ptr-mark); margin-left: calc(var(--ptr-mark) / -2);
+  opacity: 0; pointer-events: none; will-change: transform, opacity, filter;
+}
+html:root:not(#_):not(#_):not(#_) .ptr-mark[hidden] { display: none; }
+html:root:not(#_):not(#_):not(#_) .ptr-mark svg { display: block; width: 100%; height: 100%; overflow: visible; }
+html:root:not(#_):not(#_):not(#_) .ptr-mark path { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+html:root:not(#_):not(#_):not(#_) .ptr-mark .ptr-trace path { opacity: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ptr-mark.syncing .ptr-base path { stroke-dashoffset: 0 !important; opacity: 0.22; transition: opacity calc(171ms * var(--mo)) var(--ease-out); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ptr-mark.syncing .ptr-trace path { opacity: 1; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ptr-mark.locked .ptr-base path { stroke-dashoffset: 0 !important; opacity: 1; transition: opacity calc(149ms * var(--mo)) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ptr-mark path { stroke-dashoffset: 0 !important; transition: none !important; }
+}
+
+/* ---------- Highlight on phones: the pill is the press ----------
+   actionMotion.ts: touch a standings or values row and the pill fades in under it (90ms), slides with your finger to
+   the next row, and lets go when you lift or the page starts to scroll. The row's own press pill steps aside while the
+   sliding one is showing, so there's only ever one. */
+html:root:not(#_):not(#_):not(#_):not(#_) .hl-slide.touch { display: block; transition: transform calc(183ms * var(--mo)) var(--ease-spring), opacity calc(51ms * var(--mo)) var(--ease-out); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hl-slide.touch.place { transition: opacity calc(51ms * var(--mo)) var(--ease-out); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) [data-hl-touch] > :is(button.st-row, .vb-row)::after { opacity: 0 !important; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .hl-slide.touch { transition: opacity calc(51ms * var(--mo)) ease; }
+}
+
+/* ---------- Swipe row: Waivers on phones ----------
+   swipeRow.ts moves the row's own pieces (the row and its two buttons) by --sw-x and opens a lime Watch panel on the
+   left or a gray Not now panel on the right. Past 90px a swipe right watches him (the star slams, like the button) and
+   a swipe left skips him this week: the row springs back and his name is struck through left to right as it greys,
+   then it settles as Not now always has. The buttons stay for anyone who doesn't swipe. */
+html:root:not(#_):not(#_):not(#_):not(#_) .sw-under { display: none; }
+@media (max-width: 767.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ps-wv:not(.ps-no) > .wv-row { touch-action: pan-y; }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] { overflow: clip; isolation: isolate; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > :not(.sw-under) { translate: var(--sw-x, 0px) 0; }
+/* Registered so the pull itself springs back: the row's pieces and the panel's width ride the same value */
+@property --sw-x { syntax: "<length>"; inherits: true; initial-value: 0px; }
+@property --sw-p { syntax: "<number>"; inherits: true; initial-value: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw="settle"] { transition: --sw-x calc(263ms * var(--mo)) var(--ease-spring), --sw-p calc(263ms * var(--mo)) var(--ease-spring); }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under {
+  display: block; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under > span {
+  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap;
+  font: 600 0.875rem/1 var(--font-body); opacity: clamp(0, var(--sw-p, 0), 1);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under > .sw-l { left: 0; width: max(0px, var(--sw-x, 0px)); padding-left: 20px; background: var(--lime); color: #121312; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under > .sw-r { right: 0; width: max(0px, calc(var(--sw-x, 0px) * -1)); justify-content: flex-end; padding-right: 20px; background: #3A3F3C; color: var(--ink); opacity: clamp(0, calc(var(--sw-p, 0) * -1), 1); }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under svg { flex: none; overflow: visible; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .wv[data-sw] > .sw-under .sw-l svg path { fill: #121312; stroke: #121312; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .wv[data-sw-act="watch"] > .sw-under .sw-l svg { animation: act-slam calc(297ms * var(--mo)) both; }
+}
+/* Not now: his name greys to muted while a 1.5px line draws through it, left to right */
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw-act="cut"] .wv-nm { position: relative; color: var(--muted); transition: color calc(171ms * var(--mo)) var(--ease-out); }
+html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw-act="cut"] .wv-nm::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 55%; height: 1.5px; border-radius: 1px; background: currentColor;
+  transform: scaleX(1); transform-origin: left center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw-act="cut"] .wv-nm::after { animation: sw-strike calc(194ms * var(--mo)) var(--ease-out) calc(149ms * var(--mo)) both; }
+}
+@keyframes sw-strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv[data-sw="settle"] { transition: none; }
+}
+
+/* ---------- Watching filter: the same lime star as the Watch toggles ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_) .wv3-watching .wstar { width: 16px; height: 16px; }
+
+/* ---------- Sliding number: only the digits that changed slide ----------
+   SlideNum.tsx. Up for a rise, down for a drop; the old digit leaves the other way. */
+html:root:not(#_):not(#_):not(#_) .sn { display: inline; white-space: nowrap; font-variant-numeric: tabular-nums; }
+html:root:not(#_):not(#_):not(#_) .sn-c { display: inline-block; position: relative; }
+html:root:not(#_):not(#_):not(#_) .sn-c > span { display: inline-block; }
+/* Each digit is its own element, so the mono marker (monoNumbers.ts) would tag it: keep the number's own face */
+html:root:not(#_):not(#_):not(#_) .sn [data-n] { font-family: inherit !important; letter-spacing: inherit; }
+html:root:not(#_):not(#_):not(#_) .sn-c > .sn-ghost { position: absolute; left: 0; top: 0; pointer-events: none; }

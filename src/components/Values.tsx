@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { useRowsArrive } from "../rowsArrive";
 import { deny } from "../deny";
 import { BoardRow, LEAGUE, PLAYERS, TEAMS, FREE_AGENTS } from "../data";
 import { marketValue, specialValue } from "../engine";
@@ -53,6 +54,9 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
   const board = useMemo(() => LEAGUE.board?.length ? LEAGUE.board : demoBoard(), []);
   const specials = useMemo(specialBoard, []);
   const max = board[0]?.value || 1;
+  // The rows drift in the first time the list shows this visit; filters swap them in place
+  const listRef = useRef<HTMLElement>(null);
+  useRowsArrive(listRef, "values", ":scope > .vb-row");
   const mine = TEAMS.find((t) => t.you)?.id;
   const rows = (isSpecial(pos) ? specials : board).filter((r) => (pos === "ALL" || r.pos === pos) && (own === "all" || (own === "fa" ? !r.ownerId : r.ownerId === mine)));
   const owned = board.filter((r) => r.ownerId);
@@ -80,7 +84,7 @@ export function Values({ onTarget }: { onTarget?: (playerId: string, ownerId: st
         ))}
       </section>
 
-      <section className="card vb-list wv-card" aria-label="Player values">
+      <section ref={listRef} className="card vb-list wv-card" aria-label="Player values">
         <div className="wv-head">
           <div className="wv-head-t"><b>Player values</b><span>{pos === "K" ? "Kickers, valued from projections" : pos === "DEF" ? "Defenses, valued from projections" : "Top 150 by trade value"}</span></div>
           <Select className="wv-sort" size="pill" aria-label="Show" value={own} onChange={setOwn}
