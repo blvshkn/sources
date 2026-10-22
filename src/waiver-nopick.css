@@ -1,0 +1,54 @@
+/* Waivers, tablet and desktop column (Zach): when nobody beats your starters, the Top pickup card says the lineup is
+   covered and offers the best stash, the watch list and next week, so the column never sits empty. Phones hide it:
+   there the column's wrappers vanish and the list carries the page. */
+html:root:not(#_):not(#_):not(#_):not(#_) .np-card { display: none; }
+@container pg (min-width: 760px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .wv-aside .np-card { display: grid; gap: 16px; margin: 0; }
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-hero { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-mark {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px;
+  background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-hero-t { display: grid; gap: 4px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-hero-t h3 { margin: 0; font: 600 1.0625rem/1.25 var(--font-body); letter-spacing: -0.01em; color: var(--ink); }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-hero-t p { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-hero-t p b { color: var(--ink); font-weight: 600; }
+
+/* Best stash and Watching: tappable rows on the faint ink fill, 8 apart */
+html:root:not(#_):not(#_):not(#_):not(#_) .np-list { display: grid; gap: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%;
+  margin: 0; padding: 10px 12px; border: 0; border-radius: 12px; text-align: left; color: var(--ink); cursor: pointer;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  transition: background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@media (hover: hover) { html:root:not(#_):not(#_):not(#_):not(#_) .np-row:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); } }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row:active { transform: scale(0.98); }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t { display: grid; gap: 2px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t > small, html:root:not(#_):not(#_):not(#_):not(#_) .np-row-v > small {
+  font: 600 0.625rem/1.2 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 0.9375rem/1.25 var(--font-body); }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t > b.np-names { font-weight: 500; font-size: 0.875rem; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t > .wv-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-t .lu-pos {
+  display: inline-flex; align-items: center; height: 16px; padding: 0 7px; border-radius: 999px;
+  font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; background: color-mix(in srgb, currentColor 13%, transparent);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-v { display: grid; gap: 2px; justify-items: end; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-row-v > b { font: 500 1.0625rem/1.1 var(--font-mono); letter-spacing: -0.02em; }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-ico {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--lime);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-ico svg { fill: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_) .np-go { display: grid; color: var(--muted); }
+
+/* Next week: a full-width quiet pill */
+html:root:not(#_):not(#_):not(#_):not(#_) .np-next {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 44px; border-radius: 999px;
+  border: 0; background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); font: 500 0.875rem/1 var(--font-body);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .np-next svg { color: var(--muted); }

@@ -3,12 +3,12 @@
 // scrolling body above the sticky tabs; once its name scrolls away, the sheet top's compact bar (PlayerBar) fades in. Every number here comes from the app's own data: bios from Sleeper (playerBio.ts),
 // ranks from the Values board, rostered % and adds from the waiver feed. Anything without a source is left out.
 import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { FREE_AGENTS, LEAGUE, PLAYERS, SPECIAL_FREE_AGENTS, WEEK, isDemo, type BoardRow } from "../data";
-import { eff } from "../engine";
+import { FREE_AGENTS, LEAGUE, SPECIAL_FREE_AGENTS, WEEK, isDemo, type BoardRow } from "../data";
 import { teamColors } from "../jersey";
 import { feet, useBio } from "../playerBio";
 import { Avatar, AvatarPhotos, teamLogo, teamLogoHi } from "./Avatar";
 import { viaEdge } from "../imgProxy";
+import { fetchResearch } from "../sleeper";
 import { demoBoard, specialBoard } from "./Values";
 import { Tooltip } from "./Tooltip";
 import { Icon, PosBadge } from "./ui";
@@ -26,7 +26,21 @@ const compact = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1
 interface Stat { k: string; v: string; tip: string }
 /** Position and overall rank by trade value (the same order as League > Values), then rostered % and adds when the
  *  waiver feed has them. Nothing for a player the board doesn't list. */
-export function ranksFor(s: HeroSubject): Stat[] {
+const pct = (n: number) => (n > 0 && n < 1 ? "<1" : String(Math.round(n)));
+
+/** This week's Sleeper research figures (rostered and started percents), fetched once and shared by every header. */
+export function useResearch(): Record<string, { owned?: number; started?: number }> | null {
+  const [r, setR] = useState<Record<string, { owned?: number; started?: number }> | null>(null);
+  useEffect(() => {
+    if (isDemo() || !LEAGUE.season) return;
+    let on = true;
+    fetchResearch(LEAGUE.season, WEEK).then((x) => { if (on) setR(x); });
+    return () => { on = false; };
+  }, []);
+  return r;
+}
+
+export function ranksFor(s: HeroSubject, research?: Record<string, { owned?: number; started?: number }> | null): Stat[] {
   const out: Stat[] = [];
   const special = s.pos === "K" || s.pos === "DEF";
   const { board, specials } = boards();
@@ -39,17 +53,15 @@ export function ranksFor(s: HeroSubject): Stat[] {
       : `By trade value among ${s.pos}s. Same order as League > Values.` });
     if (!special) out.push({ k: "Overall", v: `#${i + 1}`, tip: "By trade value across QB, RB, WR and TE. Same order as League > Values." });
   }
+  // Rostered and Started: the share of Sleeper leagues that roster and start him this week (Zach: these over the
+  // weekly position rank). Live leagues read Sleeper's research feed; the demo uses its own clearly demo figures.
   const fa = [...FREE_AGENTS, ...SPECIAL_FREE_AGENTS].find((f) => f.id === s.id);
-  if (fa?.rostered !== undefined) out.push({ k: "Rostered", v: `${fa.rostered}%`, tip: isDemo() ? "Demo league figure: the share of leagues that roster him." : "The share of Sleeper leagues that roster him." });
-  if (fa?.adds) out.push({ k: "Adds 7d", v: compact(fa.adds), tip: isDemo() ? "Demo league figure: adds across Sleeper over the last 7 days." : "Adds across Sleeper over the last 7 days, from Sleeper's trending feed." });
-  // A rostered player has no waiver numbers, so the row fills with this week's projection rank and his value trend
-  // (Zach: the row showed only two)
-  const me = PLAYERS[s.id];
-  if (out.length < 4 && me && !special) {
-    const pool = Object.values(PLAYERS).filter((p) => p.pos === s.pos).map((p) => ({ id: p.id, v: eff(p, true) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
-    const wr = pool.findIndex((x) => x.id === s.id);
-    if (wr >= 0) out.push({ k: `Wk ${WEEK} ${s.pos}`, v: `#${wr + 1}`, tip: `By this week's projected points among the ${s.pos}s in your league and on its wire.` });
-  }
+  const rs = research?.[s.id];
+  const owned = isDemo() ? fa?.rostered : rs?.owned, started = isDemo() ? (fa?.rostered !== undefined ? Math.round(fa.rostered * 0.45) : undefined) : rs?.started;
+  if (typeof owned === "number") out.push({ k: "Rostered", v: `${pct(owned)}%`, tip: isDemo() ? "Demo league figure: the share of leagues that roster him." : `The share of Sleeper leagues that roster him, week ${WEEK}.` });
+  if (typeof started === "number") out.push({ k: "Started", v: `${pct(started)}%`, tip: isDemo() ? "Demo league figure: the share of leagues that start him." : `The share of Sleeper leagues that start him in week ${WEEK}.` });
+  // Waiver claims across Sleeper this week (Zach: keep it, labeled as claims). From the trending feed's adds.
+  if (fa?.adds) out.push({ k: "Claims 7d", v: compact(fa.adds), tip: isDemo() ? "Demo league figure: claims across Sleeper over the last 7 days." : "Times he was added across Sleeper leagues over the last 7 days, from Sleeper's trending feed." });
   const row = i >= 0 ? list[i] : null;
   if (out.length < 4 && row && !special && row.trend) {
     out.push({ k: "Value trend", v: `${row.trend > 0 ? "+" : "−"}${compact(Math.abs(row.trend))}`, tip: isDemo() ? "Demo league figure: how his trade value has moved lately." : "How his trade value has moved lately, the same figure as League > Values risers and fallers." });
@@ -172,7 +184,8 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
     b.exp !== undefined && { k: "Exp", v: b.exp === 0 ? "Rookie" : `${b.exp} yr${b.exp === 1 ? "" : "s"}`, tip: "" },
     b.college && { k: "College", v: b.college, tip: "" },
   ].filter((x): x is Stat => !!x) : [];
-  const ranks = ranksFor(s);
+  const research = useResearch();
+  const ranks = ranksFor(s, research);
   const num = b?.number;
 
   return (

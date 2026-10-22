@@ -121,6 +121,11 @@ export const fetchStatRows = (season: string, week: number, pos: string) =>
  *  for weeks already played (weeks ahead come from the season slate). Cached for 30 minutes. */
 export const fetchProjRows = (season: string, week: number, pos: string) =>
   cached(`proj:${season}:${week}:${pos}`, 30 * 60_000, () => get<StatRow[]>(`/projections/nfl/${season}/${week}?season_type=regular&position[]=${pos}`));
+/** Sleeper's research feed for one week: the share of Sleeper leagues that roster ("owned") and start ("started") each
+ *  player, as percents. Undocumented but public; an empty map if it fails, so the header just shows fewer figures. */
+export const fetchResearch = (season: string, week: number) =>
+  cached(`research:${season}:${week}`, 30 * 60_000, () =>
+    get<Record<string, { owned?: number; started?: number }>>(`/players/nfl/research/regular/${season}/${week}`).catch(() => ({} as Record<string, { owned?: number; started?: number }>)));
 /** The NFL regular-season schedule for any season (the same feed loadLeague reads for this one). The game log uses it
  *  for last season's opponents and bye week. Cached for an hour. */
 export const fetchSchedule = (season: string) =>

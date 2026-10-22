@@ -7,7 +7,7 @@ import { kickLine, kickWhen, kickWhenIn, oppAt, oppText, useKickoffs } from "../
 import { DEADLINES, FAAB, YOU, LEAGUE, WEEK, sleeperUrl , PLAYERS, TEAMS, FREE_AGENTS, SPECIAL_FREE_AGENTS, FA_SEARCH, WaiverFA, WaiverPos, BidTier, isSpecialFA, gameNow, lockedThisWeek, leagueKey, noTeam } from "../data";
 import { WaiverRec, bidDollars, bidRange, bidSourceNote, bidsFor, eff, fitScore, fmt, irReport, lockedRecs, recDrop, recFor, round1, slotGaps, specialBidRange, weakSet } from "../engine";
 import { fetchFaPool } from "../sleeper";
-import { WeekView, loadWeek, peekWeek } from "../weeks";
+import { WeekView, lastWeek, loadWeek, peekWeek } from "../weeks";
 import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../waiverWeeks";
 import { useLive } from "../live";
 import { AiLabel, Icon, StatusPill, useSticky, type IconName } from "./ui";
@@ -369,7 +369,13 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           why={kd ? kd.line : top.fit ?? (!/^Projects /.test(top.fa.why) ? top.fa.why : null)}
           plan={kd?.fix ? <span>Fills your {kd.fix === "empty" ? "empty" : kd.fix === "bye" ? "bye-week" : "injured"} {top.fa.pos} slot. <b>{fmt(top.gain)} pts</b> this week.</span>
             : starts ? <span>Starts for you. <b>{fmt(top.gain)} pts</b> this week.</span> : <span>Bench stash for now. Doesn't crack your lineup this week.</span>} />;
-      })() : null /* Nothing worth claiming: no card at all (Zach) */)}
+      })() : (() => {
+        // Nobody worth claiming: say so, then give the column something to do (tablet and desktop only; phones hide it)
+        const stash = [...recs].filter((r) => !no(r.fa.id) && !skipped(r.fa.id)).sort((a, b) => b.value - a.value)[0];
+        const watching = all.filter((e) => watched(e.fa.id)).map((e) => e.fa.name);
+        return <NoPick stash={stash} watching={watching} next={WEEK < lastWeek() ? WEEK + 1 : null}
+          onOpen={(id) => setOpen(id)} onWatching={() => { setPos("ALL"); setOnlyWatch(true); }} onNext={(w) => { setWeek(w); setOpen(null); }} />;
+      })())}
       {kind !== "current" && (topRow ? (() => {
         const x = topRow, r = x.r!, starts = x.gain > 0.05, past = topKind === "past", week = topWeek;
         return <TopCard rec={r} irMove={irMove?.name} onToast={onToast} starts={starts} game={x.c?.opp ? (past ? x.c.opp : oppAt(r.fa.nfl, x.c.opp, week)) : ""} eyebrow={past ? `Top scorer, week ${week}` : `Top pickup, week ${week}`} onSnooze={() => snooze(x)}
@@ -625,6 +631,40 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
 /** Top pickup with nobody to pick, same frame so the column doesn't jump. */
 function EmptyTop({ label, text }: { label: string; text: string }) {
   return <section className="card topk wv3-topk-empty" aria-label="Top pickup"><div className="topk-head"><span className="topk-label">{label}</span></div><p className="small muted">{text}</p></section>;
+}
+
+/** Top pickup when nobody beats your starters this week. Tablet and desktop column only: it says the lineup is
+ *  covered, then offers the best stash, the watch list and next week, so the column never sits empty (Zach). */
+function NoPick({ stash, watching, next, onOpen, onWatching, onNext }: {
+  stash?: WaiverRec; watching: string[]; next: number | null;
+  onOpen: (id: string) => void; onWatching: () => void; onNext: (week: number) => void;
+}) {
+  const names = watching.length <= 2 ? watching.join(" and ") : `${watching.slice(0, 2).join(", ")} and ${watching.length - 2} more`;
+  return (
+    <section className="card topk np-card" aria-label="Top pickup">
+      <div className="topk-head"><span className="topk-label">Top pickup</span><AiLabel /></div>
+      <div className="np-hero">
+        <span className="np-mark" aria-hidden="true"><Icon name="check" size={20} /></span>
+        <div className="np-hero-t">
+          <h3>Your lineup is covered</h3>
+          <p>No free agent beats your week {WEEK} starters. {FAAB.enabled ? <>Hold your <b className="num">${FAAB.remaining}</b> for a bigger need.</> : <>Keep your waiver priority for a bigger need.</>}</p>
+        </div>
+      </div>
+      {(stash || watching.length > 0) && <div className="np-list">
+        {stash && <button className="np-row" onClick={() => onOpen(stash.fa.id)} aria-haspopup="dialog">
+          <Avatar p={stash.fa} size={40} />
+          <span className="np-row-t"><small>Best stash</small><b>{stash.fa.name}</b><span className="wv-meta"><b className={`lu-pos p-${stash.fa.pos}`}>{stash.fa.pos}</b>{stash.fa.nfl}</span></span>
+          <span className="np-row-v"><small>ROS / wk</small><b className="num">{stash.value.toFixed(1)}</b></span>
+        </button>}
+        {watching.length > 0 && <button className="np-row" onClick={onWatching}>
+          <span className="np-ico" aria-hidden="true"><Icon name="star" size={18} /></span>
+          <span className="np-row-t"><small>Watching {watching.length}</small><b className="np-names">{names}</b></span>
+          <span className="np-go" aria-hidden="true"><Icon name="chev" size={16} /></span>
+        </button>}
+      </div>}
+      {next && <button className="btn np-next" onClick={() => onNext(next)}>Look ahead to week {next}<Icon name="chev" size={16} /></button>}
+    </section>
+  );
 }
 
 /** Keeps a card at the tallest it's been for the same slot, so swapping in the next pick never pulls the page up. */

@@ -26,3 +26,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .av.av-cut > .
 }
 /* Player header: the photo sits 8px further left; the name and team line stay where they were. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art > .av.av-cut { margin-left: -28px; margin-right: -42px; }
+
+/* Player header figures: with five (rank, overall, rostered, started, claims) the cells tighten their side padding so
+   every label fits on a phone */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-ranks:has(> div:nth-child(5)) > div { padding-inline: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-ranks:has(> div:nth-child(5)) > div:first-child { padding-left: 12px; }

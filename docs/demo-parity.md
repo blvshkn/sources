@@ -155,3 +155,7 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 
 - The Slot report's weekly bars (`DEMO_SLOT_HISTORY` in data.ts) are their own fixture, not summed from the demo season.
 
+
+## Oct 22
+- Waivers, tablet and desktop: when nobody beats your starters, the Top pickup card shows "Your lineup is covered" with the best stash, the watch list and a look ahead to next week. The demo shows it only when its engine finds no pick.
+- Player header figures: Rostered, Started and Claims 7d (live: Sleeper's research and trending feeds). The demo's Started is a demo figure derived from its Rostered, labeled as demo in the tip.
