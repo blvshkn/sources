@@ -163,3 +163,19 @@ Status: OK means it shows in the demo with no extra data. Seeded means demo data
 - Lineup what-if note: tighter padding; the buttons fill the width under the text, and sit right of it (up to 400) only on a very wide card.
 - Skeletons pulse as a wave, row by row. Player header position badge uses the sheet slot chip. Revisiting a section fades the page in quickly instead of replaying the entrance.
 - Lineup, Start / Sit compare: each pick has a "Search your roster" field in place of the Change menu (focus shows the roster, typing narrows it, one tap or Enter picks). Picks lie on their side, headshot left, on cards 560px and wider, and stack one above the other with VS between on phones. The compare rows are thin rounded bars out from the middle with the values beside them. Same in the demo. The demo league has no playoff, last 3 or trade value figures, so its compare shows only the week and rest-of-season rows (unchanged from before).
+
+### Action motion (Oct 22)
+
+Motion plays when you act, when something actually changes, or on first arrival. How to see each one in the demo:
+
+| Effect | In the demo | Status |
+| --- | --- | --- |
+| Watch star: lift, slam, small squash, button dips; on is the star filled lime, off empties it | Waivers, any row's star, or Watch in a player sheet | OK |
+| Spring check: pops and draws itself when newly reached | Lineup, Start / Sit: tap Use optimal lineup and "Lineup set" pops. Overview, On your radar: tap Not right now on the waiver row until the wire is covered, and the Waivers row's check pops. Coming back to either page shows it settled | OK |
+| Swipe toast: springs up, flick it sideways past 80px to dismiss, Undo and auto-dismiss unchanged | Any toast, for example Watch on a waiver row | OK |
+| Bell: swings once and its lime dot springs in when a new inbox item arrives; opening the inbox clears the dot quietly | Seeded: about 20 seconds after your first tap or keypress, once per visit, Mike offers Jerry Jeudy for your Dalton Kincaid (his TE, Sam LaPorta, is out). Inbox only; the Overview cards don't change | Seeded |
+| Shiny text: slow sheen on the thinking label and on AI summary while the answer is still writing | Ask, any starter question (the built-in answer when Sources AI is unreachable) | OK |
+| Decrypted text: the Start / Sit verdict resolves left to right when it changes | Lineup, Compare: change the week or a pick. Not on first open | OK |
+| Highlight: one pill slides between rows on a desktop pointer | League, Standings and Values | OK |
+| Auto height: text disclosures grow and shrink to their real height | Lineup, price check "teams can't get there"; landing FAQ | OK |
+| Hover inside cards: faint fill, chevron nudges 3px, avatars 1.05x, presses sink to 0.985 | Rows on every page (hover on desktop only) | OK |

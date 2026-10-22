@@ -31,10 +31,10 @@ export function Stamp({ children = "Per sources" }: { children?: ReactNode }) {
 }
 
 /** Guardrail: AI-written text is labeled and links to the data behind it. */
-export function AiLabel({ onData, dataLabel = "See the numbers" }: { onData?: () => void; dataLabel?: string }) {
+export function AiLabel({ onData, dataLabel = "See the numbers", thinking = false }: { onData?: () => void; dataLabel?: string; /** Still writing: a slow sheen runs across the words until the answer lands */ thinking?: boolean }) {
   return (
     <span className="ai-label">
-      <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ai-label-k"><AiMark size={14} />AI summary</span></Tooltip>
+      <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ai-label-k"><AiMark size={14} /><span className={thinking ? "ai-shine" : undefined}>AI summary</span></span></Tooltip>
       {onData && <button className="linkish" onClick={onData}>{dataLabel}</button>}
     </span>
   );

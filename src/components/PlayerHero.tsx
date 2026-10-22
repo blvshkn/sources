@@ -11,7 +11,8 @@ import { viaEdge } from "../imgProxy";
 import { fetchResearch } from "../sleeper";
 import { demoBoard, specialBoard } from "./Values";
 import { Tooltip } from "./Tooltip";
-import { Icon, PosBadge } from "./ui";
+import { PosBadge } from "./ui";
+import { WatchStar } from "./WatchStar";
 
 export interface HeroSubject { id: string; name: string; pos: string; nfl: string }
 
@@ -228,7 +229,7 @@ export function WatchButton({ on, name, week, onToggle }: { on: boolean; name: s
   return (
     <Tooltip content={label}>
       <button className="btn btn-sm ph-watch" aria-pressed={on} aria-label={`${label}: ${name}`} onClick={onToggle}>
-        <Icon name="star" size={16} /><span className="ph-watch-l">{on ? "Watching" : "Watch"}</span>
+        <WatchStar on={on} /><span className="ph-watch-l">{on ? "Watching" : "Watch"}</span>
       </button>
     </Tooltip>
   );

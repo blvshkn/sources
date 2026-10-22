@@ -7,6 +7,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { IdeaFeedbackCtx } from "./IdeaFeedback";
 import { playerById, teamById, YOU, TEAMS, Pos, ManagerTag, DEADLINES, WEEK, OPPONENT_ID, Player, PLAYERS, onBye } from "../data";
 import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../engine";
+import { Arrived } from "./Arrived";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
 import { PlayerSheet } from "./lazy";
@@ -505,16 +506,18 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         </div>
         {briefing.lineup !== null ? <button className="brief-row" onClick={() => onGo("roster")}>
           <span className="brief-k">Lineup fix</span><span className="grow">{briefing.lineup}</span><Icon name="chev" size={16} />
-        </button> : briefing.ok?.lineup && <button className="brief-row is-ok" onClick={() => onGo("roster")}>
-          <span className="brief-k"><Icon name="check" size={14} />Lineup</span><span className="grow">{briefing.ok.lineup}</span><Icon name="chev" size={16} />
-        </button>}
+        </button> : null}
+        <Arrived k="ok-lineup" on={briefing.lineup === null && !!briefing.ok?.lineup}>{(play) => <button className={`brief-row is-ok${play ? " ck-pop" : ""}`} onClick={() => onGo("roster")}>
+          <span className="brief-k"><Icon name="check" size={14} />Lineup</span><span className="grow">{briefing.ok!.lineup}</span><Icon name="chev" size={16} />
+        </button>}</Arrived>
         {briefing.trade ? <button className="brief-row" onClick={() => briefing.trade && onOpen(briefing.trade)}>
           <span className="brief-k">Top trade</span>
           <span className="grow"><>Your {swap(briefing.trade.give)} for {teamById(briefing.trade.partnerId).manager}'s {swap(briefing.trade.get)}: you <Delta n={briefing.trade.youDelta} />, them <Delta n={briefing.trade.themDelta} /></></span>
           <Icon name="chev" size={16} />
-        </button> : briefing.ok?.trade && <button className="brief-row is-ok" onClick={() => onGo("trade")}>
-          <span className="brief-k"><Icon name="check" size={14} />Trades</span><span className="grow">{briefing.ok.trade}</span><Icon name="chev" size={16} />
-        </button>}
+        </button> : null}
+        <Arrived k="ok-trade" on={!briefing.trade && !!briefing.ok?.trade}>{(play) => <button className={`brief-row is-ok${play ? " ck-pop" : ""}`} onClick={() => onGo("trade")}>
+          <span className="brief-k"><Icon name="check" size={14} />Trades</span><span className="grow">{briefing.ok!.trade}</span><Icon name="chev" size={16} />
+        </button>}</Arrived>
         {sent && onOpenSent && <SentLine d={sent} onOpen={onOpenSent} />}
         {briefing.waiverPass ? <div className="ps-brief">
           <button className="brief-row" onClick={() => onGo("waivers")}>
@@ -525,9 +528,10 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
               <button className="brief-snooze" aria-label={`Not right now: skip ${briefing.waiverPass.name} this week`} onClick={() => onSnooze(briefing.waiverPass!)}>Not right now</button>
             </Tooltip>
           )}
-        </div> : briefing.ok?.waiver && <button className="brief-row is-ok" onClick={() => onGo("waivers")}>
-          <span className="brief-k"><Icon name="check" size={14} />Waivers</span><span className="grow">{briefing.ok.waiver}</span><Icon name="chev" size={16} />
-        </button>}
+        </div> : null}
+        <Arrived k="ok-waiver" on={!briefing.waiverPass && !!briefing.ok?.waiver}>{(play) => <button className={`brief-row is-ok${play ? " ck-pop" : ""}`} onClick={() => onGo("waivers")}>
+          <span className="brief-k"><Icon name="check" size={14} />Waivers</span><span className="grow">{briefing.ok!.waiver}</span><Icon name="chev" size={16} />
+        </button>}</Arrived>
         {briefing.ask && onAsk && <button className="brief-row brief-ask" onClick={() => onAsk(briefing.ask!)}>
           <span className="brief-k"><Icon name="spark" size={14} />Ask</span><span className="grow">"{briefing.ask}"</span><Icon name="chev" size={16} />
         </button>}

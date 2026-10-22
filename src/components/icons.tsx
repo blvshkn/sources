@@ -118,20 +118,11 @@ function play(svg: Element) {
   svg.setAttribute("data-play", "");
   window.setTimeout(() => svg.removeAttribute("data-play"), PLAY_MS);
 }
-/** The bell's ring on a click: restarts even mid hover-ring, and swings harder (data-strong). */
-const ringTimers = new WeakMap<Element, number>();
-function ring(svg: Element) {
-  window.clearTimeout(ringTimers.get(svg));
-  svg.removeAttribute("data-play"); svg.removeAttribute("data-strong");
-  void (svg as SVGElement).getBoundingClientRect();
-  svg.setAttribute("data-play", ""); svg.setAttribute("data-strong", "");
-  ringTimers.set(svg, window.setTimeout(() => { svg.removeAttribute("data-play"); svg.removeAttribute("data-strong"); }, PLAY_MS));
-}
 /** Reduced motion: a small opacity tick instead of any movement. */
 const tick = (el: Element) => (el as HTMLElement).animate?.([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 220, easing: "ease-out" });
 
 /**
- * Hover plays (mouse only, never touch), the inbox bell and the badge bump. Route-change plays are pure CSS on aria-current.
+ * Hover plays (mouse only, never touch). Route-change plays are pure CSS on aria-current.
  * Reduced motion turns all of it off; the stylesheet does the same for the CSS side.
  */
 export function iconMotion() {
@@ -152,34 +143,6 @@ export function iconMotion() {
     });
   }, { passive: true });
 
-  // Opening or closing the inbox rings its bell harder than a hover, and the unread badge pulses once. A click, so a
-  // panel that starts open on desktop stays still on load.
-  document.addEventListener("click", (e) => {
-    const control = (e.target as Element | null)?.closest?.("[aria-controls='inbox']");
-    if (!control) return;
-    const badge = control.querySelector(".ibx-badge");
-    if (reduced.matches) { control.querySelectorAll("svg.ic-bell").forEach(tick); if (badge) tick(badge); return; }
-    control.querySelectorAll("svg.ic-bell").forEach(ring);
-    badge?.animate?.([{ scale: "1" }, { scale: "1.28", offset: 0.4 }, { scale: "1" }], { duration: 360, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
-  }, { passive: true });
-
-  // Badge bump when the unread count rises. Until the person first interacts, counts are only recorded, so the
-  // badge filling in as league data loads never animates.
-  const seen = new WeakMap<Element, number>();
-  let armed = false;
-  const arm = () => { armed = true; };
-  document.addEventListener("pointerdown", arm, { once: true, passive: true });
-  document.addEventListener("keydown", arm, { once: true, passive: true });
-  const check = () => {
-    document.querySelectorAll(".ibx-badge").forEach((b) => {
-      const n = parseInt(b.textContent || "0", 10) || 0;
-      const prev = seen.get(b) ?? (armed ? 0 : n);
-      seen.set(b, n);
-      if (n <= prev || reduced.matches) return;
-      b.animate?.([{ scale: "1" }, { scale: "1.3", offset: 0.35 }, { scale: "0.94", offset: 0.7 }, { scale: "1" }], { duration: 420, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
-      const bell = b.parentElement?.querySelector("svg.ic-bell");
-      if (bell) play(bell);
-    });
-  };
-  new MutationObserver(check).observe(document.body, { subtree: true, childList: true, characterData: true });
+  // A new inbox item swinging the bell and springing its dot is App's (data-ring, action-motion.css). Opening the
+  // inbox is quiet, so clicks no longer ring it.
 }

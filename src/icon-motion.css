@@ -1,8 +1,8 @@
 /* ---------- Icon motion ----------
    One purposeful micro-animation per icon. Each plays once on mouse hover, where src/components/icons.tsx sets
    [data-play] for a beat, so these only apply under (hover: hover) and (pointer: fine). A tab tap never replays one:
-   the active color change is the feedback. The bell plays when the inbox is opened and when the unread count rises,
-   on any device.
+   the active color change is the feedback. A new inbox item swings the bell
+   on any device (action-motion.css); opening the inbox is quiet.
    Transform and opacity only, on parts inside the svg, so the icon box never changes size.
    Reduced motion: none of this applies. The active color change is the only feedback. */
 

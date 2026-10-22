@@ -1,0 +1,129 @@
+/* Action motion (Oct 22 picks from the motion preview, ported to the real components).
+   Zach's rule: animate when you act, when something actually changes, or on first arrival. Never loop (the AI sheen
+   runs only while Sources is thinking). Nothing animates on mount for a state that already existed: the scripts that
+   set these classes (WatchStar, Arrived, Decrypt, SwipeToast, App's bell, actionMotion.ts) only set them on a change.
+   Durations are the preview's times at the app's pace: calc(Nms * var(--mo)) with N = preview ms / 1.75.
+   Loads before frame.css. */
+
+/* ---------- Watch star: lift, slam, small squash; the button dips on impact ----------
+   Off is the normal outline star; on is the same star filled lime. Turning it on lifts it a little (6px, 1.18x,
+   tilted 10deg), drops it fast, squashes it on contact and settles. No ring, no sparkles. */
+html:root:not(#_):not(#_):not(#_) .wstar { display: inline-grid; place-items: center; flex: none; }
+html:root:not(#_):not(#_):not(#_) .wstar > svg { display: block; overflow: visible; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar[data-on] > svg { color: var(--lime); stroke: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar[data-on] > svg path { fill: var(--lime); stroke: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .wstar:not([data-on]) > svg path { fill: transparent; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) button[data-slam] .wstar { animation: act-slam calc(297ms * var(--mo)) both; }
+  html:root:not(#_):not(#_):not(#_):not(#_) button[data-slam] { animation: act-impact calc(137ms * var(--mo)) var(--ease-out) calc(131ms * var(--mo)); }
+}
+@keyframes act-slam {
+  0% { transform: none; animation-timing-function: var(--ease-out); }
+  40% { transform: translateY(-6px) scale(1.18) rotate(-10deg); animation-timing-function: var(--ease-slam); }
+  58% { transform: translateY(1px) scale(1.08, 0.86); animation-timing-function: var(--ease-out); }
+  78% { transform: scale(0.97, 1.04); }
+  100% { transform: none; }
+}
+@keyframes act-impact { 40% { transform: translateY(2px) scale(0.98); } }
+
+/* ---------- Spring check: pops with a small overshoot and draws itself ----------
+   Lineup set (Roster) and the covered rows in On your radar (Wire). ck-pop is set only on the render where the state
+   is newly reached (Arrived.tsx). */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_) .ck-pop svg.ic-check { overflow: visible; animation: act-pop calc(320ms * var(--mo)) var(--ease-spring) both; }
+  html:root:not(#_):not(#_):not(#_) .ck-pop svg.ic-check path { stroke-dasharray: 24; animation: act-draw calc(240ms * var(--mo)) var(--ease-out) calc(46ms * var(--mo)) both; }
+  html:root:not(#_):not(#_):not(#_) .ck-pop .ck-t { display: inline-block; animation: act-label-in calc(240ms * var(--mo)) var(--ease-out) calc(126ms * var(--mo)) both; }
+}
+@keyframes act-pop { from { transform: scale(0.5); opacity: 0; } }
+@keyframes act-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes act-label-in { from { opacity: 0; transform: translateX(-4px); } }
+
+/* ---------- Swipe toast: springs up from the bottom, flicks away sideways ----------
+   Still transitions with @starting-style (styles.css), so the same message sent twice stays put; the entrance just
+   rides a spring now. While a finger holds it nothing transitions; on release it springs back or flies off. */
+html:root:not(#_):not(#_) .toast.swipe-toast { touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+html:root:not(#_):not(#_) .toast.swipe-toast .toast-undo { cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_) .toast.swipe-toast {
+    transition: opacity calc(171ms * var(--mo)) var(--ease-out), translate calc(274ms * var(--mo)) var(--ease-spring), scale calc(274ms * var(--mo)) var(--ease-spring);
+  }
+  @starting-style { html:root:not(#_):not(#_) .toast.swipe-toast { opacity: 0; translate: 0 24px; scale: 0.96; } }
+  html:root:not(#_):not(#_) .toast.swipe-toast.leaving { transition-timing-function: var(--ease-out); transition-duration: var(--dur-fast); }
+  html:root:not(#_):not(#_) .toast.swipe-toast.is-settle {
+    transition: transform calc(240ms * var(--mo)) var(--ease-spring), opacity calc(171ms * var(--mo)) var(--ease-out), translate var(--dur-fast) var(--ease-out), scale var(--dur-fast) var(--ease-out);
+  }
+}
+html:root:not(#_):not(#_) .toast.swipe-toast.is-drag { transition: none !important; cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_) .toast.swipe-toast.is-settle { transition: opacity var(--dur-fast) ease; }
+}
+
+/* ---------- Bell: a new inbox item swings it once and springs its lime dot in ----------
+   App sets data-ring for one beat when something new arrives this visit (never on mount, never on open). The dome
+   swings from its crown and damps out; the clapper lags. The dot scales in on a spring. */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m1 { transform-box: view-box; transform-origin: 12px 2px; animation: act-ring calc(514ms * var(--mo)) var(--ease-out) both; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m2 { transform-box: view-box; transform-origin: 12px 17px; animation: act-clap calc(514ms * var(--mo)) var(--ease-out) calc(23ms * var(--mo)) both; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge.is-new { animation: act-dot-in calc(240ms * var(--mo)) var(--ease-spring) calc(114ms * var(--mo)) both; }
+}
+@keyframes act-ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
+@keyframes act-clap { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-10deg); } 30% { transform: rotate(9deg); } 45% { transform: rotate(-6deg); } 60% { transform: rotate(3deg); } 75% { transform: rotate(-1deg); } }
+@keyframes act-dot-in { from { scale: 0; } }
+
+/* ---------- Shiny text: a slow sheen while Sources is thinking ----------
+   The Ask trace's label and the AI summary label while an answer is still being written. The class comes off when
+   the answer lands, so the sheen stops there. */
+html:root:not(#_):not(#_):not(#_) :is(.thk .thk-word.shim, .ai-shine) {
+  background-image: linear-gradient(100deg, var(--faint) 0%, var(--faint) 38%, #FFFFFF 50%, var(--faint) 62%, var(--faint) 100%);
+  background-size: 300% 100%; background-repeat: no-repeat; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+  animation: act-shine calc(1029ms * var(--mo)) linear infinite;
+}
+@keyframes act-shine { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html:root:not(#_):not(#_):not(#_) :is(.thk .thk-word.shim, .ai-shine) { animation: none; background: none; -webkit-text-fill-color: currentColor; color: inherit; }
+}
+
+/* ---------- Decrypted text: the Start / Sit verdict resolves left to right ----------
+   Decrypt.tsx: the scrambled run is lime Geist Mono; the part not reached yet holds its space, invisible. */
+html:root:not(#_):not(#_):not(#_) .dc-scr { color: var(--lime); font-family: var(--font-mono); font-weight: 500; }
+html:root:not(#_):not(#_):not(#_) .dc-rest { visibility: hidden; }
+
+/* ---------- Highlight: one pill slides between rows (desktop pointer only) ----------
+   League standings and Player values. actionMotion.ts sizes it to the row's own hover pill; the row's own pill hides
+   while it's hovered, so there's only ever one. Press and keyboard focus keep the row's own states. */
+html:root:not(#_):not(#_):not(#_) [data-hl] { position: relative; isolation: isolate; }
+html:root:not(#_):not(#_):not(#_) .hl-slide {
+  position: absolute; top: 0; left: 0; z-index: -1; border-radius: 10px; background: var(--st-tint); opacity: 0; pointer-events: none;
+  transition: transform calc(183ms * var(--mo)) var(--ease-spring), opacity calc(114ms * var(--mo)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .hl-slide.on { opacity: 1; }
+html:root:not(#_):not(#_):not(#_) .hl-slide.place { transition: opacity calc(114ms * var(--mo)) var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_) [data-hl] > :is(button.st-row, .vb-row):hover:not(:active):not(:focus-visible)::after { opacity: 0; }
+}
+@media (hover: none), (pointer: coarse) { html:root:not(#_):not(#_):not(#_) .hl-slide { display: none; } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_) .hl-slide { transition: opacity calc(114ms * var(--mo)) ease; } }
+
+/* ---------- Auto height: text disclosures open and close to their real height ----------
+   actionMotion.ts animates the height; the chevron turns back as soon as a close starts, not when it ends. */
+html:root:not(#_):not(#_):not(#_) .wt-none[data-ah="close"] summary > :last-child { transform: rotate(90deg); }
+html:root:not(#_):not(#_):not(#_) .ld2-faq details[data-ah="close"] summary svg { transform: rotate(90deg); }
+
+/* ---------- Hover states inside a card (extends states-qa.css) ----------
+   states-qa already gives rows their faint pill and nudges the trailing chevron on Overview, This week and standings
+   rows. This adds the same 3px nudge to the other rows that end in a chevron, lifts avatars 1.05x on hover, and sinks
+   a press to 0.985. Hover only on a fine pointer; presses everywhere. */
+html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .partner-card, .sr-main, .set-link, .wn-miss) :is(.av, .tp-av) {
+  transition: transform var(--st-dur, calc(160ms * var(--mo))) var(--st-ease, var(--ease-out)), opacity calc(171ms * var(--mo)) ease;
+}
+html:root:not(#_):not(#_):not(#_) :is(.psr-row, .lsw-row, .sr-main, .set-link, .wk-more, .wn-miss) > svg.ic-chev:last-child { transition: transform var(--st-dur, calc(160ms * var(--mo))) var(--st-ease, var(--ease-out)); }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not([aria-disabled="true"]), button.st-row, .psr-row, .lsw-row, .card .partner-card, .sr-main, .set-link, .wn-miss):hover :is(.av, .tp-av) { transform: scale(1.05); }
+  html:root:not(#_):not(#_):not(#_) :is(.psr-row, .lsw-row, .sr-main, .set-link, .wk-more, .wn-miss):hover > svg.ic-chev:last-child { transform: translateX(3px); }
+  /* The chevron moves once, by the row's nudge, not also by its own hover play */
+  html:root:not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row, .psr-row, .lsw-row, .sr-main, .set-link, .wk-more, .wn-miss) svg.ic-chev[data-play] .m1 { animation: none !important; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:root:not(#_):not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row, .set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.985) !important; }
+}

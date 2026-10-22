@@ -137,6 +137,7 @@ import "./matchup-sheet-air.css";
 import "./whatif-note.css";
 import "./skeleton-wave.css";
 import "./startsit-compare.css";
+import "./action-motion.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";
@@ -147,6 +148,7 @@ import { chartReveal } from "./chartReveal";
 import { iconMotion } from "./components/icons";
 import { scrollAreas } from "./components/ScrollArea";
 import { edgeFades } from "./components/edgeFade";
+import { actionMotion } from "./actionMotion";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -159,3 +161,4 @@ chartReveal(document.getElementById("root")!);
 iconMotion();
 scrollAreas();
 edgeFades();
+actionMotion();

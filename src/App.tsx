@@ -55,6 +55,7 @@ import { editWatch, liveWatch, looseWatch, mergeWatch, migrateWatch, type WatchS
 import { leagueTransactions } from "./sleeper";
 import { dealStatus } from "./components/SentOffers";
 import { AppBackdrop } from "./components/AppBackdrop";
+import { SwipeToast } from "./components/SwipeToast";
 import { enterApp, useSectionEnter } from "./sectionEnter";
 import { seedDemo } from "./demoFixtures";
 import { useDismiss } from "./components/useDismiss";
@@ -245,14 +246,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
     return () => window.removeEventListener("scroll", on);
   }, []);
   useEffect(() => { document.documentElement.dataset.platform = LEAGUE.platform ?? "sleeper"; }, []);
-  // Toasts drop back out the way they came in: mark leaving, then remove once the exit has played
-  const [toastOut, setToastOut] = useState(false);
-  useEffect(() => {
-    if (!toast) return; setToastOut(false);
-    const t = window.setTimeout(() => setToastOut(true), toast.undo ? 5000 : 2800);
-    const t2 = window.setTimeout(() => setToastState(null), (toast.undo ? 5000 : 2800) + mo(160));
-    return () => { clearTimeout(t); clearTimeout(t2); };
-  }, [toast]);
+  // Toasts drop back out the way they came in, or get flicked away sideways (SwipeToast owns the timer and the drag)
+  const closeToast = useCallback(() => setToastState(null), []);
   useEffect(() => {
     // Back and Forward: pushState doesn't fire hashchange, so listen to popstate too
     const onHash = () => { const h = hashTab(location.hash.slice(1)) || "wire"; if ((TAB_IDS as string[]).includes(h)) { setTab(h as Tab); setInboxOpen(false); } };
@@ -714,18 +709,62 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
   // "Open matchup" from the inbox closes it and opens the matchup sheet over whatever page you're on
   const [matchupSheet, setMatchupSheet] = useState(false);
   const inboxGo = (dest: string) => { if (dest === "matchup") { setInboxOpen(false); setMatchupSheet(true); } else go(dest); };
-  const inbox = useMemo(() => buildInbox({ nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote })
+  // The demo's "something new arrives" moment (demo parity for the bell): about 20 seconds after you first tap or type,
+  // once per visit, Mike offers Jerry Jeudy for your Dalton Kincaid. His TE, Sam LaPorta, is out this week.
+  const [demoArrived, setDemoArrived] = useState(false);
+  useEffect(() => {
+    if (!demo) return;
+    let t = 0;
+    const arm = () => { if (!t) t = window.setTimeout(() => setDemoArrived(true), 20000); };
+    document.addEventListener("pointerdown", arm, { once: true, passive: true });
+    document.addEventListener("keydown", arm, { once: true });
+    return () => { window.clearTimeout(t); document.removeEventListener("pointerdown", arm); document.removeEventListener("keydown", arm); };
+  }, [demo]);
+  const arrivedOffer = useMemo<Nudge | null>(() => {
+    if (!demoArrived || !YOU.roster.includes("dalton-kincaid") || !teamById("mike")?.roster.includes("jerry-jeudy")) return null;
+    const offer = evaluate(YOU, teamById("mike"), ["dalton-kincaid"], ["jerry-jeudy"], active, myTags, prices);
+    return { id: "offer-mike", kind: "offer", teamId: "mike", headline: "Mike offered Jerry Jeudy for your Dalton Kincaid.",
+      why: `${offerRead(offer).line} Here's the breakdown.`, trades: [], time: "Now", offer, counter: counterFor(offer, active, myTags, prices), deadline: DEADLINES.trade };
+  }, [demoArrived, active, myTags, prices]); // eslint-disable-line react-hooks/exhaustive-deps
+  const inbox = useMemo(() => buildInbox({ nudges: arrivedOffer ? [arrivedOffer, ...nudges] : nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote })
     .filter((x) => (x.nudge || !dismissedIds.includes(x.id)) && !((ibxSkipped[x.id] ?? -1) >= WEEK)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, ibxSkipped, tab, urgent, partnerNote, kick]);
+  [nudges, checks, yourLineup, live, dismissedIds, ibxSkipped, tab, urgent, partnerNote, kick, arrivedOffer]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
+  // The bell (Zach's motion rule): a new item arriving this visit swings it once and springs its lime dot in. Until you
+  // first tap or type, items only set the baseline, so the feed filling in as league data loads never rings. Opening
+  // the inbox clears the dot quietly; the unread count stays in the label and the panel. The trade-in-progress row is
+  // context for what you're doing, not news, so it never rings.
+  const ibxSeen = useRef<Set<string> | null>(null);
+  const ibxArmed = useRef(false);
+  useEffect(() => {
+    const arm = () => { ibxArmed.current = true; };
+    document.addEventListener("pointerdown", arm, { once: true, passive: true });
+    document.addEventListener("keydown", arm, { once: true });
+    return () => { document.removeEventListener("pointerdown", arm); document.removeEventListener("keydown", arm); };
+  }, []);
+  const [bellRing, setBellRing] = useState(0);
+  const [bellQuiet, setBellQuiet] = useState(false);
+  useEffect(() => {
+    const ids = inbox.map((x) => x.id).filter((id) => !id.startsWith("partner-"));
+    const seen = ibxSeen.current;
+    ibxSeen.current = new Set([...(seen ?? []), ...ids]);
+    if (!seen || !ibxArmed.current) return;
+    if (ids.some((id) => !seen.has(id) && !readIds.includes(id))) { setBellRing((n) => n + 1); setBellQuiet(false); }
+  }, [inbox]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!bellRing) return;
+    const t = window.setTimeout(() => setBellRing(0), mo(560));
+    return () => clearTimeout(t);
+  }, [bellRing]);
+  const bellDot = unread > 0 && !bellQuiet;
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;
   const panelOpen = docked ? dockOpen : inboxOpen;
   const toggleInbox = () => {
     const opening = !panelOpen;
-    // The bell rings on open and on close (icons.tsx rings any inbox control on click)
+    // Opening is quiet: no ring, and the unread dot clears without a flourish
     if (docked) setDockPref(opening); else setInboxOpen(opening);
-    if (opening) setIbxFocus((n) => n + 1);
+    if (opening) { setIbxFocus((n) => n + 1); setBellQuiet(true); }
   };
   const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
   // The slide-over inbox (below 1241px): Escape closes it and focus goes back to the bell; its scrim takes the outside
@@ -796,8 +835,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <header className="topbar">
         <button type="button" className="top-logo" aria-label="Sources home" onClick={goHome}><BrandLogo layout="row" mark={37.33} word={20} tagline tag={9} label="Sources" stage /></button>
         <div className="row top-acts">
-          <button className="btn btn-icon btn-ghost top-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
-            <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
+          <button className="btn btn-icon btn-ghost top-bell" data-ring={bellRing || undefined} aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
+            <Icon key={bellRing ? `r${bellRing}` : "b"} name="bell" size={20} />{bellDot && <span key={`d${bellRing}`} className={`ibx-badge${bellRing ? " is-new" : ""}`} aria-hidden="true">{unread}</span>}
           </button>
           <button className="btn btn-icon btn-ghost" aria-label="Settings" aria-current={tab === "settings" ? "page" : undefined} onClick={() => go("settings")}><Icon name="gear" size={20} /></button>
         </div>
@@ -809,8 +848,8 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
         <div className="main-inner">
           {/* Desktop's inbox bell: top right of the page, the same control as the phone top bar's. Outside the keyed
               screen below, so switching tabs never redraws it (or replays its badge). */}
-          <button type="button" className="btn btn-icon btn-ghost top-bell desk-bell" aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
-            <Icon name="bell" size={20} />{unread > 0 && <span className="ibx-badge" aria-hidden="true">{unread}</span>}
+          <button type="button" className="btn btn-icon btn-ghost top-bell desk-bell" data-ring={bellRing || undefined} aria-label={bellLabel} aria-expanded={panelOpen} aria-controls="inbox" onClick={toggleInbox}>
+            <Icon key={bellRing ? `r${bellRing}` : "b"} name="bell" size={20} />{bellDot && <span key={`d${bellRing}`} className={`ibx-badge${bellRing ? " is-new" : ""}`} aria-hidden="true">{unread}</span>}
           </button>
           <Fragment key={`${tab}:${navKey}`}>
           {tab === "wire" && (
@@ -896,10 +935,7 @@ function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefresh, on
       <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.seq}>{toast.msg}</span>}</div>
       {/* On document.body, so it sits above sheets and modals (they portal there too) */}
       {toast && createPortal(
-        <div className={`toast${toastOut ? " leaving" : ""}`} key={toast.id}>
-          <span>{toast.msg}</span>
-          {toast.undo && <button className="toast-undo" onClick={() => { toast.undo!(); setToastState(null); }}>Undo</button>}
-        </div>,
+        <SwipeToast key={toast.id} msg={toast.msg} undo={toast.undo} seq={toast.seq} onClose={closeToast} />,
         document.body,
       )}
     </div>

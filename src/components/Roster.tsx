@@ -14,6 +14,7 @@ import { LEAGUE, OPPONENT_ID, PLAYERS, SpecialPlayer, teamById, MyTag, TEAMS, YO
 import { irReport, irLabel, lineupStatus, specialLineup, specialPts, Lineup, Price, DEFAULT_PRICE, Trade, eff, fits, isOut, round1, suggestTags, weakSlots, whatItWouldTake, fmt } from "../engine";
 import { AiLabel, Delta, Icon, Seg, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
+import { Arrived } from "./Arrived";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
 import { Kick } from "./Meta";
@@ -703,7 +704,9 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   <b>Start / Sit</b>
                   {!allLocked && best.gain > 0
                     ? <button className="btn btn-sm ss-best" onClick={(e: { currentTarget: Element }) => { now.setMine(best.slots); setOpen(null, e.currentTarget); }}>Use optimal lineup <b className="ss-best-gain">{fmt(best.gain)}</b></button>
-                    : <span className="ss-ok"><Icon name="check" size={14} />Lineup set</span>}
+                    : null}
+                  {/* Newly optimal (the what-if swaps above, or Use optimal lineup): the check pops and draws itself once */}
+                  <Arrived k="ss-set" on={!(!allLocked && best.gain > 0)}>{(play) => <span className={`ss-ok${play ? " ck-pop" : ""}`}><Icon name="check" size={14} /><span className="ck-t">Lineup set</span></span>}</Arrived>
                 </div>
                 {moves.length > 0 ? <>
                   {moves.map((d) => (
@@ -716,7 +719,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 </> : <p className="ss-none">{pastWeek || lstat.final ? `Week ${WEEK} is final. Lineups can't change.` : lstat.blocked ? LOCKED_LINE : "Your Sleeper lineup matches the optimal one."}</p>}
               </div>}
               <OptimalLineup live={live} locked={allLocked} onPlayer={openPlayer} onMarks={setAiMarks} />
-              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="lu-head-r"><span className="tiny muted">{started ? "Pts" : "Proj"}</span>{!moves.length && !(best.gain > 0) && !allLocked && !(pastWeek || lstat.final) && <span className="ss-ok lu-set"><Icon name="check" size={14} />Lineup set</span>}</span></div>
+              <div className="lu-list-head"><span><b>Starters</b><span className="tiny muted lu-hint">{now.changed ? "Your what-if lineup." : "Your Sleeper lineup."}{allLocked ? " Lineups are locked." : " Tap a player to swap."}</span></span><span className="lu-head-r"><span className="tiny muted">{started ? "Pts" : "Proj"}</span><Arrived k="lu-set" on={!moves.length && !(best.gain > 0) && !allLocked && !(pastWeek || lstat.final)}>{(play) => <span className={`ss-ok lu-set${play ? " ck-pop" : ""}`}><Icon name="check" size={14} /><span className="ck-t">Lineup set</span></span>}</Arrived></span></div>
               {started && <div className="lu-play"><PlayCount c={playCount(live, [...now.mine.map((x) => (x.id ? playerById(x.id).nfl : undefined)), ...now.mineK.map((p) => p?.nfl)])} /></div>}
               {now.mine.map((x, i) => {
                 const p = x.id ? playerById(x.id) : null, key = `s${i}`, label = lbl(x.slot);

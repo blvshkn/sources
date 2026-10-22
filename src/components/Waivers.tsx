@@ -12,6 +12,7 @@ import { FaLite, WkCell, lastThreeWeeks, setWeekPick, useWeekCells } from "../wa
 import { useLive } from "../live";
 import { useCountTogether } from "../motionOnce";
 import { AiLabel, Icon, StatusPill, useSticky, type IconName } from "./ui";
+import { WatchStar } from "./WatchStar";
 import { Avatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
 import { PlatformLogo } from "./PlatformLogo";
@@ -524,7 +525,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                 : lockWhy ? <button className="wv-row wv-locked" aria-disabled="true" onClick={denyOn(lockWhy)}>{inner}</button>
                 : <div className="wv-row">{inner}</div>}
               <Tooltip content={watchLabel}>
-                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><Icon name="star" size={16} /><span className="wv-act-t" aria-hidden="true">{isWatched ? "Watching" : "Watch"}</span></button>
+                <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><WatchStar on={isWatched} /><span className="wv-act-t" aria-hidden="true">{isWatched ? "Watching" : "Watch"}</span></button>
               </Tooltip>
               {!shelved && <span className="ps-end">
                 <Tooltip content="Not right now. Skips him this week">

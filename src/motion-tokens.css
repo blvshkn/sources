@@ -9,6 +9,9 @@
   --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Action motion (action-motion.css): a spring with a small overshoot, and the fast drop of a slam */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-slam: cubic-bezier(0.5, 0, 0.75, 0);
   --dur-press: calc(100ms * var(--mo));
   --dur-fast: calc(160ms * var(--mo));
   --dur-base: calc(200ms * var(--mo));

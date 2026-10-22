@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { Decrypt } from "./Decrypt";
 import { LEAGUE, Player, WEEK, YOU, onBye, playerById } from "../data";
 import { kickLine, oppAt, useKickoffs } from "../kickoff";
 import { eff, round1, scored } from "../engine";
@@ -262,7 +263,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
         <span className="sx-vs" aria-hidden="true">vs</span>
         {Pick({ s: B, set: setB, side: "b" })}
       </div>
-      <p className={`sx-verdict${v.flip ? " flip" : ""}${loading ? " sx-loading" : ""}`} aria-live="polite">{v.text}</p>
+      <p className={`sx-verdict${v.flip ? " flip" : ""}${loading ? " sx-loading" : ""}`}><Decrypt text={v.text} hold={loading} /></p>
       <div className="sx-rows">
         {loading
           ? <Bars label={`Week ${week}`} a={0} b={0} at="" bt="" wk dim />

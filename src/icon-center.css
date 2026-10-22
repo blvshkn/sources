@@ -62,7 +62,7 @@ html:root:not(#_):not(#_) .top-bell .ibx-badge {
   box-shadow: 0 0 0 2px var(--bg); pointer-events: none;
 }
 
-/* ---------- Bell: rings on hover and on click ---------- */
+/* ---------- Bell: rings on hover (a new inbox item swings it too: action-motion.css) ---------- */
 /* Two parts (icons.tsx, Lucide bell): the dome (m1) swings from its crown at (12, 2); the clapper (m2) rides inside it, hangs from
    the lip at (12, 17) and swings the other way, calc(40ms * var(--mo, 1)) behind and wider, so it reads as a clapper lagging. Hover rings
    once per entry (icons.tsx sets data-play for a beat and never loops); a click rings 1.3x harder (data-strong) as the

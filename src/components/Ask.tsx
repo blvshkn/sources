@@ -224,7 +224,7 @@ function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onD
             </div>
           )}
           {a.by === "off" && <p className="ask-ai-off">{offNote(a.offWhy)}</p>}
-          <AiLabel />
+          <AiLabel thinking={!done} />
         </article>
       )}
       {a?.offers && a.offers.length > 0 && (

@@ -1,7 +1,7 @@
 /** Motion with a purpose (Zach, Oct 22): things animate when you first arrive (a hard or soft refresh, or the first
  *  time you open a section this visit) or when something actually changed. Coming back to a page you've already seen
  *  this visit shows it settled. Everything here lives in memory, so a reload starts fresh. */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { mo } from "./motion";
 
 const seen = new Set<string>();
@@ -53,4 +53,22 @@ export function useCountTogether(key: string | undefined, targets: number[], { r
     return () => cancelAnimationFrame(raf.current);
   }, [key, ready, sig]); // eslint-disable-line react-hooks/exhaustive-deps
   return { vals, running };
+}
+
+/** Last value each state key had this visit, so a remount (switching tabs and back) doesn't count as a change */
+const lastState = new Map<string, boolean>();
+/**
+ * True for the render where a state is newly reached: `on` turned true after being false this visit, or it is true
+ * the first time `key` shows (first arrival). A remount of something that was already true stays false, so a check
+ * that was already there never replays. Pair it with a class that runs a one-shot CSS animation.
+ */
+export function useArrived(key: string, on: boolean): boolean {
+  const [play, setPlay] = useState(false);
+  useLayoutEffect(() => {
+    const was = lastState.get(key);
+    lastState.set(key, on);
+    if (!on) { setPlay(false); return; }
+    if (was !== true) setPlay(true);
+  }, [key, on]);
+  return play;
 }
