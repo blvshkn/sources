@@ -266,3 +266,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-lead { display: flex; align-items: center; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-tabs { display: flex; align-items: center; }
 }
+
+/* Season usage, Matchup and the game log chart stack full width on tablet and desktop (Zach, Oct 23), one after
+   another, instead of usage on the left beside the other two */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps.ps-player > .ps-body > :is(.pd-usage, .pd-match, .ps-games:not(.ps-sched)) { grid-column: 1 / -1; grid-row: auto; align-self: start; }
+}
