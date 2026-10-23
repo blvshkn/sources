@@ -3562,23 +3562,8 @@ html:root:not(#_) .lu-pts b { display: inline-flex; align-items: center; justify
 html:root:not(#_) .lu-pts.heat-cold b { color: #FF7A66; }
 html:root:not(#_) .lu-pts.heat-heating b { color: #FFC43D; }
 html:root:not(#_) .lu-pts.heat-fire b { color: #FFB04A; background: linear-gradient(180deg, #FFD166, #FF8A3D 55%, #FF5A36); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 6px rgba(255, 122, 61, 0.45)); }
-html:root:not(#_) .lu-pts.heat-fire .flame { flex: none; overflow: visible; -webkit-text-fill-color: initial; }
-/* The flame is two HTML layers (body, then the bright core on top) so each moves by transform and opacity alone */
-html:root:not(#_) .flame { position: relative; display: block; flex: none; width: 14px; height: 14px; }
-html:root:not(#_) .flame svg { display: block; overflow: visible; }
-html:root:not(#_) .flame-inner { position: absolute; inset: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  /* Glow: the low drop-shadow stays put, and a copy of the number carrying the high glow fades in and out on top.
-     24px at 0.6 matches the old 9px drop-shadow peak frame for frame: text-shadow blurs tighter, and it adds to the low glow. */
-  html:root:not(#_) :is(.lu-pts, .wk-pts).heat-fire b { position: relative; filter: drop-shadow(0 0 4px rgba(255, 122, 61, 0.35)); }
-  html:root:not(#_) :is(.lu-pts, .wk-pts).heat-fire b::after { content: attr(data-pts); position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; white-space: nowrap; -webkit-text-fill-color: transparent; text-shadow: 0 0 24px rgba(255, 140, 61, 0.6); opacity: 0; pointer-events: none; animation: heat-glow 1.6s ease-in-out infinite; }
-  html:root:not(#_) .flame { transform-origin: 50% 90%; animation: flame-flicker 900ms ease-in-out infinite alternate; }
-  /* 50% 90% of the core's own shape (its fill box), in the 14px mark's pixels */
-  html:root:not(#_) .flame-inner { transform-origin: 7.232px 11.439px; animation: flame-core 600ms ease-in-out infinite alternate; }
-  @keyframes heat-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-  @keyframes flame-flicker { 0% { transform: scale(1, 1) rotate(-3deg); } 50% { transform: scale(0.94, 1.08) rotate(2deg); } 100% { transform: scale(1.04, 0.96) rotate(-1deg); } }
-  @keyframes flame-core { from { transform: scale(0.9, 0.95); opacity: 0.85; } to { transform: scale(1.05, 1.1); opacity: 1; } }
-}
+/* The old looping flame (flicker, core pulse, glow copy of the number) is gone: on fire is the 16-bit flame now
+   (gameDayMotion PixelFlame), which plays once, and the hot number carries no filter (game-day.css) */
 /* Card rows with headshots: position colored inline in the meta line; injury tag beside the name */
 html:root:not(#_) .wk-row > .av, html:root:not(#_) .wk-row > [class*="av"] { flex: none; }
 html:root:not(#_) .wk-name small .lu-pos { font-size: inherit; font-weight: 700; }
@@ -3593,21 +3578,8 @@ html:root:not(#_) .wk-pts.heat-fire b { background: linear-gradient(180deg, #FFD
 /* Cold: icy blue with a faint frost glow. Heating up: amber with lines that rise. */
 html:root:not(#_) :is(.lu-pts, .wk-pts).heat-cold b { color: #9AD8FF; filter: drop-shadow(0 0 5px rgba(122, 196, 255, 0.35)); }
 html:root:not(#_) :is(.lu-pts, .wk-pts).heat-heating b { color: #FFB547; }
-html:root:not(#_) .heatwave, html:root:not(#_) .ice { flex: none; overflow: visible; }
-/* Each heat line and the frost glow are their own HTML layer, stacked in the 14px mark */
-html:root:not(#_) :is(.heatwave, .ice) { position: relative; display: block; width: 14px; height: 14px; }
-html:root:not(#_) .heatwave { contain: paint; }
-html:root:not(#_) :is(.hw-line, .ice-glow) { position: absolute; inset: 0; }
-html:root:not(#_) :is(.heatwave, .ice) svg { position: absolute; inset: 0; display: block; overflow: visible; }
-html:root:not(#_) .ice-glow { display: none; }
-@media (prefers-reduced-motion: no-preference) {
-  /* The looping heat lines are gone: heating up is the 16-bit smoke now (gameDayMotion PixelSmoke), which plays once */
-  /* Frost: the crystal brightens and a pre-blurred light copy beneath it fades up, peaking at 80% */
-  html:root:not(#_) .ice { animation: ice-glint 2.8s ease-in-out infinite; }
-  html:root:not(#_) .ice-glow { display: block; filter: blur(1.5px); opacity: 0; animation: ice-frost 2.8s ease-in-out infinite; }
-  @keyframes ice-glint { 0%, 70%, 100% { opacity: 0.75; } 80% { opacity: 1; } }
-  @keyframes ice-frost { 0%, 100% { opacity: 0; } 80% { opacity: 1; } }
-}
+/* The looping heat lines and frost glint are gone: heating up and cold are the 16-bit smoke and snowflake now
+   (gameDayMotion PixelSmoke, PixelSnow), which play once */
 /* Live second line is the on-pace finish, colored against projection like Sleeper; finals stay plain */
 html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace { font-weight: 600; }
 html:root:not(#_) :is(.lu-pts, .wk-pts) small.lu-pace.up { color: var(--good, #6BD58A); }

@@ -6,12 +6,22 @@ html:root:not(#_):not(#_) { --gd-spring: cubic-bezier(0.34, 1.4, 0.64, 1); }
 
 /* ---- Fire and cold ---------------------------------------------------------------- */
 /* The pixel flame and snowflake replace the line icons next to live points */
+/* Crisp on phones (Zach, Oct 23): every cell is a whole 2px square (flame and smoke 8x10 cells, 16x20; snowflake 9x9,
+   18x18), and every box is sized so the art centers on whole pixels. The frames are stacked layers in one grid cell
+   (.gd-fr) and only their opacity changes, so nothing inside an SVG ever repaints while it moves. */
 html:root:not(#_):not(#_) :is(.gd-flame, .gd-snow) { display: grid; place-items: center; flex: none; width: 16px; height: 18px; -webkit-text-fill-color: initial; }
-html:root:not(#_):not(#_) .gd-flame svg { display: block; width: 14.4px; height: 18px; }
-html:root:not(#_):not(#_) .gd-snow svg { display: block; width: 14px; height: 14px; }
+html:root:not(#_):not(#_) .gd-snow { width: 18px; }
+html:root:not(#_):not(#_) .gd-fr { grid-area: 1 / 1; display: block; font-style: normal; }
+html:root:not(#_):not(#_) .gd-fr.gd-off { opacity: 0; }
+html:root:not(#_):not(#_) .gd-fr svg { display: block; image-rendering: pixelated; }
+/* The flame is 2px taller than its box; the negative margin keeps it centered without growing the points line */
+html:root:not(#_):not(#_) .gd-flame .gd-fr svg { width: 16px; height: 20px; margin: -1px 0; }
+html:root:not(#_):not(#_) .gd-snow .gd-fr svg { width: 18px; height: 18px; }
 /* The old flame's looping glow copy and flicker stay off: the corner glow is the lasting cue now */
 html:root:not(#_):not(#_):not(#_) :is(.lu-pts, .wk-pts).heat-fire b::after { content: none; animation: none; }
-html:root:not(#_):not(#_) :is(.lu-pts, .wk-pts).heat-fire b { filter: none; }
+/* No filter on a hot or cold number: a drop-shadow on the line holding the flame, the snowflake and the rolling digits
+   made Safari flatten them and redraw the shadow every frame they moved */
+html:root:not(#_):not(#_) :is(.lu-pts, .wk-pts):is(.heat-fire, .heat-cold, .heat-heating) b { filter: none; }
 /* On fire the number keeps its flame gradient, painted per digit: a gradient clipped to the whole line can't reach
    the counter's cells, so the line itself drops it */
 html:root:not(#_):not(#_):not(#_) .lu-pts.heat-fire b:has(.gd-odo) { background: none; -webkit-text-fill-color: initial; color: #FFB04A; }
@@ -26,10 +36,8 @@ html:root:not(#_):not(#_) .gd-wx { position: absolute; inset: 0; z-index: -1; ov
 html:root:not(#_):not(#_) .gd-wx-glow { position: absolute; top: -46px; right: -46px; width: 150px; height: 96px; border-radius: 50%; opacity: 0.4; }
 html:root:not(#_):not(#_) .gd-wx-hot .gd-wx-glow { background: radial-gradient(closest-side, rgba(232, 64, 42, 0.42), rgba(255, 138, 42, 0.14) 60%, transparent); }
 html:root:not(#_):not(#_) .gd-wx-cold .gd-wx-glow { background: radial-gradient(closest-side, rgba(120, 190, 255, 0.36), rgba(169, 216, 255, 0.12) 60%, transparent); }
-html:root:not(#_):not(#_) .gd-wx-c {
-  position: absolute; top: 0; right: 0; width: 120px; height: 100%; image-rendering: pixelated;
-  -webkit-mask-image: radial-gradient(120px 70px at 100% 0, #000 30%, transparent 75%); mask-image: radial-gradient(120px 70px at 100% 0, #000 30%, transparent 75%);
-}
+/* The speck canvas fades its own edge (HeatWx), so it carries no mask */
+html:root:not(#_):not(#_) .gd-wx-c { position: absolute; top: 0; right: 0; width: 120px; height: 100%; image-rendering: pixelated; }
 
 /* ---- Set in stone ----------------------------------------------------------------- */
 /* The lock sits right before the points, in the same line, so it centers on them */
@@ -90,13 +98,14 @@ html:root:not(#_):not(#_) .fo-st-final .fo-side.is-lost { opacity: 0.55; }
   /* Fire: springs in, then the component steps the frames */
   html:root:not(#_):not(#_) .gd-flame.gd-play { animation: gd-flame-in calc(400ms * var(--mo)) var(--gd-spring) both; }
   @keyframes gd-flame-in { from { opacity: 0; transform: scale(0.3) translateY(6px); } to { opacity: 1; transform: none; } }
-  /* Cold: springs in and builds out from the center pixel, then one white twinkle */
+  /* Cold: springs in (no spin: a rotating pixel grid shimmers) and builds out from the center ring by ring, then the
+     center twinkles twice. Every piece is a whole layer changing opacity, never an SVG rect or fill. */
   html:root:not(#_):not(#_) .gd-snow.gd-play { animation: gd-flake-in calc(457ms * var(--mo)) var(--gd-spring) both; }
-  @keyframes gd-flake-in { from { opacity: 0; transform: scale(0.3) rotate(-90deg); } to { opacity: 1; transform: none; } }
-  html:root:not(#_):not(#_) .gd-snow.gd-play rect { animation: gd-px-in 1ms linear both; animation-delay: calc(var(--d) * 40ms * var(--mo)); }
-  html:root:not(#_):not(#_) .gd-snow.gd-play rect.tw { animation: gd-px-in 1ms linear both, gd-twinkle calc(514ms * var(--mo)) steps(2) calc((var(--d) * 40ms + 286ms) * var(--mo)) 2; }
+  @keyframes gd-flake-in { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
+  html:root:not(#_):not(#_) .gd-snow.gd-play .gd-ring { animation: gd-px-in 1ms linear both; animation-delay: calc(var(--d) * 40ms * var(--mo)); }
+  html:root:not(#_):not(#_) .gd-snow.gd-play .gd-tw { animation: gd-twinkle calc(514ms * var(--mo)) steps(1, end) calc(286ms * var(--mo)) 2; }
   @keyframes gd-px-in { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes gd-twinkle { 50% { fill: #A9D8FF; } }
+  @keyframes gd-twinkle { 0% { opacity: 0; } 25% { opacity: 1; } 75% { opacity: 0; } 100% { opacity: 0; } }
   /* The corner glow peaks, then settles to its resting 0.4 */
   html:root:not(#_):not(#_) .gd-wx.gd-play .gd-wx-glow { animation: gd-corner calc(1371ms * var(--mo)) var(--ease-out) both; }
   @keyframes gd-corner { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0.4; } }

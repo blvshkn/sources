@@ -46,10 +46,12 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic {
   display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo.on .ll-mo-ic { background: var(--bg, #0c0d0c); }
-/* The 16-bit marks at twice their row size, still on whole pixels of their grid */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic :is(.gd-flame, .gd-snow) { width: 24px; height: 28px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-flame svg { width: 19.2px; height: 24px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-snow svg { width: 21px; height: 21px; }
+/* The 16-bit marks a size up, on whole 3px cells (flame 24x30, snowflake 27x27). The snowflake's box is a pixel wider
+   than its art and holds it at the top left, so the odd 27 still lands on whole pixels in the 44px tile. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-flame { width: 24px; height: 28px; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-snow { width: 28px; height: 28px; place-items: start; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-flame .gd-fr svg { width: 24px; height: 30px; margin: -1px 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-snow .gd-fr svg { width: 27px; height: 27px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock { width: 20px; height: 26px; margin: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock svg { width: 18px; height: 26px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock[data-f="1"] svg { transform: translateY(-2px); }
@@ -74,9 +76,10 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-name
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-pts b { font-size: 1.25rem; line-height: 1.75rem; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .lu-pts small { font-size: 0.6875rem; }
 /* Row-size pixel marks a step bigger to match the larger points */
+/* Row-size marks in a roomier box to match the larger points; the art stays on its 2px cells (game-day.css) and
+   centers on whole pixels (20x22 around 16x20 and 18x18) */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows :is(.gd-flame, .gd-snow) { width: 20px; height: 22px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-flame svg { width: 17.6px; height: 22px; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-snow svg { width: 18px; height: 18px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-flame .gd-fr svg { margin: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-lock { width: 15px; height: 20px; margin-right: 6px; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-lock svg { width: 13.5px; height: 19.5px; }
 

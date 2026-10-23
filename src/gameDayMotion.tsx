@@ -6,7 +6,7 @@
  *  the component is mounted; useFresh turns that into "play now" for whatever draws it, so a row that remounts a
  *  moment later (a branch switch) still plays once, and one that mounts later shows the settled state. */
 import { PX } from "./components/pixelIcons";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { EASE_OUT, mo } from "./motion";
 
@@ -33,19 +33,18 @@ export function useFresh(at: number, win = 1200): number {
 // ---- 16-bit art -------------------------------------------------------------------
 
 type Grid = string[];
-/** Pixel art as inline SVG: one rect per lit cell, crisp edges. `--d` is each cell's distance from the center, so a
- *  sprite can build out from the middle. */
-export function Px({ rows, colors, className, style }: { rows: Grid; colors: Record<string, string>; className?: string; style?: CSSProperties }) {
+/** Pixel art as inline SVG: one rect per lit cell, crisp edges. Nothing inside it ever animates (a per-rect animation
+ *  makes Safari repaint the whole SVG every frame); sprites move by stacking whole frames as layers instead. Memoized:
+ *  the grids and palettes are module constants, so a parent re-render (every beat of a live board) skips the rects. */
+export const Px = memo(function Px({ rows, colors, className, style }: { rows: Grid; colors: Record<string, string>; className?: string; style?: CSSProperties }) {
   const h = rows.length, w = rows[0].length;
   const rects: ReactNode[] = [];
   rows.forEach((row, y) => [...row].forEach((ch, x) => {
     const fill = colors[ch];
-    if (!fill) return;
-    const d = Math.abs(x - (w - 1) / 2) + Math.abs(y - (h - 1) / 2);
-    rects.push(<rect key={`${x}.${y}`} x={x} y={y} width="1.02" height="1.02" fill={fill} style={{ "--d": d } as CSSProperties} className={ch === "w" && x === (w - 1) / 2 && y === (h - 1) / 2 ? "tw" : undefined} />);
+    if (fill) rects.push(<rect key={`${x}.${y}`} x={x} y={y} width="1.02" height="1.02" fill={fill} />);
   }));
   return <svg viewBox={`0 0 ${w} ${h}`} className={className} style={style} shapeRendering="crispEdges" aria-hidden="true" focusable="false">{rects}</svg>;
-}
+});
 
 const FC = { r: "#E8402A", o: "#FF8A2A", y: "#FFD45A" };
 const FIRE: Grid[] = [
@@ -76,72 +75,117 @@ const CATCH: Grid = ["....l...", "...l....", "...s....", "...s.r..", "..rr.r..",
 const CATCH_C = { ...SMC, ...FC };
 type Frame = { rows: Grid; c: Record<string, string> };
 
-/** Runs a list of [ms, frame] steps once, from when `play` turns on. Returns the frame to draw. */
-function useFrames(play: number, rest: Frame, steps: () => [number, Frame][], after?: (t: number[]) => void): Frame {
-  const [fr, setFr] = useState<Frame>(rest);
-  useEffect(() => {
-    if (!play || reduce()) { setFr(rest); return; }
-    const ts = steps().map(([ms, f]) => window.setTimeout(() => setFr(f), ms));
-    after?.(ts);
-    return () => { ts.forEach((t) => window.clearTimeout(t)); setFr(rest); };
+/** A sprite whose frames play once. Every frame is drawn once, up front, as its own stacked layer (`.gd-fr`), and the
+ *  frame sequence is one opacity animation per layer in whole steps, so it runs on the compositor: no timers, no React
+ *  state per frame, no SVG repaint. `seq` is [ms, frame index] from 0; its last step is the rest frame, held after the
+ *  play ends (the layers' resting opacity shows only `rest`). Reduced motion, or nothing to play: just the rest frame. */
+function useSprite(play: number, seq: () => [number, number][]) {
+  const box = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!play || !el || reduce() || !el.animate) return;
+    const s = seq();
+    const total = s[s.length - 1][0];
+    const layers = [...el.querySelectorAll<HTMLElement>(":scope > .gd-fr")];
+    const anims = layers.map((l, i) => l.animate(s.map(([ms, f]) => ({ offset: ms / total, opacity: f === i ? 1 : 0, easing: "steps(1, end)" })), { duration: total }));
+    return () => anims.forEach((a) => a.cancel());
   }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
-  return fr;
+  return box;
 }
+const Frames = ({ frames, rest }: { frames: Frame[]; rest: number }) => <>{frames.map((f, i) => <i key={i} className={`gd-fr${i === rest ? "" : " gd-off"}`}><Px rows={f.rows} colors={f.c} /></i>)}</>;
 
+const SMOKE_FR: Frame[] = [...SMOKE.map((rows) => ({ rows, c: SMC })), { rows: WISP, c: SMC }];
 /** Heating up: the ember smokes through its three frames twice (200ms a frame on screen), then rests as a wisp.
  *  Already heating when the row mounted: just the wisp. Never loops. */
 export function PixelSmoke({ at }: { at: number }) {
   const play = useFresh(at);
-  const rest: Frame = { rows: WISP, c: SMC };
-  const fr = useFrames(play, rest, () => [...[0, 1, 2, 0, 1, 2].map((f, k): [number, Frame] => [k * mo(114), { rows: SMOKE[f], c: SMC }]), [6 * mo(114), rest]]);
-  return <span className="gd-flame gd-smoke" aria-hidden="true"><Px rows={fr.rows} colors={fr.c} /></span>;
+  const box = useSprite(play, () => [...[0, 1, 2, 0, 1, 2].map((f, k): [number, number] => [k * mo(114), f]), [6 * mo(114), 3]]);
+  return <span ref={box} key={play} className="gd-flame gd-smoke" aria-hidden="true"><Frames frames={SMOKE_FR} rest={3} /></span>;
 }
 
+// Flame layers: the three fire frames (0 is the rest), then the smoke and catch frames a caught flame starts from
+const FLAME_FR: Frame[] = [...FIRE.map((rows) => ({ rows, c: FC })), { rows: SMOKE[1], c: SMC }, { rows: CATCH, c: CATCH_C }];
 /** The pixel flame. When he catches fire it springs in and flickers through its three frames for about two seconds
  *  (125ms a frame), then holds the first frame. `caught`: he was heating up first, so the smoke catches instead: one
  *  smoke frame, the catch frame, a small 1.25 step pop, then 12 flicker frames and rest. Already on fire when the row
  *  mounted: just the first frame. */
 export function PixelFlame({ at, caught = false }: { at: number; caught?: boolean }) {
   const play = useFresh(at);
-  const el = useRef<HTMLSpanElement>(null);
-  const rest: Frame = { rows: FIRE[0], c: FC };
-  const fr = useFrames(play, rest, () => caught
-    ? [[0, { rows: SMOKE[1], c: SMC }], [mo(86), { rows: CATCH, c: CATCH_C }],
-      ...Array.from({ length: 12 }, (_, k): [number, Frame] => [mo(171) + k * mo(71), { rows: FIRE[k % 3], c: FC }]), [mo(171) + 12 * mo(71), rest]]
-    : [...Array.from({ length: 15 }, (_, k): [number, Frame] => [(k + 1) * mo(71), { rows: FIRE[(k + 1) % 3], c: FC }]), [16 * mo(71), rest]],
-  (ts) => { if (caught) ts.push(window.setTimeout(() => el.current?.animate([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: mo(137), easing: "steps(3)" }), mo(171))); });
-  return <span ref={el} key={play} className={`gd-flame${play && !caught ? " gd-play" : ""}`} aria-hidden="true"><Px rows={fr.rows} colors={fr.c} /></span>;
+  const box = useSprite(play, () => caught
+    ? [[0, 3], [mo(86), 4], ...Array.from({ length: 12 }, (_, k): [number, number] => [mo(171) + k * mo(71), k % 3]), [mo(171) + 12 * mo(71), 0]]
+    : [...Array.from({ length: 16 }, (_, k): [number, number] => [k * mo(71), k % 3]), [16 * mo(71), 0]]);
+  // The catch pops once, scheduled with the sprite rather than on a timer
+  useLayoutEffect(() => {
+    if (!play || !caught || reduce()) return;
+    const a = box.current?.animate?.([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: mo(137), delay: mo(171), easing: "steps(3)" });
+    return () => a?.cancel();
+  }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <span ref={box} key={play} className={`gd-flame${play && !caught ? " gd-play" : ""}`} aria-hidden="true"><Frames frames={FLAME_FR} rest={0} /></span>;
 }
 
-/** The pixel snowflake: builds out from its center pixel by pixel, and the center twinkles white. Settled when he was
- *  already cold at mount. */
+// The snowflake split into one layer per ring (each cell's distance from the center), so it can build out from the
+// middle by fading whole layers in, plus a one-pixel overlay for the center's twinkle
+const SNOW_RINGS: { d: number; rows: Grid }[] = (() => {
+  const h = SNOW.length, w = SNOW[0].length;
+  const dist = (x: number, y: number) => Math.abs(x - (w - 1) / 2) + Math.abs(y - (h - 1) / 2);
+  const ds = [...new Set(SNOW.flatMap((row, y) => [...row].map((ch, x) => (SC[ch as keyof typeof SC] ? dist(x, y) : -1))))].filter((d) => d >= 0).sort((a, b) => a - b);
+  return ds.map((d) => ({ d, rows: SNOW.map((row, y) => [...row].map((ch, x) => (dist(x, y) === d ? ch : ".")).join("")) }));
+})();
+const SNOW_TW: Grid = SNOW.map((row, y) => [...row].map((_, x) => (x === (row.length - 1) / 2 && y === (SNOW.length - 1) / 2 ? "b" : ".")).join(""));
+/** The pixel snowflake: builds out from its center ring by ring, and the center twinkles. Settled when he was already
+ *  cold at mount. */
 export function PixelSnow({ at }: { at: number }) {
   const play = useFresh(at);
-  return <span key={play} className={`gd-snow${play ? " gd-play" : ""}`} aria-hidden="true"><Px rows={SNOW} colors={SC} /></span>;
+  return (
+    <span key={play} className={`gd-snow${play ? " gd-play" : ""}`} aria-hidden="true">
+      {SNOW_RINGS.map((r) => <i key={r.d} className="gd-fr gd-ring" style={{ "--d": r.d } as CSSProperties}><Px rows={r.rows} colors={SC} /></i>)}
+      <i className="gd-fr gd-off gd-tw"><Px rows={SNOW_TW} colors={SC} /></i>
+    </span>
+  );
 }
 
 /** The faint glow in the row's top-right corner while a player is hot or cold, plus a few pixel specks in that corner
- *  for about two seconds when he turns: embers drifting up, or sleet falling on a slant. Positioned against the row. */
+ *  for about two seconds when he turns: embers drifting up, or sleet falling on a slant. Positioned against the row.
+ *  The specks are a one-shot canvas: it measures once, fades each speck toward the corner's edge itself (a CSS mask
+ *  over a canvas that redraws every frame made Safari recomposite the mask every frame), and stops for good when the
+ *  burst ends, when the row leaves the screen, or when the tab is hidden. The glow is one opacity animation. */
 export function HeatWx({ kind, at }: { kind: "hot" | "cold"; at: number }) {
   const play = useFresh(at);
   const cv = useRef<HTMLCanvasElement>(null);
   const [finished, setFinished] = useState(0);
   useEffect(() => {
     const c = cv.current;
-    if (!play || !c || reduce()) { setFinished(play); return; }
+    if (!play || !c || reduce() || document.hidden) { setFinished(play); return; }
     const dpr = Math.min(2, window.devicePixelRatio || 1), W = c.clientWidth, H = c.clientHeight;
-    c.width = W * dpr; c.height = H * dpr;
-    const x = c.getContext("2d");
-    if (!x) return;
+    const x = W > 0 && H > 0 ? c.getContext("2d") : null;
+    if (!x) { setFinished(play); return; }
+    c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
-    type P = { x: number; y: number; vx: number; vy: number; life: number; max: number; c?: string };
+    type P = { x: number; y: number; vx: number; vy: number; life: number; max: number; c: string };
     const parts: P[] = [], t0 = performance.now(), SPAWN = mo(1030), END = mo(1486), GAP = mo(kind === "hot" ? 97 : 63), S = 2;
     const snap = (v: number) => Math.round(v / S) * S;
+    // The corner's soft edge: full strength near the top-right, gone by three quarters of a 120 by 70 ellipse
+    const edge = (px: number, py: number) => {
+      const r = Math.hypot((W - px) / 120, py / 70);
+      return r <= 0.3 ? 1 : r >= 0.75 ? 0 : 1 - (r - 0.3) / 0.45;
+    };
     const spawn = (): P => kind === "hot"
       ? { x: W - 10 - Math.random() * 60, y: H * 0.55, vx: (Math.random() - 0.5) * 0.15, vy: -(0.35 + Math.random() * 0.35), life: 0, max: 70, c: [FC.r, FC.o, FC.y][Math.floor(Math.random() * 3)] }
-      : { x: W - Math.random() * 90, y: -4, vx: -0.7, vy: 1.6 + Math.random() * 0.6, life: 0, max: 50 };
+      : { x: W - Math.random() * 90, y: -4, vx: -0.7, vy: 1.6 + Math.random() * 0.6, life: 0, max: 50, c: "#B9DEFF" };
     // Moves by elapsed time (in 60fps frames), so the specks keep their speed when a frame is dropped
-    let last = 0, raf = 0, prev = t0;
+    let last = 0, raf = 0, prev = t0, done = false;
+    const stop = () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(raf);
+      io?.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      setFinished(play);
+    };
+    const onVis = () => { if (document.hidden) stop(); };
+    const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver((es) => { if (!es.some((e) => e.isIntersecting)) stop(); }) : null;
+    io?.observe(c);
+    document.addEventListener("visibilitychange", onVis);
     const step = (now: number) => {
       const t = now - t0, k = Math.min(4, (now - prev) / (1000 / 60) || 1);
       prev = now;
@@ -150,16 +194,18 @@ export function HeatWx({ kind, at }: { kind: "hot" | "cold"; at: number }) {
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
         p.life += k; p.x += p.vx * k; p.y += p.vy * k;
-        x.globalAlpha = Math.max(0, 1 - p.life / p.max) * 0.8;
-        if (kind === "hot") { x.fillStyle = p.c!; x.fillRect(snap(p.x), snap(p.y), S, S); }
-        else { x.fillStyle = "#B9DEFF"; x.fillRect(snap(p.x), snap(p.y), S, S); x.fillRect(snap(p.x + 2), snap(p.y - 4), S, S); }
+        const sx = snap(p.x), sy = snap(p.y);
+        x.globalAlpha = Math.max(0, 1 - p.life / p.max) * 0.8 * edge(sx, sy);
+        x.fillStyle = p.c;
+        x.fillRect(sx, sy, S, S);
+        if (kind === "cold") x.fillRect(snap(p.x + 2), snap(p.y - 4), S, S);
         if (p.life > p.max || p.y < -6 || p.y > H + 6) parts.splice(i, 1);
       }
       x.globalAlpha = 1;
-      if (t < END || parts.length) raf = requestAnimationFrame(step); else { x.clearRect(0, 0, W, H); setFinished(play); }
+      if (t < END || parts.length) raf = requestAnimationFrame(step); else stop();
     };
     raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    return () => { done = true; cancelAnimationFrame(raf); io?.disconnect(); document.removeEventListener("visibilitychange", onVis); };
   }, [play, kind]);
   return (
     <span className={`gd-wx gd-wx-${kind}${play ? " gd-play" : ""}`} aria-hidden="true">

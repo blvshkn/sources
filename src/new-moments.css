@@ -60,7 +60,7 @@ html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.nm-gliding.nm-lead { z-index:
 
 /* ---- Heating up (gameDayMotion PixelSmoke)------------------------------------------------ */
 /* Same box as the flame, so the smoke catching into fire doesn't shift the points */
-html:root:not(#_):not(#_):not(#_) .gd-flame.gd-smoke svg { display: block; width: 14.4px; height: 18px; }
+html:root:not(#_):not(#_):not(#_) .gd-flame.gd-smoke .gd-fr svg { display: block; width: 16px; height: 20px; margin: -1px 0; }
 
 /* ---- New since you looked (Wire's On your radar, the inbox) -------------------------------- */
 html:root:not(#_):not(#_):not(#_) .briefing .brief-row .nm-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); margin-left: 4px; }
