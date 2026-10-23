@@ -18,3 +18,10 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-ma
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup :is(.mu-mine, .mu-theirs) .mu-p > .av { align-self: center; transform: translateY(1px); }
 /* The opponent sits a touch lower under your player, lined up with your player's text and points */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps-matchup .mu-theirs { margin-top: 6px !important; padding-left: 10px !important; padding-right: 16px !important; }
+
+/* Played or locked (Zach, Oct 23): your row is an outline, not a fill, in the sheet and on the Matchup page alike.
+   The sheet's resting fill above (8) used to beat deny.css's locked clear (4), so this sits above both. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-mine:is(.is-locked, .mu-past),
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .mu-mine:is(.is-locked, .mu-past):is(:hover, :active, :focus-visible) {
+  background: transparent !important; border-color: transparent !important; box-shadow: inset 0 0 0 1px var(--line) !important; transform: none !important;
+}

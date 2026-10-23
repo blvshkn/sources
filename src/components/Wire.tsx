@@ -253,8 +253,10 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
                 <WkPts p={p} live={live} />
               </>;
               // Already played (Zach, Oct 23): reads as done, like the Lineup's finished rows, and there's nothing to tap
-              return live.games[p.nfl] === "complete"
-                ? <div key={p.id} className="wk-row is-done" aria-label={`${p.name}, game final`}>{inner}</div>
+              // Playing now: locked at kickoff, so not a button either, but not dimmed
+              const st = live.games[p.nfl];
+              return st === "complete" || st === "in_game"
+                ? <div key={p.id} className={`wk-row ${st === "complete" ? "is-done" : "is-locked"}`} aria-label={`${p.name}, ${st === "complete" ? "game final" : "playing now"}`}>{inner}</div>
                 : <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>{inner}</button>;
             })}
           </div>

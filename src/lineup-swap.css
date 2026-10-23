@@ -69,3 +69,5 @@ html:root:not(#_):not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick { left
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done:is(:hover, :active, .is-open, .on, [aria-pressed="true"]) { background-color: transparent !important; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done::after { background: transparent !important; box-shadow: inset 0 0 0 1px var(--line); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done:is(:hover, :active, :focus-visible, .is-open)::after { opacity: 1 !important; }
+/* Past weeks' rows are locked too: no hover fill (they never get is-done) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-locked:not(.is-live):hover { background-color: transparent !important; }
