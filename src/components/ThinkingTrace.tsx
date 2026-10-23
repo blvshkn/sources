@@ -53,7 +53,7 @@ export function Words({ text, k, base = 0, muteBefore }: { text: string; k: numb
           const idx = w++;
           const on = idx < k;
           // Profanity and anything abhorrent shows pixelated (Censored.tsx)
-          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}>{clean[i].map((r, j) => (r.hide ? <Pixelated key={j} n={r.t.length} /> : r.t))}</span>;
+          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}>{clean[i].map((r, j) => (r.hide ? <Pixelated key={j} word={r.t} /> : r.t))}</span>;
         })}
       </span>
     </>
