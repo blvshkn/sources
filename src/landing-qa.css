@@ -13,38 +13,16 @@ html:root:not(#_):not(#_) .ld2-label .plat-logo { margin: 0 0.3em 0 0.15em; vert
 /* ==== Floating headshots ====
    Bottom pair drifts no faster than the cards on scroll, so they only ever move away from the card edge.
    Every placement leaves at least 16px to the nearest card, form or nav control, including pointer drift. */
-html:root:not(#_):not(#_) .ld2-head.h3 { --d: 0.5; }
-html:root:not(#_):not(#_) .ld2-head.h6 { --d: 0.45; }
 
 /* Tablet: the stage is only as wide as its card, so the players frame the card instead of the empty column */
 @media (min-width: 600px) and (max-width: 959px) {
   html:root:not(#_):not(#_) .ld2-stage { max-width: 640px; }
-  html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -100px; }
-}
-
-@media (min-width: 960px) {
-  html:root:not(#_):not(#_) .ld2-head.h0 { top: -92px; left: -48px; --d: 0.8; }
-  html:root:not(#_):not(#_) .ld2-head.h3 { bottom: -100px; right: 26%; }
-  html:root:not(#_):not(#_) .ld2-head.h6 { display: block; bottom: -100px; left: 4%; }
 }
 /* Small desktop: no gutter beside the cards, so the players line up above and below them */
-@media (min-width: 960px) and (max-width: 1279px) {
-  html:root:not(#_):not(#_) .ld2-head.h1 { top: -92px; left: 22%; right: auto; }
-  html:root:not(#_):not(#_) .ld2-head.h2 { top: -92px; left: 46%; right: auto; --d: 0.8; }
-  html:root:not(#_):not(#_) .ld2-head:is(.h4, .h5) { display: none; }
-}
 /* Wide desktop: the gutter outside the cards holds the side players */
-@media (min-width: 1280px) {
-  html:root:not(#_):not(#_) .ld2-head.h4 { top: -28px; right: -60px; }
-  html:root:not(#_):not(#_) .ld2-head.h5 { display: none; }
-}
-@media (min-width: 1360px) {
-  html:root:not(#_):not(#_) .ld2-head.h5 { display: block; bottom: 16%; right: -80px; --d: 0.6; }
-}
 
 /* ==== Feature grid ==== */
 /* Sunday, live: the heading and its paragraph get the same 8px every other cell has */
-html:root:not(#_):not(#_) .ld2-live-head p { margin-top: 8px; }
 
 /* Finder: the notes it reads, shown above the scan */
 html:root:not(#_):not(#_) .ld2-notes { display: grid; gap: 8px; }
@@ -74,68 +52,26 @@ html:root:not(#_):not(#_) .ld2-final .ld2-help { margin-inline: auto; }
 
 /* Under 960 the stage has no scroll drift of its own: the players and the card move with the page,
    so the players above the card never slide up into the link or help text */
-@media (max-width: 959px) {
-  html:root:not(#_):not(#_) .ld2-stage .ld2-preview, html:root:not(#_):not(#_) .ld2-head { transform: none; }
-}
 /* Top right player drifts slowly so it never climbs into the nav */
-html:root:not(#_):not(#_) .ld2-head.h4 { --d: 0.3; }
 
 /* Hero cards glide in from the right, one after the other. The trade idea is a .nudge card, and a global
    rule turns .nudge animation off with !important, which left it sitting there while everything else loaded. */
 @keyframes ld3-from-right { from { opacity: 0; transform: translateX(72px); filter: blur(10px); } }
-html:root:not(#_):not(#_) .ld2-stage .ld2-card { animation: ld3-from-right 1000ms cubic-bezier(0.16, 1, 0.3, 1) both !important; }
-html:root:not(#_):not(#_) .ld2-stage .ld2-card.c1 { animation-delay: calc(360ms * var(--mo, 1)) !important; }
-html:root:not(#_):not(#_) .ld2-stage .ld2-card.c2 { animation-delay: 560ms !important; }
-@media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) .ld2-stage .ld2-card { animation: rm-fade calc(240ms * var(--mo, 1)) ease both !important; }
-}
 
 /* ==== Players v2: initials only, mixed sizes, no grow-in, parallax on every screen ==== */
 /* Each player has its own size, so the group reads as depth instead of a row of identical chips */
-html:root:not(#_):not(#_) .ld2-head { --hs: 52px; }
-html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 64px; }
-html:root:not(#_):not(#_) .ld2-head.h1 { --hs: 44px; }
-html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 56px; }
-html:root:not(#_):not(#_) .ld2-head.h3 { --hs: 48px; }
-html:root:not(#_):not(#_) .ld2-head.h4 { --hs: 40px; }
-html:root:not(#_):not(#_) .ld2-head.h5 { --hs: 52px; }
-html:root:not(#_):not(#_) .ld2-head.h6 { --hs: 44px; }
-html:root:not(#_):not(#_) .ld2-head .av { width: var(--hs) !important; height: var(--hs) !important; }
-html:root:not(#_):not(#_) .ld2-head .av-initials { font-size: calc(var(--hs) * 0.36) !important; }
 /* They arrive at their final size: a soft rise and fade, no scaling up */
 @keyframes ld3-arrive { from { opacity: 0; transform: translateY(14px); filter: blur(8px); } }
-html:root:not(#_):not(#_) .ld2-head-in { animation-name: ld3-arrive, ld3-float; }
-html:root:not(#_):not(#_) .ld2-head:is(.h1, .h4, .h6) .ld2-head-in { transform: none; opacity: 1; }
 
 /* Phone: a loose cluster over the card in three sizes, all inside the screen */
-@media (max-width: 599px) {
-  html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 52px; top: -86px; left: 0; right: auto; }
-  html:root:not(#_):not(#_) .ld2-head.h1 { --hs: 40px; top: -70px; left: 36%; right: auto; }
-  html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 46px; top: -92px; right: 2px; left: auto; }
-  html:root:not(#_):not(#_) .ld2-head.h3 { --hs: 42px; bottom: -78px; right: 10%; left: auto; }
-  html:root:not(#_):not(#_) .ld2-head:is(.h4, .h5, .h6) { display: none; }
-  html:root:not(#_):not(#_) .ld2-head b { font-size: 0.625rem; }
-}
 
 /* Phone and tablet keep parallax, but sideways: players drift across as you scroll, so they never
    climb into the copy above or sink into the card below. Left players drift right, right players drift left. */
 @media (max-width: 959px) and (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .ld2-head { transform: translate3d(calc(var(--sy) * var(--dx, 0.05) * 1px), 0, 0) !important; }
-  html:root:not(#_):not(#_) .ld2-head.h0 { --dx: 0.07; }
-  html:root:not(#_):not(#_) .ld2-head.h1 { --dx: -0.035; }
-  html:root:not(#_):not(#_) .ld2-head.h2 { --dx: -0.06; }
-  html:root:not(#_):not(#_) .ld2-head.h3 { --dx: -0.05; }
-  html:root:not(#_):not(#_) .ld2-head.h6 { --dx: 0.05; }
   /* The card itself eases up a touch slower than the page */
-  html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: translate3d(0, calc(var(--sy) * -0.03px), 0) !important; }
 }
 @media (max-width: 959px) {
   /* The card stays put on phone and tablet; only the players drift, so nothing slides under them */
-  html:root:not(#_):not(#_) .ld2-stage .ld2-preview { transform: none !important; }
-}
-@media (min-width: 600px) and (max-width: 959px) {
-  html:root:not(#_):not(#_) .ld2-head.h0 { --hs: 52px; }
-  html:root:not(#_):not(#_) .ld2-head.h2 { --hs: 48px; }
 }
 
 /* Hero top: the nav, then 48px (24px on phones, from the hero's own padding), then the eyebrow. The eyebrow sits at
@@ -269,7 +205,6 @@ html:root:not(#_):not(#_):not(#_) .ld2-chip-ic svg { width: 0.46em !important; h
 }
 
 /* Hero player circles: no ring around them (Zach, Oct 22). The soft drop shadow stays so they still float. */
-html:root:not(#_):not(#_):not(#_) .ld2-head .av { box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.7); }
 /* The tagline's dim-until-lit rule (styles.css .ld2-tag span) also reached the spans inside each headshot chip, and
    only the chip itself lights. The chip's insides always show at full strength; the chip's own reveal does the rest. */
 html:root:not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip span { opacity: 1 !important; transition: none !important; }

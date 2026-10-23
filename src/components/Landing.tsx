@@ -93,7 +93,10 @@ export function Landing({ onLive, onDemo }: {
   useEffect(() => {
     const prev = document.title;
     document.title = "Source: fantasy football trades for Sleeper leagues";
-    return () => { document.title = prev; };
+    // Safari's toolbar tint follows theme-color: match the landing's bottom edge while it's open (Zach, Oct 22)
+    const metas = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')], was = metas.map((m) => m.content);
+    metas.forEach((m) => { m.content = "#101211"; });
+    return () => { document.title = prev; metas.forEach((m, i) => { m.content = was[i]; }); };
   }, []);
   const live = useLive();
   const demo = useMemo(() => {
@@ -129,7 +132,6 @@ export function Landing({ onLive, onDemo }: {
   // Hero phones: each screen draws the app at its 390px width and scales it to fit (--hp-s)
   const phonesRef = useRef<HTMLDivElement>(null);
   const foSec = useRef<HTMLElement>(null);
-  const tradeSec = useRef<HTMLElement>(null);
   // The sticky nav (Zach, Oct 22): it stays with the logo all the way down, takes a backdrop once the page moves, and
   // once the hero's username field is out of sight it offers "Find my leagues", which opens that field in the nav.
   const [stuck, setStuck] = useState(false);
@@ -463,7 +465,6 @@ export function Landing({ onLive, onDemo }: {
   const hero = useRef<HTMLElement>(null);
   useEffect(() => (hero.current ? heroDepth(hero.current, env.current) : undefined), []);
   useEffect(() => (foSec.current ? heroDepth(foSec.current, null) : undefined), []);
-  useEffect(() => (tradeSec.current ? heroDepth(tradeSec.current, null) : undefined), []);
 
   // The trade idea's buttons start the sample league the way "Or explore a sample league" does, then the app opens
   // this deal: in the builder, or with its pitch written (demoHandoff.ts). A handoff left from an earlier visit is dropped.
@@ -597,21 +598,6 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
         <svg className="yb-wave" aria-hidden="true" focusable="false"><path /></svg>
         <div className="ld2-yband-tracks" ref={trackRef} aria-hidden="true">
-          <div className="ld2-yband-track yb-bg" aria-hidden="true">
-            {[0, 1, 2].map((k) => (
-              <span key={k} className="ld2-yband-run">
-                {/* The lime: one piece per letter, so the strip can ripple like cloth as it blows in */}
-                {YOURS.map((w) => (
-                  <span key={w} className="ld2-yband-item">
-                    {[..."YOUR"].map((c, i) => <span key={`b${i}`} className="yl yl-b">{c}</span>)}
-                    {[..." " + w + " "].map((c, i) => <span key={`w${i}`} className="yl">{c === " " ? "\u00a0" : c}</span>)}
-                    <span className="yl yl-dot"><i className="ld2-yband-dot" /></span>
-                    <span className="yl">{"\u00a0"}</span>
-                  </span>
-                ))}
-              </span>
-            ))}
-          </div>
           <div className="ld2-yband-track yb-tx" aria-hidden="true">
             {[0, 1, 2].map((k) => (
               <span key={k} className="ld2-yband-run">
@@ -648,7 +634,7 @@ export function Landing({ onLive, onDemo }: {
       {/* The trade idea, large and in its own section (Zach, Oct 22: not in the phone, further down where trades are the
           subject). The same card as Overview, with the hero's depth: tilt on pointer, layers that lift apart. */}
       {demo.trade && (
-        <section className="ld-section ld2-tradesec" aria-labelledby="ld-trades" ref={tradeSec}>
+        <section className="ld-section ld2-tradesec" aria-labelledby="ld-trades">
           <div className="ld2-tradesec-copy">
             <SplitHead id="ld-trades" a="Every deal," b="built for both sides." />
             <p className="ld2-tradesec-sub">Source finds the trade the other manager is already shopping for, checks it against both starting lineups, and only shows it when you both come out ahead.</p>

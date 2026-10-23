@@ -45,17 +45,6 @@ html:root:not(#_):not(#_) .hp-scr {
   clip-path: inset(0 round calc(52 * var(--u))); background: var(--scr, #0A0B0B);
   box-shadow: 0 0 0 calc(1.5 * var(--u)) #040404;
 }
-html:root:not(#_):not(#_) .hp-app {
-  position: absolute; top: 0; left: 0; width: 390px; box-sizing: border-box; padding: 60px 14px 24px;
-  transform: scale(var(--hp-s, 0.7)); transform-origin: 0 0;
-  display: flex; flex-direction: column; gap: 12px; text-align: left;
-}
-html:root:not(#_):not(#_) .hp-title {
-  margin: 4px 2px 6px; font-family: "Clash Grotesk", Geist, system-ui, sans-serif; font-weight: 600;
-  font-size: 28px; line-height: 32px; letter-spacing: -0.01em; color: var(--ink);
-}
-html:root:not(#_):not(#_) .hp-app > .card { margin: 0; }
-html:root:not(#_):not(#_) .hp-live { margin: 0; }
 
 /* ---------- Players at three depths ----------
    d0 near: large and sharp, in front of the phones. d1 middle: smaller, a little soft. d2 far: small, blurred and
@@ -95,16 +84,9 @@ html:root:not(#_):not(#_):not(#_) .ld2-fosec .hd-states { margin: 0 auto; max-wi
 html:root:not(#_):not(#_):not(#_) .hp-phone { container-type: normal; isolation: auto; --depth: calc(var(--pw) * 0.11); }
 html:root:not(#_):not(#_):not(#_) .hp-phone { --u: calc(var(--pw) / 400); }
 html:root:not(#_):not(#_):not(#_) .hp-back { filter: none; }
-html:root:not(#_):not(#_) .hp-body { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
 /* iPhone 18 Pro Max in matte black (Zach): the Pro Max's 6.9-inch proportions (the device is already 400:838.7) and
    its anodized aluminum in black (Zach's reference render): a soft charcoal body, the frame a lighter dark gray band around the glass, with a diffuse sheen where the edge rounds
    toward the light and no polished rim. */
-html:root:not(#_):not(#_) .hp-body i {
-  position: absolute; inset: 0; border-radius: calc(64 * var(--u));
-  transform: translateZ(calc(var(--depth) * var(--z) / -22));
-  background: linear-gradient(90deg, #3A3A3D 0%, #232325 6%, #262628 35%, #1F1F21 65%, #29292B 94%, #3E3E41 100%);
-}
-html:root:not(#_):not(#_) .hp-body i:last-child { background: #1E1E20; box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.8); }
 /* The front: black glass to the edge, a hairline of the anodized band around it */
 html:root:not(#_):not(#_):not(#_) .hp-phone .ph-chrome {
   z-index: auto; transform: translateZ(0.5px);
@@ -191,10 +173,8 @@ html:root:not(#_):not(#_) .hp-poster { position: absolute; left: 0; top: calc(50
 html:root:not(#_):not(#_) .ld2-tradesec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; align-items: center; }
 html:root:not(#_):not(#_) .ld2-tradesec-copy { display: flex; flex-direction: column; gap: 24px; }
 html:root:not(#_):not(#_) .ld2-tradesec-sub { margin: 0; max-width: 46ch; font-size: 1.125rem; line-height: 1.75rem; color: var(--muted); text-wrap: pretty; }
-html:root:not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { width: 100%; max-width: 480px; justify-self: center; }
 @media (min-width: 1024px) {
   html:root:not(#_):not(#_) .ld2-tradesec { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; }
-  html:root:not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { zoom: 1.2; max-width: 460px; }
 }
 
 /* ---------- Tall sections, free scrolling (Zach, Oct 22: the 100% lock felt off; "try 85% and not locking") ----------
@@ -215,12 +195,6 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap { padding-bl
    there's height for it */
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(40px, 7vh, 96px); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yourscreen .ld2-tag.ld2-tag-stack { font-size: clamp(2.25rem, min(7.4vw, 7.6vh), 6.75rem); }
-@media (min-width: 1024px) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { zoom: 1; }
-}
-@media (min-width: 1024px) and (min-height: 960px) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tradesec .hd-trade { zoom: 1.15; }
-}
 /* heroDepth moves a card by the page's scroll times --hd-rate, which only makes sense in the hero. In their own
    sections the matchup and the trade idea keep the tilt and the layers but don't drift with the scroll. */
 html:root:not(#_):not(#_):not(#_):not(#_) :is(.ld2-fosec, .ld2-tradesec) .hd-card { --hd-rate: 0 !important; }

@@ -21,7 +21,6 @@ html:root:not(#_):not(#_) .ld2-hero {
 /* ==== The 3D stack ==== */
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card { perspective: 1200px; --hd-rate: 0; --hd-rx: 2deg; --hd-ry: 0deg; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo { --hd-rate: 0.02; --hd-ry: 2deg; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade { --hd-ry: -2deg; }
 html:root:not(#_):not(#_) .ld2-hero :is(.hd-tilt, .hd-pose) { transform-style: preserve-3d; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-pose {
   transform: rotateX(var(--hd-rx)) rotateY(var(--hd-ry));
@@ -32,13 +31,9 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-pose {
    press tint, which flattens 3D; the landing card is inert, so the tint never shows here. */
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo :is(.hd-face, .sb2, .sb2-open, .fo, .fo-in, .fo-side) { transform-style: preserve-3d; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .sb2-open { isolation: auto; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade :is(.ld2-preview, .ld2-idea, .ti, .tx) { transform-style: preserve-3d; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ld2-preview { transform: none !important; will-change: auto; }
 
 /* The trade idea's slide in from the right moves from the card (a 3D host, where its filled blur(0) would flatten the
    layers for good) to the box around it, and fills backwards only, so nothing stays on it once it lands. */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ld2-card { animation: none !important; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade { animation: ld3-from-right 1000ms cubic-bezier(0.16, 1, 0.3, 1) 560ms backwards; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-states.ld2-in { animation-fill-mode: backwards; }
 
 /* ==== Dimension at rest ====
@@ -50,28 +45,15 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .sb2 
     0 1px 1px rgba(0, 0, 0, 0.12), 0 3px 3px -1.5px rgba(0, 0, 0, 0.16), 0 8px 8px -4px rgba(0, 0, 0, 0.18),
     0 18px 18px -9px rgba(0, 0, 0, 0.22), 0 36px 36px -18px rgba(0, 0, 0, 0.26), 0 64px 64px -32px rgba(0, 0, 0, 0.3) !important;
 }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ld2-idea {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(var(--lime-rgb), 0.08),
-    0 1px 1px rgba(0, 0, 0, 0.12), 0 3px 3px -1.5px rgba(0, 0, 0, 0.16), 0 8px 8px -4px rgba(0, 0, 0, 0.18),
-    0 18px 18px -9px rgba(0, 0, 0, 0.22), 0 36px 36px -18px rgba(0, 0, 0, 0.26), 0 64px 64px -32px rgba(0, 0, 0, 0.3) !important;
-}
 
 /* ==== Layers ====
    Trade idea: shell, You send, the swap mark, You get, the stats row, the reason line, then the buttons on top.
    Face-off: shell and wash, each team side, the bars, then the VS badge and the meta lines.
    Bars and meta sit inside a side, so their lift is relative to the side's (--hd-at is where they end up). */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions),
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo :is(.fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) {
   translate: 0 0 0;
   transition: translate 700ms var(--hd-out) var(--hd-back, 0ms);
 }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .tx-side.send { --hd-l: 1; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .tx-swap { --hd-l: 1.5; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .tx-side.get { --hd-l: 2; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ti-stats { --hd-l: 3; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ti-why { --hd-l: 4; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ti-actions { --hd-l: 5; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .fo-side { --hd-l: 1.5; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .fo-bar { --hd-l: 1.5; --hd-at: 3; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .fo-meta { --hd-l: 3; --hd-at: 4.5; }
@@ -90,9 +72,7 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card :is
   opacity: 0; transition: opacity calc(240ms * var(--mo, 1)) var(--hd-out);
 }
 /* The panels and stats row have their own corners, so their outline sits on them */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade :is(.tx-side, .ti-stats)::after { inset: 0; border-radius: inherit; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo .fo-side::after { inset: -8px -10px; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ti-actions::after { border-radius: 999px; }
 
 /* ==== Exploded ==== */
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-x .hd-pose {
@@ -102,14 +82,8 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo { --hd-x-ry: 14deg; }
 /* The trade idea is the one with buttons. Its stack sinks back by the buttons' own lift and turns around their line
    (--hd-oy, measured by heroDepth.ts), so the buttons hold their place on screen and a click aimed at them lands. */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .hd-pose { position: relative; transform-origin: 50% var(--hd-oy, 85%); }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade.is-x .hd-pose {
-  transform: rotateX(16deg) rotateY(-14deg) translateZ(calc(2px - 5 * var(--hd-z)));
-}
 /* The wrappers are planes in the same 3D scene; they take no pointer, so a hit always reaches the card's own content */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card :is(.hd-tilt, .hd-pose),
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade :is(.ld2-preview, .ld2-idea, .ti, .tx) { pointer-events: none; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade :is(.nudge-kind, .ld2-idea > h3, .tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions) { pointer-events: auto; }
+html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card :is(.hd-tilt, .hd-pose) { pointer-events: none; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-x :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) {
   translate: 0 0 calc(var(--hd-l) * var(--hd-z));
   transition: translate 640ms var(--hd-big) calc(var(--hd-at, var(--hd-l)) * 22ms);
@@ -117,8 +91,6 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-x :is(.tx-side, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-foot)::after { opacity: 1; transition-duration: calc(400ms * var(--mo, 1)); }
 /* The buttons move in step with the pose, no cascade delay either way, so their net depth stays at the pivot through
    the whole move and they never swing out from under the pointer */
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade .ti-actions { transition-delay: 0ms; }
-html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade.is-x .ti-actions { transition-delay: 0ms; }
 /* The one-time moment as the hero first shows: a slower 900ms out, then the 700ms settle above */
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-intro.is-x .hd-pose { transition-duration: 900ms; }
 html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-intro.is-x :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) { transition-duration: 900ms; }
@@ -126,13 +98,9 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card.is-
 /* Compositor hints only while something moves */
 html:root:not(#_):not(#_) .ld2-hero.hd-active :is(.hd-tilt, .hd-pose, .hd-states) { will-change: transform; }
 html:root:not(#_):not(#_) .ld2-hero.hd-active .hd-card :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) { will-change: translate; }
-html:root:not(#_):not(#_) .ld2-hero .ld2-head { will-change: auto; }
-html:root:not(#_):not(#_) .ld2-hero.hd-active .ld2-head { will-change: transform; }
 
 /* Offscreen: the endless loops stop too (the players' float, the live bar's sweep, the caret) */
-html:root:not(#_):not(#_) .ld2-hero.hd-off .ld2-head-in,
-html:root:not(#_):not(#_) .ld2-hero.hd-off .fo-bar i::after,
-html:root:not(#_):not(#_) .ld2-hero.hd-off .ld2-caret::after { animation-play-state: paused; }
+html:root:not(#_):not(#_) .ld2-hero.hd-off .fo-bar i::after,html:root:not(#_):not(#_) .ld2-hero.hd-off .ld2-caret::after { animation-play-state: paused; }
 
 /* ==== Face-off states ====
    Phone: the compact card, the Projected · Live · Final pills under it, then the caption.
@@ -182,7 +150,6 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-cap .tro
   html:root:not(#_):not(#_) :is(.ld2-copy, .ld2-fosec) .hd-states { margin-top: 28px; max-width: 480px; }
   /* The face-off drifts down a touch slower than the page, the trade idea rises a touch faster, the players faster still */
   html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-fo { --hd-rate: 0.03; --hd-ry: 3deg; }
-  html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade { --hd-rate: -0.06; --hd-ry: -3deg; }
 }
 
 /* ==== Reduced motion: the resting depth, no tilt, parallax, explode or auto-advance; switches are instant ==== */
@@ -191,6 +158,5 @@ html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-cap .tro
   html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card .hd-pose { transform: rotateX(var(--hd-rx)) rotateY(var(--hd-ry)) !important; transition: none !important; }
   html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card :is(.tx-side, .tx-swap, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-bar, .fo-meta, .fo-mid, .fo-foot) { translate: none !important; transition: none !important; }
   html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-card :is(.tx-side, .ti-stats, .ti-why, .ti-actions, .fo-side, .fo-foot)::after { display: none; }
-  html:root:not(#_):not(#_) :is(.ld2-hero, .ld2-fosec, .ld2-tradesec) .hd-trade { animation: rm-fade calc(240ms * var(--mo, 1)) ease both; }
   html:root:not(#_):not(#_) .ld2-hero :is(.hd-face, .hd-cap) { transition: none !important; }
 }

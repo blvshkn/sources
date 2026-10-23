@@ -113,7 +113,6 @@ html:root:not(#_):not(#_) .ld2-endfield .env-turf {
     repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 62% / 100% 18px no-repeat;
 }
 /* The headshots' cut-out ring takes the new ground */
-html:root:not(#_):not(#_) .ld2-head .av { box-shadow: 0 0 0 3px #0D0E0D, 0 0 0 4px color-mix(in srgb, var(--ink) 14%, transparent), 0 16px 32px -12px rgba(0, 0, 0, 0.7); }
 /* Desktop: the glow lies flat, 140% x 80% centered 110% down, under the field */
 @media (min-width: 861px) {
   html:root:not(#_):not(#_) .ld2-env .env-glow.g1 { z-index: auto; left: -20%; top: 70%; width: 140%; height: 80%; rotate: none; }

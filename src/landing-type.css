@@ -25,14 +25,14 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.25rem, 3.6vw, 3.75rem) !important; }
 
 /* ---------- Card and step titles ---------- */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > h3, .ld-cell .ld2-live-head h3, .lds h3, .ld-trust-list b) {
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > h3, .lds h3, .ld-trust-list b) {
   font-family: "Clash Grotesk", Geist, system-ui, sans-serif !important; font-weight: 500 !important;
   font-size: 1.25rem !important; line-height: 1.75rem !important; letter-spacing: -0.01em !important; color: var(--ink);
 }
 
 /* ---------- Lede, body, small ---------- */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-sub, .ld2-tradesec-sub) { font: 400 1.125rem/1.75rem var(--font-body) !important; letter-spacing: normal !important; color: var(--muted); }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > p, .ld-cell .ld2-live-head p, .lds p, .ld-trust-list p, .ld2-faq-list p) {
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-cell > p, .lds p, .ld-trust-list p, .ld2-faq-list p) {
   font: 400 1rem/1.5rem var(--font-body) !important; color: var(--muted);
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-faq-list summary { font: 500 1.125rem/1.75rem var(--font-body) !important; }
@@ -194,10 +194,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone { opacity: 
 /* No WebGL: just the screens, each with a plain dark edge */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-off .hp-scr { box-shadow: 0 0 0 calc(var(--pw) * 0.035) #1E1E20, 0 40px 60px -20px rgba(0, 0, 0, 0.8); }
 /* Drawn: the CSS body, buttons and the back phones' screens give way to the render */
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.hp-body, .ph-chrome) { display: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on :is(.ph-chrome) { display: none; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-back .hp-scr { visibility: hidden; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-on .hp-front .hp-scr { box-shadow: none; }
-
 
 /* ---------- The trade section: the builder's readout (Landing.tsx LandingDeal) ----------
    Heading and line on top, then the deal the way the builder reads it, wide enough for its two columns. */
@@ -262,20 +261,12 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
 /* Two copies of the strip, same layout and same wave: the lime underneath (padded out so the pieces never show a seam,
    even tipped and bunched) and the words on top, so the lime never covers a letter (Zach, Oct 22: copy cut off) */
 html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks { position: relative; width: max-content; will-change: transform; }
-html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks > .yb-tx { position: absolute; left: 0; top: 0; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { color: transparent; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .ld2-yband-dot { visibility: hidden; }
 /* The lime is one smooth shape under the words, redrawn along the same wave (Landing.tsx yb-wave), so its edges are a
    clean curve instead of a stair of tipped pieces (Zach, Oct 22: the ribbon looked choppy) */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband { position: relative; overflow-x: clip; overflow-y: visible; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-wave { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-wave path { fill: #D8F24A; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .ld2-yband-tracks { z-index: 1; }
-/* Each lime piece reaches well into its neighbors (padding out, margin back, so the layout matches the words above it),
-   so the strip stays whole however much it bunches and tips (Zach, Oct 22: chunks missing on tablet) */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { padding-inline: 0.18em; margin-inline: -0.18em; }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl-dot { padding-inline: calc(0.55em + 0.18em); }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .ld2-yband-dot { visibility: hidden; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-spacing: -0.04em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0; }
@@ -466,3 +457,8 @@ html:root:not(#_):not(#_):not(#_) .ld2-env { inset: 0 0 auto 0; height: calc(100
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur {
   bottom: calc(100svh - 100lvh); height: calc(clamp(64px, 11vh, 112px) + 100lvh - 100svh);
 }
+
+/* Safari paints a band of the page's base color behind its floating toolbar. On the landing that base is set to the
+   color the page actually shows near the bottom, so the band blends in instead of reading as a dark box (Zach, Oct 22) */
+html:has(.ld2):root:not(#_):not(#_) { background-color: #101211 !important; }
+html:root:not(#_):not(#_) body:has(.ld2) { background-color: #101211 !important; }

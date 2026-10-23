@@ -26,13 +26,7 @@ html:root:not(#_):not(#_) {
 }
 
 /* ---------- Transitions: never `all` on interactive things ---------- */
-html:root:not(#_):not(#_) :is(
-  .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .nav button, .nav-ix button, .league-pill, .lsw-btn, .top-league, .page-league,
-  .linkish, .ibx-allread, .ibx-x, .ps-x, .st-back, .composer-btn, .qs-add, .qs-x, .qs-done, .qs-opts button, .wv-ta-list button, .tp-list button,
-  .partner-card, .tp-btn, .mu-mine, .mu-opt, .sb2-partner, .sb-stat-link, .sr-main, .ld2-link, .ld2-again, .ld2-faq summary,
-  .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .ibx-item, .saved-x, .nudge-link, .ti-nope, .fb-opt, .set-link,
-  .side-logo, .switch
-) {
+html:root:not(#_):not(#_) :is(.btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .nav button, .nav-ix button, .league-pill, .lsw-btn, .top-league, .page-league, .linkish, .ibx-allread, .ibx-x, .ps-x, .st-back, .composer-btn, .qs-add, .qs-x, .qs-done, .qs-opts button, .wv-ta-list button, .tp-list button, .partner-card, .tp-btn, .mu-mine, .mu-opt, .sb2-partner, .sb-stat-link, .sr-main, .ld2-link, .ld2-again, .ld2-faq summary, .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .ibx-item, .saved-x, .nudge-link, .ti-nope, .fb-opt, .set-link, .side-logo, .switch) {
   transition-property: background-color, box-shadow, transform, opacity, color;
   transition-duration: var(--st-dur);
   transition-timing-function: var(--st-ease);
@@ -194,11 +188,7 @@ html:root:not(#_):not(#_) .ui-tip { box-shadow: var(--shadow-sm); }
 
 /* ---------- Reduced motion: state changes stay, movement goes ---------- */
 @media (prefers-reduced-motion: reduce) {
-  html:root:not(#_):not(#_) :is(
-    .btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link, .side-logo,
-    .partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main,
-    .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt
-  ):active { transform: none !important; }
+  html:root:not(#_):not(#_) :is(.btn, .chip-btn, .seg button, .wv-pos button, .wv2-pos button, .composer-btn, .qs-add, .qs-done, .st-back, .ps-x, .ibx-x, .qs-x, .saved-x, .ld2-again, .ld2-link, .side-logo, .partner-card, .tp-btn, .mu-mine, .league-pill.lsw-btn, .top-league, .page-league, .sb-stat-link, .sb2-partner, .sr-main, .brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row, button.st-row, .psr-row, .lsw-row, .qs-opts button, .wv-ta-list button, .tp-list button, .mu-opt):active { transform: none !important; }
   html:root:not(#_):not(#_) :is(.brief-row, .wk-row, button.st-row):hover > svg:last-child,
   html:root:not(#_):not(#_) .ld2-link:hover svg { transform: none !important; }
 }

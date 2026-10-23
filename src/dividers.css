@@ -51,17 +51,7 @@ html:root:not(#_):not(#_):not(#_) .ibx-item + .ibx-item::before { transition: op
   /* Their threats: the last row and the footer link under the list */
   html:root:not(#_):not(#_):not(#_) .thr-body:has(> .wk-row:last-child:hover) + .wk-more,
   /* Dividers drawn as the top border of a wrapper around the row */
-  html:root:not(#_):not(#_):not(#_) :is(
-    .wv:has(> .wv-row:hover), .wv:has(> .wv-row:hover) + .wv,
-    .sr-row:has(> .sr-main:hover), .sr-row:has(> .sr-main:hover) + .sr-row,
-    .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover), .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover) + li,
-    .psr-list > li:has(> .psr-row:hover), .psr-list > li:has(> .psr-row:hover) + li,
-    .so-card .so-row:has(> .so-open:hover), .so-card .so-row:has(> .so-open:hover) + .so-row,
-    .nxr-g:has(> .nxr-head .nxr-tog:hover), .nxr-g:has(> .nxr-head .nxr-tog:hover) + .nxr-g,
-    .card.mu > .mu-row:has(> .mu-mine:hover), .card.mu > .mu-row:has(> .mu-mine:hover) + :is(.mu-row, .mu-foot),
-    .wv3-list:has(> .wv:first-child > .wv-row:hover),
-    .lu-list .lu-row.tap:hover + .lu-list-head.sub
-  ) { border-top-color: transparent !important; }
+  html:root:not(#_):not(#_):not(#_) :is(.wv:has(> .wv-row:hover), .wv:has(> .wv-row:hover) + .wv, .sr-row:has(> .sr-main:hover), .sr-row:has(> .sr-main:hover) + .sr-row, .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover), .fb-list > li:has(> :is(.fb-opt, .lsw-row):hover) + li, .psr-list > li:has(> .psr-row:hover), .psr-list > li:has(> .psr-row:hover) + li, .so-card .so-row:has(> .so-open:hover), .so-card .so-row:has(> .so-open:hover) + .so-row, .nxr-g:has(> .nxr-head .nxr-tog:hover), .nxr-g:has(> .nxr-head .nxr-tog:hover) + .nxr-g, .card.mu > .mu-row:has(> .mu-mine:hover), .card.mu > .mu-row:has(> .mu-mine:hover) + :is(.mu-row, .mu-foot), .wv3-list:has(> .wv:first-child > .wv-row:hover), .lu-list .lu-row.tap:hover + .lu-list-head.sub) { border-top-color: transparent !important; }
 
   /* Dividers drawn as a 1px inset shadow at the row's top */
   html:root:not(#_):not(#_):not(#_) :is(.lu-list .lu-row.tap, .vb-row:not(:disabled)):hover,

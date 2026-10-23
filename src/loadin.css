@@ -119,13 +119,7 @@ html:root:not(#_):not(#_) .lu-wskel .lu-wi .btn { width: 8.5em; }
 /* Skeletons that are the loaded element with a class on top (same nodes before and after): the bars dissolve into
    the text as the class comes off. Color and background only, nothing that changes size. */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) :is(
-    .mw :is(.mw-pts, .mw-score small, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl, .mwf-pts, .mwf-note, .mwf-name > span, .mwf-msg),
-    .fo :is(.fo-pts, .fo-name > span),
-    .wv3-list :is(.wv-proj b, .wv-c-lu b),
-    .topk :is(.topk-label, .topk-name, .wv-meta, dt, dd, .topk-why, .topk-plan li > span),
-    .sx-verdict
-  ) { transition: color calc(180ms * var(--mo, 1)) var(--ease-out), background-color calc(180ms * var(--mo, 1)) var(--ease-out); }
+  html:root:not(#_):not(#_) :is(.mw :is(.mw-pts, .mw-score small, .mw-vs-pts, .mw-vs-who b, .mw-win .mw-lbl, .mwf-pts, .mwf-note, .mwf-name > span, .mwf-msg), .fo :is(.fo-pts, .fo-name > span), .wv3-list :is(.wv-proj b, .wv-c-lu b), .topk :is(.topk-label, .topk-name, .wv-meta, dt, dd, .topk-why, .topk-plan li > span), .sx-verdict) { transition: color calc(180ms * var(--mo, 1)) var(--ease-out), background-color calc(180ms * var(--mo, 1)) var(--ease-out); }
   /* Start / Sit: the dimmed rows ease back up (startsit.css holds the calc(120ms * var(--mo, 1)) delay on the way down) and the verdict's
      bar fades out under the words */
   html:root:not(#_):not(#_) .sx-row { transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out); }

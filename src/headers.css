@@ -8,11 +8,7 @@
    line. Tracking: 0 on small titles, slightly negative from 24px up. */
 
 /* Small titles: cards, sheets, sections. Medium, tracking 0 */
-html:root:not(#_):not(#_) :is(
-  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
-  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
-  .ld2-steps h3
-) {
+html:root:not(#_):not(#_) :is(.section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b, .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2, .ld2-steps h3) {
   --font-display: "Clash Grotesk", Geist, system-ui, sans-serif;
   font-family: var(--font-display) !important;
   font-weight: 500 !important;
@@ -45,13 +41,5 @@ html:root:not(#_):not(#_) :is(.page-title, .ob-title, .sheet h2, .ld-h2) {
 html:root:not(#_):not(#_) .ld2-h1 { letter-spacing: -0.02em !important; }
 
 /* Only 500 and 600 ship, so emphasis inside a header tops out at Semibold and the browser never fakes a bold */
-html:root:not(#_):not(#_) :is(
-  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
-  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
-  .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2
-) { font-synthesis-weight: none; }
-html:root:not(#_):not(#_) :is(
-  .section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b,
-  .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2,
-  .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2
-) :is(em, strong, b) { font-weight: 600 !important; }
+html:root:not(#_):not(#_) :is(.section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b, .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2, .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2) { font-synthesis-weight: none; }
+html:root:not(#_):not(#_) :is(.section-title, .nudge h3, .ss-head > b, .lu-list-head b, .roster-head > b, .wv3-head-t > b, .wv-head-t > b, .vb-move > b, .fb-head b, .ds-h, .mus-title, .wn-title, .ibx-title, .pp-h, .dd-h, .dm-h, .nd-h, .doc h2, .ld2-steps h3, .dv-verdict > b, .ld-cell h3, .ask-title, .ld2-h1, .ld2-tag, .page-title, .ob-title, .sheet h2, .ld-h2) :is(em, strong, b) { font-weight: 600 !important; }

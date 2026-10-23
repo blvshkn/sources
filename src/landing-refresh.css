@@ -8,7 +8,6 @@ html:root:not(#_):not(#_) .ld2-copy .ld2-fo { margin-top: 32px; width: 100%; max
 html:root:not(#_):not(#_) .ld2-copy .ld2-fo .sb2-open { cursor: default; }
 
 /* The trade idea is the only card on the stage now: no offset meant to stagger it against a second card */
-html:root:not(#_):not(#_) .ld2-stage .ld2-preview > .ld2-idea { display: flex; margin-right: 0; margin-left: 0; }
 
 @media (min-width: 600px) and (max-width: 959px) {
   html:root:not(#_):not(#_) .ld2-copy .ld2-fo { max-width: 640px; }
