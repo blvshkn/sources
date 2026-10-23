@@ -121,6 +121,9 @@ html:root:not(#_):not(#_) .hp-head b {
 /* ---------- Footer: SOURCE in the display gradient, the field running down from the box above ---------- */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-sign .ld2-sign-word > span {
   background: linear-gradient(180deg, #FFFFFF 0%, #9B9B9B 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  /* The gradient only paints inside each letter's box, and the tight tracking pushes ink past it (S into O, R's leg,
+     C's ends were cut). Pad the box and pull it back with margins so the letters stay put (Zach, Oct 23). */
+  padding: 0.12em 0.14em; margin: -0.12em -0.14em;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-final { overflow: visible; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-endfield { bottom: auto; top: 62%; height: 1600px; z-index: 0; }
