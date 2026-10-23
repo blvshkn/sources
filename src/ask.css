@@ -259,7 +259,7 @@ html:root:not(#_):not(#_):not(#_) .ask-send[aria-busy="true"]::before { opacity:
 }
 
 /* ---------- Send button while Source thinks (Zach, Oct 23) ----------
-   The React Bits orb takes over the button: black behind it, the orb's ring filling the circle, and the AI mark in
+   The React Bits orb takes over the button: black behind it, the orb (its default purple and cyan) filling the circle, and the AI mark in
    white on top, a size up from the composer's and centered both ways. The drifting glow above steps aside. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ask-send[aria-busy="true"] { background: #000; color: #fff; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ask-send[aria-busy="true"]::before { opacity: 0; animation: none; }

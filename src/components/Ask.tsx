@@ -432,7 +432,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 else if (empty) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap one of the suggestions."); }
               }}>
               {/* Thinking (Zach, Oct 23): the orb takes over the button, black behind it, the AI mark white and centered */}
-              {working ? <><Orb className="ask-send-orb" colors={["#D8F24A", "#7FE3A0", "#2D6B1F"]} backgroundColor="#000000" followCursor={false} clickPulse={false} hoverIntensity={0} rotateOnHover={false} /><span className="ask-send-mark"><AiMark size={20} /></span></> : <ArrowUp />}
+              {working ? <><Orb className="ask-send-orb" backgroundColor="#000000" followCursor={false} clickPulse={false} hoverIntensity={0} rotateOnHover={false} /><span className="ask-send-mark"><AiMark size={20} /></span></> : <ArrowUp />}
             </button>
           </form>
           <p className="ask-note">Source only reads your league's public rosters and the tags you log.<span className="ask-wide"> It never scans private group chats.</span></p>
