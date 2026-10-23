@@ -26,9 +26,9 @@ type Head = {
   textures: { mime: string; off: number; len: number; skip?: 1 }[];
 };
 
-async function loadModel(T: Three, url: string) {
+async function loadModel(T: Three, got: Promise<Response>) {
   // Gzipped by scripts/pack-phone.py, so it travels small whatever the host does with .pack files
-  const res = await fetch(url);
+  const res = await got;
   const buf = await new Response(res.body!.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
   const hl = new DataView(buf).getUint32(0, true);
   const head: Head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
@@ -102,6 +102,8 @@ export type Phones3D = { kick: (ms?: number) => void; dispose: () => void };
  * phone's screen, or null to leave its glass black (the front phone, whose live app sits on top in the DOM).
  */
 export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], screens: (string | null)[], dim: number[]): Promise<Phones3D> {
+  // The model's download starts now, alongside the engine's, instead of after it (Zach, Oct 22: faster load)
+  const model = fetch("/models/iphone-18-pro-max.pack");
   // @ts-ignore vendored ES module without types
   const T: Three = await import("../vendor/three/three.module.min.js");
   const canvas = document.createElement("canvas");
@@ -116,7 +118,7 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
   const key = new T.DirectionalLight(0xffffff, 1.2); key.position.set(-400, 600, 900); scene.add(key);
 
   const [{ geos, mats, head }, screenTex] = await Promise.all([
-    loadModel(T, "/models/iphone-18-pro-max.pack"),
+    loadModel(T, model),
     Promise.all(screens.map((src) => src ? new T.TextureLoader().loadAsync(src).then((t: Three) => { t.colorSpace = T.SRGBColorSpace; t.flipY = false; return t; }) : null)),
   ]);
   const screenMesh = head.meshes.findIndex((m) => m.name === "Front_Screen");

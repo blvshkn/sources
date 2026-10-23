@@ -57,6 +57,7 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal.in { transform: none; filter:
 html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(1) { transition-delay: calc(90ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(2) { transition-delay: calc(180ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(3) { transition-delay: calc(270ms * var(--mo, 1)); }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld-trust-list > .ld2-reveal:nth-child(4) { transition-delay: calc(360ms * var(--mo, 1)); }
 html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(n+4) { transition-delay: calc(330ms * var(--mo, 1)); }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal { transform: none; filter: none; transition: opacity 160ms linear; transition-delay: 0s !important; }
@@ -74,6 +75,8 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-in {
     transition: opacity calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), filter calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
     transition-delay: calc(var(--i) * 90ms * var(--mo, 1));
   }
+  /* Arrived: sharp and in place (this has to outrank the starting state above, or SOURCE stays blurred) */
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-sign.in .ld2-sign-word > span { opacity: 1; transform: none; filter: none; }
 }
 /* Tagline chips: the manager's photo fills its circle like the headshots */
 html:root:not(#_):not(#_):not(#_) .ld2-chip .ld2-chip-mgr { width: 100% !important; height: 100% !important; border-radius: 50%; object-fit: cover; font-size: 0.3em !important; }
@@ -260,7 +263,14 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl {
    even tipped and bunched) and the words on top, so the lime never covers a letter (Zach, Oct 22: copy cut off) */
 html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks { position: relative; width: max-content; will-change: transform; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband-tracks > .yb-tx { position: absolute; left: 0; top: 0; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { background: #D8F24A; box-shadow: 0 0 0 3px #D8F24A; color: transparent; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { color: transparent; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .ld2-yband-dot { visibility: hidden; }
+/* The lime is one smooth shape under the words, redrawn along the same wave (Landing.tsx yb-wave), so its edges are a
+   clean curve instead of a stair of tipped pieces (Zach, Oct 22: the ribbon looked choppy) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband { position: relative; overflow-x: clip; overflow-y: visible; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-wave { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-wave path { fill: #D8F24A; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yband .ld2-yband-tracks { z-index: 1; }
 /* Each lime piece reaches well into its neighbors (padding out, margin back, so the layout matches the words above it),
    so the strip stays whole however much it bunches and tips (Zach, Oct 22: chunks missing on tablet) */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-yband .yb-bg .yl { padding-inline: 0.18em; margin-inline: -0.18em; }
@@ -329,9 +339,11 @@ html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i:nth-child(4) { -webkit-backdro
    The players around the phones keep moving with the scroll at their own depth (Landing.tsx sets --hsy): the near
    ones rise past fastest, the far ones barely move. Driven by the scroll only, so they stop when it does. */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-head { will-change: transform; }
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d0 { transform: translate3d(0, calc(var(--hsy, 0) * -0.42px), 0); }
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { transform: translate3d(0, calc(var(--hsy, 0) * -0.2px), 0); }
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { transform: translate3d(0, calc(var(--hsy, 0) * -0.06px), 0); }
+/* Plus the device's tilt on phones and tablets (--gx, --gy from -1 to 1, Landing.tsx): near players shift most */
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d0 { transform: translate3d(calc(var(--gx, 0) * 22px), calc(var(--hsy, 0) * -0.42px + var(--gy, 0) * 22px), 0); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { transform: translate3d(calc(var(--gx, 0) * 12px), calc(var(--hsy, 0) * -0.2px + var(--gy, 0) * 12px), 0); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { transform: translate3d(calc(var(--gx, 0) * 5px), calc(var(--hsy, 0) * -0.06px + var(--gy, 0) * 5px), 0); }
+html:root:not(#_):not(#_):not(#_):not(#_) .sc-p { transform: translate3d(calc(var(--gx, 0) * var(--r) * -90px), calc(var(--sy, 0) * var(--r) * 1px + var(--gy, 0) * var(--r) * -90px), 0); }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_) .hp-head { transform: none !important; } }
 
 /* Tagline chips' initials match every other avatar (Zach, Oct 22): 36% of the circle, in the app's body font, and they
@@ -392,3 +404,23 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask > svg:last-child { align-
 
 /* No bottom edge blur on phones (Zach, Oct 22) */
 @media (max-width: 767px) { html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur { display: none; } }
+
+/* Sign-off on phones and tablets: SOURCE sits higher so the whole word reads, cropped only a hair at the bottom
+   (Zach, Oct 22) */
+@media (max-width: 1023px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { margin-bottom: -0.06em; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-row { margin-top: 48px; }
+}
+
+/* ---------- Tagline: centered in the space under the banner, sized to the device (Zach, Oct 22) ----------
+   The pinned tagline fills exactly the screen left under the nav and banner and sits in its optical center (a touch
+   above true center, since caps and chips read heavier at the bottom). Its size is a share of that space: about 10.5%
+   of the open height or 9.5% of the width, whichever is smaller, so iPhone, iPad and desktop all fill it alike. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap {
+  top: calc(var(--navh, 64px) + var(--bandh, 96px));
+  height: calc(100svh - var(--navh, 64px) - var(--bandh, 96px));
+  padding: 0 16px 3svh; align-content: center;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
+  font-size: clamp(2rem, min(8.6vw, (100svh - var(--navh, 64px) - var(--bandh, 96px)) * 0.105), 7.5rem) !important;
+}

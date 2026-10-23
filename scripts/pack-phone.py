@@ -31,12 +31,14 @@ def put(b):
 meshes = []
 for m in g['meshes']:
     if (m.get('name') or '').startswith(HIDDEN): continue
+    if g['accessors'][m['primitives'][0]['attributes']['POSITION']]['count'] == 0: continue
     p = m['primitives'][0]; at = p['attributes']
     pos = view(at['POSITION']); nrm = view(at['NORMAL']); ind = view(p['indices'])
     uvs = view(at['TEXCOORD_0']) if 'TEXCOORD_0' in at else None
     # Triangles facing away (normals pointing back past 60 degrees) never show: the hero turns phones 30 degrees at most
     tri = [tuple(ind[i + k][0] for k in range(3)) for i in range(0, len(ind), 3)]
     tri = [f for f in tri if max(nrm[v][2] for v in f) > -0.5]
+    if not tri: continue
     keep = sorted({v for f in tri for v in f}); remap = {v: i for i, v in enumerate(keep)}
     pos = [pos[v] for v in keep]; nrm = [nrm[v] for v in keep]
     if uvs is not None: uvs = [uvs[v] for v in keep]
@@ -74,6 +76,8 @@ for m in g['materials']:
         x = ex['KHR_materials_iridescence']; o['ir'] = [x.get('iridescenceFactor', 0), x.get('iridescenceIor', 1.3), x.get('iridescenceThicknessMaximum', 400)]
     if 'KHR_materials_anisotropy' in ex: o['an'] = ex['KHR_materials_anisotropy'].get('anisotropyStrength', 0)
     mats.append(o)
+for o in mats:
+    if o['name'].startswith('BASE_Grey'): o.pop('nmap', None); o.pop('ns', None)
 used = set()
 for r in meshes:
     o = mats[r['mat']]
@@ -86,6 +90,11 @@ for ti, t in enumerate(g['textures']):
         imgs.append({'mime': 'image/png', 'off': 0, 'len': 0, 'skip': 1}); continue
     im = g['images'][t['source']]; v = g['bufferViews'][im['bufferView']]
     b = BIN[v.get('byteOffset', 0): v.get('byteOffset', 0) + v['byteLength']]
+    if 'noise_N' in (t.get('name') or ''):
+        import io
+        from PIL import Image
+        im2 = Image.open(io.BytesIO(b)).convert('RGB'); im2 = im2.resize((128, 128), Image.LANCZOS)
+        buf = io.BytesIO(); im2.save(buf, 'PNG', optimize=True); b = buf.getvalue()
     imgs.append({'mime': im['mimeType'], 'off': put(b), 'len': len(b), 'name': t.get('name')})
 head = json.dumps({'lo': lo, 'hi': hi, 'meshes': meshes, 'materials': mats, 'textures': imgs}, separators=(',', ':')).encode()
 while (len(head) + 4) % 4: head += b' '

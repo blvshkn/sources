@@ -169,8 +169,22 @@ export function Landing({ onLive, onDemo }: {
     const run = el.querySelector<HTMLElement>(".ld2-yband-run");
     let xs: number[] = [];
     const measure = () => { xs = letters.map((l) => (l.offsetParent === run ? 0 : (l.offsetParent as HTMLElement | null)?.offsetLeft ?? 0) + l.offsetLeft + l.offsetWidth / 2 + ((l.closest(".ld2-yband-run") as HTMLElement | null)?.offsetLeft ?? 0)); };
+    const band = el.querySelector<HTMLElement>(".ld2-yband"), lime = el.querySelector<SVGPathElement>(".yb-wave path");
+    // The banner's height, so the tagline can center in exactly the space under it (landing-type.css --bandh)
+    const setBand = () => { if (band) el.style.setProperty("--bandh", `${band.offsetHeight}px`); };
+    setBand(); window.addEventListener("resize", setBand, { passive: true });
+    // The lime: the band's box bent along the same curve the letters ride (amp, f and ph match the letters below)
+    const drawLime = (amp: number, f: number, ph: number) => {
+      if (!band || !lime) return;
+      const W = band.clientWidth, H = band.clientHeight, step = 12, top: string[] = [], bot: string[] = [];
+      for (let x = -step; x <= W + step; x += step) {
+        const y = amp * Math.sin(x * f - ph);
+        top.push(`${x},${y.toFixed(1)}`); bot.unshift(`${x},${(H + y).toFixed(1)}`);
+      }
+      lime.setAttribute("d", `M${top.join("L")}L${bot.join("L")}Z`);
+    };
     const wave = (k: number) => {
-      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); flat = true; } return; }
+      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); drawLime(0, 1, 0); flat = true; } return; }
       flat = false;
       if (!xs.length) measure();
       const w = run?.offsetWidth || 1;
@@ -179,6 +193,7 @@ export function Landing({ onLive, onDemo }: {
       // gather into each dip like fabric bunching, then spread out again as it flattens
       const amp = Math.min(40, window.innerWidth * 0.03) * k, len = Math.max(300, window.innerWidth * 0.3), ph = window.scrollY / 70;
       const f = (2 * Math.PI) / len, gather = amp * 0.6;
+      drawLime(amp, f, ph);
       letters.forEach((l, i) => {
         const x = xs[i] - shift, a = x * f - ph;
         const y = amp * Math.sin(a);
@@ -189,7 +204,7 @@ export function Landing({ onLive, onDemo }: {
         l.style.transform = `translate3d(${dx.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${r.toFixed(4)}rad) scaleX(${sx.toFixed(3)})`;
       });
     };
-    window.addEventListener("resize", () => { xs = []; }, { passive: true });
+    window.addEventListener("resize", () => { xs = []; flat = false; }, { passive: true });
     const paint = () => {
       raf = 0;
       const r = el.getBoundingClientRect(), vh = window.innerHeight;
@@ -266,12 +281,39 @@ export function Landing({ onLive, onDemo }: {
     let raf = 0;
     const paint = () => {
       raf = 0;
-      const vh = window.innerHeight, left = document.documentElement.scrollHeight - (window.scrollY + vh);
-      el.style.opacity = Math.min(1, Math.max(0, (left - vh * 0.25) / (vh * 1.25))).toFixed(3);
+      // Gone by the time the sign-off's top reaches 60% of the screen, so SOURCE and the footer are never blurred
+      const vh = window.innerHeight, foot = signRef.current?.getBoundingClientRect().top ?? Infinity;
+      el.style.opacity = Math.min(1, Math.max(0, (foot - vh * 0.85) / (vh * 0.5))).toFixed(3);
     };
     const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
     window.addEventListener("scroll", kick, { passive: true }); window.addEventListener("resize", kick); paint();
     return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); cancelAnimationFrame(raf); };
+  }, []);
+  // Tilt parallax (Zach, Oct 22): on phones and tablets the floating players and the dots down the page shift with the
+  // device's movement. iOS asks permission, so it's requested on the first tap. Eased, and it stops when the device does.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!matchMedia("(hover: none) and (pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let bx: number | null = null, by: number | null = null, tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+    const step = () => {
+      x += (tx - x) * 0.12; y += (ty - y) * 0.12;
+      root.style.setProperty("--gx", x.toFixed(3)); root.style.setProperty("--gy", y.toFixed(3));
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
+    };
+    const on = (e: DeviceOrientationEvent) => {
+      if (e.beta == null || e.gamma == null) return;
+      if (bx === null || by === null) { bx = e.gamma; by = e.beta; }
+      tx = Math.max(-1, Math.min(1, (e.gamma - bx) / 20)); ty = Math.max(-1, Math.min(1, (e.beta - by) / 20));
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const start = () => window.addEventListener("deviceorientation", on, { passive: true });
+    const D = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
+    let ask: (() => void) | null = null;
+    if (D && typeof D.requestPermission === "function") {
+      ask = () => { D.requestPermission!().then((r) => { if (r === "granted") start(); }).catch(() => {}); };
+      window.addEventListener("touchend", ask, { once: true });
+    } else start();
+    return () => { window.removeEventListener("deviceorientation", on); if (ask) window.removeEventListener("touchend", ask); cancelAnimationFrame(raf); };
   }, []);
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
@@ -341,7 +383,7 @@ export function Landing({ onLive, onDemo }: {
     fit();
     document.fonts?.ready.then(fit).catch(() => {});
     const ro = new ResizeObserver(fit); ro.observe(foot);
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { foot.classList.add("in"); io.disconnect(); } }, { threshold: 0.35 });
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { foot.classList.add("in"); io.disconnect(); } }, { threshold: 0.1 });
     io.observe(foot);
     return () => { ro.disconnect(); io.disconnect(); };
   }, []);
@@ -553,6 +595,7 @@ export function Landing({ onLive, onDemo }: {
       {/* The YOUR banner (Zach, Oct 22, after northeasttomato.com's product strip; moved down to sit over the tagline): YOUR, over and over, in
           Clash on lime. It slides with the page as you scroll and stops when you stop, so it never loops on its own. */}
       <section className="ld2-yband" ref={bandRef} aria-label="Your fantasy Source">
+        <svg className="yb-wave" aria-hidden="true" focusable="false"><path /></svg>
         <div className="ld2-yband-tracks" ref={trackRef} aria-hidden="true">
           <div className="ld2-yband-track yb-bg" aria-hidden="true">
             {[0, 1, 2].map((k) => (
@@ -744,6 +787,7 @@ export function Landing({ onLive, onDemo }: {
           <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
           <li className="ld2-reveal"><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
           <li className="ld2-reveal"><Icon name="send" size={22} /><div><b>Nothing sends on its own</b><p>Source drafts the offer. You decide if and where it goes.</p></div></li>
+          <li className="ld2-reveal"><Icon name="shield" size={22} /><div><b>Locked to your devices</b><p>Offers and starred players sync with a key that lives on your devices. Delete my data clears every copy.</p></div></li>
         </ul>
       </section>
 
