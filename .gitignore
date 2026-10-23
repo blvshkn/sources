@@ -4,3 +4,6 @@ dist-artifact
 .vercel
 .DS_Store
 *.log
+
+# The 3D phone model is licensed and never committed (Zach, Oct 23). Keep it locally for re-rendering stills.
+*.pack

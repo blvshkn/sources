@@ -120,6 +120,8 @@ export type Phones3D = { kick: (ms?: number) => void; dispose: () => void };
  */
 export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], screens: (string | null)[], dim: number[]): Promise<Phones3D> {
   // The model's download starts now, alongside the engine's, instead of after it (Zach, Oct 22: faster load)
+  // The model is licensed, so it is not in the repo or on the site (Zach, Oct 23). To re-render the stills, copy it
+  // into public/models/ locally (it's git-ignored); on the live site this fetch 404s and the stills stay.
   const model = fetch("/models/phone-model.pack");
   // @ts-ignore vendored ES module without types
   const T: Three = await import("../vendor/three/three.module.min.js");
