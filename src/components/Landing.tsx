@@ -229,10 +229,12 @@ export function Landing({ onLive, onDemo }: {
   }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
-  // The 3D phones (phone3d.ts): tried wherever WebGL2 works. The phones wait, hidden, until the model has drawn, then
-  // arrive as the real render (Zach, Oct 22: no CSS phone flickering in first). Without WebGL the screens show alone.
-  const [gl, setGl] = useState<"try" | "on" | "off">(() =>
-    typeof window !== "undefined" && typeof WebGL2RenderingContext !== "undefined" && new URLSearchParams(location.search).get("gl") !== "0" ? "try" : "off");
+  // The phones are pre-rendered stills of the 3D iPhone (public/phones/hp-*.webp, Zach, Oct 22: no live 3D; iPad Safari
+  // drew a dark box with it, and the engine and model were the page's heaviest load). ?gl=3d still mounts the live
+  // render (phone3d.ts) for re-rendering the stills with scripts/render-phones.mjs; ?gl=0 shows the screens alone.
+  const glMode = typeof window === "undefined" ? "" : new URLSearchParams(location.search).get("gl");
+  const live3d = glMode === "3d" && typeof WebGL2RenderingContext !== "undefined";
+  const [gl, setGl] = useState<"try" | "on" | "off">(() => (live3d ? "try" : glMode === "0" ? "off" : "on"));
   useEffect(() => {
     const stage = phonesRef.current;
     if (!stage || gl !== "try") return;
@@ -247,7 +249,7 @@ export function Landing({ onLive, onDemo }: {
   // The message phone in "Pitch it where you talk" is the same 3D iPhone (Zach, Oct 22: "This should be the rendered
   // phone"), face on. It loads once the cell is near, and waits out of sight until it has drawn.
   const smsPhone = useRef<HTMLDivElement>(null);
-  const [smsGl, setSmsGl] = useState<"try" | "on" | "off">(() => (typeof WebGL2RenderingContext !== "undefined" ? "try" : "off"));
+  const [smsGl, setSmsGl] = useState<"try" | "on" | "off">(() => (live3d ? "try" : glMode === "0" ? "off" : "on"));
   useEffect(() => {
     const el = smsPhone.current;
     if (!el || smsGl !== "try") return;
@@ -572,6 +574,11 @@ export function Landing({ onLive, onDemo }: {
               <img className="hp-poster" src="/phones/waivers.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
             </div>
           </div>
+          {!live3d && gl === "on" && <>
+            <img className="hp-r hp-r-left" src="/phones/hp-left.webp" width={807} height={1541} alt="" decoding="async" />
+            <img className="hp-r hp-r-right" src="/phones/hp-right.webp" width={818} height={1540} alt="" decoding="async" />
+            <img className="hp-r hp-r-front" src="/phones/hp-front.webp" width={920} height={1875} alt="" decoding="async" fetchPriority="high" />
+          </>}
           <div className="hp-phone hp-front ld2-phone">
             <div className="hp-scr">
               <PhoneStatus />
@@ -688,6 +695,7 @@ export function Landing({ onLive, onDemo }: {
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
               <div className={`ld2-phone ld2-phone3d gl-${smsGl}`} ref={smsPhone}>
                 <PhoneChrome />
+                {!live3d && smsGl === "on" && <img className="ld2-phone3d-img" src="/phones/hp-sms.webp" width={945} height={1958} alt="" decoding="async" loading="lazy" />}
                 <div className="ld2-sms">
                   <div className="ph-status" aria-hidden="true">
                     <span className="ph-time">12:41</span>

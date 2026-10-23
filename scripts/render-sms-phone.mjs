@@ -1,0 +1,25 @@
+import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const out = process.argv[2];
+const b = await chromium.launch({ args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 3 });
+await p.route(u => !u.href.startsWith('http://localhost'), r => r.abort());
+await p.emulateMedia({ reducedMotion: 'reduce' });
+await p.goto('http://localhost:8765/render.html?gl=3d', { waitUntil: 'load' });
+await p.waitForTimeout(1500);
+await p.evaluate(() => document.querySelector('.ld2-phone3d').scrollIntoView({ block: 'center' }));
+await p.waitForSelector('.ld2-phone3d.gl-on', { timeout: 60000 });
+await p.waitForTimeout(2500);
+const info = await p.evaluate(async () => {
+  const el = document.querySelector('.ld2-phone3d');
+  el.querySelector('.ld2-sms').style.visibility = 'hidden';
+  el.style.animation = 'none'; el.style.opacity = '1';
+  el.dispatchEvent(new Event('pointerenter'));
+  await new Promise(r => setTimeout(r, 1500));
+  const c = el.querySelector('canvas.hp-gl'), cr = c.getBoundingClientRect();
+  const ch = el.querySelector('.ph-chrome').getBoundingClientRect();
+  return { url: c.toDataURL('image/png'), cr: { x: cr.left, y: cr.top, w: cr.width, h: cr.height }, ch: { x: ch.left, y: ch.top, w: ch.width, h: ch.height }, elr: el.getBoundingClientRect().toJSON(), tf: getComputedStyle(el.querySelector('.ph-chrome')).transform };
+});
+fs.writeFileSync(`${out}/sms.png`, Buffer.from(info.url.split(',')[1], 'base64'));
+delete info.url; fs.writeFileSync(`${out}/sms.json`, JSON.stringify(info)); console.log(JSON.stringify(info));
+await b.close();
