@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from "react";
 import { useErrorHaptic } from "../haptics";
 import { setInert } from "../inert";
 import { BrandLogo } from "./BrandLogo";
@@ -199,30 +199,30 @@ export function Landing({ onLive, onDemo }: {
     const setBand = () => { if (band) el.style.setProperty("--bandh", `${band.offsetHeight}px`); };
     setBand(); window.addEventListener("resize", setBand, { passive: true });
     // The lime: the band's box bent along the same curve the letters ride (amp, f and ph match the letters below)
-    // The ends round off while it blows in (Zach, Oct 23: the sharp corners looked janky) and square up as it flattens
-    // against the screen's edges. Points every 4px so the curve reads smooth, not as a chain of kinks.
-    const drawLime = (amp: number, f: number, ph: number, k: number) => {
+    // Points every 4px so the curve reads as one smooth wave, not a chain of bends (Zach, Oct 23). The ends stay square.
+    const drawLime = (amp: number, f: number, ph: number) => {
       if (!band || !lime) return;
       const W = band.clientWidth, H = band.clientHeight, step = 4, top: string[] = [], bot: string[] = [];
-      const r = Math.min(H / 3, 18) * Math.min(1, k * 4);
-      const y = (x: number) => (amp * Math.sin(x * f - ph)).toFixed(2), yb = (x: number) => (H + amp * Math.sin(x * f - ph)).toFixed(2);
-      for (let x = r + step; x < W - r; x += step) { top.push(`${x},${y(x)}`); bot.unshift(`${x},${yb(x)}`); }
-      const L = top.length ? `L${top.join("L")}` : "", B = bot.length ? `L${bot.join("L")}` : "";
-      lime.setAttribute("d",
-        `M0,${(+y(0) + r).toFixed(2)}Q0,${y(0)} ${r},${y(r)}${L}L${W - r},${y(W - r)}Q${W},${y(W)} ${W},${(+y(W) + r).toFixed(2)}` +
-        `L${W},${(+yb(W) - r).toFixed(2)}Q${W},${yb(W)} ${W - r},${yb(W - r)}${B}L${r},${yb(r)}Q0,${yb(0)} 0,${(+yb(0) - r).toFixed(2)}Z`);
+      for (let x = -step; x <= W + step; x += step) {
+        const y = amp * Math.sin(x * f - ph);
+        top.push(`${x},${y.toFixed(2)}`); bot.unshift(`${x},${(H + y).toFixed(2)}`);
+      }
+      lime.setAttribute("d", `M${top.join("L")}L${bot.join("L")}Z`);
     };
     const wave = (k: number) => {
-      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); drawLime(0, 1, 0, 0); flat = true; } return; }
+      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); drawLime(0, 1, 0); flat = true; } return; }
       flat = false;
       if (!xs.length) measure();
       const w = run?.offsetWidth || 1;
       const shift = ((window.scrollY * 0.45) % w + w) % w; // the track's own scroll offset (the band effect above)
       // Scrunched (Zach, Oct 22: "more dramatic but not too crazy"): tighter waves, a little taller, and the letters
       // gather into each dip like fabric bunching, then spread out again as it flattens
-      const amp = Math.min(40, window.innerWidth * 0.03) * k, len = Math.max(300, window.innerWidth * 0.3), ph = window.scrollY / 70;
+      // Phones get a proper wave too (Zach, Oct 23: it came in as a tipped strip with corners): taller for their width
+      // and about one and a half waves across the screen
+      const vw = window.innerWidth;
+      const amp = Math.min(40, Math.max(18, vw * 0.045)) * k, len = Math.max(240, vw * 0.3), ph = window.scrollY / 70;
       const f = (2 * Math.PI) / len, gather = amp * 0.6;
-      drawLime(amp, f, ph, k);
+      drawLime(amp, f, ph);
       letters.forEach((l, i) => {
         const x = xs[i] - shift, a = x * f - ph;
         const y = amp * Math.sin(a);
@@ -638,7 +638,7 @@ export function Landing({ onLive, onDemo }: {
             <img className="hp-r hp-r-front" src="/phones/phone-image-front.webp" width={920} height={1875} alt="" decoding="async" fetchPriority="high" />
           </>}
           <div className="hp-phone hp-front ld2-phone">
-            <div className="hp-scr">
+            <div className="hp-scr" onClick={tapThrough}>
               <PhoneStatus />
               <PhoneApp tab="wire" go={appsGo} front={true} />
               <span className="ph-home hp-home" aria-hidden="true" />
@@ -1106,6 +1106,24 @@ function PhoneChrome() {
 /** The real app inside a hero phone: the sample league in an embedded frame, opened on `tab`, drawn at 390 wide under
  *  the status bar and scaled with the screen (--hp-s). The static screen beside it is the poster until it has drawn.
  *  Only the front phone takes input; the two behind it are pictures of the app running. */
+/** On touch screens the front phone's app ignores touches so a swipe scrolls the page, not the app (landing-type.css
+ *  .hp-frame). Taps still reach it (Zach, Oct 23: "I should be able to click and tap on these"): the tap's spot on the
+ *  phone is mapped into the frame and the control under it, or the nearest one within a fingertip, is clicked. */
+const PRESS = "button, a[href], [role='button'], [role='tab'], [role='option'], summary, label, input, [tabindex]:not([tabindex='-1'])";
+function tapThrough(e: RMouseEvent<HTMLElement>) {
+  const fr = e.currentTarget.querySelector<HTMLIFrameElement>(".hp-frame.on");
+  if (!fr || getComputedStyle(fr).pointerEvents !== "none") return;
+  let d: Document | null = null;
+  try { d = fr.contentDocument; } catch { return; }
+  if (!d) return;
+  const b = fr.getBoundingClientRect();
+  const x = ((e.clientX - b.left) / b.width) * fr.offsetWidth, y = ((e.clientY - b.top) / b.height) * fr.offsetHeight;
+  for (const [dx, dy] of [[0, 0], [0, -10], [0, 10], [-10, 0], [10, 0], [-14, -14], [14, -14], [-14, 14], [14, 14]]) {
+    const hit = d.elementFromPoint(x + dx, y + dy)?.closest<HTMLElement>(PRESS);
+    if (hit) { e.preventDefault(); hit.click(); return; }
+  }
+}
+
 function PhoneApp({ tab, go, front }: { tab: string; go: "none" | "front" | "all"; front: boolean }) {
   const [ready, setReady] = useState(false);
   if (go === "none" || (go === "front" && !front)) return null;
@@ -1191,7 +1209,7 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
                     extra: <span className={`dv-accbar ${acc.label === "Likely yes" ? "is-likely" : acc.label === "Worth a shot" ? "is-maybe" : "is-long"}`} aria-hidden="true"><i style={{ width: `${Math.round(acc.p * 100)}%` }} /></span> },
                 ]} />
               <div className="dv-actions">
-                <button className="linkish small" onClick={onOpen}>Open in builder</button>
+                <button className="linkish small" onClick={onOpen}>Try the demo</button>
                 <button className="btn btn-primary" onClick={onPitch}><Icon name="pen" size={16} />Write pitch</button>
               </div>
             </div>

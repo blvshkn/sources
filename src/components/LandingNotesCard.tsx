@@ -94,7 +94,7 @@ export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
   tags: ManagerTag[];
   /** A deal shown elsewhere on the page that the answer shouldn't repeat: `demo.trade` */
   avoid?: Trade;
-  /** Shows "Open in builder" under the answer and opens the reworked deal */
+  /** Shows "Try the demo" under the answer (Zach, Oct 23) and opens the reworked deal */
   onOpen?: (t: Trade) => void;
   /** Called when "Ask again" is tapped, after the card starts its replay */
   onAsk?: () => void;
@@ -184,7 +184,7 @@ export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
             </button>
             {onOpen && (
               <button type="button" className="lnc-open" disabled={!done} onClick={() => onOpen(story.after)}>
-                Open in builder<Icon name="chev" size={14} />
+                Try the demo<Icon name="chev" size={14} />
               </button>
             )}
           </div>
