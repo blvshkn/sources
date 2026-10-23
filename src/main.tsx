@@ -97,7 +97,9 @@ createRoot(document.getElementById("root")!).render(
 );
 
 monoNumbers(document.getElementById("root")!);
-chartReveal(document.getElementById("root")!);
+// The whole body, not just #root: sheets render in portals on <body>, and their charts were held at the start forever
+// (Zach, Oct 23: the player sheet game log bars were flat)
+chartReveal(document.body);
 iconMotion();
 scrollAreas();
 edgeFades();
