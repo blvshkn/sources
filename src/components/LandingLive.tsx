@@ -16,6 +16,7 @@ import { matchNow, onPace, playCount, sampleWeek, startersOf, type Live } from "
 import { setInert } from "../inert";
 import { PixelFlame, PixelSmoke, PixelSnow, StoneLock } from "../gameDayMotion";
 import { Avatar } from "./Avatar";
+import { GameMeta } from "./GameMeta";
 import { PlayCount, PtsCell, gameNow, playCls } from "./LivePts";
 import { Scoreboard } from "./Scoreboard";
 import { SplitHead } from "./SplitHead";
@@ -175,7 +176,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
               <div key={p.id} className={`lu-row${playCls(g)}`}>
                 <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
                 <Avatar p={p} size={48} />
-                <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{g.state === "in_game" ? <span className="lu-live"><i aria-hidden="true" />Live</span> : g.state === "complete" ? <span className="lu-final">Final</span> : null}</span></span>
+                <span className="lu-who"><span className="lu-name">{p.name}</span><GameMeta p={p} g={g} /></span>
                 <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={g.state === "in_game" || (g.state === "complete" && beat >= 5)} />
               </div>
             );

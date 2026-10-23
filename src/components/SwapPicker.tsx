@@ -5,7 +5,7 @@ import { Suspense, createContext, lazy, useCallback, useContext, useLayoutEffect
 import { useDismiss } from "./useDismiss";
 import type { ElementType, MutableRefObject, ReactNode, RefObject } from "react";
 import { PLAYERS, Player, SpecialPlayer, WEEK, onBye } from "../data";
-import { gameInAt, kickLine, oppAt, useKickoffs } from "../kickoff";
+import { gameInAt, oppAt, useKickoffs } from "../kickoff";
 import { fmt, specialPts } from "../engine";
 import { Live, onPace } from "../live";
 import { WeekPlayer } from "../weeks";
@@ -15,6 +15,9 @@ import { StatusPill } from "./ui";
 import { deny } from "../deny";
 import type { CmpWho } from "./SwapCompare";
 import { MetaParts, gameParts } from "./Meta";
+import { GameMeta } from "./GameMeta";
+import { gameNow } from "./LivePts";
+import { useLive } from "../live";
 import { EASE_OUT, mo as moT } from "../motion";
 import { Morph, useTurnedAt } from "../gameDayMotion";
 
@@ -303,11 +306,12 @@ function useKickNote(stone: boolean) {
 }
 export function Who({ p, side, slot, stone = false }: { p: Player | null; side: "you" | "them"; slot?: string; stone?: boolean }) {
   useKickoffs();
-  const note = useKickNote(stone);
+  const live = useLive();
+  const lockAt = useTurnedAt(stone, (v) => v);
   return p ? (
     <span className={`mu-p ${side}`}>
       <Avatar p={p} size={32} />
-      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><MetaParts parts={[posOf(p.pos, slot), ...teamGame(p.nfl, onBye(p.nfl) ? null : kickLine(p)), note]} /><StatusPill p={p} /></small></span>
+      <span className="mu-n"><b>{p.name}</b><small className="mu-meta"><GameMeta p={p} g={gameNow(live, p.id, p.nfl)} pos={!!posOf(p.pos, slot)} lockAt={lockAt} /><StatusPill p={p} /></small></span>
     </span>
   ) : <span className={`mu-p ${side} empty`}><span className="mu-n"><b>Empty</b></span></span>;
 }

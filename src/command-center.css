@@ -42,3 +42,5 @@ html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked) { cur
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > :is(.av, .wk-name) { opacity: 0.42; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > .wk-pts { opacity: 0.72; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked)::after { content: none !important; }
+/* The shared player line (GameMeta) under a Game day name, on its own line like the small text it replaced */
+html:root:not(#_):not(#_):not(#_) .wk-name > .wk-meta { display: flex; margin-top: 2px; }

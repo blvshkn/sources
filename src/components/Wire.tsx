@@ -9,6 +9,8 @@ import { Trade, TeamNeeds, fmt, offerRead, verdict, eff, weakSlots } from "../en
 import { Arrived } from "./Arrived";
 import { AiLabel, Delta, Icon, IconName, Phase, Stamp, useSticky, PageTabs } from "./ui";
 import { Avatar } from "./Avatar";
+import { GameMeta } from "./GameMeta";
+import { gameNow } from "./LivePts";
 import { PlayerSheet } from "./lazy";
 import { TeamAvatar } from "./TeamPicker";
 import { NumTip, Tooltip } from "./Tooltip";
@@ -247,14 +249,14 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
           <div key={d} className="wk-day">
             <span className="wk-day-k">{d}<small>{ps.length}</small></span>
             {ps.map((p) => {
+              // Already played (Zach, Oct 23): reads like the Lineup's finished row, dimmed with FINAL in the meta, and keeps
+              // who he played. Playing now: locked at kickoff, so not a button either, but not dimmed.
+              const st = live.games[p.nfl];
               const inner = <>
                 <Avatar p={p} size={40} />
-                <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {oppAt(p.nfl, vsOf(p))}</small></span>
+                <span className="wk-name">{p.name}<GameMeta p={p} g={gameNow(live, p.id, p.nfl)} opp={vsOf(p)} className="wk-meta" /></span>
                 <WkPts p={p} live={live} />
               </>;
-              // Already played (Zach, Oct 23): reads as done, like the Lineup's finished rows, and there's nothing to tap
-              // Playing now: locked at kickoff, so not a button either, but not dimmed
-              const st = live.games[p.nfl];
               return st === "complete" || st === "in_game"
                 ? <div key={p.id} className={`wk-row ${st === "complete" ? "is-done" : "is-locked"}`} aria-label={`${p.name}, ${st === "complete" ? "game final" : "playing now"}`}>{inner}</div>
                 : <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>{inner}</button>;

@@ -6,7 +6,7 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { WeekView, WeekPlayer, loadWeek, peekWeek, order } from "../weeks";
 import { useLoadedIn } from "../loadedIn";
 import { LineupWeek, gameIn } from "../weekMatch";
-import { kickWhen, moveLock, oppText, useKickoffs } from "../kickoff";
+import { moveLock, useKickoffs } from "../kickoff";
 import { injuryDetail, kdefHint } from "../gameDay";
 import { LOCKED_LINE } from "../locks";
 import { WeekStepper } from "./WeekStepper";
@@ -19,7 +19,7 @@ import { Avatar } from "./Avatar";
 import { Arrived } from "./Arrived";
 import { StartSit } from "./StartSit";
 import { Select } from "./Select";
-import { Kick } from "./Meta";
+import { GameMeta } from "./GameMeta";
 import { PlayerSheet } from "./lazy";
 import { PlatformLogo } from "./PlatformLogo";
 import { NumTip, Tooltip } from "./Tooltip";
@@ -35,7 +35,7 @@ import { flipSwap } from "../swapFlip";
 import { GameNow, PROJ_TIP, PlayCount, PtsCell, gameNow, playCls } from "./LivePts";
 // The points cell and game counts live in their own module so the landing can show them; importers still find them here
 export { FinalPts, HeatMark, PROJ_TIP, PlayCount, PtsCell, gameNow, heatOf, markLive, paceTip, playCls, soFarTip } from "./LivePts";
-import { KickNote, denyLock, useTurnedAt } from "../gameDayMotion";
+import { denyLock, useTurnedAt } from "../gameDayMotion";
 
 const TAG_LABEL: Record<MyTag, string> = {
   available: "Trade bait",
@@ -111,17 +111,6 @@ const TAG_TIP: Record<string, string> = { Q: "Questionable: may not play. Check 
 
 /** Once a game is live or final the row reads "QB · BUF · Live" as before, without the opponent. */
 const kicked = (g: GameNow) => g.state === "in_game" || g.state === "complete";
-/** Team and opponent together, no dot between them: "NO v PIT". */
-const TeamOpp = ({ nfl, opp }: { nfl: string; opp?: string }) => <span>{nfl}{opp && <> <span className="lu-game">{oppText(opp)}</span></>}</span>;
-
-/** Replaces the kickoff time once the game starts. */
-function GameTag({ g, fallback, lockAt = 0 }: { g: GameNow; fallback: string | null; lockAt?: number }) {
-  // Kicked off while you watched: "Locked at kickoff" takes the time's place for a moment, then the Live tag
-  if (g.state === "in_game") return <KickNote at={lockAt} after={<span className="lu-live"><i aria-hidden="true" />Live</span>} />;
-  if (g.state === "complete") return <span className="lu-final">Final</span>;
-  return fallback ? <span className="lu-game"><Kick when={fallback} /></span> : null;
-}
-
 /** What a tappable lineup row needs to open its swap menu (or deny when locked). */
 type RowTap = { onTap: (el: Element) => void; lock: boolean; expanded: boolean; label: string };
 /** Props that make a lineup row a button: a tap opens its swap menu, or shakes and says why when it's locked. */
@@ -158,7 +147,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
             {(g.state === null || g.state === "pre_game") && <span className={`lu-inj ${ringOf(p)}`}>{injuryDetail(p)}</span>}
           </span>
         )}</span>
-        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={onBye(p.nfl) || kicked(g) ? undefined : p.opp} />{!onBye(p.nfl) && <GameTag g={g} fallback={kickWhen(p) || null} lockAt={lockAt} />}</span>
+        <GameMeta p={p} g={g} pos={bench || slot !== p.pos} lockAt={lockAt} />
       </span>
       {onBye(p.nfl) ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={stone} />}
       {swap && (
@@ -187,7 +176,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
       <Avatar p={p} size={44} />
       <span className="lu-who">
         <span className="lu-name">{p.name}{out && <b className="lu-tag bad">OUT</b>}{p.status === "Q" && <b className="lu-tag warn">Q</b>}</span>
-        <span className="lu-meta">{(bench || slot !== p.pos) && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}<TeamOpp nfl={p.nfl} opp={bye || kicked(g) ? undefined : p.opp} />{!bye && <GameTag g={g} fallback={kickWhen(p) || null} lockAt={lockAt} />}</span>
+        <GameMeta p={p} g={g} pos={bench || slot !== p.pos} lockAt={lockAt} />
       </span>
       {bye ? <span className="lu-pts bye">BYE</span> : <PtsCell id={p.id} g={g} proj={specialPts(p)} stone={stone} />}
       {swapTo && (
