@@ -294,7 +294,8 @@ export function Landing({ onLive, onDemo }: {
     return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); cancelAnimationFrame(raf); };
   }, []);
   // Tilt parallax (Zach, Oct 22): on phones and tablets the floating players and the dots down the page shift with the
-  // device's movement. iOS asks permission, so it's requested on the first tap. Eased, and it stops when the device does.
+  // device's movement. iOS asks permission, which it only allows from a tap: the end of a scroll swipe doesn't count and
+  // fails, so every tap asks until iOS gives an answer. Eased, and it stops when the device does.
   useEffect(() => {
     const root = document.documentElement;
     if (!matchMedia("(hover: none) and (pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -313,11 +314,12 @@ export function Landing({ onLive, onDemo }: {
     const start = () => window.addEventListener("deviceorientation", on, { passive: true });
     const D = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
     let ask: (() => void) | null = null;
+    const stopAsking = () => { if (ask) { window.removeEventListener("click", ask); window.removeEventListener("touchend", ask); } };
     if (D && typeof D.requestPermission === "function") {
-      ask = () => { D.requestPermission!().then((r) => { if (r === "granted") start(); }).catch(() => {}); };
-      window.addEventListener("touchend", ask, { once: true });
+      ask = () => { D.requestPermission!().then((r) => { stopAsking(); if (r === "granted") start(); }).catch(() => { /* not a tap: ask on the next one */ }); };
+      window.addEventListener("click", ask); window.addEventListener("touchend", ask);
     } else start();
-    return () => { window.removeEventListener("deviceorientation", on); if (ask) window.removeEventListener("touchend", ask); cancelAnimationFrame(raf); };
+    return () => { window.removeEventListener("deviceorientation", on); stopAsking(); cancelAnimationFrame(raf); };
   }, []);
   const [appsGo, setAppsGo] = useState<"none" | "front" | "all">("none");
   useEffect(() => {
