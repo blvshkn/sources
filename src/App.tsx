@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MyTag, LEAGUE, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { installIconTooltips } from "./tooltips";
@@ -40,6 +40,15 @@ export default function App() {
   // First-run setup loads in its own chunk; on the landing, fetch it once the page is idle (components/lazy.tsx).
   // Anyone signed in, or on their way in, gets the app chunk fetched too.
   const [start, setStart] = useState<FirstRunStart | null>(null);
+  // Into the app from the landing: start at the top, not wherever the landing was scrolled to (Zach, Oct 22)
+  const wasMode = useRef(session.mode);
+  useLayoutEffect(() => {
+    if (wasMode.current === "none" && session.mode !== "none" && !IN_FRAME) {
+      const html = document.documentElement, prev = html.style.scrollBehavior;
+      html.style.scrollBehavior = "auto"; window.scrollTo(0, 0); html.style.scrollBehavior = prev;
+    }
+    wasMode.current = session.mode;
+  }, [session.mode]);
   useEffect(() => { if (session.mode === "none") preloadFirstRun(); }, [session.mode]);
   // A hover over a control, a tap or a focus on the landing warms first-run setup, stylesheets included
   useEffect(() => {
