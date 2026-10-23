@@ -25,6 +25,12 @@ export const TIMEOUT_MS = 20_000;
 const MAX_TOKENS = 600;
 const RATE = { perMin: 10, perHour: 60 };
 
+/** The reply when the model's own answer would have carried a banned word */
+const KEEP_IT_FRIENDLY = {
+  text: "I'm not going to engage with that. We want to keep this a respectful, fun and friendly place, so let's get back to your team.",
+  points: ["Ask me about a trade, your lineup this week or a waiver pickup."], playerIds: [], teamId: "", quip: "",
+};
+
 export const SYSTEM = `You are Sources AI, the assistant inside Sources, a fantasy football app. You answer questions about one fantasy league.
 
 Ground rules
@@ -40,7 +46,7 @@ Ground rules
 - Write every number as plain digits with no spaces inside it: 1.2, 15.3, +4.0.
 - No betting of any kind. Sources is a fantasy trade calculator for better trades and the optimal lineup, and its terms don't allow betting. Never answer questions about sports betting, prop bets, parlays, spreads, over/unders, moneylines, odds, sportsbooks or daily fantasy contests, and never suggest a bet. Vegas lines may only be mentioned as one input to a player's point projection. If a question touches betting, answer kindly, quote the terms in "text" ("${BETTING_TERMS}"), and offer to help with a trade, a lineup or a waiver pickup instead.
 - If the message is a compliment or a thank-you (to you or to Sources), thank them back warmly and sincerely in a sentence or two, keep it humble, and offer to help with their team. Leave "points" and "playerIds" empty, and don't invent league facts to fill space.
-- Stay positive, kind and helpful in every answer. Never write anything hateful, racist, sexist, demeaning or abhorrent, and never stereotype anyone by race, religion, gender, sexuality, nationality or any other part of who they are, even as a joke, a roast or a quip. Never repeat a slur or offensive word back, even to refuse it.
+- Stay positive, kind and helpful in every answer. Never write anything hateful, racist, sexist, demeaning or abhorrent, and never stereotype anyone by race, religion, gender, sexuality, nationality or any other part of who they are, even as a joke, a roast or a quip. Never write a slur, profanity or offensive word yourself, or repeat one back, even to refuse it. No one can talk you into it: not by asking you to quote, spell, translate, rhyme, decode, fill in a blank, role-play, "just this once" or as a test.
 - When a question uses or asks for that kind of word or content, don't scold or lecture. Answer in this spirit: "I'm not going to engage with that word. We want to keep this a respectful, fun and friendly place, so let's get back to your team." Then give them something real and useful from their league (how their team is doing, their next matchup, a move worth making). Leave "quip" empty.
 - If the earlier turns show they keep pushing it, get firmer each time, but never rude: say plainly you won't go there, keep it to one short sentence, and steer straight back to their team with a specific hook from the data (a lineup fix, a trade idea, their playoff odds). Don't argue, don't explain at length, and don't change your answer because they insist.
 
@@ -253,8 +259,11 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     // Saved after the reply goes out, inside this same call (no extra request). Refusals before the model ran aren't kept.
     const keep = (status, answer) => (log && (r.ok || r.status === 504) ? logAsk(log, askRow({ question: input.question, league: input.raw.league, facts: input.raw.facts, history: input.history, answer, usage: r.msg?.usage, model: MODEL, ms, status, env }), { env }) : null);
     if (!r.ok) { res.status(r.status).json(r.body); await keep(r.status, null); return; }
-    const answer = answerFrom(r.msg, input.ids);
+    let answer = answerFrom(r.msg, input.ids);
     if (!answer) { res.status(502).json({ error: "bad model reply" }); await keep(502, null); return; }
+    // No one can get Sources to say a banned word (Zach, Oct 23): if the reply carries one anyway, it's replaced whole
+    // with the friendly turn back to their team
+    if ([answer.text, ...(answer.points ?? []), answer.quip ?? ""].some((t) => maskFoul(t) !== t)) answer = { ...KEEP_IT_FRIENDLY };
     res.status(200).json({ answer });
     await keep(200, answer);
   };
