@@ -64,7 +64,7 @@ export function AddTeam({ teams, onAdd, count }: { teams: Team[]; onAdd: (id: st
       {full ? <Tooltip content="Sleeper trades top out at 4 teams">{addBtn}</Tooltip> : addBtn}
       {open && (
         <div className="mt-menu">
-          <p className="mt-menu-note">Make it a {count + 1}-team trade. <PlatformName size={12} /> takes up to {MAX_PARTNERS + 1} teams in one proposal.</p>
+          <p className="mt-menu-note">Make it a {count + 1}-team trade. <PlatformName size={12} /> allows up to {MAX_PARTNERS + 1}.</p>
           {searching && <TeamSearchField q={q} setQ={setQ} onKey={onKey} input={input} wrap={field} label="Search teams by name or manager" />}
           <ul className="tp-list mt-list" role="listbox" ref={list} tabIndex={-1} aria-label="Add a team to this trade" onKeyDown={onKey}
             aria-activedescendant={shown[hi] ? `mt-o-${shown[hi].team.id}` : undefined} style={kbMax || room ? { maxHeight: kbMax ?? Math.min(400, room! - (searching ? 52 : 0)) } : undefined}>
@@ -129,7 +129,7 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = []
       </div>
       <FlagLine ids={[...allGive, ...allGet]} flags={allFlags} />
       {!m || !v ? (
-        <p className="empty-deal">{!any ? "Add players to each team's column, or tap them on the rosters below." : empty ? `Add a player to or from ${empty.team.manager}, or take them out of the trade.` : !allGive.length ? "Now pick who you'd send." : "Now pick who you'd get back."}</p>
+        <p className="empty-deal">{!any ? "Add players to each team's column, or tap them below." : empty ? `Add a player to or from ${empty.team.manager}, or take them out of the trade.` : !allGive.length ? "Now pick who you'd send." : "Now pick who you'd get back."}</p>
       ) : (
         <div className="dv">
           <div className="dv-main">
@@ -161,7 +161,7 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = []
               <button key={r.team.id} className={`btn${r === m.legs[0] ? " btn-primary" : ""}`} onClick={() => onPitch(r.trade)}><Icon name="pen" size={16} />Pitch {r.team.manager}</button>
             ))}
           </div>
-          <p className="tiny muted dv-foot">Propose the whole trade in <PlatformName size={12} />, then send each manager a pitch about their part of it.</p>
+          <p className="tiny muted dv-foot">Propose the whole trade in <PlatformName size={12} />, then pitch each manager on their part.</p>
           </div>
           <DealDetails
             bars={<PositionDeltas m={m} youAfter={youAfterRoster} />} barsSummary={positionSummary(YOU.roster, youAfterRoster)}

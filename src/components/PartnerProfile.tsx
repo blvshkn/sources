@@ -143,7 +143,7 @@ export function PartnerProfile({ teamIds, initial, tags, onNotes, onClose, pause
               <div><dt>Closed</dt><dd>{td.offers ? <><span className="pp-num">{td.trades}</span> of <span className="pp-num">{td.offers}</span></> : <span className="pp-dash">n/a</span>}</dd></div>
               <div><dt>Usually buys</dt><dd>{td.buys.length ? td.buys.join(", ") : <span className="pp-dash">n/a</span>}</dd></div>
             </dl>
-            {valueAsks.includes(id) && <p className="pp-trait"><b>Wants more value:</b> from a declined offer. Ideas with {t.manager} give him more.</p>}
+            {valueAsks.includes(id) && <p className="pp-trait"><b>Wants more value</b>, per a declined offer. Ideas with {t.manager} give him more.</p>}
             {tip && <p className="pp-tip"><AiMark size={14} /><span>{tip.replace(/-/g, "‑")}</span></p>}
           </section>
 

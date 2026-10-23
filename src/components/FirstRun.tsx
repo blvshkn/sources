@@ -132,7 +132,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 <div className="idea-swap"><span>Your {intel.opener.give.map((id) => playerById(id).name).join(" + ")}</span><span className="arrow">for</span><span>{teamById(intel.opener.partnerId).manager}'s {intel.opener.get.map((id) => playerById(id).name).join(" + ")}</span></div>
                 <div className="idea-nums"><span>You gain <Delta n={intel.opener.youDelta} />/wk</span><span>They gain <Delta n={intel.opener.themDelta} />/wk</span></div>
               </div>
-            ) : <p className="small muted">No trade helps both sides right now. Source will tell you when one opens up.</p>}
+            ) : <p className="small muted">No trade helps both sides right now. Source will tell you when one does.</p>}
             <AiLabel />
             <button className="btn btn-primary" onClick={() => setStep("untouchables")}>Continue</button>
           </div>
@@ -141,7 +141,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
         {step === "untouchables" && (
           <div className="ob-step" key="s4">
             <h1 id="ob-title" className="ob-title">Anyone off the table?</h1>
-            <p className="ob-sub">Optional. Tag your untouchables so trade ideas leave them out. Set an asking price for "overpay only" guys on your Lineup page.</p>
+            <p className="ob-sub">Optional. Tag your untouchables and trade ideas leave them out. Set asking prices for "overpay only" guys in Lineup.</p>
             <div className="ob-teams">
               {starters.map((p) => p && (
                 <div key={p.id} className="ob-option static">

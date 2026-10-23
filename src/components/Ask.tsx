@@ -398,7 +398,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 <div className="ask-intro">
                   <span className="ask-mark"><Icon name="spark" size={32} /></span>
                   <h2 className="ask-title">Ask Source</h2>
-                  <p className="ask-sub">Trades, lineups, waivers, or anything else about your league. I run the numbers on your real rosters and show my work.</p>
+                  <p className="ask-sub">Trades, lineups, waivers, anything about your league. I run the numbers on your real rosters and show my work.</p>
                 </div>
                 <div className="ask-groups">
                   {groups.map((g) => (
@@ -429,7 +429,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
             <button className="ask-send" type="submit" aria-label={working ? "Ask (working on an answer)" : "Ask"} aria-disabled={empty || working || undefined} aria-busy={working || undefined}
               onClick={(e) => {
                 if (working) { e.preventDefault(); deny(e.currentTarget, "Still working on the last answer. One moment."); }
-                else if (empty) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap one of the suggestions."); }
+                else if (empty) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap a suggestion."); }
               }}>
               {/* Thinking (Zach, Oct 23): the orb takes over the button, black behind it, the AI mark white and centered */}
               {working ? <><Orb className="ask-send-orb" size={1.2} backgroundColor="#000000" followCursor={false} clickPulse={false} hoverIntensity={0} rotateOnHover={false} /><span className="ask-send-mark"><AiMark size={20} /></span></> : <ArrowUp />}

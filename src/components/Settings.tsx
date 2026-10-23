@@ -135,7 +135,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
             {accounts.length > 1 && <p className="tiny muted">To remove @{username}, switch to a league on another account first.</p>}
           </div>
         )}
-        <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Source connects with your username or the platform's official sign-in. We never ask for or store a fantasy app password.</span></div>
+        <div className="note-good"><Icon name="lock" size={16} /><span><b>No passwords, ever.</b> Source connects with your username or the platform's official sign-in. It never asks for or stores a fantasy app password.</span></div>
         <p className="tiny muted">Next up: {PLATFORMS.filter((p) => p.when === "v1").map((p) => p.name).join(" and ")}. Later: {PLATFORMS.filter((p) => p.when !== "v1" && p.when !== "MVP" && p.when !== "n/a").map((p) => p.name).join(" and ")}.</p>
         <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} onClick={demo || !onSwitchLeague ? onReplay : onSwitchLeague}>{demo ? "Run setup again" : "Switch league"}</button>
       </section>
@@ -160,7 +160,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <span className="grow"><b>TE Premium</b><span className="small muted" style={{ display: "block" }}>+0.5 per TE reception.</span></span>
           <Toggle label="TE Premium" on={format.tePremium} onChange={(v) => setFormat({ ...format, tePremium: v })} />
         </div>
-        <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium are derived using estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."} Trade values: {LEAGUE.valueSource}.</p>
+        <p className="tiny muted">{demo ? "Demo projections are PPR. Half, Standard and TE Premium use estimated receptions by position." : "Projections come from Sleeper for every scoring type. TE Premium adds half a point per projected TE reception."} Trade values: {LEAGUE.valueSource}.</p>
       </section>
       </>}
 
@@ -182,7 +182,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           {muted.length > 0 && <button className="btn btn-sm" onClick={resetDismissed}>Reset</button>}
         </div>
         <div className="set-row ps-set">
-          <span className="grow"><b>Players you passed on</b><span className="small muted" style={{ display: "block" }}>{passed.length ? "Source won't suggest them in trade ideas, waiver picks or nudges. They still show on Waivers, dimmed." : "Tap \"Not interested\" on any suggestion and Source stops suggesting that player."}</span></span>
+          <span className="grow"><b>Players you passed on</b><span className="small muted" style={{ display: "block" }}>{passed.length ? "Source won't suggest them in trade ideas, waiver picks or nudges. They still show on Waivers, dimmed." : "Tap \"Not interested\" on any suggestion and Source stops suggesting him."}</span></span>
           {passed.length > 1 && onClearPassed && <button className="btn btn-sm" onClick={onClearPassed}>Clear all</button>}
         </div>
         {passed.length > 0 && (
@@ -222,9 +222,9 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <li><b>No passwords, ever.</b> Your Sleeper username is all it takes.</li>
           <li><b>Tags are private.</b> What you note about a league mate is never shown to them.</li>
           <li><b>Collect the minimum.</b> No email, no account. Rosters are public on Sleeper already.</li>
-          <li><b>Synced lists stay yours.</b> Sent offers and starred players only sync to devices you pair with a one-time code. Knowing your Sleeper ids isn't enough to read them.</li>
+          <li><b>Synced lists stay yours.</b> Sent offers and starred players sync only to devices you pair with a one-time code. Your Sleeper ids alone can't read them.</li>
           <li><b>AI sees the league, not your notes.</b> Ask and Set optimal lineup send league data to Anthropic. Tags stay here.</li>
-          <li><b>Questions without names.</b> Source keeps what's asked, with names stripped and nothing tied to you, to make answers better.</li>
+          <li><b>Questions without names.</b> Source keeps questions to improve answers, with names stripped and nothing tied to you.</li>
           <li><b>One tap to leave.</b> Disconnect, or delete your data, any time.</li>
           <li><b>No selling data.</b> Said plainly in the privacy policy.</li>
           <li><b>Show our work.</b> Every verdict explains why, and every value shows when it last changed.</li>

@@ -105,7 +105,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   } else if (done.length) {
     const got = done.reduce((a, p) => a + (live.points[p.id] ?? 0), 0), want = done.reduce((a, p) => a + eff(p, true), 0);
     out.push({ id: `final-${done.length}`, icon: "check", title: "Games final", time: "Today",
-      text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final with ${got.toFixed(1)} pts, ${fmt(got - want)} against their projections.`,
+      text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final. ${got.toFixed(1)} pts, ${fmt(got - want)} vs projections.`,
       action: { label: "Open matchup", run: () => go("matchup") } });
   }
 
@@ -268,7 +268,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                         {(it.meta || it.ai) && (
                           <div className="ibx-n-meta">
                             {it.meta && <span><Meta s={it.meta} /></span>}
-                            {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><AiMark size={12} />AI</span></Tooltip>}
+                            {it.ai && <Tooltip focusable content="Written by AI from your league's data. Check it before you act."><span className="ibx-ai"><AiMark size={12} />AI</span></Tooltip>}
                           </div>
                         )}
                         <p className="ibx-n-text">{it.text}</p>

@@ -158,7 +158,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
   return (
     <section className="ld-section ld2-livesec" aria-labelledby="ld-live">
       <SplitHead id="ld-live" a="Sweat every snap," b="with the whole lineup." />
-      <p className="ll-sub">Points as they land, where every starter is on pace to finish, and a win chance that swings with each drive. Guys catch fire. Guys go cold. Finals lock in.</p>
+      <p className="ll-sub">Points as they land, each starter's pace, and a win chance that swings with every drive. Guys catch fire. Guys go cold. Finals lock in.</p>
       <div className="card ll-board" ref={board}>
         {/* The Wire face-off on the same scripted Sunday: scores roll and the win % bars glide as the moments land. It
             remounts with the rows on a replay, so going back to the earlier state shows settled. */}
@@ -198,7 +198,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
             </li>
           ))}
         </ol>
-        {onAdd && <SectionCta line="See this in action for yourself." onAdd={onAdd} />}
+        {onAdd && <SectionCta line="See it live in your own league." onAdd={onAdd} />}
       </div>
     </section>
   );

@@ -77,7 +77,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
       <div className="wk-head"><h2 className="section-title">Where to improve</h2></div>
       <button className="wk-row" onClick={() => onGo("league")}>
         <span className="imp-k"><Tooltip content="Starting lineup strength against the other teams. 1 is strongest."><span>Power rank</span></Tooltip></span>
-        <span className="wk-name">#{you.rank} of {TEAMS.length}<small>See the standings and every team's values</small></span>
+        <span className="wk-name">#{you.rank} of {TEAMS.length}<small>Standings and every team's values</small></span>
         <Icon name="chev" size={16} />
       </button>
       <button className="wk-row" onClick={() => onGo("roster:slots")}>
@@ -88,7 +88,7 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
       {partner && partnerId ? (
         <button className="wk-row" onClick={() => onGo("trade", partnerId)}>
           <span className="imp-k">Trade partner</span>
-          <span className="wk-name imp-who"><span className="imp-nm">{pt && <TeamAvatar t={pt} size={22} />}<span>{partner}</span>{pt && <Trophy teamId={pt.id} />}</span><small>Has what you need at {you.need}. Build a deal</small></span>
+          <span className="wk-name imp-who"><span className="imp-nm">{pt && <TeamAvatar t={pt} size={22} />}<span>{partner}</span>{pt && <Trophy teamId={pt.id} />}</span><small>Has the {you.need} you need. Build a deal</small></span>
           <Icon name="chev" size={16} />
         </button>
       ) : <p className="small muted">No clear trade partner yet.</p>}
@@ -169,7 +169,7 @@ export function Threats(_props: { onGo?: (t: string) => void }) {
       ))} />
       {open && opp && <PlayerSheet p={open.p} where={`${opp.manager}'s ${open.p.pos}`} note={threatNote(open.p, open.rank, opp.manager)} onClose={() => setOpen(null)} />}
       {mu && <MatchupSheet week={WEEK} onClose={() => setMu(false)} />}
-      <button type="button" className="wk-more" onClick={opp ? go : denyOn(`You're on bye in Week ${WEEK}, so there's no matchup to open.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+      <button type="button" className="wk-more" onClick={opp ? go : denyOn(`You're on bye in Week ${WEEK}. No matchup to open.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }
@@ -200,7 +200,7 @@ function WeekThreats({ week }: { week: number }) {
       }) : null} />
       {open && opp && <PlayerSheet p={open} where={`${opp.team.manager}'s ${open.pos}, Week ${week}`} onClose={() => setOpen(null)} />}
       {mu && <MatchupSheet week={week} onClose={() => setMu(false)} />}
-      <button type="button" className="wk-more" onClick={opp ? go : denyOn(m ? `You're on bye in Week ${week}, so there's no matchup to open.` : `Week ${week} is still loading. Try again in a moment.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
+      <button type="button" className="wk-more" onClick={opp ? go : denyOn(m ? `You're on bye in Week ${week}. No matchup to open.` : `Week ${week} is still loading. Try again shortly.`)} aria-disabled={!opp || undefined}><span>See the full matchup</span><Icon name="chev" size={14} /></button>
     </section>
   );
 }
@@ -270,7 +270,7 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
       {threats}
       <section className="card wk" aria-label="Injury watch">
         <div className="wk-head"><h2 className="section-title">Injury watch</h2><span className="tiny muted">You and {opp?.manager ?? "your opponent"}</span></div>
-        {injured.length === 0 ? <p className="small muted">Nobody in this matchup carries an injury tag.</p> : injured.map(({ p, you }) => (
+        {injured.length === 0 ? <p className="small muted">No injury tags in this matchup.</p> : injured.map(({ p, you }) => (
           <button key={p.id} className="wk-row" onClick={() => onGo(you ? "roster" : "matchup")}>
             <Avatar p={p} size={40} />
             <span className="wk-name"><span className="wk-nm">{p.name}<span className={`wk-tag s-${p.status}`}>{injuryTag(p)}</span></span><small>{detail(p)}</small></span>
@@ -302,7 +302,7 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
         <span className="rail-time">Sent {f.when} by {f.via}</span>
       </div>
       <h3>Did {them.manager} reply?</h3>
-      <p className="muted small">You offered {swap(f.trade.give)} for {swap(f.trade.get)}. One tap turns the answer into a tag so the next idea is smarter.</p>
+      <p className="muted small">You offered {swap(f.trade.give)} for {swap(f.trade.get)}. Tap an answer. It becomes a tag that shapes the next idea.</p>
       {!no ? (
         <div className="chips-row">
           <button className="chip-btn good" onClick={() => onResolve(f.id, `Deal logged with ${them.manager}.`)}>They're in</button>
@@ -328,7 +328,7 @@ function FollowUpCard({ f, coach, onTag, onResolve, onOpen, onPitch }: {
               <TradeIdea t={c.trade} onOpen={onOpen} onPitch={onPitch} />
               <AiLabel />
             </>
-          ) : <p className="small muted">No single tweak makes this work for both of you while respecting {them.manager}'s tags. Try another partner.</p>}
+          ) : <p className="small muted">No single tweak works for both of you within {them.manager}'s tags. Try another partner.</p>}
           <div className="row"><button className="btn btn-sm btn-ghost" onClick={() => onResolve(f.id, "Follow-up closed.")}>Done</button></div>
         </div>
       )}
@@ -446,7 +446,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
             <span className="brief-k">Waiver add</span><span className="grow">{briefing.waiver}</span><Icon name="chev" size={16} />
           </button>
           {onSnooze && (
-            <Tooltip content="Skips him this week. He can come back next week.">
+            <Tooltip content="Skips him this week only.">
               <button className="brief-snooze" aria-label={`Not right now: skip ${briefing.waiverPass.name} this week`} onClick={() => onSnooze(briefing.waiverPass!)}>Not right now</button>
             </Tooltip>
           )}
@@ -477,7 +477,7 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
         <span className="sample-note">{level === "light" ? "Light: top nudges only" : level === "hands" ? "Hands-on: every nudge" : "Standard nudges"} · <button className="linkish" onClick={() => onGo("settings:nudges")}>Change</button></span>
       </div>
 
-      {nudges.length === 0 && <p className="empty-deal">You're caught up. Source will nudge you when something changes.</p>}
+      {nudges.length === 0 && <p className="empty-deal">You're caught up. Source will flag the next change.</p>}
 
       {visible.map((n) => (
         <article key={n.id} className={`card nudge nudge-${n.kind}${leaving.includes(n.id) ? " leaving" : ""}`}>

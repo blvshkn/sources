@@ -388,11 +388,12 @@ export function Landing({ onLive, onDemo }: {
         // has stopped scrolling for a beat; booting mid-scroll made the players hitch (Zach, Oct 23)
         const boot = () => {
           if (later) window.removeEventListener("scroll", later);
-          idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(go, { timeout: 4000 }) : setTimeout(go, 1200) as unknown as number;
+          idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(go, { timeout: 1200 }) : setTimeout(go, 300) as unknown as number;
         };
-        later = () => { clearTimeout(quiet); quiet = window.setTimeout(boot, 1200); };
+        later = () => { clearTimeout(quiet); quiet = window.setTimeout(boot, 500); };
         window.addEventListener("scroll", later, { passive: true });
-        quiet = window.setTimeout(boot, 3000);
+        // Sooner now (Zach, Oct 23: the live app took too long to come in); the poster matches it, so the hand-off is unseen
+        quiet = window.setTimeout(boot, 900);
       }, { rootMargin: "200px 0px" });
       io.observe(stage);
     };
@@ -502,9 +503,9 @@ export function Landing({ onLive, onDemo }: {
     setBusy(true); setError("");
     try {
       const u = await findUser(name);
-      if (!u) { setError(`No Sleeper account named @${name}. It's your Sleeper username, not your email.`); setBusy(false); return; }
+      if (!u) { setError(`No Sleeper account named @${name}. Use your username, not your email.`); setBusy(false); return; }
       const { leagues } = await findLeagues(u.user_id);
-      if (!leagues.length) { setError("That account isn't in any NFL leagues on Sleeper yet. Join one on Sleeper, or try the demo."); setBusy(false); return; }
+      if (!leagues.length) { setError("That account isn't in any NFL leagues on Sleeper yet. Join one, or try the demo."); setBusy(false); return; }
       onLive({ username: name, user: { id: u.user_id, name: u.display_name || name }, leagues });
     } catch (err) {
       setError(err instanceof SleeperError ? err.message : "We couldn't reach Sleeper. Check your connection and try again.");
@@ -545,23 +546,23 @@ export function Landing({ onLive, onDemo }: {
           placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
         <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Adding your leagues…" : "Add your leagues"}</button>
       </form>
-      <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Source can't change anything in Sleeper."}</p>
+      <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Source can't change your league."}</p>
     </>
   );
   const tagline = "Every offer judged by both starting lineups, then pitched around what the other manager needs.";
   // Each answer stands on its own, so search and AI answers can quote it without the question
   const faqs: [string, string][] = [
     ["What is Source?", "Source is a free trade tool for Sleeper fantasy football leagues. It reads your league, measures what every team needs at each starting slot, and builds trades that raise both teams' starting points. It also drafts the pitch, lineup fixes and waiver bids."],
-    ["Is Source free?", "Yes. Source is free. Connect your Sleeper league with your username and use every screen, from trade ideas to waiver bids, at no cost."],
-    ["Do you need my Sleeper password?", "No. Source only needs your Sleeper username. League data comes from Sleeper's public API, so there's no password and nothing to sign into."],
-    ["Can Source make moves in my league?", "No. Source is read only, so it can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move in Sleeper yourself."],
-    ["Where do trade values come from?", "Source blends public market values for your league's scoring format with a projection model for the rest of the season and each team's actual starting needs. Every offer is then judged by what it does to both starting lineups."],
-    ["How does Ask work?", "Source AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Source's own engine, and once in a while the AI cracks a joke. There's a daily limit, and past it Ask gives the built-in answer."],
+    ["Is Source free?", "Yes. Every screen is free, from trade ideas to waiver bids. Connect your Sleeper league with just your username."],
+    ["Do you need my Sleeper password?", "No. Source only needs your Sleeper username. League data comes from Sleeper's public API, so there's nothing to sign into."],
+    ["Can Source make moves in my league?", "No. Source is read only and can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move yourself."],
+    ["Where do trade values come from?", "Source blends public market values for your league's scoring format with a rest-of-season projection model and each team's actual starting needs. Then every offer is judged by what it does to both starting lineups."],
+    ["How does Ask work?", "Source AI answers questions about your league from its rosters, standings and matchups. Trade math comes from Source's own engine. Once in a while it cracks a joke. Past the daily limit, Ask gives the built-in answer."],
     ["What does Set optimal lineup check?", "It starts from your best projected lineup, then reads player news, injury and practice reports, Vegas lines and kickoff weather. Every suggested move comes with its reason. You make the moves in Sleeper."],
     ["Does a pitch send on its own?", "No. Source writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
-    ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers sync to your phone, tablet and desktop. A key that lives on your devices protects them, and a new device joins with a one-time code from Settings. The sample league stays on one device."],
+    ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers sync to your phone, tablet and desktop. A key on your devices protects them. A new device joins with a one-time code from Settings. The sample league stays on one device."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Source never shows them to other managers."],
-    ["What data does Source keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved so they can sync, readable only with your device key. Delete my data in Settings clears this browser and the synced copies."],
+    ["What data does Source keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved for syncing, and only your device key can read them. Delete my data in Settings clears this browser and the synced copies."],
     ["Does the win chance match Sleeper?", "Closely. Source uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Source works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];
@@ -708,7 +709,7 @@ export function Landing({ onLive, onDemo }: {
         <section className="ld-section ld2-tradesec" aria-labelledby="ld-trades">
           <div className="ld2-tradesec-copy">
             <SplitHead id="ld-trades" a="Every deal," b="built for both sides." />
-            <p className="ld2-tradesec-sub">Source finds the trade the other manager is already shopping for, checks it against both starting lineups, and only shows it when you both come out ahead.</p>
+            <p className="ld2-tradesec-sub">Source finds the trade the other manager is already shopping for. It checks both starting lineups and only shows deals where you both come out ahead.</p>
           </div>
           {/* The deal the way the trade builder reads it (Zach, Oct 22: "so you can see it's a win win"): both sides,
               the verdict, points and value for each team, and their odds. Same pieces as Trade.tsx, read only. */}
@@ -726,7 +727,7 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld-bento">
           <article className="card ld-cell ld2-reveal tall">
             <h3>Know who needs what</h3>
-            <p>Every starting slot measured against your league's average, so you know exactly where an offer lands.</p>
+            <p>Every starting slot measured against the league average, so you know where an offer lands.</p>
             <div className="bars">
               {demo.thin.map((n) => (
                 <div key={n.team.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 0", borderTop: "1px solid var(--line)" }}>
@@ -749,12 +750,12 @@ export function Landing({ onLive, onDemo }: {
           {demo.trade && (
             <article className="card ld-cell ld2-reveal">
               <h3>Verdicts in starting points</h3>
-              <p>Every deal is judged by what it does to both starting lineups, so three bench players can't fake a star.</p>
+              <p>Deals are judged by both starting lineups, so three bench players can't fake a star.</p>
               <TradeCompare trade={demo.trade} them={demo.mike} />
             </article>
           )}
           {/* One lead-in and CTA between the bento's two rows (Zach, Oct 23) */}
-          <SectionCta line="You need the edge, and we've got it." onAdd={() => setFindOpen(true)} />
+          <SectionCta line="You need the edge. We've got it." onAdd={() => setFindOpen(true)} />
           {demo.trade && (
             <article className="card ld-cell ld2-reveal ld2-msg-cell">
               <h3>Pitch it where you talk</h3>
@@ -804,7 +805,7 @@ export function Landing({ onLive, onDemo }: {
         <div className="ld2-new-grid">
           <article className="card ld-cell ld2-reveal ld2-ask-cell" ref={askCell}>
             <h3>Ask anything about your league</h3>
-            <p>Source AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
+            <p>Source AI reads your rosters, standings, matchups and trades. Trade answers use the builder's math, so the numbers hold up. Now and then, a dry joke.</p>
             {askDemo && <div className="ld2-ask" ref={setInert}>
               {askDemo.map((t) => <Fragment key={t.q}>
                 <div className="ask-you-row"><p className="ask-you">{t.q}</p></div>
@@ -821,7 +822,7 @@ export function Landing({ onLive, onDemo }: {
           </article>
           <article className="card ld-cell ld2-reveal ld2-opt-cell">
             <h3>Set optimal lineup</h3>
-            <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
+            <p>One tap weighs this week's news, injuries, Vegas lines and kickoff weather. Every move comes with a reason. You make it in Sleeper.</p>
             {/* The Lineup tab's Set optimal lineup, played from a script with the engine's moves (LandingOptimal.tsx) */}
             {optDemo.swaps.length > 0
               ? <LandingOptimal res={optDemo} onFind={() => setFindOpen(true)} />
@@ -829,7 +830,7 @@ export function Landing({ onLive, onDemo }: {
           </article>
           <article className="card ld-cell ld2-reveal ld2-sync-cell">
             <h3>Works on every device</h3>
-            <p>Offers you send and players you star follow your Sleeper account to your phone, tablet and desktop.</p>
+            <p>Sent offers and starred players follow your Sleeper account to every device.</p>
             <ul className="ld2-sync">
               {demo.trade && (
                 <li><span className="ld2-sync-ic"><Icon name="send" size={16} /></span>
@@ -850,10 +851,10 @@ export function Landing({ onLive, onDemo }: {
         {/* The heading and a lead-in CTA share the left column (Zach, Oct 23) */}
         <div className="ld2-trust-head">
           <SplitHead id="ld-private" a="Private" b="by default." />
-          <SectionCta line="No sign up form. Just your Sleeper username." onAdd={() => setFindOpen(true)} />
+          <SectionCta line="No sign-up form. Just your Sleeper username." onAdd={() => setFindOpen(true)} />
         </div>
         <ul className="ld-trust-list">
-          <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
+          <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. League data comes straight from Sleeper's public API.</p></div></li>
           <li className="ld2-reveal"><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
           <li className="ld2-reveal"><Icon name="send" size={22} /><div><b>Nothing sends on its own</b><p>Source drafts the offer. You decide if and where it goes.</p></div></li>
           <li className="ld2-reveal"><Icon name="shield" size={22} /><div><b>Locked to your devices</b><p>Offers and starred players sync with a key that lives on your devices. Delete my data clears every copy.</p></div></li>
@@ -897,7 +898,7 @@ export function Landing({ onLive, onDemo }: {
       <footer className="ld-foot ld2-sign" ref={signRef}>
         <span className="ld2-endlines" aria-hidden="true"><picture><source media="(min-width: 861px)" srcSet="/field-lines.png" /><img src="/field-lines-phone.png" width={860} height={944} alt="" decoding="async" /></picture></span>
         <div className="ld2-sign-top">
-          <p className="ld2-sign-lede">Every league has an insider. Make it you. Source reads every roster in your Sleeper league, so you know who needs what before the group chat does.</p>
+          <p className="ld2-sign-lede">Every league has an insider. Make it you. Source reads every roster, so you know who needs what before the group chat does.</p>
           <div className="ld2-sign-col">
             <nav className="ld2-legal" aria-label="Legal">
               <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
@@ -919,7 +920,7 @@ export function Landing({ onLive, onDemo }: {
         <DetailSheet className="lda-sheet ldf-sheet" onClose={() => { setFindOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }} label="Add your leagues"
           title={<h2 className="ds-h">Add your leagues</h2>}>
           <div className="ldf-body">
-            <p className="ldf-sub">Type your Sleeper username and Source pulls in every league you're in. No password, nothing to sign into.</p>
+            <p className="ldf-sub">Type your Sleeper username and Source pulls in every league you're in. No password needed.</p>
             <div className="lda-form">{form("ld-find-user")}</div>
             <div className="lda-or" aria-hidden="true"><span>or</span></div>
             <button type="button" className="btn btn-secondary lda-demo" onClick={onDemo}>Try the sample league</button>
@@ -1150,7 +1151,7 @@ function PhoneApp({ tab, go, front }: { tab: string; go: "none" | "front" | "all
   return (
     <iframe className={`hp-frame${ready ? " on" : ""}`} src={`/?frame=demo#${tab}`} title={front ? "Source, the sample league" : ""}
       tabIndex={front ? undefined : -1} aria-hidden={front ? undefined : true} loading="lazy"
-      onLoad={(e) => { const f = e.currentTarget; window.setTimeout(() => setReady(true), 900); try { f.contentWindow?.document.documentElement.classList.add(front ? "frame-front" : "frame-back"); } catch { /* cross origin: fine */ } }} />
+      onLoad={(e) => { const f = e.currentTarget; window.setTimeout(() => setReady(true), 350); try { f.contentWindow?.document.documentElement.classList.add(front ? "frame-front" : "frame-back"); } catch { /* cross origin: fine */ } }} />
   );
 }
 
@@ -1221,7 +1222,7 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
                   { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
                     <DealPts key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
                     <DealPts key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
-                  { label: "Trade value", tip: "Market value, the plain sum of each player's value.", cells: [
+                  { label: "Trade value", tip: "Market value: the plain sum of each player's value.", cells: [
                     <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
                     <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
                     extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
