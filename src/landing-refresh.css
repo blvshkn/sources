@@ -70,3 +70,12 @@ html:root:not(#_):not(#_) .ld2-legal button {
 html:root:not(#_):not(#_) .ld2-legal button:active { color: var(--ink); }
 html:root:not(#_):not(#_) .ld2 main:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .ld2-legal button { transition: none; } }
+
+/* Section CTAs (Zach, Oct 23): the line left, Add your leagues right and hugging; phones stack with a filling button */
+html:root:not(#_):not(#_) .ld2-secta { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 32px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; }
+html:root:not(#_):not(#_) .ld2-secta > p { margin: 0; font: 600 1.125rem/1.3 var(--font-body); letter-spacing: -0.01em; color: var(--ink); }
+html:root:not(#_):not(#_) .ld2-secta > .btn { height: 48px; min-height: 48px; justify-content: center; }
+@media (min-width: 720px) {
+  html:root:not(#_):not(#_) .ld2-secta { flex-direction: row; align-items: center; justify-content: space-between; padding: 20px 20px 20px 28px; }
+  html:root:not(#_):not(#_) .ld2-secta > .btn { flex: 0 0 auto; padding-inline: 24px; }
+}

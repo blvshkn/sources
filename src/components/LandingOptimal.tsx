@@ -74,8 +74,8 @@ function Block({ res, trace, phase, onGo, onDismiss, onFind, ghost = false }: {
             <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper{lockBy ? ` before ${lockBy}` : ""}.</span>
             <div className="lu-ai-btns">
               <button type="button" className="btn btn-sm lu-ai-x" onClick={onDismiss} tabIndex={live ? undefined : -1}>Dismiss</button>
-              {/* On the landing the next step is your own league (Zach, Oct 23): the green main action opens Find my leagues */}
-              <button type="button" className="btn btn-sm btn-primary lu-ai-open" onClick={onFind} tabIndex={live ? undefined : -1}>Find my leagues</button>
+              {/* On the landing the next step is your own league (Zach, Oct 23): the green main action opens Add your leagues */}
+              <button type="button" className="btn btn-sm btn-primary lu-ai-open" onClick={onFind} tabIndex={live ? undefined : -1}>Add your leagues</button>
             </div>
           </div>
           <AiLabel />

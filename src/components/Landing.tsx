@@ -158,7 +158,7 @@ export function Landing({ onLive, onDemo }: {
   const phonesRef = useRef<HTMLDivElement>(null);
   const foSec = useRef<HTMLElement>(null);
   // The sticky nav (Zach, Oct 22): it stays with the logo all the way down, takes a backdrop once the page moves, and
-  // once the hero's username field is out of sight it offers "Find my leagues", which opens that field in the nav.
+  // once the hero's username field is out of sight it offers "Add your leagues", which opens that field in the nav.
   const [stuck, setStuck] = useState(false);
   const [navCta, setNavCta] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
@@ -494,7 +494,7 @@ export function Landing({ onLive, onDemo }: {
     e.preventDefault();
     const name = username.trim().replace(/^@/, "");
     if (busy) return;
-    if (!name) { setError("Enter your Sleeper username to find your leagues."); return; }
+    if (!name) { setError("Enter your Sleeper username to add your leagues."); return; }
     setBusy(true); setError("");
     try {
       const u = await findUser(name);
@@ -539,7 +539,7 @@ export function Landing({ onLive, onDemo }: {
         <span className="at" aria-hidden="true">@</span>
         <input id={id} value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }} aria-invalid={!!error && errFor === id} aria-describedby={`${id}-help`} name="username"
           placeholder="yourname…" autoComplete="username" autoCapitalize="none" spellCheck={false} />
-        <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Finding your leagues…" : "Find my leagues"}</button>
+        <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "Adding your leagues…" : "Add your leagues"}</button>
       </form>
       <p id={`${id}-help`} className={error && errFor === id ? "ld2-error" : "ld2-help"} role={error && errFor === id ? "alert" : undefined}>{(errFor === id && error) || "Free. No password. Read only, so Source can't change anything in Sleeper."}</p>
     </>
@@ -576,9 +576,9 @@ export function Landing({ onLive, onDemo }: {
       <nav className={`ld-nav ld2-nav${stuck ? " stuck" : ""}`} aria-label="Source">
         <div className="brand" style={{ padding: 0 }}><BrandLogo layout="row" mark={52} word={30} tagline tag={11} label="Source" stage /></div>
         <div className="ld2-navright">
-          {/* Once the hero's username field has scrolled away, the nav carries it: "Find my leagues" opens the same field here */}
+          {/* Once the hero's username field has scrolled away, the nav carries it: "Add your leagues" opens the same field here */}
           <div className={`ld2-navcta${navCta ? " on" : ""}`} aria-hidden={!navCta || undefined}>
-            <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setFindOpen(true)} aria-haspopup="dialog">Find my leagues</button>
+            <button ref={navBtn} className="btn btn-sm btn-primary" tabIndex={navCta ? undefined : -1} onClick={() => setFindOpen(true)} aria-haspopup="dialog">Add your leagues</button>
           </div>
           <button className="btn btn-sm btn-ghost" onClick={onDemo}>Try the demo</button>
         </div>
@@ -656,6 +656,7 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld-section ld2-fosec" aria-labelledby="ld-fo" ref={foSec}>
         <SplitHead id="ld-fo" a="Your matchup," b="before, during, after." />
         <FaceOffStates you={demo.you} partner={demo.mike.manager} />
+        <SectionCta line="See it on your own matchup." onAdd={() => setFindOpen(true)} />
       </section>
 
       {/* One screen: the YOUR banner over the stacked tagline (Zach, Oct 22) */}
@@ -791,6 +792,7 @@ export function Landing({ onLive, onDemo }: {
               itself now lives in the trade section's readout) */}
           <LandingNotesCard them={demo.mike} notes={demo.notes} tags={demo.tags} avoid={demo.trade} onOpen={openDeal("trade")} />
         </div>
+        <SectionCta line="You need the edge, and we've got it." onAdd={() => setFindOpen(true)} />
       </section>
 
       <section className="ld-section ld2-new" aria-labelledby="ld-new">
@@ -836,6 +838,7 @@ export function Landing({ onLive, onDemo }: {
             </ul>
           </article>
         </div>
+        <SectionCta line="See this in action for yourself." onAdd={() => setFindOpen(true)} />
       </section>
 
       <section className="ld-trust ld2-trust" aria-labelledby="ld-private">
@@ -902,10 +905,10 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sign-word" ref={wordRef}>{"SOURCE".split("").map((c, i) => <span key={i} style={{ ["--i" as string]: i }}>{c}</span>)}</p>
         </div>
       </footer>
-      {/* Find my leagues from the nav (Zach, Oct 22): a modal on desktop, a sheet on phones, with the hero's form */}
+      {/* Add your leagues from the nav (Zach, Oct 22): a modal on desktop, a sheet on phones, with the hero's form */}
       {findOpen && (
-        <DetailSheet className="lda-sheet ldf-sheet" onClose={() => { setFindOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }} label="Find my leagues"
-          title={<h2 className="ds-h">Find your leagues</h2>}>
+        <DetailSheet className="lda-sheet ldf-sheet" onClose={() => { setFindOpen(false); requestAnimationFrame(() => navBtn.current?.focus()); }} label="Add your leagues"
+          title={<h2 className="ds-h">Add your leagues</h2>}>
           <div className="ldf-body">
             <p className="ldf-sub">Type your Sleeper username and Source pulls in every league you're in. No password, nothing to sign into.</p>
             <div className="lda-form">{form("ld-find-user")}</div>
@@ -1223,6 +1226,16 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
           </div>
         )}</FinderDemo>
       </section>
+    </div>
+  );
+}
+
+/** A section's closing nudge (Zach, Oct 23): one line on the left, Add your leagues on the right, stacked on phones */
+function SectionCta({ line, onAdd }: { line: string; onAdd: () => void }) {
+  return (
+    <div className="ld2-secta">
+      <p>{line}</p>
+      <button type="button" className="btn btn-primary" onClick={onAdd} aria-haspopup="dialog">Add your leagues</button>
     </div>
   );
 }
