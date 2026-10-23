@@ -75,12 +75,18 @@ html:root:not(#_):not(#_):not(#_) .lnc :is(.lnc-again, .lnc-open) {
     opacity calc(220ms * var(--mo, 1)) var(--ease-out), transform calc(160ms * var(--mo, 1)) var(--ease-out);
 }
 html:root:not(#_):not(#_):not(#_) .lnc .lnc-again { border: 1px solid var(--line); background: transparent; color: var(--ink); }
-html:root:not(#_):not(#_):not(#_) .lnc .lnc-again .ai-mark { color: var(--lime); }
-html:root:not(#_):not(#_):not(#_) .lnc .lnc-open { border: 0; background: none; padding-inline: 8px; color: var(--muted); gap: 2px; }
+html:root:not(#_):not(#_):not(#_) .lnc .lnc-again .ic { color: var(--lime); }
+/* The main action sits on the right and fills the row; the secondary sits to its left (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_) .lnc .lnc-foot { flex-wrap: nowrap; }
+html:root:not(#_):not(#_):not(#_) .lnc .lnc-again { flex: none; width: 112px; min-height: 48px; justify-content: center; }
+html:root:not(#_):not(#_):not(#_) .lnc .lnc-open {
+  flex: 1 1 auto; min-height: 48px; justify-content: center; gap: 4px; border: 0;
+  background: var(--lime); color: #0F1110; font-weight: 600; font-size: 1rem;
+}
 html:root:not(#_):not(#_):not(#_) .lnc :is(.lnc-again, .lnc-open):disabled { opacity: 0.45; cursor: default; }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_):not(#_) .lnc .lnc-again:not(:disabled):hover { background: var(--surface-2); }
-  html:root:not(#_):not(#_):not(#_) .lnc .lnc-open:not(:disabled):hover { color: var(--ink); }
+  html:root:not(#_):not(#_):not(#_) .lnc .lnc-open:not(:disabled):hover { background: color-mix(in srgb, var(--lime) 88%, white); }
 }
 html:root:not(#_):not(#_):not(#_) .lnc :is(.lnc-again, .lnc-open):active:not(:disabled) { transform: scale(0.97); }
 html:root:not(#_):not(#_):not(#_) .lnc :is(.lnc-again, .lnc-open):focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }

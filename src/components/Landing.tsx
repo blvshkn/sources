@@ -20,7 +20,7 @@ import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
 import { eff, fits } from "../engine";
-import { AiMark, AiMarkPlay } from "./WorkingLoader";
+import { AiMarkPlay } from "./WorkingLoader";
 import { LandingAsk } from "./LandingAsk";
 import { AskShowBlock, DealNumbers } from "./AskShow";
 import { LandingOptimal } from "./LandingOptimal";
