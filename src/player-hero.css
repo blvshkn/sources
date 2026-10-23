@@ -218,3 +218,16 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-row { display: contents; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row > .ph-acts:only-child { margin-left: auto; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row > .ph-bio { flex: 0 1 auto; }
 }
+
+/* The Watch star (Zach, Oct 23): phones keep it on the headshot's bottom-left corner; tablet and desktop line it up
+   with the bio row, still at the headshot's left edge. It sits in the grid so it follows that row wherever it lands. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph > .ph-art-watch {
+  position: relative; left: auto; bottom: auto; grid-area: art; align-self: center; justify-self: start; z-index: 2;
+  /* Both are centered in the row, so this puts its bottom on the headshot's (84px headshot, 76px for defenses) */
+  translate: 0 22px;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph.ph-def > .ph-art-watch { translate: 0 18px;
+}
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-art-watch { grid-area: row; grid-column: 1; align-self: start; margin-top: 2px; translate: none; }
+}

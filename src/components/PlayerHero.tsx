@@ -195,7 +195,9 @@ export function PlayerHero({ s, nameId, status, meta, where, actions, watch }: {
     <div ref={ref} className={`ph${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
       {photos && team && logoOk && <img className="ph-logo" src={logoTry === 0 ? viaEdge(teamLogoHi(s.nfl), 240) : logoTry === 1 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
-      <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut />{watch && <span className="ph-art-watch">{watch}</span>}</span>
+      <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut /></span>
+      {/* Its own grid item, so tablet and desktop can line it up with the bio row */}
+      {watch && <span className="ph-art-watch">{watch}</span>}
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>
         <div className="ph-meta">
