@@ -451,6 +451,13 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; 
    fixed) it touched the bottom of the screen, and Safari 26 then paints its toolbar strip as a solid box over the page
    (Zach, Oct 22, iPhone and iPad: ?off=envfix made the box go away) */
 html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto 0; height: 100svh; bottom: auto; background: none; }
+/* Where it ends, it fades out over its last 200px instead of stopping on a hard line (Zach, Oct 22, iPad) */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env {
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
+  }
+}
 html:root:not(#_):not(#_):not(#_) .env-field-img { display: none; }
 /* Phones (Zach, Oct 22): the backdrop holds still behind the page, the field pinned to the bottom of the screen and
    never drifting or fading. Pinned again, but with no fill of its own (the page color comes from html), which is what

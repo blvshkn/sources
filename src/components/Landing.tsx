@@ -19,7 +19,7 @@ import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
 import { useLive } from "../live";
-import { eff } from "../engine";
+import { eff, fits } from "../engine";
 import { AiMark, AiMarkPlay } from "./WorkingLoader";
 import { LandingAsk } from "./LandingAsk";
 import { AskShowBlock, DealNumbers } from "./AskShow";
@@ -120,9 +120,24 @@ export function Landing({ onLive, onDemo }: {
     setAskDemo({ q, a, deal: a.links.find((l) => l.trade)?.trade });
   }), [demo.tags]);
   // Set optimal lineup without the network: the engine's lineup and its own reasons (out, bye, projection)
+  // When the sample lineup is already right there'd be nothing to show (Zach, Oct 22), so the card starts from the
+  // optimal lineup with two starters swapped for the closest bench player who fits, and shows the moves that undo it.
   const optDemo = useMemo(() => {
-    const cur = sleeperNow().mine;
-    return resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off");
+    const cur = sleeperNow().mine, locked = lockedIn(live), fin = bestUnderLocks(cur, locked);
+    const res = resultFor(cur, fin, "off");
+    if (res.swaps.length) return res;
+    const before = fin.map((s) => ({ ...s }));
+    const bench = YOU.roster.filter((id) => !fin.some((s) => s.id === id) && !locked(id));
+    const picks = before.flatMap((s, i) => {
+      if (!s.id || locked(s.id)) return [];
+      const was = eff(playerById(s.id), true);
+      const b = bench.map((id) => playerById(id)).filter((p) => fits(s.slot, p.pos) && eff(p, true) < was)
+        .sort((x, y) => eff(y, true) - eff(x, true))[0];
+      return b ? [{ i, id: b.id, loss: was - eff(b, true) }] : [];
+    }).sort((x, y) => x.loss - y.loss);
+    const used = new Set<string>();
+    for (const k of picks) { if (used.size === 2) break; if (used.has(k.id)) continue; before[k.i].id = k.id; used.add(k.id); }
+    return resultFor(before, fin, "off");
   }, [live]);
   const watched = useMemo(() => waiverRecs(YOU).find((r) => r.pick)?.fa ?? null, []);
   const [doc, setDoc] = useState<"legal" | "how" | null>(null);
