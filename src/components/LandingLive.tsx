@@ -8,6 +8,7 @@
 // smoke, the win chance swings), he catches fire, and a second live starter goes cold. They play once when the board
 // scrolls into view. After that nothing moves unless you tap: each moment replays on its own, and Replay runs all four.
 // Reduced motion shows the last moment settled, and taps just jump between states.
+import { SectionCta } from "./SectionCta";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DEMO_SLATE, YOU, playerById, type Player } from "../data";
 import { allNeeds, eff } from "../engine";
@@ -46,7 +47,7 @@ function sameGame(nfl: string): string[] {
   return g ? [g[0], g[1]] : [nfl];
 }
 
-export function LandingLive(): JSX.Element {
+export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element {
   const base = useMemo(() => sampleWeek("live"), []);
   const you = useMemo(() => allNeeds().find((n) => n.team.you)!, []);
   const starters = useMemo(() => startersOf(YOU).map(playerById), []);
@@ -190,6 +191,7 @@ export function LandingLive(): JSX.Element {
             </li>
           ))}
         </ol>
+        {onAdd && <SectionCta line="See this in action for yourself." onAdd={onAdd} />}
       </div>
     </section>
   );

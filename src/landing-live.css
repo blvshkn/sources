@@ -100,3 +100,6 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-rows .gd-lock
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ld-h2.ld2-split { margin-bottom: 16px; }
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec > .ll-board { margin-top: 0; }
 }
+
+/* The CTA fills the open space under the moments (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-moments .ld2-secta { margin-top: 24px; flex-direction: column; align-items: stretch; padding: 20px; }

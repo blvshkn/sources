@@ -52,7 +52,8 @@ const FIRE: Grid[] = [
   ["....r...", "....rr..", ".r..rr..", ".r.rror.", ".rrroor.", "rroyoorr", "royyyyor", "royyyyor", ".royyor.", "..rrrr.."],
   ["..r.....", "..r..r..", ".rr..r..", ".rrorr..", ".rooorr.", "rrooyorr", "royyyyor", "royyyyor", ".royyor.", "..rrrr.."],
 ];
-const SNOW: Grid = ["b...b...b", ".b..b..b.", "..b.b.b..", "...bwb...", "bbbwwwbbb", "...bwb...", "..b.b.b..", ".b..b..b.", "b...b...b"];
+// Diagonal arms one pixel shorter than the straight ones (Zach, Oct 23)
+const SNOW: Grid = ["....b....", ".b..b..b.", "..b.b.b..", "...bwb...", "bbbwwwbbb", "...bwb...", "..b.b.b..", ".b..b..b.", "....b...."];
 const SC = { b: "#A9D8FF", w: "#FFFFFF" };
 const LC = { d: "#C9CEC9", s: "#5E6360", l: "#9AA09C", k: "#2A2E2C", h: "#B8BDB9" };
 const BODY: Grid = ["sssssssss", "shhhhhhls", "sllllllls", "sllkkllls", "sllkkllls", "slllkllls", "sllllllls", "sssssssss"];

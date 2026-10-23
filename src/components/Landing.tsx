@@ -38,6 +38,7 @@ import { AcceptCell, DealRows, PtsCell as DealPts, dealWhy } from "./dealRows";
 import { acceptance, verdict } from "../engine";
 import type { Team } from "../data";
 import { SplitHead, useSplitHeads } from "./SplitHead";
+import { SectionCta } from "./SectionCta";
 import { heroDepth } from "../heroDepth";
 import { clearHandoff, setHandoff } from "../demoHandoff";
 import { sampleWeek, matchNow } from "../live";
@@ -656,7 +657,6 @@ export function Landing({ onLive, onDemo }: {
       <section className="ld-section ld2-fosec" aria-labelledby="ld-fo" ref={foSec}>
         <SplitHead id="ld-fo" a="Your matchup," b="before, during, after." />
         <FaceOffStates you={demo.you} partner={demo.mike.manager} />
-        <SectionCta line="See it on your own matchup." onAdd={() => setFindOpen(true)} />
       </section>
 
       {/* One screen: the YOUR banner over the stacked tagline (Zach, Oct 22) */}
@@ -714,7 +714,7 @@ export function Landing({ onLive, onDemo }: {
       )}
 
       {/* Sunday live, its own section (Zach, Oct 22: "show live things and celebrate the sweat"; LandingLive.tsx) */}
-      <LandingLive />
+      <LandingLive onAdd={() => setFindOpen(true)} />
 
       <LandingSteps trade={demo.trade} />
 
@@ -838,7 +838,6 @@ export function Landing({ onLive, onDemo }: {
             </ul>
           </article>
         </div>
-        <SectionCta line="See this in action for yourself." onAdd={() => setFindOpen(true)} />
       </section>
 
       <section className="ld-trust ld2-trust" aria-labelledby="ld-private">
@@ -1226,16 +1225,6 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
           </div>
         )}</FinderDemo>
       </section>
-    </div>
-  );
-}
-
-/** A section's closing nudge (Zach, Oct 23): one line on the left, Add your leagues on the right, stacked on phones */
-function SectionCta({ line, onAdd }: { line: string; onAdd: () => void }) {
-  return (
-    <div className="ld2-secta">
-      <p>{line}</p>
-      <button type="button" className="btn btn-primary" onClick={onAdd} aria-haspopup="dialog">Add your leagues</button>
     </div>
   );
 }
