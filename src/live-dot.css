@@ -1,11 +1,11 @@
-/* Live dot: the broadcast pulse on every "Live" badge.
-   The pulse lives on .lu-live i::before (styles.css): the dot holds solid in its red while a ring of its own color,
+/* Live dot: the broadcast ring on every "Live" badge.
+   The ring lives on .lu-live i::before (styles.css): the dot holds solid in its red while a ring of its own color,
    drawn at 18px, is scaled down to the dot and grows back out as it fades. Only transform and opacity move, so the
    compositor runs it alone. The face-off restyle (0cff1a2) swapped the face-off's .lu-live tag for .fo-live, which
-   drew the dot but never got the ring, so Live sat still on the Wire and Lineup cards, the matchup sheet header and
-   the landing hero. These rules give .fo-live and the player sheet's Live pill the same ring, same 1.6s ease-out,
-   so every Live dot in the app beats together. Final and Projected draw no dot, so nothing moves there. With reduced
-   motion the dot stays, still, and no ring is drawn. */
+   drew the dot but never got the ring. These rules give .fo-live and the player sheet's Live pill the same ring, same
+   1.6s ease-out. Motion rule (Zach): no loops. The ring plays once when the Live badge arrives (it mounts when a game
+   turns live, or when a live board first shows), then the dot rests solid. Final and Projected draw no dot. With
+   reduced motion the dot stays, still, and no ring is drawn. */
 
 html:root:not(#_):not(#_) .fo-live i { position: relative; flex: none; }
 /* The player sheet's pill draws its dot as ::before; the pill lines it up on center so the ring can sit on it */
@@ -15,12 +15,12 @@ html:root:not(#_):not(#_) .pd-live-k.on::before { flex: none; vertical-align: 0;
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_) .fo-live i::before {
     content: ""; position: absolute; inset: -6px; border-radius: 50%; background: inherit; pointer-events: none;
-    opacity: 0; animation: live-ring 1.6s ease-out infinite;
+    opacity: 0; animation: live-ring 1.6s ease-out 1;
   }
   /* 7px of padding puts the dot's center 10px in: an 18px ring starting 1px in shares it */
   html:root:not(#_):not(#_) .pd-live-k.on::after {
     content: ""; position: absolute; left: 1px; top: calc(50% - 9px); width: 18px; height: 18px; border-radius: 50%;
-    background: var(--bad); pointer-events: none; opacity: 0; animation: live-ring 1.6s ease-out infinite;
+    background: var(--bad); pointer-events: none; opacity: 0; animation: live-ring 1.6s ease-out 1;
   }
   @keyframes live-ring { 0% { transform: scale(0.3333); opacity: 0.55; } 80%, 100% { transform: scale(1); opacity: 0; } }
 }

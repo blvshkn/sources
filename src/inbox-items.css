@@ -129,3 +129,6 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-empty-ic {
 /* Inside the landing's phones (html.in-frame) the drawn status bar covers the top 50px, so the inbox head starts under
    it like the app's top bar does (styles.css html.in-frame .topbar) */
 html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-head { padding-top: 54px; }
+
+/* Not right now on the left, the main action on the right filling the row (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n .ibx-cta { flex: 1 1 auto; justify-content: center; }

@@ -43,9 +43,11 @@ html:root:not(#_):not(#_) .gd-wx-c { position: absolute; top: 0; right: 0; width
 /* The lock sits right before the points, in the same line, so it centers on them */
 html:root:not(#_):not(#_) .gd-lock { display: grid; place-items: center; flex: none; width: 12px; height: 16px; margin-right: 4px; -webkit-text-fill-color: initial; }
 html:root:not(#_):not(#_) .gd-lock svg { display: block; width: 11px; height: 15px; }
-/* Optical centering: the closing frames drop their top rows, so they ride up by the rows they dropped */
-html:root:not(#_):not(#_) .gd-lock[data-f="1"] svg { transform: translateY(-1px); }
-html:root:not(#_):not(#_) .gd-lock[data-f="2"] svg { transform: translateY(-2px); }
+/* The three frames are stacked layers (.gd-fr .f0 to .f2, StoneLock), so the shackle closes by opacity alone.
+   Optical centering: the closing frames drop their top rows, so their layers ride up by the rows they dropped and the
+   body stays still. These offsets are static; nothing here animates. */
+html:root:not(#_):not(#_):not(#_) .gd-lock .gd-fr.f1 svg { transform: translateY(-1px); }
+html:root:not(#_):not(#_):not(#_) .gd-lock .gd-fr.f2 svg { transform: translateY(-2px); }
 /* The color drains a little from a locked row's headshot */
 html:root:not(#_):not(#_) :is(.lu-row, .mu-mine):has(.gd-lock) .av { filter: saturate(0.6); }
 /* The stone lock replaces the lock badge that used to show on a tap */

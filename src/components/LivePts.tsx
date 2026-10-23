@@ -37,7 +37,9 @@ export function FinalPts({ id, pts, proj, cls, lock }: { id: string; pts: number
   if (stamp.current) stamped.add(id);
   return (
     <span className={`${cls} final cemented${stamp.current ? " stamp" : ""}`} aria-label={`Final, ${pts.toFixed(1)} points, projected ${proj.toFixed(1)}`}>
-      <b>{lock}<NumTip label="Points scored" note="Final"><span>{pts.toFixed(1)}</span></NumTip></b><small>proj {proj.toFixed(1)}</small>
+      {/* The engraved edge is a static copy of the number behind it (.fp-n::before and ::after), not a filter: a
+          drop-shadow on this line made Safari redraw it every frame the stone lock moved inside it */}
+      <b>{lock}<NumTip label="Points scored" note="Final"><span className="fp-n" data-v={pts.toFixed(1)}><span>{pts.toFixed(1)}</span></span></NumTip></b><small>proj {proj.toFixed(1)}</small>
     </span>
   );
 }

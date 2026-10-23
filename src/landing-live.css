@@ -55,8 +55,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-fla
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-snow .gd-fr svg { width: 27px; height: 27px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock { width: 20px; height: 26px; margin: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock svg { width: 18px; height: 26px; }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock[data-f="1"] svg { transform: translateY(-2px); }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock[data-f="2"] svg { transform: translateY(-3px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock .gd-fr.f1 svg { transform: translateY(-2px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-ic .gd-lock .gd-fr.f2 svg { transform: translateY(-3px); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t { display: grid; gap: 2px; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t b { font: 600 1rem/1.5rem var(--font-body); color: var(--ink); }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo-t small { font: 400 0.875rem/1.25rem var(--font-body); color: var(--muted); text-wrap: pretty; }

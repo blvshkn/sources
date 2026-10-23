@@ -164,7 +164,6 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) .ph-wa
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) .ph-watch[aria-pressed="true"] svg path { fill: currentColor; }
 @media (hover: hover) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) .ph-watch:hover { background: var(--surface-3); } }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) :is(.ph-cta, .ph-watch):active { transform: scale(0.97); }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-acts .ph-snooze { margin-left: auto; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) :is(.ph-cta, .ph-watch):active { transform: none; } }
 
 /* ---------- Tablet and desktop: a wider header, the headshot beside everything ---------- */

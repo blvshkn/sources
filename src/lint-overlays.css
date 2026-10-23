@@ -134,3 +134,6 @@ html:root:not(#_):not(#_) .psr > .psr-list:is([data-fade="end"], [data-fade="bot
 html:root:not(#_):not(#_) .ps.ps-player .ps-where { color: var(--ink) !important; background: var(--surface-3); }
 html:root:not(#_):not(#_) .ps.ps-player .ps-bar.hi i { background: var(--good); }
 html:root:not(#_):not(#_) .ps.ps-player .ps-legend i.hi { background: var(--good); }
+
+/* First run: the step's main action on the right, filling the row; Back or Skip keeps its own width on the left (Zach, Oct 23) */
+html:root:not(#_):not(#_) .onboard .ob-acts > .btn-primary { flex: 1 1 auto; justify-content: center; }

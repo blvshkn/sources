@@ -497,9 +497,9 @@ export function Wire({ you, partner, partnerId, nudges, followUps, briefing, coa
                 <button className="btn btn-sm" onClick={() => onClearTag(n.tagId!)}>Not anymore</button>
               </>
             )}
-            {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
             {n.kind === "need" && n.teamId && <button className="nudge-link" onClick={() => onGo("league", n.teamId)}><span>See {teamById(n.teamId).manager}'s needs</span><Icon name="chev" size={14} /></button>}
             {n.pass && onSnooze && <button className="snooze-btn ps-nudge-pass" onClick={() => onSnooze(n.pass!)} aria-label={`Not right now: skip ${n.pass.name} this week`}>Not right now</button>}
+            {n.go && <button className="btn btn-sm" onClick={() => onGo(n.go!.tab, n.teamId)}>{n.go.label}</button>}
             <button className="nudge-link dismiss" onClick={() => leave(n)} aria-label="Not useful, show fewer like this">Not useful</button>
           </div>
         </article>

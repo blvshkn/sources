@@ -144,10 +144,11 @@ export function SyncDevicesRow({ user, demo }: { user: string; demo: boolean }) 
           </span>
         </span>
         <span className="row wrap sync-acts">
-          {paired && <button className="btn btn-sm" onClick={() => setSheet("show")} aria-haspopup="dialog">Show pairing code</button>}
-          {!paired && <button className={`btn btn-sm${needsPair ? " btn-primary" : ""}`} onClick={() => setSheet("enter")} aria-haspopup="dialog">Enter pairing code</button>}
+          {/* The reset actions on the left, the code on the right as the main action (Zach, Oct 23) */}
           {paired && <TwoTap label="Reset sync" again="Tap again to reset" busy={busy} onConfirm={() => void run(() => rotateKey(user), "Sync reset. Your other devices need a new code.")} />}
           {needsPair && <TwoTap label="Start fresh" again="Tap again to replace" busy={busy} className="btn btn-sm btn-ghost" onConfirm={() => void run(() => startFresh(user), "Started fresh. This device's lists are the synced copy now.")} />}
+          {paired && <button className="btn btn-sm" onClick={() => setSheet("show")} aria-haspopup="dialog">Show pairing code</button>}
+          {!paired && <button className={`btn btn-sm${needsPair ? " btn-primary" : ""}`} onClick={() => setSheet("enter")} aria-haspopup="dialog">Enter pairing code</button>}
         </span>
       </div>
       {needsPair && <p className="tiny muted sync-note">Start fresh replaces the synced copy with what's on this device, and your other devices need a new code.</p>}

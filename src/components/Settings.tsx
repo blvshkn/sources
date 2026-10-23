@@ -83,10 +83,14 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <span className="grow" style={{ minWidth: 0 }}><span className="set-brandline"><b>Sleeper</b>{refreshed && <span className="small muted set-when">{refreshed}</span>}</span><SyncLine as="span" className="set-sync" idle="" /><span className="small muted" style={{ display: "block" }}>{demo ? "Not connected. You're exploring the demo league." : accounts.length > 1 ? `${LEAGUE_NAME} via @${username} · read-only` : `Connected as @${username} · ${LEAGUE_NAME} · read-only`}</span></span>
           {demo ? <button className="btn btn-sm btn-primary" onClick={onDisconnect}><PlatformLogo size={16} />Connect Sleeper</button> : (
             <span className="row wrap">
+              {/* Main action on the right (Zach, Oct 23). Disconnect asks to confirm in place: Cancel, then the red
+                  Disconnect in the same slot, so focus stays on it; Refresh holds its spot at the end */}
+              {confirm === "disconnect"
+                ? <button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button> : null}
+              {confirm === "disconnect"
+                ? <button className="btn btn-sm btn-danger" onClick={onDisconnect}><PlatformLogo size={16} />{accounts.length > 1 ? "Disconnect all" : "Disconnect Sleeper"}</button>
+                : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
               <button className="btn btn-sm" onClick={onRefresh}>Refresh</button>
-              {confirm === "disconnect" ? (
-                <><button className="btn btn-sm btn-danger" onClick={onDisconnect}><PlatformLogo size={16} />{accounts.length > 1 ? "Disconnect all" : "Disconnect Sleeper"}</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></>
-              ) : <button className="btn btn-sm" onClick={() => setConfirm("disconnect")}>Disconnect</button>}
             </span>
           )}
         </div>
@@ -228,7 +232,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
         <div className="set-row danger-row">
           <span className="grow"><b>Delete your data</b><span className="small muted" style={{ display: "block" }}>Removes your connection, tags, prices and history from this device, plus your synced offers, watchlist and sync key. Paired devices stop syncing. This can't be undone.</span></span>
           {confirm === "delete" ? (
-            <span className="row"><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete my data</button><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button></span>
+            <span className="row"><button className="btn btn-sm btn-ghost" onClick={() => setConfirm("none")}>Cancel</button><button className="btn btn-sm btn-danger" onClick={onDelete}><Icon name="trash" size={14} />Delete my data</button></span>
           ) : <button className="btn btn-sm btn-danger-ghost" onClick={() => setConfirm("delete")}>Delete my data</button>}
         </div>
       </section>

@@ -3138,13 +3138,14 @@ html:root:not(#_) .tr-scout p { margin: 0; font-size: 0.875rem; line-height: 1.4
 html:root:not(#_) .tr-tip { display: grid; grid-template-columns: 16px 1fr; gap: 8px; color: var(--ink) !important; font-weight: 500; }
 html:root:not(#_) .tr-tip svg { margin-top: 3px; color: var(--lime); }
 
-/* Live scoring: a pulsing lime "Live" tag replaces kickoff time; points so far lead, projection sits under */
+/* Live scoring: a lime "Live" tag replaces kickoff time; points so far lead, projection sits under */
 html:root:not(#_) .lu-live { display: inline-flex; align-items: center; gap: 5px; font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--lime); }
 html:root:not(#_) .lu-live i, html:root:not(#_) .lu-mx-now i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
 /* The ring is the dot's own color drawn at its full 18px, scaled down to the dot and grown back out as it fades, so
-   only transform and opacity move and the compositor runs it */
+   only transform and opacity move and the compositor runs it. It plays once when the tag arrives (the game turns
+   live, or a live row first shows), then the dot rests solid: no loops (Zach's motion rule). */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_) .lu-live i::before, html:root:not(#_) .lu-mx-now i::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: inherit; opacity: 0; pointer-events: none; animation: live-dot 1.6s ease-out infinite; }
+  html:root:not(#_) .lu-live i::before, html:root:not(#_) .lu-mx-now i::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: inherit; opacity: 0; pointer-events: none; animation: live-dot 1.6s ease-out 1; }
   @keyframes live-dot { 0% { transform: scale(0.3333); opacity: 0.55; } 80%, 100% { transform: scale(1); opacity: 0; } }
 }
 html:root:not(#_) .lu-final { font: 600 0.6875rem/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -3601,13 +3602,24 @@ html:root:not(#_) :is(.lu-pts, .wk-pts).cemented small { color: var(--faint); }
     62% { transform: translateX(-1.5px); } 76% { transform: translateX(1px); } 100% { transform: none; }
   }
 }
-/* Final: carved into the row, not a raised slab (that read as a button). Granite tone digits with an engraved edge. */
+/* Final: carved into the row, not a raised slab (that read as a button). Granite tone digits with an engraved edge.
+   No filter on the line (the stone lock animates inside it, and a filter made Safari redraw it every frame): the
+   granite gradient sits on the digits alone, and the edge is two static copies of the number behind them (FinalPts
+   gives .fp-n the number as data-v), a dark one a pixel down and a faint light one a pixel up. */
 html:root:not(#_) :is(.lu-pts, .wk-pts).cemented b {
-  padding: 0; border-radius: 0; background: linear-gradient(180deg, #E4E7E3 0%, #A9AFAA 55%, #C7CCC7 100%);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #C9CEC9;
-  box-shadow: none; text-shadow: none;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.06));
+  padding: 0; border-radius: 0; background: none; -webkit-text-fill-color: initial; color: #C9CEC9;
+  box-shadow: none; text-shadow: none; filter: none;
 }
+html:root:not(#_) .cemented .fp-n { position: relative; display: inline-block; isolation: isolate; }
+html:root:not(#_) .cemented .fp-n > span {
+  display: inline-block; background: linear-gradient(180deg, #E4E7E3 0%, #A9AFAA 55%, #C7CCC7 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #C9CEC9;
+}
+html:root:not(#_) .cemented .fp-n::before, html:root:not(#_) .cemented .fp-n::after {
+  content: attr(data-v); position: absolute; left: 0; z-index: -1; white-space: nowrap; pointer-events: none;
+}
+html:root:not(#_) .cemented .fp-n::before { top: 1px; color: rgba(0, 0, 0, 0.85); -webkit-text-fill-color: rgba(0, 0, 0, 0.85); }
+html:root:not(#_) .cemented .fp-n::after { top: -1px; color: rgba(255, 255, 255, 0.06); -webkit-text-fill-color: rgba(255, 255, 255, 0.06); }
 /* Neutral live points are plain ink: the Live tag says it's live, and only heat states color the number */
 html:root:not(#_) .lu-pts.live:not([class*="heat-"]) b, html:root:not(#_) .wk-pts.live:not([class*="heat-"]) b { color: var(--ink); }
 /* Matchup screen live: scored total big, projected finish beneath, Live tag over the win chance */
@@ -4050,9 +4062,12 @@ html:root:not(#_) .ld2-typed-box { display: grid; white-space: pre-line; animati
 html:root:not(#_) .ld2-typed-box > * { grid-area: 1 / 1; }
 html:root:not(#_) .ld2-typed-size { visibility: hidden; }
 html:root:not(#_) .ld2-typed-text { background: linear-gradient(90deg, #FFFFFF, #9B9B9B); -webkit-background-clip: text; background-clip: text; color: transparent; }
-html:root:not(#_) .ld2-caret { display: inline-block; width: 0.07em; height: 0.82em; margin-left: 0.06em; vertical-align: -0.04em; border-radius: 2px; background: var(--lime); animation: ld3-blink 1s steps(1) infinite; }
+html:root:not(#_) .ld2-caret { display: inline-block; width: 0.07em; height: 0.82em; margin-left: 0.06em; vertical-align: -0.04em; border-radius: 2px; background: var(--lime); animation: ld3-blink 1s steps(1) 4 forwards; }
 html:root:not(#_) .ld2-caret.on { animation: none; }
-@keyframes ld3-blink { 50% { opacity: 0; } }
+/* The caret blinks four times when typing pauses (a hold is 3 to 4.2s, so it never goes dark mid hold), then ends
+   hidden: once the headline finishes its one pass it rests with no caret. Typing (.on) holds it solid, and every new
+   pause restarts the four blinks. */
+@keyframes ld3-blink { 0% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_) .ld2-caret { display: none; } }
 
 /* Desktop hero: copy starts near the top instead of floating mid-column beside the tall preview */
@@ -4082,9 +4097,11 @@ html:root:not(#_):not(#_) .ld2-typed-text { background: none; color: var(--ink);
 html:root:not(#_):not(#_) .ld2-typed-text.sel { background: rgba(var(--lime-rgb), 0.32); }
 html:root:not(#_):not(#_) .ld2-typed-rest { color: transparent; }
 html:root:not(#_):not(#_) .ld2-caret { display: inline; position: relative; width: auto; height: auto; margin: 0; background: none; animation: none; }
-html:root:not(#_):not(#_) .ld2-caret::after { content: ""; position: absolute; left: 0.02em; bottom: -0.06em; width: 0.07em; height: 0.86em; border-radius: 2px; background: var(--lime); animation: ld3-blink 1s steps(1) infinite; }
+html:root:not(#_):not(#_) .ld2-caret::after { content: ""; position: absolute; left: 0.02em; bottom: -0.06em; width: 0.07em; height: 0.86em; border-radius: 2px; background: var(--lime); animation: ld3-blink 1s steps(1) 4 forwards; }
 html:root:not(#_):not(#_) .ld2-caret.on::after { animation: none; }
 html:root:not(#_):not(#_) .ld2-caret.off::after { opacity: 0; }
+/* Reduced motion: the headline is written in full at once, so no caret (the display: none above loses to this block) */
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .ld2-caret::after { animation: none; opacity: 0; } }
 
 /* Every floating player shows a last name */
 
@@ -4112,11 +4129,13 @@ html:root:not(#_):not(#_) .sms-img :is(img, .tcard-skel) { display: block; width
 html:root:not(#_):not(#_) .sms-out { align-self: flex-end; max-width: 84%; margin: 6px 0 0; padding: 10px 14px; border-radius: 20px 20px 6px 20px; background: var(--lime); color: var(--action-ink); font-size: 0.9375rem; line-height: 1.35; text-wrap: pretty; }
 html:root:not(#_):not(#_) .sms-meta { align-self: flex-end; padding-right: 6px; font-size: 0.6875rem; color: var(--muted); }
 html:root:not(#_):not(#_) .sms-typing { align-self: flex-start; display: inline-flex; gap: 4px; margin-top: 6px; padding: 12px 14px; border-radius: 20px 20px 20px 6px; background: var(--surface-2); }
-html:root:not(#_):not(#_) .sms-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: sms-dot 1.2s ease-in-out infinite; }
-html:root:not(#_):not(#_) .sms-typing i:nth-child(2) { animation-delay: calc(160ms * var(--mo, 1)); }
-html:root:not(#_):not(#_) .sms-typing i:nth-child(3) { animation-delay: calc(320ms * var(--mo, 1)); }
+/* The reply dots bounce two passes when the card scrolls into view (.ld2-reveal.in), then rest dim: no loops */
+html:root:not(#_):not(#_) .sms-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: 0.35; }
+html:root:not(#_):not(#_) .ld2-reveal.in .sms-typing i { animation: sms-dot 1.2s ease-in-out calc(400ms * var(--mo, 1)) 2 both; }
+html:root:not(#_):not(#_) .ld2-reveal.in .sms-typing i:nth-child(2) { animation-delay: calc(560ms * var(--mo, 1)); }
+html:root:not(#_):not(#_) .ld2-reveal.in .sms-typing i:nth-child(3) { animation-delay: calc(720ms * var(--mo, 1)); }
 @keyframes sms-dot { 0%, 60%, 100% { opacity: 0.35; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .sms-typing i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { html:root:not(#_):not(#_) .ld2-reveal.in .sms-typing i { animation: none; } }
 
 /* The finder card keeps its content up top instead of sinking to the bottom of a tall row */
 html:root:not(#_):not(#_) .ld2-finder { margin-top: 0; }

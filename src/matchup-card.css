@@ -154,53 +154,14 @@ html:root:not(#_):not(#_) .fo-side.them .fo-bar i { clip-path: inset(0 0 0 calc(
 }
 
 /* Live (Figma State=Live): the fill keeps its color at the tip and fades to the surface by 88.5% of the way back to
-   the outer edge. While games are on, a soft lighter band sweeps along it from the outer end to the tip, then rests,
-   so the bar reads as one that can still move. Final, Projected and Scored bars stay solid and still.
-   The band is the fill's own ::after, clipped by the fill's pill, and only its transform animates: no layout, paint
-   or style work per frame, so the compositor runs it alone (the app drops React's animationiteration listener, see
-   animationIteration.ts). 2.8s a loop: 1.8s to cross on ease-in-out, 1s at rest. No band with reduced motion. */
+   the outer edge. Final, Projected and Scored bars stay solid. The live bar's motion (one flow and beat when it
+   arrives or its win % changes) is in live-bar.css; the looping white sweep and drifting stripe texture that used to
+   live here are gone (Zach's motion rule: no loops). */
 html:root:not(#_):not(#_) .fo-st-live .fo-bar i { position: relative; overflow: hidden; background: linear-gradient(90deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
 html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background: linear-gradient(270deg, var(--fo-bg) 0, var(--fo-fill) 88.5%); }
 /* The fade is sized to the visible fill, not the whole track, and anchored at the outer edge */
 html:root:not(#_):not(#_) .fo-st-live .fo-bar i { background-repeat: no-repeat; background-size: calc(var(--v, 0) * 100%) 100%; background-position: 0 0; }
 html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i { background-position: 100% 0; }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .fo-st-live .fo-bar i::after {
-    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: calc(60% * var(--v, 0)); pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2) 50%, transparent);
-    transform: translateX(-100%); animation: fo-sweep 2.8s ease-in-out infinite;
-  }
-  html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::after { left: auto; right: 0; transform: translateX(100%); animation-name: fo-sweep-back; }
-  html:root:not(#_):not(#_) .fo.is-skel .fo-bar i::after { animation: none; display: none; }
-  /* -100% to 166.67% of the band's own width carries it from just off the outer end to just past the tip */
-  @keyframes fo-sweep { 0% { transform: translateX(-100%); } 64.29%, 100% { transform: translateX(166.67%); } }
-  @keyframes fo-sweep-back { 0% { transform: translateX(100%); } 64.29%, 100% { transform: translateX(-166.67%); } }
-}
-
-/* Live texture: fine diagonal stripes drift through each live fill toward the VS badge, under the sweep band, so the
-   bar never sits still while games are on. The stripes are the surface color at 14% over the fill: a shade deeper on
-   the green or red, and gone where the fill fades back to the surface, so the leader still reads green and the
-   trailer red. The fill's ::before, clipped by its pill (overflow hidden on the fill, above), 96px wider than the fill
-   on the outer side. Stripes repeat every 8px across (5.657px apart at 45deg, 8 / sqrt 2), and the layer slides
-   96px, twelve repeats, every 8s on linear, so the last frame lands on the first and the loop never seams. Only
-   transform moves; will-change is set on live fills alone. Your bar flows right and leans "/", theirs flows left and
-   leans "\", both toward the center. Final, Projected and Scored bars draw no texture. With reduced motion there is
-   no texture at all: a still stripe read as a pattern, not as life. */
-html:root:not(#_):not(#_) .fo-st-live .fo-bar i { --fo-tex: color-mix(in srgb, var(--fo-bg) 14%, transparent); }
-@media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_) .fo-st-live .fo-bar i::before {
-    content: ""; position: absolute; top: 0; bottom: 0; left: -96px; right: 0; pointer-events: none;
-    background: repeating-linear-gradient(135deg, var(--fo-tex) 0 2.8284px, transparent 2.8284px 5.6569px);
-    will-change: transform; animation: fo-tex 8s linear infinite;
-  }
-  html:root:not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::before {
-    left: 0; right: -96px; animation-name: fo-tex-back;
-    background: repeating-linear-gradient(225deg, var(--fo-tex) 0 2.8284px, transparent 2.8284px 5.6569px);
-  }
-  html:root:not(#_):not(#_) .fo.is-skel .fo-bar i::before { animation: none; display: none; }
-  @keyframes fo-tex { from { transform: translateX(0); } to { transform: translateX(96px); } }
-  @keyframes fo-tex-back { from { transform: translateX(0); } to { transform: translateX(-96px); } }
-}
 
 /* Meta: win %, record, then the projection or points per game. Mono, 11px. */
 html:root:not(#_):not(#_) .fo-meta {

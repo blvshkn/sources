@@ -82,9 +82,10 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
         ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Claim</a>
         : null;
 
+  // Watch first, the main move last so it sits on the right (Zach, Oct 23)
   const actions = (primary || watchApi) ? <>
-    {primary}
     {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
+    {primary}
   </> : null;
 
   // Portaled to body: rendered in place it inherited the page's stacking (Lineup's sticky side column made it a

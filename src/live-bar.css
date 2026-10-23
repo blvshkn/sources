@@ -1,10 +1,13 @@
 /* Live win % bar, option A (Zach, Oct 22): heartbeat with color flow. Replaces the soft white sweep and the drifting
-   stripe texture on live face-off bars (matchup-card.css). The fill, its fade and its growth stay as they are.
+   stripe texture that used to loop on live face-off bars (since removed from matchup-card.css). The fill, its fade
+   and its growth stay as they are.
 
    Flow (::before): a band of a richer shade of the bar's own color travels from the outer edge to the tip. The band is
    45% of the visible fill, so it crosses a short bar and a long bar in the same time. Beat (::after): as the band
-   lands, the tip beats once, a white core inside a halo of that richer color. One beat every 2.4s. Both are clipped
-   by the fill's pill. Only transform and opacity animate.
+   lands, the tip beats once, a white core inside a halo of that richer color. Both are clipped by the fill's pill.
+   Only transform and opacity animate. Motion rule (Zach): no loops. Flow and beat play once when the live bar
+   arrives and once each time its win % changes (FaceOff flips .fo-b2 on .fo-bar, which swaps to identical copies of
+   the keyframes so the animation restarts), then the bar rests.
 
    Green is the leader, red the trailer (FaceOff sets .up / .down by win %). The red runs calmer (Zach): its band is
    about half strength and its beat dimmer and warmer, with no hard white. Final, Projected and Scored bars stay
@@ -18,7 +21,7 @@ html:root:not(#_):not(#_):not(#_) .fo-side.down { --fo-rich: #E0685A; --fo-band:
     content: ""; position: absolute; top: 0; bottom: 0; left: 0; right: auto; width: calc(45% * var(--v, 0)); pointer-events: none;
     background: linear-gradient(90deg, transparent 0%, var(--fo-band, transparent) 50%, transparent 100%);
     opacity: 0; transform: translateX(-100%); will-change: transform, opacity;
-    animation: fo-flow calc(2400ms * var(--mo, 1) / 1.75) cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    animation: fo-flow calc(2400ms * var(--mo, 1) / 1.75) cubic-bezier(0.45, 0, 0.55, 1) 1;
   }
   html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::before { left: auto; right: 0; transform: translateX(100%); animation-name: fo-flow-back; }
   /* -100% to 222.2% of the band's own width (45% of the fill) carries it from just off the outer edge to the tip */
@@ -30,13 +33,21 @@ html:root:not(#_):not(#_):not(#_) .fo-side.down { --fo-rich: #E0685A; --fo-band:
     content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--v, 0) * 100% - 60px); right: auto; width: 60px; pointer-events: none;
     background: radial-gradient(60px 10px at 100% 50%, var(--fo-core, #fff) 0, var(--fo-halo, transparent) 34%, transparent 76%);
     opacity: 0; transform: none; will-change: opacity;
-    animation: fo-beat calc(2400ms * var(--mo, 1) / 1.75) ease-out infinite;
+    animation: fo-beat calc(2400ms * var(--mo, 1) / 1.75) ease-out 1;
   }
   html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar i::after {
     left: auto; right: calc(var(--v, 0) * 100% - 60px);
     background: radial-gradient(60px 10px at 0 50%, var(--fo-core, #fff) 0, var(--fo-halo, transparent) 34%, transparent 76%);
   }
   @keyframes fo-beat { 0%, 48% { opacity: 0; } 58% { opacity: 1; } 90%, 100% { opacity: 0; } }
+
+  /* A win % change: the same flow and beat under a new name, so they play again */
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-bar.fo-b2 i::before { animation-name: fo-flow2; }
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-side.them .fo-bar.fo-b2 i::before { animation-name: fo-flow-back2; }
+  html:root:not(#_):not(#_):not(#_) .fo-st-live .fo-bar.fo-b2 i::after { animation-name: fo-beat2; }
+  @keyframes fo-flow2 { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 55% { transform: translateX(222.2%); opacity: 1; } 56%, 100% { transform: translateX(222.2%); opacity: 0; } }
+  @keyframes fo-flow-back2 { 0% { transform: translateX(100%); opacity: 0; } 15% { opacity: 1; } 55% { transform: translateX(-222.2%); opacity: 1; } 56%, 100% { transform: translateX(-222.2%); opacity: 0; } }
+  @keyframes fo-beat2 { 0%, 48% { opacity: 0; } 58% { opacity: 1; } 90%, 100% { opacity: 0; } }
 
   /* An even bar (no leader) and a loading face-off stay still */
   html:root:not(#_):not(#_):not(#_) .fo-side:not(.up):not(.down) .fo-bar i::before,

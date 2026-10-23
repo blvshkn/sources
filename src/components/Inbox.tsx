@@ -235,9 +235,9 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                         )}
                         <p className="ibx-n-text">{it.text}</p>
                         <div className="ibx-n-acts">
-                          <button className="btn btn-sm ibx-cta" onClick={() => { onRead(it.id); it.action.run(); }}>{it.action.label}</button>
                           <button className="ibx-later" onClick={() => { onRead(it.id); if (it.skip) it.skip(); else onDismiss(it); }}
                             aria-label={`Not right now: ${it.title}`}>Not right now</button>
+                          <button className="btn btn-sm ibx-cta" onClick={() => { onRead(it.id); it.action.run(); }}>{it.action.label}</button>
                         </div>
                       </div>
                     </li>

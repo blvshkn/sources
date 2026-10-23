@@ -83,15 +83,20 @@ type Frame = { rows: Grid; c: Record<string, string> };
 function useSprite(play: number, seq: () => [number, number][]) {
   const box = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
-    const el = box.current;
-    if (!play || !el || reduce() || !el.animate) return;
-    const s = seq();
-    const total = s[s.length - 1][0];
-    const layers = [...el.querySelectorAll<HTMLElement>(":scope > .gd-fr")];
-    const anims = layers.map((l, i) => l.animate(s.map(([ms, f]) => ({ offset: ms / total, opacity: f === i ? 1 : 0, easing: "steps(1, end)" })), { duration: total }));
+    if (!play || reduce()) return;
+    const anims = stepLayers(box.current, seq());
     return () => anims.forEach((a) => a.cancel());
   }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
   return box;
+}
+/** Steps a sprite's stacked layers through `seq` once (see useSprite). Cancels a sequence already playing on them. */
+function stepLayers(el: HTMLElement | null, s: [number, number][]): Animation[] {
+  if (!el?.animate) return [];
+  const total = s[s.length - 1][0];
+  return [...el.querySelectorAll<HTMLElement>(":scope > .gd-fr")].map((l, i) => {
+    l.getAnimations().forEach((a) => a.cancel());
+    return l.animate(s.map(([ms, f]) => ({ offset: ms / total, opacity: f === i ? 1 : 0, easing: "steps(1, end)" })), { duration: total });
+  });
 }
 const Frames = ({ frames, rest }: { frames: Frame[]; rest: number }) => <>{frames.map((f, i) => <i key={i} className={`gd-fr${i === rest ? "" : " gd-off"}`}><Px rows={f.rows} colors={f.c} /></i>)}</>;
 
@@ -222,34 +227,34 @@ export function denyLock(row: Element | null | undefined) {
 }
 /** The 16-bit stone lock on a row whose game has kicked off. Locked during the session: it drops in with some weight,
  *  the shackle snaps shut a frame at a time (about 400ms and 480ms in) and the row gives a small thud. Locked at
- *  mount: closed and still. The closed frames have empty rows on top, so they ride up to stay centered on the points. */
+ *  mount: closed and still. The three frames are stacked layers (like the flame), so the shackle closes by opacity
+ *  alone with no re-render or SVG repaint; the closed frames have empty rows on top, so their layers ride up (.f1,
+ *  .f2 in game-day.css) to keep the body still and centered on the points. */
+const LOCK_FR: Frame[] = LOCK.map((rows) => ({ rows, c: LC }));
 export function StoneLock({ at }: { at: number }) {
   const play = useFresh(at);
-  const el = useRef<HTMLSpanElement>(null);
-  const [f, setF] = useState(play ? 0 : 2);
-  const timers = useRef<number[]>([]);
-  const clear = () => { timers.current.forEach((t) => window.clearTimeout(t)); timers.current = []; };
-  const seq = (frames: [number, number][]) => { clear(); timers.current = frames.map(([ms, fr]) => window.setTimeout(() => setF(fr), ms)); };
-  useEffect(() => {
-    if (!play) return;
-    if (reduce()) { setF(2); return; }
-    setF(0);
-    seq([[mo(229), 1], [mo(274), 2]]);
-    el.current?.closest(".lu-row, .mu-mine")?.animate([{ transform: "none" }, { transform: "scale(0.985)", offset: 0.4 }, { transform: "none" }], { duration: mo(149), delay: mo(297), easing: "cubic-bezier(0.33, 1, 0.68, 1)", composite: "add" });
-    return clear;
-  }, [play]);
+  const el = useSprite(play, () => [[0, 0], [mo(229), 1], [mo(274), 2]]);
+  useLayoutEffect(() => {
+    if (!play || reduce()) return;
+    const a = el.current?.closest(".lu-row, .mu-mine")?.animate([{ transform: "none" }, { transform: "scale(0.985)", offset: 0.4 }, { transform: "none" }], { duration: mo(149), delay: mo(297), easing: "cubic-bezier(0.33, 1, 0.68, 1)", composite: "add" });
+    return () => a?.cancel();
+  }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const node = el.current;
     if (!node) return;
     const onDeny = () => {
       if (reduce()) return;
-      seq([[0, 1], [mo(51), 0], [mo(114), 1], [mo(149), 2]]);
+      stepLayers(node, [[0, 1], [mo(51), 0], [mo(114), 1], [mo(149), 2]]);
       node.animate([{ transform: "none" }, { transform: "translateX(-4px) rotate(-6deg)", offset: 0.2 }, { transform: "translateX(4px) rotate(5deg)", offset: 0.45 }, { transform: "translateX(-2px)", offset: 0.7 }, { transform: "none" }], { duration: mo(240), easing: "cubic-bezier(0.33, 1, 0.68, 1)", composite: "add" });
     };
     node.addEventListener("gd-deny", onDeny);
-    return () => { node.removeEventListener("gd-deny", onDeny); clear(); };
-  }, []);
-  return <span ref={el} className={`gd-lock${play ? " gd-play" : ""}`} data-f={f} aria-hidden="true"><Px rows={LOCK[f]} colors={LC} /></span>;
+    return () => node.removeEventListener("gd-deny", onDeny);
+  }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <span ref={el} key={play} className={`gd-lock${play ? " gd-play" : ""}`} aria-hidden="true">
+      {LOCK_FR.map((f, i) => <i key={i} className={`gd-fr f${i}${i === 2 ? "" : " gd-off"}`}><Px rows={f.rows} colors={f.c} /></i>)}
+    </span>
+  );
 }
 
 const SPK_C = { w: "#FFF6D6", y: "#F2BE55" };

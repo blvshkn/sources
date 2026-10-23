@@ -14,6 +14,9 @@
 html:root:not(#_):not(#_) .main-inner .ti { container: ti / inline-size; grid-template-columns: minmax(0, 1fr) auto !important; column-gap: 0 !important; }
 html:root:not(#_):not(#_) .main-inner .ti > * { grid-column: 1 / -1; min-width: 0; }
 html:root:not(#_):not(#_) .main-inner .ti-stats dd { font-variant-numeric: tabular-nums; }
+/* Narrow card: Open in builder keeps its own width on the left, Write pitch fills the rest on the right (Zach, Oct 23).
+   The 640px layout below stacks them again. */
+html:root:not(#_):not(#_) .main-inner .ti > .ti-actions { grid-template-columns: auto minmax(0, 1fr) !important; }
 
 @container ti (min-width: 640px) {
   html:root:not(#_):not(#_) .main-inner .ti > .tx { grid-column: 1 / -1; grid-row: 1; }

@@ -114,9 +114,9 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 </div>
               ))}
             </div>
-            <div className="row wrap">
-              <button className="btn btn-primary" onClick={() => { computeIntel(); setStep("intel"); }}>Yes, that's me</button>
+            <div className="row wrap ob-acts">
               <button className="btn btn-ghost" onClick={() => (isDemoRun ? onClose() : setStep("league"))}>Back</button>
+              <button className="btn btn-primary" onClick={() => { computeIntel(); setStep("intel"); }}>Yes, that's me</button>
             </div>
           </div>
         )}
@@ -157,9 +157,9 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
                 </div>
               ))}
             </div>
-            <div className="row wrap">
-              <button className="btn btn-primary" onClick={() => finish()}>Open Overview</button>
+            <div className="row wrap ob-acts">
               <button className="btn btn-ghost" onClick={() => finish({})}>Skip for now</button>
+              <button className="btn btn-primary" onClick={() => finish()}>Open Overview</button>
             </div>
           </div>
         )}

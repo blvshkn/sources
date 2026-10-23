@@ -1,4 +1,5 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { useRef } from "react";
 import type { Team } from "../data";
 import type { PlayCount, Result } from "../liveMath";
 import { Morph, PixelTrophy, RollNum, isFresh, useTurnedAt } from "../gameDayMotion";
@@ -162,6 +163,10 @@ function Side({ s, side, pct, other, won, lost = false, chip, state, tips = true
   const t = s.t;
   // Ahead or behind on win %: the leader's % and bar go green, the trailer's go red. Even stays neutral.
   const tone = pct === null || other === null || pct === other ? "even" : pct > other ? "up" : "down";
+  // A live bar flows and beats once when it arrives and once each time its win % changes (live-bar.css): each change
+  // flips .fo-b2, which swaps the bar to an identical copy of its keyframes, and a new animation name restarts it
+  const beat = useRef({ v: pct, b: false });
+  if (beat.current.v !== pct) beat.current = { v: pct, b: !beat.current.b };
   const handle = !t ? null : t.manager === "You" ? "You" : t.manager;
   // Last season's champion always keeps his crown before the handle (Zach, Oct 22: "the crown should stay next to
   // Jake's name"); the matchup winner's pixel trophy sits beside the team name.
@@ -187,7 +192,7 @@ function Side({ s, side, pct, other, won, lost = false, chip, state, tips = true
         {pts === null ? <span className="fo-pts muted">--</span> : t ? <NumTip focusable={focus} {...scoreTip(st, s.note)}>{pts}</NumTip> : pts}
       </span>
       {pct === null ? <span className="fo-bar"><i style={{ "--v": 0 } as CSSProperties} /></span>
-        : <NumTip focusable={focus} {...winTip(pct, st, true)}><span className="fo-bar"><i style={{ "--v": (apct ?? pct) / 100, ...(apct !== undefined ? { transition: "none" } : {}) } as CSSProperties} /></span></NumTip>}
+        : <NumTip focusable={focus} {...winTip(pct, st, true)}><span className={`fo-bar${beat.current.b ? " fo-b2" : ""}`}><i style={{ "--v": (apct ?? pct) / 100, ...(apct !== undefined ? { transition: "none" } : {}) } as CSSProperties} /></span></NumTip>}
       <span className="fo-meta">
         {meta.flatMap((x, i) => (i ? [<i key={`d${i}`} className="fo-dot">•</i>, x] : [x]))}
         {left && <i className="fo-dot fo-dot-chip">•</i>}

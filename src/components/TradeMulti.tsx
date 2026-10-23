@@ -156,8 +156,9 @@ export function MultiDeal({ legs, m, toggle, onRemove, clear, onPitch, tags = []
           )}
           {m.warnings.filter((w) => ![...allGive, ...allGet].some((id) => w.includes(playerById(id).name))).map((w) => <div key={w} className="warning"><Icon name="alert" size={16} /><span>{w}</span></div>)}
           <div className="dv-actions">
-            {m.legs.map((r, i) => (
-              <button key={r.team.id} className={`btn${i === 0 ? " btn-primary" : ""}`} onClick={() => onPitch(r.trade)}><Icon name="pen" size={16} />Pitch {r.team.manager}</button>
+            {/* The first leg's pitch is the main action, so it goes last, on the right (Zach, Oct 23) */}
+            {[...m.legs.slice(1), ...m.legs.slice(0, 1)].map((r) => (
+              <button key={r.team.id} className={`btn${r === m.legs[0] ? " btn-primary" : ""}`} onClick={() => onPitch(r.trade)}><Icon name="pen" size={16} />Pitch {r.team.manager}</button>
             ))}
           </div>
           <p className="tiny muted dv-foot">Propose the whole trade in <PlatformName size={12} />, then send each manager a pitch about their part of it.</p>

@@ -549,13 +549,14 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           // the tap: it shakes and says why instead of doing nothing (deny.ts)
           const lockWhy = e.noTeam && !shelved ? noTeamText(e.fa) : kind === "current" && !r && !shelved ? lockWhyText(e.fa, e.avail) : null;
           const watchLabel = isWatched ? `Watching for week ${watch[e.fa.id]}. Tap to stop` : `Watch for week ${target}`;
-          // The claim sheet's actions: in the hero from 768px, docked to the sheet's bottom edge on phones
+          // The claim sheet's actions: in the hero from 768px, docked to the sheet's bottom edge on phones. Claim, the main
+          // action, comes last so it sits on the right (Zach, Oct 23)
           const claimActs = isOpen && r && !shelved ? <>
+            <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
+            <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
             <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
               <PlatformLogo size={16} />Claim
             </a>
-            <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
-            <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
           </> : null;
           return (
             <div key={e.fa.id} data-id={e.fa.id} className={`wv ps-wv${dim ? " wv-dim" : ""}${off ? " wv-off" : ""}${isWatched ? " wv3-on" : ""}${shelved ? " ps-no" : ""}`}>
@@ -663,11 +664,11 @@ function TopCard({ rec: top, eyebrow, stat, why, plan, starts, irMove, onToast, 
         </li>
       </ul>
       <div className="ps-actions">
+        <button className="snooze-btn" onClick={onSnooze} aria-label={`Not right now: skip ${top.fa.name} this week`}>Not right now</button>
         <a className="btn btn-primary topk-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer"
           onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(top.bid, top.fa)} for` : "Claim"} ${top.fa.name}${drop && (kd?.drop || !irMove) ? `, drop ${drop.name}` : ""}.`)}>
           <PlatformLogo size={18} />Claim in Sleeper
         </a>
-        <button className="snooze-btn" onClick={onSnooze} aria-label={`Not right now: skip ${top.fa.name} this week`}>Not right now</button>
       </div>
     </section>
   );

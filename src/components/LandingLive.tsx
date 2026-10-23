@@ -170,7 +170,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
                 <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
                 <Avatar p={p} size={48} />
                 <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{g.state === "in_game" ? <span className="lu-live"><i aria-hidden="true" />Live</span> : g.state === "complete" ? <span className="lu-final">Final</span> : null}</span></span>
-                <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={g.state === "complete" && beat >= 1} />
+                <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={g.state === "in_game" || (g.state === "complete" && beat >= 1)} />
               </div>
             );
           })}

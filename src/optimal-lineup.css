@@ -33,6 +33,9 @@ html:root:not(#_):not(#_) .lu-ai .lu-ai-off { margin: 0; font-size: 0.75rem; lin
 html:root:not(#_):not(#_) .lu-ai .lu-ai-foot { display: flex; flex-direction: column; gap: 10px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted); }
 html:root:not(#_):not(#_) .lu-ai .lu-ai-btns { display: flex; gap: 8px; }
 html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .btn { flex: 1 1 0; }
+/* Main action on the right, filling the row (Zach, Oct 23): Dismiss keeps its own width when Open in Sleeper is there */
+html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .lu-ai-x:where(:not(:only-child)) { flex: none; padding-inline: 20px; }
+html:root:not(#_):not(#_) .lu-ai .lu-ai-btns > .lu-ai-open { flex: 1 1 auto; }
 html:root:not(#_):not(#_) .lu-ai .ask-prow { background: var(--surface); }
 
 /* A swap's reason, under its two rows, in Ask and here */
