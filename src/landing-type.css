@@ -456,3 +456,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-spk { display: none; }
 }
 /* Hero phone shadows read on the dark page: a deeper, wider pool */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; right: -6%; top: 94%; height: 16%; filter: blur(12px); }
+
+/* The landing's backdrop (glow, field, grain) reaches under Safari's floating toolbar, so there's no dark band
+   where the page shows through below the small viewport (Zach, Oct 22: "what's this black bar?") */
+html:root:not(#_):not(#_):not(#_) .ld2-env { inset: 0 0 auto 0; height: calc(100lvh + 120px); bottom: auto; }
