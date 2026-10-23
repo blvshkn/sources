@@ -1,7 +1,7 @@
 import { Kick } from "./Meta";
 import { KickNote } from "../gameDayMotion";
 import { kickWhen, oppText } from "../kickoff";
-import { onBye, type Player } from "../data";
+import { onBye } from "../data";
 import type { GameNow } from "./LivePts";
 
 /** The one line under a player's name everywhere (Zach, Oct 23: "a single component for this throughout all the
@@ -9,7 +9,8 @@ import type { GameNow } from "./LivePts";
  *  FINAL, and the opponent stays the whole way ("WR · CHI v NE · FINAL"). A bye reads "CHI · Bye".
  *  Dots between the parts come from .lu-meta (styles.css), so the wrapper is that class. */
 export function GameMeta({ p, g, pos = true, opp, lockAt = 0, className = "" }: {
-  p: Pick<Player, "pos" | "nfl"> & Partial<Pick<Player, "id" | "opp">>;
+  /** Any player shape: skill players, kickers and defenses (SpecialPlayer), week rows */
+  p: { pos: string; nfl: string; opp?: string | null };
   g: GameNow;
   /** Show the position (the Lineup leaves it off when the slot pill already says it) */
   pos?: boolean;
@@ -20,7 +21,7 @@ export function GameMeta({ p, g, pos = true, opp, lockAt = 0, className = "" }: 
   className?: string;
 }) {
   const bye = onBye(p.nfl);
-  const vs = opp ?? p.opp;
+  const vs = opp ?? p.opp ?? undefined;
   return (
     <span className={`lu-meta ${className}`.trim()}>
       {pos && <b className={`lu-pos p-${p.pos}`}>{p.pos}</b>}
