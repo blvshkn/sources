@@ -31,6 +31,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
   transition: background-color calc(160ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(160ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay:active { transform: scale(0.97); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay .ic { color: var(--lime); } /* green like the other Replay buttons (Zach, Oct 23) */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-mo {
   display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 14px; width: 100%; padding: 10px 12px;
   border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--ink); text-align: left; cursor: pointer;
