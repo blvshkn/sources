@@ -24,3 +24,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky.is-
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::before { transition: none; }
 }
+/* Inside the landing's phones (html.in-frame) the header is solid: the frame sits in a 3D-turned phone, where Safari
+   drops backdrop blur, so the translucent band and bar went see-through and rows showed through the header while
+   scrolling (Zach, Oct 22). Solid, and swapped instantly, so there's never a frame with nothing behind the header. */
+html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::before {
+  background: #0F1110 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transition: none !important;
+}
+html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::after { background: #0F1110 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
