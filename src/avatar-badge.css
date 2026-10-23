@@ -2,4 +2,6 @@
    keeps dark logos readable against the headshot and the card. No url references in this file. */
 html:root:not(#_):not(#_) .av-badge { background: none; box-shadow: none; border-radius: 0; right: -4px; bottom: -4px; }
 html:root:not(#_):not(#_) .av-badge img { width: 100%; height: 100%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.55)); }
-
+/* The badge sticks out past the circle, so neither the avatar nor the badge may clip (the photo and initials round
+   themselves). Guards against generic rules like ".deal-lists li span:last-child { overflow: hidden }". */
+html:root:not(#_):not(#_) :is(.av, .av-badge) { overflow: visible; }
