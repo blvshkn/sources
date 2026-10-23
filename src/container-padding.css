@@ -150,3 +150,7 @@ html:root:not(#_):not(#_):not(#_) .card.wv-card.vb-list:has(> :last-child.vb-row
 html:root:not(#_):not(#_):not(#_) .card:has(> .roster-head):has(> :last-child.roster-row) { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
 html:root:not(#_):not(#_):not(#_) .card:has(> .roster-head):has(> :last-child.pick) { padding-bottom: max(0px, var(--pad-card-y) - 9px) !important; }
 html:root:not(#_):not(#_):not(#_) .card.st:has(> :last-child.st-table) { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
+
+/* Settings groups that end on a link row (About Source): the last row's 13.5px bottom padding is pulled back out by
+   its -13.5px margin, so the card's own padding is the whole gap. Make it the same as the top (Zach, Oct 23). */
+html:root:not(#_):not(#_):not(#_):not(#_) .card.settings-group:has(> :last-child.set-link) { padding-bottom: var(--pad-card-y) !important; }
