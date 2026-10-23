@@ -290,36 +290,21 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-a
 /* The readout's read: the finder's scan and Replay, inside the trade card */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder .dv { margin-top: 0; }
-/* Replay sits on the actions' row, at its left end */
-/* From 720px it shares the actions' row at the left end; on phones, where the actions stack full width, it gets its
-   own row under them (Zach, Oct 22: it was overlaying Write pitch) */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 12px; }
+/* Replay lives in the actions' row (FinderDemo hands it over), so the row lays itself out with no offsets.
+   Tablet and desktop, until the row stacks: Try the demo at the left edge, then Replay and Write pitch at the right,
+   Write pitch hugging its label (Zach, Oct 23). Phones: Replay left of a filling Write pitch, Try the demo under them. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .ld2-again { margin: 0; width: 112px; height: 48px; min-height: 48px; justify-content: center; justify-self: auto; }
 @media (min-width: 720px) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { gap: 0; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { position: absolute; left: 0; bottom: 0; margin: 0; width: 112px; height: 48px; justify-content: center; }
-  /* Main action right and filling, secondaries to its left: Replay, Try the demo, then Write pitch (Zach, Oct 23) */
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { display: flex; align-items: center; gap: 8px; padding-left: 120px; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 1 1 auto; height: 48px; min-height: 48px; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { flex: none; min-height: 48px; padding-inline: 12px; }
-}
-/* Tablet and desktop, until the row stacks: Try the demo sits at the left edge; Replay then Write pitch at the right,
-   Write pitch at its own width (Zach, Oct 23). Replay lives outside the actions, so the row saves a slot for it. */
-@media (min-width: 720px) {
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { padding-left: 0; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { margin-right: auto; padding-inline: 0; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 0 0 auto; width: 200px; margin-left: 120px; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { left: auto; right: 208px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; padding-left: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { flex: none; margin-right: auto; min-height: 48px; padding-inline: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 0 0 auto; width: auto; height: 48px; min-height: 48px; }
 }
 @media (max-width: 719px) {
-  /* Replay sits to the left of Write pitch on one row (Zach, Oct 23); Try the demo centers under them. Replay lives
-     outside the actions (it belongs to the scan), so the row keeps its column free and Replay is placed over it. */
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px 8px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .ld2-again { grid-row: 1; grid-column: 1; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { grid-row: 1; grid-column: 2; width: 100%; height: 48px; min-height: 48px; flex: none; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { grid-row: 2; grid-column: 1 / -1; justify-self: center; min-height: 44px; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { gap: 0; }
-  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again {
-    position: absolute; left: 0; bottom: 56px; width: 112px; height: 48px; margin: 0; justify-content: center;
-  }
 }
 
 /* The nav's arrival lets go once it lands (fill backwards, not both): an animation that keeps holding opacity stops

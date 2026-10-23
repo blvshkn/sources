@@ -35,7 +35,9 @@ html:root:not(#_):not(#_) .ld2-new .ld-cell > p { margin: 0 0 8px; }
 }
 
 /* Ask: the question bubble and answer card from the Ask tab, at rest, without the page around them */
-html:root:not(#_):not(#_) .ld2-ask { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+/* The thread reads from the top, like the Ask tab after you've asked (Zach, Oct 23) */
+html:root:not(#_):not(#_) .ld2-ask { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+html:root:not(#_):not(#_) .ld2-ask .ask-card + .ask-you-row { margin-top: 12px; }
 html:root:not(#_):not(#_) .ld2-ask .ask-you-row { display: flex; justify-content: flex-end; }
 html:root:not(#_):not(#_) .ld2-ask .ask-card { margin: 0; }
 html:root:not(#_):not(#_) .ld2-ask .ask-after { opacity: 1; visibility: visible; }

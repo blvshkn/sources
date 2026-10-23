@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from "react";
 import { useErrorHaptic } from "../haptics";
 import { setInert } from "../inert";
 import { BrandLogo } from "./BrandLogo";
@@ -118,12 +118,14 @@ export function Landing({ onLive, onDemo }: {
   // Ask, answered by the engine on the sample league: one of the app's own starter questions and the same trade math.
   // On a real league Source AI writes the words around these numbers. It sits far below the fold, so it's worked out
   // after the page has loaded, once the reader is within a screen or so of it (idle.whenNear), off the hero's path.
-  const [askDemo, setAskDemo] = useState<{ q: string; a: Answer; deal?: Trade } | null>(null);
+  // Two turns, so the card shows a thread after you've asked (Zach, Oct 23: no input bar, people would try to type)
+  const [askDemo, setAskDemo] = useState<{ q: string; a: Answer; deal?: Trade }[] | null>(null);
   const askCell = useRef<HTMLElement>(null);
   useEffect(() => whenNear(askCell.current, () => {
-    const q = "Who should I trade with?";
-    const a = ask(q, demo.tags, INITIAL_MY_TAGS, {}, []);
-    setAskDemo({ q, a, deal: a.links.find((l) => l.trade)?.trade });
+    setAskDemo(["Who needs a WR most?", "Who should I trade with?"].map((q) => {
+      const a = ask(q, demo.tags, INITIAL_MY_TAGS, {}, []);
+      return { q, a, deal: a.links.find((l) => l.trade)?.trade };
+    }));
   }), [demo.tags]);
   // Set optimal lineup without the network: the engine's lineup and its own reasons (out, bye, projection)
   // When the sample lineup is already right there'd be nothing to show (Zach, Oct 22), so the card starts from the
@@ -798,13 +800,15 @@ export function Landing({ onLive, onDemo }: {
             <h3>Ask anything about your league</h3>
             <p>Source AI reads your rosters, standings, matchups and trades. Trade questions run the same math as the builder, so the numbers hold up. Now and then it throws in a dry joke.</p>
             {askDemo && <div className="ld2-ask" ref={setInert}>
-              <div className="ask-you-row"><p className="ask-you">{askDemo.q}</p></div>
-              <div className="ask-card">
-                <p className="ask-head">{askDemo.a.text}</p>
-                {askDemo.a.points.length > 0 && <ul className={`ask-pts${askDemo.a.points.length > 1 ? " many" : ""}`}>{askDemo.a.points.map((p) => <li key={p}>{p}</li>)}</ul>}
-                {askDemo.deal && <div className="ask-after"><AskShowBlock deal={askDemo.deal} onPlayer={() => {}} live={false} /></div>}
-                {askDemo.deal && <div className="ask-after"><DealNumbers t={askDemo.deal} /></div>}
-              </div>
+              {askDemo.map((t) => <Fragment key={t.q}>
+                <div className="ask-you-row"><p className="ask-you">{t.q}</p></div>
+                <div className="ask-card">
+                  <p className="ask-head">{t.a.text}</p>
+                  {t.a.points.length > 0 && <ul className={`ask-pts${t.a.points.length > 1 ? " many" : ""}`}>{t.a.points.map((p) => <li key={p}>{p}</li>)}</ul>}
+                  {t.deal && <div className="ask-after"><AskShowBlock deal={t.deal} onPlayer={() => {}} live={false} /></div>}
+                  {t.deal && <div className="ask-after"><DealNumbers t={t.deal} /></div>}
+                </div>
+              </Fragment>)}
             </div>}
           </article>
           <article className="card ld-cell ld2-reveal ld2-opt-cell">
@@ -1073,7 +1077,8 @@ function Caption({ at, live }: { at: At; live: ReturnType<typeof sampleWeek> }) 
 }
 
 /** The trade finder doing its thing: it runs through its steps when scrolled into view, then shows what it found. */
-function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: ReactNode }) {
+/** children can take the Replay button, so the readout can place it in its own action row (Zach, Oct 23) */
+function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: ReactNode | ((replay: ReactNode) => ReactNode) }) {
   const ref = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<"wait" | "scan" | "done">("wait");
   useEffect(() => {
@@ -1082,14 +1087,15 @@ function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: Re
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  const replay = <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="replay" size={14} />Replay</button>;
   return (
     <div ref={ref} className="ld2-finder">
       {/* Scan and result share one cell, so the card is its final size from the start and never grows */}
       <div className="ld2-finder-cell">
-        <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{children}</div>
+        <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{typeof children === "function" ? children(replay) : children}</div>
         {phase !== "done" && <IdeaScan run={run} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
       </div>
-      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="replay" size={14} />Replay</button>
+      {typeof children !== "function" && replay}
     </div>
   );
 }
@@ -1190,7 +1196,7 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
         {/* Source reads the deal when it scrolls into view (the finder's steps), then the readout appears in the same
             space, so the card never changes size; Replay replays the read (Zach, Oct 22: the Ideas card's
             interactions move here) */}
-        <FinderDemo run={run}>
+        <FinderDemo run={run}>{(replay) => (
           <div className="dv">
             <div className="dv-main">
               {/* Already written (Zach, Oct 22: "it should already be filled"): no typing in, so nothing below it moves */}
@@ -1210,11 +1216,12 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
                 ]} />
               <div className="dv-actions">
                 <button className="linkish small" onClick={onOpen}>Try the demo</button>
+                {replay}
                 <button className="btn btn-primary" onClick={onPitch}><Icon name="pen" size={16} />Write pitch</button>
               </div>
             </div>
           </div>
-        </FinderDemo>
+        )}</FinderDemo>
       </section>
     </div>
   );
