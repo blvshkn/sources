@@ -81,3 +81,5 @@ html:root:not(#_):not(#_) .ld2-secta > .btn { height: 48px; min-height: 48px; ju
 }
 html:root:not(#_):not(#_):not(#_) .ld-bento > .ld2-secta { grid-column: 1 / -1; margin: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2-ask-cell > .ld2-secta { margin-top: 16px; }
+html:root:not(#_):not(#_):not(#_) .ld2-trust-head { display: flex; flex-direction: column; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2-trust-head > .ld2-secta { flex-direction: column; align-items: stretch; padding: 20px; max-width: 420px; }

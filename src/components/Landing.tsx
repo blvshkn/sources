@@ -844,7 +844,11 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld-trust ld2-trust" aria-labelledby="ld-private">
-        <SplitHead id="ld-private" a="Private" b="by default." />
+        {/* The heading and a lead-in CTA share the left column (Zach, Oct 23) */}
+        <div className="ld2-trust-head">
+          <SplitHead id="ld-private" a="Private" b="by default." />
+          <SectionCta line="No sign up form. Just your Sleeper username." onAdd={() => setFindOpen(true)} />
+        </div>
         <ul className="ld-trust-list">
           <li className="ld2-reveal"><Icon name="lock" size={22} /><div><b>No passwords</b><p>Connect with your Sleeper username. Your league is read straight from Sleeper's public API.</p></div></li>
           <li className="ld2-reveal"><Icon name="eye" size={22} /><div><b>Your notes stay yours</b><p>What you log about league mates is private and never shown to them.</p></div></li>
