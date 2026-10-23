@@ -21,21 +21,24 @@ import { Scoreboard } from "./Scoreboard";
 import { SplitHead } from "./SplitHead";
 import { Icon } from "./ui";
 
-/** 0 is the board before anything plays; 1 to 4 are the moments, in order */
-type Beat = 0 | 1 | 2 | 3 | 4;
+/** 0 is the board before kickoff; 1 to 5 are the moments, in the order a Sunday runs (Zach, Oct 23): the lock at
+ *  kickoff, heating up, on fire, gone cold, then finals lock in */
+type Beat = 0 | 1 | 2 | 3 | 4 | 5;
 const ORDER: Record<string, number> = { in_game: 0, complete: 1, pre_game: 2 };
 // When each moment lands after the board arrives (or after Replay), in real ms
-const AT_MS = [0, 250, 1500, 2700, 4300];
+const AT_MS = [0, 250, 1500, 2700, 4000, 5300];
 // Between the big play and on fire the hot player's points keep climbing in steps, so he rolls straight into the flame
 // instead of holding still and then jumping (Zach, Oct 22)
 const TWEEN = [0.25, 0.5, 0.75];
 // The moments rewind the live starters' game to the middle of it and play it forward to the sample Sunday as it is
-// (beat 4 is the sample exactly, the same Live state the face-off section above shows). Share of the game left, and
+// (beats 4 and 5 are the sample exactly, the same Live state the face-off section above shows). Share of the game left, and
 // each player's points as a share of where he is on the sample Sunday. The hot one smokes after a big play (on pace
 // to pass his projection), then passes it; the cold one holds even until the clock runs on him.
-const LEFT = [0.55, 0.55, 0.5, 0.45];
-const HOT = [0.44, 0.44, 0.74, 0.944];
-const COLD = [0.875, 0.875, 0.875, 1];
+// Beat 0 is before kickoff (their games not started), beat 1 is kickoff (on the field, no points yet, so the lock
+// stamps), then the points come in and the lock steps aside for the smoke, the flame and the cold.
+const LEFT = [1, 1, 0.55, 0.5, 0.45];
+const HOT = [0, 0, 0.74, 0.944, 1];
+const COLD = [0, 0, 0.6, 0.875, 1];
 const still = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const last = (p: Player) => p.name.split(" ").slice(-1)[0];
 const r1 = (n: number) => Math.round(n * 10) / 10;
@@ -64,18 +67,18 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
 
   /** The sample Sunday at a beat: the two players' points and game clocks rewound, Sleeper's team score with them */
   const weekAt = useMemo(() => (b: Beat, tw = 0): Live => {
-    if (b === 4) return base;
-    const points = { ...base.points }, left = { ...base.left }, teamPts = { ...base.teamPts };
+    if (b >= 4) return base;
+    const points = { ...base.points }, left = { ...base.left }, teamPts = { ...base.teamPts }, games = { ...base.games };
     const at = (xs: number[]) => (b === 2 && tw > 0 ? xs[2] + (xs[3] - xs[2]) * tw : xs[b]);
     const move = (p: Player | undefined, share: number[]) => {
       if (!p) return;
       const now = r1((base.points[p.id] ?? 0) * at(share));
       teamPts[YOU.id] = (teamPts[YOU.id] ?? 0) + now - (points[p.id] ?? 0);
       points[p.id] = now;
-      sameGame(p.nfl).forEach((t) => { left[t] = Math.max(at(LEFT), base.left[t] ?? 0); });
+      sameGame(p.nfl).forEach((t) => { left[t] = Math.max(at(LEFT), base.left[t] ?? 0); if (b === 0) games[t] = "pre_game"; });
     };
     move(hot, HOT); move(cold, COLD);
-    return { ...base, points, left, teamPts };
+    return { ...base, points, left, teamPts, games };
   }, [base, hot, cold]);
 
   const [beat, setBeat] = useState<Beat>(0);
@@ -83,7 +86,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
   // Remounting the rows lets a moment replay from the state just before it, with nothing animating on the way back
   const [run, setRun] = useState(0);
   // When each moment last played, so its icon in the list plays with it
-  const [playedAt, setPlayedAt] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [playedAt, setPlayedAt] = useState<number[]>([0, 0, 0, 0, 0, 0]);
   const timers = useRef<number[]>([]);
   const board = useRef<HTMLDivElement>(null);
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
@@ -103,10 +106,10 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
     }
   };
 
-  // Arrival: the four moments play once, the first time the board is mostly on screen
+  // Arrival: the moments play once, the first time the board is mostly on screen
   useEffect(() => {
     const el = board.current;
-    if (!el || typeof IntersectionObserver === "undefined" || still()) { setBeat(4); return; }
+    if (!el || typeof IntersectionObserver === "undefined" || still()) { setBeat(5); return; }
     const io = new IntersectionObserver((es) => {
       if (!es.some((e) => e.isIntersecting)) return;
       io.disconnect();
@@ -124,7 +127,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
   // Each moment's line, from the engine's own numbers at that beat. They only depend on the sample Sunday, so the win
   // model runs once here instead of several times on every beat and tween step.
   const lines = useMemo(() => {
-    const at = ([0, 1, 2, 3, 4] as Beat[]).map((b) => weekAt(b));
+    const at = ([0, 1, 2, 3, 4, 5] as Beat[]).map((b) => weekAt(b));
     const win = at.map((w) => matchNow(w).chance ?? 50);
     const swing = (b: Beat) => {
       const a = win[b - 1], z = win[b];
@@ -132,20 +135,23 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
     };
     const finals = rows.filter((p) => gameNow(base, p.id, p.nfl).state === "complete");
     const paceOf = (p: Player, b: Beat) => onPace(at[b].points[p.id] ?? 0, eff(p, true), at[b].left[p.nfl]) ?? 0;
+    const kicked = [hot, cold].filter((p): p is Player => !!p);
     return {
-      1: finals.length ? `${names(finals)} ${finals.length > 1 ? "are" : "is"} done. Set in stone.` : "Finished games set in stone.",
-      2: hot ? `${last(hot)} +${r1((at[2].points[hot.id] ?? 0) - (at[1].points[hot.id] ?? 0)).toFixed(1)}, ${swing(2)}.` : "",
+      1: kicked.length ? `${names(kicked)} ${kicked.length > 1 ? "kick" : "kicks"} off. Locked in your lineup.` : "Kickoff locks your starters in.",
+      2: hot ? `${last(hot)} up to ${(at[2].points[hot.id] ?? 0).toFixed(1)}, on pace to pass his projection, ${swing(2)}.` : "",
       3: hot ? `${last(hot)} passes his ${eff(hot, true).toFixed(1)} projection, ${swing(3)}.` : "",
       4: cold ? `${last(cold)} on pace for ${paceOf(cold, 4).toFixed(1)}, ${swing(4)}.` : "",
+      5: finals.length ? `${names(finals)} ${finals.length > 1 ? "are" : "is"} done. Set in stone.` : "Finished games set in stone.",
     };
   }, [weekAt, rows, base, hot, cold]);
   const moments: { b: Beat; title: string; line: string; icon: ReactNode }[] = [
-    { b: 1, title: "Finals lock in", line: lines[1], icon: <StoneLock at={playedAt[1]} /> },
+    { b: 1, title: "Locked at kickoff", line: lines[1], icon: <StoneLock at={playedAt[1]} /> },
     ...(hot ? [
-      { b: 2 as Beat, title: "Big play", line: lines[2], icon: <PixelSmoke at={playedAt[2]} /> },
+      { b: 2 as Beat, title: "Heating up", line: lines[2], icon: <PixelSmoke at={playedAt[2]} /> },
       { b: 3 as Beat, title: "On fire", line: lines[3], icon: <PixelFlame at={playedAt[3]} caught={playedAt[3] > 0} /> },
     ] : []),
     ...(cold ? [{ b: 4 as Beat, title: "Gone cold", line: lines[4], icon: <PixelSnow at={playedAt[4]} /> }] : []),
+    { b: 5 as Beat, title: "Finals lock in", line: lines[5], icon: <StoneLock at={playedAt[5]} /> },
   ];
 
   return (
@@ -170,7 +176,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
                 <span className={`lu-slot s-${p.pos}`}>{p.pos}</span>
                 <Avatar p={p} size={48} />
                 <span className="lu-who"><span className="lu-name">{p.name}</span><span className="lu-meta"><b className={`lu-pos p-${p.pos}`}>{p.pos}</b><span>{p.nfl}</span>{g.state === "in_game" ? <span className="lu-live"><i aria-hidden="true" />Live</span> : g.state === "complete" ? <span className="lu-final">Final</span> : null}</span></span>
-                <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={g.state === "in_game" || (g.state === "complete" && beat >= 1)} />
+                <PtsCell id={p.id} g={g} proj={eff(p, true)} stone={g.state === "in_game" || (g.state === "complete" && beat >= 5)} />
               </div>
             );
           })}
@@ -179,7 +185,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
       <div className="ll-moments" role="group" aria-label="Game day moments">
         <div className="ll-mo-head">
           <span className="ll-k">Sunday moments</span>
-          <button type="button" className="ll-replay" onClick={() => play(1, 4)}><Icon name="replay" size={14} />Replay</button>
+          <button type="button" className="ll-replay" onClick={() => play(1, 5)}><Icon name="replay" size={14} />Replay</button>
         </div>
         <ol>
           {moments.map((m) => (
