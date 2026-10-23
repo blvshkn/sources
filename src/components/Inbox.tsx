@@ -146,6 +146,18 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   });
 }
 
+/** Filter pills (Zach, Oct 23: easier to filter, the app's pills, stuck on scroll) */
+export type InboxKind = "lineup" | "trades" | "waivers" | "news";
+type Filter = "all" | "unread" | InboxKind;
+const KINDS: { id: InboxKind; label: string }[] = [{ id: "lineup", label: "Lineup" }, { id: "trades", label: "Trades" }, { id: "waivers", label: "Waivers" }, { id: "news", label: "News" }];
+export function kindOf(it: InboxItem): InboxKind {
+  const k = it.nudge?.kind;
+  if (k === "offer" || k === "need" || k === "stale" || it.id.startsWith("partner-")) return "trades";
+  if (k === "waiver") return "waivers";
+  if (k === "news" || it.id.startsWith("pnews-")) return "news";
+  return "lineup";
+}
+
 /** "Locks Sun 1 PM ET" -> "Locks " + mono "Sun 1 PM ET". Dates and times are data, so they read in Geist Mono. */
 function Meta({ s }: { s: string }) {
   const m = /^(.*?)((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Week)\b.*|\d.*)$/.exec(s);
@@ -172,6 +184,17 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
 }) {
   const unread = items.filter((x) => !read.includes(x.id)).length;
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const pass = (x: InboxItem) => filter === "all" ? true : filter === "unread" ? !read.includes(x.id) : kindOf(x) === filter;
+  const shown = items.filter(pass);
+  // Only the kinds that have something in them get a pill; a filter that empties out falls back to All
+  const pills: { id: Filter; label: string; n: number }[] = [
+    { id: "all", label: "All", n: items.length },
+    ...(unread > 0 ? [{ id: "unread" as Filter, label: "Unread", n: unread }] : []),
+    ...KINDS.map((k) => ({ id: k.id as Filter, label: k.label, n: items.filter((x) => kindOf(x) === k.id).length })).filter((k) => k.n > 0),
+  ];
+  useEffect(() => { if (filter !== "all" && !pills.some((p) => p.id === filter)) setFilter("all"); });
+  const listRef = useRef<HTMLDivElement>(null);
   // Items already here when the panel first draws sit still; anything that arrives later slides in
   const seen = useRef<Set<string> | null>(null);
   if (!seen.current) seen.current = new Set(items.map((x) => x.id));
@@ -200,7 +223,22 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
         <button className="btn btn-icon btn-ghost ibx-close" aria-label="Close inbox" onClick={onClose}><Icon name="x" size={20} /></button>
       </div>
       {context}
-      <div className="ibx-list" role="region" aria-label="Notifications">
+      <div className="ibx-list" role="region" aria-label="Notifications" ref={listRef}>
+        {items.length > 0 && (
+          <div className="ibx-pills" role="group" aria-label="Filter notifications">
+            {pills.map((p) => (
+              <button key={p.id} type="button" aria-pressed={filter === p.id}
+                onClick={() => { setFilter(p.id); listRef.current?.scrollTo({ top: 0 }); }}><span>{p.label}</span><small>{p.n}</small></button>
+            ))}
+          </div>
+        )}
+        {items.length > 0 && shown.length === 0 && (
+          <div className="ibx-empty">
+            <span className="ibx-empty-ic" aria-hidden="true"><Icon name="check" size={18} /></span>
+            <b>Nothing here.</b>
+            <span>{filter === "unread" ? "You've read everything." : "Nothing in this filter right now."}</span>
+          </div>
+        )}
         {items.length === 0 && (
           <div className="ibx-empty">
             <span className="ibx-empty-ic" aria-hidden="true"><Icon name="check" size={18} /></span>
@@ -209,7 +247,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
           </div>
         )}
         {GROUPS.map((g) => {
-          const xs = items.filter((x) => groupOf(x.time) === g.id);
+          const xs = shown.filter((x) => groupOf(x.time) === g.id);
           if (!xs.length) return null;
           return (
             <section key={g.id} className="ibx-sec" aria-labelledby={`ibx-sec-${g.id}`}>

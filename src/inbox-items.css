@@ -132,3 +132,29 @@ html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_) .rail.ibx .ibx-head {
 
 /* Not right now on the left, the main action on the right filling the row (Zach, Oct 23) */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-n .ibx-cta { flex: 1 1 auto; justify-content: center; }
+
+/* ---------- Filter pills (Zach, Oct 23): the Waivers pills, in one sideways row that sticks to the top of the feed
+   as it scrolls. The Now / Today headings stick under them, on the panel's own background. ---------- */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills {
+  position: sticky; top: 0; z-index: 3; display: flex; gap: 6px; margin: 0 calc(-1 * var(--pad-card-x)); padding: 8px var(--pad-card-x) 10px;
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; background: var(--bg);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills::-webkit-scrollbar { display: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--muted); font: 600 0.8125rem/1 var(--font-body); white-space: nowrap; cursor: pointer;
+  transition: background-color var(--ibx-dur) var(--ibx-ease), color var(--ibx-dur) var(--ibx-ease), transform var(--ibx-dur) var(--ibx-ease);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button small { font: 500 0.6875rem/1 var(--font-mono); color: var(--faint); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button[aria-pressed="true"] small { color: var(--muted); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button:active { transform: scale(0.97); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+@media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button { height: 40px; } }
+@media (hover: hover) and (pointer: fine) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); }
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .ibx-sec-h {
+  position: sticky; top: 54px; z-index: 2; margin: 0 calc(-1 * var(--pad-card-x)); padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); background: var(--bg);
+}
+@media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .ibx-sec-h { top: 58px; } }

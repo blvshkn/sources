@@ -49,7 +49,7 @@ export function gameDayChecks(lineup: Lineup, w = weekGames()): Check[] {
     ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, lockAt: moveLock(flex.player, bestBench) || undefined,
       text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Basically a coin flip.` }] : []),
     ...(benchOut.length && anyOpen ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName,
-      text: `Thin bench this week. ${benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`).join(" and ")} can't cover a starter.` }] : []),
+      text: `Thin bench this week. ${andList(benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`))} can't cover a starter.` }] : []),
   ];
 }
 
@@ -60,3 +60,6 @@ export function kdefHint(p: SpecialPlayer, best: SpecialPlayer | null | undefine
   const locked = lockedNow(w);
   return locked(p.id) || locked(best.id) ? undefined : best;
 }
+
+/** "A", "A and B", "A, B and C" */
+function andList(xs: string[]): string { return xs.length < 3 ? xs.join(" and ") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`; }
