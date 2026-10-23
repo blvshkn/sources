@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { StoneLock, useTurnedAt } from "../gameDayMotion";
 import { denyOn } from "../deny";
+import { requestCompare } from "../compareSeed";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
 import { LeagueSwitch } from "./LeagueSwitch";
@@ -284,7 +285,7 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
       </div>
       {keyDates}
       {sheetP && <PlayerSheet p={sheetP.p} where={sheetP.you ? `Your ${sheetP.p.pos}` : `${opp?.manager ?? "Their"}'s ${sheetP.p.pos}`} onClose={() => setMine(null)}
-        onLineup={sheetP.you ? () => onGo("roster") : undefined} onStartSit={sheetP.you ? () => onGo("roster:compare") : undefined} />}
+        onLineup={sheetP.you ? () => onGo("roster") : undefined} onStartSit={sheetP.you ? () => { requestCompare(sheetP.p.id); onGo("roster:compare"); } : undefined} />}
     </div>
   );
 }

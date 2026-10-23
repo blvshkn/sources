@@ -32,6 +32,7 @@ import { DetailSheet } from "./DetailSheet";
 import { OptimalLineup, type AiMarks } from "./OptimalLineup";
 import { CompareBtn, CmpWho, SwapCompare, cmpNow, cmpWeek } from "./SwapCompare";
 import { flipSwap } from "../swapFlip";
+import { takeCompare } from "../compareSeed";
 import { GameNow, PROJ_TIP, PlayCount, PtsCell, gameNow, playCls } from "./LivePts";
 // The points cell and game counts live in their own module so the landing can show them; importers still find them here
 export { FinalPts, HeatMark, PROJ_TIP, PlayCount, PtsCell, gameNow, heatOf, markLive, paceTip, playCls, soFarTip } from "./LivePts";
@@ -521,7 +522,8 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
   const lstat = lineupStatus();
   const diff = lstat.moves;
   const [sheet, setSheet] = useState<{ p: Player; where: string } | null>(null);
-  const [cmp, setCmp] = useState<string | undefined>(undefined);
+  // Seeded when Compare was tapped on a player sheet elsewhere (compareSeed.ts)
+  const [cmp, setCmp] = useState<string | undefined>(() => takeCompare());
   const live = useLive();
   const started = Object.values(live.games).some((x) => x === "in_game" || x === "complete");
   const [view, setView] = useSticky<"lineup" | "compare" | "tags" | "price" | "slots">("roster.view", "lineup", ["lineup", "compare", "tags", "price", "slots"]);
