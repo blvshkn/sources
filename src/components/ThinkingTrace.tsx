@@ -3,7 +3,7 @@
 // running step carries the working loader (Braille Flipwave). When it's done it folds to "Worked 1.4s" with a chevron that opens the
 // steps again. The head line is always there. When the steps fold or open, the trace changes height in one step and
 // whatever sits under it (Ask's answer card, the lineup result) slides from where it was by transform, so nothing jumps.
-import { Censored, spokenClean } from "./Censored";
+import { Pixelated, cleanWords, spokenClean } from "./Censored";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { haptic } from "../haptics";
 import type { ReactNode, RefObject } from "react";
@@ -41,6 +41,8 @@ export const wordCount = (text: string) => (text.trim() ? text.trim().split(/\s+
  */
 export function Words({ text, k, base = 0, muteBefore }: { text: string; k: number; base?: number; muteBefore?: number }) {
   const parts = text.trim().split(/(\s+)/);
+  // Hidden words worked out against the whole sentence (Censored.tsx)
+  const clean = cleanWords(text.trim());
   let w = base;
   return (
     <>
@@ -51,7 +53,7 @@ export function Words({ text, k, base = 0, muteBefore }: { text: string; k: numb
           const idx = w++;
           const on = idx < k;
           // Profanity and anything abhorrent shows pixelated (Censored.tsx)
-          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}><Censored text={p} /></span>;
+          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}>{clean[i].map((r, j) => (r.hide ? <Pixelated key={j} n={r.t.length} /> : r.t))}</span>;
         })}
       </span>
     </>
