@@ -258,3 +258,11 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd
   width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd-weeknav > .btn-icon svg { width: 14px !important; height: 14px !important; }
+
+/* The tab row is one height on every tab (tablet and desktop), whatever shares it: the week switch, the game log's
+   numbers, or nothing. So the tabs never move up or down on a switch. */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > * { min-height: 40px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-lead { display: flex; align-items: center; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-tabs { display: flex; align-items: center; }
+}

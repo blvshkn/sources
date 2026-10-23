@@ -17,7 +17,9 @@ html:root:not(#_):not(#_) .ps.ps-detail.pt-sheet { height: 88vh; height: 88dvh; 
 }
 
 /* Game log and depth chart take the whole body width on the wide two-column player sheet */
-html:root:not(#_):not(#_) .ps-body.pt-body { display: block; }
+/* One column, but still the body's grid with its gaps, so the tab row sits exactly where it does on Overview and
+   nothing above it moves on a switch (Zach, Oct 23) */
+html:root:not(#_):not(#_) .ps-body.pt-body { display: grid; grid-template-columns: minmax(0, 1fr); }
 html:root:not(#_):not(#_) .ps-body.pt-body > * { min-width: 0; }
 
 /* ---------- Skeleton ---------- */
