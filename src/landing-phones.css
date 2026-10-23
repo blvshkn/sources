@@ -84,7 +84,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-fosec .hd-states { margin: 0 auto; max-wi
 html:root:not(#_):not(#_):not(#_) .hp-phone { container-type: normal; isolation: auto; --depth: calc(var(--pw) * 0.11); }
 html:root:not(#_):not(#_):not(#_) .hp-phone { --u: calc(var(--pw) / 400); }
 html:root:not(#_):not(#_):not(#_) .hp-back { filter: none; }
-/* iPhone 18 Pro Max in matte black (Zach): the Pro Max's 6.9-inch proportions (the device is already 400:838.7) and
+/* The phone in matte black (Zach): its proportions (the device is already 400:838.7) and
    its anodized aluminum in black (Zach's reference render): a soft charcoal body, the frame a lighter dark gray band around the glass, with a diffuse sheen where the edge rounds
    toward the light and no polished rim. */
 /* The front: black glass to the edge, a hairline of the anodized band around it */

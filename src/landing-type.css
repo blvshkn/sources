@@ -173,7 +173,7 @@ html:root:not(#_):not(#_) .ld2 { --navh: 64px; }
    The headline types and erases between lines of different lengths. Its box keeps the height of the longest one, so
    the copy and the phones beside it never shift as it changes. */
 
-/* ---------- The hero phones as the real iPhone 18 Pro Max (phone3d.ts) ----------
+/* ---------- The hero phones as the 3D phone (phone3d.ts) ----------
    The phone boxes take the model's proportions (78.97 x 163.35 mm) and the screens its glass: inset 2.46 mm top,
    2.41 mm bottom, 2.97 mm each side, 10.2mm corners. That holds for the CSS fallback too, so either way the app fits. */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone { aspect-ratio: 78.968 / 163.353; height: auto; }
@@ -271,7 +271,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-b { font-weight: 600; letter-sp
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot { display: inline-grid; place-items: center; align-self: stretch; padding-inline: 0.55em; }
 html:root:not(#_):not(#_):not(#_) .ld2-yband .yl-dot .ld2-yband-dot { margin: 0; }
 
-/* ---------- The message phone as the 3D iPhone (Landing.tsx smsPhone, phone3d.ts) ----------
+/* ---------- The message phone as the 3D phone (Landing.tsx smsPhone, phone3d.ts) ----------
    The model's proportions and glass; the canvas sits under the screen. Until the render is ready the phone waits out
    of sight; without WebGL the screen shows with a plain dark edge. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d { aspect-ratio: 78.968 / 163.353; }
@@ -482,7 +482,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur {
    color the page actually shows near the bottom, so the band blends in instead of reading as a dark box (Zach, Oct 22). The rule is html.ld2-on, at the end of this file */
 
 /* ---------- The hero phones as stills (Zach, Oct 22) ----------
-   Each phone is a transparent render of the 3D iPhone (public/phones/hp-*.webp, made by scripts/render-phones.mjs at
+   Each phone is a transparent render of the 3D phone (public/phones/phone-image-*.webp, made by scripts/render-phones.mjs at
    the 1280px pose). Each still sits where its phone element sits: the element's own box at the stage's center, moved by
    the same translate the CSS phone uses, then the render's offset and size in units of that phone's width. The front
    phone's live screen stays on top of its still. */

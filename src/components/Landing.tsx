@@ -250,7 +250,7 @@ export function Landing({ onLive, onDemo }: {
   }, []);
   // The real app in the phones: once the page has settled and the stage is near the screen, each phone loads the
   // sample league in an embedded frame (App.tsx IN_FRAME). The front phone everywhere; the two behind it from 1024px.
-  // The phones are pre-rendered stills of the 3D iPhone (public/phones/hp-*.webp, Zach, Oct 22: no live 3D; iPad Safari
+  // The phones are pre-rendered stills of the 3D phone (public/phones/phone-image-*.webp, Zach, Oct 22: no live 3D; iPad Safari
   // drew a dark box with it, and the engine and model were the page's heaviest load). ?gl=3d still mounts the live
   // render (phone3d.ts) for re-rendering the stills with scripts/render-phones.mjs; ?gl=0 shows the screens alone.
   const glMode = typeof window === "undefined" ? "" : new URLSearchParams(location.search).get("gl");
@@ -627,9 +627,9 @@ export function Landing({ onLive, onDemo }: {
             </div>
           </div>
           {!live3d && gl === "on" && <>
-            <img className="hp-r hp-r-left" src="/phones/hp-left.webp" width={807} height={1541} alt="" decoding="async" />
-            <img className="hp-r hp-r-right" src="/phones/hp-right.webp" width={818} height={1540} alt="" decoding="async" />
-            <img className="hp-r hp-r-front" src="/phones/hp-front.webp" width={920} height={1875} alt="" decoding="async" fetchPriority="high" />
+            <img className="hp-r hp-r-left" src="/phones/phone-image-left.webp" width={807} height={1541} alt="" decoding="async" />
+            <img className="hp-r hp-r-right" src="/phones/phone-image-right.webp" width={818} height={1540} alt="" decoding="async" />
+            <img className="hp-r hp-r-front" src="/phones/phone-image-front.webp" width={920} height={1875} alt="" decoding="async" fetchPriority="high" />
           </>}
           <div className="hp-phone hp-front ld2-phone">
             <div className="hp-scr">
@@ -747,7 +747,7 @@ export function Landing({ onLive, onDemo }: {
               <p>A message written around their need, ready for text, the group chat or Sleeper. You hit send.</p>
               <div className={`ld2-phone ld2-phone3d gl-${smsGl}`} ref={smsPhone}>
                 <PhoneChrome />
-                {!live3d && smsGl === "on" && <img className="ld2-phone3d-img" src="/phones/hp-sms.webp" width={945} height={1958} alt="" decoding="async" loading="lazy" />}
+                {!live3d && smsGl === "on" && <img className="ld2-phone3d-img" src="/phones/phone-image-sms.webp" width={945} height={1958} alt="" decoding="async" loading="lazy" />}
                 <div className="ld2-sms">
                   <div className="ph-status" aria-hidden="true">
                     <span className="ph-time">12:41</span>

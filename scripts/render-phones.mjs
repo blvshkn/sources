@@ -1,4 +1,4 @@
-// Renders the landing's phone stills (public/phones/hp-left|right|front.webp) from the live 3D (?gl=3d) at the 1280px pose.
+// Renders the landing's phone stills (public/phones/phone-image-left|right|front.webp) from the live 3D (?gl=3d) at the 1280px pose.
 // Serve a build whose phone3d.ts pixel-ratio cap is lifted as render.html, then: node scripts/render-phones.mjs <outdir>.
 // Crop each PNG to its alpha, and update the offsets in landing-type.css (.hp-r-*) from info.json. scripts/render-sms-phone.mjs does the message phone.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';

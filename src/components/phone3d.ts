@@ -1,5 +1,5 @@
 /**
- * The hero's phones as a real 3D render (Zach, Oct 22): the iPhone 18 Pro Max model (public/models, packed from his
+ * The hero's phones as a real 3D render (Zach, Oct 22): the phone model (public/models, packed from his
  * GLB by scripts/pack-phone.py) drawn with three.js in one canvas behind the phones' screens.
  *
  * The CSS still places every phone: each 3D phone copies its .hp-phone element's position and transform, so the
@@ -120,7 +120,7 @@ export type Phones3D = { kick: (ms?: number) => void; dispose: () => void };
  */
 export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], screens: (string | null)[], dim: number[]): Promise<Phones3D> {
   // The model's download starts now, alongside the engine's, instead of after it (Zach, Oct 22: faster load)
-  const model = fetch("/models/iphone-18-pro-max.pack");
+  const model = fetch("/models/phone-model.pack");
   // @ts-ignore vendored ES module without types
   const T: Three = await import("../vendor/three/three.module.min.js");
   // WebGL draws offscreen and each frame is copied into a plain 2D canvas on the page. iPad Safari composited the
