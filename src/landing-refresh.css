@@ -80,3 +80,4 @@ html:root:not(#_):not(#_) .ld2-secta > .btn { height: 48px; min-height: 48px; ju
   html:root:not(#_):not(#_) .ld2-secta > .btn { flex: 0 0 auto; padding-inline: 24px; }
 }
 html:root:not(#_):not(#_):not(#_) .ld-bento > .ld2-secta { grid-column: 1 / -1; margin: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2-ask-cell > .ld2-secta { margin-top: 16px; }

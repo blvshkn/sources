@@ -813,6 +813,8 @@ export function Landing({ onLive, onDemo }: {
                 </div>
               </Fragment>)}
             </div>}
+            {/* Under the thread, outside the inert demo (Zach, Oct 23) */}
+            <SectionCta line="Ask about your own league." onAdd={() => setFindOpen(true)} />
           </article>
           <article className="card ld-cell ld2-reveal ld2-opt-cell">
             <h3>Set optimal lineup</h3>
