@@ -557,3 +557,13 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .thk-card { padding-left: 0 !impo
     @keyframes ld-par { from { translate: 0 0; } to { translate: 0 calc(var(--pk, 0) * var(--maxs, 4000) * 1px); } }
   }
 }
+
+/* ---------- Footer on every width (Zach, Oct 22) ----------
+   Its text lines up with the sections above on both sides (the same 20 / 32 / 48px gutters, inside the 1200px column), and SOURCE sits on the
+   page's last pixel with whole letters: line box of 1em, pulled down by the empty space under the capitals (0.15em
+   of Clash Grotesk), so nothing is cropped from the letters and there's no gap below them. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { --fg: 20px; --fp: max(var(--fg), calc((100vw - 1200px) / 2 + var(--fg))); padding-inline: var(--fp); padding-bottom: 0; }
+@media (min-width: 600px) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { --fg: 32px; } }
+@media (min-width: 960px) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { --fg: 48px; } }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-bleed { margin-inline: calc(-1 * var(--fp)); padding-bottom: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { line-height: 1; margin-bottom: -0.15em; }
