@@ -151,7 +151,7 @@ export function LandingLive({ onAdd }: { onAdd?: () => void } = {}): JSX.Element
       { b: 3 as Beat, title: "On fire", line: lines[3], icon: <PixelFlame at={playedAt[3]} caught={playedAt[3] > 0} /> },
     ] : []),
     ...(cold ? [{ b: 4 as Beat, title: "Gone cold", line: lines[4], icon: <PixelSnow at={playedAt[4]} /> }] : []),
-    { b: 5 as Beat, title: "Finals lock in", line: lines[5], icon: <StoneLock at={playedAt[5]} outline /> },
+    { b: 5 as Beat, title: "Finals lock in", line: lines[5], icon: <StoneLock at={playedAt[5]} /> },
   ];
 
   return (

@@ -104,7 +104,7 @@ function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof u
   const pace = g === "in_game" ? onPace(pts, proj, live.left?.[p.nfl]) : null, heat = g === "in_game" ? heatOf(pts, proj, pace) : null;
   const showLock = g === "complete" || (g === "in_game" && pts === 0 && !heat);
   const lockAt = useTurnedAt(showLock, (v) => v);
-  const lock = showLock ? <StoneLock at={lockAt} outline={g === "complete"} /> : null;
+  const lock = showLock ? <StoneLock at={lockAt} /> : null;
   if (g === "in_game") {
     markLive(p.id);
     return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{pts.toFixed(1)}</span></NumTip></b>{pace !== null

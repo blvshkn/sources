@@ -62,10 +62,6 @@ const LOCK: Grid[] = [
   [".........", "..ddddd..", ".d.....d.", ".d.....d.", ".d.....d.", ...BODY],
   [".........", ".........", "..ddddd..", ".d.....d.", ".d.....d.", ...BODY],
 ];
-// Already played (Zach, Oct 23): the same lock drawn in outline, so a final reads apart from a game that's locked
-// but still to come
-const BODY_O: Grid = ["lllllllll", "l.......l", "l.......l", "l..ll...l", "l..ll...l", "l...l...l", "l.......l", "lllllllll"];
-const LOCK_O: Grid[] = LOCK.map((g) => [...g.slice(0, 5), ...BODY_O]);
 
 // Heating up (approved Oct 22): an ember that smokes, then rests as a faint wisp. Same 8x10 grid as the flame, so
 // the smoke can catch into it.
@@ -235,8 +231,7 @@ export function denyLock(row: Element | null | undefined) {
  *  alone with no re-render or SVG repaint; the closed frames have empty rows on top, so their layers ride up (.f1,
  *  .f2 in game-day.css) to keep the body still and centered on the points. */
 const LOCK_FR: Frame[] = LOCK.map((rows) => ({ rows, c: LC }));
-const LOCK_O_FR: Frame[] = LOCK_O.map((rows) => ({ rows, c: LC }));
-export function StoneLock({ at, outline = false }: { at: number; outline?: boolean }) {
+export function StoneLock({ at }: { at: number }) {
   const play = useFresh(at);
   const el = useSprite(play, () => [[0, 0], [mo(229), 1], [mo(274), 2]]);
   useLayoutEffect(() => {
@@ -256,8 +251,8 @@ export function StoneLock({ at, outline = false }: { at: number; outline?: boole
     return () => node.removeEventListener("gd-deny", onDeny);
   }, [play]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <span ref={el} key={play} className={`gd-lock${play ? " gd-play" : ""}${outline ? " is-outline" : ""}`} aria-hidden="true">
-      {(outline ? LOCK_O_FR : LOCK_FR).map((f, i) => <i key={i} className={`gd-fr f${i}${i === 2 ? "" : " gd-off"}`}><Px rows={f.rows} colors={f.c} /></i>)}
+    <span ref={el} key={play} className={`gd-lock${play ? " gd-play" : ""}`} aria-hidden="true">
+      {LOCK_FR.map((f, i) => <i key={i} className={`gd-fr f${i}${i === 2 ? "" : " gd-off"}`}><Px rows={f.rows} colors={f.c} /></i>)}
     </span>
   );
 }

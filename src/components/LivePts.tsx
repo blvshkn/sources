@@ -60,7 +60,7 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false, stone = fal
   // flame, smoke or cold carries the row), and comes back when his game is final
   const showLock = stone && (g.state === "complete" || (live && g.pts === 0 && !heat));
   const lockAt = useTurnedAt(showLock, (v) => v);
-  const lock = showLock ? <StoneLock at={lockAt} outline={g.state === "complete"} /> : null;
+  const lock = showLock ? <StoneLock at={lockAt} /> : null;
   if (live) {
     markLive(id);
     const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
