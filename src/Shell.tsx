@@ -10,7 +10,7 @@ import { MatchupSheet } from "./components/MatchupSheet";
 import { HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, applyValueAsks, askSteps, builderTip,
-  counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, lineupStatus, waiverRecs, weakSlots, recDrop, bidRange,
+  acceptance, counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, lineupStatus, waiverRecs, weakSlots, recDrop, bidRange,
   irReport, irLabel, parseTag, tendencies,
 } from "./engine";
 import { lineupCard } from "./bye";
@@ -535,7 +535,14 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   // ---- Sent offers ----
   const saveSent = (t: Trade, pitchText: string, via: string) =>
     setSent((c) => recordSent(c, { leagueId: LEAGUE.id, partnerId: t.partnerId, give: t.give, get: t.get, pitch: pitchText, via, week: WEEK, now: Date.now(),
-      reopened: reopened && reopened.partnerId === t.partnerId ? reopened.deal : null }).list);
+      reopened: reopened && reopened.partnerId === t.partnerId ? reopened.deal : null, read: readOf(t) }).list);
+  /** Source's read of the deal as it goes out, saved with the offer so real answers can tune the odds later */
+  const readOf = (t: Trade) => {
+    try {
+      const odds = (t.accept ?? acceptance(t, YOU, teamById(t.partnerId))).p;
+      return { give: t.marketGive, get: t.marketGet, adjGive: t.adjGive, adjGet: t.adjGet, odds };
+    } catch { return undefined; }
+  };
   const markSent = (t: Trade, pitchText: string) => {
     const prev = sent;
     saveSent(t, pitchText, "marked");

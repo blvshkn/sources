@@ -14,6 +14,8 @@ import { mergeWatch, sameWatch, type WatchSet } from "./watchMerge.js";
 import { ensureKey, markNeedsPair, useSyncStatus } from "./syncKey";
 
 const PUSH_DELAY = 800;
+/** The least time between catch-up pulls when the window comes back */
+const WAKE_GAP = 60_000;
 
 export function useWatchSync({ enabled, league, user, set, setSet }: {
   enabled: boolean; league: string; user: string; set: WatchSet; setSet: (s: WatchSet) => void;
@@ -112,7 +114,10 @@ export function useWatchSync({ enabled, league, user, set, setSet }: {
   useEffect(() => {
     if (!on) return;
     void pull();
-    const wake = () => { if (document.visibilityState !== "hidden") void pull(); };
+    // One pull per minute at most when you come back (focus and visibility fire together on every tab switch, and
+    // each pull is a function call plus Blob reads). Changes you make still push right away.
+    let lastWake = Date.now();
+    const wake = () => { if (document.visibilityState === "hidden" || Date.now() - lastWake < WAKE_GAP) return; lastWake = Date.now(); void pull(); };
     // Leaving with a change not sent yet: one last try that outlives the page
     const leave = () => { if (dirty.current && !stopped.current && key()) { try { void send(true).catch(() => {}); } catch { /* best effort */ } } };
     window.addEventListener("focus", wake);

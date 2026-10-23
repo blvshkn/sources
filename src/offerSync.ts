@@ -16,6 +16,8 @@ import { ensureKey, markNeedsPair, useSyncStatus } from "./syncKey";
 export type SyncState = "off" | "syncing" | "synced" | "unavailable" | "offline" | "pair";
 
 const PUSH_DELAY = 800;
+/** The least time between catch-up pulls when the window comes back */
+const WAKE_GAP = 60_000;
 const sig = ({ updatedAt: _u, ...o }: SentOffer) => JSON.stringify(o);
 const sigs = (list: SentOffer[]) => new Map(list.map((o) => [o.id, sig(o)]));
 /** Same records at the same stamps, in any order */
@@ -142,7 +144,10 @@ export function useOfferSync({ enabled, league, user, sent, setSent }: {
   useEffect(() => {
     if (!on) return;
     void pull();
-    const wake = () => { if (document.visibilityState !== "hidden") void pull(); };
+    // One pull per minute at most when you come back (focus and visibility fire together on every tab switch, and
+    // each pull is a function call plus Blob reads). Changes you make still push right away.
+    let lastWake = Date.now();
+    const wake = () => { if (document.visibilityState === "hidden" || Date.now() - lastWake < WAKE_GAP) return; lastWake = Date.now(); void pull(); };
     // Leaving with a change not sent yet: one last try that outlives the page
     const leave = () => {
       if (!dirty.current || stopped.current) return;

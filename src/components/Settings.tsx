@@ -224,6 +224,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
           <li><b>Collect the minimum.</b> No email, no account. Rosters are public on Sleeper already.</li>
           <li><b>Synced lists stay yours.</b> Sent offers and starred players only sync to devices you pair with a one-time code. Knowing your Sleeper ids isn't enough to read them.</li>
           <li><b>AI sees the league, not your notes.</b> Ask and Set optimal lineup send league data to Anthropic. Tags stay here.</li>
+          <li><b>Questions without names.</b> Source keeps what's asked, with names stripped and nothing tied to you, to make answers better.</li>
           <li><b>One tap to leave.</b> Disconnect, or delete your data, any time.</li>
           <li><b>No selling data.</b> Said plainly in the privacy policy.</li>
           <li><b>Show our work.</b> Every verdict explains why, and every value shows when it last changed.</li>

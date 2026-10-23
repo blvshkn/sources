@@ -51,7 +51,12 @@ export interface SentOffer {
   why?: DeclineWhy;
   /** ms since epoch, the last change to this record on any device. Sync's merge keeps the newest (see offerSync.ts) */
   updatedAt?: number;
+  /** Source's read when it went out (Zach, Oct 23): market value each side (0 to 10,000 scale, summed and adjusted)
+   *  and the acceptance odds (0 to 1). Kept next to the outcome so the acceptance curve can be fit to real answers. */
+  read?: OfferRead;
 }
+
+export interface OfferRead { give: number; get: number; adjGive: number; adjGet: number; odds: number }
 
 export const SENT_KEY = "sentOffers.v1";
 
@@ -83,18 +88,18 @@ export function sentDeals(list: SentOffer[]): SentDeal[] {
  * When the deal was reopened from Sent offers (`reopened` is its deal id) and the players changed, it becomes the next
  * version of that deal and the one before it is marked replaced. Anything else is a new deal at version 1.
  */
-export function recordSent(list: SentOffer[], o: { leagueId: string; partnerId: string; give: string[]; get: string[]; pitch: string; via: string; week: number; now: number; reopened?: string | null }): { list: SentOffer[]; offer: SentOffer } {
+export function recordSent(list: SentOffer[], o: { leagueId: string; partnerId: string; give: string[]; get: string[]; pitch: string; via: string; week: number; now: number; reopened?: string | null; read?: OfferRead }): { list: SentOffer[]; offer: SentOffer } {
   const deals = sentDeals(list);
   const fromReopen = o.reopened ? deals.find((d) => d.head.deal === o.reopened && d.head.partnerId === o.partnerId) : undefined;
   const target = fromReopen ?? deals.find((d) => d.head.status === "pending" && sameDeal(d.head, o));
   if (target && sameDeal(target.head, o)) {
-    const offer: SentOffer = { ...target.head, pitch: o.pitch, via: o.via, sentAt: o.now, week: o.week, status: target.head.status === "replaced" ? "pending" : target.head.status };
+    const offer: SentOffer = { ...target.head, pitch: o.pitch, via: o.via, sentAt: o.now, week: o.week, status: target.head.status === "replaced" ? "pending" : target.head.status, ...(o.read ? { read: o.read } : {}) };
     return { list: list.map((x) => (x.id === offer.id ? offer : x)), offer };
   }
   const id = `so${o.now.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const offer: SentOffer = {
     id, deal: target ? target.head.deal : id, leagueId: o.leagueId, partnerId: o.partnerId, give: [...o.give], get: [...o.get],
-    pitch: o.pitch, sentAt: o.now, version: target ? target.head.version + 1 : 1, via: o.via, week: o.week, status: "pending",
+    pitch: o.pitch, sentAt: o.now, version: target ? target.head.version + 1 : 1, via: o.via, week: o.week, status: "pending", ...(o.read ? { read: o.read } : {}),
   };
   const rest = target ? list.map((x) => (x.deal === target.head.deal && x.status === "pending" ? { ...x, status: "replaced" as const, statusAt: o.now } : x)) : list;
   return { list: [offer, ...rest], offer };

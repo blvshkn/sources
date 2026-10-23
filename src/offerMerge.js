@@ -64,6 +64,13 @@ export function cleanOffer(o, leagueId) {
     if (w.kind === "notNow" && resumed != null) why.resumedAt = resumed;
     out.why = why;
   }
+  // Source's read when it went out: values and odds, numbers only
+  const r = o.read;
+  if (r && typeof r === "object" && !Array.isArray(r)) {
+    const v = (x, max) => { const n = num(x); return n != null && n <= max ? Math.round(n * 1000) / 1000 : null; };
+    const read = { give: v(r.give, 1e6), get: v(r.get, 1e6), adjGive: v(r.adjGive, 1e6), adjGet: v(r.adjGet, 1e6), odds: v(r.odds, 1) };
+    if (Object.values(read).every((x) => x != null)) out.read = read;
+  }
   out.updatedAt = stampOf({ ...out, updatedAt: o.updatedAt });
   return out;
 }

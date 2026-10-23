@@ -6,11 +6,14 @@
 // `league` is the compact league snapshot the app builds from loaded data (src/askContext.ts). `facts` is what the
 // rule engine already computed for this question (a deal, a lineup swap, a waiver pick), so the model phrases real
 // math instead of guessing. The model only ever sees that data plus general football knowledge.
-// Calls the Anthropic Messages API with fetch (no SDK installed). The key and the context are never logged.
+// Calls the Anthropic Messages API with fetch (no SDK installed). The key and the league snapshot are never logged.
+// The question and answer are saved with names stripped (api/_lib/ask-log.js) after the reply goes out.
 // Before any paid call the deployed handler runs api/_lib/guard.js: same-origin, Vercel BotID, the daily spend ceiling
 // and the per-IP, per-user and demo limits kept in Blob. The app reads 403, 429 and 503 as "use the built-in answer".
 
 import { createGuard, ipOf as guardIpOf } from "./_lib/guard.js";
+import { askRow, logAsk } from "./_lib/ask-log.js";
+import { blobFromEnv } from "./offers.js";
 
 export const MODEL = "claude-haiku-5-5";
 export const MAX_Q = 500;
@@ -100,7 +103,7 @@ export function readBody(req) {
   const history = (Array.isArray(b.history) ? b.history : []).slice(-MAX_HISTORY)
     .filter((h) => h && typeof h.q === "string" && typeof h.a === "string")
     .map((h) => ({ q: h.q.slice(0, MAX_Q), a: h.a.slice(0, 1200) }));
-  return { question, league, facts, history, ids: idsIn(ctx.league) };
+  return { question, league, facts, history, ids: idsIn(ctx.league), raw: { league: ctx.league, facts: ctx.facts ?? null } };
 }
 
 /** Every player and team id in the league snapshot, so the reply can only point at real ones. */
@@ -222,7 +225,8 @@ export async function guardedCall(guard, req, key, request, timeoutMs) {
 }
 
 /** `guard` is api/_lib/guard.js's createGuard(); the deployed handler (the default export) always has one. */
-export function createHandler({ env = process.env, rand = Math.random, timeoutMs = TIMEOUT_MS, guard = null } = {}) {
+/** `log` is the Blob the question log writes to (api/_lib/ask-log.js); tests leave it out and nothing is saved. */
+export function createHandler({ env = process.env, rand = Math.random, timeoutMs = TIMEOUT_MS, guard = null, log = null } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method not allowed" }); }
@@ -234,11 +238,16 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     if (limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many questions, try again in a minute" }); }
 
     const quip = ROAST.test(input.question) || rand() < 0.25;
+    const t0 = Date.now();
     const r = await guardedCall(guard, req, key, buildRequest(input, quip), timeoutMs);
-    if (!r.ok) return res.status(r.status).json(r.body);
+    const ms = Date.now() - t0;
+    // Saved after the reply goes out, inside this same call (no extra request). Refusals before the model ran aren't kept.
+    const keep = (status, answer) => (log && (r.ok || r.status === 504) ? logAsk(log, askRow({ question: input.question, league: input.raw.league, facts: input.raw.facts, history: input.history, answer, usage: r.msg?.usage, model: MODEL, ms, status, env }), { env }) : null);
+    if (!r.ok) { res.status(r.status).json(r.body); await keep(r.status, null); return; }
     const answer = answerFrom(r.msg, input.ids);
-    if (!answer) return res.status(502).json({ error: "bad model reply" });
-    return res.status(200).json({ answer });
+    if (!answer) { res.status(502).json({ error: "bad model reply" }); await keep(502, null); return; }
+    res.status(200).json({ answer });
+    await keep(200, answer);
   };
 }
 
@@ -270,4 +279,4 @@ export async function callModel(key, request, timeoutMs = TIMEOUT_MS) {
   }
 }
 
-export default createHandler({ guard: createGuard() });
+export default createHandler({ guard: createGuard(), log: blobFromEnv() });
