@@ -4184,5 +4184,6 @@ html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { top: calc(100svh - 100lvh); b
 /* ---------- No widows (Zach, Oct 23) ----------
    Body copy rebalances its last lines so a single word never sits alone at the end; headings balance their lines.
    :where() keeps this at zero specificity, so any rule that sets its own wrapping still wins. */
-:where(p, li, dd, blockquote, figcaption, small, label, .lu-ai-txt span, .ibx-n-text, .bnr-copy span, .tip, .pd-fine) { text-wrap: pretty; }
+/* On body, so every piece of text inherits it: rows, buttons, spans, cards (Zach, Oct 23: a widow in On your radar) */
+:where(body) { text-wrap: pretty; }
 :where(h1, h2, h3, h4, .section-title) { text-wrap: balance; }

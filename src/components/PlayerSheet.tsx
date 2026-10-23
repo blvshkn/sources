@@ -9,6 +9,7 @@ import { PLAYERS, Player, TEAMS, WEEK, onBye, sleeperUrl } from "../data";
 import { kickLine, useKickoffs } from "../kickoff";
 import { eff, fmt, round1, scored } from "../engine";
 import { Icon, StatusPill } from "./ui";
+import { deny } from "../deny";
 import { PlatformLogo } from "./PlatformLogo";
 import { PlayerBar, PlayerHero, WatchButton, keepTabs } from "./PlayerHero";
 import { toggleWatch, useWatchApi, waiverWeek } from "./watchCtx";
@@ -24,7 +25,11 @@ import { mo } from "../motion";
 const isSheet = () => typeof window !== "undefined" && window.innerWidth < 768;
 
 /** Player details in a bottom sheet on phones and a centered modal from 768px, so you stay on the page you were on. */
-export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onClose, onCompare: firstCompare }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news" }) {
+export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onClose, onCompare: firstCompare, onLineup, onStartSit }: { p: Player; where?: string; note?: ReactNode; onClose: () => void; onCompare?: () => void; focus?: "news";
+  /** Your player, opened from Overview: a way to your Lineup from the sheet (Zach, Oct 23) */
+  onLineup?: () => void;
+  /** Your player: Compare him with the others who could start in his spot (Lineup's compare) */
+  onStartSit?: () => void }) {
   const [shown, setShown] = useState(false);
   // A name tapped in the depth chart opens that player here; the opener's context (where, note, compare) was about the first one
   const [p, setP] = useState(first);
@@ -74,8 +79,15 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
   // Swap in Sleeper only when the lineup call asks for a change in your Sleeper lineup (the same test LineupCall uses)
   const call = owner?.you && !onCompare ? lineupCall(p, nowFor(live, p)) : null;
   const swap = !!call && (/in Sleeper|Sleeper still has him/.test(call.line) || call.head === "Take him out of your lineup");
+  // Locked (his game kicked off): the swap can't happen, so the button shows but is off, and says why on a tap
+  const gs = live?.games[p.nfl];
+  const kicked = owner?.you && (gs === "in_game" || gs === "complete");
   const primary = onCompare
     ? <button className="btn btn-primary btn-sm ph-cta" onClick={() => { close(); window.setTimeout(onCompare, mo(240)); }}><Icon name="columns2" size={16} />Compare</button>
+    : kicked
+      ? <button type="button" className="btn btn-primary btn-sm ph-cta" aria-disabled="true"
+          onClick={(e) => deny(e.currentTarget, gs === "complete" ? `${p.name}'s game is final. His spot locked at kickoff.` : `${p.name} is playing now. Lineups lock at kickoff.`)}>
+          <PlatformLogo size={16} />Swap in Sleeper</button>
     : swap
       ? <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Swap in Sleeper</a>
       : !owner && p.nfl !== "FA"
@@ -83,7 +95,13 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
         : null;
 
   // Watch first, the main move last so it sits on the right (Zach, Oct 23)
-  const actions = (primary || watchApi) ? <>
+  const lineupBtn = owner?.you && onLineup
+    ? <button type="button" className="btn btn-sm ph-lineup" onClick={() => { close(); window.setTimeout(onLineup, mo(240)); }}><Icon name="helmet" size={16} />Lineup</button> : null;
+  const startSitBtn = owner?.you && onStartSit && !kicked
+    ? <button type="button" className="btn btn-sm ph-compare" onClick={() => { close(); window.setTimeout(onStartSit, mo(240)); }}><Icon name="columns2" size={16} />Compare</button> : null;
+  const actions = (primary || watchApi || lineupBtn || startSitBtn) ? <>
+    {lineupBtn}
+    {startSitBtn}
     {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
     {primary}
   </> : null;

@@ -41,6 +41,9 @@ html:root:not(#_):not(#_):not(#_) .card.wk.cc-dates { padding-bottom: max(0px, v
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked) { cursor: default; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > :is(.av, .wk-name) { opacity: 0.42; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > .wk-pts { opacity: 0.72; }
-html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked)::after { content: none !important; }
+
 /* The shared player line (GameMeta) under a Game day name, on its own line like the small text it replaced */
 html:root:not(#_):not(#_):not(#_) .wk-name > .wk-meta { display: flex; margin-top: 2px; }
+/* A stretched card keeps its rows at the top; the extra height sits below them */
+html:root:not(#_):not(#_):not(#_):not(#_) .cc-cols > .cc-col > .card { justify-content: flex-start; align-content: start; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done { cursor: pointer; }

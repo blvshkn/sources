@@ -448,7 +448,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,
     ok: {
       lineup: lineupNow.final ? `Week ${WEEK} is final. Next week's lineup is ready to set.` : !diff.length && !lineupNow.blocked ? "Your best projected lineup is set in Sleeper." : undefined,
-      trade: partners[0]?.t ? undefined : "Nothing helps both sides yet. Build a deal and Source grades it.",
+      trade: partners[0]?.t ? undefined : "No deal helps both sides yet. Build one and Source grades it.",
       waiver: topRec ? undefined : `Nobody on the wire beats your starters.${Object.keys(watch).length ? ` Watching ${Object.keys(watch).length}.` : ""}`,
     },
   };

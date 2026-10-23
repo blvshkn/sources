@@ -1,7 +1,6 @@
 import { Fragment, useState } from "react";
-import { StoneLock, denyLock, useTurnedAt } from "../gameDayMotion";
-import { deny, denyOn } from "../deny";
-import { lockRules } from "./SwapPicker";
+import { StoneLock, useTurnedAt } from "../gameDayMotion";
+import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
 import { LeagueSwitch } from "./LeagueSwitch";
@@ -223,6 +222,8 @@ function threatNote(p: Player, rank: number, manager: string) {
  *  the dates that matter on the right. On a phone it's one column, threats first. */
 function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => void }) {
   const live = useLive();
+  // Any player here opens his sheet (Zach, Oct 23): swap when he's hurt, compare, watch, or go to your Lineup
+  const [sheetP, setMine] = useState<{ p: Player; you: boolean } | null>(null);
   useKickoffs();
   const opp = OPPONENT_ID ? teamById(OPPONENT_ID) : null;
   // The lineups set in Sleeper (best projected only when Sleeper has none)
@@ -258,12 +259,10 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
                 <span className="wk-name">{p.name}<GameMeta p={p} g={gameNow(live, p.id, p.nfl)} opp={vsOf(p)} className="wk-meta" /></span>
                 <WkPts p={p} live={live} />
               </>;
-              return st === "complete" || st === "in_game"
-                // A tap does what the Lineup does: the lock shakes and a toast says why he can't move (Zach, Oct 23)
-                ? <button key={p.id} type="button" className={`wk-row ${st === "complete" ? "is-done" : "is-locked"}`} aria-disabled="true"
-                    aria-label={`${p.name}, ${st === "complete" ? "game final" : "playing now"}, locked`}
-                    onClick={(e) => { const el = e.currentTarget; denyLock(el); deny(el, lockRules(live, false).starterLock(p) ?? `${p.name} is locked.`); }}>{inner}</button>
-                : <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>{inner}</button>;
+              // Every row opens his player sheet (Zach, Oct 23). Finished ones still read as done; the sheet's swap is
+              // off once he's kicked off, and its Lineup button goes to your lineup.
+              return <button key={p.id} type="button" className={`wk-row${st === "complete" ? " is-done" : st === "in_game" ? " is-live" : ""}`}
+                aria-label={`${p.name}${st === "complete" ? ", game final" : st === "in_game" ? ", playing now" : ""}`} onClick={() => setMine({ p, you: true })}>{inner}</button>;
             })}
           </div>
         ))}
@@ -275,7 +274,7 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
       <section className="card wk" aria-label="Injury watch">
         <div className="wk-head"><h2 className="section-title">Injury watch</h2><span className="tiny muted">You and {opp?.manager ?? "your opponent"}</span></div>
         {injured.length === 0 ? <p className="small muted">No injury tags in this matchup.</p> : injured.map(({ p, you }) => (
-          <button key={p.id} className="wk-row" onClick={() => onGo(you ? "roster" : "matchup")}>
+          <button key={p.id} className="wk-row" onClick={() => setMine({ p, you })}>
             <Avatar p={p} size={40} />
             <span className="wk-name"><span className="wk-nm">{p.name}<span className={`wk-tag s-${p.status}`}>{injuryTag(p)}</span></span><small>{detail(p)}</small></span>
             <span className={`wk-who${you ? " you" : ""}`}>{you ? "You" : "Them"}</span>
@@ -284,6 +283,8 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
       </section>
       </div>
       {keyDates}
+      {sheetP && <PlayerSheet p={sheetP.p} where={sheetP.you ? `Your ${sheetP.p.pos}` : `${opp?.manager ?? "Their"}'s ${sheetP.p.pos}`} onClose={() => setMine(null)}
+        onLineup={sheetP.you ? () => onGo("roster") : undefined} onStartSit={sheetP.you ? () => onGo("roster:compare") : undefined} />}
     </div>
   );
 }
