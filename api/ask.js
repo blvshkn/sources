@@ -13,6 +13,7 @@
 
 import { createGuard, ipOf as guardIpOf } from "./_lib/guard.js";
 import { askRow, logAsk } from "./_lib/ask-log.js";
+import { NO_BETTING, isBetting } from "./_lib/betting.js";
 import { blobFromEnv } from "./offers.js";
 
 export const MODEL = "claude-haiku-5-5";
@@ -37,6 +38,7 @@ Ground rules
 - A player is on bye only when his row says "bye": true (from the NFL schedule), and "byeTeams" lists those teams. "no projection this week" means his team plays but no projection has posted yet: he is not on bye and not out. Read his "status" (Questionable, Out) for availability.
 - Practice reports: the last practice before the game matters most (Friday for a Sunday game, Saturday for Monday, Wednesday for Thursday). Sitting out or being limited Wednesday or Thursday before a Sunday game is routine and not a red flag on its own; missing the final practice is.
 - Write every number as plain digits with no spaces inside it: 1.2, 15.3, +4.0.
+- No betting of any kind. Sources is a fantasy trade calculator for better trades and the optimal lineup, and its terms don't allow betting. Never answer questions about sports betting, prop bets, parlays, spreads, over/unders, moneylines, odds, sportsbooks or daily fantasy contests, and never suggest a bet. Vegas lines may only be mentioned as one input to a player's point projection. If a question is about betting, say Sources doesn't answer betting questions and offer to help with a trade, a lineup or a waiver pickup instead.
 
 Trade offers
 - When computed_facts has "offersShownAsCards", the app shows each offer as its own trade card right under your answer, with the players and numbers. Write "text" as a short summary that points at the cards by their approach name (for example "Best odds" or "Cheapest in value") and says which one you'd lead with and why. Don't list every player and number again. "points" can be empty, and leave "playerIds" empty.
@@ -238,6 +240,8 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     if (input.status) return res.status(input.status).json({ error: input.error });
     if (limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many questions, try again in a minute" }); }
 
+    // Betting questions get the fixed reply and never reach the model (our terms: no betting of any kind)
+    if (isBetting(input.question)) return res.status(200).json({ answer: { ...NO_BETTING, playerIds: [], teamId: "", quip: "" } });
     const quip = ROAST.test(input.question) || rand() < 0.25;
     const t0 = Date.now();
     const r = await guardedCall(guard, req, key, buildRequest(input, quip), timeoutMs);

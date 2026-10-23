@@ -4,6 +4,7 @@ import { AiMark, AiMarkPlay } from "./WorkingLoader";
 import { PX } from "./pixelIcons";
 import { deny } from "../deny";
 import { clearAskHandoff, setAskHandoff } from "../demoHandoff";
+import { NO_BETTING, isBetting } from "../../api/_lib/betting.js";
 
 /** Starters about Source itself, each one a question from the landing's FAQ so it gets that exact answer here. */
 const GROUPS: { topic: string; items: string[] }[] = [
@@ -66,7 +67,8 @@ export function LandingAsk({ onClose, onDemo, form, faqs }: {
   const send = (text: string, el?: Element | null) => {
     const t = text.trim();
     if (!t) { deny(el, "Type a question, or tap a suggestion."); return; }
-    const a = faqFor(t, faqs);
+    // Betting of any kind is off limits under the terms: the fixed reply, and nothing carried into the app
+    const a = isBetting(t) ? NO_BETTING.text : faqFor(t, faqs);
     setAnswer(a);
     if (a) clearAskHandoff(); else setAskHandoff(t);
     setAsked(t);

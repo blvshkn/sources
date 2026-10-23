@@ -14,6 +14,7 @@ import type { Tracer } from "./think";
 import { optimalJob, type OptimalResult } from "./optimalLineup";
 import { aiHeaders, offReason, type AiOff } from "./aiClient";
 import { loadPosWeeks, usageFor, type PosWeeks } from "./usage";
+import { NO_BETTING, isBetting } from "../api/_lib/betting.js";
 
 /** Each player's usage from Sleeper's weekly stats (Zach, Oct 23: Ask said it had no targets): every stat the player
  *  sheet shows (snap share, targets, carries, catches, yards, red-zone looks...), as [last 3 games, season] per game,
@@ -270,6 +271,8 @@ async function play(g: Steps<Answer>, first: IteratorResult<TraceEv, Answer>, tr
  */
 export function askJob(q: string, engine: (q: string) => Steps<Answer>, history: AskTurnLog[], live?: Live) {
   return async (tr: Tracer): Promise<Answer> => {
+    // Betting of any kind is off limits under the terms: answered right here, nothing sent to Source AI
+    if (isBetting(q)) { await tr.finish(); return { ...NO_BETTING, points: [...NO_BETTING.points], links: [] }; }
     const g = engine(q);
     // The engine's first event is its plan; its second tells us whether it has a rule for this question at all
     const first = g.next();
