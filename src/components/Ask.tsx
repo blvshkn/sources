@@ -244,7 +244,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
   // answer card then appears out of view, the thread brings its top into view once. Scroll back to the bottom and
   // the follow picks up again. The empty state starts at the top instead, so a short phone opens on the intro.
   const stick = useRef(!!initial?.trim());
-  const cap = useRef(true);
+  const cap = useRef(false);
   const userAt = useRef(0);
   const smoothUntil = useRef(0);
   const seenCard = useRef<Element | null>(null);
@@ -365,7 +365,9 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
     busyRef.current = true;
     const id = Date.now();
     stick.current = true;
-    cap.current = true;
+    // Like texting (Zach, Oct 23): the thread stays pinned to the bottom, so your question lands right above the
+    // composer and the answer pushes it up as it comes in, instead of the answer stopping at its card's top
+    cap.current = false;
     userAt.current = 0;
     smoothUntil.current = performance.now() + 700;
     setMsgs((m) => [...m, { id, q: t, history: log.current.slice(-3), ctx: { acq: acq.current } }]);

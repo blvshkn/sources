@@ -10,7 +10,9 @@
       is a skeleton line (ask-skeleton.css) with its bullet dimmed. */
 
 /* ---------- 1. Room for the newest turn ---------- */
-html:root:not(#_):not(#_) .ask-thread > .ask-col > .ask-turn:last-child { min-height: var(--ask-room, 0px); }
+/* Texting order (Zach, Oct 23): no reserved screen of room any more. The thread sits at the bottom (ask.css .ask-col
+   margin-top: auto), your question shows right above the composer, and the answer pushes it up as it grows. */
+html:root:not(#_):not(#_) .ask-thread > .ask-col > .ask-turn:last-child { min-height: 0; }
 
 /* ---------- 2. Trace steps: trace-flow.css lays them out for every trace ---------- */
 
