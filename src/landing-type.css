@@ -621,5 +621,8 @@ html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai .ask-show { margin-top: 0
 /* Phones: the pinned lines at half strength (Zach, Oct 22: "the lines are too crazy") */
 @media (max-width: 860px) { html:root:not(#_):not(#_):not(#_):not(#_) .env-lines img { opacity: 0.5; } }
 
-/* Replay's label is white like the other Replay buttons; its icon stays lime (Zach, Oct 23) */
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-again { color: var(--ink); }
+/* Every Replay on the landing: white label, lime icon, in every state, including while its replay is playing
+   (Zach, Oct 23: "The replay label on landing page everywhere should be white") */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay) { color: #fff; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay):disabled { opacity: 1; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay) .ic { color: var(--lime); }
