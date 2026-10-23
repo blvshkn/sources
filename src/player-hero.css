@@ -231,3 +231,19 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph.ph-def > .
 @media (min-width: 768px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-art-watch { grid-area: row; grid-column: 1; align-self: start; margin-top: 2px; translate: none; }
 }
+
+/* Sheet tabs at the right (Zach, Oct 23): on tablet and desktop the tabs share a row with the open tab's first line
+   (the week stepper, the game log's season numbers) and line up with the header buttons' right edge. When the two
+   don't fit, the tabs go back above it at the left. Row-reverse puts the tabs (first in the markup) at the right;
+   flex-end packs a line that holds only the tabs to the left; the first line grows to push them right when they share. */
+html:root:not(#_):not(#_):not(#_) .st-lead-home { display: contents; }
+html:root:not(#_):not(#_):not(#_) .st-lead:empty { display: none; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick {
+    display: flex; flex-direction: row-reverse; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px 24px;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-tabs { flex: 0 0 auto; margin: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > :is(.pd-weeknav, .st-lead) { flex: 1 1 auto; min-width: 0; margin: 0; }
+  /* With no first line to share, an empty spacer keeps the tabs at the right so they don't jump between tabs */
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-lead:empty { display: block; flex: 1 1 0; }
+}

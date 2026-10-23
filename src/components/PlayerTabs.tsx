@@ -1,7 +1,8 @@
 // Tabs for the player sheet and the waiver claim sheet: the sheet's own view, a game log and the team depth chart.
 // The tab row sticks under the sheet's top and keeps its place on a switch; the incoming tab fades in over 160ms with
 // no movement (player-hero.css), and so does a list replacing its loading skeleton. The last tab picked is remembered per sheet type for the session.
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { teamNick } from "../data";
 import { useLive } from "../live";
 import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, missWhy, peekDepth, peekLog, seasonsFor } from "../gamelog";
@@ -24,7 +25,24 @@ export function useSheetTab(kind: "player" | "waiver", allowed: SheetTab[]): [Sh
 }
 /** The League page's tabs (icon and label pills, no track behind the row), sticky under the sheet's top. */
 export function SheetTabs({ value, onChange, options }: { value: SheetTab; onChange: (t: SheetTab) => void; options: { v: SheetTab; label: string; icon?: IconName }[] }) {
-  return <PageTabs inSheet className="st-tabs" label="Sheet section" value={value} onChange={onChange} options={options} />;
+  // The slot after the tabs takes the open tab's first line (SheetLead) on tablet and desktop, so the tabs sit at its right
+  return <><PageTabs inSheet className="st-tabs" label="Sheet section" value={value} onChange={onChange} options={options} /><div className="st-lead" /></>;
+}
+
+const WIDE = "(min-width: 768px)";
+/** A tab's first line (Zach, Oct 23). Tablet and desktop: moved up beside the tabs, which sit at the right and go back
+ *  above it when the two don't fit on one line. Phones: left in place under the tabs. */
+function SheetLead({ children }: { children: ReactNode }) {
+  const here = useRef<HTMLSpanElement>(null);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(WIDE);
+    const find = () => setSlot(mq.matches ? here.current?.closest(".ps")?.querySelector<HTMLElement>(".ph-stick > .st-lead") ?? null : null);
+    find();
+    mq.addEventListener("change", find);
+    return () => mq.removeEventListener("change", find);
+  }, []);
+  return slot ? createPortal(children, slot) : <span ref={here} className="st-lead-home">{children}</span>;
 }
 
 // ---- Shared bits ------------------------------------------------------------------------
@@ -153,6 +171,7 @@ export function GameLogTab({ s }: { s: Subject }) {
     <section className="gl" aria-label="Game log" aria-busy={log.state === "loading"}>
       <div className="gl-bar">
         {/* The season's numbers first, then the season pills (Zach); while it loads the row holds its place */}
+        <SheetLead>
         {log.state === "loading" ? (
           <dl className="gl-sum" aria-hidden="true">
             {["Games", "Avg", "Best", "Beat proj"].map((k) => <div key={k}><dt>{k}</dt><dd className="sk-text">00.0</dd></div>)}
@@ -166,6 +185,7 @@ export function GameLogTab({ s }: { s: Subject }) {
             {withProj > 0 && <div><dt>Beat proj</dt><dd>{beat}/{withProj}</dd></div>}
           </dl>
         )}
+        </SheetLead>
         <div className="page-tabs gl-years">
           <div className="seg" role="group" aria-label="Season">
             {years.map((y) => <button key={y} aria-pressed={season === y} onClick={() => setSeason(y)}>{y}</button>)}
