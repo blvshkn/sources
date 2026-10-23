@@ -1,0 +1,6 @@
+/* ---------- After the first-paint shell (index.html, html.ld-shell) ----------
+   The nav and hero were already on screen before React mounted, so their entrance plays out at once: each animation
+   jumps to its end state instead of fading the same content in a second time. The floating players still arrive. */
+html.ld-shell:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-nav, .ld2-env .env-glow, .ld2-hero :is(.ld2-in, .ld2-typed-box, .hp-phone, .hp-r)) {
+  animation-duration: 0s !important; animation-delay: 0s !important;
+}

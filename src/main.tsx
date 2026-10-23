@@ -74,6 +74,7 @@ import "./game-day.css";
 import "./live-bar.css";
 import "./gesture-motion.css";
 import "./new-moments.css";
+import "./first-paint.css";
 import "./frame.css";
 import "./sheet.css";
 import "./scroll.css";

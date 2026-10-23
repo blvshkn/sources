@@ -8,7 +8,10 @@ const FACES: [string, string][] = [[clashMedium, "500"], [clashSemibold, "600"]]
 
 try {
   if (typeof FontFace !== "undefined" && document.fonts) {
+    // index.html registers the same files from its preloads for the first-paint shell; don't add a second, unloaded copy
+    const have = (weight: string) => [...document.fonts].some((f) => f.family.replace(/"/g, "") === "Clash Grotesk" && f.weight === weight);
     for (const [src, weight] of FACES) {
+      if (have(weight)) continue;
       const face = new FontFace("Clash Grotesk", `url(${JSON.stringify(src)}) format("woff2")`, { weight, style: "normal", display: "swap" });
       document.fonts.add(face);
       // Start the fetch now rather than at first use, so headers swap in as early as possible

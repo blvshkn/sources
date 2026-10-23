@@ -83,7 +83,10 @@ export function Landing({ onLive, onDemo }: {
   onLive: (s: { username: string; user: { id: string; name: string }; leagues: SLeague[] }) => void;
   onDemo: () => void;
 }) {
-  const [username, setUsername] = useState("");
+  // Whatever was typed into index.html's first-paint shell before React took over carries into the real field
+  const [username, setUsername] = useState(() => (typeof document === "undefined" ? "" : (document.querySelector<HTMLInputElement>("[data-shell] #ld-user")?.value ?? "")));
+  const [shellFocus] = useState(() => typeof document !== "undefined" && !!document.activeElement?.matches("[data-shell] #ld-user"));
+  useLayoutEffect(() => { if (shellFocus) document.getElementById("ld-user")?.focus({ preventScroll: true }); }, [shellFocus]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useErrorHaptic(error);
@@ -953,12 +956,14 @@ const HEADLINES = [
  */
 function TypedHeadline({ lines }: { lines: string[] }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [state, setState] = useState({ i: 0, n: 0, typing: true });
+  // After index.html's first-paint shell (html.ld-shell) the headline is already on screen typed: start there and hold
+  const [shell] = useState(() => typeof document !== "undefined" && document.documentElement.classList.contains("ld-shell"));
+  const [state, setState] = useState(() => (shell ? { i: 0, n: lines[0].length, typing: false } : { i: 0, n: 0, typing: true }));
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setState({ i: 0, n: lines[0].length, typing: false }); return; }
     // Driven off the frame clock, so keystrokes land at an even pace instead of drifting with timers
     const TYPE = 56, ERASE = 24, HOLD_FIRST = 4200, HOLD = 3000, GAP = 320;
-    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1, started = false, done = false;
+    let i = 0, phase: "type" | "hold" | "erase" | "gap" = shell ? "hold" : "type", t0 = 0, raf = 0, visible = true, last = shell ? lines[0].length : -1, started = false, done = false;
     // One pass through every line, then it rests on the first (Zach, Oct 22: no looping); a tap plays it again
     const replay = () => { if (!done) return; done = false; i = 0; phase = "erase"; t0 = 0; last = lines[0].length; resume(); };
     const host = ref.current?.closest("h1"); host?.addEventListener("click", replay);
@@ -984,7 +989,7 @@ function TypedHeadline({ lines }: { lines: string[] }) {
     document.addEventListener("visibilitychange", resume);
     const start = window.setTimeout(() => { started = true; resume(); }, 420);
     return () => { started = false; clearTimeout(start); cancelAnimationFrame(raf); raf = 0; io.disconnect(); document.removeEventListener("visibilitychange", resume); host?.removeEventListener("click", replay); };
-  }, [lines]);
+  }, [lines, shell]);
   const full = lines[state.i];
   return (
     <>
