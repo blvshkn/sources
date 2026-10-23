@@ -115,3 +115,15 @@ html:root:not(#_):not(#_) .dc-none { margin: 0; padding: 12px 8px 12px 0; font-s
 html:root:not(#_):not(#_) .gl-tbl tfoot tr > * { border-bottom: 0; color: var(--ink); font-weight: 600; }
 html:root:not(#_):not(#_) .gl-tbl tfoot tr.gl-total > * { border-top: 1px solid var(--line); }
 html:root:not(#_):not(#_) .gl-tbl tfoot .gl-wk { font: 600 0.6875rem/1 "Geist", sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; }
+
+/* Game log season dropdown (Zach, Oct 23). Beside the numbers it hugs; once the row stacks (phones, or the tabs gone
+   above on tablet and desktop) it drops under them and fills the width. */
+html:root:not(#_):not(#_):not(#_) .gl-lead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .gl-bar .gl-lead { flex: 1 1 100%; }
+html:root:not(#_):not(#_):not(#_) .sel-trigger.gl-season {
+  flex: 0 0 auto; height: 36px; padding: 0 12px 0 14px; gap: 10px; border-radius: 999px; background: var(--surface-2);
+  justify-content: space-between; font: 500 0.875rem/1 var(--font-mono); font-variant-numeric: tabular-nums;
+}
+@media (hover: hover) { html:root:not(#_):not(#_):not(#_) .sel-trigger.gl-season:hover { background: var(--surface-3); } }
+html:root:not(#_):not(#_):not(#_) .sel-trigger.gl-season[data-open] { background: var(--surface-3); }
+html:root:not(#_):not(#_):not(#_) :is(.st-lead-home, .ph-stick[data-stacked] > .st-lead) .sel-trigger.gl-season { flex: 1 1 100%; width: 100%; }

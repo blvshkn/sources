@@ -7,6 +7,7 @@ import { teamNick } from "../data";
 import { useLive } from "../live";
 import { Depth, LogRow, SeasonLog, Stats, Subject, groupOf, loadDepth, loadLog, missWhy, peekDepth, peekLog, seasonsFor } from "../gamelog";
 import { Tooltip } from "./Tooltip";
+import { Select } from "./Select";
 import { PageTabs, type IconName } from "./ui";
 import { useBio } from "../playerBio";
 
@@ -42,6 +43,17 @@ function SheetLead({ children }: { children: ReactNode }) {
     mq.addEventListener("change", find);
     return () => mq.removeEventListener("change", find);
   }, []);
+  // Marks the tab row stacked (the tabs on their own line above) so the first line can switch to its stacked layout
+  useLayoutEffect(() => {
+    const row = slot?.parentElement;
+    const tabs = row?.querySelector<HTMLElement>(":scope > .st-tabs");
+    if (!row || !tabs) return;
+    const check = () => row.toggleAttribute("data-stacked", Math.abs(tabs.offsetTop - slot!.offsetTop) > 4);
+    const ro = new ResizeObserver(check);
+    ro.observe(row);
+    check();
+    return () => { ro.disconnect(); row.removeAttribute("data-stacked"); };
+  }, [slot]);
   return slot ? createPortal(children, slot) : <span ref={here} className="st-lead-home">{children}</span>;
 }
 
@@ -79,17 +91,11 @@ const GROUPS: Record<Subject["pos"], { label: string; cols: Col[] }[]> = {
 const oppLabel = (o: string | null) => (o ? o.replace(/^(v|@)\s*/, "") : DASH);
 const away = (o: string | null) => !!o && o.startsWith("@");
 
-/** Seasons shown before "More" */
-const FIRST_YEARS = 6;
 export function GameLogTab({ s }: { s: Subject }) {
   // Back to his rookie season (years in the league from his bio), each one loaded when picked and cached
   const bio = useBio(s);
   const seasons = seasonsFor(s.pos === "DEF" ? 5 : bio === "loading" ? undefined : bio.exp);
   const [season, setSeason] = useState(seasons[0]);
-  const [allYears, setAllYears] = useState(false);
-  const shownYears = allYears || seasons.length <= FIRST_YEARS + 1 ? seasons : seasons.slice(0, FIRST_YEARS);
-  // A season picked from behind "More" keeps its pill visible
-  const years = shownYears.includes(season) ? shownYears : [...shownYears, season];
   const [log, setLog] = useState<Load<SeasonLog>>(() => { const v = peekLog(s, seasons[0]); return v ? { state: "ready", v } : { state: "loading" }; });
   useEffect(() => {
     let on = true;
@@ -172,6 +178,7 @@ export function GameLogTab({ s }: { s: Subject }) {
       <div className="gl-bar">
         {/* The season's numbers first, then the season pills (Zach); while it loads the row holds its place */}
         <SheetLead>
+        <div className="gl-lead">
         {log.state === "loading" ? (
           <dl className="gl-sum" aria-hidden="true">
             {["Games", "Avg", "Best", "Beat proj"].map((k) => <div key={k}><dt>{k}</dt><dd className="sk-text">00.0</dd></div>)}
@@ -185,13 +192,12 @@ export function GameLogTab({ s }: { s: Subject }) {
             {withProj > 0 && <div><dt>Beat proj</dt><dd>{beat}/{withProj}</dd></div>}
           </dl>
         )}
-        </SheetLead>
-        <div className="page-tabs gl-years">
-          <div className="seg" role="group" aria-label="Season">
-            {years.map((y) => <button key={y} aria-pressed={season === y} onClick={() => setSeason(y)}>{y}</button>)}
-            {years.length < seasons.length && <button className="gl-more" aria-pressed={false} onClick={() => setAllYears(true)} aria-label={`More seasons, back to ${seasons[seasons.length - 1]}`}>More</button>}
-          </div>
+          {/* The season, as a dropdown beside the numbers (Zach, Oct 23): it hugs there, and fills the width under them
+              once the row stacks */}
+          <Select size="pill" className="gl-season" aria-label="Season" header="Season" value={season}
+            options={seasons.map((y) => ({ value: y, label: y }))} onChange={setSeason} />
         </div>
+        </SheetLead>
       </div>
       {log.state === "loading" ? <Skel rows={8} />
         : log.state === "none" ? <p className="ps-none">{log.why}</p>
