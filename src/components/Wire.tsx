@@ -246,13 +246,17 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
         {days.map(({ d, ps }) => (
           <div key={d} className="wk-day">
             <span className="wk-day-k">{d}<small>{ps.length}</small></span>
-            {ps.map((p) => (
-              <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>
+            {ps.map((p) => {
+              const inner = <>
                 <Avatar p={p} size={40} />
                 <span className="wk-name">{p.name}<small><b className={`lu-pos p-${p.pos}`}>{p.pos}</b> · {p.nfl} {oppAt(p.nfl, vsOf(p))}</small></span>
                 <WkPts p={p} live={live} />
-              </button>
-            ))}
+              </>;
+              // Already played (Zach, Oct 23): reads as done, like the Lineup's finished rows, and there's nothing to tap
+              return live.games[p.nfl] === "complete"
+                ? <div key={p.id} className="wk-row is-done" aria-label={`${p.name}, game final`}>{inner}</div>
+                : <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>{inner}</button>;
+            })}
           </div>
         ))}
       </section>

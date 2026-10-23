@@ -35,3 +35,10 @@ html:root:not(#_):not(#_) .cc-week > .cc-sec > .section-title { margin: 0; }
 /* Key dates' list sits in its own row wrapper: no rule above the first date, and the card's bottom inset as before */
 html:root:not(#_):not(#_):not(#_) .cc-dates .cc-dates-row > .wk-date:first-child { border-top: 0; }
 html:root:not(#_):not(#_):not(#_) .card.wk.cc-dates { padding-bottom: max(0px, var(--pad-card-y) - 10px) !important; }
+
+/* Game day: a starter whose game is final reads as done, like the Lineup's finished rows (styles.css .lu-row.is-done),
+   and isn't a button, so no hover, press or pointer (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done { cursor: default; pointer-events: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > :is(.av, .wk-name) { opacity: 0.42; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > .wk-pts { opacity: 0.72; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done::after { content: none !important; }
