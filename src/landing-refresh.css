@@ -79,3 +79,4 @@ html:root:not(#_):not(#_) .ld2-secta > .btn { height: 48px; min-height: 48px; ju
   html:root:not(#_):not(#_) .ld2-secta { flex-direction: row; align-items: center; justify-content: space-between; padding: 20px 20px 20px 28px; }
   html:root:not(#_):not(#_) .ld2-secta > .btn { flex: 0 0 auto; padding-inline: 24px; }
 }
+html:root:not(#_):not(#_):not(#_) .ld-bento > .ld2-secta { grid-column: 1 / -1; margin: 0; }

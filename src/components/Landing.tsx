@@ -750,6 +750,8 @@ export function Landing({ onLive, onDemo }: {
               <TradeCompare trade={demo.trade} them={demo.mike} />
             </article>
           )}
+          {/* One lead-in and CTA between the bento's two rows (Zach, Oct 23) */}
+          <SectionCta line="You need the edge, and we've got it." onAdd={() => setFindOpen(true)} />
           {demo.trade && (
             <article className="card ld-cell ld2-reveal ld2-msg-cell">
               <h3>Pitch it where you talk</h3>
@@ -792,7 +794,6 @@ export function Landing({ onLive, onDemo }: {
               itself now lives in the trade section's readout) */}
           <LandingNotesCard them={demo.mike} notes={demo.notes} tags={demo.tags} avoid={demo.trade} onOpen={openDeal("trade")} />
         </div>
-        <SectionCta line="You need the edge, and we've got it." onAdd={() => setFindOpen(true)} />
       </section>
 
       <section className="ld-section ld2-new" aria-labelledby="ld-new">
