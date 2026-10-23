@@ -205,3 +205,16 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watc
 @media (min-width: 768px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) { width: 100%; max-width: 880px; height: min(88vh, 860px); }
 }
+
+/* Actions on the bio's row (Zach, Oct 23): tablet and desktop put Lineup and Compare at the right, centered on the
+   bio. When the row runs out of room they wrap below the bio. Phones keep their own order (the row is invisible). */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-row { display: contents; }
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) { grid-template-areas: "art who" "art row" "rank rank"; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row {
+    grid-area: row; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; min-width: 0;
+  }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row > .ph-acts { align-self: center; justify-content: flex-start; flex: 0 0 auto; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row > .ph-acts:only-child { margin-left: auto; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) > .ph-row > .ph-bio { flex: 0 1 auto; }
+}

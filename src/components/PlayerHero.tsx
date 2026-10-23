@@ -209,18 +209,21 @@ export function PlayerHero({ s, nameId, status, meta, where, actions, watch }: {
           {where && <span className={`ps-where ph-where${/bench|\w's /i.test(where) ? " bench" : ""}`}>{where}</span>}
         </div>}
       </div>
+      {/* The bio and the actions share a row on tablet and desktop, the actions wrapping below when it runs out of room */}
+      <div className="ph-row">
       {!def && (bio === "loading" ? <span className="ph-bio ph-skel" aria-hidden="true"><i /><i /><i /><i /></span>
         : facts.length > 0 && (
           <dl className="ph-bio" aria-label="Bio">
             {facts.map((f) => <div key={f.k} className={f.k === "College" ? "ph-col" : undefined}><dt>{f.k}</dt><dd>{f.v}</dd></div>)}
           </dl>
         ))}
+        {actions && <div className="ph-acts">{actions}</div>}
+      </div>
       {ranks.length > 0 && (
         <dl className="ph-ranks" aria-label="Rankings">
           {ranks.map((r) => <div key={r.k}><dt><Tooltip focusable content={r.tip}><span className="tt-term">{r.k}</span></Tooltip></dt><dd>{r.v}</dd></div>)}
         </dl>
       )}
-      {actions && <div className="ph-acts">{actions}</div>}
     </div>
   );
 }
