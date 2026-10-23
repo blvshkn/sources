@@ -27,8 +27,9 @@ export function useSplitHeads(root: RefObject<HTMLElement | null>) {
       const vh = window.innerHeight;
       near.forEach((h) => {
         const top = h.getBoundingClientRect().top;
-        // 0 when its top is at the bottom edge, 1 once it's 42% of the way down the screen
-        const p = Math.min(1, Math.max(0, (vh - top) / (vh * 0.58)));
+        // 0 when its top is at the bottom edge, settled once it's 70% of the way down the screen, so the heading is still
+        // well before the reader gets to it (Zach, Oct 22: things came in too late)
+        const p = Math.min(1, Math.max(0, (vh - top) / (vh * 0.3)));
         h.style.setProperty("--p", p.toFixed(3));
       });
     };

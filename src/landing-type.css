@@ -424,3 +424,16 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagw
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
   font-size: clamp(2rem, min(8.6vw, (100svh - var(--navh, 64px) - var(--bandh, 96px)) * 0.105), 7.5rem) !important;
 }
+
+/* ---------- Scroll reveals land sooner (Zach, Oct 22: "happening too late") ----------
+   Cards start just before they enter the screen (Landing.tsx rootMargin), rise and sharpen in about 400ms, and
+   follow each other 50ms apart, so they're settled while they're still low on the screen. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-reveal {
+  transform: translateY(10px); filter: blur(2px);
+  transition-duration: 420ms, 420ms, 420ms;
+}
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-reveal.in { transform: none; filter: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(1) { transition-delay: 0ms; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(2) { transition-delay: 50ms; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(3) { transition-delay: 100ms; }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(n+4) { transition-delay: 150ms; }

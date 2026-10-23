@@ -451,7 +451,7 @@ export function Landing({ onLive, onDemo }: {
   useSplitHeads(root);
   useEffect(() => {
     const el = root.current; if (!el) return;
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -12% 0px" });
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px 8% 0px" });
     el.querySelectorAll(".ld2-reveal").forEach((n) => io.observe(n));
     const words = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("on", e.isIntersecting || e.boundingClientRect.top < 0)), { rootMargin: "0px 0px -45% 0px" });
     el.querySelectorAll(".ld2-tag:not(.ld2-tag-stack) > span").forEach((n) => words.observe(n));
