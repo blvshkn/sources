@@ -447,9 +447,21 @@ html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-spk { display: none; }
 /* Hero phone shadows read on the dark page: a deeper, wider pool */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; right: -6%; top: 94%; height: 16%; }
 
-/* The landing's backdrop (glow, field, grain) reaches under Safari's floating toolbar, so there's no dark band
-   where the page shows through below the small viewport (Zach, Oct 22: "what's this black bar?") */
-html:root:not(#_):not(#_):not(#_) .ld2-env { inset: 0 0 auto 0; height: calc(100lvh + 120px); bottom: auto; }
+/* The landing's backdrop (glow, field, grain) is the first screen's, and scrolls away with it. Pinned (position:
+   fixed) it touched the bottom of the screen, and Safari 26 then paints its toolbar strip as a solid box over the page
+   (Zach, Oct 22, iPhone and iPad: ?off=envfix made the box go away) */
+html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto 0; height: 100svh; bottom: auto; background: none; }
+html:root:not(#_):not(#_):not(#_) .env-field-img { display: none; }
+/* Phones (Zach, Oct 22): the backdrop holds still behind the page, the field pinned to the bottom of the screen and
+   never drifting or fading. Pinned again, but with no fill of its own (the page color comes from html), which is what
+   Safari had been stretching into the box under its toolbar */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env { position: fixed; inset: 0; height: auto; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-glow { transform: none !important; }
+  /* The field lines are a still image here (public/field.webp, the drawn field at 430px), pinned to the bottom */
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field { display: none; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field-img { display: block; position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; }
+}
 
 /* The edge blur runs to the true bottom of the screen, under Safari's toolbar, so its lower edge sits flush instead
    of stopping above it (Zach, Oct 22, iPad) */

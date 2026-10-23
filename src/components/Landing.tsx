@@ -511,6 +511,7 @@ export function Landing({ onLive, onDemo }: {
       <div className="ld2-env" ref={env} aria-hidden="true">
         <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
         <div className="env-field"><div className="env-turf" /></div>
+        <img className="env-field-img" src="/field.webp" width={1290} height={939} alt="" decoding="async" />
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
       <nav className={`ld-nav ld2-nav${stuck ? " stuck" : ""}`} aria-label="Source">
