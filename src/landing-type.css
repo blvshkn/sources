@@ -546,9 +546,12 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .thk-card { padding-left: 0 !impo
     html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { --pk: -0.2; transform: translate3d(calc(var(--gx, 0) * 12px), calc(var(--gy, 0) * 12px), 0); }
     html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { --pk: -0.06; transform: translate3d(calc(var(--gx, 0) * 5px), calc(var(--gy, 0) * 5px), 0); }
     html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head {
-      animation: hp-float-in calc(1000ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) calc((400ms + var(--i) * 90ms) * var(--mo, 1)) both, ld-par 1ms linear both;
-      animation-timeline: auto, scroll(root); animation-composition: replace, add;
+      /* The arrival moves transform and the scroll drift moves translate, so each runs on its own property with no
+         compositing between them (Zach, Oct 23: the players hitched as they came in) */
+      animation: hp-head-in calc(1000ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) calc((400ms + var(--i) * 90ms) * var(--mo, 1)) backwards, ld-par 1ms linear both;
+      animation-timeline: auto, scroll(root);
     }
+    @keyframes hp-head-in { from { opacity: 0; transform: translateY(24px); } }
     html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sc-p {
       --pk: var(--r); transform: translate3d(calc(var(--gx, 0) * var(--r) * -90px), calc(var(--gy, 0) * var(--r) * -90px), 0);
       animation: ld-par 1ms linear both; animation-timeline: scroll(root);

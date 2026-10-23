@@ -354,10 +354,11 @@ export function Landing({ onLive, onDemo }: {
     const start = () => window.addEventListener("deviceorientation", on, { passive: true });
     const D = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
     let ask: (() => void) | null = null;
-    const stopAsking = () => { if (ask) { window.removeEventListener("click", ask); window.removeEventListener("touchend", ask); } };
+    const stopAsking = () => { if (ask) window.removeEventListener("click", ask); };
     if (D && typeof D.requestPermission === "function") {
       ask = () => { D.requestPermission!().then((r) => { stopAsking(); if (r === "granted") start(); }).catch(() => { /* not a tap: ask on the next one */ }); };
-      window.addEventListener("click", ask); window.addEventListener("touchend", ask);
+      // Taps only: a touchend also ends every scroll swipe, and iOS put the prompt up mid-scroll (Zach, Oct 23)
+      window.addEventListener("click", ask);
     } else start();
     return () => { window.removeEventListener("deviceorientation", on); stopAsking(); cancelAnimationFrame(raf); };
   }, []);
@@ -365,18 +366,26 @@ export function Landing({ onLive, onDemo }: {
   useEffect(() => {
     const stage = phonesRef.current;
     if (!stage) return;
-    let idle = 0, io: IntersectionObserver | null = null;
+    let idle = 0, quiet = 0, io: IntersectionObserver | null = null, later: (() => void) | null = null;
     const start = () => {
       io = new IntersectionObserver((es) => {
         if (!es.some((e) => e.isIntersecting)) return;
         io?.disconnect();
         const go = () => setAppsGo(matchMedia("(min-width: 1024px)").matches ? "all" : "front");
-        idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 1200) as unknown as number;
+        // The embedded app boots on the page's own thread, so it waits until the arrivals have played and the reader
+        // has stopped scrolling for a beat; booting mid-scroll made the players hitch (Zach, Oct 23)
+        const boot = () => {
+          if (later) window.removeEventListener("scroll", later);
+          idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(go, { timeout: 4000 }) : setTimeout(go, 1200) as unknown as number;
+        };
+        later = () => { clearTimeout(quiet); quiet = window.setTimeout(boot, 1200); };
+        window.addEventListener("scroll", later, { passive: true });
+        quiet = window.setTimeout(boot, 3000);
       }, { rootMargin: "200px 0px" });
       io.observe(stage);
     };
     if (document.readyState === "complete") start(); else window.addEventListener("load", start, { once: true });
-    return () => { io?.disconnect(); window.removeEventListener("load", start); if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle); clearTimeout(idle); };
+    return () => { io?.disconnect(); clearTimeout(quiet); if (later) window.removeEventListener("scroll", later); window.removeEventListener("load", start); if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle); clearTimeout(idle); };
   }, []);
   useEffect(() => {
     const stage = phonesRef.current;
