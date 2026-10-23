@@ -269,14 +269,14 @@ html:root:not(#_):not(#_):not(#_) .orb-canvas { position: absolute; inset: 0; di
 html:root:not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; line-height: 0; color: #fff; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark .ai-mark { display: block; width: 20px; height: 20px; }
 
-/* Thinking, take two (Zach, Oct 23): the button keeps its lime fill with the AI mark animating on it in the dark ink,
+/* Thinking, take two (Zach, Oct 23): the button goes black with the AI mark animating on it in white,
    and the orb shows only as a stroke around the button: the orb is drawn a little larger than the button and masked
    to a 3px ring outside its edge. */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send[aria-busy="true"] { background: var(--action); color: var(--action-ink); overflow: visible; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send[aria-busy="true"] { background: #000; color: #fff; overflow: visible; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-orb {
   inset: -4px; z-index: 0; border-radius: 50%;
   -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
   mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
 }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark { color: var(--action-ink); }
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark .wkl { --lb-ink: currentColor; --lb-paper: var(--action); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark { color: #fff; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark .wkl { --lb-ink: #fff; --lb-paper: #000; }

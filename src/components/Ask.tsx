@@ -431,7 +431,7 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 if (working) { e.preventDefault(); deny(e.currentTarget, "Still working on the last answer. One moment."); }
                 else if (empty) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap a suggestion."); }
               }}>
-              {/* Thinking (Zach, Oct 23): the button keeps its fill and the AI mark animates on it, while the orb shows
+              {/* Thinking (Zach, Oct 23): the button goes black and the AI mark animates on it in white, while the orb shows
                   as a stroke around the button */}
               {working ? <><Orb className="ask-send-orb" size={1.2} backgroundColor="#000000" followCursor={false} clickPulse={false} hoverIntensity={0} rotateOnHover={false} /><span className="ask-send-mark"><WorkingLoader size={20} /></span></> : <ArrowUp />}
             </button>
