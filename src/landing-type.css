@@ -287,10 +287,10 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-off .ld2-sms
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv, .dv-main, .dv-read, .dv-rows) { width: 100%; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-accbar i) { transition: none !important; animation: none !important; }
 
-/* The readout's read: the finder's scan and Run it again, inside the trade card */
+/* The readout's read: the finder's scan and Replay, inside the trade card */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder .dv { margin-top: 0; }
-/* Run it again sits on the actions' row, at its left end */
+/* Replay sits on the actions' row, at its left end */
 /* From 720px it shares the actions' row at the left end; on phones, where the actions stack full width, it gets its
    own row under them (Zach, Oct 22: it was overlaying Write pitch) */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: relative; gap: 12px; }

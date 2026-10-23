@@ -83,7 +83,7 @@ type Phase = "wait" | "ask" | "think" | "test" | "say";
  * "When they say no": your notes on a league mate, the offer he turned down and why, and Source's answer to "How do
  * I make the Mike deal work?". All of it comes from the engine on the sample league. The Ask plays once when it
  * scrolls into view (the question, two working steps, the answer streaming in word by word as in the app), and again
- * on "Ask again". Nothing loops, and the card is its final size from the start. Reduced motion shows the answer.
+ * on "Replay". Nothing loops, and the card is its final size from the start. Reduced motion shows the answer.
  */
 export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
   /** The league mate: `demo.mike` */
@@ -96,7 +96,7 @@ export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
   avoid?: Trade;
   /** Shows "Try the demo" under the answer (Zach, Oct 23) and opens the reworked deal */
   onOpen?: (t: Trade) => void;
-  /** Called when "Ask again" is tapped, after the card starts its replay */
+  /** Called when "Replay" is tapped, after the card starts its replay */
   onAsk?: () => void;
 }) {
   const cell = useRef<HTMLElement>(null);
@@ -180,7 +180,7 @@ export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
           </div>
           <div className="lnc-foot">
             <button type="button" className="lnc-again" disabled={phase !== "say" || !done} onClick={() => { play(); onAsk?.(); }}>
-              <AiMark size={14} />Ask again
+              <Icon name="replay" size={14} />Replay
             </button>
             {onOpen && (
               <button type="button" className="lnc-open" disabled={!done} onClick={() => onOpen(story.after)}>

@@ -1,7 +1,7 @@
 /* "When they say no" (LandingNotesCard.tsx): your notes on a league mate, the offer he turned down and why, and
    Source's answer to how to make it work. Replaces the landing's old finder card in the "how" bento.
    Type follows landing-type.css: card title Clash 500 20/28, body 16/24 muted, labels Geist Mono 11px caps 0.08em.
-   Motion only on arrival or on "Ask again": the question rises in, the status line steps, the answer streams.
+   Motion only on arrival or on "Replay": the question rises in, the status line steps, the answer streams.
    No CSS image functions in this file. */
 
 /* ---------- Card ---------- */
@@ -66,7 +66,7 @@ html:root:not(#_):not(#_):not(#_) .lnc .lnc-after .ask-prow { min-height: 44px; 
 html:root:not(#_):not(#_):not(#_) .lnc .lnc-after .ask-prow > svg { display: none; }
 html:root:not(#_):not(#_):not(#_) .lnc .lnc-after .ask-nums { padding-top: 12px; border-top: 1px solid var(--line); }
 
-/* ---------- Footer: Ask again, and Open in builder when the page routes it ---------- */
+/* ---------- Footer: Replay, and Try the demo when the page routes it ---------- */
 html:root:not(#_):not(#_):not(#_) .lnc .lnc-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 html:root:not(#_):not(#_):not(#_) .lnc :is(.lnc-again, .lnc-open) {
   appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0; padding: 0 16px;

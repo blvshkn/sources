@@ -1089,7 +1089,7 @@ function FinderDemo({ run, children }: { run: () => Steps<Trade[]>; children: Re
         <div className={`ld2-found${phase === "done" ? " on" : ""}`} aria-hidden={phase !== "done"}>{children}</div>
         {phase !== "done" && <IdeaScan run={run} onDone={() => setPhase("done")} key={phase} paused={phase === "wait"} />}
       </div>
-      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><AiMark size={14} />Run it again</button>
+      <button className={`ld2-again${phase === "done" ? "" : " off"}`} tabIndex={phase === "done" ? 0 : -1} aria-hidden={phase !== "done"} onClick={() => setPhase("scan")}><Icon name="replay" size={14} />Replay</button>
     </div>
   );
 }
@@ -1188,7 +1188,7 @@ function LandingDeal({ trade, them, run, onOpen, onPitch }: { trade: Trade; them
           {side("You get", trade.get, true)}
         </div>
         {/* Source reads the deal when it scrolls into view (the finder's steps), then the readout appears in the same
-            space, so the card never changes size; Run it again replays the read (Zach, Oct 22: the Ideas card's
+            space, so the card never changes size; Replay replays the read (Zach, Oct 22: the Ideas card's
             interactions move here) */}
         <FinderDemo run={run}>
           <div className="dv">
