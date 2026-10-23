@@ -34,7 +34,8 @@ const Skel = ({ rows = 6 }: { rows?: number }) => <div className="gl-skel" aria-
 
 // ---- Game log -----------------------------------------------------------------------------
 type Col = { k: string; label: string; v: (s: Stats) => string; tip?: string };
-const n0 = (v: number | undefined) => String(Math.round(v ?? 0));
+/** Whole numbers for a game's line; a season average keeps one decimal (4.3 targets a game) */
+const n0 = (v: number | undefined) => { const x = v ?? 0; return Number.isInteger(Math.round(x * 10) / 10) ? String(Math.round(x)) : x.toFixed(1); };
 /** A ratio with one decimal, "–" when there's nothing to divide by. */
 const per = (a: number | undefined, b: number | undefined) => (b ? ((a ?? 0) / b).toFixed(1) : DASH);
 /** A stat Sleeper leaves off a played game's line is a zero (it only sends the stats that happened). */
@@ -90,6 +91,28 @@ export function GameLogTab({ s }: { s: Subject }) {
   const best = played.length ? Math.max(...played.map((r) => r.pts ?? 0)) : null;
   const beat = played.filter((r) => r.proj !== undefined && (r.pts ?? 0) >= r.proj).length;
   const withProj = played.filter((r) => r.proj !== undefined).length;
+
+  // The season's Total and Avg rows under the weeks (Zach, Oct 23): every stat summed over the games he played, and
+  // per game. Ratios (YPC, YPT) come from the summed stats, so they're the season's true rate.
+  const lines = played.filter((r) => r.stats);
+  const totals: Stats = {};
+  for (const r of lines) for (const [k, v] of Object.entries(r.stats!)) if (typeof v === "number") totals[k] = (totals[k] ?? 0) + v;
+  const avgs: Stats = Object.fromEntries(Object.entries(totals).map(([k, v]) => [k, (v ?? 0) / Math.max(1, lines.length)]));
+  const projSum = lines.reduce((a, r) => a + (r.proj ?? 0), 0), projN = lines.filter((r) => r.proj !== undefined).length;
+  const ptsSum = lines.reduce((a, r) => a + (r.pts ?? 0), 0);
+  const snapAll = totals.off_snp !== undefined && totals.tm_off_snp ? `${Math.round((totals.off_snp / totals.tm_off_snp) * 100)}%` : DASH;
+  const sumRow = (kind: "Total" | "Avg") => {
+    const st = kind === "Total" ? totals : avgs, k = kind === "Total" ? 1 : 1 / Math.max(1, lines.length);
+    return (
+      <tr key={kind} className={`gl-sumrow gl-${kind.toLowerCase()}`}>
+        <th scope="row" className="gl-s gl-wk" colSpan={2}>{kind}</th>
+        <td className="gl-s gl-pts">{(ptsSum * k).toFixed(1)}</td>
+        <td className="gl-proj">{projN ? (kind === "Total" ? projSum : projSum / projN).toFixed(1) : DASH}</td>
+        {skill && <td>{snapAll}</td>}
+        {groups.map((g) => g.cols.map((col, i) => <td key={`${g.label}${col.k}`} className={i === 0 ? "gl-g0" : undefined}>{col.v(st)}</td>))}
+      </tr>
+    );
+  };
 
   const row = (r: LogRow) => {
     // This week: points so far once his game is on (the live feed), otherwise just the projection
@@ -173,6 +196,7 @@ export function GameLogTab({ s }: { s: Subject }) {
                   </tr>
                 </thead>
                 <tbody>{log.v.rows.map(row)}</tbody>
+                {lines.length > 1 && <tfoot>{sumRow("Total")}{sumRow("Avg")}</tfoot>}
               </table>
             </div>
             <p className="pd-fine">

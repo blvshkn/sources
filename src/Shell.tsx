@@ -944,7 +944,8 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
       }} />}
       {/* Banners at the top right: new inbox items, and a newer build that stays until Refresh (appUpdate.ts). Toasts
           at the bottom stay for feedback on what you just did. */}
-      {!document.documentElement.classList.contains("in-frame") && <Banners dockKey={panelOpen} onClose={(id) => setBanners((bs) => bs.filter((b) => b.id !== id))}
+      {/* Not while the inbox is open: everything a banner says is right there in the list (Zach, Oct 23) */}
+      {!panelOpen && !document.documentElement.classList.contains("in-frame") && <Banners dockKey={panelOpen} onClose={(id) => setBanners((bs) => bs.filter((b) => b.id !== id))}
         items={[...(updateReady ? [{ id: "app-update", icon: "replay" as IconName, title: "Source has an update", text: "Refresh to get the latest.", sticky: true,
           action: { label: "Refresh", run: () => location.reload() } }] : []), ...banners]} />}
       {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
