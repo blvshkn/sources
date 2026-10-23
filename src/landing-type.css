@@ -284,7 +284,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-on { animati
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone.ld2-phone3d.gl-off .ld2-sms { box-shadow: 0 0 0 3.5cqi #1E1E20; }
 
 /* The landing's deal readout holds its full width from the first frame, and its bars are drawn full, not filled in */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv, .dv-main, .dv-read, .dv-rows) { width: 100%; min-width: 0; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv, .dv-main, .dv-read, .dv-rows) { width: 100%; max-width: none; min-width: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal :is(.dv-bar i, .dv-accbar i) { transition: none !important; animation: none !important; }
 
 /* The readout's read: the finder's scan and Replay, inside the trade card */
