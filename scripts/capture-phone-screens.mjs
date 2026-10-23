@@ -1,34 +1,23 @@
-// Recaptures the landing's phone screens from the live app, so the images shown before the app loads match it
+// Recaptures the landing's phone posters from the live app, so the image shown before the app loads matches it
 // exactly (Zach, Oct 23: the tab bar sits above the home bar in the live render; the old images had it lower).
-// Each phone's whole glass (status bar, the app under it, the tab bar and home bar) is captured at 780px wide from
-// the landing with ?gl=0, where every phone runs the real app.
+// Each poster is the app exactly as the phone's frame loads it (/?frame=demo#tab) at the glass's 390 x 847, 2x, in
+// Eastern time. The phone's status bar and home bar sit on top of it on the page, as they do over the live app.
+// Shot straight from the frame URL, not from the landing, where the phones are tilted in 3D.
 //   node scripts/capture-phone-screens.mjs <site> <outdir>
-// Writes wire.webp (front poster), trade.webp and waivers.webp (back posters) and trade-screen.webp and
-// waivers-screen.webp (the screens painted into the 3D back phones).
 import { chromium } from 'playwright';
 import sharp from 'sharp';
 const [site = 'https://fantasysource.app', out = 'public/phones'] = process.argv.slice(2);
 const b = await chromium.launch();
-async function grab(sel) {
-  const probe = await b.newPage({ viewport: { width: 1440, height: 1000 } });
-  await probe.goto(`${site}/?gl=0`, { waitUntil: 'load' });
-  const w = await probe.$eval(`${sel} .hp-scr`, (e) => e.clientWidth);
-  await probe.close();
-  const p = await b.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 780 / w });
-  await p.goto(`${site}/?gl=0`, { waitUntil: 'load' });
-  await p.waitForFunction((s) => document.querySelector(`${s} .hp-frame.on`), sel, { timeout: 90000 });
+const ctx = await b.newContext({ viewport: { width: 390, height: 847 }, deviceScaleFactor: 2, timezoneId: 'America/New_York', reducedMotion: 'reduce' });
+for (const [name, tab, front] of [['wire', 'wire', true], ['trade', 'trade', false], ['waivers', 'waivers', false]]) {
+  const p = await ctx.newPage();
+  await p.goto(`${site}/?frame=demo#${tab}`, { waitUntil: 'load' });
+  // The class the landing adds to each frame once it loads
+  await p.evaluate((f) => document.documentElement.classList.add(f ? 'frame-front' : 'frame-back'), front);
   await p.waitForTimeout(8000);
-  const buf = await (await p.$(`${sel} .hp-scr`)).screenshot({ animations: 'disabled' });
+  const buf = await p.screenshot({ animations: 'disabled' });
+  const info = await sharp(buf).resize({ width: 780 }).webp({ quality: 84 }).toFile(`${out}/${name}.webp`);
+  console.log(name, info.width, info.height, info.size);
   await p.close();
-  return sharp(buf).resize({ width: 780 }).png().toBuffer();
-}
-const shots = { wire: await grab('.hp-front'), trade: await grab('.hp-left'), waivers: await grab('.hp-right') };
-for (const [k, buf] of Object.entries(shots)) {
-  const info = await sharp(buf).webp({ quality: 84 }).toFile(`${out}/${k}.webp`);
-  console.log(k, info.width, info.height, info.size);
-  if (k !== 'wire') {
-    // The 3D textures are the same screen at the glass's 780 x 1692
-    await sharp(buf).resize(780, 1692, { fit: 'fill' }).webp({ quality: 84 }).toFile(`${out}/${k}-screen.webp`);
-  }
 }
 await b.close();
