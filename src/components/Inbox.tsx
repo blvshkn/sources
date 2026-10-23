@@ -18,7 +18,7 @@ import { AiMark } from "./WorkingLoader";
 export interface InboxItem {
   id: string;
   icon: IconName;
-  /** Two or three words: what kind of thing this is ("Before lock", "Trade offer", "Waiver add") */
+  /** Two or three words: what kind of thing this is ("Before kickoff lock", "Trade offer", "Waiver add") */
   title: string;
   /** When: "Now", "12 min ago", "Today". Sorts the item into Now, Today or Earlier this week. */
   time: string;
@@ -52,7 +52,7 @@ function waiversSoon(): boolean {
   const run = DAYS.indexOf(m[1].toLowerCase()), now = new Date(), d = now.getDay();
   return d === (run + 6) % 7 || (d === run && now.getHours() < 3);
 }
-const kindTitle: Record<Nudge["kind"], string> = { ir: "Injured reserve", need: "Trade idea", offer: "Trade offer", news: "League news", stale: "Tag check", lineup: "Before lock", waiver: "Waiver add", slot: "Slot report" };
+const kindTitle: Record<Nudge["kind"], string> = { ir: "Injured reserve", need: "Trade idea", offer: "Trade offer", news: "League news", stale: "Tag check", lineup: "Before kickoff lock", waiver: "Waiver add", slot: "Slot report" };
 
 /** Game-day alerts, live moments and the wire's nudges in one list, grouped by time and urgent first in each group.
  *  Built from the same data the Lineup and Wire screens use, so nothing here is invented for the feed. */
@@ -81,7 +81,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
     const lock = c.lockAt ? `Locks ${c.lockAt}` : undefined;
     const urgent = c.tone !== "info";
     out.push({
-      id: `chk-${c.key}`, icon: c.icon, title: urgent ? "Before lock" : c.key === "flex" ? "Flex call" : c.key === "bench" ? "Bench" : "Lineup",
+      id: `chk-${c.key}`, icon: c.icon, title: urgent ? "Before kickoff lock" : c.key === "flex" ? "Flex call" : c.key === "bench" ? "Bench" : "Lineup",
       time: "Now", meta: lock, text: c.text, urgent, ai: c.key === "flex",
       action: c.key === "flex" ? { label: "Compare them", run: () => go("roster:compare") }
         : c.key === "bench" ? { label: "Open waivers", run: () => go("waivers") }

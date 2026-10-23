@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [".github/workflows/phone-screens.yml", "scripts/capture-phone-screens.mjs"]
+    paths: [".github/workflows/phone-screens.yml", "scripts/capture-phone-screens.mjs", "scripts/rerender-back-phones.mjs"]
 permissions:
   contents: write
 concurrency: { group: phone-screens, cancel-in-progress: true }
@@ -22,6 +22,24 @@ jobs:
       - run: sleep 90
       - name: Capture the screens from the live app
         run: node scripts/capture-phone-screens.mjs https://fantasysource.app public/phones
+      - name: Screens for the 3D back phones, shot flat from the live app
+        run: node scripts/rerender-back-phones.mjs screens https://fantasysource.app public/phones
+      - name: Build with those screens and the pixel-ratio cap lifted
+        run: |
+          npm install --no-audit --no-fund
+          sed -i 's/Math.min(window.devicePixelRatio || 1, 2)/(window.devicePixelRatio || 1)/' src/components/phone3d.ts
+          # Software GL on the runner is slower than the page's 12s give-up before it falls back to the stills
+          sed -i 's/}, 12000);/}, 600000);/' src/components/Landing.tsx
+          npx vite build
+          git checkout src/components/phone3d.ts src/components/Landing.tsx
+      - name: Re-render the 3D back phones
+        # If the render fails, the posters still go in; the back phones keep their last good images
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          (npx vite preview --port 8765 --strictPort > preview.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://localhost:8765 >/dev/null && break; sleep 1; done
+          node scripts/rerender-back-phones.mjs render http://localhost:8765 public/phones || { git checkout public/phones/phone-image-left.webp public/phones/phone-image-right.webp public/phones/trade-screen.webp public/phones/waivers-screen.webp; exit 1; }
       - name: Commit the images
         run: |
           git config user.name "github-actions[bot]"
