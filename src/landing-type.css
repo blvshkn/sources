@@ -302,6 +302,14 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: rela
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 1 1 auto; height: 48px; min-height: 48px; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { flex: none; min-height: 48px; padding-inline: 12px; }
 }
+/* Desktop: Try the demo sits at the left edge; Replay then Write pitch at the right, Write pitch at its own width
+   (Zach, Oct 23). Replay lives outside the actions, so the row saves a slot for it left of Write pitch. */
+@media (min-width: 1024px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { padding-left: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { margin-right: auto; padding-inline: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 0 0 auto; width: 200px; margin-left: 120px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder > .ld2-again { left: auto; right: 208px; }
+}
 @media (max-width: 719px) {
   /* Replay sits to the left of Write pitch on one row (Zach, Oct 23); Try the demo centers under them. Replay lives
      outside the actions (it belongs to the scan), so the row keeps its column free and Replay is placed over it. */
