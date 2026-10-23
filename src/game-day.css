@@ -72,7 +72,8 @@ html:root:not(#_):not(#_):not(#_) .gd-odo [data-n] { font-family: inherit !impor
 html:root:not(#_):not(#_) .fo-name:has(.gd-trw) { display: flex; align-items: center; gap: 6px; min-width: 0; }
 html:root:not(#_):not(#_) .fo-side.them .fo-name:has(.gd-trw) { justify-content: flex-end; }
 /* The trophy sits on the name's inner side, toward VS (Zach): after your name, before theirs */
-html:root:not(#_):not(#_):not(#_) .fo-side.them .fo-name:has(.gd-trw) > :not(:first-child) { order: -1; }
+/* :has() sits on the child, not the name: a `X:has() > :not()` rule makes every :has change re-style the whole page */
+html:root:not(#_):not(#_):not(#_) .fo-side.them .fo-name > :not(:first-child):has(.gd-trw) { order: -1; }
 html:root:not(#_):not(#_) .gd-trw { position: relative; display: block; flex: none; width: 14px; height: 14px; perspective: 120px; }
 html:root:not(#_):not(#_) .gd-troph { position: absolute; inset: 0; }
 html:root:not(#_):not(#_) .gd-troph svg { display: block; width: 14px; height: 14px; }

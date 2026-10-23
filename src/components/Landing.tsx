@@ -18,13 +18,12 @@ import type { Answer, Trade } from "../engine";
 import type { Steps } from "../steps";
 import { cardHeight, draftPitch } from "../pitch";
 import { useLoadedIn } from "../loadedIn";
-import { useLive } from "../live";
 import { eff, fits } from "../engine";
 import { AiMark, AiMarkPlay } from "./WorkingLoader";
 import { LandingAsk } from "./LandingAsk";
 import { AskShowBlock, DealNumbers } from "./AskShow";
-import { SwapRows } from "./SwapRows";
-import { lockedIn, resultFor } from "../optimalLineup";
+import { LandingOptimal } from "./LandingOptimal";
+import { resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
@@ -104,7 +103,6 @@ export function Landing({ onLive, onDemo }: {
     metas.forEach((m) => { m.content = "#101211"; });
     return () => { document.title = prev; metas.forEach((m, i) => { m.content = was[i]; }); };
   }, []);
-  const live = useLive();
   const demo = useMemo(() => {
     const tags = activeTags(INITIAL_MANAGER_TAGS, 4);
     const needs = allNeeds();
@@ -129,11 +127,11 @@ export function Landing({ onLive, onDemo }: {
   // When the sample lineup is already right there'd be nothing to show (Zach, Oct 22), so the card starts from the
   // optimal lineup with two starters swapped for the closest bench player who fits, and shows the moves that undo it.
   const optDemo = useMemo(() => {
-    const cur = sleeperNow().mine, locked = lockedIn(live), fin = bestUnderLocks(cur, locked);
-    const res = resultFor(cur, fin, "off");
-    if (res.swaps.length) return res;
-    // Locks don't apply to the illustration: on a game night most of the sample roster is locked and nothing could move
-    const open = bestUnderLocks(cur, () => false);
+    // Locks don't apply to the illustration (on a game night most of the sample roster is locked and nothing could
+    // move), and live data doesn't either, so the card shows the same two moves from first paint on (Zach, Oct 22)
+    const cur = sleeperNow().mine, open = bestUnderLocks(cur, () => false);
+    const res = resultFor(cur, open, "off");
+    if (res.swaps.length >= 2) return res;
     const before = open.map((s) => ({ ...s }));
     const bench = YOU.roster.filter((id) => !open.some((s) => s.id === id));
     const picks = before.flatMap((s, i) => {
@@ -146,7 +144,7 @@ export function Landing({ onLive, onDemo }: {
     const used = new Set<string>();
     for (const k of picks) { if (used.size === 2) break; if (used.has(k.id)) continue; before[k.i].id = k.id; used.add(k.id); }
     return resultFor(before, open, "off");
-  }, [live]);
+  }, []);
   const watched = useMemo(() => waiverRecs(YOU).find((r) => r.pick)?.fa ?? null, []);
   const [doc, setDoc] = useState<"legal" | "how" | null>(null);
   // The FAQ's "Still have a question?" opens the app's Ask screen as a sheet; its mark waves on view and on hover
@@ -797,8 +795,9 @@ export function Landing({ onLive, onDemo }: {
           <article className="card ld-cell ld2-reveal ld2-opt-cell">
             <h3>Set optimal lineup</h3>
             <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
+            {/* The Lineup tab's Set optimal lineup, played from a script with the engine's moves (LandingOptimal.tsx) */}
             {optDemo.swaps.length > 0
-              ? <div ref={setInert}><SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /></div>
+              ? <LandingOptimal res={optDemo} />
               : <p className="ld2-opt-none">{optDemo.summary}</p>}
           </article>
           <article className="card ld-cell ld2-reveal ld2-sync-cell">

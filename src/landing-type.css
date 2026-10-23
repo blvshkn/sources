@@ -582,5 +582,23 @@ html:root:not(#_):not(#_):not(#_) :is(.env-lines, .app-lines, .ld2-endlines) img
 html:root:not(#_):not(#_):not(#_) .ld2-endlines { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
 html:root:not(#_):not(#_):not(#_) .app-lines img { opacity: 0.32; }
 
+/* ---------- Set optimal lineup card (LandingOptimal.tsx) ---------- */
+/* The landing's Set optimal lineup card (components/LandingOptimal.tsx). The block is the Lineup tab's own .lu-ai
+   (optimal-lineup.css) with the same box it gets there, inside the bento cell. A hidden finished copy shares the grid
+   cell with the live one, so the card is always its final size and nothing below it moves when the run plays. */
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .ld2-optl { display: grid; margin-top: auto; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .ld2-optl > * { grid-area: 1 / 1; min-width: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .ld2-optl-ghost { visibility: hidden; pointer-events: none; }
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .ld2-optl > .lu-ai { align-self: start; }
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai {
+  --lu-ai-ease: var(--ease-out);
+  margin: 0; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0;
+  container: lu-ai / inline-size;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2);
+}
+html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai .ask-show { margin-top: 0; }
+@media (min-width: 600px) {
+  html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai { padding: 14px 16px; }
+}
 /* Phones: the pinned lines at half strength (Zach, Oct 22: "the lines are too crazy") */
 @media (max-width: 860px) { html:root:not(#_):not(#_):not(#_):not(#_) .env-lines img { opacity: 0.5; } }
