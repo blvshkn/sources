@@ -73,3 +73,24 @@ if (typeof document !== "undefined") {
     e.clipboardData.setData("text/plain", clean);
   });
 }
+
+// Copying (Zach, Oct 23): an offensive, racist, homophobic or transphobic word someone wrote never leaves the chat.
+// Whatever is selected is copied with each hidden word swapped for a friendly football word. Typing fields are left
+// alone. One listener for the whole app, added once.
+const SWAPS = ["touchdown", "football", "teammate", "kickoff", "friend", "huddle", "champion", "sunshine"];
+const swapFor = (w: string) => SWAPS[[...w].reduce((n, c) => n + c.charCodeAt(0), 0) % SWAPS.length];
+export const cleanCopy = (text: string) =>
+  cleanWords(text).map((w) => w.map((r) => (r.hide ? swapFor(r.t) : r.t)).join("")).join("");
+if (typeof document !== "undefined" && !(window as unknown as { __cleanCopy?: boolean }).__cleanCopy) {
+  (window as unknown as { __cleanCopy?: boolean }).__cleanCopy = true;
+  document.addEventListener("copy", (e) => {
+    const t = e.target as HTMLElement | null;
+    if (t && t.closest?.("input, textarea, [contenteditable='true']")) return;
+    const text = window.getSelection()?.toString() ?? "";
+    if (!text) return;
+    const clean = cleanCopy(text);
+    if (clean === text || !e.clipboardData) return;
+    e.clipboardData.setData("text/plain", clean);
+    e.preventDefault();
+  });
+}
