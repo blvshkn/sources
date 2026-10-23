@@ -197,17 +197,21 @@ export function Landing({ onLive, onDemo }: {
     const setBand = () => { if (band) el.style.setProperty("--bandh", `${band.offsetHeight}px`); };
     setBand(); window.addEventListener("resize", setBand, { passive: true });
     // The lime: the band's box bent along the same curve the letters ride (amp, f and ph match the letters below)
-    const drawLime = (amp: number, f: number, ph: number) => {
+    // The ends round off while it blows in (Zach, Oct 23: the sharp corners looked janky) and square up as it flattens
+    // against the screen's edges. Points every 4px so the curve reads smooth, not as a chain of kinks.
+    const drawLime = (amp: number, f: number, ph: number, k: number) => {
       if (!band || !lime) return;
-      const W = band.clientWidth, H = band.clientHeight, step = 12, top: string[] = [], bot: string[] = [];
-      for (let x = -step; x <= W + step; x += step) {
-        const y = amp * Math.sin(x * f - ph);
-        top.push(`${x},${y.toFixed(1)}`); bot.unshift(`${x},${(H + y).toFixed(1)}`);
-      }
-      lime.setAttribute("d", `M${top.join("L")}L${bot.join("L")}Z`);
+      const W = band.clientWidth, H = band.clientHeight, step = 4, top: string[] = [], bot: string[] = [];
+      const r = Math.min(H / 3, 18) * Math.min(1, k * 4);
+      const y = (x: number) => (amp * Math.sin(x * f - ph)).toFixed(2), yb = (x: number) => (H + amp * Math.sin(x * f - ph)).toFixed(2);
+      for (let x = r + step; x < W - r; x += step) { top.push(`${x},${y(x)}`); bot.unshift(`${x},${yb(x)}`); }
+      const L = top.length ? `L${top.join("L")}` : "", B = bot.length ? `L${bot.join("L")}` : "";
+      lime.setAttribute("d",
+        `M0,${(+y(0) + r).toFixed(2)}Q0,${y(0)} ${r},${y(r)}${L}L${W - r},${y(W - r)}Q${W},${y(W)} ${W},${(+y(W) + r).toFixed(2)}` +
+        `L${W},${(+yb(W) - r).toFixed(2)}Q${W},${yb(W)} ${W - r},${yb(W - r)}${B}L${r},${yb(r)}Q0,${yb(0)} 0,${(+yb(0) - r).toFixed(2)}Z`);
     };
     const wave = (k: number) => {
-      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); drawLime(0, 1, 0); flat = true; } return; }
+      if (k < 0.002) { if (!flat) { letters.forEach((l) => { l.style.transform = ""; }); drawLime(0, 1, 0, 0); flat = true; } return; }
       flat = false;
       if (!xs.length) measure();
       const w = run?.offsetWidth || 1;
@@ -216,7 +220,7 @@ export function Landing({ onLive, onDemo }: {
       // gather into each dip like fabric bunching, then spread out again as it flattens
       const amp = Math.min(40, window.innerWidth * 0.03) * k, len = Math.max(300, window.innerWidth * 0.3), ph = window.scrollY / 70;
       const f = (2 * Math.PI) / len, gather = amp * 0.6;
-      drawLime(amp, f, ph);
+      drawLime(amp, f, ph, k);
       letters.forEach((l, i) => {
         const x = xs[i] - shift, a = x * f - ph;
         const y = amp * Math.sin(a);
