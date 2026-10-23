@@ -99,12 +99,14 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
 function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof useLive>; them?: boolean }) {
   const known = live.points[p.id] !== undefined, g = known ? live.games[p.nfl] ?? null : null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
   // Locked once his game kicks off, like every other row that shows him (Zach, Oct 23: "He played so he should be locked")
-  const played = g === "in_game" || g === "complete";
-  const lockAt = useTurnedAt(played, (v) => v);
-  const lock = played ? <StoneLock at={lockAt} /> : null;
+  // The lock (Zach, Oct 23): stamps at kickoff, steps aside once he's on the board (the flame, smoke or cold carries
+  // the row while he plays), and comes back when his game is final. Same rule as PtsCell.
+  const pace = g === "in_game" ? onPace(pts, proj, live.left?.[p.nfl]) : null, heat = g === "in_game" ? heatOf(pts, proj, pace) : null;
+  const showLock = g === "complete" || (g === "in_game" && pts === 0 && !heat);
+  const lockAt = useTurnedAt(showLock, (v) => v);
+  const lock = showLock ? <StoneLock at={lockAt} /> : null;
   if (g === "in_game") {
     markLive(p.id);
-    const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
     return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{pts.toFixed(1)}</span></NumTip></b>{pace !== null
       ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip>
       : <small>proj {proj.toFixed(1)}</small>}</span>;

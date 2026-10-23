@@ -56,8 +56,11 @@ export function PtsCell({ id, g, proj, cls = "lu-pts", them = false, stone = fal
   const smokeAt = useTurnedAt(heat, (v) => v === "heating");
   const was = useRef(heat), caught = useRef(false);
   if (was.current !== heat) { caught.current = was.current === "heating" && heat === "fire"; was.current = heat; }
-  const lockAt = useTurnedAt(stone, (v) => v);
-  const lock = stone ? <StoneLock at={lockAt} /> : null;
+  // The lock (Zach, Oct 23): it stamps at kickoff, steps aside once he's on the board (no lock while he plays; the
+  // flame, smoke or cold carries the row), and comes back when his game is final
+  const showLock = stone && (g.state === "complete" || (live && g.pts === 0 && !heat));
+  const lockAt = useTurnedAt(showLock, (v) => v);
+  const lock = showLock ? <StoneLock at={lockAt} /> : null;
   if (live) {
     markLive(id);
     const note = heat === "fire" ? ", past his projection" : heat === "heating" ? ", on pace to beat his projection" : heat === "cold" ? ", on pace to fall short" : "";
