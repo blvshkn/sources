@@ -553,6 +553,7 @@ export function Landing({ onLive, onDemo }: {
   // Each answer stands on its own, so search and AI answers can quote it without the question
   const faqs: [string, string][] = [
     ["What is Source?", "Source is a free trade tool for Sleeper fantasy football leagues. It reads your league, measures what every team needs at each starting slot, and builds trades that raise both teams' starting points. It also drafts the pitch, lineup fixes and waiver bids."],
+    ["What kind of tool is Source?", "A fantasy trade calculator. Source is here to help you get better outcomes on trades and set the optimal lineup for your team. It doesn't support prop bets or betting of any kind. Vegas lines only help shape its point projections."],
     ["Is Source free?", "Yes. Every screen is free, from trade ideas to waiver bids. Connect your Sleeper league with just your username."],
     ["Do you need my Sleeper password?", "No. Source only needs your Sleeper username. League data comes from Sleeper's public API, so there's nothing to sign into."],
     ["Can Source make moves in my league?", "No. Source is read only and can't change anything in your Sleeper league. It drafts offers, lineup changes and waiver bids. You make every move yourself."],
