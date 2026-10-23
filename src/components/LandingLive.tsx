@@ -24,7 +24,10 @@ import { Icon } from "./ui";
 type Beat = 0 | 1 | 2 | 3 | 4;
 const ORDER: Record<string, number> = { in_game: 0, complete: 1, pre_game: 2 };
 // When each moment lands after the board arrives (or after Replay), in real ms
-const AT_MS = [0, 250, 1500, 3100, 4700];
+const AT_MS = [0, 250, 1500, 2700, 4300];
+// Between the big play and on fire the hot player's points keep climbing in steps, so he rolls straight into the flame
+// instead of holding still and then jumping (Zach, Oct 22)
+const TWEEN = [0.25, 0.5, 0.75];
 // The moments rewind the live starters' game to the middle of it and play it forward to the sample Sunday as it is
 // (beat 4 is the sample exactly, the same Live state the face-off section above shows). Share of the game left, and
 // each player's points as a share of where he is on the sample Sunday. The hot one smokes after a big play (on pace
@@ -59,21 +62,23 @@ export function LandingLive(): JSX.Element {
   }, [base, rows]);
 
   /** The sample Sunday at a beat: the two players' points and game clocks rewound, Sleeper's team score with them */
-  const weekAt = useMemo(() => (b: Beat): Live => {
+  const weekAt = useMemo(() => (b: Beat, tw = 0): Live => {
     if (b === 4) return base;
     const points = { ...base.points }, left = { ...base.left }, teamPts = { ...base.teamPts };
+    const at = (xs: number[]) => (b === 2 && tw > 0 ? xs[2] + (xs[3] - xs[2]) * tw : xs[b]);
     const move = (p: Player | undefined, share: number[]) => {
       if (!p) return;
-      const now = r1((base.points[p.id] ?? 0) * share[b]);
+      const now = r1((base.points[p.id] ?? 0) * at(share));
       teamPts[YOU.id] = (teamPts[YOU.id] ?? 0) + now - (points[p.id] ?? 0);
       points[p.id] = now;
-      sameGame(p.nfl).forEach((t) => { left[t] = Math.max(LEFT[b], base.left[t] ?? 0); });
+      sameGame(p.nfl).forEach((t) => { left[t] = Math.max(at(LEFT), base.left[t] ?? 0); });
     };
     move(hot, HOT); move(cold, COLD);
     return { ...base, points, left, teamPts };
   }, [base, hot, cold]);
 
   const [beat, setBeat] = useState<Beat>(0);
+  const [tw, setTw] = useState(0);
   // Remounting the rows lets a moment replay from the state just before it, with nothing animating on the way back
   const [run, setRun] = useState(0);
   // When each moment last played, so its icon in the list plays with it
@@ -81,7 +86,7 @@ export function LandingLive(): JSX.Element {
   const timers = useRef<number[]>([]);
   const board = useRef<HTMLDivElement>(null);
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
-  const land = (b: Beat) => { setBeat(b); setPlayedAt((p) => p.map((x, i) => (i === b ? performance.now() : x))); };
+  const land = (b: Beat) => { setBeat(b); setTw(0); setPlayedAt((p) => p.map((x, i) => (i === b ? performance.now() : x))); };
 
   /** Play moments `from` to `to` in order, starting from the board as it was just before `from` */
   const play = (from: Beat, to: Beat) => {
@@ -93,6 +98,7 @@ export function LandingLive(): JSX.Element {
     for (let b = from; b <= to; b++) {
       const at = from === to ? 450 : AT_MS[b] - t0 + 450;
       timers.current.push(window.setTimeout(() => land(b as Beat), at));
+      if (b === 2 && to >= 3) TWEEN.forEach((f) => timers.current.push(window.setTimeout(() => setTw(f), at + (AT_MS[3] - AT_MS[2]) * f)));
     }
   };
 
@@ -104,12 +110,13 @@ export function LandingLive(): JSX.Element {
       if (!es.some((e) => e.isIntersecting)) return;
       io.disconnect();
       AT_MS.slice(1).forEach((ms, i) => timers.current.push(window.setTimeout(() => land((i + 1) as Beat), ms)));
+      TWEEN.forEach((f) => timers.current.push(window.setTimeout(() => setTw(f), AT_MS[2] + (AT_MS[3] - AT_MS[2]) * f)));
     }, { threshold: 0.2 });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
   }, []);
 
-  const week = weekAt(beat);
+  const week = weekAt(beat, tw);
   const count = playCount(week, starters.map((p) => p.nfl));
 
   // Each moment's line, from the engine's own numbers at that beat

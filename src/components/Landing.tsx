@@ -126,10 +126,12 @@ export function Landing({ onLive, onDemo }: {
     const cur = sleeperNow().mine, locked = lockedIn(live), fin = bestUnderLocks(cur, locked);
     const res = resultFor(cur, fin, "off");
     if (res.swaps.length) return res;
-    const before = fin.map((s) => ({ ...s }));
-    const bench = YOU.roster.filter((id) => !fin.some((s) => s.id === id) && !locked(id));
+    // Locks don't apply to the illustration: on a game night most of the sample roster is locked and nothing could move
+    const open = bestUnderLocks(cur, () => false);
+    const before = open.map((s) => ({ ...s }));
+    const bench = YOU.roster.filter((id) => !open.some((s) => s.id === id));
     const picks = before.flatMap((s, i) => {
-      if (!s.id || locked(s.id)) return [];
+      if (!s.id) return [];
       const was = eff(playerById(s.id), true);
       const b = bench.map((id) => playerById(id)).filter((p) => fits(s.slot, p.pos) && eff(p, true) < was)
         .sort((x, y) => eff(y, true) - eff(x, true))[0];
@@ -137,7 +139,7 @@ export function Landing({ onLive, onDemo }: {
     }).sort((x, y) => x.loss - y.loss);
     const used = new Set<string>();
     for (const k of picks) { if (used.size === 2) break; if (used.has(k.id)) continue; before[k.i].id = k.id; used.add(k.id); }
-    return resultFor(before, fin, "off");
+    return resultFor(before, open, "off");
   }, [live]);
   const watched = useMemo(() => waiverRecs(YOU).find((r) => r.pick)?.fa ?? null, []);
   const [doc, setDoc] = useState<"legal" | "how" | null>(null);
