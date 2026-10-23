@@ -248,7 +248,7 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
       </>}
       {doc && (
         <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
-          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
+          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc />}</article>
         </DetailSheet>
       )}
     </>

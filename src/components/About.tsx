@@ -1,6 +1,5 @@
 import { Icon } from "./ui";
 
-const UPDATED = "October 23, 2026";
 
 function Back({ onBack }: { onBack: () => void }) {
   return <button className="st-back doc-back" onClick={onBack}><Icon name="chev" size={16} />Settings</button>;
@@ -22,7 +21,7 @@ export function Legal({ onBack }: { onBack: () => void }) {
   return (
     <>
       <Back onBack={onBack} />
-      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="lock" size={20} /></span>Terms and legal</h1><p className="page-meta">Last updated {UPDATED}</p></div></header>
+      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="lock" size={20} /></span>Terms and legal</h1></div></header>
       <article className="card doc"><LegalDoc /></article>
     </>
   );
@@ -92,10 +91,9 @@ export function HowItWorksDoc() {
 }
 
 /** The terms text on its own, for the page and for the sheet Settings opens it in */
-export function LegalDoc({ dated = false }: { dated?: boolean }) {
+export function LegalDoc() {
   return (
     <>
-      {dated && <p className="doc-updated">Last updated {UPDATED}</p>}
     <section>
       <h2>Terms of use</h2>
       <ul>
@@ -105,7 +103,7 @@ export function LegalDoc({ dated = false }: { dated?: boolean }) {
         <li><b>You make the moves.</b> Source never sends a message, trade or lineup change for you. You decide what to do in your league and you're responsible for it.</li>
         <li><b>Be decent.</b> Don't use pitches or tags to harass anyone in your league.</li>
         <li><b>People only.</b> Automated access to the AI features (bots, scripts, scrapers or anything posing as a person) isn't allowed. Requests that look automated are refused.</li>
-        <li><b>Changes.</b> These terms may change as Source grows. The date at the top shows the latest version. Using Source after a change means you accept it.</li>
+        <li><b>Changes.</b> These terms may change as Source grows. Using Source after a change means you accept it.</li>
         <li><b>Limits.</b> To the extent the law allows, Source isn't liable for losses tied to decisions made with it, including lost games, trades or prizes.</li>
       </ul>
     </section>

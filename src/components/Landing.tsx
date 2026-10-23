@@ -931,7 +931,7 @@ export function Landing({ onLive, onDemo }: {
       {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} faqs={faqs} />}
       {doc && (
         <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
-          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc dated />}</article>
+          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc />}</article>
         </DetailSheet>
       )}
     </div>
