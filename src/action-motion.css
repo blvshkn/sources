@@ -127,3 +127,13 @@ html:root:not(#_):not(#_):not(#_) :is(.psr-row, .lsw-row, .sr-main, .set-link, .
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.brief-row, .wk-row, .lu-row.tap, .wv-row, .pick, .vb-row:not(:disabled), button.st-row, .psr-row, .lsw-row, .set-link, .card.wk > .wk-more, .sr-main):active { transform: scale(0.985) !important; }
 }
+
+/* ---------- Update toast (appUpdate.ts): stays up until Refresh. It sits where toasts do, and lifts above a regular
+   toast if one shows. ---------- */
+html:root:not(#_):not(#_):not(#_) .toast.update-toast { cursor: default; padding-right: 8px; gap: 12px; transition: translate var(--dur-fast) var(--ease-out); }
+html:root:not(#_):not(#_):not(#_) body:has(.swipe-toast) .toast.update-toast { translate: 0 -64px; }
+html:root:not(#_):not(#_):not(#_) .toast.update-toast .update-toast-go { height: 32px; min-height: 32px; padding: 0 14px; border-radius: 999px; flex: none; }
+@media (prefers-reduced-motion: no-preference) {
+  @starting-style { html:root:not(#_):not(#_):not(#_) .toast.update-toast { opacity: 0; translate: 0 24px; } }
+  html:root:not(#_):not(#_):not(#_) .toast.update-toast { transition: opacity var(--dur-fast) var(--ease-out), translate calc(240ms * var(--mo, 1)) var(--ease-spring, var(--ease-out)); }
+}

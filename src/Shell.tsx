@@ -58,6 +58,8 @@ import { useDismiss } from "./components/useDismiss";
 import { mo } from "./motion";
 import { matches, store, useMedia, usePersist } from "./persist";
 import "./appStyles";
+import { useAppUpdate } from "./appUpdate";
+import { UpdateToast } from "./components/UpdateToast";
 
 export { PullRefresh } from "./components/PullRefresh";
 
@@ -176,6 +178,8 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   // id keys the visible toast; the same message arriving while one is showing keeps its id, so it stays put (its
   // timer restarts) instead of remounting and replaying the entrance. seq keys the live region so a repeat is still announced.
   const [toast, setToastState] = useState<{ msg: string; undo?: () => void; id: number; seq: number } | null>(null);
+  // Not inside the landing's phones: the page around them handles its own loading
+  const updateReady = useAppUpdate(typeof document !== "undefined" && !document.documentElement.classList.contains("in-frame"));
   const toastSeq = useRef(0);
   const setToast = useCallback((msg: string | null, undo?: () => void) => setToastState((prev) => {
     if (!msg) return null;
@@ -914,6 +918,8 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
         if (via) haptic();
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
+      {/* A newer build is live: a toast that stays until Refresh (appUpdate.ts) */}
+      {updateReady && <UpdateToast />}
       {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
       <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.seq}>{toast.msg}</span>}</div>
       {/* On document.body, so it sits above sheets and modals (they portal there too) */}
