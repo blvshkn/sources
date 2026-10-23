@@ -460,3 +460,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; 
 /* The landing's backdrop (glow, field, grain) reaches under Safari's floating toolbar, so there's no dark band
    where the page shows through below the small viewport (Zach, Oct 22: "what's this black bar?") */
 html:root:not(#_):not(#_):not(#_) .ld2-env { inset: 0 0 auto 0; height: calc(100lvh + 120px); bottom: auto; }
+
+/* The edge blur runs to the true bottom of the screen, under Safari's toolbar, so its lower edge sits flush instead
+   of stopping above it (Zach, Oct 22, iPad) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur {
+  bottom: calc(100svh - 100lvh); height: calc(clamp(64px, 11vh, 112px) + 100lvh - 100svh);
+}
