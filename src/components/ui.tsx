@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, PointerEvent as RPointerEvent } from "react";
 import { Player, onBye } from "../data";
 import { fmt } from "../engine";
 
@@ -7,6 +7,7 @@ import { Icon, type IconName } from "./icons";
 import { Tooltip } from "./Tooltip";
 import { AiMark } from "./WorkingLoader";
 import { mo } from "../motion";
+import { haptic } from "../haptics";
 import { MorphPill, RollNum } from "../gameDayMotion";
 export { Icon };
 export type { IconName } from "./icons";
@@ -89,8 +90,42 @@ export function Seg<T extends string>({ value, options, onChange, label, thumb =
     ro.observe(seg);
     return () => ro.disconnect();
   }, [value, thumb, options.length]);
+  // Drag to pick (Zach, Oct 23): press anywhere on the track and slide; the thumb snaps to whichever option is under the
+  // finger, with a light tick per change, like the iOS control. A drag swallows the click it ends in, so letting go
+  // never snaps back to where it started. Vertical swipes still scroll the page (touch-action: pan-y in CSS).
+  const drag = useRef<{ id: number; x0: number; moved: boolean; at: T } | null>(null);
+  const eat = useRef(false);
+  const optAt = (x: number): T | null => {
+    const btns = ref.current ? [...ref.current.querySelectorAll<HTMLElement>(":scope > button")] : [];
+    let best = -1, d = Infinity;
+    btns.forEach((b, i) => { const r = b.getBoundingClientRect(); const dd = x < r.left ? r.left - x : x > r.right ? x - r.right : 0; if (dd < d) { d = dd; best = i; } });
+    return best >= 0 ? options[best].v : null;
+  };
+  const down = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!thumb || e.button !== 0) return;
+    drag.current = { id: e.pointerId, x0: e.clientX, moved: false, at: value };
+  };
+  const move = (e: RPointerEvent<HTMLDivElement>) => {
+    const g = drag.current;
+    if (!g || g.id !== e.pointerId) return;
+    if (!g.moved) {
+      if (Math.abs(e.clientX - g.x0) < 6) return;
+      g.moved = true;
+      try { ref.current?.setPointerCapture(e.pointerId); } catch { /* fine without capture */ }
+    }
+    const v = optAt(e.clientX);
+    if (v && v !== g.at) { g.at = v; haptic("tap"); onChange(v); }
+  };
+  const up = (e: RPointerEvent<HTMLDivElement>) => {
+    const g = drag.current;
+    if (!g || g.id !== e.pointerId) return;
+    drag.current = null;
+    if (g.moved) { eat.current = true; window.setTimeout(() => { eat.current = false; }, 0); }
+  };
   return (
-    <div ref={ref} className={`seg${thumb ? " has-thumb" : ""}`} role="group" aria-label={label}>
+    <div ref={ref} className={`seg${thumb ? " has-thumb" : ""}`} role="group" aria-label={label}
+      onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => { drag.current = null; }}
+      onClickCapture={(e) => { if (eat.current) { e.stopPropagation(); e.preventDefault(); eat.current = false; } }}>
       {options.map((o) => <button key={o.v} aria-pressed={value === o.v} onClick={() => onChange(o.v)}>{o.icon && <Icon name={o.icon} size={16} />}{o.label}</button>)}
       {thumb && <span ref={th} className="seg-thumb" aria-hidden="true" />}
     </div>

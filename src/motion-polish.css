@@ -19,3 +19,11 @@ html:root:not(#_):not(#_) .seg-thumb {
 }
 /* Round icon X buttons press to 0.94 like every other icon button (the 0.97 above is for text buttons) */
 html:root:not(#_):not(#_):not(#_) :is(.ps-x, .ibx-x, .qs-x, .saved-x):active:not(:disabled) { transform: scale(0.94) !important; }
+
+/* Drag to pick (ui.tsx Seg): horizontal drags go to the control, vertical swipes still scroll the page */
+html:root:not(#_):not(#_) .seg.has-thumb { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+/* Phones: a segmented control fills its row, options sharing it equally (Zach, Oct 23: "On mobile it should fill") */
+@media (max-width: 719px) {
+  html:root:not(#_):not(#_):not(#_) .seg.has-thumb { display: flex; width: 100%; max-width: none; }
+  html:root:not(#_):not(#_):not(#_) .seg.has-thumb > button { flex: 1 1 0; min-width: 0; justify-content: center; }
+}
