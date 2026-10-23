@@ -149,6 +149,11 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish {
   display: inline-flex; align-items: center; transition: color calc(150ms * var(--mo, 1)) ease-out;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish:hover { color: var(--ink); text-decoration: none; }
+/* Until the row stacks: the text button sits at the left edge, Write pitch at the right at its own width (Zach, Oct 23) */
+@container pg (min-width: 700px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions .linkish { margin-right: auto; padding-left: 0; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-actions:has(.linkish) .btn-primary { flex: 0 0 auto; width: 200px; }
+}
 /* The tip spans the same width as the rows, one even inset */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .dv-main > .tip { width: 100%; box-sizing: border-box; margin: 0; padding: 12px 16px; align-items: center; }
 

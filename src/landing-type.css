@@ -302,9 +302,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-deal .ld2-finder { position: rela
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 1 1 auto; height: 48px; min-height: 48px; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { flex: none; min-height: 48px; padding-inline: 12px; }
 }
-/* Desktop: Try the demo sits at the left edge; Replay then Write pitch at the right, Write pitch at its own width
-   (Zach, Oct 23). Replay lives outside the actions, so the row saves a slot for it left of Write pitch. */
-@media (min-width: 1024px) {
+/* Tablet and desktop, until the row stacks: Try the demo sits at the left edge; Replay then Write pitch at the right,
+   Write pitch at its own width (Zach, Oct 23). Replay lives outside the actions, so the row saves a slot for it. */
+@media (min-width: 720px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions { padding-left: 0; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .linkish { margin-right: auto; padding-inline: 0; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-deal .dv-actions .btn-primary { flex: 0 0 auto; width: 200px; margin-left: 120px; }
