@@ -247,3 +247,14 @@ html:root:not(#_):not(#_):not(#_) .st-lead:empty { display: none; }
   /* With no first line to share, an empty spacer keeps the tabs at the right so they don't jump between tabs */
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-body, .ps-body) > .ph-stick > .st-lead:empty { display: block; flex: 1 1 0; }
 }
+
+/* Player sheet week switch (Zach, Oct 23): the arrows sit right next to "Week 7" instead of at the far edge, and are
+   a size down (32px). The label column holds a minimum so the arrows don't shift between Week 9 and Week 10. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd-weeknav {
+  grid-template-columns: minmax(64px, max-content) 32px 32px !important; justify-content: start !important; column-gap: 6px !important; min-height: 32px !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd-weeknav > .lu-weeknav-lbl { margin-right: 8px; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd-weeknav > .btn-icon {
+  width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important;
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd-weeknav > .btn-icon svg { width: 14px !important; height: 14px !important; }
