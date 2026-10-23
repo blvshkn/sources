@@ -370,12 +370,11 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-form:focus-within { box-shadow: i
    off the page. Drawn in CSS under the render; nothing animates. */
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-phone::after {
   content: ""; position: absolute; left: 2%; right: 2%; top: 95%; height: 11%; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(42% 30% at 50% 22%, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%),
-    radial-gradient(50% 50% at 50% 30%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%);
-  filter: blur(6px);
+  /* No filter: blur here. Safari draws a blurred child of a 3D-turned phone as a dark rectangle (Zach, Oct 22: "the dark
+     box is behind the phones"), so the softness lives in the gradient's own falloff */
+  background: radial-gradient(closest-side at 50% 35%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.6) 30%, rgba(0, 0, 0, 0.28) 58%, rgba(0, 0, 0, 0.08) 82%, rgba(0, 0, 0, 0) 100%);
 }
-html:root:not(#_):not(#_):not(#_):not(#_) .hp-back::after { left: -4%; right: -4%; height: 13%; opacity: 0.8; filter: blur(10px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .hp-back::after { left: -4%; right: -4%; height: 13%; opacity: 0.8; }
 html:root:not(#_):not(#_):not(#_):not(#_) .hp-stage.gl-try .hp-phone::after { opacity: 0; }
 
 /* Live board rows (Zach, Oct 22): room between the position chip and a smaller avatar. Phones 36px, wider 40px */
@@ -446,7 +445,7 @@ html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-spk { display: none; }
   html:root:not(#_):not(#_):not(#_):not(#_) .sc-p { opacity: 0.45; }
 }
 /* Hero phone shadows read on the dark page: a deeper, wider pool */
-html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; right: -6%; top: 94%; height: 16%; filter: blur(12px); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; right: -6%; top: 94%; height: 16%; }
 
 /* The landing's backdrop (glow, field, grain) reaches under Safari's floating toolbar, so there's no dark band
    where the page shows through below the small viewport (Zach, Oct 22: "what's this black bar?") */
