@@ -280,3 +280,8 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-orb {
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark { color: #fff; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark .wkl { --lb-ink: #fff; --lb-paper: #000; }
+/* Centered: the orb's container sets width and height to 100%, which beat the -4px inset on the right and bottom and
+   shifted the ring up and left. Pin it 4px out on every side instead. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-orb.orb-container {
+  position: absolute; top: -4px; left: -4px; right: auto; bottom: auto; width: calc(100% + 8px); height: calc(100% + 8px);
+}
