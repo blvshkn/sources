@@ -63,3 +63,9 @@ html:root:not(#_):not(#_) .lu-list .ss .ss-best .ss-best-gain { color: var(--goo
 /* The menu spans the open row's outlined box edge to edge, on every size (Zach: it should flex and fill). placeSwap
    puts the box's left and right insets on the anchor as --sw-l / --sw-r. */
 html:root:not(#_):not(#_):not(#_) .lu-list .lu-pick-at > .mu-swap.lu-pick { left: var(--sw-l, 12px); right: var(--sw-r, 12px); width: auto; }
+
+/* Already played (Zach, Oct 23): the row's fill (hover, press, open) becomes an outline. He can't be moved, so the
+   row doesn't look like something to grab. The lock itself stays as it is. */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done:is(:hover, :active, .is-open, .on, [aria-pressed="true"]) { background-color: transparent !important; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done::after { background: transparent !important; box-shadow: inset 0 0 0 1px var(--line); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-list .lu-row.is-done:is(:hover, :active, :focus-visible, .is-open)::after { opacity: 1 !important; }
