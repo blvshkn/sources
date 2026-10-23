@@ -626,3 +626,8 @@ html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai .ask-show { margin-top: 0
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay) { color: #fff; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay):disabled { opacity: 1; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ld2-again, .lnc-again, .ll-replay) .ic { color: var(--lime); }
+/* One size for all three: the live section's Replay matches the trade and Ask cards' (Zach, Oct 23: it felt small) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
+  width: 112px; min-height: 48px; height: 48px; padding: 0 12px; justify-content: center; gap: 6px;
+  font: 500 0.875rem/1 var(--font-body); letter-spacing: normal; text-transform: none;
+}
