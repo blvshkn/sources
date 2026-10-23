@@ -481,3 +481,9 @@ html:root:not(#_):not(#_):not(#_) .hp-r-front { z-index: 2; left: calc(50% + (-0
 }
 /* The message phone's still covers the drawn body exactly (render offset 0.26%, width 99.47% of it) */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone3d-img { position: absolute; left: 0.26cqi; top: 0.27cqi; width: 99.47cqi; height: auto; max-width: none; z-index: 2; pointer-events: none; }
+
+/* On touch screens a swipe over the front phone scrolled the app inside it instead of the page (Zach, Oct 22: "why is
+   this happening on scroll in the phone?"), so there the phone is a picture of the app; "Try the demo" opens the real one */
+@media (hover: none) and (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_) .hp-frame { pointer-events: none; }
+}
