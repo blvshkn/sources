@@ -13,6 +13,29 @@ import type { Steps, TraceEv } from "./steps";
 import type { Tracer } from "./think";
 import { optimalJob, type OptimalResult } from "./optimalLineup";
 import { aiHeaders, offReason, type AiOff } from "./aiClient";
+import { loadPosWeeks, usageFor, type PosWeeks } from "./usage";
+
+/** Each player's usage from Sleeper's weekly stats (Zach, Oct 23: Ask said it had no targets): every stat the player
+ *  sheet shows (snap share, targets, carries, catches, yards, red-zone looks...), as [last 3 games, season] per game,
+ *  plus games played. The same stats Sleeper filters by, so Ask can rank waiver WRs by targets. Read from Sleeper in
+ *  the browser (no Source function call) and cached with the player sheet's. */
+type Use = Record<string, number | [number, number]>;
+let usagePromise: Promise<Record<string, PosWeeks | null>> | null = null;
+export async function usageContext(): Promise<(p: Pick<Player, "id" | "pos">) => Use | undefined> {
+  usagePromise ??= Promise.all((["QB", "RB", "WR", "TE"] as const).map((pos) => loadPosWeeks(pos).catch(() => null)))
+    .then(([QB, RB, WR, TE]) => ({ QB, RB, WR, TE }));
+  const data = await usagePromise;
+  const memo = new Map<string, Use | undefined>();
+  return (p) => {
+    if (memo.has(p.id)) return memo.get(p.id);
+    const d = data[p.pos];
+    const u = d ? usageFor(p as Player, d) : null;
+    const out = u ? Object.fromEntries([["games", u.games], ...u.rows.map((r) => [r.key, [round1(r.pct ? r.last3 * 100 : r.last3), round1(r.pct ? r.season * 100 : r.season)]])]) as Use : undefined;
+    memo.set(p.id, out);
+    return out;
+  };
+}
+let useOf: ((p: Pick<Player, "id" | "pos">) => Use | undefined) | null = null;
 
 /** One finished turn, sent back with the next question so "what about him?" works. */
 export interface AskTurnLog { q: string; a: string }
@@ -20,7 +43,7 @@ export interface AskTurnLog { q: string; a: string }
 /** About this much JSON at most. Bigger leagues lose detail (bench rest-of-season numbers, then IR and taxi) first. */
 export const CONTEXT_BUDGET = 25_000;
 
-type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | string; ros?: number; status?: string; bye?: true; starter?: true; pts?: number };
+type CtxPlayer = { id: string; name: string; pos: string; nfl: string; proj?: number | string; ros?: number; status?: string; bye?: true; starter?: true; pts?: number; use?: Use };
 
 /** What Ask says for a player with no projection this week, in the context and in any reply. */
 export const NO_PROJ = "no projection this week";
@@ -43,6 +66,7 @@ function playerRow(p: Player, live: Live | undefined, starter: boolean, lean: bo
   const status = p.injury ?? (p.status === "O" ? "Out" : p.status === "Q" ? "Questionable" : undefined);
   if (status) row.status = p.note ? `${status} (${p.note})` : status;
   if (starter) row.starter = true;
+  if (!lean || starter) { const u = useOf?.(p); if (u) row.use = u; }
   const pts = live?.points[p.id];
   if (typeof pts === "number" && live?.games[p.nfl] && live.games[p.nfl] !== "pre_game") row.pts = round1(pts);
   return row;
@@ -106,7 +130,8 @@ export function leagueContext(live?: Live): Record<string, unknown> {
       ...(a.drops.length ? { dropped: a.drops.map((p) => `${p.name} (${p.teamId})`) } : {}), ...(a.bid !== undefined ? { bid: a.bid } : {}),
       daysAgo: Math.max(0, Math.round((Date.now() - a.at) / 864e5)),
     }));
-    const fa = FREE_AGENTS.slice(0, lean ? 6 : 10).map((f) => ({ id: f.id, name: f.name, pos: f.pos, nfl: f.nfl, ros: f.proj, ...(f.rostered !== undefined ? { rosteredPct: f.rostered } : {}) }));
+    const fa = FREE_AGENTS.slice(0, lean ? 6 : 10).map((f) => { const u = lean < 2 ? useOf?.(f as unknown as Player) : undefined;
+      return { id: f.id, name: f.name, pos: f.pos, nfl: f.nfl, ros: f.proj, ...(f.rostered !== undefined ? { rosteredPct: f.rostered } : {}), ...(u ? { use: u } : {}) }; });
     const mu = matchups(live);
     return {
       league: { name: LEAGUE.name, season: LEAGUE.season, week: WEEK, scoring: formatLabel(currentFormat()), ...(LEAGUE.type ? { type: LEAGUE.type } : {}), teams: TEAMS.length, ...(isDemo() ? { demo: true } : {}) },
@@ -254,6 +279,8 @@ export function askJob(q: string, engine: (q: string) => Steps<Answer>, history:
     await tr.think(ruled && plan ? plan : "I'll read your whole league, then ask Source AI to answer from it.");
     const playerCount = TEAMS.reduce((n, t) => n + t.roster.length + (t.ir?.length ?? 0) + (t.taxi?.length ?? 0), 0);
     await tr.step("Reading your league", `Read your league (${TEAMS.length} teams, ${playerCount} players)`, { chips: [{ label: LEAGUE.name, kind: "team" }] });
+    // Usage for every player (targets, snaps, carries...), loaded once and cached
+    useOf = await usageContext().catch(() => null);
     const league = leagueContext(live);
     const base = ruled ? await play(g, second, tr) : (second.done ? second.value : null);
     // Start/sit: the same signals and AI check as Set optimal lineup, so both give the same moves and reasons
