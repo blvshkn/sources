@@ -314,9 +314,14 @@ export function Landing({ onLive, onDemo }: {
       if (v !== last) { last = v; els.forEach((el) => el.style.setProperty("--maxs", v)); }
     };
     measure();
-    const ro = new ResizeObserver(measure); ro.observe(document.body);
-    window.addEventListener("resize", measure);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); els.forEach((el) => el.style.removeProperty("--maxs")); };
+    // Settled changes only (Zach, Oct 23: an FAQ opening hitched). The page grows a little every frame while an answer
+    // opens, and measuring and restyling the hero on each of those frames cost a frame now and then. The hero is off
+    // screen by then, so one update once the page stops changing is enough.
+    let t = 0;
+    const later = () => { window.clearTimeout(t); t = window.setTimeout(measure, 200); };
+    const ro = new ResizeObserver(later); ro.observe(document.body);
+    window.addEventListener("resize", later);
+    return () => { window.clearTimeout(t); ro.disconnect(); window.removeEventListener("resize", later); els.forEach((el) => el.style.removeProperty("--maxs")); };
   }, []);
   useEffect(() => {
     const stage = phonesRef.current;
