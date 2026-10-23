@@ -101,16 +101,16 @@ html:root:not(#_):not(#_) .ld2-env .env-field {
 html:root:not(#_):not(#_) .ld2-env .env-turf {
   inset: 0 auto auto 50%; width: 2400px; height: 170%; margin-left: -1200px;
   background:
-    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.09) 158px 160px),
-    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 27% / 100% 18px no-repeat,
-    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 37% / 100% 18px no-repeat;
+    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.32) 158px 160px),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.3) 22px 23px) 0 27% / 100% 18px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.3) 22px 23px) 0 37% / 100% 18px no-repeat;
 }
 /* The field under the closing call to action keeps its place, with the same line colors */
 html:root:not(#_):not(#_) .ld2-endfield .env-turf {
   background:
-    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.09) 158px 160px),
-    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 46% / 100% 18px no-repeat,
-    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.07) 22px 23px) 0 62% / 100% 18px no-repeat;
+    repeating-linear-gradient(90deg, transparent 0 158px, rgba(216, 242, 74, 0.32) 158px 160px),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.3) 22px 23px) 0 46% / 100% 18px no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(242, 243, 238, 0.3) 22px 23px) 0 62% / 100% 18px no-repeat;
 }
 /* The headshots' cut-out ring takes the new ground */
 /* Desktop: the glow lies flat, 140% x 80% centered 110% down, under the field */
