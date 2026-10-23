@@ -111,7 +111,7 @@ export function LandingNotesCard({ them, notes, tags, avoid, onOpen, onAsk }: {
   useEffect(() => {
     const el = askRef.current;
     if (!el || typeof IntersectionObserver === "undefined") { setSeen(true); return; }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect(); } }, { rootMargin: "0px 0px -20% 0px" });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect(); } }, { rootMargin: "0px 0px 0px 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, []);

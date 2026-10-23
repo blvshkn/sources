@@ -11,7 +11,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .main-inner > .page-tabs.pt-sticky::be
   /* Up to the screen's top edge, under the top bar, so bar and tabs are one surface instead of two layers stacked */
   top: calc(-1 * (var(--pt-top, 0px) + 8px)); bottom: -8px; left: calc(-1 * var(--pt-l, 0px)); right: calc(-1 * var(--pt-r, 0px));
   /* The bottom nav's surface (nav.css .tabbar.ix), the same one the scrolled top bar takes (top-nav-match.css) */
-  background: rgba(15, 17, 16, 0.9); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  background: rgba(15, 17, 16, 0.9); -webkit-backdrop-filter: blur(48px); backdrop-filter: blur(48px);
   box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
   opacity: 0; transition: opacity calc(180ms * var(--mo, 1)) var(--ease-out);
 }

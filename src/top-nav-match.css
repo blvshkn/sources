@@ -7,7 +7,7 @@
     content: "" !important; display: block !important; position: absolute; z-index: -1; pointer-events: none;
     left: 0; right: 0; top: calc(-1 * env(safe-area-inset-top, 0px)); bottom: 0; height: auto; margin: 0;
     background: rgba(15, 17, 16, 0.9) !important;
-    -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(48px) !important; backdrop-filter: blur(48px) !important;
     box-shadow: 0 4px 20px 8px rgba(0, 0, 0, 0.15);
   }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar::before {

@@ -3740,7 +3740,7 @@ html:root:not(#_) { --surface: rgba(30, 33, 31, 0.78); }
 html:root:not(#_) .topbar {
   /* One surface for every bar (Zach, Oct 22): the bottom nav's #0F1110 at 90% with a 24px blur */
   background: rgba(15, 17, 16, 0.9) !important;
-  -webkit-backdrop-filter: blur(24px) !important; backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(48px) !important; backdrop-filter: blur(48px) !important;
 }
 html:root:not(#_) .deal-tray { background: rgba(24, 27, 25, 0.72) !important; -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); }
 /* Sheets and their scrim are solid: a full-screen blur under a sliding sheet cost frames on phones, and the sheet was

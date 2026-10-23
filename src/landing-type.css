@@ -136,7 +136,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-nav::before {
   content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%);
   /* The app's bar surface: the same as its top and bottom navs */
   background: rgba(15, 17, 16, 0.9);
-  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(48px); backdrop-filter: blur(48px);
   /* No drop shadow on the landing's bar (Zach, Oct 22) */
   box-shadow: none;
   opacity: 0; transition: opacity calc(320ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
@@ -447,3 +447,12 @@ html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-spk { display: none; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { margin-bottom: 0; line-height: 1; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-bleed { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
 }
+
+/* Phones and tablets: the drifting player dots keep to the screen's edges, half off it, so they never sit on copy */
+@media (max-width: 1023px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .sc-p.sc-l { left: -22px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .sc-p.sc-r { right: -22px !important; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .sc-p { opacity: 0.45; }
+}
+/* Hero phone shadows read on the dark page: a deeper, wider pool */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; right: -6%; top: 94%; height: 16%; filter: blur(12px); }

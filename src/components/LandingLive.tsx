@@ -104,7 +104,7 @@ export function LandingLive(): JSX.Element {
       if (!es.some((e) => e.isIntersecting)) return;
       io.disconnect();
       AT_MS.slice(1).forEach((ms, i) => timers.current.push(window.setTimeout(() => land((i + 1) as Beat), ms)));
-    }, { threshold: 0.4 });
+    }, { threshold: 0.2 });
     io.observe(el);
     return () => { io.disconnect(); clear(); };
   }, []);
