@@ -141,8 +141,9 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
   const g = gameNow(live, p.id, p.nfl);
   const where = bench ? "On your bench" : `Starting at ${SLOT_LABEL[slot] ?? slot}`;
   const sheet = !tap && onOpen;
-  // Set in stone: a row you can't move because his game kicked off
-  const stone = !!tap?.lock && kicked(g);
+  // Set in stone: his game kicked off, so the row is locked everywhere it shows (Zach, Oct 23: "He played so he
+  // should be locked. Everywhere")
+  const stone = kicked(g);
   const lockAt = useTurnedAt(stone, (v) => v);
   return (
     <div data-pid={p.id} className={`lu-row${bench ? " bench" : ""}${swap ? " has-swap" : ""}${sheet ? " tap" : ""}${tapCls(tap)}${playCls(g, onBye(p.nfl))}${ai ? ` ai-${ai}` : ""}`}
@@ -178,7 +179,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
   useKickoffs();
   const g = gameNow(live, p.id, p.nfl);
   const out = p.status === "O";
-  const stone = !!tap?.lock && kicked(g);
+  const stone = kicked(g);
   const lockAt = useTurnedAt(stone, (v) => v);
   return (
     <div data-pid={p.id} className={`lu-row${bench ? " bench" : ""}${swapTo ? " has-swap" : ""}${tapCls(tap)}${playCls(g, bye)}`} {...(tap ? tapProps(tap) : {})}>

@@ -9,7 +9,7 @@ import { PX } from "./pixelIcons";
 
 export type IconName =
   | "overview" | "headset" | "hatGlasses" | "league" | "trade" | "roster" | "check" | "x" | "lock" | "copy" | "msg" | "send" | "share" | "alert"
-  | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "ai" | "clock" | "eye" | "helmet" | "pen"
+  | "waivers" | "ask" | "gear" | "mic" | "chev" | "group" | "app" | "plug" | "trash" | "spark" | "ai" | "clock" | "stopwatch" | "eye" | "helmet" | "pen"
   | "target" | "trophy" | "values" | "activity" | "tendencies" | "switch" | "plus" | "search" | "bell" | "bookmark"
   | "download" | "image" | "mail" | "star" | "shield" | "replay"
   | "userPlus" | "table" | "listOrdered" | "columns2";

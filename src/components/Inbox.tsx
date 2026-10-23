@@ -253,7 +253,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
         <AskIcon size={18} />
         <label htmlFor="ibx-q" className="sr-only">Ask about your league</label>
         <input id="ibx-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about your league" autoComplete="off" />
-        <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Source"><Icon name="ask" size={16} /></button>
+        <button className="btn btn-icon btn-sm ibx-send" type="submit" aria-label="Ask Source"><Icon name="send" size={16} /></button>
       </form>
     </>
   );

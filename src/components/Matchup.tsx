@@ -174,7 +174,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
           const e = edges[i];
           const lock = starterLock(me);
           // Set in stone: locked because his game kicked off (not a finished week's lock on a row that never played)
-          const stone = !!lock && !!me && kickedOff(gameNow(live, me.id, me.nfl));
+          const stone = !!me && kickedOff(gameNow(live, me.id, me.nfl));
           const options: SwapOption[] = bench.filter((p) => fits(s.slot, p.pos)).sort((a, b) => eff(b, true) - eff(a, true)).map((p) => {
             // A bench player whose game already started can't come in: dimmed, marked Locked, and a tap says why
             const d = eff(p, true) - pts(s.id);
@@ -195,7 +195,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
               </button>
               {cmp}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" slot={s.slot} />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+              <span className={`mu-theirs${rowCls(them)}`}><Who p={them} side="them" slot={s.slot} stone={!!them && kickedOff(gameNow(live, them.id, them.nfl))} />{them ? <PtsCell id={them.id} g={gameNow(live, them.id, them.nfl)} proj={proj(them.id)} cls="lu-pts mu-pts" them stone={kickedOff(gameNow(live, them.id, them.nfl))} /> : <span className="mu-pts">0.0</span>}</span>
               {open === i && <SwapPicker menuRef={swapEl} title={title} empty={`No bench player can play ${s.slot}.`} options={options} />}
             </div>
           );
@@ -205,7 +205,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
           // or DEF on your roster, through the same menu
           const them = oppK[i] ?? null, e = kEdges[i], idx = mine.length + i, me = x.player;
           const lock = starterLock(me);
-          const stone = !!lock && !!me && kickedOff(gameNow(live, me.id, me.nfl));
+          const stone = !!me && kickedOff(gameNow(live, me.id, me.nfl));
           const options: SwapOption[] = benchK.filter((p) => p.pos === x.slot).sort((a, b) => spPts(live, b) - spPts(live, a)).map((p) => {
             const d = round1(spPts(live, p) - spPts(live, me));
             return { key: p.id, who: <SpecialWho p={p} side="you" />, name: p.name, pts: spPts(live, p), delta: d, up: d >= 0, lock: candidateLock(p), onPick: (from: Element) => swapK(i, p, from), cmp: cmpNow(p, spPts(live, p)) };
@@ -222,7 +222,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
               </button>
               {cmp}
               <span className={`mu-edge ${e > 0 ? "up" : e < 0 ? "down" : ""}`}>{e === 0 ? "even" : fmt(e)}</span>
-              <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho p={them?.player ?? null} suggested={them?.suggested} side="them" slot={x.slot} />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them /> : <span className="mu-pts">0.0</span>}</span>
+              <span className={`mu-theirs${spCls(them?.player ?? null)}`}><SpecialWho p={them?.player ?? null} suggested={them?.suggested} side="them" slot={x.slot} stone={!!them?.player && kickedOff(gameNow(live, them.player.id, them.player.nfl))} />{them?.player ? <PtsCell id={them.player.id} g={gameNow(live, them.player.id, them.player.nfl)} proj={specialPts(them.player)} cls="lu-pts mu-pts" them stone={kickedOff(gameNow(live, them.player.id, them.player.nfl))} /> : <span className="mu-pts">0.0</span>}</span>
               {open === idx && <SwapPicker menuRef={swapEl} title={title} empty={`No other ${x.slot === "DEF" ? "defense" : "kicker"} on your roster.`} options={options} />}
             </div>
           );

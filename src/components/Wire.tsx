@@ -1,4 +1,5 @@
-import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useState } from "react";
+import { StoneLock, useTurnedAt } from "../gameDayMotion";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
@@ -97,14 +98,18 @@ function Improve({ you, partner, partnerId, onGo }: { you: TeamNeeds; partner: s
  *  with the flame once he's past his projection. */
 function WkPts({ p, live, them = false }: { p: Player; live: ReturnType<typeof useLive>; them?: boolean }) {
   const known = live.points[p.id] !== undefined, g = known ? live.games[p.nfl] ?? null : null, proj = eff(p, true), pts = live.points[p.id] ?? 0;
+  // Locked once his game kicks off, like every other row that shows him (Zach, Oct 23: "He played so he should be locked")
+  const played = g === "in_game" || g === "complete";
+  const lockAt = useTurnedAt(played, (v) => v);
+  const lock = played ? <StoneLock at={lockAt} /> : null;
   if (g === "in_game") {
     markLive(p.id);
     const pace = onPace(pts, proj, live.left?.[p.nfl]), heat = heatOf(pts, proj, pace);
-    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{pts.toFixed(1)}</span></NumTip></b>{pace !== null
+    return <span className={`wk-pts live${heat ? ` heat-${heat}` : ""}`}><b data-pts={pts.toFixed(1)}>{lock}{heat && <HeatMark heat={heat} />}<NumTip {...soFarTip(proj)}><span>{pts.toFixed(1)}</span></NumTip></b>{pace !== null
       ? <NumTip {...paceTip(pace)}><small className={`lu-pace ${(pace >= proj) !== them ? "up" : "down"}`}>pace {pace.toFixed(1)}</small></NumTip>
       : <small>proj {proj.toFixed(1)}</small>}</span>;
   }
-  if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" />;
+  if (g === "complete") return <FinalPts id={p.id} pts={pts} proj={proj} cls="wk-pts" lock={lock} />;
   // Not started: the number is his projection, labelled like the live (pace) and final (proj) rows, so every row reads the same
   return <span className="wk-pts muted"><NumTip {...PROJ_TIP}><b>{proj.toFixed(1)}</b></NumTip><small>proj</small></span>;
 }
@@ -225,32 +230,14 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
   const detail = injuryDetail;
   const injured = [...hurt(YOU.roster.map(playerById)).map((p) => ({ p, you: true })), ...hurt(theirs).map((p) => ({ p, you: false }))];
   const dates = [lockLine(), DEADLINES.waivers, DEADLINES.trade].filter(Boolean);
-  // Key dates goes under whichever column is shorter (Zach, Oct 22), so the two sides end close to even instead of
-  // leaving an empty block under Game day. One column (phones): it stays last.
-  const colsRef = useRef<HTMLDivElement>(null);
-  const [datesLeft, setDatesLeft] = useState(false);
-  useLayoutEffect(() => {
-    const cols = colsRef.current; if (!cols) return;
-    const place = () => {
-      const main = cols.querySelector<HTMLElement>(".cc-main"), side = cols.querySelector<HTMLElement>(".cc-side");
-      const kd = cols.querySelector<HTMLElement>(".cc-dates");
-      if (!main || !side || !kd || getComputedStyle(cols).display !== "grid") { setDatesLeft(false); return; }
-      const gap = parseFloat(getComputedStyle(main).rowGap) || 0, k = kd.offsetHeight + gap;
-      const inLeft = main.contains(kd);
-      const mainH = main.offsetHeight - (inLeft ? k : 0), sideH = side.offsetHeight - (inLeft ? 0 : k);
-      setDatesLeft(mainH < sideH);
-    };
-    place();
-    const ro = new ResizeObserver(place); ro.observe(cols);
-    cols.querySelectorAll(".cc-col").forEach((c) => ro.observe(c));
-    return () => ro.disconnect();
-  }, []);
+  // Key dates spans the full width under both columns (Zach, Oct 23: "Key dates should fill"), its dates side by side,
+  // so neither column ends on an empty block. One column (phones): it stays last.
   const keyDates = dates.length > 0 && <section className="card wk cc-dates" aria-label="Key dates">
         <div className="wk-head"><h2 className="section-title">Key dates</h2></div>
-        {dates.map((d) => <div key={d} className="wk-date"><Icon name="clock" size={16} /><span>{d}</span></div>)}
+        <div className="cc-dates-row">{dates.map((d) => <div key={d} className="wk-date"><Icon name="stopwatch" size={16} /><span>{d}</span></div>)}</div>
       </section>;
   return (
-    <div className="cc-cols" ref={colsRef}>
+    <div className="cc-cols">
       <div className="cc-col cc-main">
       <section className="card wk cc-days" aria-label="When your starters play">
         <div className="wk-head"><h2 className="section-title">Game day</h2><span className="tiny muted">Your starters</span></div>
@@ -267,7 +254,6 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
           </div>
         ))}
       </section>
-      {datesLeft && keyDates}
       </div>
 
       <div className="cc-col cc-side">
@@ -282,9 +268,8 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
           </button>
         ))}
       </section>
-
-      {!datesLeft && keyDates}
       </div>
+      {keyDates}
     </div>
   );
 }
