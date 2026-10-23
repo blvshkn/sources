@@ -61,7 +61,8 @@ html:root:not(#_):not(#_) .ps-brief:has(.ps-x) > .brief-row > svg:last-child { m
 html:root:not(#_):not(#_) .ps-brief > .brief-row > .grow { margin-right: 0; }
 html:root:not(#_):not(#_) .ps-brief > .ps-x, html:root:not(#_):not(#_) .ps-brief > span > .ps-x { right: 0; }
 /* "Not right now" under the waiver add text: a small text button, not an X. The row makes room for it below. */
-html:root:not(#_):not(#_):not(#_) .ps-brief:has(> span > .brief-snooze, > .brief-snooze) > .brief-row { padding-bottom: 40px !important; }
+/* The Tooltip wrapper by class, not `span`: a tag inside :has() makes every span inserted anywhere re-check :has up the page */
+html:root:not(#_):not(#_):not(#_) .ps-brief:has(> .tt-wrap > .brief-snooze, > .brief-snooze) > .brief-row { padding-bottom: 40px !important; }
 html:root:not(#_):not(#_):not(#_) .ps-brief .brief-snooze {
   position: absolute; left: var(--snooze-x, 96px); bottom: 10px; height: 26px; padding: 0 10px; border: 0; border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--muted); font: 500 0.75rem/1 var(--font-body); cursor: pointer;

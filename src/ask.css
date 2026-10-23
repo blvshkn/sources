@@ -89,7 +89,8 @@ html:root:not(#_):not(#_) .ask-act {
   transition: background-color calc(160ms * var(--mo, 1)) var(--ask-ease), transform calc(160ms * var(--mo, 1)) var(--ask-ease);
 }
 html:root:not(#_):not(#_) .ask-act svg { flex: none; margin-right: -2px; }
-html:root:not(#_):not(#_) .ask-act:last-child:not(:has(svg)) { padding-right: 16px; }
+/* .ic (the Icon svg) rather than `svg`: a tag inside :has() makes every svg inserted anywhere re-check :has up the page */
+html:root:not(#_):not(#_) .ask-act:last-child:not(:has(.ic)) { padding-right: 16px; }
 @media (hover: hover) and (pointer: fine) {
   html:root:not(#_):not(#_) .ask-act:hover { background: color-mix(in srgb, var(--surface-3) 80%, var(--ink) 20%); }
 }

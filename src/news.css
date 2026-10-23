@@ -113,7 +113,8 @@ html:root:not(#_):not(#_) .nxr-list { display: grid; grid-template-columns: minm
 html:root:not(#_):not(#_) .nxr-all { margin-top: 10px; }
 
 /* Intel fills the column: the news card and intel cards use the full width instead of a 760px reading measure */
-html:root:not(#_):not(#_) .main-inner:has(> .nudge, > .followup, > .nxr) > :not(.page-head):not(.page-tabs) { max-width: none !important; }
+/* (written on the child rather than as .main-inner:has(...) > :not(...), which makes every :has change re-style the whole page) */
+html:root:not(#_):not(#_) .main-inner > :not(.page-head):not(.page-tabs):is(.nudge, .followup, .nxr, .nudge ~ *, .followup ~ *, .nxr ~ *, :has(~ .nudge, ~ .followup, ~ .nxr)) { max-width: none !important; }
 
 /* Player */
 html:root:not(#_):not(#_) .nxr-g { display: grid; border-top: 1px solid var(--line); transition: border-color var(--st-dur, calc(160ms * var(--mo, 1))) var(--st-ease, ease-out); }

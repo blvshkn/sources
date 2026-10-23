@@ -116,27 +116,35 @@ export function LandingLive(): JSX.Element {
     return () => { io.disconnect(); clear(); };
   }, []);
 
-  const week = weekAt(beat, tw);
+  // One Live state per beat (and tween step), so the face-off below gets the same object back on a re-render
+  const week = useMemo(() => weekAt(beat, tw), [weekAt, beat, tw]);
   const count = playCount(week, starters.map((p) => p.nfl));
 
-  // Each moment's line, from the engine's own numbers at that beat
-  const winAt = (b: Beat) => matchNow(weekAt(b)).chance ?? 50;
-  const swing = (b: Beat) => {
-    const a = winAt((b - 1) as Beat), z = winAt(b);
-    return a === z ? `win chance holds at ${z}%` : `win chance ${z > a ? "up" : "down"} ${a}% to ${z}%`;
-  };
-  const finals = rows.filter((p) => gameNow(base, p.id, p.nfl).state === "complete");
-  const paceOf = (p: Player, b: Beat) => {
-    const w = weekAt(b);
-    return onPace(w.points[p.id] ?? 0, eff(p, true), w.left[p.nfl]) ?? 0;
-  };
+  // Each moment's line, from the engine's own numbers at that beat. They only depend on the sample Sunday, so the win
+  // model runs once here instead of several times on every beat and tween step.
+  const lines = useMemo(() => {
+    const at = ([0, 1, 2, 3, 4] as Beat[]).map((b) => weekAt(b));
+    const win = at.map((w) => matchNow(w).chance ?? 50);
+    const swing = (b: Beat) => {
+      const a = win[b - 1], z = win[b];
+      return a === z ? `win chance holds at ${z}%` : `win chance ${z > a ? "up" : "down"} ${a}% to ${z}%`;
+    };
+    const finals = rows.filter((p) => gameNow(base, p.id, p.nfl).state === "complete");
+    const paceOf = (p: Player, b: Beat) => onPace(at[b].points[p.id] ?? 0, eff(p, true), at[b].left[p.nfl]) ?? 0;
+    return {
+      1: finals.length ? `${names(finals)} ${finals.length > 1 ? "are" : "is"} done. Set in stone.` : "Finished games set in stone.",
+      2: hot ? `${last(hot)} +${r1((at[2].points[hot.id] ?? 0) - (at[1].points[hot.id] ?? 0)).toFixed(1)}, ${swing(2)}.` : "",
+      3: hot ? `${last(hot)} passes his ${eff(hot, true).toFixed(1)} projection, ${swing(3)}.` : "",
+      4: cold ? `${last(cold)} on pace for ${paceOf(cold, 4).toFixed(1)}, ${swing(4)}.` : "",
+    };
+  }, [weekAt, rows, base, hot, cold]);
   const moments: { b: Beat; title: string; line: string; icon: ReactNode }[] = [
-    { b: 1, title: "Finals lock in", line: finals.length ? `${names(finals)} ${finals.length > 1 ? "are" : "is"} done. Set in stone.` : "Finished games set in stone.", icon: <StoneLock at={playedAt[1]} /> },
+    { b: 1, title: "Finals lock in", line: lines[1], icon: <StoneLock at={playedAt[1]} /> },
     ...(hot ? [
-      { b: 2 as Beat, title: "Big play", line: `${last(hot)} +${r1((weekAt(2).points[hot.id] ?? 0) - (weekAt(1).points[hot.id] ?? 0)).toFixed(1)}, ${swing(2)}.`, icon: <PixelSmoke at={playedAt[2]} /> },
-      { b: 3 as Beat, title: "On fire", line: `${last(hot)} passes his ${eff(hot, true).toFixed(1)} projection, ${swing(3)}.`, icon: <PixelFlame at={playedAt[3]} caught={playedAt[3] > 0} /> },
+      { b: 2 as Beat, title: "Big play", line: lines[2], icon: <PixelSmoke at={playedAt[2]} /> },
+      { b: 3 as Beat, title: "On fire", line: lines[3], icon: <PixelFlame at={playedAt[3]} caught={playedAt[3] > 0} /> },
     ] : []),
-    ...(cold ? [{ b: 4 as Beat, title: "Gone cold", line: `${last(cold)} on pace for ${paceOf(cold, 4).toFixed(1)}, ${swing(4)}.`, icon: <PixelSnow at={playedAt[4]} /> }] : []),
+    ...(cold ? [{ b: 4 as Beat, title: "Gone cold", line: lines[4], icon: <PixelSnow at={playedAt[4]} /> }] : []),
   ];
 
   return (

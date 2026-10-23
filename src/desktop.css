@@ -157,7 +157,8 @@ html:root:not(#_) .nav .nav-inbox { position: relative; }
    improve, and the game week in two columns. Intel is below. */
 /* Intel is reading: hold it to a comfortable measure */
 @container col (min-width: 800px) {
-  html:root:not(#_) .main-inner:has(> .nudge, > .followup) > :not(.page-head):not(.page-tabs) { width: 100%; max-width: 760px; }
+  /* Same as .main-inner:has(> .nudge, > .followup) > :not(...), written on the child: a `X:has() > :not()` rule makes every :has change re-style the whole page */
+  html:root:not(#_) .main-inner > :not(.page-head):not(.page-tabs):is(.nudge, .followup, .nudge ~ *, .followup ~ *, :has(~ .nudge, ~ .followup)) { width: 100%; max-width: 760px; }
 }
 
 /* ---------- League ---------- */
@@ -221,7 +222,7 @@ html:root:not(#_) .shell:has(.main-inner > .st) .ibx-ctx { display: none; }
 /* The two position tables sit side by side under the playoff picture */
 @container col (min-width: 760px) {
   html:root:not(#_) .main-inner:has(> .st + .st + .st) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
-  html:root:not(#_) .main-inner:has(> .st + .st + .st) > :not(.st), html:root:not(#_) .main-inner:has(> .st + .st + .st) > .st[aria-labelledby="st-title"] { grid-column: 1 / -1; }
+  html:root:not(#_) .main-inner > :not(.st):is(.st + .st + .st ~ *, :has(~ .st + .st + .st)), html:root:not(#_) .main-inner:has(> .st + .st + .st) > .st[aria-labelledby="st-title"] { grid-column: 1 / -1; }
 }
 
 /* Lineup > Tags: one card, players in two columns once the column is wide */

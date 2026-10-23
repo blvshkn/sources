@@ -7,6 +7,7 @@ import { Icon } from "./ui";
 import { TeamAvatar } from "./Avatar";
 import { Tooltip } from "./Tooltip";
 import { Trophy } from "./Trophy";
+import { useMemo } from "react";
 import { useLive, matchNow, type Live } from "../live";
 import { FaceOff } from "./FaceOff";
 
@@ -20,7 +21,8 @@ export function Scoreboard({ you, partner, onPartner, onMatchup, extras = true, 
   // score, projected finish, and win % that turns into the result once every starter is done
   const shared = useLive();
   const live = at ?? shared;
-  const ms = matchNow(live);
+  // The win model, once per Live state (the landing's live section re-renders this on every beat)
+  const ms = useMemo(() => matchNow(live), [live]);
   const mine = ms.me.proj;
   const theirs = ms.opp ? ms.opp.proj : null;
   const chance = ms.chance;

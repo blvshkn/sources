@@ -23,7 +23,7 @@ import { eff, fits } from "../engine";
 import { AiMark, AiMarkPlay } from "./WorkingLoader";
 import { LandingAsk } from "./LandingAsk";
 import { AskShowBlock, DealNumbers } from "./AskShow";
-import { SwapRows } from "./SwapRows";
+import { LandingOptimal } from "./LandingOptimal";
 import { lockedIn, resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
@@ -797,8 +797,9 @@ export function Landing({ onLive, onDemo }: {
           <article className="card ld-cell ld2-reveal ld2-opt-cell">
             <h3>Set optimal lineup</h3>
             <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
+            {/* The Lineup tab's Set optimal lineup, played from a script with the engine's moves (LandingOptimal.tsx) */}
             {optDemo.swaps.length > 0
-              ? <div ref={setInert}><SwapRows rows={optDemo.swaps.slice(0, 2)} live={false} className="ld2-opt" /></div>
+              ? <LandingOptimal res={optDemo} />
               : <p className="ld2-opt-none">{optDemo.summary}</p>}
           </article>
           <article className="card ld-cell ld2-reveal ld2-sync-cell">
