@@ -45,6 +45,12 @@
          replays when React takes over. Clash Grotesk is registered here
          from the preloads above, so the shell's headline is in the right face; fonts.ts skips faces already added. -->
     <script>
+      /* One viewport height for the landing's layout (Zach, Oct 23: wonky scroll on iPhone in Instagram's browser).
+         In-app browsers resize the page as their toolbars slide, so every vh-sized section changed height mid-scroll
+         and the page jumped. --vh1 is 1% of the height at load, updated only when the width changes (a rotation). */
+      (function () { var w = -1; function set() { if (innerWidth === w) return; w = innerWidth; document.documentElement.style.setProperty("--vh1", (innerHeight / 100).toFixed(2) + "px"); } set(); addEventListener("resize", set); addEventListener("orientationchange", function () { w = -1; setTimeout(set, 300); }); })();
+    </script>
+    <script>
       (function () {
         var d = document.documentElement, app = false;
         try {

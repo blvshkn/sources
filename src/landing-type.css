@@ -19,7 +19,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld2-h1, .ld-h2.ld2-split) {
 }
 /* The tagline is the same display size in caps; on short screens it also fits the screen's height */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
-  font-weight: 500 !important; font-size: clamp(2.25rem, min(9vw, 8.5vh), 6.75rem) !important; line-height: 0.96 !important; letter-spacing: -0.02em !important;
+  font-weight: 500 !important; font-size: clamp(2.25rem, min(9vw, calc(8.5 * var(--vh1, 1svh))), 6.75rem) !important; line-height: 0.96 !important; letter-spacing: -0.02em !important;
 }
 /* The FAQ's side column keeps the display face, a step down so it fits beside the list */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-faq-side .ld-h2.ld2-split { font-size: clamp(2.25rem, 3.6vw, 3.75rem) !important; }
@@ -87,18 +87,18 @@ html:root:not(#_):not(#_):not(#_) .ld2-chip .ld2-chip-mgr { width: 100% !importa
    both leave together when it ends. Coming in, the banner flies from the right at an angle, rippling like cloth
    (--ywave, from the scroll), and lies flat as it pins (--yin). */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-yourscreen {
-  display: block; align-content: start; min-height: 250svh; padding: 0; gap: 0; position: relative;
+  display: block; align-content: start; min-height: calc(250 * var(--vh1, 1svh)); padding: 0; gap: 0; position: relative;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband {
   position: sticky; top: var(--navh, 64px); z-index: 5; margin: 0;
   --q: calc(1 - var(--yin, 1));
   transform-origin: 0% 50%;
-  transform: translate3d(calc(var(--q) * 60vw), calc(var(--q) * 18vh), 0) rotate(calc(var(--q) * -9deg));
+  transform: translate3d(calc(var(--q) * 60vw), calc(var(--q) * calc(18 * var(--vh1, 1svh))), 0) rotate(calc(var(--q) * -9deg));
   will-change: transform;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap {
-  position: sticky; top: calc(var(--navh, 64px) + clamp(72px, 12vh, 120px)); height: calc(100svh - var(--navh, 64px) - clamp(72px, 12vh, 120px)); box-sizing: border-box;
-  display: grid; align-content: center; padding: clamp(32px, 6vh, 72px) 16px 0; margin: 0 auto;
+  position: sticky; top: calc(var(--navh, 64px) + clamp(72px, calc(12 * var(--vh1, 1svh)), 120px)); height: calc(calc(100 * var(--vh1, 1svh)) - var(--navh, 64px) - clamp(72px, calc(12 * var(--vh1, 1svh)), 120px)); box-sizing: border-box;
+  display: grid; align-content: center; padding: clamp(32px, calc(6 * var(--vh1, 1svh)), 72px) 16px 0; margin: 0 auto;
 }
 /* Words before they light: the app's muted ink; lighting uses the app's ease */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag-stack > span:not(.ld2-chip) {
@@ -107,7 +107,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag-stack > span:not(.ld2-ch
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag-stack > span:not(.ld2-chip).on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { transform: none; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-yourscreen { min-height: 100svh; }
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-yourscreen { min-height: calc(100 * var(--vh1, 1svh)); }
 }
 
 /* ---------- Hero players' names (they had dropped off in the redesign) ---------- */
@@ -321,7 +321,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld-trust { background: none; bor
    band, so content blurs more the closer it gets to the edge. A faint shade of the page's ground at the very bottom
    helps it read. Above the content, under the nav and sheets, and never takes a click. */
 html:root:not(#_):not(#_):not(#_) .ld2-edgeblur {
-  position: fixed; left: 0; right: 0; bottom: 0; height: clamp(64px, 11vh, 112px); z-index: 30; pointer-events: none;
+  position: fixed; left: 0; right: 0; bottom: 0; height: clamp(64px, calc(11 * var(--vh1, 1svh)), 112px); z-index: 30; pointer-events: none;
   background: linear-gradient(180deg, rgba(18, 20, 19, 0) 0%, rgba(18, 20, 19, 0.55) 100%);
 }
 html:root:not(#_):not(#_):not(#_) .ld2-edgeblur i { position: absolute; inset: 0; display: block; }
@@ -413,11 +413,11 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-faq-ask > svg:last-child { align-
    of the open height or 9.5% of the width, whichever is smaller, so iPhone, iPad and desktop all fill it alike. */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap {
   top: calc(var(--navh, 64px) + var(--bandh, 96px));
-  height: calc(100svh - var(--navh, 64px) - var(--bandh, 96px));
-  padding: 0 16px 3svh; align-content: center;
+  height: calc(calc(100 * var(--vh1, 1svh)) - var(--navh, 64px) - var(--bandh, 96px));
+  padding: 0 16px calc(3 * var(--vh1, 1svh)); align-content: center;
 }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-stack {
-  font-size: clamp(2rem, min(8.6vw, (100svh - var(--navh, 64px) - var(--bandh, 96px)) * 0.105), 7.5rem) !important;
+  font-size: clamp(2rem, min(8.6vw, (calc(100 * var(--vh1, 1svh)) - var(--navh, 64px) - var(--bandh, 96px)) * 0.105), 7.5rem) !important;
 }
 
 /* ---------- Scroll reveals land sooner (Zach, Oct 22: "happening too late") ----------
@@ -455,7 +455,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; 
 /* The landing's backdrop (glow, field, grain) is the first screen's, and scrolls away with it. Pinned (position:
    fixed) it touched the bottom of the screen, and Safari 26 then paints its toolbar strip as a solid box over the page
    (Zach, Oct 22, iPhone and iPad: ?off=envfix made the box go away) */
-html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto 0; height: 100svh; bottom: auto; background: none; }
+html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto 0; height: calc(100 * var(--vh1, 1svh)); bottom: auto; background: none; }
 /* Where it ends, it fades out over its last 440px, through the field, instead of stopping on a hard line (Zach, Oct 22, iPad) */
 @media (min-width: 861px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env {

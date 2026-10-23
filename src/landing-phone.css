@@ -25,7 +25,7 @@ html:root:not(#_):not(#_) .ld2-phone {
   --u: calc(100cqi / 400);
   --scr: #0A0B0B;
   position: relative; isolation: isolate; container-type: inline-size;
-  --pw: min(calc(100% + 12px), calc((100svh - 96px) / 2.097));
+  --pw: min(calc(100% + 12px), calc((calc(100 * var(--vh1, 1svh)) - 96px) / 2.097));
   flex: none; box-sizing: border-box;
   width: var(--pw); aspect-ratio: 400 / 838.7;
   margin: 8px calc((100% - var(--pw)) / 2) 12px;

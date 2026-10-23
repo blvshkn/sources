@@ -4005,7 +4005,7 @@ html:root:not(#_) .env-glow.g3 { width: 900px; height: 420px; top: 120vh; right:
 @keyframes env-in { to { opacity: 1; } }
 
 /* A field laid back in perspective under the hero: yard lines and hash marks, fading into the dark */
-html:root:not(#_) .env-field { position: absolute; left: 50%; bottom: -8vh; width: 2400px; height: 56vh; margin-left: -1200px; perspective: 900px; perspective-origin: 50% 0%; transform: translate3d(calc(var(--mx) * -10px), calc(var(--sy) * 0.22px), 0); opacity: calc(1 - var(--sy) / 900); mask-image: radial-gradient(ellipse 50% 90% at 50% 100%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 50% 90% at 50% 100%, #000 30%, transparent 75%); }
+html:root:not(#_) .env-field { position: absolute; left: 50%; bottom: calc(-8 * var(--vh1, 1svh)); width: 2400px; height: calc(56 * var(--vh1, 1svh)); margin-left: -1200px; perspective: 900px; perspective-origin: 50% 0%; transform: translate3d(calc(var(--mx) * -10px), calc(var(--sy) * 0.22px), 0); opacity: calc(1 - var(--sy) / 900); mask-image: radial-gradient(ellipse 50% 90% at 50% 100%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 50% 90% at 50% 100%, #000 30%, transparent 75%); }
 html:root:not(#_) .env-turf { position: absolute; inset: 0; transform: rotateX(64deg); transform-origin: 50% 0%;
   background:
     repeating-linear-gradient(90deg, transparent 0 158px, rgba(var(--lime-rgb), 0.08) 158px 160px),

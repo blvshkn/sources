@@ -9,7 +9,7 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-hero { padding-block: 32px 80px; }
 @media (min-width: 1024px) {
   html:root:not(#_):not(#_):not(#_) .ld2 .ld2-hero {
     grid-template-columns: minmax(0, 1fr) minmax(0, 600px); gap: 48px; align-items: center;
-    min-height: min(calc(100svh - 96px), 880px); padding-block: 48px 96px;
+    min-height: min(calc(calc(100 * var(--vh1, 1svh)) - 96px), 880px); padding-block: 48px 96px;
   }
   html:root:not(#_):not(#_):not(#_) .ld2 .ld2-copy { padding-top: 0; }
 }
@@ -181,20 +181,20 @@ html:root:not(#_):not(#_) .ld2-tradesec-sub { margin: 0; max-width: 46ch; font-s
    Each block of the landing is at least 85% of the screen tall so the next one peeks in from below, and the page
    scrolls freely with no snapping. Content centers in its block. */
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > :not(.sc-layer) {
-  min-height: 85svh; box-sizing: border-box;
-  padding-block: clamp(64px, 10vh, 120px); margin-block: 0;
+  min-height: calc(85 * var(--vh1, 1svh)); box-sizing: border-box;
+  padding-block: clamp(64px, calc(10 * var(--vh1, 1svh)), 120px); margin-block: 0;
 }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > :is(.ld-section:not(.ld2-fosec), .ld2-trust, .ld2-final, .ld2-yourscreen, .ld-hero) { display: grid; align-content: center; }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > .ld2-fosec { justify-content: center; }
 html:root:not(#_):not(#_):not(#_) .ld2 #ld-main > .ld-hero { padding-block: 32px 64px; }
 /* The banner screen: banner, then the tagline under it with room between */
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(64px, 12vh, 140px); padding-inline: 0; }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(64px, calc(12 * var(--vh1, 1svh)), 140px); padding-inline: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-yband { margin: 0; }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen .ld2-tagwrap { padding-block: 0; }
 /* Fit each screen: the stacked tagline scales with the screen's height too, and the trade card only grows when
    there's height for it */
-html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(40px, 7vh, 96px); }
-html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yourscreen .ld2-tag.ld2-tag-stack { font-size: clamp(2.25rem, min(7.4vw, 7.6vh), 6.75rem); }
+html:root:not(#_):not(#_):not(#_) .ld2 .ld2-yourscreen { gap: clamp(40px, calc(7 * var(--vh1, 1svh)), 96px); }
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-yourscreen .ld2-tag.ld2-tag-stack { font-size: clamp(2.25rem, min(7.4vw, calc(7.6 * var(--vh1, 1svh))), 6.75rem); }
 /* heroDepth moves a card by the page's scroll times --hd-rate, which only makes sense in the hero. In their own
    sections the matchup and the trade idea keep the tilt and the layers but don't drift with the scroll. */
 html:root:not(#_):not(#_):not(#_):not(#_) :is(.ld2-fosec, .ld2-tradesec) .hd-card { --hd-rate: 0 !important; }
