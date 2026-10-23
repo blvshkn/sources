@@ -281,10 +281,21 @@ export function Landing({ onLive, onDemo }: {
     io.observe(el);
     return () => { alive = false; io.disconnect(); window.clearTimeout(give); gone?.(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Hero players' parallax: the scroll position, for their per-depth drift (landing-type.css .hp-head)
+  // Hero players' parallax: the scroll position, for their per-depth drift (landing-type.css .hp-head). Where the
+  // browser runs scroll-driven animations (Safari 26, Chrome), the CSS does it on the compositor at the screen's frame
+  // rate and only needs the page's scroll length (--maxs); the scroll listener is the fallback (Zach, Oct 22: 60fps)
+  useEffect(() => {
+    if (typeof CSS === "undefined" || !CSS.supports("animation-timeline: scroll()")) return;
+    const root = document.documentElement;
+    const measure = () => root.style.setProperty("--maxs", String(Math.max(1, root.scrollHeight - window.innerHeight)));
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(document.body);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); root.style.removeProperty("--maxs"); };
+  }, []);
   useEffect(() => {
     const stage = phonesRef.current;
-    if (!stage || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!stage || matchMedia("(prefers-reduced-motion: reduce)").matches || (typeof CSS !== "undefined" && CSS.supports("animation-timeline: scroll()"))) return;
     let raf = 0;
     const paint = () => { raf = 0; stage.style.setProperty("--hsy", String(Math.round(window.scrollY))); };
     const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
@@ -426,7 +437,7 @@ export function Landing({ onLive, onDemo }: {
   const scatterRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scatterRef.current;
-    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches || (typeof CSS !== "undefined" && CSS.supports("animation-timeline: scroll()"))) return;
     let raf = 0;
     const paint = () => { raf = 0; el.style.setProperty("--sy", String(window.scrollY)); };
     const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };

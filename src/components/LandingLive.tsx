@@ -163,7 +163,7 @@ export function LandingLive(): JSX.Element {
       <div className="ll-moments" role="group" aria-label="Game day moments">
         <div className="ll-mo-head">
           <span className="ll-k">Sunday moments</span>
-          <button type="button" className="ll-replay" onClick={() => play(1, 4)}><Icon name="switch" size={14} />Replay</button>
+          <button type="button" className="ll-replay" onClick={() => play(1, 4)}><Icon name="replay" size={14} />Replay</button>
         </div>
         <ol>
           {moments.map((m) => (

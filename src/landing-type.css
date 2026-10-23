@@ -536,3 +536,24 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { vertical-al
 /* The trade search's thinking steps line up with the rows above them on the left (Zach, Oct 22): inside the landing's
    deal card its own card padding doubled the inset */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .thk-card { padding-left: 0 !important; padding-right: 0 !important; }
+
+/* Scroll parallax on the compositor (Zach, Oct 22: "the parallax needs to be in 60fps"). Where scroll-driven animations
+   run, the players' drift is an animation on the page's scroll (translate, added on top of their arrival), so it moves
+   at the screen's frame rate with no script per frame; the tilt stays on transform. Same distances as before: each
+   moves --pk px per px scrolled, over the page's scroll length (--maxs, Landing.tsx). */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head.d0 { --pk: -0.42; transform: translate3d(calc(var(--gx, 0) * 22px), calc(var(--gy, 0) * 22px), 0); }
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head.d1 { --pk: -0.2; transform: translate3d(calc(var(--gx, 0) * 12px), calc(var(--gy, 0) * 12px), 0); }
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head.d2 { --pk: -0.06; transform: translate3d(calc(var(--gx, 0) * 5px), calc(var(--gy, 0) * 5px), 0); }
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-head {
+      animation: hp-float-in calc(1000ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)) calc((400ms + var(--i) * 90ms) * var(--mo, 1)) both, ld-par 1ms linear both;
+      animation-timeline: auto, scroll(root); animation-composition: replace, add;
+    }
+    html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .sc-p {
+      --pk: var(--r); transform: translate3d(calc(var(--gx, 0) * var(--r) * -90px), calc(var(--gy, 0) * var(--r) * -90px), 0);
+      animation: ld-par 1ms linear both; animation-timeline: scroll(root);
+    }
+    @keyframes ld-par { from { translate: 0 0; } to { translate: 0 calc(var(--pk, 0) * var(--maxs, 4000) * 1px); } }
+  }
+}
