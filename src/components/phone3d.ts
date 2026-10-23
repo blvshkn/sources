@@ -19,8 +19,8 @@ const CX = 0.000021, CY = 0.081662; // body center
 const GLASS_Z = 0.004322; // the screen's surface
 
 type Head = {
-  lo: number[]; hi: number[];
-  meshes: { name: string; mat: number; n: number; pos: number; nrm: number; uv?: number; ind: number; ni: number }[];
+  pb: number; ub: number; lo: number[]; hi: number[];
+  meshes: { name: string; mat: number; n: number; pos: number; nrm: number; uv?: number; ulo?: number[]; uhi?: number[]; ind: number; ni: number }[];
   materials: { name: string; c: number[]; m: number; r: number; map?: number; nmap?: number; ns?: number; ao?: number; e?: number[]; emap?: number;
     blend?: 1; ds?: 1; ior?: number; cc?: number[]; ir?: number[]; an?: number }[];
   textures: { mime: string; off: number; len: number; skip?: 1 }[];
@@ -44,15 +44,32 @@ async function loadModel(T: Three, got: Promise<Response>) {
     tx.needsUpdate = true;
     return tx;
   }));
+  // v2 geometry (scripts/pack-phone.py): zigzag deltas in byte planes, low bytes then high, one plane pair per component
+  const bytes = new Uint8Array(buf, base);
+  const run = (off: number, n: number, out: Float32Array, stride: number, k: number, scale: number, add: number) => {
+    let acc = 0;
+    for (let i = 0; i < n; i++) { const z = bytes[off + i] | (bytes[off + n + i] << 8); acc += (z >>> 1) ^ -(z & 1); out[i * stride + k] = add + acc * scale; }
+  };
   const geos = head.meshes.map((m) => {
     const g = new T.BufferGeometry();
-    const q = new Int16Array(buf, base + m.pos, m.n * 3);
-    const p = new Float32Array(m.n * 3);
-    for (let i = 0; i < p.length; i++) { const k = i % 3; p[i] = head.lo[k] + ((q[i] + 32768) / 65535) * (head.hi[k] - head.lo[k]); }
+    const p = new Float32Array(m.n * 3), pq = (1 << head.pb) - 1;
+    for (let k = 0; k < 3; k++) run(m.pos + 2 * m.n * k, m.n, p, 3, k, (head.hi[k] - head.lo[k]) / pq, head.lo[k]);
     g.setAttribute("position", new T.BufferAttribute(p, 3));
-    g.setAttribute("normal", new T.BufferAttribute(new Int8Array(buf, base + m.nrm, m.n * 3), 3, true));
-    if (m.uv != null) g.setAttribute("uv", new T.Float16BufferAttribute(new Uint16Array(buf, base + m.uv, m.n * 2), 2));
-    g.setIndex(new T.BufferAttribute(new Uint16Array(buf, base + m.ind, m.ni), 1));
+    // Octahedral normals: two signed bytes per vertex, x plane then y plane
+    const nx = new Int8Array(buf, base + m.nrm, m.n), ny = new Int8Array(buf, base + m.nrm + m.n, m.n), nr = new Float32Array(m.n * 3);
+    for (let i = 0; i < m.n; i++) {
+      let x = nx[i] / 127, y = ny[i] / 127; const z = 1 - Math.abs(x) - Math.abs(y);
+      if (z < 0) { const ax = Math.abs(x); x = (1 - Math.abs(y)) * (x >= 0 ? 1 : -1); y = (1 - ax) * (y >= 0 ? 1 : -1); }
+      const l = Math.hypot(x, y, z) || 1; nr[i * 3] = x / l; nr[i * 3 + 1] = y / l; nr[i * 3 + 2] = z / l;
+    }
+    g.setAttribute("normal", new T.BufferAttribute(nr, 3));
+    if (m.uv != null && m.ulo && m.uhi) {
+      const uv = new Float32Array(m.n * 2), uq = (1 << head.ub) - 1;
+      for (let k = 0; k < 2; k++) run(m.uv + 2 * m.n * k, m.n, uv, 2, k, (m.uhi[k] - m.ulo[k]) / uq, m.ulo[k]);
+      g.setAttribute("uv", new T.BufferAttribute(uv, 2));
+    }
+    const ix = new Float32Array(m.ni); run(m.ind, m.ni, ix, 1, 0, 1, 0);
+    g.setIndex(new T.BufferAttribute(Uint16Array.from(ix), 1));
     return g;
   });
   const mats = head.materials.map((d) => {
@@ -106,10 +123,15 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
   const model = fetch("/models/iphone-18-pro-max.pack");
   // @ts-ignore vendored ES module without types
   const T: Three = await import("../vendor/three/three.module.min.js");
+  // WebGL draws offscreen and each frame is copied into a plain 2D canvas on the page. iPad Safari composited the
+  // transparent WebGL layer as a dark box once the stuck nav's backdrop blur overlapped it (Zach, Oct 22); a 2D canvas
+  // composites like any image
+  const glc = document.createElement("canvas");
   const canvas = document.createElement("canvas");
   canvas.className = "hp-gl";
   canvas.setAttribute("aria-hidden", "true");
-  const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  const ctx = canvas.getContext("2d")!;
+  const renderer = new T.WebGLRenderer({ canvas: glc, antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -151,6 +173,7 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
     canvas.style.left = `${-mx}px`; canvas.style.top = `${-my}px`;
     canvas.style.width = `${W + 2 * mx}px`; canvas.style.height = `${H + 2 * my}px`;
     renderer.setSize(W + 2 * mx, H + 2 * my, false);
+    canvas.width = glc.width; canvas.height = glc.height;
     const cs = getComputedStyle(stage);
     const P = parseFloat(cs.perspective) || 1600;
     const [ox, oy] = cs.perspectiveOrigin.split(" ").map(parseFloat);
@@ -193,6 +216,8 @@ export async function mountPhones3D(stage: HTMLElement, phones: HTMLElement[], s
     renderer.clearDepth();
     groups.forEach((g: Three) => { g.visible = g === front; }); renderer.render(scene, camera);
     groups.forEach((g: Three) => { g.visible = true; });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(glc, 0, 0);
   };
 
   let raf = 0, until = 0;

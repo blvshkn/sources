@@ -1,8 +1,12 @@
-# Packs the iPhone GLB into the landing's compact format: int16 positions, int8 normals, float16 UVs, uint16 indices,
-# PBR material params, and the embedded images, gzipped (phone3d.ts inflates it with DecompressionStream).
+# Packs the iPhone GLB into the landing's compact format (v2), gzipped (phone3d.ts inflates it with DecompressionStream).
+# Geometry is shaped for gzip: duplicate vertices welded, triangles sorted along a Morton curve, vertices renumbered in
+# first-use order, then 13-bit positions, octahedral 8-bit normals, 12-bit UVs and indices stored as zigzag deltas split
+# into byte planes. 13 bits over the phone's 163 mm is 0.02 mm, far under a pixel at hero size.
 # Parts the hero never shows (the back, camera bump, port, screws, speaker grilles) and textures nothing kept uses are
 # left out, and so is the screen texture (the screen shows the app instead). Usage: python3 -I pack-phone.py in.glb out.pack
 import json, struct, sys, array, gzip
+import numpy as np
+PB, UB = 13, 12
 HIDDEN = ('Back_', 'USB_', 'Screws', 'Side_Panel_Speakers', 'Holes')
 src = open(sys.argv[1], 'rb').read()
 L = struct.unpack('<I', src[12:16])[0]
@@ -39,25 +43,49 @@ for m in g['meshes']:
     tri = [tuple(ind[i + k][0] for k in range(3)) for i in range(0, len(ind), 3)]
     tri = [f for f in tri if max(nrm[v][2] for v in f) > -0.5]
     if not tri: continue
-    keep = sorted({v for f in tri for v in f}); remap = {v: i for i, v in enumerate(keep)}
-    pos = [pos[v] for v in keep]; nrm = [nrm[v] for v in keep]
-    if uvs is not None: uvs = [uvs[v] for v in keep]
-    ind = [(remap[v],) for f in tri for v in f]
-    q = array.array('h')
-    for v in pos:
-        for k in range(3): q.append(round((v[k] - lo[k]) / (hi[k] - lo[k]) * 65535) - 32768)
-    nq = array.array('b')
-    for v in nrm:
-        for k in range(3): nq.append(max(-127, min(127, round(v[k] * 127))))
-    rec = {'name': m.get('name'), 'mat': p.get('material', 0), 'n': len(pos), 'pos': put(q.tobytes()), 'nrm': put(nq.tobytes())}
+    rec = {'name': m.get('name'), 'mat': p.get('material', 0)}
     mt = g['materials'][p.get('material', 0)]
     textured = 'normalTexture' in mt or 'occlusionTexture' in mt or 'emissiveTexture' in mt or 'baseColorTexture' in mt.get('pbrMetallicRoughness', {})
     # UVs only where a texture reads them (the screen keeps its own: the phones behind show their screens through it)
-    if 'TEXCOORD_0' in at and (textured or m.get('name') == 'Front_Screen'):
-        uv = uvs
-        rec['uv'] = put(b''.join(struct.pack('<ee', *v) for v in uv))
-    ii = array.array('H', [i[0] for i in ind])
-    rec['ind'] = put(ii.tobytes()); rec['ni'] = len(ii)
+    want_uv = uvs is not None and (textured or m.get('name') == 'Front_Screen')
+    P = np.array(pos, np.float64); N = np.array(nrm, np.float64); U = np.array(uvs, np.float64) if want_uv else np.zeros((len(pos), 0))
+    qp = np.round((P - lo) / (np.array(hi) - lo) * ((1 << PB) - 1)).astype(np.int64)
+    N /= np.abs(N).sum(1, keepdims=True) + 1e-12
+    ox, oy = N[:, 0].copy(), N[:, 1].copy(); back = N[:, 2] < 0
+    sx = np.where(N[:, 0] >= 0, 1, -1); sy = np.where(N[:, 1] >= 0, 1, -1)
+    ox[back] = (1 - np.abs(N[back, 1])) * sx[back]; oy[back] = (1 - np.abs(N[back, 0])) * sy[back]
+    qn = np.stack([np.round(ox * 127), np.round(oy * 127)], 1).astype(np.int64)
+    if want_uv:
+        ulo = U.min(0); uhi = U.max(0); ur = np.where(uhi > ulo, uhi - ulo, 1)
+        qu = np.round((U - ulo) / ur * ((1 << UB) - 1)).astype(np.int64)
+        rec['ulo'] = ulo.tolist(); rec['uhi'] = (ulo + ur).tolist()
+    else:
+        qu = np.zeros((len(pos), 0), np.int64)
+    # Weld vertices that quantize to the same thing, then sort triangles spatially and renumber by first use
+    key = np.concatenate([qp, qn, qu], 1)
+    _, first, inv = np.unique(key, axis=0, return_index=True, return_inverse=True)
+    t = inv.ravel()[np.array(tri, np.int64)]
+    t = t[(t[:, 0] != t[:, 1]) & (t[:, 1] != t[:, 2]) & (t[:, 0] != t[:, 2])]
+    c = (qp[first][t].sum(1) // 3) >> max(0, PB - 10)
+    def spread(x):
+        x = x & 0x3ff; x = (x | (x << 16)) & 0x30000ff; x = (x | (x << 8)) & 0x300f00f
+        x = (x | (x << 4)) & 0x30c30c3; return (x | (x << 2)) & 0x9249249
+    t = t[np.argsort(spread(c[:, 0]) | (spread(c[:, 1]) << 1) | (spread(c[:, 2]) << 2), kind='stable')]
+    flat = t.ravel(); order = []; seen = {}
+    for v in flat.tolist():
+        if v not in seen: seen[v] = len(order); order.append(v)
+    ind = np.array([seen[v] for v in flat.tolist()], np.int64)
+    src = first[np.array(order)]
+    def zplanes(col):  # zigzag deltas, low bytes then high bytes
+        d = np.diff(col, prepend=0)
+        assert np.abs(d).max(initial=0) < 32768
+        z = ((d << 1) ^ (d >> 63)).astype(np.uint16)
+        return (z & 255).astype(np.uint8).tobytes() + (z >> 8).astype(np.uint8).tobytes()
+    rec['n'] = len(order)
+    rec['pos'] = put(b''.join(zplanes(qp[src][:, k]) for k in range(3)))
+    rec['nrm'] = put(qn[src].astype(np.int8)[:, 0].tobytes() + qn[src].astype(np.int8)[:, 1].tobytes())
+    if want_uv: rec['uv'] = put(b''.join(zplanes(qu[src][:, k]) for k in range(2)))
+    rec['ind'] = put(zplanes(ind)); rec['ni'] = len(ind)
     meshes.append(rec)
 mats = []
 for m in g['materials']:
@@ -94,9 +122,9 @@ for ti, t in enumerate(g['textures']):
         import io
         from PIL import Image
         im2 = Image.open(io.BytesIO(b)).convert('RGB'); im2 = im2.resize((128, 128), Image.LANCZOS)
-        buf = io.BytesIO(); im2.save(buf, 'PNG', optimize=True); b = buf.getvalue()
+        buf = io.BytesIO(); im2.save(buf, 'JPEG', quality=88, optimize=True); b = buf.getvalue(); im = dict(im, mimeType='image/jpeg')
     imgs.append({'mime': im['mimeType'], 'off': put(b), 'len': len(b), 'name': t.get('name')})
-head = json.dumps({'lo': lo, 'hi': hi, 'meshes': meshes, 'materials': mats, 'textures': imgs}, separators=(',', ':')).encode()
+head = json.dumps({'v': 2, 'pb': PB, 'ub': UB, 'lo': lo, 'hi': hi, 'meshes': meshes, 'materials': mats, 'textures': imgs}, separators=(',', ':')).encode()
 while (len(head) + 4) % 4: head += b' '
 raw = struct.pack('<I', len(head)) + head + bytes(body)
 open(sys.argv[2], 'wb').write(gzip.compress(raw, 9))
