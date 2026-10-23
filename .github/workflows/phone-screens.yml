@@ -23,8 +23,12 @@ jobs:
       - name: Capture the screens from the live app
         run: node scripts/capture-phone-screens.mjs https://fantasysource.app public/phones
       - name: Screens for the 3D back phones, shot flat from the live app
+        # If this fails, the posters above still go in
+        id: backscreens
+        continue-on-error: true
         run: node scripts/rerender-back-phones.mjs screens https://fantasysource.app public/phones
       - name: Build with those screens and the pixel-ratio cap lifted
+        if: steps.backscreens.outcome == 'success'
         run: |
           npm install --no-audit --no-fund
           sed -i 's/Math.min(window.devicePixelRatio || 1, 2)/(window.devicePixelRatio || 1)/' src/components/phone3d.ts
@@ -33,6 +37,7 @@ jobs:
           npx vite build
           git checkout src/components/phone3d.ts src/components/Landing.tsx
       - name: Re-render the 3D back phones
+        if: steps.backscreens.outcome == 'success'
         # If the render fails, the posters still go in; the back phones keep their last good images
         continue-on-error: true
         timeout-minutes: 15
@@ -44,6 +49,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          # Back-phone screens from a failed run stay as they were
+          [ "${{ steps.backscreens.outcome }}" = "success" ] || git checkout public/phones/trade-screen.webp public/phones/waivers-screen.webp 2>/dev/null || true
           git add public/phones
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "Phone images recaptured from the live app" -m "Co-Authored-By: Zach Blevins <324491846+blev-commits@users.noreply.github.com>"

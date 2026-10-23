@@ -630,3 +630,12 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
   width: 112px; min-height: 48px; height: 48px; padding: 0 12px; justify-content: center; gap: 6px;
   font: 500 0.875rem/1 var(--font-body); letter-spacing: normal; text-transform: none;
 }
+
+/* No hard line where the field ends (Zach, Oct 23): a longer, eased fade over the backdrop's bottom 60%, so the yard
+   lines thin out to nothing instead of stopping on an edge */
+@media (min-width: 861px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-env {
+    --fade: linear-gradient(180deg, #000 40%, rgba(0, 0, 0, 0.82) 52%, rgba(0, 0, 0, 0.58) 64%, rgba(0, 0, 0, 0.34) 76%, rgba(0, 0, 0, 0.15) 87%, rgba(0, 0, 0, 0.04) 95%, transparent);
+    -webkit-mask-image: var(--fade); mask-image: var(--fade);
+  }
+}
