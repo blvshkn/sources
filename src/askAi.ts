@@ -272,7 +272,7 @@ async function play(g: Steps<Answer>, first: IteratorResult<TraceEv, Answer>, tr
 export function askJob(q: string, engine: (q: string) => Steps<Answer>, history: AskTurnLog[], live?: Live) {
   return async (tr: Tracer): Promise<Answer> => {
     // Betting of any kind is off limits under the terms: answered right here, nothing sent to Source AI
-    if (isBetting(q)) { await tr.finish(); return { ...NO_BETTING, points: [...NO_BETTING.points], links: [] }; }
+    if (isBetting(q)) { await tr.finish(); return { ...NO_BETTING, points: [...NO_BETTING.points], links: [{ label: "Read our terms", tab: "legal" }] }; }
     const g = engine(q);
     // The engine's first event is its plan; its second tells us whether it has a rule for this question at all
     const first = g.next();

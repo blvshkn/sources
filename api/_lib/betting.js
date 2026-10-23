@@ -24,8 +24,12 @@ export function isBetting(q) {
   return WORDS.some((re) => re.test(s));
 }
 
-/** Ask's reply to a betting question */
+/** The terms' betting clause, word for word. The Terms page (src/components/About.tsx) shows this same text, so Ask
+ *  always quotes the current version. */
+export const BETTING_TERMS = "Source is a calculation tool for fantasy football trades and lineups. It doesn't support prop bets, sports betting, real-money wagers or daily fantasy contests, and it doesn't link to or take bets for any sportsbook. Vegas lines appear only as one input to point projections, to help estimate how a game might play out. They aren't picks or betting advice, and nothing in Source is financial advice.";
+
+/** Ask's reply to a betting question: kind, a quote of the terms, and a turn back to fantasy (Zach, Oct 23) */
 export const NO_BETTING = {
-  text: "Source doesn't answer betting questions. It's a fantasy trade calculator for better trades and your optimal lineup, and its terms don't allow betting of any kind.",
-  points: ["Vegas lines only help shape point projections.", "Ask about a trade, a start or sit, or a waiver pickup instead."],
+  text: `Thanks for asking! Source sticks to fantasy football, so it can't help with betting of any kind. Here's what our terms say: "${BETTING_TERMS}"`,
+  points: ["Happy to help with a trade, a start or sit, or a waiver pickup instead. What's on your mind for your team?"],
 };

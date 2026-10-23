@@ -1,5 +1,6 @@
 import { Icon } from "./ui";
 import { DetailSheet } from "./DetailSheet";
+import { BETTING_TERMS } from "../../api/_lib/betting.js";
 
 /** One version of Source's two docs everywhere they open (Zach, Oct 23): the landing page, Settings, their pages and
  *  the app's routes all take their names, one-line descriptions and text from here. The landing page's names win. */
@@ -118,7 +119,7 @@ export function LegalDoc() {
       <ul>
         <li><b>For your own league.</b> Source is a personal tool for managing fantasy football leagues you play in. Don't use it to scrape, resell or republish league data.</li>
         <li><b>Information, not guarantees.</b> Projections, values, odds, suggestions and AI answers are estimates for entertainment and informational purposes. They are provided as is, without warranties of any kind, and results may differ.</li>
-        <li><b>No betting of any kind.</b> Source is a calculation tool for fantasy football trades and lineups. It doesn't support prop bets, sports betting, real-money wagers or daily fantasy contests, and it doesn't link to or take bets for any sportsbook. Vegas lines appear only as one input to point projections, to help estimate how a game might play out. They aren't picks or betting advice, and nothing in Source is financial advice.</li>
+        <li><b>No betting of any kind.</b> {BETTING_TERMS}</li>
         <li><b>You make the moves.</b> Source never sends a message, trade or lineup change for you. You decide what to do in your league and you're responsible for it.</li>
         <li><b>Be decent.</b> Don't use pitches or tags to harass anyone in your league.</li>
         <li><b>People only.</b> Automated access to the AI features (bots, scripts, scrapers or anything posing as a person) isn't allowed. Requests that look automated are refused.</li>
