@@ -15,7 +15,8 @@ const STEMS = [
   "jigaboo", "jiggaboo", "pickaninn", "golliwog", "zipperhead", "slanteye", "chinaman", "sandnig", "spearchuck", "coonass",
   "redskin", "halfbreed", "squaw", "cameljock",
   // homophobic, transphobic, ableist
-  "faggot", "fagot", "fggt", "tranny", "trannie", "shemale", "retard", "mongoloid", "spastic",
+  "faggot", "fagot", "fagg", "faggy", "fggt", "tranny", "trannie", "troon", "shemale", "heshe", "ladyboy", "sodomite",
+  "battyboy", "battyman", "lezzie", "lezbo", "groomer", "dykey", "retard", "mongoloid", "spastic",
   // hate symbols and slogans written as one word
   "heilhitler", "siegheil", "whitepower", "1488",
 ];
@@ -24,7 +25,7 @@ const WHOLE = [
   "ass", "asses", "arse", "dick", "cock", "pussy", "piss", "pissed", "prick", "damn", "cum", "porn", "rape", "rapist", "hoe",
   "spic", "spick", "gook", "coon", "fag", "dyke", "paki", "jap", "nip", "wop", "dago", "kraut", "yid", "heeb", "hymie",
   "honky", "sambo", "injun", "gyp", "gypped", "gyppo", "negro", "darkie", "darky", "mulatto", "coolie", "slant", "spook",
-  "spaz", "homo", "lesbo", "poof", "poofter", "nazi", "kkk", "jewed",
+  "spaz", "homo", "homos", "lesbo", "lez", "lezz", "poof", "poofter", "pansy", "nazi", "kkk", "jewed",
 ];
 // Racist tropes and hate phrases: every word in the phrase is hidden
 const PHRASES = [
@@ -32,6 +33,8 @@ const PHRASES = [
   "go back to mexico", "go back to china", "go back to your country", "go back where you came from", "white power",
   "white pride", "heil hitler", "sieg heil", "gas the jews", "jew them down", "jew him down", "fourteen words",
   "fried chicken and watermelon", "act white", "acting white", "thug culture",
+  "no homo", "thats gay", "that is so gay", "thats so gay", "so gay", "he she",
+  "pray the gay away", "batty boy", "trans agenda", "gay agenda",
 ].map((p) => p.split(" "));
 // Full forms a starred word (f**k, n****r) is checked against
 const FULL = ["fuck", "fucking", "fucker", "shit", "bitch", "cunt", "nigger", "nigga", "faggot", "asshole", "dick", "cock", "pussy", "motherfucker", "bullshit", "whore", "slut", "retard", "chink", "kike", "spic", "damn"];
