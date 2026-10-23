@@ -25,7 +25,7 @@ const tradeOrder = (t: PastTrade) => {
 const names = (xs: PastTrade["aGot"]) => xs.map((x) => x.name).join(" and ");
 
 /**
- * A trade partner's profile, opened from Trade's "<Manager>'s profile" button: what they need, where their
+ * A trade partner's profile, opened from Trade's "Insights on <Manager>" button (Zach, Oct 23: not a page, so not "profile"): what they need, where their
  * starters are strong, how they trade, their recent trades and your notes on them. Same facts as the side
  * panel's partner card. A bottom sheet below 768px, a centered modal from 768px up. With more than one
  * partner in the deal, pills at the top switch between them.

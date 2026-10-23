@@ -1,0 +1,45 @@
+# Recaptures the landing's phone images from the live app and re-renders the 3D back phones with them, then commits
+# the images (Zach, Oct 23: every image should show the tab bar where the live app draws it). Runs when either script
+# or this file changes, or by hand from the Actions tab after a UI change the phones show.
+name: Phone screens
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/phone-screens.yml", "scripts/capture-phone-screens.mjs", "scripts/rerender-back-phones.mjs"]
+permissions:
+  contents: write
+concurrency: { group: phone-screens, cancel-in-progress: true }
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - run: npm install --no-save --no-audit --no-fund playwright sharp && npx playwright install --with-deps chromium
+      # The live site has to be on this commit's parent at least; give Vercel a moment if this push also deployed
+      - run: sleep 90
+      - name: Capture the screens from the live app
+        run: node scripts/capture-phone-screens.mjs https://fantasysource.app public/phones
+      - name: Build with the new screens and the pixel-ratio cap lifted
+        run: |
+          sed -i 's/Math.min(window.devicePixelRatio || 1, 2)/(window.devicePixelRatio || 1)/' src/components/phone3d.ts
+          npx vite build
+          git checkout src/components/phone3d.ts
+      - name: Re-render the back phones
+        run: |
+          npx vite preview --port 8765 --strictPort &
+          npx wait-on -t 60000 http://localhost:8765 || sleep 10
+          node scripts/rerender-back-phones.mjs http://localhost:8765 public/phones
+      - name: Commit the images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add public/phones
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Phone images recaptured from the live app" -m "Co-Authored-By: Zach Blevins <324491846+blev-commits@users.noreply.github.com>"
+          git pull --rebase origin main
+          git push origin HEAD:main

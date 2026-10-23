@@ -165,9 +165,9 @@ html:root:not(#_):not(#_):not(#_) .hp-scr .hp-home { z-index: 6; bottom: calc(8 
 /* The phones behind are pictures of the app running: nothing in them takes a click, a hover or focus */
 html:root:not(#_):not(#_):not(#_) .hp-back, html:root:not(#_):not(#_):not(#_) .hp-back * { pointer-events: none !important; }
 
-/* The stand-in until the real app has drawn: a screenshot of that same screen (public/phones, captured from the app at
-   390 x 795, 2x), placed exactly where the frame will be, so the hand-off doesn't show */
-html:root:not(#_):not(#_) .hp-poster { position: absolute; left: 0; top: calc(50px * var(--hp-s, 0.7)); width: 100%; height: auto; display: block; }
+/* The stand-in until the real app has drawn: a screenshot of that same screen (public/phones, the whole glass captured
+   from the live app by scripts/capture-phone-screens.mjs), placed exactly where the frame will be, so the hand-off doesn't show */
+html:root:not(#_):not(#_) .hp-poster { position: absolute; left: 0; top: 0; width: 100%; height: auto; display: block; }
 
 /* ---------- The trade idea's own section ---------- */
 html:root:not(#_):not(#_) .ld2-tradesec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; align-items: center; }

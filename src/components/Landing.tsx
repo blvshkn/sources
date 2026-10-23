@@ -624,7 +624,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="trade" go={gl === "off" ? appsGo : "none"} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <img className="hp-poster" src="/phones/trade.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
+              <img className="hp-poster" src="/phones/trade.webp" width={780} height={1694} alt="" decoding="async" loading="lazy" />
             </div>
           </div>
           <div className="hp-phone hp-back hp-right ld2-phone" aria-hidden="true" ref={setInert}>
@@ -632,7 +632,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="waivers" go={gl === "off" ? appsGo : "none"} front={false} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <img className="hp-poster" src="/phones/waivers.webp" width={780} height={1590} alt="" decoding="async" loading="lazy" />
+              <img className="hp-poster" src="/phones/waivers.webp" width={780} height={1694} alt="" decoding="async" loading="lazy" />
             </div>
           </div>
           {!live3d && gl === "on" && <>
@@ -645,7 +645,7 @@ export function Landing({ onLive, onDemo }: {
               <PhoneStatus />
               <PhoneApp tab="wire" go={appsGo} front={true} />
               <span className="ph-home hp-home" aria-hidden="true" />
-              <img className="hp-poster" src="/phones/wire.webp" width={780} height={1590} alt="" decoding="async" fetchPriority="high" />
+              <img className="hp-poster" src="/phones/wire.webp" width={780} height={1694} alt="" decoding="async" fetchPriority="high" />
             </div>
           </div>
         </div>
