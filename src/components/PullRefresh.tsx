@@ -148,6 +148,7 @@ export function PullRefresh({ onSync }: { onSync: () => Promise<() => void> }) {
         }
         loops.forEach((a) => a.cancel());
         mark.classList.remove("syncing");
+        if (!apply) haptic("error");
         if (apply) {
           haptic("done");
           mark.classList.add("locked");

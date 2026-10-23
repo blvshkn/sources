@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useErrorHaptic } from "../haptics";
 import { useBackClose } from "../backClose";
 import { SleeperError, findLeagues, findUser, managerAvatar, teamAvatarIn } from "../sleeper";
 import { LEAGUE, LEAGUE_NAME } from "../data";
@@ -38,6 +39,7 @@ export function LeagueSwitcher({ accounts, activeUserId, adding = false, demo, o
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [added, setAdded] = useState<string | null>(null);
   const sheet = useRef<HTMLElement>(null);
   useFocusTrap(sheet);

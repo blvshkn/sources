@@ -4,6 +4,7 @@
 // steps again. The head line is always there. When the steps fold or open, the trace changes height in one step and
 // whatever sits under it (Ask's answer card, the lineup result) slides from where it was by transform, so nothing jumps.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { haptic } from "../haptics";
 import type { ReactNode, RefObject } from "react";
 import { WorkingLoader } from "./WorkingLoader";
 import { Icon } from "./icons";
@@ -176,7 +177,7 @@ function useSlideFollowers(root: RefObject<HTMLDivElement | null>, open: boolean
 }
 
 /** The trace itself. `idle` draws nothing. `doneLabel` lets a surface say "Read" or "Loaded" instead of "Worked". */
-export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, stayOpen = false, children }: {
+export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked" }, className = "", compact = false, stayOpen = false, haptics = true, children }: {
   trace: TraceState;
   verb?: { doing: string; done: string };
   className?: string;
@@ -186,6 +187,9 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   /** Keep the steps open once it's done instead of folding them, for a result that needs its working shown (the
    *  trade finder when it finds nothing). The chevron still folds them. Off everywhere else. */
   stayOpen?: boolean;
+  /** Feel the work (haptics.ts): a light tick as each step lands, a finished tick at the end, three ticks if it stops.
+   *  Off for traces nobody started with a tap (Boot, the landing's scripted demos). */
+  haptics?: boolean;
   /** Extra rows at the foot of the timeline (a surface's own detail). */
   children?: ReactNode;
 }) {
@@ -210,6 +214,11 @@ export function ThinkingTrace({ trace, verb = { doing: "Working", done: "Worked"
   // from where it was by transform (useSlideFollowers)
   const root = useRef<HTMLDivElement>(null);
   useSlideFollowers(root, open);
+  // Zach, Oct 23: "When AI is thinking too". Never inside the landing's phones (an embedded frame) or its demos.
+  const feel = haptics && typeof window !== "undefined" && window.top === window;
+  const nSteps = trace.steps.length;
+  useEffect(() => { if (feel && running && nSteps > 0) haptic("tap"); }, [nSteps]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (feel && trace.status === "done") haptic("done"); else if (feel && trace.status === "error") haptic("error"); }, [trace.status]); // eslint-disable-line react-hooks/exhaustive-deps
   if (trace.status === "idle") return null;
 
   const elapsed = (trace.ended ?? t) - trace.started;

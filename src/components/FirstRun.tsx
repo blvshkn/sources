@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useErrorHaptic } from "../haptics";
 import { useFocusTrap } from "./focusTrap";
 import { backdropClose, useDismiss } from "./useDismiss";
 import { MyTag, TEAMS, YOU, playerById, LEAGUE_NAME, setLeague, teamById } from "../data";
@@ -25,6 +26,7 @@ export function FirstRun({ start, onLive, onDemo, onClose }: { start: FirstRunSt
   const [leagueId, setLeagueId] = useState<string | null>(start.kind === "demo" ? "demo" : null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [picked, setPicked] = useState<Record<string, MyTag>>({});
   const [intel, setIntel] = useState<{ you: TeamNeeds; opener: Trade | null } | null>(null);
   const isDemoRun = leagueId === "demo";

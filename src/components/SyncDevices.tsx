@@ -5,6 +5,7 @@
 //     fresh and Reset sync each take a second tap on the same button, no modal.
 // The code sheet is a DetailSheet: a bottom sheet on phones, a modal from 768px.
 import { useEffect, useRef, useState } from "react";
+import { useErrorHaptic } from "../haptics";
 import { DetailSheet } from "./DetailSheet";
 import { Icon } from "./ui";
 import { mintCode, redeemCode, rotateKey, startFresh, useSyncStatus } from "../syncKey";
@@ -41,6 +42,7 @@ export function PairSheet({ user, mode, onClose }: { user: string; mode: "show" 
 function ShowCode({ user }: { user: string }) {
   const [code, setCode] = useState<{ code: string; expiresAt: number } | null>(null);
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   // Each new code replaces the last one on the server, so only one request at a time, and only the latest one shows
@@ -77,6 +79,7 @@ function ShowCode({ user }: { user: string }) {
 function EnterCode({ user, onDone }: { user: string; onDone: () => void }) {
   const [v, setV] = useState("");
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [busy, setBusy] = useState(false);
   const [paired, setPaired] = useState(false);
   const field = useRef<HTMLInputElement>(null);

@@ -66,7 +66,7 @@ function Block({ res, trace, phase, onGo, onDismiss, ghost = false }: {
           {running ? <WorkingLoader size={16} /> : <AiMark size={16} />}Set optimal lineup
         </button>
       </div>
-      {phase !== "idle" && trace.status !== "idle" && <ThinkingTrace trace={trace} />}
+      {phase !== "idle" && trace.status !== "idle" && <ThinkingTrace haptics={false} trace={trace} />}
       {phase === "done" && (
         <div className="lu-ai-res" aria-live={live ? "polite" : undefined}>
           <p className="lu-ai-head">{res.summary}</p>

@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useErrorHaptic } from "./haptics";
 import { MyTag, LEAGUE, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { installIconTooltips } from "./tooltips";
@@ -73,6 +74,7 @@ export default function App() {
   // The league load's real steps (each Sleeper and FantasyCalc fetch), shown under the logo while it loads
   const [bootTrace, setBootTrace] = useState<TraceState>(IDLE);
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [version, setVersion] = useState(0);
   const [initialMyTags, setInitialMyTags] = useState<Record<string, MyTag> | undefined>();
   const justLoaded = useRef(false);

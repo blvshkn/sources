@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useErrorHaptic } from "../haptics";
 import { Decrypt } from "./Decrypt";
 import { LEAGUE, Player, WEEK, YOU, onBye, playerById } from "../data";
 import { kickLine, oppAt, useKickoffs } from "../kickoff";
@@ -213,6 +214,7 @@ export function StartSit({ a: a0, b: b0 }: { a?: string; b?: string }) {
   useKickoffs(week);
   const [wv, setWv] = useState<WeekView | null>(null);
   const [err, setErr] = useState<{ week: number; msg: string } | null>(null);
+  useErrorHaptic(err);
   useEffect(() => {
     if (week === WEEK || peekWeek(week)) return;
     let live = true;

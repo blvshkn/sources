@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useErrorHaptic } from "../haptics";
 import { setInert } from "../inert";
 import { BrandLogo } from "./BrandLogo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
@@ -84,6 +85,7 @@ export function Landing({ onLive, onDemo }: {
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useErrorHaptic(error);
   const [errFor, setErrFor] = useState("ld-user");
 
   applyFormat(DEFAULT_FORMAT);

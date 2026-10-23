@@ -64,7 +64,7 @@ export function Boot({ step, leaving = false, trace }: { step: string; leaving?:
           <span className="boot3-loader" aria-hidden="true"><WorkingLoader size={30} /></span>
           {/* Reserves the finished trace's height, so the logo never moves and nothing jumps as steps arrive */}
           <div className="boot3-trace">
-            {trace && trace.status !== "idle" && <ThinkingTrace trace={trace} verb={{ doing: "Loading", done: "Loaded" }} stayOpen />}
+            {trace && trace.status !== "idle" && <ThinkingTrace haptics={false} trace={trace} verb={{ doing: "Loading", done: "Loaded" }} stayOpen />}
           </div>
         </div>
         <div className="boot3-gap" />
