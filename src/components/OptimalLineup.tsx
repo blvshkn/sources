@@ -71,7 +71,7 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
     <div className={`lu-ai${open ? " is-open" : ""}`} aria-label="Set optimal lineup">
       <div className="lu-ai-bar">
         {knownSet ? <>
-          <p className="lu-ai-txt"><b>Your lineup is set</b><span>{raw ? "Source AI checked it this week. Nothing to move." : "Your best projected lineup is already in Sleeper. Nothing to move."}</span></p>
+          <p className="lu-ai-txt"><b>Your optimal lineup is set</b><span>{raw ? "Source AI checked it this week. Nothing to move." : "Your best projected lineup is already in Sleeper. Nothing to move."}</span></p>
           <button type="button" className="btn btn-sm btn-ghost lu-ai-again" onClick={(e) => { setRecheck(true); go(e); }}><AiMark size={16} />Check again</button>
         </> : <>
           <p className="lu-ai-txt"><b>Source AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
