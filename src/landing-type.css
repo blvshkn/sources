@@ -462,7 +462,13 @@ html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto
    never drifting or fading. Pinned again, but with no fill of its own (the page color comes from html), which is what
    Safari had been stretching into the box under its toolbar */
 @media (max-width: 860px) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env { position: fixed; inset: 0; height: auto; }
+  /* No longer pinned (Zach, Oct 23: the black box came back on iPhone): Safari 26 paints a solid strip under its
+     toolbar for a layer pinned to the screen's bottom edge, so phones get the first-screen backdrop like the wider
+     screens, fading out over its last 200px */
+  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env {
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
+  }
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-glow { transform: none !important; }
 }
 
