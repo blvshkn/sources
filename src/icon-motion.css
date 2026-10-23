@@ -16,12 +16,14 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) svg.px-ic path
 html:root:not(#_) svg.ic-helmet .m3 { opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Notifications (Zach, Oct 23: "it should rock like a bell"): the whole bell rocks from its crown and settles, smooth
-     rather than stepped. The clapper hangs from the same crown and trails a beat behind, so it reads as a swing. */
-  html:root:not(#_) .ic-bell[data-play] :is(.m1, .m2) { transform-origin: 8px 1px; animation: px-bell calc(760ms * var(--mo, 1)) cubic-bezier(0.37, 0, 0.63, 1) both; }
-  html:root:not(#_) .ic-bell[data-play] .m2 { animation-name: px-clap; animation-delay: calc(50ms * var(--mo, 1)); }
-  @keyframes px-bell { 0% { transform: rotate(0); } 14% { transform: rotate(16deg); } 32% { transform: rotate(-12deg); } 50% { transform: rotate(8deg); } 68% { transform: rotate(-4deg); } 84% { transform: rotate(1.5deg); } 100% { transform: rotate(0); } }
-  @keyframes px-clap { 0% { transform: rotate(0); } 14% { transform: rotate(10deg); } 32% { transform: rotate(-14deg); } 50% { transform: rotate(10deg); } 68% { transform: rotate(-5deg); } 84% { transform: rotate(2deg); } 100% { transform: rotate(0); } }
+  /* Notifications (Zach, Oct 23: rock side to side like a bell, in our pixel motion, not jello): the dome and the
+     clapper move as one piece from the crown, so nothing wobbles against anything else. It ticks through whole frames
+     at 12 a second like the other pixel icons (steps), swinging out wide and settling back: 15, -15, 10, -10, 5, 0. */
+  html:root:not(#_) .ic-bell[data-play] :is(.m1, .m2) { transform-origin: 8px 1px; animation: px-bell calc(583ms * var(--mo, 1)) steps(1, end) both; }
+  @keyframes px-bell {
+    0% { transform: rotate(0); } 14.3% { transform: rotate(15deg); } 28.6% { transform: rotate(-15deg); }
+    42.9% { transform: rotate(10deg); } 57.1% { transform: rotate(-10deg); } 71.4% { transform: rotate(5deg); } 85.7%, 100% { transform: rotate(0); }
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
@@ -130,3 +132,5 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) svg.px
 }
 /* The landing tagline's icon chips are sized by the type around them (about 48px), so they take the weight here */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-chip-ic svg.px-ic path { --px-sw: 0.35; }
+/* While the bell rocks its edges stay hard pixels instead of smoothing at the tilted frames */
+html:root:not(#_) :is(.ic-bell[data-play], .top-bell[data-ring] .ic-bell) { shape-rendering: crispEdges; }

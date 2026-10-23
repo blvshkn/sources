@@ -62,9 +62,8 @@ html:root:not(#_):not(#_) .toast.swipe-toast.is-drag { transition: none !importa
    App sets data-ring for one beat when something new arrives this visit (never on mount, never on open). The bell
    rocks from its crown and damps out; the clapper hangs from the same crown and trails (icon-motion.css keyframes). The dot scales in on a spring. */
 @media (prefers-reduced-motion: no-preference) {
-  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m1 { transform-box: view-box; transform-origin: 8px 1px; animation: px-bell calc(760ms * var(--mo)) cubic-bezier(0.37, 0, 0.63, 1) both; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell .m2 { transform-box: view-box; transform-origin: 8px 1px; animation: px-clap calc(760ms * var(--mo)) cubic-bezier(0.37, 0, 0.63, 1) calc(50ms * var(--mo)) both; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge.is-new { animation: act-dot-in calc(240ms * var(--mo)) var(--ease-spring) calc(114ms * var(--mo)) both; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .top-bell[data-ring] svg.ic-bell :is(.m1, .m2) { transform-box: view-box; transform-origin: 8px 1px; animation: px-bell calc(583ms * var(--mo)) steps(1, end) both; }
+    html:root:not(#_):not(#_):not(#_):not(#_) .top-bell .ibx-badge.is-new { animation: act-dot-in calc(240ms * var(--mo)) var(--ease-spring) calc(114ms * var(--mo)) both; }
 }
 @keyframes act-ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
 @keyframes act-clap { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-10deg); } 30% { transform: rotate(9deg); } 45% { transform: rotate(-6deg); } 60% { transform: rotate(3deg); } 75% { transform: rotate(-1deg); } }
