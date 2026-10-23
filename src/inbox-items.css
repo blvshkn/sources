@@ -214,3 +214,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills { padding-t
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .ibx-sec-h { top: 64px; padding-top: 12px; padding-bottom: 10px; box-shadow: inset 0 -1px 0 var(--line); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-sec-h + .ibx-sub > .ibx-n:first-child { border-top: 0; }
 @media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .ibx-sec-h { top: 68px; } }
+
+/* The filter pills scroll sideways (Zach, Oct 23): pills keep their size, a mouse can drag the row (useDragScroll.ts) */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills { overflow-x: auto; overflow-y: hidden; touch-action: pan-x; cursor: grab; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills.is-dragging { cursor: grabbing; user-select: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills.is-dragging > button { pointer-events: none; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-pills > button { flex: 0 0 auto; white-space: nowrap; }

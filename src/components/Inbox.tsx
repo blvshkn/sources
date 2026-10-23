@@ -1,3 +1,4 @@
+import { useDragScroll } from "../useDragScroll";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { denyOn } from "../deny";
 import type { ReactNode } from "react";
@@ -195,6 +196,8 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   ];
   useEffect(() => { if (filter !== "all" && !pills.some((p) => p.id === filter)) setFilter("all"); });
   const listRef = useRef<HTMLDivElement>(null);
+  const pillsRef = useRef<HTMLDivElement>(null);
+  useDragScroll(pillsRef, items.length > 0);
   // The stuck pills and headings take the panel's real background, whatever surface the panel sits on (docked,
   // slide-over, the demo, phones), so nothing shows a different shade behind them (Zach, Oct 23)
   useLayoutEffect(() => {
@@ -235,7 +238,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
       {context}
       <div className="ibx-list" role="region" aria-label="Notifications" ref={listRef}>
         {items.length > 0 && (
-          <div className="ibx-pills" role="group" aria-label="Filter notifications">
+          <div ref={pillsRef} className="ibx-pills" role="group" aria-label="Filter notifications">
             {pills.map((p) => (
               <button key={p.id} type="button" aria-pressed={filter === p.id}
                 onClick={() => { setFilter(p.id); listRef.current?.scrollTo({ top: 0 }); }}><span>{p.label}</span><small>{p.n}</small></button>
