@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import Filter from "bad-words";
 import { maskFoul } from "../../api/_lib/censor.js";
 
@@ -7,9 +8,40 @@ import { maskFoul } from "../../api/_lib/censor.js";
 const filter = new Filter();
 const badWord = (w: string) => { const c = w.replace(/[^a-zA-Z]/g, ""); return !!c && filter.isProfane(c); };
 
-/** One hidden word, blurred on black. Screen readers hear "hidden word"; copying it pastes a friendly word instead. */
+/** One hidden word, pixelated (Zach, Oct 23): the word is drawn on a canvas a few pixels across and scaled back up with
+ *  no smoothing, in the text's own font and color, so it reads as a mosaic of the word. The word itself is never in
+ *  the page: screen readers hear "hidden word", and copying it pastes the friendly word kept in data-swap. Drawn
+ *  natively; react-pixelate only takes images and needs React 16, so it would have broken the build on React 18. */
 export function Pixelated({ word }: { word: string }) {
-  return <span className="px-cens" role="img" aria-label="hidden word"><span aria-hidden="true">{word}</span></span>;
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current, host = c?.parentElement;
+    if (!c || !host) return;
+    const cs = getComputedStyle(host);
+    const size = parseFloat(cs.fontSize) || 16;
+    const font = `${cs.fontStyle} ${cs.fontWeight} ${size}px ${cs.fontFamily}`;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    ctx.font = font;
+    const w = Math.max(8, Math.ceil(ctx.measureText(word).width)), h = Math.ceil(size * 1.2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    // Blocks about a quarter of the type size
+    const block = Math.max(3, Math.round(size / 4));
+    const sw = Math.max(2, Math.ceil(w / block)), sh = Math.max(2, Math.ceil(h / block));
+    const off = document.createElement("canvas");
+    off.width = sw; off.height = sh;
+    const o = off.getContext("2d");
+    if (!o) return;
+    o.scale(sw / w, sh / h);
+    o.font = font; o.fillStyle = cs.color; o.textBaseline = "middle";
+    o.fillText(word, 0, h / 2);
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    c.style.width = `${w}px`; c.style.height = `${h}px`;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.drawImage(off, 0, 0, sw, sh, 0, 0, c.width, c.height);
+  }, [word]);
+  return <span className="px-cens" role="img" aria-label="hidden word" data-swap={swapFor(word)}><canvas ref={ref} aria-hidden="true" /></span>;
 }
 
 /** Each word of `text` with its hidden parts marked, worked out against the whole sentence (so phrases and spaced out
@@ -66,8 +98,11 @@ if (typeof document !== "undefined") {
     if (!el?.closest("[class*=\"ask\"]") && !el?.querySelector(".px-cens")) return;
     const frag = sel.getRangeAt(0).cloneContents();
     frag.querySelectorAll(".sr-only").forEach((n) => n.remove());
+    let swapped = false;
+    frag.querySelectorAll<HTMLElement>(".px-cens").forEach((n) => { n.replaceWith(n.dataset.swap ?? "friend"); swapped = true; });
     const text = frag.textContent ?? "";
     const clean = friendly(text);
+    if (swapped && clean === text) { e.preventDefault(); e.clipboardData.setData("text/plain", text); return; }
     if (clean === text) return;
     e.preventDefault();
     e.clipboardData.setData("text/plain", clean);
