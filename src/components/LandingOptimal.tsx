@@ -8,10 +8,9 @@ import { useTrace, type TraceState, type Tracer } from "../think";
 import { ThinkingTrace } from "./ThinkingTrace";
 import { WorkingLoader, AiMark } from "./WorkingLoader";
 import { SwapRows } from "./SwapRows";
-import { PlatformLogo } from "./PlatformLogo";
 import { AiLabel } from "./ui";
 import { moveLock } from "../kickoff";
-import { WEEK, YOU, playerById, sleeperUrl } from "../data";
+import { WEEK, YOU, playerById } from "../data";
 import { mo } from "../motion";
 import type { Chip } from "../steps";
 import type { OptimalResult } from "../optimalLineup";
@@ -52,8 +51,8 @@ function doneTrace(res: OptimalResult): TraceState {
     steps: s.steps.map((x) => ({ doing: x.doing, done: x.done, n: x.n, chips: x.chips ?? [], state: "done", at: 0 })) };
 }
 
-function Block({ res, trace, phase, onGo, onDismiss, ghost = false }: {
-  res: OptimalResult; trace: TraceState; phase: "idle" | "run" | "done"; onGo?: () => void; onDismiss?: () => void; ghost?: boolean;
+function Block({ res, trace, phase, onGo, onDismiss, onFind, ghost = false }: {
+  res: OptimalResult; trace: TraceState; phase: "idle" | "run" | "done"; onGo?: () => void; onDismiss?: () => void; onFind?: () => void; ghost?: boolean;
 }) {
   const running = phase === "run";
   const lockBy = moveLock(...res.swaps.flatMap((w) => [playerById(w.start), playerById(w.bench)]));
@@ -75,7 +74,8 @@ function Block({ res, trace, phase, onGo, onDismiss, ghost = false }: {
             <span className="lu-ai-hint">Make {res.swaps.length > 1 ? "these moves" : "this move"} in Sleeper{lockBy ? ` before ${lockBy}` : ""}.</span>
             <div className="lu-ai-btns">
               <button type="button" className="btn btn-sm lu-ai-x" onClick={onDismiss} tabIndex={live ? undefined : -1}>Dismiss</button>
-              <a className="btn btn-sm lu-ai-open" href={sleeperUrl("team")} target="_blank" rel="noreferrer" tabIndex={live ? undefined : -1}><PlatformLogo size={16} />Open in Sleeper</a>
+              {/* On the landing the next step is your own league (Zach, Oct 23): the green main action opens Find my leagues */}
+              <button type="button" className="btn btn-sm btn-primary lu-ai-open" onClick={onFind} tabIndex={live ? undefined : -1}>Find my leagues</button>
             </div>
           </div>
           <AiLabel />
@@ -85,7 +85,7 @@ function Block({ res, trace, phase, onGo, onDismiss, ghost = false }: {
   );
 }
 
-export function LandingOptimal({ res }: { res: OptimalResult }) {
+export function LandingOptimal({ res, onFind }: { res: OptimalResult; onFind?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const { trace, result, start } = useTrace<OptimalResult>();
   const [phase, setPhase] = useState<"idle" | "run" | "done">("idle");
@@ -135,7 +135,7 @@ export function LandingOptimal({ res }: { res: OptimalResult }) {
   return (
     <div ref={ref} className="ld2-optl">
       <div className="ld2-optl-ghost" aria-hidden="true" ref={setInert}><Block res={shownRes ?? res} trace={doneTrace(shownRes ?? res)} phase="done" ghost /></div>
-      <Block res={shownRes ?? res} trace={shown} phase={phase} onGo={go} onDismiss={() => { setStill(null); setPhase("idle"); }} />
+      <Block res={shownRes ?? res} trace={shown} phase={phase} onGo={go} onDismiss={() => { setStill(null); setPhase("idle"); }} onFind={onFind} />
     </div>
   );
 }

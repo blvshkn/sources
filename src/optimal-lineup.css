@@ -59,3 +59,7 @@ html:root:not(#_):not(#_):not(#_) .lu-list .lu-row.ai-sit { background-color: co
   html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn) { transition: none; }
   html:root:not(#_):not(#_) .lu-ai :is(.lu-ai-go, .lu-ai-btns > .btn):active { transform: none; }
 }
+
+/* The landing's copy: the main action sits right and fills, Dismiss to its left (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_) .ld2-optl .lu-ai .lu-ai-btns > .lu-ai-x { flex: none; padding-inline: 20px; }
+html:root:not(#_):not(#_):not(#_) .ld2-optl .lu-ai .lu-ai-btns > .lu-ai-open { flex: 1 1 auto; }

@@ -812,7 +812,7 @@ export function Landing({ onLive, onDemo }: {
             <p>One tap weighs this week's news, injury reports, Vegas lines and kickoff weather. Every move comes with its reason. You make it in Sleeper.</p>
             {/* The Lineup tab's Set optimal lineup, played from a script with the engine's moves (LandingOptimal.tsx) */}
             {optDemo.swaps.length > 0
-              ? <LandingOptimal res={optDemo} />
+              ? <LandingOptimal res={optDemo} onFind={() => setFindOpen(true)} />
               : <p className="ld2-opt-none">{optDemo.summary}</p>}
           </article>
           <article className="card ld-cell ld2-reveal ld2-sync-cell">
