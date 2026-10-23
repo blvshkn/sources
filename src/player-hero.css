@@ -272,3 +272,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .lu-weeknav.pd
 @media (min-width: 861px) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ps.ps-player > .ps-body > :is(.pd-usage, .pd-match, .ps-games:not(.ps-sched)) { grid-column: 1 / -1; grid-row: auto; align-self: start; }
 }
+
+/* The close sits in the sheet's corner like every other sheet's close (Zach, Oct 23): the shared corner inset from
+   icon-center.css, equal from the top and the right, at every size */
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) > :is(.ds-top, .pd-top) > .ps-x {
+  top: calc((var(--sheet-r) - var(--x-size) / 2) * 0.3 + 8px); right: calc((var(--sheet-r) - var(--x-size) / 2) * 0.3 + 8px);
+}
