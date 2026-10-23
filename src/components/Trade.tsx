@@ -449,7 +449,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
       ) : (
         <div className="tr-bar">
           <TeamPicker compact teams={TEAMS.filter((t) => !t.you && !extra.some((l) => l.teamId === t.id))} value={partnerId} onChange={setPartner} />
-          {onProfile && <button type="button" className="btn tr-profile" onClick={() => setProfile(true)} aria-haspopup="dialog" aria-expanded={profile} title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Partner insights" : `Insights on ${them.manager}`}</span></button>}
+          {onProfile && <button type="button" className="btn tr-profile" onClick={() => setProfile(true)} aria-haspopup="dialog" aria-expanded={profile} title="Needs, notes and how they trade"><Icon name="group" size={18} /><span>{isMulti ? "Scout partners" : `Scout ${them.manager}`}</span></button>}
           {profile && <PartnerProfile teamIds={legs.map((l) => l.team.id)} initial={partnerId} tags={tags} onClose={() => setProfile(false)}
             pauses={pauses} onResume={onResumePause} valueAsks={valueAsks}
             onNotes={(id) => { if (id !== partnerId) setPartner(id); setView("notes"); }} />}
