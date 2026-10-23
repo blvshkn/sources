@@ -113,19 +113,27 @@ function autoHeight() {
     const from = d.offsetHeight;
     const opening = !running.has(d) ? !d.open : d.dataset.ah !== "open";
     running.get(d)?.cancel();
-    // Measure the end height in one synchronous pass: no paint happens between these toggles
-    d.open = opening;
-    const to = d.offsetHeight;
+    // Measure the end height in one synchronous pass: no paint happens between these toggles. Closing measures the
+    // summary instead of toggling: closing and reopening <details> to measure restarted the answer's fade-in, so the
+    // text flashed back in as it shut
+    let to: number;
+    if (opening) { d.open = true; to = d.offsetHeight; }
+    else {
+      const cs = getComputedStyle(d);
+      to = (sum?.offsetHeight ?? 0) + (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    }
     d.open = true;
     d.dataset.ah = opening ? "open" : "close";
-    d.style.overflow = "hidden";
+    // overflow alone doesn't clip a <details>' content in Safari (the answer drew over the next question while it
+    // grew, Zach Oct 23); a clip-path clips it everywhere
+    d.style.overflow = "hidden"; d.style.clipPath = "inset(0)";
     const a = d.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: mo(240), easing: EASE_OUT });
     running.set(d, a);
     a.onfinish = () => {
-      running.delete(d); d.style.overflow = ""; delete d.dataset.ah;
+      running.delete(d); d.style.overflow = ""; d.style.clipPath = ""; delete d.dataset.ah;
       if (!opening) d.open = false;
     };
-    a.oncancel = () => { d.style.overflow = ""; };
+    a.oncancel = () => { d.style.overflow = ""; d.style.clipPath = ""; };
   });
 }
 

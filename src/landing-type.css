@@ -639,3 +639,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
     -webkit-mask-image: var(--fade); mask-image: var(--fade);
   }
 }
+
+/* The FAQ grows and shrinks the page under it (Zach, Oct 23: opening an answer hitched). The closing CTA and the
+   sign-off get their own layers, so they slide down as one picture instead of being repainted every frame */
+html:root:not(#_):not(#_):not(#_) :is(.ld2-final, .ld2-sign) { will-change: transform; }
