@@ -3,7 +3,6 @@ import { haptic } from "./haptics";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
 import { moveLock, useKickoffs } from "./kickoff";
-import { LOCKED_LINE } from "./locks";
 import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
 import { MatchupSheet } from "./components/MatchupSheet";
@@ -442,7 +441,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
 
   const briefing: Briefing = {
     // No lineup line when there's nothing to change (final week, or already optimal); locks that blocked a helpful move say so plainly
-    lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : lineupNow.blocked ? LOCKED_LINE : null,
+    lineup: lineupNow.final ? null : diff.length ? `Start ${diff[0].start.name} over ${diff[0].benched.name} (${fmt(diff[0].gain)})` : null, // only a fix you can still make; a move kickoff blocked is not one (Zach, Oct 23 lint)
     trade: partners[0]?.t ?? null,
     waiver: topRec ? `${topRec.fa.name}: Sugg. bid ${bidRange(topRec.bid)}${recDrop(topRec) ? `, drop ${recDrop(topRec)!.name}` : ""}` : "Nothing on the wire fixes a weak spot this week.",
     waiverPass: topRec ? { id: topRec.fa.id, name: topRec.fa.name } : undefined,

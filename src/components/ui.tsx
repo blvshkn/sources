@@ -170,6 +170,9 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
       el.style.setProperty("--pt-l", `${Math.max(0, Math.round(pr.left - mr.left))}px`);
       el.style.setProperty("--pt-r", `${Math.max(0, Math.round(mr.right - pr.right))}px`);
       stickAt = parseFloat(getComputedStyle(el).top) || 0;
+      // Where the stuck tabs end, for anything that sticks under them (the Trade roster switch: lint, Oct 23, it stuck
+      // at the old 64px bar height and sat over the header)
+      root.style.setProperty("--pt-under", `${Math.round(stickAt + el.getBoundingClientRect().height + 8)}px`);
       check();
     };
     // Stuck is read straight from where the tabs sit: pinned at their sticky line once the page has moved. A position
@@ -185,7 +188,7 @@ export function PageTabs<T extends string>({ value, options, onChange, inSheet =
     window.addEventListener("scroll", onScroll, { passive: true });
     measure();
     const ro = new ResizeObserver(measure); ro.observe(document.body);
-    return () => { ro.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); root.removeAttribute("data-tabs-stuck"); };
+    return () => { ro.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); root.removeAttribute("data-tabs-stuck"); root.style.removeProperty("--pt-under"); };
   }, [inSheet]);
   const pick = (v: T) => {
     if (v === value) return;

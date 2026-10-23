@@ -1,4 +1,4 @@
-// Set optimal lineup: Sources AI checks the engine's projection-best lineup against the week's signals.
+// Set optimal lineup: Source AI checks the engine's projection-best lineup against the week's signals.
 //   POST /api/lineup  body { week, slots, roster, current, baseline, signals }
 //   200 { lineup: { starters: [{ slot, id }], swaps: [{ start, bench, slot, why, signal }], summary } }
 //   400 bad input · 403 not this site, or a bot · 405 not POST · 413 too big · 429 slow down (reason "daily_limit")
@@ -20,7 +20,7 @@ export const SIGNAL_KINDS = ["news", "injury", "odds", "weather", "rankings"];
 const KEY = { news: "news", injury: "injuries", odds: "odds", weather: "weather", rankings: "rankings" };
 const lineupLimit = rateLimiter({ perMin: 6, perHour: 40 });
 
-export const SYSTEM = `You are Sources AI, setting one fantasy football lineup for this week inside Sources.
+export const SYSTEM = `You are Source AI, setting one fantasy football lineup for this week inside Source.
 
 What you get (JSON in the user turn)
 - "slots": the starting slots in order. FLEX takes RB, WR or TE. SF (superflex) takes any position.

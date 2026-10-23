@@ -23,3 +23,8 @@
     html:root:not(#_):not(#_):not(#_) .rosters .side-switch::before { -webkit-backdrop-filter: none; backdrop-filter: none; }
   }
 }
+
+/* Under the stuck page tabs, not at the old 64px top bar height, where it covered the header (lint, Oct 23) */
+@media (max-width: 860px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .rosters .side-switch { top: var(--pt-under, calc(env(safe-area-inset-top, 0px) + 64px)); }
+}

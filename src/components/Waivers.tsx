@@ -569,10 +569,10 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                 <button className="wv3-watch" aria-pressed={isWatched} aria-label={`${watchLabel}: ${e.fa.name}`} onClick={() => toggleWatch(e)}><WatchStar on={isWatched} /><span className="wv-act-t" aria-hidden="true">{isWatched ? "Watching" : "Watch"}</span></button>
               </Tooltip>
               {/* Swipe row (phones): the panels a sideways drag opens, Watch on the left and Not now on the right */}
-              {!shelved && <span className="sw-under" aria-hidden="true"><span className="sw-l"><Icon name="star" size={18} />{isWatched ? "Watching" : "Watch"}</span><span className="sw-r">Not now</span></span>}
+              {!shelved && <span className="sw-under" aria-hidden="true"><span className="sw-l"><Icon name="star" size={18} />{isWatched ? "Watching" : "Watch"}</span><span className="sw-r">Not right now</span></span>}
               {!shelved && <span className="ps-end">
                 <Tooltip content="Not right now. Skips him this week">
-                  <button className="ps-x" aria-label={`Not right now: skip ${e.fa.name} this week`} onClick={() => snooze(e)}><Icon name="x" size={16} /><span className="wv-act-t" aria-hidden="true">Not now</span></button>
+                  <button className="ps-x" aria-label={`Not right now: skip ${e.fa.name} this week`} onClick={() => snooze(e)}><Icon name="x" size={16} /><span className="wv-act-t" aria-hidden="true">Not right now</span></button>
                 </Tooltip>
               </span>}
               {isOpen && r && !shelved && (

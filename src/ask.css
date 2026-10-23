@@ -290,3 +290,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-or
    text's baseline like any other word */
 html:root:not(#_):not(#_):not(#_) .px-cens { display: inline-block; vertical-align: -0.2em; line-height: 0; pointer-events: none; }
 html:root:not(#_):not(#_):not(#_) .px-cens > canvas { display: block; image-rendering: pixelated; }
+
+/* Phones and tablets: the suggestion groups draw no box, so they take no box padding either; the chips line up with "Ask Source"
+   (lint, Oct 23: they sat 16px in) */
+@media (max-width: 860.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .ask-group { padding: 0 !important; }
+}
