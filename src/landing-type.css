@@ -506,3 +506,23 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone3d-img { position: absolute;
 @media (hover: none) and (pointer: coarse) {
   html:root:not(#_):not(#_):not(#_) .hp-frame { pointer-events: none; }
 }
+
+/* Tablets held sideways (Zach, Oct 22): the hero sits higher and the phones a size down, so the headline and the
+   username field are in view from the start instead of centered below a tall stage */
+@media (min-width: 1024px) and (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-hero { min-height: 0; padding-block: 8px 64px; align-items: start; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-copy { padding-top: 56px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-stage { height: 600px; --pf: 232px; --pb: 186px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-front { --pw: 232px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-back { --pw: 186px; }
+}
+@media (min-width: 1280px) and (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-stage { height: 660px; --pf: 264px; --pb: 211px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-front { --pw: 264px; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .hp-back { --pw: 211px; }
+}
+
+/* Tagline chips sit on the middle of the caps, all alike (Zach, Oct 22). As inline flex boxes they took their baseline
+   from what's inside, so a chip with initials (LJ) or a photo sat lower than an icon chip; aligned by their own middle
+   instead, then nudged up to the middle of the capitals. */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { vertical-align: middle; position: relative; top: -0.07em; }
