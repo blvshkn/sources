@@ -122,6 +122,8 @@ export function LegalDoc() {
         <li><b>No betting of any kind.</b> {BETTING_TERMS}</li>
         <li><b>You make the moves.</b> Source never sends a message, trade or lineup change for you. You decide what to do in your league and you're responsible for it.</li>
         <li><b>Be decent.</b> Don't use pitches or tags to harass anyone in your league.</li>
+        <li><b>Keep your language respectful.</b> Don't use hateful, racist, sexist, homophobic, transphobic or otherwise abusive language anywhere in Source, including Ask. Source hides offensive words and won't repeat them.</li>
+        <li><b>Breaking these terms.</b> If we decide you've broken these terms, we may take action when necessary, including limiting or ending your access to Ask or to Source.</li>
         <li><b>People only.</b> Automated access to the AI features (bots, scripts, scrapers or anything posing as a person) isn't allowed. Requests that look automated are refused.</li>
         <li><b>Changes.</b> These terms may change as Source grows. Using Source after a change means you accept it.</li>
         <li><b>Limits.</b> To the extent the law allows, Source isn't liable for losses tied to decisions made with it, including lost games, trades or prizes.</li>
