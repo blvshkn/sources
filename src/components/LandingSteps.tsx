@@ -16,6 +16,9 @@ import { AiMark } from "./WorkingLoader";
 const USER = "blevishkin";
 const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 
+/** The demos run at a bit over half their written timing (Zach, Oct 23: they need to come in faster) */
+const PACE = 0.55;
+
 /** Steps through `marks` (ms from start) once `go` turns true. Returns how many marks have passed. */
 function usePhase(go: boolean, marks: number[], onDone: () => void): number {
   // Reduced motion: the end state from the first paint, in view or not
@@ -23,7 +26,7 @@ function usePhase(go: boolean, marks: number[], onDone: () => void): number {
   useEffect(() => {
     if (reduced()) { setK(marks.length); onDone(); return; }
     if (!go) return;
-    const ids = marks.map((ms, i) => window.setTimeout(() => { setK(i + 1); if (i === marks.length - 1) onDone(); }, ms));
+    const ids = marks.map((ms, i) => window.setTimeout(() => { setK(i + 1); if (i === marks.length - 1) onDone(); }, ms * PACE));
     return () => ids.forEach(clearTimeout);
   }, [go]); // eslint-disable-line react-hooks/exhaustive-deps
   return k;
@@ -108,24 +111,10 @@ function TradeDemo({ go, t }: { go: boolean; t: Trade }) {
 export function LandingSteps({ trade }: { trade?: Trade }) {
   const ol = useRef<HTMLOListElement>(null);
   const rail = useRef<HTMLSpanElement>(null);
-  const [seen, setSeen] = useState([false, false, false]);
-  const [done, setDone] = useState([false, false, false]);
+  const [started, setStarted] = useState([false, false, false]);
+  const [, setDone] = useState([false, false, false]);
   const [lit, setLit] = useState(0);
   const finish = (i: number) => setDone((d) => d.map((x, j) => x || j === i));
-
-  // Each demo plays once it's in view and the one before it has played
-  useEffect(() => {
-    const el = ol.current; if (!el) return;
-    const items = [...el.querySelectorAll<HTMLElement>(".lds-demo")];
-    const io = new IntersectionObserver((es) => es.forEach((e) => {
-      if (!e.isIntersecting) return;
-      const i = items.indexOf(e.target as HTMLElement);
-      setSeen((s) => s.map((x, j) => x || j === i));
-      io.unobserve(e.target);
-    }), { threshold: 0.6 });
-    items.forEach((n) => io.observe(n));
-    return () => io.disconnect();
-  }, []);
 
   // The rail runs from the first chip's center to the last. It fills with scroll (transform only) and each chip
   // lights when the fill reaches it. Only listens while the list is on screen.
@@ -169,7 +158,10 @@ export function LandingSteps({ trade }: { trade?: Trade }) {
     return () => { ro.disconnect(); io.disconnect(); removeEventListener("scroll", kick); cancelAnimationFrame(raf); };
   }, []);
 
-  const go = (i: number) => seen[i] && (i === 0 || done[i - 1]);
+  // Each box plays the moment its number lights as you scroll (Zach, Oct 23), not after the one before it finishes
+  // and once started it plays through even if you scroll back up
+  useEffect(() => { setStarted((st) => (st.every((x, j) => x || lit <= j) ? st : st.map((x, j) => x || lit > j))); }, [lit]);
+  const go = (i: number) => started[i];
   const steps = [
     { h: "Enter your username", p: "Your Sleeper username, nothing else. No password, no sign up form.", demo: <UserDemo go={go(0)} onDone={() => finish(0)} /> },
     { h: "Pick your league", p: "Source loads rosters, projections, trades and waivers for the league you choose.", demo: <LeagueDemo go={go(1)} onDone={() => finish(1)} /> },

@@ -117,3 +117,6 @@ html:root:not(#_):not(#_):not(#_) .lds-trade.p3 :is(.lds-pts, .lds-both) { opaci
   html:root:not(#_):not(#_):not(#_) .lds :is(.lds-num > i, .lds-ok, .lds-found, .lds-row::after, .lds-row > svg, .lds-thk, .ask-prows > li, .lds-pts, .lds-both) { transition: none; }
   html:root:not(#_):not(#_):not(#_) .lds .lds-caret { animation: none; }
 }
+
+/* Faster here (Zach, Oct 23): the steps' transitions run at their written length instead of the site's slower 1.75x */
+html:root:not(#_):not(#_) .lds { --mo: 1; }
