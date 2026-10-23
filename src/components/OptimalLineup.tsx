@@ -56,6 +56,12 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
       keepOptimal(r); setKept(r);
     });
   };
+  // Already set (Zach, Oct 23): when Source already knows the lineup in Sleeper is the best one (by projection, with
+  // nothing to move, or Source AI checked it this week and found no moves) the bar says so instead of offering
+  // another run. "Check again" is still there for fresh news.
+  const st = lineupStatus();
+  const [recheck, setRecheck] = useState(false);
+  const knownSet = !recheck && !running && !locked && !st.final && !st.blocked && st.moves.length === 0 && !(raw && raw.swaps.length > 0);
   const dismiss = () => { setOpen(false); setKept(null); keepOptimal(null); onMarks(null); };
   // The moves lock at the earliest kickoff among the players in them
   const lockBy = res ? moveLock(...res.swaps.flatMap((w) => [playerById(w.start), playerById(w.bench)])) : "";
@@ -64,10 +70,15 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
   return (
     <div className={`lu-ai${open ? " is-open" : ""}`} aria-label="Set optimal lineup">
       <div className="lu-ai-bar">
-        <p className="lu-ai-txt"><b>Source AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
-        <button type="button" className="btn btn-sm lu-ai-go" onClick={go} aria-busy={running || undefined} aria-disabled={locked || running || undefined}>
-          {running ? <WorkingLoader size={16} /> : <AiMark size={16} />}Set optimal lineup
-        </button>
+        {knownSet ? <>
+          <p className="lu-ai-txt"><b>Your lineup is set</b><span>{raw ? "Source AI checked it this week. Nothing to move." : "Your best projected lineup is already in Sleeper. Nothing to move."}</span></p>
+          <button type="button" className="btn btn-sm btn-ghost lu-ai-again" onClick={(e) => { setRecheck(true); go(e); }}><AiMark size={16} />Check again</button>
+        </> : <>
+          <p className="lu-ai-txt"><b>Source AI</b><span>Weighs news, injuries, Vegas lines and weather against your projections.</span></p>
+          <button type="button" className="btn btn-sm lu-ai-go" onClick={go} aria-busy={running || undefined} aria-disabled={locked || running || undefined}>
+            {running ? <WorkingLoader size={16} /> : <AiMark size={16} />}Set optimal lineup
+          </button>
+        </>}
       </div>
       {open && trace.status !== "idle" && <ThinkingTrace trace={trace} />}
       {open && res && (
