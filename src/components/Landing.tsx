@@ -29,7 +29,7 @@ import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
 import { HowItWorksDoc, LegalDoc } from "./About";
 import { PX } from "./pixelIcons";
-import { trophyPointer } from "../gameDayMotion";
+import { PixelTrophy, trophyPointer } from "../gameDayMotion";
 import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
 import { LandingLive } from "./LandingLive";
@@ -43,7 +43,7 @@ import { clearHandoff, setHandoff } from "../demoHandoff";
 import { sampleWeek, matchNow } from "../live";
 import { LEAGUE, OPPONENT_ID } from "../data";
 import { Seg } from "./ui";
-import { Trophy, WinCup } from "./Trophy";
+import { Trophy } from "./Trophy";
 import { whenNear } from "../idle";
 import type { TeamNeeds } from "../engine";
 
@@ -892,7 +892,10 @@ function TypedHeadline({ lines }: { lines: string[] }) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setState({ i: 0, n: lines[0].length, typing: false }); return; }
     // Driven off the frame clock, so keystrokes land at an even pace instead of drifting with timers
     const TYPE = 56, ERASE = 24, HOLD_FIRST = 4200, HOLD = 3000, GAP = 320;
-    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1, started = false;
+    let i = 0, phase: "type" | "hold" | "erase" | "gap" = "type", t0 = 0, raf = 0, visible = true, last = -1, started = false, done = false;
+    // One pass through every line, then it rests on the first (Zach, Oct 22: no looping); a tap plays it again
+    const replay = () => { if (!done) return; done = false; i = 0; phase = "erase"; t0 = 0; last = lines[0].length; resume(); };
+    const host = ref.current?.closest("h1"); host?.addEventListener("click", replay);
     // One loop at a time: resuming only re-arms it if it isn't already running
     const resume = () => { if (started && visible && !document.hidden && !raf) { t0 = 0; raf = requestAnimationFrame(tick); } };
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; resume(); });
@@ -906,15 +909,15 @@ function TypedHeadline({ lines }: { lines: string[] }) {
       const el = now - t0;
       let n = last, typing = false;
       if (phase === "type") { n = Math.min(len, Math.floor(el / TYPE)); typing = true; if (n >= len) { phase = "hold"; t0 = now; } }
-      else if (phase === "hold") { n = len; if (el > (i === 0 ? HOLD_FIRST : HOLD)) { phase = "erase"; t0 = now; } }
+      else if (phase === "hold") { n = len; if (done) { setState({ i, n, typing: false }); return; } if (el > (i === 0 ? HOLD_FIRST : HOLD)) { phase = "erase"; t0 = now; } }
       else if (phase === "erase") { n = Math.max(0, len - Math.floor(el / ERASE)); typing = true; if (n <= 0) { phase = "gap"; t0 = now; } }
-      else { n = 0; if (el > GAP) { i = (i + 1) % lines.length; phase = "type"; t0 = now; last = 0; } }
+      else { n = 0; if (el > GAP) { i = (i + 1) % lines.length; if (i === 0) done = true; phase = "type"; t0 = now; last = 0; } }
       if (n !== last || phase === "hold") { last = n; setState((s) => (s.i === i && s.n === n && s.typing === typing ? s : { i, n, typing })); }
       raf = requestAnimationFrame(tick);
     }
     document.addEventListener("visibilitychange", resume);
     const start = window.setTimeout(() => { started = true; resume(); }, 420);
-    return () => { started = false; clearTimeout(start); cancelAnimationFrame(raf); raf = 0; io.disconnect(); document.removeEventListener("visibilitychange", resume); };
+    return () => { started = false; clearTimeout(start); cancelAnimationFrame(raf); raf = 0; io.disconnect(); document.removeEventListener("visibilitychange", resume); host?.removeEventListener("click", replay); };
   }, [lines]);
   const full = lines[state.i];
   return (
@@ -958,7 +961,10 @@ function FaceOffStates({ you, partner }: { you: TeamNeeds; partner: string }) {
   }, []);
   useEffect(() => {
     if (picked || hold.hover || hold.focus || !seen || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setTimeout(() => setAt((a) => AT[(AT.findIndex((x) => x.v === a) + 1) % AT.length].v), 4000);
+    // One pass through the states, then it rests on Final; the tabs replay any of them (Zach, Oct 22: no looping)
+    const i = AT.findIndex((x) => x.v === at);
+    if (i >= AT.length - 1) return;
+    const id = window.setTimeout(() => setAt(AT[i + 1].v), 4000);
     return () => clearTimeout(id);
   }, [at, picked, hold.hover, hold.focus, seen]);
   return (
@@ -998,7 +1004,7 @@ function Caption({ at, live }: { at: At; live: ReturnType<typeof sampleWeek> }) 
   if (at === "final" && ms.result) {
     const r = ms.result, mine = r.letter === "W", margin = Math.abs(ms.me.scored - ms.opp.scored);
     if (r.letter === "T") return <>Final: a tie at {n(ms.me.scored)}.</>;
-    return <>Final: {who(mine)} won by {n(margin)}. The <WinCup size={12} /> cup marks the winner.</>;
+    return <>Final: {who(mine)} won by {n(margin)}. The <span className="ld2-cap-troph" aria-hidden="true"><PixelTrophy /></span> trophy marks the winner.</>;
   }
   // The crown only shows on the card when last season's champion is in this matchup, so the caption names it only then
   const champ = LEAGUE.champion?.teamId;

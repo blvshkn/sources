@@ -4242,3 +4242,7 @@ html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_) .tabbar.ix { padding-
 /* The phone's status bar sits over the frame's first 50px, the way iOS lays the app under it: the top bar takes that
    room as its own, so its surface runs from the glass's top edge */
 html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar { height: 114px !important; min-height: 114px !important; padding-top: 50px !important; box-sizing: border-box !important; }
+
+/* Sheet and modal scrim (Zach, Oct 22): the same dimmed, blurred backdrop in the app and on the landing page */
+html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+@media (prefers-reduced-transparency: reduce) { html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 10, 9, 0.8); } }

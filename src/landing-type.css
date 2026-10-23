@@ -437,3 +437,13 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(2) { transition-delay: 50ms; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(3) { transition-delay: 100ms; }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-list) > .ld2-reveal:nth-child(n+4) { transition-delay: 150ms; }
+
+/* The Final caption's trophy: the pixel trophy at text size, sitting on the line */
+html:root:not(#_):not(#_):not(#_) .ld2-cap-troph { display: inline-block; vertical-align: -2px; }
+html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-trw { position: relative; display: inline-block; width: 13px; height: 13px; }
+html:root:not(#_):not(#_):not(#_) .ld2-cap-troph .gd-spk { display: none; }
+/* SOURCE on phones and tablets: the whole word shows, nothing clipped under the letters (Zach, Oct 22) */
+@media (max-width: 1023px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { margin-bottom: 0; line-height: 1; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-bleed { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+}
