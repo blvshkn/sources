@@ -99,10 +99,10 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
     ? <button type="button" className="btn btn-sm ph-lineup" onClick={() => { close(); window.setTimeout(onLineup, mo(240)); }}><Icon name="helmet" size={16} />Lineup</button> : null;
   const startSitBtn = owner?.you && onStartSit && !kicked
     ? <button type="button" className="btn btn-sm ph-compare" onClick={() => { close(); window.setTimeout(onStartSit, mo(240)); }}><Icon name="columns2" size={16} />Compare</button> : null;
-  const actions = (primary || watchApi || lineupBtn || startSitBtn) ? <>
+  const watchBtn = watchApi ? <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} /> : null;
+  const actions = (primary || lineupBtn || startSitBtn) ? <>
     {lineupBtn}
     {startSitBtn}
-    {watchApi && <WatchButton on={watchApi.watch[p.id] !== undefined} name={p.name} week={watchApi.watch[p.id] ?? watchFor} onToggle={() => toggleWatch(watchApi, p, watchFor)} />}
     {primary}
   </> : null;
 
@@ -123,7 +123,7 @@ export function PlayerSheet({ p: first, where: firstWhere, note: firstNote, onCl
         <PlayerHero key={p.id} s={p} nameId="ps-name" where={where}
           meta={onBye(p.nfl) ? undefined : kickLine(p) || undefined}
           status={<StatusPill p={p} />}
-          actions={actions} />
+          actions={actions} watch={watchBtn} />
         <div className="ph-stick">
           <SheetTabs value={tab} onChange={pick} options={[{ v: "main", label: "Overview", icon: "overview" }, { v: "log", label: "Game log", icon: "table" }, { v: "depth", label: "Depth chart", icon: "listOrdered" }]} />
           {tab === "main" && <WeekStepper week={week} onChange={(w) => { keepTabs(body.current); setWeek(w); }} className="pd-weeknav" />}

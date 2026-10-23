@@ -152,7 +152,7 @@ export function PlayerBar({ s }: { s: HeroSubject }) {
 }
 
 // ---- Header ----------------------------------------------------------------------------------
-export function PlayerHero({ s, nameId, status, meta, where, actions }: {
+export function PlayerHero({ s, nameId, status, meta, where, actions, watch }: {
   s: HeroSubject;
   /** id on the name, for the dialog's aria-labelledby */
   nameId?: string;
@@ -165,6 +165,8 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
   /** Primary action, Watch, and any small text action. Shown in the hero from 768px; on phones the sheet docks the
    *  same actions to its bottom edge (.ph-dock) and the hero's copy is hidden. */
   actions?: ReactNode;
+  /** The Watch star, as an icon button on the headshot's bottom-left corner (Zach, Oct 23) */
+  watch?: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useLargeTitle(ref);
@@ -193,7 +195,7 @@ export function PlayerHero({ s, nameId, status, meta, where, actions }: {
     <div ref={ref} className={`ph${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
       {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? viaEdge(teamLogoHi(s.nfl), 240) : logoTry === 1 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
-      <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut /></span>
+      <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut />{watch && <span className="ph-art-watch">{watch}</span>}</span>
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>
         <div className="ph-meta">
@@ -228,8 +230,8 @@ export function WatchButton({ on, name, week, onToggle }: { on: boolean; name: s
   const label = on ? `Watching for week ${week}. Tap to stop` : `Watch for week ${week}`;
   return (
     <Tooltip content={label}>
-      <button className="btn btn-sm ph-watch" aria-pressed={on} aria-label={`${label}: ${name}`} onClick={onToggle}>
-        <WatchStar on={on} /><span className="ph-watch-l">{on ? "Watching" : "Watch"}</span>
+      <button className="btn btn-icon ph-watch ph-watch-ic" aria-pressed={on} aria-label={`${label}: ${name}`} onClick={onToggle}>
+        <WatchStar on={on} />
       </button>
     </Tooltip>
   );

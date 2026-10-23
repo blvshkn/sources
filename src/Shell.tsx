@@ -890,7 +890,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
               setPrice={(id, p) => setPrices((c) => { const n = { ...c }; if (p) n[id] = p; else delete n[id]; return n; })}
               setTag={(id, v) => { setMyTags((cur) => { const n = { ...cur }; if (v) n[id] = v; else delete n[id]; return n; }); if (v) setToast(`${playerById(id).name} marked ${v === "amazing" ? "overpay only" : v === "available" ? "trade bait" : v}.`); }} />
           )}
-          {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onUnpass={unpassPlayer} snoozed={snoozedNow} onSnooze={snoozePlayer} onUnsnooze={unsnoozePlayer} />}
+          {tab === "waivers" && <Waivers recs={allRecs} onToast={setToast} watch={watch} onWatch={setWatch} passed={passed} onUnpass={unpassPlayer} snoozed={snoozedNow} onSnooze={snoozePlayer} onUnsnooze={unsnoozePlayer} onPass={passPlayer} />}
           {tab === "ask" && <Ask initial={askSeed} answer={(q, ctx) => askSteps(q, active, myTags, prices, passed, { ...ctx, paused: askPaused })} onLink={onLink} onGo={(t) => go(t)} onPitch={setPitch} starters={askStarters} />}
           {tab === "settings" && (
             <Settings username={username} demo={demo} leagueFormat={LEAGUE.format} onRefresh={onRefresh} refreshed={refreshed} format={format} setFormat={(f) => { setFormat(f); setToast(`League format: ${formatLabel(f)}. Every number updated.`); }}

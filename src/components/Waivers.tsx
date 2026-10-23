@@ -160,13 +160,15 @@ interface Row extends Entry {
   l3: (number | null | undefined)[];
 }
 
-export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snoozed = [], onSnooze, onUnsnooze }: {
+export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snoozed = [], onSnooze, onUnsnooze, onPass }: {
   recs: WaiverRec[]; onToast: (m: string) => void; watch: Record<string, number>; onWatch: (next: (w: Record<string, number>) => Record<string, number>) => void;
   /** Players you said you're not interested in, shared with every other suggestion. Nothing here adds to it anymore;
    *  players already on it stay dimmed with a way back. */
   passed: string[]; onUnpass: (p: { id: string; name: string }) => void;
   /** "Not right now": skipped this week. Still listed, out of the top pickup, back next week. */
   snoozed?: string[]; onSnooze: (p: { id: string; name: string }) => void; onUnsnooze: (p: { id: string; name: string }) => void;
+  /** Not interested: out of every suggestion until you bring him back (the inbox's pass) */
+  onPass?: (p: { id: string; name: string }) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   // The claim sheet's tabs (Claim, Game log, Depth chart), remembered for the session; a depth chart name opens his sheet
@@ -552,8 +554,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           // The claim sheet's actions: in the hero from 768px, docked to the sheet's bottom edge on phones. Claim, the main
           // action, comes last so it sits on the right (Zach, Oct 23)
           const claimActs = isOpen && r && !shelved ? <>
-            <button className="snooze-btn ph-snooze" onClick={() => { snooze(e); setOpen(null); }} aria-label={`Not right now: skip ${e.fa.name} this week`}>Not now</button>
-            <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} />
+            {/* Not interested (Zach, Oct 23): takes him out of every suggestion, like the inbox's pass */}
+            <button className="snooze-btn ph-snooze" onClick={() => { if (onPass) onPass({ id: e.fa.id, name: e.fa.name }); else snooze(e); setOpen(null); }} aria-label={`Not interested in ${e.fa.name}`}>Not interested</button>
             <a className="btn btn-primary btn-sm ph-cta" href={sleeperUrl("players")} target="_blank" rel="noreferrer" onClick={() => onToast(`Opening Sleeper. ${FAAB.enabled ? `Sugg. bid ${bidText(r.bid, r.fa)} for` : "Claim"} ${r.fa.name}, drop ${drop?.name ?? "nobody"}.`)}>
               <PlatformLogo size={16} />Claim
             </a>
@@ -584,7 +586,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                   <PlayerHero s={e.fa}
                     meta={kind === "current" ? (gameOf(e.fa) || undefined) : undefined}
                     status={<StatusPill p={PLAYERS[e.fa.id] ?? { id: e.fa.id, name: e.fa.name, pos: "WR", nfl: e.fa.nfl, proj: e.fa.proj, status: isSpecialFA(e.fa) ? e.fa.status : undefined }} />}
-                    actions={claimActs} />
+                    actions={claimActs} watch={!shelved ? <WatchButton on={isWatched} name={e.fa.name} week={isWatched ? watch[e.fa.id] : target} onToggle={() => toggleWatch(e)} /> : undefined} />
                   <div className="ph-stick">
                     <SheetTabs value={e.fa.pos === "DEF" && sheetTab === "depth" ? "main" : sheetTab} options={tabOpts} onChange={(t) => { keepTabs(document.querySelector<HTMLElement>(".pt-sheet .ds-body")); setSheetTab(t); }} />
                   </div>

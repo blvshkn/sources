@@ -181,3 +181,21 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ph-acts, .ph-dock) :is(.p
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-ranks > div { padding: 12px 14px; }
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ph-ranks dd { font-size: 1.25rem; }
 }
+
+/* ---------- Header actions and the Watch star (Zach, Oct 23) ----------
+   Tablet and desktop: the actions move up beside the headshot, right under the bio, and sit at the right edge.
+   The Watch star is a round icon button on the headshot's bottom-left corner, everywhere. */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph:not(.ph-slim) { grid-template-areas: "art who" "art bio" "art act" "rank rank"; }
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph .ph-acts { justify-content: flex-end; align-self: end; }
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch { position: absolute; left: 0; bottom: 0; z-index: 2; }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic {
+  width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--ph-bg, #1A1D1B) 82%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--line); color: var(--ink);
+}
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic[aria-pressed="true"] svg { color: var(--lime); }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic[aria-pressed="true"] svg path { fill: currentColor; }
+@media (hover: hover) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic:hover { background: var(--surface-3); } }
+html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic:active { transform: scale(0.95); }
