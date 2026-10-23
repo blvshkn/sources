@@ -9,7 +9,7 @@ const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftsha
 const p = await b.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 3 });
 await p.emulateMedia({ reducedMotion: 'reduce' });
 await p.goto(`${site}/?gl=3d`, { waitUntil: 'load' });
-await p.waitForSelector('.hp-stage.gl-on', { timeout: 120000 });
+await p.waitForSelector('.hp-stage.gl-on', { timeout: 300000 });
 await p.waitForTimeout(4000);
 for (const k of ['left', 'right']) {
   const url = await p.evaluate(async (k) => {

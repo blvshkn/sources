@@ -27,9 +27,14 @@ jobs:
       - name: Build with the new screens and the pixel-ratio cap lifted
         run: |
           sed -i 's/Math.min(window.devicePixelRatio || 1, 2)/(window.devicePixelRatio || 1)/' src/components/phone3d.ts
+          # Software GL on the runner takes longer than the page's 12s give-up before it falls back to the stills
+          sed -i 's/}, 12000);/}, 240000);/' src/components/Landing.tsx
           npx vite build
-          git checkout src/components/phone3d.ts
+          git checkout src/components/phone3d.ts src/components/Landing.tsx
       - name: Re-render the back phones
+        # If the 3D render fails, the screens and posters still go in
+        continue-on-error: true
+        timeout-minutes: 12
         run: |
           npx vite preview --port 8765 --strictPort &
           npx wait-on -t 60000 http://localhost:8765 || sleep 10
