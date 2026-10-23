@@ -14,6 +14,7 @@
 import { createGuard, ipOf as guardIpOf } from "./_lib/guard.js";
 import { askRow, logAsk } from "./_lib/ask-log.js";
 import { BETTING_TERMS, NO_BETTING, isBetting } from "./_lib/betting.js";
+import { maskFoul } from "./_lib/censor.js";
 import { blobFromEnv } from "./offers.js";
 
 export const MODEL = "claude-haiku-5-5";
