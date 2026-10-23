@@ -13,6 +13,11 @@ import { FirstRun, preloadFirstRun, warmFirstRun } from "./components/lazy";
 import { Account, Session, accountsOf, activeAccount, mergeAccounts, normalizeSession } from "./accounts";
 import { enterApp } from "./sectionEnter";
 import { store, usePersist } from "./persist";
+import { isAutomated } from "./automation";
+
+// Agents and crawlers see the landing page, never the app (automation.ts). The landing's own phone frames are part of
+// the landing, so they stay as they are.
+const AUTOMATED = isAutomated() && !(typeof location !== "undefined" && new URLSearchParams(location.search).get("frame") === "demo");
 
 export type { Session };
 
@@ -127,6 +132,15 @@ export default function App() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (AUTOMATED && (session.mode !== "none" || start)) return (
+    <div className="boot" role="main">
+      <Mark size={64} />
+      <p className="boot-step">Source is for people. Automated browsers and AI agents can read the landing page, not the app.</p>
+      <div className="row wrap" style={{ justifyContent: "center" }}>
+        <button className="btn" onClick={() => { setStart(null); setSession((s) => ({ mode: "none", accounts: accountsOf(s) })); }}>Back to the landing page</button>
+      </div>
+    </div>
+  );
   if (status === "loading") return <Boot step={step} trace={bootTrace} />;
   if (status === "error") {
     return (

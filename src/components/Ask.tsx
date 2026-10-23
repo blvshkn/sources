@@ -8,7 +8,8 @@ import { LeagueSwitch } from "./LeagueSwitch";
 import { Answer, AskCtx, Trade, type AcquireOption } from "../engine";
 import { Player, TEAMS, playerById } from "../data";
 import { AiLabel, Icon } from "./ui";
-import { WorkingLoader, AiMark } from "./WorkingLoader";
+import { AiMark } from "./WorkingLoader";
+import Orb from "./Orb";
 import { PlayerSheet } from "./lazy";
 import { askJob, turnText, type AskTurnLog } from "../askAi";
 import { offNote } from "../aiClient";
@@ -430,7 +431,8 @@ export function Ask({ answer, onLink, onGo, onPitch, starters, initial }: {
                 if (working) { e.preventDefault(); deny(e.currentTarget, "Still working on the last answer. One moment."); }
                 else if (empty) { e.preventDefault(); deny(e.currentTarget, "Type a question first, or tap one of the suggestions."); }
               }}>
-              {working ? <WorkingLoader size={18} /> : <ArrowUp />}
+              {/* Thinking (Zach, Oct 23): the orb takes over the button, black behind it, the AI mark white and centered */}
+              {working ? <><Orb className="ask-send-orb" colors={["#D8F24A", "#7FE3A0", "#2D6B1F"]} backgroundColor="#000000" followCursor={false} clickPulse={false} hoverIntensity={0} rotateOnHover={false} /><span className="ask-send-mark"><AiMark size={20} /></span></> : <ArrowUp />}
             </button>
           </form>
           <p className="ask-note">Source only reads your league's public rosters and the tags you log.<span className="ask-wide"> It never scans private group chats.</span></p>
