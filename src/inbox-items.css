@@ -158,3 +158,52 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .i
   position: sticky; top: 54px; z-index: 2; margin: 0 calc(-1 * var(--pad-card-x)); padding-left: var(--pad-card-x); padding-right: var(--pad-card-x); background: var(--bg);
 }
 @media (pointer: coarse) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ibx-list:has(> .ibx-pills) .ibx-sec-h { top: 58px; } }
+
+/* ---------- Banners (Banners.tsx, Zach, Oct 23): top right on desktop, top center on phones, as a card stack.
+   The newest sits in front; up to two more peek out below it, smaller and dimmer. Hover or focus fans the stack out
+   into a column. Each card slides in from the right (down from the top on phones) and back out when it goes. ---------- */
+html:root:not(#_):not(#_):not(#_) .bnr-stack {
+  position: fixed; z-index: 1200; top: max(16px, env(safe-area-inset-top, 0px)); right: var(--bnr-right, 16px);
+  width: min(360px, calc(100vw - 32px)); display: grid; pointer-events: none;
+}
+html:root:not(#_):not(#_):not(#_) .bnr {
+  --gap: 10px; grid-area: 1 / 1; align-self: start; pointer-events: auto; position: relative;
+  display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 12px; border-radius: 16px;
+  background: color-mix(in srgb, var(--surface, #191C1B) 92%, transparent); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px -16px rgba(0, 0, 0, 0.7);
+  z-index: calc(10 - var(--i)); transform-origin: top center;
+  transform: translateY(calc(var(--i) * var(--gap))) scale(calc(1 - var(--i) * 0.05));
+  opacity: calc(1 - var(--i) * 0.25);
+  transition: transform calc(320ms * var(--mo, 1)) var(--ease-spring, cubic-bezier(0.32, 0.72, 0, 1)), opacity calc(220ms * var(--mo, 1)) var(--ease-out);
+}
+html:root:not(#_):not(#_):not(#_) .bnr[aria-hidden="true"] > * { visibility: hidden; }
+/* Fanned out: each card drops below the one in front, full size */
+html:root:not(#_):not(#_):not(#_) .bnr-stack:is(:hover, :focus-within) .bnr { transform: translateY(calc(var(--i) * (100% + 8px))); opacity: 1; }
+html:root:not(#_):not(#_):not(#_) .bnr-stack:is(:hover, :focus-within) .bnr[aria-hidden="true"] > * { visibility: visible; }
+html:root:not(#_):not(#_):not(#_) .bnr-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer;
+}
+html:root:not(#_):not(#_):not(#_) .bnr-main:disabled { cursor: default; }
+html:root:not(#_):not(#_):not(#_) .bnr-ic { flex: none; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
+html:root:not(#_):not(#_):not(#_) .bnr.is-urgent .bnr-ic { background: var(--warn-soft); color: var(--warn); }
+html:root:not(#_):not(#_):not(#_) .bnr-copy { min-width: 0; display: grid; gap: 2px; }
+html:root:not(#_):not(#_):not(#_) .bnr-copy b { font: 600 0.8125rem/1.3 var(--font-body); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) .bnr.is-urgent .bnr-copy b { color: var(--warn); }
+html:root:not(#_):not(#_):not(#_) .bnr-copy span { font: 400 0.8125rem/1.35 var(--font-body); color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html:root:not(#_):not(#_):not(#_) .bnr-go { flex: none; height: 32px; min-height: 32px; padding: 0 14px; border-radius: 999px; }
+html:root:not(#_):not(#_):not(#_) .bnr-x { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--faint); cursor: pointer; }
+html:root:not(#_):not(#_):not(#_) .bnr-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+html:root:not(#_):not(#_):not(#_) :is(.bnr-main, .bnr-x):focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  @starting-style { html:root:not(#_):not(#_):not(#_) .bnr { opacity: 0; transform: translateX(calc(100% + 24px)); } }
+  html:root:not(#_):not(#_):not(#_) .bnr.is-leaving { opacity: 0; transform: translateX(calc(100% + 24px)); }
+}
+html:root:not(#_):not(#_):not(#_) .bnr.is-leaving { opacity: 0; }
+/* Phones: across the top, sliding down from it */
+@media (max-width: 600px) {
+  html:root:not(#_):not(#_):not(#_) .bnr-stack { left: 16px; right: 16px; width: auto; }
+  @media (prefers-reduced-motion: no-preference) {
+    @starting-style { html:root:not(#_):not(#_):not(#_) .bnr { transform: translateY(-120%); } }
+    html:root:not(#_):not(#_):not(#_) .bnr.is-leaving { transform: translateY(-120%); }
+  }
+}

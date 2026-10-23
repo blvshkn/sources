@@ -154,7 +154,7 @@ export function kindOf(it: InboxItem): InboxKind {
   const k = it.nudge?.kind;
   if (k === "offer" || k === "need" || k === "stale" || it.id.startsWith("partner-")) return "trades";
   if (k === "waiver") return "waivers";
-  if (k === "news" || it.id.startsWith("pnews-")) return "news";
+  if (k === "news" || it.id.startsWith("pnews-") || it.id === "app-update") return "news";
   return "lineup";
 }
 

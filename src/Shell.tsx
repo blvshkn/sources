@@ -59,7 +59,7 @@ import { mo } from "./motion";
 import { matches, store, useMedia, usePersist } from "./persist";
 import "./appStyles";
 import { useAppUpdate } from "./appUpdate";
-import { UpdateToast } from "./components/UpdateToast";
+import { Banners, type Banner } from "./components/Banners";
 
 export { PullRefresh } from "./components/PullRefresh";
 
@@ -720,9 +720,13 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     return { id: "offer-mike", kind: "offer", teamId: "mike", headline: "Mike offered Jerry Jeudy for your Dalton Kincaid.",
       why: `${offerRead(offer).line} Here's the breakdown.`, trades: [], time: "Now", offer, counter: counterFor(offer, active, myTags, prices), deadline: DEADLINES.trade };
   }, [demoArrived, active, myTags, prices]); // eslint-disable-line react-hooks/exhaustive-deps
-  const inbox = useMemo(() => buildInbox({ nudges: arrivedOffer ? [arrivedOffer, ...nudges] : nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote })
-    .filter((x) => (x.nudge || !dismissedIds.includes(x.id)) && !((ibxSkipped[x.id] ?? -1) >= WEEK)), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nudges, checks, yourLineup, live, dismissedIds, ibxSkipped, tab, urgent, partnerNote, kick, arrivedOffer]);
+  const inbox = useMemo((): InboxItem[] => [
+    // A newer build is live: in Notifications too, until the refresh (after it, the build matches and it's gone)
+    ...(updateReady ? [{ id: "app-update", icon: "replay" as IconName, title: "Source has an update", time: "Now", text: "Refresh to get the latest version of Source.",
+      action: { label: "Refresh", run: () => location.reload() } }] : []),
+    ...buildInbox({ nudges: arrivedOffer ? [arrivedOffer, ...nudges] : nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote }),
+  ].filter((x) => (x.nudge || !dismissedIds.includes(x.id)) && !((ibxSkipped[x.id] ?? -1) >= WEEK)), // eslint-disable-next-line react-hooks/exhaustive-deps
+  [nudges, checks, yourLineup, live, dismissedIds, ibxSkipped, tab, urgent, partnerNote, kick, arrivedOffer, updateReady]);
   const unread = inbox.filter((x) => !readIds.includes(x.id)).length;
   // The bell (Zach's motion rule): a new item arriving this visit swings it once and springs its lime dot in. Until you
   // first tap or type, items only set the baseline, so the feed filling in as league data loads never rings. Opening
@@ -743,8 +747,19 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     const seen = ibxSeen.current;
     ibxSeen.current = new Set([...(seen ?? []), ...ids]);
     if (!seen || !ibxArmed.current) return;
-    if (ids.some((id) => !seen.has(id) && !readIds.includes(id))) { setBellRing((n) => n + 1); setBellQuiet(false); }
+    const fresh = inbox.filter((x) => !x.id.startsWith("partner-") && x.id !== "app-update" && !seen.has(x.id) && !readIds.includes(x.id));
+    if (fresh.length) {
+      setBellRing((n) => n + 1); setBellQuiet(false);
+      // A banner for each, unless the inbox is already open where you can see them land (Zach, Oct 23)
+      if (!panelOpenRef.current) setBanners((bs) => [...fresh.slice(0, 3).map((x): Banner => ({ id: x.id, icon: x.icon, title: x.title, text: x.text, urgent: x.urgent,
+        // Needs you: stays until you close it (before kickoff lock, an incoming offer). The rest leave on their own.
+        sticky: !!x.urgent || x.nudge?.kind === "offer",
+        open: () => { if (!panelOpenRef.current) toggleInboxRef.current(); } })), ...bs.filter((b) => !fresh.some((x) => x.id === b.id))].slice(0, 3));
+    }
   }, [inbox]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const panelOpenRef = useRef(false);
+  const toggleInboxRef = useRef<() => void>(() => {});
   useEffect(() => {
     if (!bellRing) return;
     const t = window.setTimeout(() => setBellRing(0), mo(560));
@@ -754,12 +769,14 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   // Every page, Trade included, uses the same frame: the panel docks wherever it docks elsewhere
   const docked = dockWide;
   const panelOpen = docked ? dockOpen : inboxOpen;
+  panelOpenRef.current = panelOpen;
   const toggleInbox = () => {
     const opening = !panelOpen;
     // Opening is quiet: no ring, and the unread dot clears without a flourish
     if (docked) setDockPref(opening); else setInboxOpen(opening);
     if (opening) { setIbxFocus((n) => n + 1); setBellQuiet(true); }
   };
+  toggleInboxRef.current = toggleInbox;
   const closeInbox = () => { if (docked) setDockPref(false); else setInboxOpen(false); };
   // The slide-over inbox (below 1241px): Escape closes it and focus goes back to the bell; its scrim takes the outside
   // tap. Docked, it's a column of the page and stays until the bell closes it.
@@ -925,8 +942,11 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
         if (via) haptic();
         if (via) setFollowUps((c) => [{ id: `f${Date.now()}`, trade: pitch, via, when: "today" }, ...c.filter((f) => f.trade.key !== pitch.key)].slice(0, 3));
       }} />}
-      {/* A newer build is live: a toast that stays until Refresh (appUpdate.ts) */}
-      {updateReady && <UpdateToast />}
+      {/* Banners at the top right: new inbox items, and a newer build that stays until Refresh (appUpdate.ts). Toasts
+          at the bottom stay for feedback on what you just did. */}
+      {!document.documentElement.classList.contains("in-frame") && <Banners dockKey={panelOpen} onClose={(id) => setBanners((bs) => bs.filter((b) => b.id !== id))}
+        items={[...(updateReady ? [{ id: "app-update", icon: "replay" as IconName, title: "Source has an update", text: "Refresh to get the latest.", sticky: true,
+          action: { label: "Refresh", run: () => location.reload() } }] : []), ...banners]} />}
       {/* The live region stays mounted so every toast is announced, a repeat included (a new node per toast) */}
       <div className="sr-only" role="status" aria-live="polite">{toast && <span key={toast.seq}>{toast.msg}</span>}</div>
       {/* On document.body, so it sits above sheets and modals (they portal there too) */}
