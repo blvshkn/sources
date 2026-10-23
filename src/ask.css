@@ -285,3 +285,15 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-mark .wkl 
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ask-send .ask-send-orb.orb-container {
   position: absolute; top: -4px; left: -4px; right: auto; bottom: auto; width: calc(100% + 8px); height: calc(100% + 8px);
 }
+
+/* Pixelated words in the Ask chat (Zach, Oct 23): profanity, slurs and anything abhorrent show as a block of pixels
+   about the word's width, in the text's own color at low contrast, so the sentence keeps its shape. */
+html:root:not(#_):not(#_):not(#_) .px-cens {
+  display: inline-block; width: calc(var(--n, 4) * 0.56em); height: 0.95em; vertical-align: -0.12em; border-radius: 2px;
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+  background-image:
+    linear-gradient(45deg, color-mix(in srgb, currentColor 34%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, currentColor 34%, transparent) 75%),
+    linear-gradient(45deg, color-mix(in srgb, currentColor 26%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, currentColor 26%, transparent) 75%);
+  background-size: 6px 6px; background-position: 0 0, 3px 3px;
+  image-rendering: pixelated;
+}

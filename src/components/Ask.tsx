@@ -1,3 +1,4 @@
+import { Censored } from "./Censored";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PX } from "./pixelIcons";
 import type { Steps } from "../steps";
@@ -118,7 +119,7 @@ function AskTurn({ q, ctx, history, live, answer, onLink, onPitch, onPlayer, onD
   let base = counts[0] ?? 0;
   return (
     <div className="ask-turn">
-      <div className="ask-you-row"><p className="ask-you">{q}</p></div>
+      <div className="ask-you-row"><p className="ask-you"><Censored text={q} /></p></div>
       <ThinkingTrace trace={trace} />
       {a && (
         <article className="ask-card" aria-busy={!done}>

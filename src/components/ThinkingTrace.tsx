@@ -3,6 +3,7 @@
 // running step carries the working loader (Braille Flipwave). When it's done it folds to "Worked 1.4s" with a chevron that opens the
 // steps again. The head line is always there. When the steps fold or open, the trace changes height in one step and
 // whatever sits under it (Ask's answer card, the lineup result) slides from where it was by transform, so nothing jumps.
+import { Censored, spokenClean } from "./Censored";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { haptic } from "../haptics";
 import type { ReactNode, RefObject } from "react";
@@ -43,13 +44,14 @@ export function Words({ text, k, base = 0, muteBefore }: { text: string; k: numb
   let w = base;
   return (
     <>
-      <span className="sr-only">{k > base ? text : ""}</span>
+      <span className="sr-only">{k > base ? spokenClean(text) : ""}</span>
       <span aria-hidden="true">
         {parts.map((p, i) => {
           if (/^\s+$/.test(p)) return p;
           const idx = w++;
           const on = idx < k;
-          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}>{p}</span>;
+          // Profanity and anything abhorrent shows pixelated (Censored.tsx)
+          return <span key={i} className={`thk-w${on ? " on" : ""}${on && muteBefore !== undefined && idx < muteBefore ? " old" : ""}`}><Censored text={p} /></span>;
         })}
       </span>
     </>

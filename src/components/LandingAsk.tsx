@@ -1,3 +1,4 @@
+import { Censored } from "./Censored";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DetailSheet } from "./DetailSheet";
 import { AiMark, AiMarkPlay } from "./WorkingLoader";
@@ -95,7 +96,7 @@ export function LandingAsk({ onClose, onDemo, form, faqs }: {
       )}>
       {asked ? (
         <div className="lda-body lda-asked">
-          <div className="ask-you-row"><p className="ask-you">{asked}</p></div>
+          <div className="ask-you-row"><p className="ask-you"><Censored text={asked} /></p></div>
           {answer && (() => {
             // The answer's first sentence is the headline; a one-word one ("Yes.", "No.") takes the next sentence along
             const parts = answer.split(/(?<=\.)\s/);
