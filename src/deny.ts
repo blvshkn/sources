@@ -3,10 +3,12 @@
  * toast. Targets carry aria-disabled="true" (not disabled, which would swallow the tap) and keep their dimming.
  *
  * deny(el, message): a short horizontal shake on el through the Web Animations API, composited on top of whatever
- * transform the element already has so it never fights CSS, a 10ms haptic where supported, and the toast through
+ * transform the element already has so it never fights CSS, a double-tick haptic (haptics.ts), and the toast through
  * App's toast (registered with setDenySink). Reduced motion skips the shake and keeps the toast. With no el, the
  * control the person last pressed shakes, so handlers that only see an id (App's trade toggle) still give feedback.
  */
+import { haptic } from "./haptics";
+
 type Sink = (message: string) => void;
 let sink: Sink | null = null;
 /** App registers its toast setter here; the returned function unregisters it. */
@@ -45,7 +47,7 @@ export function deny(el: Element | null | undefined, message: string) {
     clearTimeout(Number(target.dataset.deniedT));
     target.dataset.deniedT = String(window.setTimeout(() => { delete target.dataset.denied; delete target.dataset.deniedT; }, 1800));
   }
-  try { navigator.vibrate?.(10); } catch { /* unsupported */ }
+  haptic("deny");
   sink?.(message);
 }
 

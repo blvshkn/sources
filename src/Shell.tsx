@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { haptic } from "./haptics";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, ManagerTag, MyTag, TEAMS, YOU, teamById, playerById, DEADLINES, LEAGUE_NAME, WEEK, LEAGUE, POS_ORDER, Pos, Player, isDemo, FAAB, PLAYERS, FREE_AGENTS, SPECIAL_FREE_AGENTS, onBye } from "./data";
 import { moveLock, useKickoffs } from "./kickoff";
@@ -84,7 +85,6 @@ const TAB_IDS = TABS.map((t) => t.id);
 const hashTab = (h: string) => (h === "overview" ? "wire" : h);
 
 /** Short tap on Android for meaningful commits only (save, send). iOS Safari ignores it. */
-const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
 
 export type { Session };
 

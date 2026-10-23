@@ -3,6 +3,7 @@
 // lineup or claims it's set. The rows it recommends are marked on the lineup until dismissed (Roster.tsx draws the
 // marks), and nothing moves.
 import { useEffect, useState } from "react";
+import { haptic } from "../haptics";
 import type { MouseEvent } from "react";
 import { useTrace } from "../think";
 import { ThinkingTrace } from "./ThinkingTrace";
@@ -40,7 +41,8 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
   const openSwaps = raw ? raw.swaps.filter((w) => !isLocked(w.start) && !isLocked(w.bench)) : [];
   const res = raw && (openSwaps.length === raw.swaps.length ? raw
     : { ...raw, swaps: openSwaps, summary: `${openSwaps.length} ${openSwaps.length === 1 ? "move is" : "moves are"} still open. The rest locked at kickoff.` });
-  useEffect(() => { if (result) { keepOptimal(result); setKept(result); } }, [result]);
+  // The lineup is ready: a finished-job tick (haptics.ts)
+  useEffect(() => { if (result) { keepOptimal(result); setKept(result); haptic("done"); } }, [result]);
   const markKey = res ? res.swaps.map((w) => `${w.start}>${w.bench}`).join() : "";
   useEffect(() => { onMarks(open && res && res.swaps.length ? marksOf(res) : null); }, [open, raw, markKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => onMarks(null), []); // eslint-disable-line react-hooks/exhaustive-deps

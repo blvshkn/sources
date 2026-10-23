@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { haptic } from "../haptics";
 import { MARK } from "./Logo";
 import { EASE_OUT, mo } from "../motion";
 
@@ -148,6 +149,7 @@ export function PullRefresh({ onSync }: { onSync: () => Promise<() => void> }) {
         loops.forEach((a) => a.cancel());
         mark.classList.remove("syncing");
         if (apply) {
+          haptic("done");
           mark.classList.add("locked");
           if (!calm) mark.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }], { duration: mo(183), easing: EASE_OUT });
         }
@@ -194,7 +196,8 @@ export function PullRefresh({ onSync }: { onSync: () => Promise<() => void> }) {
       y0 = null;
       if (!on) return;
       on = false;
-      if (d >= PULL) refresh(); else settle();
+      // Let go past the line: one tick as the refresh commits (Zach, Oct 23)
+      if (d >= PULL) { haptic("tap"); refresh(); } else settle();
     };
     reset();
     const opt = { passive: true } as const;

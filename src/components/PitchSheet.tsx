@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { haptic } from "../haptics";
 import { useTrace } from "../think";
 import { ThinkingTrace, Words, useReveal, wordCount } from "./ThinkingTrace";
 import { useBackClose } from "../backClose";
@@ -19,7 +20,6 @@ import { WORDMARK, WORD_FONT, WORD_WEIGHT } from "./BrandLogo";
 import { mo } from "../motion";
 
 /** Short tap on Android when the share goes through. iOS Safari ignores it. */
-const haptic = () => { try { navigator.vibrate?.(10); } catch { /* unsupported */ } };
 
 /** Below this the pitch is a bottom sheet with detents (sheetDrag.ts, pitch-sheet.css); from here up a centered modal. */
 const MODAL_FROM = 768;
