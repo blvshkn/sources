@@ -194,7 +194,7 @@ export function PlayerHero({ s, nameId, status, meta, where, actions, watch }: {
   return (
     <div ref={ref} className={`ph${def ? " ph-def" : ""}`} style={{ ["--tc" as string]: c1, ["--tc2" as string]: c3 }}>
       <span className="ph-wash" aria-hidden="true" />
-      {photos && team && logoOk && !def && <img className="ph-logo" src={logoTry === 0 ? viaEdge(teamLogoHi(s.nfl), 240) : logoTry === 1 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
+      {photos && team && logoOk && <img className="ph-logo" src={logoTry === 0 ? viaEdge(teamLogoHi(s.nfl), 240) : logoTry === 1 ? teamLogoHi(s.nfl) : teamLogo(s.nfl)} alt="" aria-hidden="true" decoding="async" onError={() => setLogoTry((n) => n + 1)} />}
       <span className="ph-art"><Avatar p={s} size={def ? 76 : 84} badge={false} cut />{watch && <span className="ph-art-watch">{watch}</span>}</span>
       <div className="ph-who">
         <h2 className="ph-name" id={nameId}>{s.name}</h2>

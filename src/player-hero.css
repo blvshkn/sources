@@ -199,3 +199,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watc
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic[aria-pressed="true"] svg path { fill: currentColor; }
 @media (hover: hover) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic:hover { background: var(--surface-3); } }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ph-art-watch .ph-watch-ic:active { transform: scale(0.95); }
+
+/* Every player sheet is one width on tablet and desktop (Zach, Oct 23): the player sheet, the waiver claim sheet
+   and team defenses all match */
+@media (min-width: 768px) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) :is(.ps.ps-detail.ph-sheet, .ps.ps-player) { width: 100%; max-width: 880px; height: min(88vh, 860px); }
+}
