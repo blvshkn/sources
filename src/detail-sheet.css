@@ -21,6 +21,17 @@ html:root:not(#_):not(#_) .ps-detail .ds-body {
   padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
+/* Page scroll lock while any DetailSheet is open (DetailSheet.tsx lockPage) */
+html[data-sheet-lock]:root:not(#_):not(#_), html[data-sheet-lock]:root:not(#_):not(#_) > body { overflow: hidden; }
+
+/* On-screen keyboard up with a field in the sheet focused (DetailSheet.tsx useKeyboardLift): the wrap is pinned to the
+   visible box above the keyboard, so the sheet sits on the keyboard and shrinks to fit. The home indicator is under
+   the keyboard, so the body drops its safe-area padding. Nothing animates: the keyboard itself is the motion. */
+html:root:not(#_):not(#_):not(#_) .ps-wrap.ds-wrap[data-kb] { top: var(--ds-vv-top, 0px); bottom: auto; height: var(--ds-vv-h, 100%); }
+html:root:not(#_):not(#_):not(#_) .ps-wrap.ds-wrap[data-kb] > .ps-scrim { top: -100lvh; bottom: -100lvh; }
+html:root:not(#_):not(#_):not(#_) .ps-wrap.ds-wrap[data-kb] > .ps.ps-detail { max-height: calc(100% - 12px); }
+html:root:not(#_):not(#_):not(#_) .ps-wrap.ds-wrap[data-kb] > .ps.ps-detail > .ds-body { padding-bottom: 20px; }
+
 /* 768px up: a centered modal. The shared .ps shell only centers from 861px, so the tablet range is set here too. */
 @media (min-width: 768px) {
   html:root:not(#_):not(#_) .ps-wrap.ds-wrap { align-items: center; padding: 32px; }

@@ -458,17 +458,12 @@ html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto
     mask-image: linear-gradient(180deg, #000 calc(100% - 440px), rgba(0, 0, 0, 0.55) calc(100% - 220px), transparent);
   }
 }
-html:root:not(#_):not(#_):not(#_) .env-field-img { display: none; }
 /* Phones (Zach, Oct 22): the backdrop holds still behind the page, the field pinned to the bottom of the screen and
    never drifting or fading. Pinned again, but with no fill of its own (the page color comes from html), which is what
    Safari had been stretching into the box under its toolbar */
 @media (max-width: 860px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env { position: fixed; inset: 0; height: auto; }
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-glow { transform: none !important; }
-  /* The field lines are a still image here (public/field.webp, the drawn field at 430px), pinned to the bottom */
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field { display: none; }
-  html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field-img { display: block; position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; }
-  /* Drawn taller than the CSS field (Zach, Oct 22), so it reaches up past the hero's phones into the space under the copy */
 }
 
 /* The edge blur runs to the true bottom of the screen, under Safari's toolbar, so its lower edge sits flush instead
@@ -478,9 +473,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur {
 }
 
 /* Safari paints a band of the page's base color behind its floating toolbar. On the landing that base is set to the
-   color the page actually shows near the bottom, so the band blends in instead of reading as a dark box (Zach, Oct 22) */
-html:has(.ld2):root:not(#_):not(#_) { background-color: #101211 !important; }
-html:root:not(#_):not(#_) body:has(.ld2) { background-color: #101211 !important; }
+   color the page actually shows near the bottom, so the band blends in instead of reading as a dark box (Zach, Oct 22). The rule is html.ld2-on, at the end of this file */
 
 /* ---------- The hero phones as stills (Zach, Oct 22) ----------
    Each phone is a transparent render of the 3D iPhone (public/phones/hp-*.webp, made by scripts/render-phones.mjs at
@@ -573,3 +566,21 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { 
    height (--navh, which is the nav's height at every width). */
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 { padding-top: var(--navh, 72px); }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 > .ld2-nav { position: fixed; top: 0; left: 0; right: 0; margin-inline: auto; }
+
+/* ---------- Page base color without :has() (perf, Oct 22) ----------
+   The landing's page color (see the Safari toolbar note above), keyed to a class Landing.tsx puts on <html> while
+   it's mounted. It was html:has(.ld2) / body:has(.ld2), and a :has() on html or body makes every DOM insertion
+   restyle the whole page. */
+html.ld2-on:root:not(#_):not(#_) { background-color: #101211 !important; }
+html.ld2-on:root:not(#_):not(#_) body { background-color: #101211 !important; }
+
+/* ---------- Field lines: one drawing everywhere (Zach, Oct 22) ----------
+   The yard lines are a transparent PNG (public/field-lines.png wide, field-lines-phone.png up to 860px), drawn from
+   the CSS field once; the glow under them stays CSS. Pinned to the bottom of their layer: the landing's backdrop (the
+   screen on phones, the first screen on wider ones), the footer, and the app's backdrop at a third of the strength. */
+html:root:not(#_):not(#_):not(#_) :is(.env-lines, .app-lines, .ld2-endlines) img { display: block; position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; pointer-events: none; user-select: none; }
+html:root:not(#_):not(#_):not(#_) .ld2-endlines { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+html:root:not(#_):not(#_):not(#_) .app-lines img { opacity: 0.32; }
+
+/* Phones: the pinned lines at half strength (Zach, Oct 22: "the lines are too crazy") */
+@media (max-width: 860px) { html:root:not(#_):not(#_):not(#_):not(#_) .env-lines img { opacity: 0.5; } }

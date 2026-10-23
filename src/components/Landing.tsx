@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { setInert } from "../inert";
 import { BrandLogo } from "./BrandLogo";
 import { INITIAL_MANAGER_TAGS, INITIAL_MY_TAGS, TEAMS, YOU, playerById, teamById, type Player } from "../data";
@@ -34,7 +34,7 @@ import { FinalCtaPanel } from "./FinalCta";
 import { LandingSteps } from "./LandingSteps";
 import { LandingLive } from "./LandingLive";
 import { LandingNotesCard } from "./LandingNotesCard";
-import { AcceptCell, DealRows, PtsCell as DealPts, dealWhy } from "./Trade";
+import { AcceptCell, DealRows, PtsCell as DealPts, dealWhy } from "./dealRows";
 import { acceptance, verdict } from "../engine";
 import type { Team } from "../data";
 import { SplitHead, useSplitHeads } from "./SplitHead";
@@ -88,6 +88,12 @@ export function Landing({ onLive, onDemo }: {
   const [errFor, setErrFor] = useState("ld-user");
 
   applyFormat(DEFAULT_FORMAT);
+  // The page's base color (landing-type.css, html.ld2-on): a class on <html> while the landing is up. It used to be
+  // html:has(.ld2), which made every node React added restyle the whole document (~0.5s a time on a mid phone)
+  useLayoutEffect(() => {
+    document.documentElement.classList.add("ld2-on");
+    return () => document.documentElement.classList.remove("ld2-on");
+  }, []);
   // Headshots for the sample league are matched by name, so the landing needs the player id table too
   useEffect(() => { loadJerseyNumbers(); }, []);
   useEffect(() => {
@@ -288,12 +294,19 @@ export function Landing({ onLive, onDemo }: {
   // rate and only needs the page's scroll length (--maxs); the scroll listener is the fallback (Zach, Oct 22: 60fps)
   useEffect(() => {
     if (typeof CSS === "undefined" || !CSS.supports("animation-timeline: scroll()")) return;
+    // Set on the two layers that drift, not on <html>: a custom property on the root is inherited by every element, so
+    // each change (the page growing as images and sections arrive) restyled the whole document, ~400ms a time on a phone
     const root = document.documentElement;
-    const measure = () => root.style.setProperty("--maxs", String(Math.max(1, root.scrollHeight - window.innerHeight)));
+    const els = [phonesRef.current, scatterRef.current].filter((e): e is HTMLDivElement => !!e);
+    let last = "";
+    const measure = () => {
+      const v = String(Math.max(1, root.scrollHeight - window.innerHeight));
+      if (v !== last) { last = v; els.forEach((el) => el.style.setProperty("--maxs", v)); }
+    };
     measure();
     const ro = new ResizeObserver(measure); ro.observe(document.body);
     window.addEventListener("resize", measure);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); root.style.removeProperty("--maxs"); };
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); els.forEach((el) => el.style.removeProperty("--maxs")); };
   }, []);
   useEffect(() => {
     const stage = phonesRef.current;
@@ -541,8 +554,8 @@ export function Landing({ onLive, onDemo }: {
       <a className="skip-link" href="#ld-main">Skip to content</a>
       <div className="ld2-env" ref={env} aria-hidden="true">
         <i className="env-glow g1" /><i className="env-glow g2" /><i className="env-glow g3" />
-        <div className="env-field"><div className="env-turf" /></div>
-        <img className="env-field-img" src="/field.webp" width={1290} height={939} alt="" decoding="async" />
+        {/* The field lines are one drawing (public/field-lines*.png, Zach Oct 22), the same in the app; the glow is CSS */}
+        <picture className="env-lines"><source media="(min-width: 861px)" srcSet="/field-lines.png" /><img src="/field-lines-phone.png" width={860} height={944} alt="" decoding="async" /></picture>
         <i className="env-grain" style={{ backgroundImage: GRAIN }} />
       </div>
       <nav className={`ld-nav ld2-nav${stuck ? " stuck" : ""}`} aria-label="Source">
@@ -827,7 +840,7 @@ export function Landing({ onLive, onDemo }: {
             <button type="button" className="ld2-faq-ask" aria-haspopup="dialog" onClick={() => setAskOpen(true)}
               onPointerEnter={(e) => { if (e.pointerType === "mouse") setAskWave((w) => w + 1); }} onFocus={(e) => { if (e.currentTarget.matches(":focus-visible")) setAskWave((w) => w + 1); }}>
               <AiMarkPlay size={20} replay={askWave} className="ld2-faq-ask-mark" />
-              <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask Source about the sample league and see how it answers.</span></span>
+              <span className="ld2-faq-ask-copy"><b>Still have a question?</b><span>Ask how Source works, what it costs, or what it does with your league.</span></span>
               <Icon name="chev" size={16} />
             </button>
           </div>
@@ -841,7 +854,6 @@ export function Landing({ onLive, onDemo }: {
       </section>
 
       <section className="ld2-final ld2-reveal" aria-labelledby="ld-final">
-        <div className="ld2-endfield" aria-hidden="true"><div className="env-turf" /></div>
         <FinalCtaPanel>
           <h2 id="ld-final" className="ld2-h1 ld2-final-h">See your first trade<br />in under a minute.</h2>
           <div className="ld2-final-form">{form("ld-user-2")}</div>
@@ -853,6 +865,7 @@ export function Landing({ onLive, onDemo }: {
       {/* The sign-off (Zach, Oct 22): a few small lines over SOURCE, oversized so it bleeds off the sides and bottom, in
           Clash Grotesk Semibold. An impact statement, not a link: people reading it are already here. */}
       <footer className="ld-foot ld2-sign" ref={signRef}>
+        <span className="ld2-endlines" aria-hidden="true"><picture><source media="(min-width: 861px)" srcSet="/field-lines.png" /><img src="/field-lines-phone.png" width={860} height={944} alt="" decoding="async" /></picture></span>
         <div className="ld2-sign-top">
           <p className="ld2-sign-lede">Every league has an insider. Make it you. Source reads every roster in your Sleeper league, so you know who needs what before the group chat does.</p>
           <div className="ld2-sign-col">

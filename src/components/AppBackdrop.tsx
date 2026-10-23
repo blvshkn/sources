@@ -6,7 +6,7 @@ export function AppBackdrop() {
   return (
     <div className="app-bg" aria-hidden="true">
       <div className="app-glow" />
-      <div className="app-field"><div className="app-turf" /></div>
+      <picture className="app-lines"><source media="(min-width: 861px)" srcSet="/field-lines.png" /><img src="/field-lines-phone.png" width={860} height={944} alt="" decoding="async" /></picture>
     </div>
   );
 }

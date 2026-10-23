@@ -4157,7 +4157,7 @@ html:root:not(#_):not(#_) .ld2-endfield { position: absolute; left: 50%; bottom:
 html:root:not(#_):not(#_) .ld2-endfield .env-turf { clip-path: none; animation: none; }
 
 /* Inside the app: the same field, faint, along the bottom of the screen behind everything */
-html:root:not(#_):not(:has(.ld2)) body::before {
+html:root:not(#_):not(.ld2-on) body::before {
   content: ""; position: fixed; left: 50%; bottom: -12vh; z-index: -1; width: 2400px; height: 46vh; margin-left: -1200px; pointer-events: none;
   transform: perspective(900px) rotateX(64deg); transform-origin: 50% 0%;
   background:
@@ -4169,7 +4169,7 @@ html:root:not(#_):not(:has(.ld2)) body::before {
 /* The landing is always dark, so its headline gradient never flips to the light-mode black */
 html:root:not(#_):not(#_) .ld2-h1:not(.ld2-typed) { background-image: linear-gradient(90deg, #FFFFFF, #9B9B9B) !important; }
 /* html already paints the same dark, so body can let the field show through */
-html:root:not(#_):not(:has(.ld2)) body { background: transparent; }
+html:root:not(#_):not(.ld2-on) body { background: transparent; }
 
 /* Player sheet: a short reason line, e.g. why an opponent's player is a threat */
 html:root:not(#_) .ps-why { margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); color: var(--ink); font-size: 0.9375rem; line-height: 1.45; text-wrap: pretty; }
@@ -4185,4 +4185,7 @@ html.in-frame:root:not(#_):not(#_):not(#_):not(#_):not(#_) .topbar { height: 114
 
 /* Sheet and modal scrim (Zach, Oct 22): the same dimmed, blurred backdrop in the app and on the landing page */
 html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+/* Scrims run to the true edges of the screen, under Safari's toolbar, instead of stopping a band short of the bottom
+   (Zach, Oct 22, iPad portrait). The fixed wrap only spans the small viewport; this reaches the large one. Desktop: 0. */
+html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { top: calc(100svh - 100lvh); bottom: calc(100svh - 100lvh); }
 @media (prefers-reduced-transparency: reduce) { html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 10, 9, 0.8); } }
