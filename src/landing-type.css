@@ -620,3 +620,6 @@ html:root:not(#_):not(#_):not(#_) .ld2-opt-cell .lu-ai .ask-show { margin-top: 0
 }
 /* Phones: the pinned lines at half strength (Zach, Oct 22: "the lines are too crazy") */
 @media (max-width: 860px) { html:root:not(#_):not(#_):not(#_):not(#_) .env-lines img { opacity: 0.5; } }
+
+/* Replay's label is white like the other Replay buttons; its icon stays lime (Zach, Oct 23) */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2-again { color: var(--ink); }
