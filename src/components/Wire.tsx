@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
-import { StoneLock, useTurnedAt } from "../gameDayMotion";
-import { denyOn } from "../deny";
+import { StoneLock, denyLock, useTurnedAt } from "../gameDayMotion";
+import { deny, denyOn } from "../deny";
+import { lockRules } from "./SwapPicker";
 import type { ReactNode } from "react";
 import { useLoadedIn } from "../loadedIn";
 import { LeagueSwitch } from "./LeagueSwitch";
@@ -258,7 +259,10 @@ function WeekMore({ threats, onGo }: { threats: ReactNode; onGo: (t: string) => 
                 <WkPts p={p} live={live} />
               </>;
               return st === "complete" || st === "in_game"
-                ? <div key={p.id} className={`wk-row ${st === "complete" ? "is-done" : "is-locked"}`} aria-label={`${p.name}, ${st === "complete" ? "game final" : "playing now"}`}>{inner}</div>
+                // A tap does what the Lineup does: the lock shakes and a toast says why he can't move (Zach, Oct 23)
+                ? <button key={p.id} type="button" className={`wk-row ${st === "complete" ? "is-done" : "is-locked"}`} aria-disabled="true"
+                    aria-label={`${p.name}, ${st === "complete" ? "game final" : "playing now"}, locked`}
+                    onClick={(e) => { const el = e.currentTarget; denyLock(el); deny(el, lockRules(live, false).starterLock(p) ?? `${p.name} is locked.`); }}>{inner}</button>
                 : <button key={p.id} className="wk-row" onClick={() => onGo("roster")}>{inner}</button>;
             })}
           </div>

@@ -38,7 +38,7 @@ html:root:not(#_):not(#_):not(#_) .card.wk.cc-dates { padding-bottom: max(0px, v
 
 /* Game day: a starter whose game is final reads as done, like the Lineup's finished rows (styles.css .lu-row.is-done),
    and isn't a button, so no hover, press or pointer (Zach, Oct 23) */
-html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked) { cursor: default; pointer-events: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked) { cursor: default; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > :is(.av, .wk-name) { opacity: 0.42; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row.is-done > .wk-pts { opacity: 0.72; }
 html:root:not(#_):not(#_):not(#_):not(#_) .wk-row:is(.is-done, .is-locked)::after { content: none !important; }
