@@ -142,7 +142,8 @@ export function PlayerBar({ s }: { s: HeroSubject }) {
   const team = s.nfl && s.nfl !== "FA";
   return (
     <button type="button" className="ph-bar" onClick={toTop} aria-label={`${s.name}. Back to top`}>
-      <Avatar p={s} size={36} badge={false} />
+      {/* The team logo badge in the same corner as every other avatar in the app (Zach, Oct 23) */}
+      <Avatar p={s} size={36} />
       <span className="ph-bar-who">
         <b>{s.name}</b>
         <span className="ph-bar-meta"><PosBadge pos={s.pos} />{team && <span>{s.nfl}</span>}</span>
