@@ -3419,8 +3419,8 @@ html:root:not(#_) .ld2-tag span.on { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_) .ld2-tag span { color: var(--ink); transition: none; } }
 
 /* Sections fade up as they arrive */
-html:root:not(#_) .ld2-reveal { opacity: 0; transform: translateY(64px); filter: blur(12px); transition: opacity 900ms var(--ease-fluid), transform 900ms var(--ease-fluid), filter 900ms var(--ease-fluid); }
-html:root:not(#_) .ld2-reveal.in { opacity: 1; transform: none; filter: none; }
+html:root:not(#_) .ld2-reveal { opacity: 0; transform: translateY(64px); transition: opacity 900ms var(--ease-fluid), transform 900ms var(--ease-fluid); }
+html:root:not(#_) .ld2-reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { html:root:not(#_) .ld2-reveal { opacity: 1; transform: none; filter: none; transition: none; } }
 html:root:not(#_) .ld2 .ld-cell.reveal, html:root:not(#_) .ld2 .reveal { animation: none; }
 
@@ -4035,16 +4035,16 @@ html:root:not(#_) .env-grain { position: absolute; inset: 0; opacity: 0.035; }
 html:root:not(#_) .ld2-nav { animation: ld3-down 700ms var(--ease-fluid) both; }
 @keyframes ld3-down { from { opacity: 0; transform: translateY(-12px); } }
 html:root:not(#_) .ld2-in { animation: ld3-up 800ms var(--ease-fluid) both; animation-delay: calc(calc(120ms * var(--mo, 1)) + var(--i, 0) * calc(80ms * var(--mo, 1))); }
-@keyframes ld3-up { from { opacity: 0; transform: translateY(20px); filter: blur(6px); } }
+@keyframes ld3-up { from { opacity: 0; transform: translateY(20px); } }
 @keyframes ld3-line { from { transform: translateY(105%); } }
 
 /* The product stage: cards rise out of depth, the whole stage drifts with scroll and pointer */
 html:root:not(#_) .ld2-stage { position: relative; --sy: 0; --mx: 0; --my: 0; }
-@keyframes ld3-card { from { opacity: 0; transform: translateY(48px) scale(0.95); filter: blur(12px); } }
+@keyframes ld3-card { from { opacity: 0; transform: translateY(48px) scale(0.95); } }
 
 /* Headshots: near ones sit in front of the cards and move more, far ones sit behind and move less */
 html:root:not(#_) .ld2-heads { position: absolute; inset: 0; pointer-events: none; }
-@keyframes ld3-pop { from { opacity: 0; transform: translateY(16px) scale(0.6); filter: blur(8px); } }
+@keyframes ld3-pop { from { opacity: 0; transform: translateY(16px) scale(0.6); } }
 @keyframes ld3-float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 @media (max-width: 860px) {
   html:root:not(#_) .ld2-stage { margin-top: 40px; }

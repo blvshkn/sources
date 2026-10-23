@@ -58,8 +58,9 @@ html:root:not(#_):not(#_) .thk-dg-col { display: flex; flex-direction: column; t
 html:root:not(#_):not(#_) .thk-dg-col > span, html:root:not(#_):not(#_) .thk-sep { height: 20px; line-height: 20px; }
 
 /* Streamed words: each fades and sharpens in. Hidden words keep their space, so nothing reflows */
-html:root:not(#_):not(#_) .thk-w { opacity: 0; filter: blur(5px); transition: opacity calc(300ms * var(--mo, 1)) var(--ease-out), filter calc(300ms * var(--mo, 1)) var(--ease-out), color 500ms ease; }
-html:root:not(#_):not(#_) .thk-w.on { opacity: 1; filter: blur(0); }
+/* Words fade in on opacity alone: a blur on every word at once dropped frames on phones (Zach, Oct 22: 60fps) */
+html:root:not(#_):not(#_) .thk-w { opacity: 0; transition: opacity calc(300ms * var(--mo, 1)) var(--ease-out), color 500ms ease; }
+html:root:not(#_):not(#_) .thk-w.on { opacity: 1; }
 html:root:not(#_):not(#_) .thk-w.old { color: var(--muted); }
 
 /* ---------- Ask: the trace sits above each answer ---------- */

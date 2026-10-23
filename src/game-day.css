@@ -44,6 +44,8 @@ html:root:not(#_):not(#_) :is(.lu-row, .mu-mine):has(.gd-lock) .av { filter: sat
 html:root:not(#_):not(#_):not(#_):not(#_) :is(.lu-row, .mu-mine):has(.gd-lock) :is(.lu-lockic, .mu-lockic) { display: none; }
 html:root:not(#_):not(#_) .gd-kick { color: var(--muted); }
 
+/* Game-day motion runs on transform and opacity only, so it holds 60fps on phones (Zach, Oct 22): the digit and label
+   morphs dropped their blur, which Safari repainted every frame on every glyph at once */
 /* ---- Morphs ----------------------------------------------------------------------- */
 html:root:not(#_):not(#_) .gd-morph { display: inline-grid; justify-items: center; align-items: center; }
 html:root:not(#_):not(#_) .gd-morph > * { grid-area: 1 / 1; min-width: 0; }
@@ -105,11 +107,11 @@ html:root:not(#_):not(#_) .fo-st-final .fo-side.is-lost { opacity: 0.55; }
   /* Blur morph: the week label under VS, status pills */
   html:root:not(#_):not(#_) :is(.gd-morph-blur, .gd-morph-rise) > .gd-m-out { animation: gd-blur-out calc(240ms * var(--mo)) var(--ease-out) both; }
   html:root:not(#_):not(#_) .gd-morph-blur > .gd-m-in { animation: gd-blur-in calc(240ms * var(--mo)) var(--ease-out) both; }
-  @keyframes gd-blur-out { from { opacity: 1; filter: blur(0); transform: none; } to { opacity: 0; filter: blur(6px); transform: scale(0.96); } }
-  @keyframes gd-blur-in { from { opacity: 0; filter: blur(6px); transform: scale(0.96); } to { opacity: 1; filter: blur(0); transform: none; } }
+  @keyframes gd-blur-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.94); } }
+  @keyframes gd-blur-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
   /* Rise: the final result morphs in as it rises, after a beat */
   html:root:not(#_):not(#_) .gd-morph-rise > .gd-m-in { animation: gd-rise calc(354ms * var(--mo)) var(--ease-out) calc(400ms * var(--mo)) both; }
-  @keyframes gd-rise { 0% { opacity: 0; filter: blur(6px); transform: translateY(12px) scale(0.96); } 84% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
+  @keyframes gd-rise { 0% { opacity: 0; transform: translateY(12px) scale(0.96); } 84% { opacity: 1; } 100% { opacity: 1; transform: none; } }
   /* Swap: the kickoff line slides out up and the new words slide in from below */
   html:root:not(#_):not(#_) .gd-morph-swap > .gd-m-out { animation: gd-swap-out calc(149ms * var(--mo)) var(--ease-out) both; }
   html:root:not(#_):not(#_) .gd-morph-swap > .gd-m-in { animation: gd-swap-in calc(149ms * var(--mo)) var(--ease-out) both; }
@@ -121,10 +123,10 @@ html:root:not(#_):not(#_) .fo-st-final .fo-side.is-lost { opacity: 0.55; }
   html:root:not(#_):not(#_) .gd-g.gd-in.down { animation: gd-num-in-down calc(297ms * var(--mo)) var(--ease-out) both; }
   html:root:not(#_):not(#_) .gd-g.gd-out.up { animation: gd-num-out-up calc(297ms * var(--mo)) var(--ease-out) both; }
   html:root:not(#_):not(#_) .gd-g.gd-out.down { animation: gd-num-out-down calc(297ms * var(--mo)) var(--ease-out) both; }
-  @keyframes gd-num-in-up { 0% { opacity: 0; filter: blur(6px); transform: translateY(45%) scale(0.96); } 80% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
-  @keyframes gd-num-in-down { 0% { opacity: 0; filter: blur(6px); transform: translateY(-45%) scale(0.96); } 80% { opacity: 1; filter: blur(0); } 100% { opacity: 1; filter: blur(0); transform: none; } }
-  @keyframes gd-num-out-up { 80% { opacity: 0; filter: blur(6px); } 100% { opacity: 0; filter: blur(6px); transform: translateY(-45%) scale(0.96); } }
-  @keyframes gd-num-out-down { 80% { opacity: 0; filter: blur(6px); } 100% { opacity: 0; filter: blur(6px); transform: translateY(45%) scale(0.96); } }
+  @keyframes gd-num-in-up { 0% { opacity: 0; transform: translateY(45%) scale(0.96); } 80% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+  @keyframes gd-num-in-down { 0% { opacity: 0; transform: translateY(-45%) scale(0.96); } 80% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+  @keyframes gd-num-out-up { 60% { opacity: 0; } 100% { opacity: 0; transform: translateY(-45%) scale(0.96); } }
+  @keyframes gd-num-out-down { 60% { opacity: 0; } 100% { opacity: 0; transform: translateY(45%) scale(0.96); } }
 
   /* Final whistle: the trophy spins out from the winner's name and settles, then three pixel sparkles blink once */
   html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .gd-troph { animation: gd-troph-spin calc(434ms * var(--mo)) both calc(257ms * var(--mo)); }
@@ -141,7 +143,7 @@ html:root:not(#_):not(#_) .fo-st-final .fo-side.is-lost { opacity: 0.55; }
   @keyframes gd-spark { 0% { opacity: 1; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.3); } }
   /* The Live dot shrinks away as the word blurs out */
   html:root:not(#_):not(#_) .fo-line .gd-m-out .fo-live > i { animation: gd-dot-away calc(240ms * var(--mo)) var(--ease-out) both; }
-  @keyframes gd-dot-away { to { width: 0; margin: 0; opacity: 0; transform: scale(0.4); } }
+  @keyframes gd-dot-away { to { opacity: 0; transform: scale(0.4); } }
   html:root:not(#_):not(#_) .fo.gd-fw .fo-side.is-won .fo-bar { animation: gd-thud-bar calc(149ms * var(--mo)) var(--ease-out) calc(411ms * var(--mo)); }
   @keyframes gd-thud-bar { 40% { transform: translateY(1px); } }
 }

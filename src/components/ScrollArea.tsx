@@ -240,23 +240,36 @@ export const SCROLL_AREAS = [
 export function scrollAreas(root: HTMLElement = document.body) {
   let raf = 0;
   const live = new Set<HTMLElement>();
+  // Areas already found not to scroll aren't measured again until something about them changes: a class change
+  // anywhere used to re-run getComputedStyle on every area each frame, which forced a style pass per frame while the
+  // landing's animations toggled classes (Zach, Oct 22: 60fps)
+  let flat = new WeakSet<HTMLElement>();
   const scan = () => {
     raf = 0;
     for (const el of live) if (!el.isConnected) { attached.get(el)?.(); live.delete(el); }
     for (const el of Array.from(root.querySelectorAll<HTMLElement>(SCROLL_AREAS))) {
-      if (live.has(el) || attached.has(el)) continue;
+      if (live.has(el) || attached.has(el) || flat.has(el)) continue;
       const oy = getComputedStyle(el).overflowY;
-      if (oy !== "auto" && oy !== "scroll") continue;
+      if (oy !== "auto" && oy !== "scroll") { flat.add(el); continue; }
       attachScrollbar(el); live.add(el);
     }
   };
+  const later = () => { if (!raf) raf = requestAnimationFrame(scan); };
   const mo = new MutationObserver((recs) => {
-    if (recs.every((r) => r.target instanceof Element && (r.target.classList.contains("sa-track") || r.target.classList.contains("sa-thumb")))) return;
-    if (!raf) raf = requestAnimationFrame(scan);
+    let go = false;
+    for (const r of recs) {
+      if (r.type === "childList") { if ([...r.addedNodes].some((n) => n instanceof Element) || r.removedNodes.length) go = true; continue; }
+      const t = r.target;
+      if (!(t instanceof HTMLElement) || t.classList.contains("sa-track") || t.classList.contains("sa-thumb")) continue;
+      // A class on the page root can turn overflow on below it; one on an area re-measures just that area
+      if (t === document.documentElement || t === document.body || t === root) { flat = new WeakSet(); go = true; }
+      else if (t.matches(SCROLL_AREAS)) { flat.delete(t); go = true; }
+    }
+    if (go) later();
   });
   mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   // A breakpoint can turn overflow on (the sidebar scrolls only on desktop)
-  const onResize = () => { if (!raf) raf = requestAnimationFrame(scan); };
+  const onResize = () => { flat = new WeakSet(); later(); };
   window.addEventListener("resize", onResize);
   scan();
   return () => { mo.disconnect(); window.removeEventListener("resize", onResize); cancelAnimationFrame(raf); for (const el of live) attached.get(el)?.(); live.clear(); };

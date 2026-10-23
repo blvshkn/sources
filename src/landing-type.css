@@ -49,7 +49,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .bars b.small { font-weight: 600 
 
 /* ---------- Entrance: the app's ---------- */
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal {
-  transform: translateY(14px); filter: blur(4px);
+  transform: translateY(14px);
   transition: opacity calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), filter calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
 }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal.in { transform: none; filter: none; }
@@ -63,7 +63,7 @@ html:root:not(#_):not(#_):not(#_) .ld2 :is(.ld-bento, .ld2-new-grid, .ld-trust-l
   html:root:not(#_):not(#_):not(#_) .ld2 .ld2-reveal { transform: none; filter: none; transition: opacity 160ms linear; transition-delay: 0s !important; }
 }
 /* The hero's opening lines: the same rise and blur */
-@keyframes ld3-up { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+@keyframes ld3-up { from { opacity: 0; transform: translateY(14px); } }
 html:root:not(#_):not(#_):not(#_) .ld2 .ld2-in {
   animation: ld3-up calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)) both;
   animation-delay: calc((120ms + var(--i, 0) * 90ms) * var(--mo, 1));
@@ -71,7 +71,7 @@ html:root:not(#_):not(#_):not(#_) .ld2 .ld2-in {
 /* The sign-off's letters come in the same way, one after another */
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-sign .ld2-sign-word > span {
-    transform: translateY(14%); filter: blur(4px);
+    transform: translateY(14%);
     transition: opacity calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), transform calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1)), filter calc(640ms * var(--mo, 1)) var(--ease-out, cubic-bezier(0.33, 1, 0.68, 1));
     transition-delay: calc(var(--i) * 90ms * var(--mo, 1));
   }
@@ -147,7 +147,7 @@ html:root:not(#_):not(#_) .ld2-navright { display: flex; align-items: center; ga
 
 /* The CTA slot: collapsed to nothing until the hero field is gone, then it grows in beside "Try the demo" */
 html:root:not(#_):not(#_) .ld2-navcta {
-  display: block; max-width: 0; margin-right: -8px; overflow: hidden; opacity: 0; transform: translateY(-4px); filter: blur(4px);
+  display: block; max-width: 0; margin-right: -8px; overflow: hidden; opacity: 0; transform: translateY(-4px);
   transition: max-width calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)), margin-right calc(420ms * var(--mo, 1)) var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
     opacity calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1), transform calc(420ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1),
     filter calc(320ms * var(--mo, 1)) cubic-bezier(0.33, 1, 0.68, 1);
@@ -419,7 +419,7 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-tag.ld2-tag-
    Cards start just before they enter the screen (Landing.tsx rootMargin), rise and sharpen in about 400ms, and
    follow each other 50ms apart, so they're settled while they're still low on the screen. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-reveal {
-  transform: translateY(10px); filter: blur(2px);
+  transform: translateY(10px);
   transition-duration: 420ms, 420ms, 420ms;
 }
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-reveal.in { transform: none; filter: none; }
@@ -451,11 +451,11 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .hp-phone::after { left: -6%; 
    fixed) it touched the bottom of the screen, and Safari 26 then paints its toolbar strip as a solid box over the page
    (Zach, Oct 22, iPhone and iPad: ?off=envfix made the box go away) */
 html:root:not(#_):not(#_):not(#_) .ld2-env { position: absolute; inset: 0 0 auto 0; height: 100svh; bottom: auto; background: none; }
-/* Where it ends, it fades out over its last 200px instead of stopping on a hard line (Zach, Oct 22, iPad) */
+/* Where it ends, it fades out over its last 440px, through the field, instead of stopping on a hard line (Zach, Oct 22, iPad) */
 @media (min-width: 861px) {
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env {
-    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
-    mask-image: linear-gradient(180deg, #000 calc(100% - 200px), transparent);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 440px), rgba(0, 0, 0, 0.55) calc(100% - 220px), transparent);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 440px), rgba(0, 0, 0, 0.55) calc(100% - 220px), transparent);
   }
 }
 html:root:not(#_):not(#_):not(#_) .env-field-img { display: none; }
@@ -468,6 +468,7 @@ html:root:not(#_):not(#_):not(#_) .env-field-img { display: none; }
   /* The field lines are a still image here (public/field.webp, the drawn field at 430px), pinned to the bottom */
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field { display: none; }
   html:root:not(#_):not(#_):not(#_):not(#_) .ld2-env .env-field-img { display: block; position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; }
+  /* Drawn taller than the CSS field (Zach, Oct 22), so it reaches up past the hero's phones into the space under the copy */
 }
 
 /* The edge blur runs to the true bottom of the screen, under Safari's toolbar, so its lower edge sits flush instead
@@ -531,3 +532,7 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { vertical-al
 @media (max-width: 1023px), (hover: none) and (pointer: coarse) {
   html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur { display: none !important; }
 }
+
+/* The trade search's thinking steps line up with the rows above them on the left (Zach, Oct 22): inside the landing's
+   deal card its own card padding doubled the inset */
+html:root:not(#_):not(#_):not(#_):not(#_) .ld2 .thk-card { padding-left: 0 !important; padding-right: 0 !important; }

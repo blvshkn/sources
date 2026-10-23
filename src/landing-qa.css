@@ -56,12 +56,12 @@ html:root:not(#_):not(#_) .ld2-final .ld2-help { margin-inline: auto; }
 
 /* Hero cards glide in from the right, one after the other. The trade idea is a .nudge card, and a global
    rule turns .nudge animation off with !important, which left it sitting there while everything else loaded. */
-@keyframes ld3-from-right { from { opacity: 0; transform: translateX(72px); filter: blur(10px); } }
+@keyframes ld3-from-right { from { opacity: 0; transform: translateX(72px); } }
 
 /* ==== Players v2: initials only, mixed sizes, no grow-in, parallax on every screen ==== */
 /* Each player has its own size, so the group reads as depth instead of a row of identical chips */
 /* They arrive at their final size: a soft rise and fade, no scaling up */
-@keyframes ld3-arrive { from { opacity: 0; transform: translateY(14px); filter: blur(8px); } }
+@keyframes ld3-arrive { from { opacity: 0; transform: translateY(14px); } }
 
 /* Phone: a loose cluster over the card in three sizes, all inside the screen */
 
@@ -125,7 +125,7 @@ html:root:not(#_):not(#_) .ld2-sign-word > span { display: block; }
    after another. The letters rise out of the page's bottom edge, which crops them. */
 @media (prefers-reduced-motion: no-preference) {
   html:root:not(#_):not(#_) .ld2-sign .ld2-sign-word > span {
-    opacity: 0; transform: translateY(32%); filter: blur(12px);
+    opacity: 0; transform: translateY(32%);
     transition: opacity calc(900ms * var(--mo, 1)) var(--ease-fluid), transform calc(900ms * var(--mo, 1)) var(--ease-fluid), filter calc(900ms * var(--mo, 1)) var(--ease-fluid);
     transition-delay: calc(var(--i) * 70ms * var(--mo, 1));
   }

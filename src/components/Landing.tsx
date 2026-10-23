@@ -312,12 +312,13 @@ export function Landing({ onLive, onDemo }: {
   // device's movement. iOS asks permission, which it only allows from a tap: the end of a scroll swipe doesn't count and
   // fails, so every tap asks until iOS gives an answer. Eased, and it stops when the device does.
   useEffect(() => {
-    const root = document.documentElement;
-    if (!matchMedia("(hover: none) and (pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Set on the two layers that move, not the document, so a tilt restyles only them (60fps, Zach Oct 22)
+    const els = [phonesRef.current, scatterRef.current].filter((e): e is HTMLDivElement => !!e);
+    if (!els.length || !matchMedia("(hover: none) and (pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let bx: number | null = null, by: number | null = null, tx = 0, ty = 0, x = 0, y = 0, raf = 0;
     const step = () => {
       x += (tx - x) * 0.12; y += (ty - y) * 0.12;
-      root.style.setProperty("--gx", x.toFixed(3)); root.style.setProperty("--gy", y.toFixed(3));
+      els.forEach((el) => { el.style.setProperty("--gx", x.toFixed(3)); el.style.setProperty("--gy", y.toFixed(3)); });
       raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
     };
     const on = (e: DeviceOrientationEvent) => {

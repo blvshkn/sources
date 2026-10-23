@@ -129,7 +129,7 @@ export function HeatWx({ kind, at }: { kind: "hot" | "cold"; at: number }) {
   useEffect(() => {
     const c = cv.current;
     if (!play || !c || reduce()) { setFinished(play); return; }
-    const dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), W = c.clientWidth, H = c.clientHeight;
     c.width = W * dpr; c.height = H * dpr;
     const x = c.getContext("2d");
     if (!x) return;
@@ -140,14 +140,16 @@ export function HeatWx({ kind, at }: { kind: "hot" | "cold"; at: number }) {
     const spawn = (): P => kind === "hot"
       ? { x: W - 10 - Math.random() * 60, y: H * 0.55, vx: (Math.random() - 0.5) * 0.15, vy: -(0.35 + Math.random() * 0.35), life: 0, max: 70, c: [FC.r, FC.o, FC.y][Math.floor(Math.random() * 3)] }
       : { x: W - Math.random() * 90, y: -4, vx: -0.7, vy: 1.6 + Math.random() * 0.6, life: 0, max: 50 };
-    let last = 0, raf = 0;
+    // Moves by elapsed time (in 60fps frames), so the specks keep their speed when a frame is dropped
+    let last = 0, raf = 0, prev = t0;
     const step = (now: number) => {
-      const t = now - t0;
+      const t = now - t0, k = Math.min(4, (now - prev) / (1000 / 60) || 1);
+      prev = now;
       x.clearRect(0, 0, W, H);
       if (t < SPAWN && now - last > GAP) { parts.push(spawn()); last = now; }
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
-        p.life++; p.x += p.vx; p.y += p.vy;
+        p.life += k; p.x += p.vx * k; p.y += p.vy * k;
         x.globalAlpha = Math.max(0, 1 - p.life / p.max) * 0.8;
         if (kind === "hot") { x.fillStyle = p.c!; x.fillRect(snap(p.x), snap(p.y), S, S); }
         else { x.fillStyle = "#B9DEFF"; x.fillRect(snap(p.x), snap(p.y), S, S); x.fillRect(snap(p.x + 2), snap(p.y - 4), S, S); }
