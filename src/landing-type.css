@@ -526,3 +526,8 @@ html:root:not(#_):not(#_):not(#_):not(#_) .ld2-phone3d-img { position: absolute;
    from what's inside, so a chip with initials (LJ) or a photo sat lower than an icon chip; aligned by their own middle
    instead, then nudged up to the middle of the capitals. */
 html:root:not(#_):not(#_):not(#_):not(#_) .ld2-tag-stack .ld2-chip { vertical-align: middle; position: relative; top: -0.07em; }
+
+/* No bottom-edge blur on phones and tablets (Zach, Oct 22): below 1024px, and on any touch screen */
+@media (max-width: 1023px), (hover: none) and (pointer: coarse) {
+  html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-edgeblur { display: none !important; }
+}
