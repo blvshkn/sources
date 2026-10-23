@@ -43,11 +43,11 @@ export function gameDayChecks(lineup: Lineup, w = weekGames()): Check[] {
     ...irChecks,
     ...s.filter((x) => x.player.status && open(x.player)).map((x) => ({ key: `inj-${x.player.id}`, tone: (x.player.status === "O" ? "bad" : "warn") as "bad" | "warn", icon: "alert" as IconName, player: x.player,
       lockAt: lockWhen(x.player) || undefined,
-      text: x.player.status === "O" ? `${x.player.name} is out (${injuryDetail(x.player)}). Swap him before lock.` : `${x.player.name} is questionable (${injuryDetail(x.player)}). Check the inactives 90 minutes before kickoff.` })),
+      text: x.player.status === "O" ? `${x.player.name} is out (${injuryDetail(x.player)}). Swap him before lock.` : `${x.player.name} is questionable (${injuryDetail(x.player)}). Check inactives 90 min before kickoff.` })),
     ...emptySpecial.map((x) => ({ key: `empty-${x.slot}`, tone: "bad" as const, icon: "helmet" as IconName, ...(x.player ? { lockAt: lockWhen(x.player) || undefined } : {}),
       text: x.player ? `Your ${x.slot} slot is empty in Sleeper. Start ${x.player.name} before lock.` : `Your ${x.slot} slot is empty. Pick up a ${x.slot === "K" ? "kicker" : "defense"} in Sleeper before lock.` })),
     ...(closeCall ? [{ key: "flex", tone: "info" as const, icon: "trade" as IconName, lockAt: moveLock(flex.player, bestBench) || undefined,
-      text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. Basically a coin flip.` }] : []),
+      text: `Close call at flex: ${flex.player.name} ${eff(flex.player, true).toFixed(1)} vs ${bestBench.name} ${eff(bestBench, true).toFixed(1)}. A coin flip.` }] : []),
     ...(benchOut.length && anyOpen ? [{ key: "bench", tone: "info" as const, icon: "roster" as IconName,
       text: `Thin bench this week. ${andList(benchOut.map((p) => `${p.name} (${onBye(p.nfl) ? "bye" : "out"})`))} can't cover a starter.` }] : []),
   ];

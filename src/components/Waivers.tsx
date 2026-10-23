@@ -56,7 +56,7 @@ export const lockWhyText = (fa: WaiverFA, avail: Avail): string | null => !avail
 /** `only`: found through search, outside the suggested list. `noTeam`: no NFL team, so nothing to claim for points. */
 type Entry = { fa: WaiverFA; value: number; avail: Avail; rec?: WaiverRec; later?: WaiverRec; only?: boolean; noTeam?: boolean };
 /** Why a player with no NFL team has no claim, said on his row and when it's tapped. */
-const noTeamText = (fa: WaiverFA) => `${fa.name} has no NFL team right now, so he can't score for you until someone signs him.`;
+const noTeamText = (fa: WaiverFA) => `${fa.name} has no NFL team. He can't score for you until someone signs him.`;
 /** This week's projection for a search-only player, when there is one. */
 const searchValue = (fa: WaiverFA) => (isSpecialFA(fa) ? fa.wk ?? fa.proj : PLAYERS[fa.id] ? eff(PLAYERS[fa.id]) : fa.proj);
 /** A search-only free agent as a full list entry, with claim details from the same engine path as the list (recFor). */
@@ -489,7 +489,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
           })}
         </div>
         <div ref={listRef} className={`wv3-list k-${kind}`} aria-busy={loading}>
-        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos === "FLEX" ? "flex" : pos}`} yet. Tap the star on a player to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Rostered players are in Build a deal search.` : `No ${pos === "ALL" ? "players" : pos === "FLEX" ? "flex players" : pos} available right now. Check back after waivers run.`}</p>}
+        {shown.length === 0 && <p className="small muted" style={{ padding: "8px 16px 18px" }}>{onlyWatch ? `You're not watching anyone${pos === "ALL" ? "" : ` at ${pos === "FLEX" ? "flex" : pos}`} yet. Tap a player's star to watch him for week ${target}.` : q.trim() ? `No free agent matches "${q.trim()}". Search rostered players in Build a deal.` : `No ${pos === "ALL" ? "players" : pos === "FLEX" ? "flex players" : pos} available right now. Check back after waivers run.`}</p>}
         {shown.map((e) => {
           const r = e.r;
           const isOpen = !!r && open === e.fa.id;
@@ -605,7 +605,7 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
                     <div><span className="eyebrow">{FAAB.enabled ? SUGG_BID : "Claim"}</span><p className="small">{FAAB.enabled ? (r.kdef || isSpecialFA(r.fa) ? <><b className="sugg-bid-amt">{bidText(r.bid, r.fa)}</b>. Kickers and defenses rarely draw real bids.</> : <><b className="sugg-bid-amt">{bidText(r.bid)}</b>. {bidSourceNote()}</>) : r.kdef ? <>Low priority claim. Don't spend a high waiver spot on a {r.fa.pos === "K" ? "kicker" : "defense"}</> : <>Rolling waiver priority in your league</>}</p></div>
                   </div>
                   {FAAB.enabled && (r.kdef ? <SpecialBidNote /> : <BidHistory tier={r.tier as BidTier["tier"]} range={r.bid} />)}
-                  <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. Claims are placed in your league app. Source never bids for you.</p>
+                  <p className="tiny muted wv-claim-note">Claim opens Sleeper's Players tab. You place the claim there. Source never bids for you.</p>
                 </div>
                 </>);
                 }}
@@ -730,7 +730,7 @@ export function useHoldHeight<T extends HTMLElement>(key: string) {
 function SpecialBidNote() {
   const { bids, estimated } = specialBidRange();
   return <p className="tiny muted wv-kdef-bid">{estimated
-    ? `Your league doesn't have enough K/DEF claims yet. Kickers and defenses usually go for ${bidRange(specialBidRange().bid)}, so bid low.`
+    ? `Not enough K/DEF claims in your league yet. They usually go for ${bidRange(specialBidRange().bid)}, so bid low.`
     : `Winning K/DEF bids in your league this season: ${bids.slice().sort((a, b) => a - b).map((b) => `$${bidDollars(b, true)}`).join(", ")}.`}</p>;
 }
 
@@ -739,7 +739,7 @@ function BidHistory({ tier, range }: { tier: string; range: [number, number] }) 
   const max = Math.max(30, ...bids, range[1]);
   return (
     <div className="bid-hist">
-      <span className="tiny muted">{estimated ? `Not enough winning ${tier.toLowerCase()} bids in your league yet, so this shows a typical range` : `Winning ${tier.toLowerCase()} bids in your league this season (${bids.length})`}</span>
+      <span className="tiny muted">{estimated ? `Not enough winning ${tier.toLowerCase()} bids in your league yet. Showing a typical range.` : `Winning ${tier.toLowerCase()} bids in your league this season (${bids.length})`}</span>
       <div className="bid-track" role="img" aria-label={`Winning bids: ${bids.join(", ")} percent`}>
         <span className="bid-range" style={{ left: `${(range[0] / max) * 100}%`, width: `${Math.max(2, ((range[1] - range[0]) / max) * 100)}%` }} />
         {bids.map((b, i) => <Tooltip key={i} content={<>A winning bid of <b>{b}%</b> of budget</>}><span className="bid-dot" style={{ left: `${(b / max) * 100}%` }} /></Tooltip>)}

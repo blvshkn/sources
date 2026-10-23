@@ -274,7 +274,7 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
                   </button>
                 ))}
               </div>
-            ) : <span className="cmp-none">Everyone in the list is in the comparison.</span>}
+            ) : <span className="cmp-none">Everyone on the list is already here.</span>}
           </div>
 
           <section className="cmp-sec" aria-label="Side by side this week">
@@ -345,8 +345,8 @@ export function SwapCompare({ subject, role, options, title, swapLabel, from, on
                     </div>
                   ))}
                 </div>
-                <p className="cmp-src">{isDemo() ? "Sample points from the demo league, the same ones each player's game log shows." : "Points from Sleeper's weekly stats, scored with your league's settings, the same ones each player's game log shows."}
-                  {used.size > 0 && <> {[...used.values()].map((y) => `${y.label} ${KEY[y.kind]}`).join(", ")}. Hover or press a label for the detail.</>}</p>
+                <p className="cmp-src">{isDemo() ? "Sample points from the demo league. Same as each player's game log." : "Points from Sleeper's weekly stats, scored with your league's settings. Same as each player's game log."}
+                  {used.size > 0 && <> {[...used.values()].map((y) => `${y.label} ${KEY[y.kind]}`).join(", ")}. Hover or press a label for details.</>}</p>
               </>}
           </section>
         </div>

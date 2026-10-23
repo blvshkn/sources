@@ -46,13 +46,13 @@ export function OptimalLineup({ live, locked, onPlayer, onMarks }: {
   useEffect(() => () => onMarks(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = (e: MouseEvent<HTMLButtonElement>) => {
-    if (running) { deny(e.currentTarget, "Still working on your lineup. One moment."); return; }
+    if (running) { deny(e.currentTarget, "Still working. One moment."); return; }
     if (locked) { deny(e.currentTarget, weekFinal(live) ? `Week ${WEEK} is final. Lineups can't change.` : LOCKED_LINE); return; }
     setOpen(true); setKept(null); keepOptimal(null);
     start(optimalJob(live)).catch(() => {
       // Something broke mid-run: the engine's lineup is still the answer, never an error
       const cur = sleeperNow().mine;
-      const r = resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off", null, "Source AI couldn't finish, so this is your best lineup by projection.");
+      const r = resultFor(cur, bestUnderLocks(cur, lockedIn(live)), "off", null, "Source AI couldn't finish. Here's your best lineup by projection.");
       keepOptimal(r); setKept(r);
     });
   };

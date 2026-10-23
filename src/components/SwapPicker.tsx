@@ -35,7 +35,7 @@ const him = (p: Lockable) => (p.pos === "DEF" ? "it" : "him");
 const isBye = (p: Lockable) => onBye(p.nfl);
 /** Swapping in someone on bye only scores 0, so bye candidates stay listed, dimmed and marked Bye, and a tap says why. */
 export const BYE_TAG = "Bye";
-export const byeWhy = (p: Lockable, week: number) => `${p.name} is on bye in Week ${week}, so ${him(p) === "it" ? "it" : "he"} won't score there.`;
+export const byeWhy = (p: Lockable, week: number) => `${p.name} is on bye in Week ${week}, so ${him(p) === "it" ? "it" : "he"} won't score.`;
 /** For a week other than this one: lock and tag for a candidate with no game that week. */
 export const weekBye = (p: WeekPlayer, week: number) => {
   if (!gameIn(p, week)) return { lock: byeWhy(p, week), tag: BYE_TAG };

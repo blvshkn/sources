@@ -105,7 +105,7 @@ export function buildInbox({ nudges, checks, live, go, loadTrade, keepTag, news 
   } else if (done.length) {
     const got = done.reduce((a, p) => a + (live.points[p.id] ?? 0), 0), want = done.reduce((a, p) => a + eff(p, true), 0);
     out.push({ id: `final-${done.length}`, icon: "check", title: "Games final", time: "Today",
-      text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final with ${got.toFixed(1)} pts, ${fmt(got - want)} against their projections.`,
+      text: `${done.length} of your starters ${done.length === 1 ? "is" : "are"} final. ${got.toFixed(1)} pts, ${fmt(got - want)} vs projections.`,
       action: { label: "Open matchup", run: () => go("matchup") } });
   }
 
@@ -195,6 +195,16 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
   ];
   useEffect(() => { if (filter !== "all" && !pills.some((p) => p.id === filter)) setFilter("all"); });
   const listRef = useRef<HTMLDivElement>(null);
+  // The stuck pills and headings take the panel's real background, whatever surface the panel sits on (docked,
+  // slide-over, the demo, phones), so nothing shows a different shade behind them (Zach, Oct 23)
+  useLayoutEffect(() => {
+    let el: HTMLElement | null = listRef.current;
+    while (el) {
+      const bg = getComputedStyle(el).backgroundColor;
+      if (bg && bg !== "transparent" && !/rgba\([^)]*,\s*0\)$/.test(bg)) { listRef.current?.style.setProperty("--ibx-bg", bg); break; }
+      el = el.parentElement;
+    }
+  }, [open]);
   // Items already here when the panel first draws sit still; anything that arrives later slides in
   const seen = useRef<Set<string> | null>(null);
   if (!seen.current) seen.current = new Set(items.map((x) => x.id));
@@ -268,7 +278,7 @@ export function InboxPanel({ items, read, onRead, onReadAll, onDismiss, onAsk, o
                         {(it.meta || it.ai) && (
                           <div className="ibx-n-meta">
                             {it.meta && <span><Meta s={it.meta} /></span>}
-                            {it.ai && <Tooltip focusable content="Written by AI from this league's data. Worth a second look before you act."><span className="ibx-ai"><AiMark size={12} />AI</span></Tooltip>}
+                            {it.ai && <Tooltip focusable content="Written by AI from your league's data. Check it before you act."><span className="ibx-ai"><AiMark size={12} />AI</span></Tooltip>}
                           </div>
                         )}
                         <p className="ibx-n-text">{it.text}</p>

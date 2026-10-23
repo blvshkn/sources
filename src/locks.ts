@@ -8,7 +8,7 @@ export type GameNow = "pre_game" | "in_game" | "complete";
 export interface WeekGames { games: Record<string, GameNow>; past?: boolean }
 
 /** What plain words say when the best move is blocked and no other move is left. */
-export const LOCKED_LINE = "Lineups are locked for this week's games that have started.";
+export const LOCKED_LINE = "Lineups are locked for games that have started.";
 
 /** The week is over: Sleeper says so, or every game on the schedule is final. */
 export const weekFinal = (w: WeekGames): boolean => {

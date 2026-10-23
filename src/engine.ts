@@ -946,7 +946,7 @@ export function lineupStatus(w: WeekGames = weekGames()): { moves: LineupMove[];
 }
 /** What lineup advice says when there's no move to make: final, locked, or already optimal. */
 export const noMoveText = (st: { final: boolean; blocked: boolean }, total: number) =>
-  st.final ? `Week ${WEEK} is final, so there's no lineup left to set.` : st.blocked ? LOCKED_LINE : `Your lineup in Sleeper is already optimal at ${total.toFixed(1)} projected.`;
+  st.final ? `Week ${WEEK} is final. Nothing left to set.` : st.blocked ? LOCKED_LINE : `Your Sleeper lineup is already optimal. It projects ${total.toFixed(1)}.`;
 
 export function weakSlots(): { slot: string; misses: number; weeks: number; gap: number }[] {
   return SLOT_HISTORY.map((h) => {

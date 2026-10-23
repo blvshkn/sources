@@ -65,7 +65,7 @@ export function LandingAsk({ onClose, onDemo, form, faqs }: {
 
   const send = (text: string, el?: Element | null) => {
     const t = text.trim();
-    if (!t) { deny(el, "Type a question first, or tap one of the suggestions."); return; }
+    if (!t) { deny(el, "Type a question, or tap a suggestion."); return; }
     const a = faqFor(t, faqs);
     setAnswer(a);
     if (a) clearAskHandoff(); else setAskHandoff(t);
@@ -110,8 +110,8 @@ export function LandingAsk({ onClose, onDemo, form, faqs }: {
             <span className="lda-gate-mark"><AiMarkPlay size={24} replay={wave} /></span>
             <h3 id="lda-gate-h" ref={gate} tabIndex={-1}>{answer ? "Now ask about your own league." : "Pick a league and I'll answer this."}</h3>
             <p>{answer
-              ? "Connect your Sleeper league and I'll answer from your real rosters, or try me on the sample league first."
-              : "I answer from real rosters, standings and matchups. Connect your Sleeper league to ask about your team, or see how I answer on the sample league. Your question comes along either way."}</p>
+              ? "Connect your Sleeper league for answers from your real rosters, or try the sample league first."
+              : "I answer from real rosters, standings and matchups. Connect your Sleeper league, or try the sample league first. Your question comes along either way."}</p>
             <div className="lda-form">{form("lda-user")}</div>
             <div className="lda-or" aria-hidden="true"><span>or</span></div>
             <button type="button" className="btn btn-secondary lda-demo" onClick={toDemo}>{answer ? "Try the sample league" : "Ask on the sample league"}</button>

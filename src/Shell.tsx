@@ -343,15 +343,15 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     // Injured reserve comes first: a mistake here blocks every other move
     const ir = irReport(YOU);
     ir.mustActivate.forEach((p) => list.push({
-      id: `ir-activate-${p.id}`, kind: "ir", headline: `${p.name} is on IR but no longer qualifies`, emph: "Sleeper will block your adds and trades until he's off it.",
-      why: `His status is now ${p.injury ? p.injury : "healthy"}. Activate him in Sleeper${ir.open === 0 && YOU.roster.length >= LEAGUE.rosterMax ? ", which means dropping someone to make room" : ""}.`,
+      id: `ir-activate-${p.id}`, kind: "ir", headline: `${p.name} is on IR but no longer qualifies`, emph: "Sleeper blocks your adds and trades until he's off it.",
+      why: `His status is now ${p.injury ? p.injury : "healthy"}. Activate him in Sleeper${ir.open === 0 && YOU.roster.length >= LEAGUE.rosterMax ? ". You'll have to drop someone to make room" : ""}.`,
       trades: [], time: "Now", go: { label: "Review IR", tab: "roster" },
     }));
     if (ir.open > 0 && ir.moveIn.length) {
       const p = ir.moveIn[0];
       list.push({
         id: `ir-move-${p.id}`, kind: "ir", headline: `${p.name} can go on IR`, emph: "and you have an open spot.",
-        why: `He's listed ${irLabel(p).toLowerCase()}. Moving him frees a bench spot for a waiver add without cutting anyone.${ir.moveIn.length > 1 ? ` ${ir.moveIn.slice(1).map((x) => x.name).join(", ")} also qualif${ir.moveIn.length > 2 ? "y" : "ies"}.` : ""}`,
+        why: `He's listed ${irLabel(p).toLowerCase()}. Moving him opens a bench spot for a waiver add. No cut needed.${ir.moveIn.length > 1 ? ` ${ir.moveIn.slice(1).map((x) => x.name).join(", ")} also qualif${ir.moveIn.length > 2 ? "y" : "ies"}.` : ""}`,
         trades: [], time: "Now", go: { label: "Review IR", tab: "roster" },
       });
     }
@@ -362,7 +362,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
       const when = moveLock(d.benched, d.start);
       list.push({
         id: "lineup", kind: "lineup", ...lineupCard(d.benched, d.start, d.slot, onBye(d.benched.nfl)),
-        why: `Start ${d.start.name} instead for ${fmt(d.gain)} pts. Make the swap in Sleeper before ${when || "kickoff"}.`, trades: [], time: "Now", ...(when ? { deadline: `Locks ${when}` } : {}),
+        why: `Start ${d.start.name} for ${fmt(d.gain)} pts. Swap them in Sleeper before ${when || "kickoff"}.`, trades: [], time: "Now", ...(when ? { deadline: `Locks ${when}` } : {}),
         go: { label: "Review lineup", tab: "roster" },
       });
     }
@@ -388,7 +388,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
         list.push({
           id: `need-${n.team.id}`, kind: "need", teamId: n.team.id,
           headline: `${n.team.name} needs`, emph: `${needCopy(pos)}.`,
-          why: `${starterOut ? `Their starter ${starterOut.name} is out and they're` : "They're"} ${Math.abs(g.diff).toFixed(1)} pts a week ${g.diff < 0 ? "below" : "above"} the league average at ${pos}${wantPos(n.team.id) ? ", and you logged that they're shopping" : ""}. Here are ideas that would move them.`,
+          why: `${starterOut ? `Their starter ${starterOut.name} is out and they're` : "They're"} ${Math.abs(g.diff).toFixed(1)} pts a week ${g.diff < 0 ? "below" : "above"} the league average at ${pos}${wantPos(n.team.id) ? ". You logged them as shopping" : ""}. These deals would help them.`,
           trades: suggestionsByTeam[n.team.id].slice(0, 2), time: ["8 min ago", "34 min ago"][i] ?? "Today", deadline: DEADLINES.trade,
         });
       });
@@ -416,21 +416,21 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
     if (w) list.push({
       id: `waiver-${w.fa.id}`, kind: "waiver", headline: w.kdef?.fix ? w.kdef.line.split(".")[0] + "." : w.fit ? `${w.fa.name} is your best add this week.` : demo ? `${w.fa.why.split(".")[0].replace(/^The /, "the ")}.` : `${w.fa.name} is your best add this week.`,
       emph: w.kdef ? (FAAB.enabled ? `Sugg. bid ${bidRange(w.bid)}.` : "Put in a low priority claim.") : FAAB.enabled ? `Sugg. bid ${bidRange(w.bid)}.` : "Put in a claim.",
-      why: `${w.kdef ? `${w.fa.name} adds ${fmt(w.gain)} to your starters` : w.fit ? w.fit.replace(/\.$/, "") : `${w.fa.name} adds ${fmt(w.gain)} to your starters`}${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely draw real bids." : "Sized to your budget and how fast he's being added."}`,
+      why: `${w.kdef ? `${w.fa.name} adds ${fmt(w.gain)} to your starters` : w.fit ? w.fit.replace(/\.$/, "") : `${w.fa.name} adds ${fmt(w.gain)} to your starters`}${wDrop ? `. Drop ${wDrop.name}` : ""}. ${w.kdef ? "Kickers and defenses rarely draw real bids." : "Sized to your budget and how fast he's moving."}`,
       trades: [], time: "Today", deadline: DEADLINES.waivers, go: { label: "Open waivers", tab: "waivers" }, pass: { id: w.fa.id, name: w.fa.name },
     });
     // Aging tags
     active.filter((t) => t.weeksOld >= 3).slice(0, 1).forEach((t) => list.push({
       id: `stale-${t.id}`, kind: "stale", teamId: t.teamId, tagId: t.id,
       headline: `${teamById(t.teamId).manager} said "${t.text.toLowerCase()}" ${t.weeksOld} weeks ago.`, emph: "Still true?",
-      why: "Interest changes week to week. Keep the tag and Source keeps respecting it. Clear it and that player comes back into trade ideas.",
+      why: "Interest changes week to week. Keep the tag and Source honors it. Clear it and that player returns to trade ideas.",
       trades: [], time: "Today",
     }));
     // Patterns
     const weak = weakSlots()[0];
     if (weak) list.push({
       id: "slot", kind: "slot", headline: `your ${weak.slot} slot has come up short ${weak.misses} of ${weak.weeks} weeks.`,
-      why: `That's ${fmt(weak.gap)} a week against the league average. It's flagged as a need, so trade ideas lean toward fixing it.`,
+      why: `That's ${fmt(weak.gap)} a week vs the league average. It's flagged as a need, so trade ideas lean toward it.`,
       trades: [], time: "This week", go: { label: "See slot report", tab: "roster" },
     });
 
@@ -722,7 +722,7 @@ export function Shell({ session, initialMyTags, onReconnect, onDeleteAll, onRefr
   }, [demoArrived, active, myTags, prices]); // eslint-disable-line react-hooks/exhaustive-deps
   const inbox = useMemo((): InboxItem[] => [
     // A newer build is live: in Notifications too, until the refresh (after it, the build matches and it's gone)
-    ...(updateReady ? [{ id: "app-update", icon: "replay" as IconName, title: "Source has an update", time: "Now", text: "Refresh to get the latest version of Source.",
+    ...(updateReady ? [{ id: "app-update", icon: "replay" as IconName, title: "Source has an update", time: "Now", text: "Refresh to get the latest.",
       action: { label: "Refresh", run: () => location.reload() } }] : []),
     ...buildInbox({ nudges: arrivedOffer ? [arrivedOffer, ...nudges] : nudges, checks, live, go: inboxGo, loadTrade, keepTag, news: urgent, pass: passPlayer, skip: snoozePlayer, partner: partnerNote }),
   ].filter((x) => (x.nudge || !dismissedIds.includes(x.id)) && !((ibxSkipped[x.id] ?? -1) >= WEEK)), // eslint-disable-next-line react-hooks/exhaustive-deps

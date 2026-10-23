@@ -159,7 +159,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
 
         {changed && (
           <div className="mu-whatif">
-            <span><b>What-if lineup</b>{fmt(round1(myTotal - baseTotal))} pts vs your Sleeper lineup. Make the swap in Sleeper to lock it in.</span>
+            <span><b>What-if lineup</b>{fmt(round1(myTotal - baseTotal))} pts vs your Sleeper lineup. Make the swap in Sleeper.</span>
             <div className="mu-wbtn">
               <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => { reset(); setOpen(null, e.currentTarget); }}>Reset</button>
               <a className="btn btn-sm btn-primary" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
@@ -228,7 +228,7 @@ function MatchupNow({ onBack, stepper, inner }: { onBack?: () => void; stepper: 
           );
         })}
         <div className="mu-foot">
-          <span>{allLocked ? (pastWeek ? `Week ${WEEK} is final. Lineups are locked.` : "Every starter's game has kicked off. Lineups are locked.") : "Tap any of your players to try a swap."}</span>
+          <span>{allLocked ? (pastWeek ? `Week ${WEEK} is final. Lineups are locked.` : "Every starter's game has started. Lineups are locked.") : "Tap a player to try a swap."}</span>
           {bestGain > 0 && !allLocked && <button className="btn btn-sm" onClick={useBest}>Use best lineup {fmt(bestGain)}</button>}
         </div>
       </section>
@@ -343,7 +343,7 @@ function WeekMatchup({ week, onBack, stepper, inner }: { week: number; onBack?: 
             </div>
           );
         })}
-        <div className="mu-foot"><span>{past ? `Week ${week} final, from Sleeper.` : wi.changed ? `Your what-if against ${opp.team.manager}'s best projected starters for Week ${week}.` : `Lineups set to each side's best projected starters for Week ${week}. Tap yours to try a swap.`}</span></div>
+        <div className="mu-foot"><span>{past ? `Week ${week} final, from Sleeper.` : wi.changed ? `Your what-if against ${opp.team.manager}'s best projected starters for Week ${week}.` : `Each side's best projected starters for Week ${week}. Tap yours to try a swap.`}</span></div>
       </section>
       {layers}
     </>

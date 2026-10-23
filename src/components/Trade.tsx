@@ -72,7 +72,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
           </span>
         </span>
         {metric === "value"
-          ? <NumTip label="Market value" note="What the deal's trade value adds up"><span className="pproj">{packageValue([id]).toLocaleString()}</span></NumTip>
+          ? <NumTip label="Market value" note="The number trade value adds up"><span className="pproj">{packageValue([id]).toLocaleString()}</span></NumTip>
           : <NumTip label="Projected points a week" note="Rest of season"><span className="pproj">{eff(p).toFixed(1)}</span></NumTip>}
         <span className="check">{on && <Icon name="check" size={13} />}</span>
       </button>
@@ -83,7 +83,7 @@ export function RosterPicker({ team, lineup, picked, onToggle, dimIds, lockIds, 
       <div className="roster-head">
         <div className="rp-id"><TeamAvatar t={team} size={32} /><div className="rp-t"><span>{label}</span><b>{team.name}<Trophy teamId={team.id} /></b></div></div>
         {metric === "value"
-          ? <span className="rp-total"><b>{Math.round(sumValue(current ? current.starters : lineup.slots.flatMap((s) => (s.player ? [s.player.id] : [])))).toLocaleString()}</b><Tooltip focusable content="Market value of the starting lineup. The same scale the deal's trade value uses."><small className="tt-term">starters value</small></Tooltip></span>
+          ? <span className="rp-total"><b>{Math.round(sumValue(current ? current.starters : lineup.slots.flatMap((s) => (s.player ? [s.player.id] : [])))).toLocaleString()}</b><Tooltip focusable content="Market value of the starting lineup, on the same scale as trade value."><small className="tt-term">starters value</small></Tooltip></span>
           : <span className="rp-total"><b>{(current ? current.starters.reduce((n, id) => n + eff(playerById(id)), 0) : lineup.total).toFixed(1)}</b><Tooltip focusable content="Points a week from the starting lineup only. Bench players don't count."><small className="tt-term">starters pts/wk</small></Tooltip></span>}
       </div>
       <div className="slot-label rp-label"><span>Starters{current ? <small> as set in <PlatformName size={12} /></small> : null}</span>
@@ -203,7 +203,7 @@ export function DealSide({ title, team, ids, pool, onToggle, className, flags = 
                 ))}
               </span>
               <Tooltip focusable content="This week's projected points."><span className={`qs-col${sort === "proj" ? " on" : ""}`}>Proj</span></Tooltip>
-              <Tooltip focusable content="Market value. The same number the deal's trade value adds up."><span className={`qs-col${sort === "value" ? " on" : ""}`}>Value</span></Tooltip>
+              <Tooltip focusable content="Market value. Trade value adds these up."><span className={`qs-col${sort === "value" ? " on" : ""}`}>Value</span></Tooltip>
               <span aria-hidden="true" />
             </div>
             <ul className="qs-opts qs-scroll" ref={opts} style={kbMax ? { maxHeight: kbMax } : undefined}>
@@ -455,7 +455,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
             onNotes={(id) => { if (id !== partnerId) setPartner(id); setView("notes"); }} />}
           {/* An offer comes from one manager, so the switch is a two-team thing: the multi-team read never used it */}
           {view === "build" && !isMulti && (
-            <Tooltip content={`Turn on when ${them.manager} sent you this deal. The read judges their offer instead of yours.`}>
+            <Tooltip content={`Turn on if ${them.manager} sent you this deal. The read then judges it as their offer.`}>
               <button type="button" role="switch" aria-checked={received} className={`btn ttb-offer${received ? " on" : ""}`} onClick={() => setReceived((x) => !x)} aria-label={`Received this offer from ${them.manager}`}>
                 <span className="ttb-sw" aria-hidden="true"><span /></span>
                 <span className="ttb-long" aria-hidden="true">Received this offer</span>
@@ -515,7 +515,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           </div>
           <FlagLine ids={[...give, ...get]} flags={{ ...flags.you, ...flags.theirs }} />
           {!trade ? (
-            <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Add players to both sides, or tap them on the rosters below." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
+            <p className="empty-deal">{give.length === 0 && get.length === 0 ? "Add players to both sides, or tap them below." : give.length === 0 ? "Now pick who you'd send from your roster." : `Now pick who you'd get from ${them.manager}.`}</p>
           ) : (
             <div className="dv">
               <div className="dv-main">
@@ -526,7 +526,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
                   { label: "Points per week", tip: "Starting lineups only. Bench players don't count.", cells: [
                     <PtsCell key="y" you d={trade.youDelta} before={trade.youBefore} after={trade.youAfter} />,
                     <PtsCell key="t" d={trade.themDelta} before={trade.themBefore} after={trade.themAfter} />] },
-                  { label: "Trade value", tip: "Market value, the plain sum of each player's value, the same way a trade calculator adds it up. The verdict also adjusts for extra pieces, so three bench players can't add up to one star.", cells: [
+                  { label: "Trade value", tip: "The plain sum of each player's market value, like any trade calculator. The verdict discounts extra pieces, so three bench players can't add up to one star.", cells: [
                     <span key="y" className="dv-v"><b className="dv-n">{trade.marketGive.toLocaleString()}</b><small className="dv-s">you give</small></span>,
                     <span key="t" className="dv-v"><b className="dv-n">{trade.marketGet.toLocaleString()}</b><small className="dv-s">you get</small></span>],
                     extra: <span className="dv-bar" aria-hidden="true"><i style={{ flex: Math.max(1, trade.marketGive) }} /><i style={{ flex: Math.max(1, trade.marketGet) }} /></span> },
@@ -619,7 +619,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           </div>
           <button className="btn btn-primary dt-go" aria-disabled={(isMulti ? !multi : !trade) || undefined}
             onClick={(e) => (isMulti ? multi : trade) ? seeRead()
-              : deny(e.currentTarget, isMulti ? "Add a player for every team in the deal to see the read." : !allGive.length && !allGet.length ? "Add a player to each side to see the read." : !allGive.length ? "Add a player you send to see the read." : "Add a player you get to see the read.")}>See the read</button>
+              : deny(e.currentTarget, isMulti ? "Add a player for every team to see the read." : !allGive.length && !allGet.length ? "Add a player to each side to see the read." : !allGive.length ? "Add a player you send to see the read." : "Add a player you get to see the read.")}>See the read</button>
         </div>
         </>
       )}
@@ -630,7 +630,7 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
           <p>Private to you. Trade ideas use it.</p>
         </div>
         <TagCapture onSave={onAddTag} placeholder="wants a TE" compact teamId={partnerId} onTeam={setPartner} />
-        {last && stale && <button className="scan-cta" onClick={() => setView("ideas")}><AiMark size={14} /><span>Notes changed. Find new trade ideas with {them.manager}</span><Icon name="chev" size={14} /></button>}
+        {last && stale && <button className="scan-cta" onClick={() => setView("ideas")}><AiMark size={14} /><span>Notes changed. Find new ideas with {them.manager}</span><Icon name="chev" size={14} /></button>}
         <div className="tag-builder">
           <span className="tb-or">Or build it</span>
           <div className="tb-sentence">

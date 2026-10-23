@@ -104,7 +104,7 @@ function verdictFor(A: Side, B: Side, w: number): { text: string; flip: boolean;
     const aQ = A.avail?.kind === "q", bQ = B.avail?.kind === "q";
     if (aQ !== bQ) {
       const [q, safe] = aQ ? [A, B] : [B, A];
-      return { flip: false, lead: safe.p.id, text: `Too close to call on projections. Start ${safe.p.name}, since ${q.p.name} is ${q.avail!.say}.` };
+      return { flip: false, lead: safe.p.id, text: `Too close to call. Start ${safe.p.name}, since ${q.p.name} is ${q.avail!.say}.` };
     }
     if (aQ && bQ) return { flip: true, text: `Too close to call, and both are questionable. Check who's active before kickoff.` };
     return { flip: true, text: gap < 0.1 ? `Dead even for ${wk}. Either is a fine start.` : `Too close to call for ${wk}. Either is a fine start.` };
@@ -157,7 +157,7 @@ function PlayerFind({ pool, value, other, irIds, onPick, label }: { pool: Player
   const pick = (i: number) => {
     const p = hits[i]?.item;
     if (!p) return;
-    if (p.id === other) { deny(document.getElementById(`sx-${uid}-${i}`), `${p.name} is already on the other side. Pick someone else to compare.`); return; }
+    if (p.id === other) { deny(document.getElementById(`sx-${uid}-${i}`), `${p.name} is already on the other side. Pick someone else.`); return; }
     if (p.id !== value) onPick(p.id);
     close();
     input.current?.blur();

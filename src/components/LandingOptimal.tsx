@@ -18,7 +18,7 @@ import { setInert } from "../inert";
 
 const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
-const PLAN = "I'll start from your best projected lineup, then check news, injury reports, Vegas lines and weather, and ask Source AI whether any of it should change a call.";
+const PLAN = "I'll start from your best projected lineup, check news, injury reports, Vegas lines and weather, then ask Source AI if any of it changes a call.";
 
 /** The run's steps, in optimalJob's words, with counts from the sample league. */
 function script(res: OptimalResult) {

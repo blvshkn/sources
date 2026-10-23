@@ -81,7 +81,7 @@ function IrBlock({ onOpen }: { onOpen?: (p: Player, where: string) => void }) {
           <span className="ir-empty" aria-hidden="true" />
           <span className="lu-who">
             <span className="lu-name muted">Open spot</span>
-            <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} is IR-eligible. Moving him opens a bench spot.` : "No one on your roster is IR-eligible right now."}</span>
+            <span className="lu-meta wrap">{ir.moveIn[i] ? `${ir.moveIn[i].name} qualifies. Move him to open a bench spot.` : "No one on your roster qualifies right now."}</span>
           </span>
           {ir.moveIn[i] ? <a className="btn btn-xs" href={sleeperUrl("team")} target="_blank" rel="noreferrer">Move</a> : <span />}
         </div>
@@ -107,7 +107,7 @@ function SlotTag({ slot }: { slot: string }) {
   return <span className={`lu-slot s-${slot}`}>{SLOT_LABEL[slot] ?? slot}</span>;
 }
 /** What the injury letter means, plus the reason when Sleeper gives one */
-const TAG_TIP: Record<string, string> = { Q: "Questionable: may not play. Check his status before lock.", D: "Doubtful: unlikely to play.", OUT: "Out: won't play this week.", IR: "Injured reserve: can move to an IR slot.", PUP: "PUP list: not eligible to play yet.", SUS: "Suspended.", NA: "Not active.", DNR: "Did not report.", COV: "On the COVID list." };
+const TAG_TIP: Record<string, string> = { Q: "Questionable: may not play. Check his status before lock.", D: "Doubtful: unlikely to play.", OUT: "Out: won't play this week.", IR: "Injured reserve: eligible for an IR slot.", PUP: "PUP list: not eligible to play yet.", SUS: "Suspended.", NA: "Not active.", DNR: "Did not report.", COV: "On the COVID list." };
 
 /** Once a game is live or final the row reads "QB · BUF · Live" as before, without the opponent. */
 const kicked = (g: GameNow) => g.state === "in_game" || g.state === "complete";
@@ -153,7 +153,7 @@ function LineupRow({ p, slot, bench, swap, onOpen, live, tap, ai, extra }: { p: 
       {swap && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
-          <span>Start <b>{swap.to.name}</b> here instead{onBye(p.nfl) ? ` (${p.name} is on bye)` : isOut(p, true) ? ` (${p.name} is out)` : ""} for <b className="good">+{swap.gain.toFixed(1)}</b>.</span>
+          <span>Start <b>{swap.to.name}</b> here for <b className="good">+{swap.gain.toFixed(1)}</b>.{onBye(p.nfl) ? ` ${p.name} is on bye.` : isOut(p, true) ? ` ${p.name} is out.` : ""}</span>
         </span>
       )}
       {extra}
@@ -182,7 +182,7 @@ function SpecialRow({ p, slot, bench, swapTo, live, tap, extra }: { p: SpecialPl
       {swapTo && (
         <span className="lu-swap">
           <Icon name="trade" size={14} />
-          <span>Start <b>{swapTo.name}</b> here instead{bye ? ` (${p.name} is on bye)` : ""} for <b className="good">+{(specialPts(swapTo) - specialPts(p)).toFixed(1)}</b>.</span>
+          <span>Start <b>{swapTo.name}</b> here for <b className="good">+{(specialPts(swapTo) - specialPts(p)).toFixed(1)}</b>.{bye ? ` ${p.name} is on bye.` : ""}</span>
         </span>
       )}
       {extra}
@@ -206,8 +206,8 @@ const PickAt = ({ show, children }: { show: boolean; children: ReactNode }) => <
 function LuWhatIf({ changed, delta, locked, base, resetLabel, onReset }: { changed: boolean; delta: number; locked: boolean; base: string; resetLabel: string; onReset: (el: Element) => void }) {
   return (
     <div className={!changed && locked ? "lu-wi is-locked" : "lu-wi"}>
-      <p className="lu-wi-txt">{changed ? <><b>What-if lineup</b> <b className={delta >= 0 ? "lu-wi-up" : "lu-wi-down"}>{fmt(delta)} pts</b> vs {base}. Make the swap in Sleeper to lock it in.</>
-        : locked ? "Lineups are locked for this week." : "Tap a player to try a swap. Swaps here are a what-if, so make them in Sleeper too."}</p>
+      <p className="lu-wi-txt">{changed ? <><b>What-if lineup</b> <b className={delta >= 0 ? "lu-wi-up" : "lu-wi-down"}>{fmt(delta)} pts</b> vs {base}. Make the swap in Sleeper.</>
+        : locked ? "Lineups are locked this week." : "Tap a player to try a swap. It's a what-if until you make it in Sleeper."}</p>
       <div className="lu-wi-btns">
         {changed && <button className="btn btn-sm" onClick={(e: { currentTarget: Element }) => onReset(e.currentTarget)}>{resetLabel}</button>}
         <a className="btn btn-sm" href={sleeperUrl("team")} target="_blank" rel="noreferrer"><PlatformLogo size={16} />Open Sleeper</a>
@@ -279,7 +279,7 @@ function WeekPanel({ v, menu, onInfo, onCompare }: { v: WeekView; menu: SwapMenu
         return (
           <Fragment key={p.id}>
             {row(p, "BN", tap, true, extra)}
-            <PickAt show={open === key && future}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`${p.name} can't play any of your starting slots.`} options={options} /></PickAt>
+            <PickAt show={open === key && future}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`${p.name} doesn't fit any starting slot.`} options={options} /></PickAt>
           </Fragment>
         );
       })}
@@ -350,7 +350,7 @@ function SlotReport({ lineup }: { lineup: Lineup }) {
           <span className="tiny muted">Weeks 1 to {weeks}, you vs the league average</span>
         </div>
         {weak.length > 0 && (
-          <p className="small srx-lede"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks ({fmt(weak[0].gap)} pts a week). Trade ideas target it.</p>
+          <p className="small srx-lede"><Stamp>Per sources</Stamp> Your {weak[0].slot} slot came up short {weak[0].misses} of {weak[0].weeks} weeks, {fmt(weak[0].gap)} pts a week. Trade ideas target it.</p>
         )}
       </div>
 
@@ -681,7 +681,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                 return (
                   <Fragment key={key}>
                     <LineupRow p={p} slot="BN" bench live={live} tap={tap} ai={aiMarks?.[p.id]} extra={extra} />
-                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`${p.name} can't play any of your starting slots.`} options={options} /></PickAt>
+                    <PickAt show={open === key}><SwapPicker menuRef={menuRef} className="lu-pick" title={title} empty={`${p.name} doesn't fit any starting slot.`} options={options} /></PickAt>
                   </Fragment>
                 );
               })}
@@ -752,7 +752,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
       {view === "price" && <section className="card wt" aria-labelledby="wt-title">
         <header className="wt-head">
           <h2 className="section-title" id="wt-title">What would it take?</h2>
-          <p>Set an asking price on anyone you'd move. Source finds the cheapest offer from each team that meets it, and trade ideas never go below it.</p>
+          <p>Set an asking price on anyone you'd move. Source finds each team's cheapest offer that meets it. Trade ideas never go below it.</p>
         </header>
         {(movable.length > 0 || untouch.length > 0) && (
           <ul className="wt-quick" aria-label="Tagged players without a price">
@@ -807,7 +807,7 @@ export function Roster({ lineup, myTags, setTag, prices, setPrice, tags, level, 
                   style={{ background: `linear-gradient(90deg, rgb(var(--tab-rgb)) ${fill}%, var(--surface-3) ${fill}%)` }}
                   onChange={(e) => setPrice(pid, { mode: price.mode, amount: Number(e.target.value) })} />
                 <div className="wt-scale" aria-hidden="true"><span>{pts ? "+0.5" : "+5%"}</span><span>{pts ? "+6" : "+60%"}</span></div>
-                <p className="wt-note">{pts ? `Only moves if the deal adds at least ${price.amount.toFixed(1)} pts a week to your lineup.` : `Only moves if the return beats his value by ${price.amount}% without lowering your lineup.`}</p>
+                <p className="wt-note">{pts ? `Only moves if your lineup gains at least ${price.amount.toFixed(1)} pts a week.` : `Only moves if the return beats his value by ${price.amount}% and your lineup holds.`}</p>
               </div>
 
               {real.length > 0 ? (

@@ -395,7 +395,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
       let wrote: Promise<void>;
       try { wrote = navigator.clipboard.write([new ClipboardItem({ "image/png": c.blob })]); } catch (e) { wrote = Promise.reject(e); }
       wrote.then(
-        () => { record("text"); onSent("Card copied. Paste it into the message to attach it.", "text"); openSms(); },
+        () => { record("text"); onSent("Card copied. Paste it into the message.", "text"); openSms(); },
         () => { saveCard(); record("text"); onSent("Card saved. Attach it to the message.", "text"); openSms(); });
       return;
     }
@@ -404,7 +404,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
 
   const primary = async () => {
     if (method === "text") textMessage();
-    if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy automatically. The message is selected, so copy it from the box.", "group chat"); }
+    if (method === "group") { const ok = await copy(); record("group chat"); onSent(ok ? "Copied for the group chat. Paste it in." : "Couldn't copy. The message is selected, so copy it from the box.", "group chat"); }
     if (method === "app") { const ok = await copy(); record(app); window.open(app === "Sleeper" ? sleeperUrl("trades") : APP_URL[app], "_blank", "noopener"); onSent(ok ? `Pitch copied. Paste it into the trade note in ${app}.` : `Opening ${app}. Copy the message from the box first.`, app); }
     if (method === "share") shareImage();
   };
@@ -465,12 +465,12 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
             <Seg<LeagueApp> label="League app" value={app} onChange={setApp} options={[{ v: "Sleeper", label: "Sleeper" }, { v: "ESPN", label: "ESPN" }, { v: "Yahoo", label: "Yahoo" }]} />
           </div>
         )}
-        {method === "app" && app === "Sleeper" && <p className="tiny muted">Sleeper's API is read-only, so Source can't propose the trade inside Sleeper. It copies the pitch and opens Sleeper for you.</p>}
+        {method === "app" && app === "Sleeper" && <p className="tiny muted">Sleeper's API is read-only, so Source can't propose the trade there. It copies the pitch and opens Sleeper.</p>}
 
         <div className="sa2">
           <button className="btn btn-primary sa2-main" onClick={primary}><Icon name="send" size={18} />{primaryLabel}</button>
           <div className="sa2-row">
-            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); if (ok) record("copied"); onSent(ok ? "Message copied" : "Couldn't copy automatically. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
+            <button className="btn sa2-sub" onClick={async () => { const ok = await copy(); if (ok) record("copied"); onSent(ok ? "Message copied" : "Couldn't copy. The message is selected, so copy it from the box."); }}><Icon name="copy" size={16} />Copy message</button>
             <button className="btn sa2-sub" onClick={saveImage}><Icon name="download" size={16} />Save image</button>
           </div>
         </div>

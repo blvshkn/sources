@@ -201,7 +201,7 @@ export function GameLogTab({ s }: { s: Subject }) {
             </div>
             <p className="pd-fine">
               {log.v.demo ? "Demo league stats, made up for the sample season. " : `From Sleeper's weekly stats and projections${log.v.team && log.v.team !== s.nfl ? ` (with ${log.v.team} that season)` : ""}, scored with your league's settings. `}
-              {withProj > 0 ? "FPTS is green when he beat his projection by 20% or more, red when he fell 20% short." : ""}
+              {withProj > 0 ? "FPTS is green when he beat his projection by 20% or more, red when he missed it by 20%." : ""}
             </p>
           </>
         )}
@@ -259,7 +259,7 @@ export function DepthTab({ s, onOpen }: { s: Subject; onOpen?: (id: string) => v
                 </div>
               ))}
             </dl>
-            <p className="pd-fine">{d.v.demo ? "Demo depth chart, built from the players in the demo league." : `From Sleeper's depth chart for ${s.nfl}. Teams shuffle it during the week, so check it again before lock.`}</p>
+            <p className="pd-fine">{d.v.demo ? "Demo depth chart, built from the demo league's players." : `From Sleeper's depth chart for ${s.nfl}. Teams shuffle it during the week, so check again before lock.`}</p>
           </>
         )}
     </section>
