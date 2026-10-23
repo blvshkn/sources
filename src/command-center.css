@@ -18,7 +18,10 @@ html:root:not(#_):not(#_) .cc-week > .cc-sec > .section-title { margin: 0; }
   html:root:not(#_):not(#_) .cc-cols > .cc-side > .thr { order: -1; }
 }
 @container col (min-width: 720px) {
-  html:root:not(#_):not(#_) .cc-week > .cc-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+  html:root:not(#_):not(#_) .cc-week > .cc-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: stretch; }
+  /* Both columns end on the same line: the last card in each grows to fill (Zach, Oct 23: Injury watch fills down to
+     Game day's bottom) */
+  html:root:not(#_):not(#_):not(#_) .cc-cols > .cc-col > .card:last-child { flex: 1 1 auto; margin-bottom: 0; }
   /* Key dates fills the row under both columns, its dates side by side with a divider between */
   html:root:not(#_):not(#_) .cc-cols > .cc-dates { grid-column: 1 / -1; margin: 0; }
   html:root:not(#_):not(#_):not(#_) .cc-dates .cc-dates-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); column-gap: 24px; }
