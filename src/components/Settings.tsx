@@ -4,8 +4,7 @@ import { Format, FadeWeeks, Scoring, formatLabel } from "../engine";
 import { LEAGUE, LEAGUE_NAME, LeagueFormat, YOU } from "../data";
 import { Icon, Seg, useSticky, PageTabs } from "./ui";
 import { PlatformLogo } from "./PlatformLogo";
-import { DetailSheet } from "./DetailSheet";
-import { HowItWorksDoc, LegalDoc } from "./About";
+import { DOC_BLURB, DOC_TITLE, DocSheet } from "./About";
 import { Account, accountLabel } from "../accounts";
 import { SyncDevicesRow } from "./SyncDevices";
 import { ManagerAvatar } from "./Avatar";
@@ -242,15 +241,11 @@ export function Settings({ username, demo, leagueFormat, onRefresh, refreshed = 
       {view === "about" && <>
       <section className="card settings-group">
         <h2 className="section-title">About Source</h2>
-        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("how")}><span className="grow"><b>How Source works</b><span className="small muted">Where the data comes from and what goes into each number</span></span><Icon name="chev" size={16} /></button>
-        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("legal")}><span className="grow"><b>Terms and legal</b><span className="small muted">Terms of use, privacy, and names, images and likenesses</span></span><Icon name="chev" size={16} /></button>
+        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("how")}><span className="grow"><b>{DOC_TITLE.how}</b><span className="small muted">{DOC_BLURB.how}</span></span><Icon name="chev" size={16} /></button>
+        <button className="set-link" aria-haspopup="dialog" onClick={() => setDoc("legal")}><span className="grow"><b>{DOC_TITLE.legal}</b><span className="small muted">{DOC_BLURB.legal}</span></span><Icon name="chev" size={16} /></button>
       </section>
       </>}
-      {doc && (
-        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
-          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc />}</article>
-        </DetailSheet>
-      )}
+      {doc && <DocSheet doc={doc} onClose={() => setDoc(null)} />}
     </>
   );
 }

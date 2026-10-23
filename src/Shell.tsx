@@ -7,7 +7,7 @@ import { LOCKED_LINE } from "./locks";
 import { TIER, playersInText, rankPlayers } from "./search";
 import { Matchup } from "./components/Matchup";
 import { MatchupSheet } from "./components/MatchupSheet";
-import { HowItWorks, Legal } from "./components/About";
+import { DOC_TITLE, HowItWorks, Legal } from "./components/About";
 import {
   Answer, DEFAULT_FORMAT, FadeWeeks, Format, Price, Trade, activeTags, allNeeds, applyFormat, applyValueAsks, askSteps, builderTip,
   acceptance, counterFor, evaluate, evaluateMulti, DealLeg, findTrades, fmt, formatLabel, lineupFor, needsFor, offerRead, lineupStatus, waiverRecs, weakSlots, recDrop, bidRange,
@@ -77,8 +77,8 @@ const TABS: { id: Tab; label: string; short: string; icon: IconName; main: boole
   { id: "ask", label: "Ask Source", short: "Ask", icon: "spark", main: false },
   { id: "settings", label: "Settings", short: "Settings", icon: "gear", main: false },
   { id: "matchup", label: "Matchup", short: "Matchup", icon: "helmet", main: false, hidden: true },
-  { id: "how", label: "How Source works", short: "How it works", icon: "spark", main: false, hidden: true },
-  { id: "legal", label: "Terms and legal", short: "Legal", icon: "lock", main: false, hidden: true },
+  { id: "how", label: DOC_TITLE.how, short: "How it works", icon: "spark", main: false, hidden: true },
+  { id: "legal", label: DOC_TITLE.legal, short: "Terms", icon: "lock", main: false, hidden: true },
 ];
 /** The phone tab bar: the five main tabs, then Ask */
 const BAR_TABS = TABS.filter((t) => t.main || t.id === "ask");

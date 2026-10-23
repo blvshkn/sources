@@ -1,4 +1,23 @@
 import { Icon } from "./ui";
+import { DetailSheet } from "./DetailSheet";
+
+/** One version of Source's two docs everywhere they open (Zach, Oct 23): the landing page, Settings, their pages and
+ *  the app's routes all take their names, one-line descriptions and text from here. The landing page's names win. */
+export type DocKind = "how" | "legal";
+export const DOC_TITLE: Record<DocKind, string> = { how: "How Source works", legal: "Terms and privacy" };
+export const DOC_BLURB: Record<DocKind, string> = {
+  how: "Where the data comes from and what goes into each number",
+  legal: "Terms of use, privacy, and names, images and likenesses",
+};
+
+/** The doc in a sheet, the same from the landing page and from Settings */
+export function DocSheet({ doc, onClose }: { doc: DocKind; onClose: () => void }) {
+  return (
+    <DetailSheet className="doc-sheet" onClose={onClose} title={<h2 className="ds-h">{DOC_TITLE[doc]}</h2>}>
+      <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc />}</article>
+    </DetailSheet>
+  );
+}
 
 
 function Back({ onBack }: { onBack: () => void }) {
@@ -10,7 +29,7 @@ export function HowItWorks({ onBack }: { onBack: () => void }) {
   return (
     <>
       <Back onBack={onBack} />
-      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="spark" size={20} /></span>How Source works</h1><p className="page-meta">What goes into the numbers, in plain terms</p></div></header>
+      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="spark" size={20} /></span>{DOC_TITLE.how}</h1><p className="page-meta">{DOC_BLURB.how}</p></div></header>
       <article className="card doc"><HowItWorksDoc /></article>
     </>
   );
@@ -21,7 +40,7 @@ export function Legal({ onBack }: { onBack: () => void }) {
   return (
     <>
       <Back onBack={onBack} />
-      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="lock" size={20} /></span>Terms and legal</h1></div></header>
+      <header className="page-head"><div><h1 className="page-title"><span className="page-ic" aria-hidden="true"><Icon name="lock" size={20} /></span>{DOC_TITLE.legal}</h1><p className="page-meta">{DOC_BLURB.legal}</p></div></header>
       <article className="card doc"><LegalDoc /></article>
     </>
   );

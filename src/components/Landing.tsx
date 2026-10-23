@@ -27,7 +27,7 @@ import { LandingOptimal } from "./LandingOptimal";
 import { resultFor } from "../optimalLineup";
 import { bestUnderLocks, sleeperNow } from "../lineupWhatIf";
 import { DetailSheet } from "./DetailSheet";
-import { HowItWorksDoc, LegalDoc } from "./About";
+import { DOC_TITLE, DocSheet } from "./About";
 import { PX } from "./pixelIcons";
 import { PixelTrophy, trophyPointer } from "../gameDayMotion";
 import { FinalCtaPanel } from "./FinalCta";
@@ -902,8 +902,8 @@ export function Landing({ onLive, onDemo }: {
           <p className="ld2-sign-lede">Every league has an insider. Make it you. Source reads every roster, so you know who needs what before the group chat does.</p>
           <div className="ld2-sign-col">
             <nav className="ld2-legal" aria-label="Legal">
-              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>How Source works</button>
-              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>Terms and privacy</button>
+              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("how")}>{DOC_TITLE.how}</button>
+              <button type="button" aria-haspopup="dialog" onClick={() => setDoc("legal")}>{DOC_TITLE.legal}</button>
             </nav>
             <p>Not affiliated with Sleeper. The {TEAMS.length}-team sample league uses made-up data.</p>
           </div>
@@ -929,11 +929,7 @@ export function Landing({ onLive, onDemo }: {
         </DetailSheet>
       )}
       {askOpen && <LandingAsk onClose={() => setAskOpen(false)} onDemo={onDemo} form={form} faqs={faqs} />}
-      {doc && (
-        <DetailSheet className="doc-sheet" onClose={() => setDoc(null)} title={<h2 className="ds-h">{doc === "how" ? "How Source works" : "Terms and legal"}</h2>}>
-          <article className="doc">{doc === "how" ? <HowItWorksDoc /> : <LegalDoc />}</article>
-        </DetailSheet>
-      )}
+      {doc && <DocSheet doc={doc} onClose={() => setDoc(null)} />}
     </div>
     </AvatarPhotos.Provider>
   );
