@@ -574,6 +574,9 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign
 @media (min-width: 960px) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld-foot.ld2-sign { --fg: 48px; } }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-bleed { margin-inline: calc(-1 * var(--fp)); padding-bottom: 0; }
 html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { line-height: 1; margin-bottom: -0.15em; }
+/* Desktop: SOURCE sinks below the page's bottom edge so the screen crops it (Zach, Oct 23). Phones and tablets keep the
+   whole word. */
+@media (min-width: 1024px) { html:root:not(#_):not(#_):not(#_):not(#_):not(#_):not(#_):not(#_) .ld2 .ld2-sign-word { margin-bottom: -0.3em; } }
 
 /* The nav is pinned with position: fixed rather than sticky (Zach, Oct 22: it stopped sticking on iPad Safari). Fixed
    doesn't depend on its ancestors' overflow or the scroll setup; the page keeps its place with padding of the nav's
