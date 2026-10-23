@@ -643,3 +643,10 @@ html:root:not(#_):not(#_):not(#_):not(#_):not(#_) .ld2-livesec .ll-replay {
 /* The FAQ grows and shrinks the page under it (Zach, Oct 23: opening an answer hitched). The closing CTA and the
    sign-off get their own layers, so they slide down as one picture instead of being repainted every frame */
 html:root:not(#_):not(#_):not(#_) :is(.ld2-final, .ld2-sign) { will-change: transform; }
+
+/* The username field inside a card (Ask's sign-up card, Zach Oct 23): the card is the same surface as the field, so the
+   field takes a step lighter plus a hairline, and reads as a field again */
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.lda-sheet, .ldf-body) .ld2-form {
+  background: color-mix(in srgb, var(--ink) 7%, var(--surface-2)); box-shadow: inset 0 0 0 1px var(--line);
+}
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.lda-sheet, .ldf-body) .ld2-form:focus-within { box-shadow: inset 0 0 0 2px var(--lime); }
