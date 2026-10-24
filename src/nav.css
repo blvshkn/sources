@@ -220,3 +220,9 @@ html:root:not(#_):not(#_):not(#_):not(#_) .nav-ix > button + button { margin-top
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .tabbar.ix .ix-ic, .side > .league-pill.lsw-btn) { transition: none !important; }
   html:root:not(#_):not(#_):not(#_):not(#_) :is(.nav-ix button, .tabbar.ix button, .side > .league-pill.lsw-btn):active { transform: none; }
 }
+
+/* The narrowest phones (320 to 359 wide, lint Oct 23): "Overview" ran into "League" at 12px. A size down keeps a gap
+   between every label */
+@media (max-width: 359.98px) {
+  html:root:not(#_):not(#_):not(#_):not(#_) .tabbar .ix-w { font-size: 10.5px; letter-spacing: -0.01em; }
+}
