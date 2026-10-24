@@ -49,3 +49,9 @@ html:root:not(#_):not(#_):not(#_) .mu-meta .status { margin-left: var(--sep); }
 /* ---------- The injury note under a Lineup name wraps instead of cutting off ---------- */
 html:root:not(#_):not(#_):not(#_) .lu-name .lu-tagwrap { overflow: visible; align-items: flex-start; }
 html:root:not(#_):not(#_):not(#_) .lu-name .lu-inj { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+
+/* The first part never relies on its own dot for its indent (Zach, Oct 23: on iPhone the position at the start, "WR",
+   lost its first letter under the clip). It starts after a plain margin the width of a dot instead, so it lines up
+   with the name above in every browser; the dots between later parts work as before. */
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.lu-meta, .mu-n > small.mu-meta) > :first-child::before { content: none; display: none; }
+html:root:not(#_):not(#_):not(#_):not(#_) :is(.lu-meta, .mu-n > small.mu-meta) > :first-child { margin-left: var(--sep); }
