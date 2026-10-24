@@ -6,6 +6,10 @@
  *   done  a tick, then a firmer one: a job that finished (a refresh landed, the optimal lineup is ready)
  *   error three quick ticks: something went wrong (a username not found, Sleeper unreachable, a refresh that failed)
  *
+ * iPhone (Oct 23): Apple blocked every web haptic in iOS 26.5, script-flipped switches and switches under a finger
+ * alike, so on current iPhones this is silent by design and the visual feedback carries it. A native app wrapper is
+ * the only way back to haptics there.
+ *
  * Android uses navigator.vibrate. iOS Safari has no vibrate, but flipping a native switch input (iOS 18 and later)
  * plays the system's selection tick, so a hidden one is flipped once per tick. Browsers only allow either during or
  * just after a tap, so calls far from a gesture fall silent, which is the right failure. Calls closer than 150ms apart
