@@ -4187,7 +4187,3 @@ html:root:not(#_):not(#_) :is(.ps-scrim, .scrim) { top: calc(100svh - 100lvh); b
 /* On body, so every piece of text inherits it: rows, buttons, spans, cards (Zach, Oct 23: a widow in On your radar) */
 :where(body) { text-wrap: pretty; }
 :where(h1, h2, h3, h4, .section-title) { text-wrap: balance; }
-
-/* The invisible native switch over tappable controls on iPhone (haptics.ts hapticSurfaces): covers the control,
-   takes the tap so iOS plays its tick, and the click carries on to the control */
-input.hx { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; border: 0; border-radius: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; z-index: 1; }

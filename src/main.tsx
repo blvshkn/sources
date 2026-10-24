@@ -1,4 +1,3 @@
-import { hapticSurfaces } from "./haptics";
 import "./botid";
 import "./animationIteration";
 import "./imageGuard";
@@ -105,4 +104,3 @@ iconMotion();
 scrollAreas();
 edgeFades();
 actionMotion();
-hapticSurfaces();
