@@ -15,6 +15,7 @@ import { optimalJob, type OptimalResult } from "./optimalLineup";
 import { aiHeaders, offReason, type AiOff } from "./aiClient";
 import { loadPosWeeks, usageFor, type PosWeeks } from "./usage";
 import { NO_BETTING, isBetting } from "../api/_lib/betting.js";
+import { putBack, takeEvents, track } from "./track";
 
 /** Each player's usage from Sleeper's weekly stats (Zach, Oct 23: Ask said it had no targets): every stat the player
  *  sheet shows (snap share, targets, carries, catches, yards, red-zone looks...), as [last 3 games, season] per game,
@@ -195,13 +196,15 @@ export type AiReply = { text: string; points: string[]; playerIds?: string[]; te
 /** Ask the server. Resolves to the reply, or null when Source AI is unavailable for any reason (`onOff` hears why). */
 export async function askServer(question: string, context: Record<string, unknown>, history: AskTurnLog[], signal?: AbortSignal, onOff?: (why: AiOff) => void): Promise<AiReply | null> {
   let r: Response | null = null;
+  // Usage counts waiting in this browser ride along with the question (track.ts)
+  const ev = takeEvents();
   try {
     r = await fetch("/api/ask", {
       method: "POST", headers: aiHeaders(),
-      body: JSON.stringify({ question: question.slice(0, 500), context, history: history.slice(-3) }),
+      body: JSON.stringify({ question: question.slice(0, 500), context, history: history.slice(-3), ...(ev.length ? { ev } : {}) }),
       signal: signal ?? AbortSignal.timeout(25_000),
     });
-    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { onOff?.(await offReason(r)); return null; }
+    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { putBack(ev); onOff?.(await offReason(r)); return null; }
     const d = await r.json() as { answer?: AiReply };
     const a = d?.answer;
     if (!a || typeof a.text !== "string" || !a.text.trim()) return null;
@@ -212,6 +215,7 @@ export async function askServer(question: string, context: Record<string, unknow
       quip: typeof a.quip === "string" && a.quip.trim() ? noNulls(a.quip.trim()) : undefined,
     };
   } catch {
+    if (!r) putBack(ev);
     onOff?.("offline");
     return null;
   }
@@ -272,6 +276,7 @@ async function play(g: Steps<Answer>, first: IteratorResult<TraceEv, Answer>, tr
 export function askJob(q: string, engine: (q: string) => Steps<Answer>, history: AskTurnLog[], live?: Live) {
   return async (tr: Tracer): Promise<Answer> => {
     // Betting of any kind is off limits under the terms: answered right here, nothing sent to Source AI
+    if (!isBetting(q)) track("ask_used", { demo: LEAGUE.mode !== "live" });
     if (isBetting(q)) { await tr.finish(); return { ...NO_BETTING, points: [...NO_BETTING.points], links: [{ label: "Read our terms", tab: "legal" }] }; }
     const g = engine(q);
     // The engine's first event is its plan; its second tells us whether it has a rule for this question at all

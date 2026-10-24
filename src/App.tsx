@@ -1,6 +1,7 @@
+import { track, trackReturn } from "./track";
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useErrorHaptic } from "./haptics";
-import { MyTag, LEAGUE, setLeague, demoLeague, leagueKey } from "./data";
+import { MyTag, LEAGUE, WEEK, setLeague, demoLeague, leagueKey } from "./data";
 import { loadLeague } from "./sleeper";
 import { installIconTooltips } from "./tooltips";
 import { Boot } from "./components/Boot";
@@ -107,6 +108,14 @@ export default function App() {
     return () => { cancelled = true; };
     // Adding or removing an account leaves the league on screen alone, so it doesn't reload it.
   }, [liveKey, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Usage counts (track.ts): a league or the sample league on screen, once a day each, and a visit in a later week
+  useEffect(() => {
+    if (status !== "ready" || session.mode === "none") return;
+    const demo = session.mode !== "live";
+    track(demo ? "demo_started" : "league_opened", { once: true, demo });
+    trackReturn(WEEK, demo);
+  }, [status, liveKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reload = () => setReloadTick((t) => t + 1);
   /** Pull to refresh's sync: the same league load as reload, without the loading screen. It resolves with a function

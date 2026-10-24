@@ -4,6 +4,7 @@
 //   - A device without it can enter a code, or start fresh, which makes this device's lists the synced copy. Start
 //     fresh and Reset sync each take a second tap on the same button, no modal.
 // The code sheet is a DetailSheet: a bottom sheet on phones, a modal from 768px.
+import { track } from "../track";
 import { useEffect, useRef, useState } from "react";
 import { useErrorHaptic } from "../haptics";
 import { DetailSheet } from "./DetailSheet";
@@ -90,7 +91,7 @@ function EnterCode({ user, onDone }: { user: string; onDone: () => void }) {
     setBusy(true); setError("");
     const r = await redeemCode(user, v);
     setBusy(false);
-    if (r.ok) { setPaired(true); window.setTimeout(onDone, 1200); return; }
+    if (r.ok) { setPaired(true); track("sync_paired"); window.setTimeout(onDone, 1200); return; }
     setError(r.status === 429 ? tryAgainIn(r.retryAfter) : r.status === 401 ? "That code didn't work. It may have expired or been used. Get a new one and try again." : "Couldn't reach Source. Check your connection and try again.");
   };
   return (

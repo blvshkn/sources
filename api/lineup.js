@@ -11,6 +11,8 @@
 // api/ask.js.
 import { MODEL, guardedCall, ipOf, rateLimiter, tidy } from "./ask.js";
 import { createGuard } from "./_lib/guard.js";
+import { logEvents } from "./_lib/events.js";
+import { blobFromEnv } from "./offers.js";
 
 export const MAX_BODY = 48_000;
 const MAX_TOKENS = 900;
@@ -117,7 +119,7 @@ export function readLineupBody(req) {
   // A reason may quote a projection gap ("Projects 4.1 more than Warren"), so the gaps count as data too
   const projs = data.roster.map((p) => p.proj);
   const gaps = projs.flatMap((a, i) => projs.slice(i + 1).map((b) => Math.round(Math.abs(a - b) * 10) / 10));
-  return { data, json, ids: new Set(data.roster.map((p) => p.id)), have, numbers: [...numbersIn(json), ...gaps] };
+  return { data, json, ids: new Set(data.roster.map((p) => p.id)), have, numbers: [...numbersIn(json), ...gaps], ev: b.ev };
 }
 
 /** Every number that appears in the data the model saw. */
@@ -176,7 +178,7 @@ export function buildLineupRequest(input) {
 // ---- Handler ---------------------------------------------------------------
 
 /** `guard` is api/_lib/guard.js's createGuard(); the deployed handler (the default export) always has one. */
-export function createLineupHandler({ env = process.env, timeoutMs, guard = null } = {}) {
+export function createLineupHandler({ env = process.env, timeoutMs, guard = null, log = null } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ error: "method not allowed" }); }
@@ -190,9 +192,11 @@ export function createLineupHandler({ env = process.env, timeoutMs, guard = null
     if (!r.ok) return res.status(r.status).json(r.body);
     const lineup = lineupFrom(r.msg, input);
     if (!lineup) return res.status(502).json({ error: "bad model reply" });
-    return res.status(200).json({ lineup });
+    res.status(200).json({ lineup });
+    // Usage counts the app sent along (src/track.ts): one Blob, after the reply
+    await logEvents(log, input.ev, { env });
   };
 }
 
 export const resetLineupLimits = lineupLimit.reset;
-export default createLineupHandler({ guard: createGuard() });
+export default createLineupHandler({ guard: createGuard(), log: blobFromEnv() });

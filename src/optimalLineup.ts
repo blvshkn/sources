@@ -4,6 +4,7 @@
 // (api/lineup.js) whether any of them should change a call, and checks every slot of what comes back before showing it.
 // If the AI is unavailable or its lineup fails a check, the engine's lineup is the answer with the engine's reasons.
 // Nothing here writes to Sleeper: the result is a list of moves to make there.
+import { putBack, takeEvents, track } from "./track";
 import { LEAGUE, WEEK, YOU, onBye, playerById, type Player, type Pos } from "./data";
 import { eff, fits, fmt, isOut, pairMoves, round1, type SlotName } from "./engine";
 import { teamLock } from "./locks";
@@ -180,14 +181,18 @@ async function fetchPart(part: Part, body: object): Promise<SignalReply | null> 
 
 /** Ask Source AI. Resolves the lineup, or null when it's unavailable for any reason (`onOff` hears why). */
 export async function askLineup(body: object, onOff?: (why: AiOff) => void): Promise<AiLineup | null> {
+  // Usage counts waiting in this browser ride along with the lineup call (track.ts)
+  const ev = takeEvents();
+  let sent = false;
   try {
-    const r = await fetch("/api/lineup", { method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(25_000) });
-    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { onOff?.(await offReason(r)); return null; }
+    const r = await fetch("/api/lineup", { method: "POST", headers: aiHeaders(), body: JSON.stringify(ev.length ? { ...body, ev } : body), signal: AbortSignal.timeout(25_000) });
+    sent = true;
+    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) { putBack(ev); onOff?.(await offReason(r)); return null; }
     const d = await r.json() as { lineup?: AiLineup };
     const l = d?.lineup;
     if (!l || !Array.isArray(l.starters)) return null;
     return { starters: l.starters, swaps: Array.isArray(l.swaps) ? l.swaps : [], summary: typeof l.summary === "string" ? l.summary : "" };
-  } catch { onOff?.("offline"); return null; }
+  } catch { if (!sent) putBack(ev); onOff?.("offline"); return null; }
 }
 
 const arr = (x: unknown) => (Array.isArray(x) ? x : []) as Record<string, unknown>[];
@@ -201,6 +206,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString
  */
 export function optimalJob(live: Live, { intro = true }: { intro?: boolean } = {}) {
   return async (tr: Tracer): Promise<OptimalResult> => {
+    if (intro) track("lineup_run", { demo: LEAGUE.mode !== "live" });
     const locked = lockedIn(live);
     const current = sleeperNow().mine;
     const roster = YOU.roster.map(playerById).filter(Boolean);

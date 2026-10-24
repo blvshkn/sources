@@ -1,3 +1,4 @@
+import { track } from "../track";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from "react";
 import { useErrorHaptic } from "../haptics";
 import { setInert } from "../inert";
@@ -506,13 +507,16 @@ export function Landing({ onLive, onDemo }: {
     if (busy) return;
     if (!name) { setError("Enter your Sleeper username to add your leagues."); return; }
     setBusy(true); setError("");
+    track("username_entered");
     try {
       const u = await findUser(name);
-      if (!u) { setError(`No Sleeper account named @${name}. Use your username, not your email.`); setBusy(false); return; }
+      if (!u) { track("lookup_failed", { via: "no-user" }); setError(`No Sleeper account named @${name}. Use your username, not your email.`); setBusy(false); return; }
       const { leagues } = await findLeagues(u.user_id);
-      if (!leagues.length) { setError("That account isn't in any NFL leagues on Sleeper yet. Join one, or try the demo."); setBusy(false); return; }
+      if (!leagues.length) { track("no_leagues"); setError("That account isn't in any NFL leagues on Sleeper yet. Join one, or try the demo."); setBusy(false); return; }
+      track("leagues_found");
       onLive({ username: name, user: { id: u.user_id, name: u.display_name || name }, leagues });
     } catch (err) {
+      track("lookup_failed", { via: "sleeper" });
       setError(err instanceof SleeperError ? err.message : "We couldn't reach Sleeper. Check your connection and try again.");
     }
     setBusy(false);
@@ -568,7 +572,7 @@ export function Landing({ onLive, onDemo }: {
     ["Does a pitch send on its own?", "No. Source writes the pitch and draws the share image in your browser. Nothing reaches the other manager until you share, copy or text it yourself."],
     ["Do sent offers sync across devices?", "Yes, in a connected Sleeper league. Offers you send and players you star on Waivers sync to your phone, tablet and desktop. A key on your devices protects them. A new device joins with a one-time code from Settings. The sample league stays on one device."],
     ["Will other managers see my notes?", "No. Tags and notes you log about league mates stay on your device. Source never shows them to other managers."],
-    ["What data does Source keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved for syncing, and only your device key can read them. Delete my data in Settings clears this browser and the synced copies."],
+    ["What data does Source keep?", "Tags, prices, settings and history stay in your browser. Sent offers and starred players are saved for syncing, and only your device key can read them. Delete my data in Settings clears this browser and the synced copies. Source also counts visits and steps like adding a league, with no names, usernames or cookies."],
     ["Does the win chance match Sleeper?", "Closely. Source uses the lineup you set in Sleeper and a model tuned to Sleeper's win probability, refreshed every 15 seconds while games are on."],
     ["Which platforms work?", "Source works with Sleeper today. Yahoo and ESPN are next, then MyFantasyLeague and CBS."],
   ];

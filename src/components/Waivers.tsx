@@ -1,3 +1,4 @@
+import { track } from "../track";
 import { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DetailSheet } from "./DetailSheet";
 import { useDismiss } from "./useDismiss";
@@ -170,6 +171,8 @@ export function Waivers({ recs, onToast, watch, onWatch, passed, onUnpass, snooz
   /** Not interested: out of every suggestion until you bring him back (the inbox's pass) */
   onPass?: (p: { id: string; name: string }) => void;
 }) {
+  // Usage counts (track.ts): Waivers opened, once a day
+  useEffect(() => { track("waivers_viewed", { once: true, demo: LEAGUE.mode !== "live" }); }, []);
   const [open, setOpen] = useState<string | null>(null);
   // The claim sheet's tabs (Claim, Game log, Depth chart), remembered for the session; a depth chart name opens his sheet
   const [sheetTab, setSheetTab] = useSheetTab("waiver", ["main", "log", "depth"]);

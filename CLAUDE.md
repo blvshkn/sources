@@ -13,4 +13,6 @@ This applies to the app, the landing page and everything else in this repo.
 
 ## Saved data
 - `asks/YYYY-MM-DD/*.json` in Blob: Ask questions and answers with team, manager and league names replaced, plus format, model, tokens and cost. No user ids. Deleted after 12 months. Turn off with `ASK_LOG=off`.
+- `events/YYYY-MM-DD/*.json` in Blob: anonymous usage counts (src/track.ts), riding along with Ask and Set optimal lineup calls, one write per call. Step name, day, device size, ref tag, demo or not. No user, league or IP. Deleted after 12 months. Turn off with `EVENTS_LOG=off`.
+- Vercel Web Analytics (index.html): cookieless page views and referrers, path plus `?ref=` only. Not in the landing's phone frames.
 - Sent offers carry `read` (Source's market values and acceptance odds when it went out) next to the outcome, for tuning the acceptance curve later.

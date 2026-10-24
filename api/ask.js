@@ -15,6 +15,7 @@ import { createGuard, ipOf as guardIpOf } from "./_lib/guard.js";
 import { askRow, logAsk } from "./_lib/ask-log.js";
 import { BETTING_TERMS, NO_BETTING, isBetting } from "./_lib/betting.js";
 import { maskFoul } from "./_lib/censor.js";
+import { logEvents } from "./_lib/events.js";
 import { blobFromEnv } from "./offers.js";
 
 export const MODEL = "claude-haiku-5-5";
@@ -117,7 +118,7 @@ export function readBody(req) {
   const history = (Array.isArray(b.history) ? b.history : []).slice(-MAX_HISTORY)
     .filter((h) => h && typeof h.q === "string" && typeof h.a === "string")
     .map((h) => ({ q: h.q.slice(0, MAX_Q), a: h.a.slice(0, 1200) }));
-  return { question, league, facts, history, ids: idsIn(ctx.league), raw: { league: ctx.league, facts: ctx.facts ?? null } };
+  return { question, league, facts, history, ids: idsIn(ctx.league), raw: { league: ctx.league, facts: ctx.facts ?? null }, ev: b.ev };
 }
 
 /** Every player and team id in the league snapshot, so the reply can only point at real ones. */
@@ -252,7 +253,7 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     if (limited(ipOf(req))) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "too many questions, try again in a minute" }); }
 
     // Betting questions get the fixed reply and never reach the model (our terms: no betting of any kind)
-    if (isBetting(input.question)) return res.status(200).json({ answer: { ...NO_BETTING, playerIds: [], teamId: "", quip: "" } });
+    if (isBetting(input.question)) { res.status(200).json({ answer: { ...NO_BETTING, playerIds: [], teamId: "", quip: "" } }); await logEvents(log, input.ev, { env }); return; }
     const quip = ROAST.test(input.question) || rand() < 0.25;
     const t0 = Date.now();
     const r = await guardedCall(guard, req, key, buildRequest(input, quip), timeoutMs);
@@ -267,6 +268,8 @@ export function createHandler({ env = process.env, rand = Math.random, timeoutMs
     if ([answer.text, ...(answer.points ?? []), answer.quip ?? ""].some((t) => maskFoul(t) !== t)) answer = { ...KEEP_IT_FRIENDLY };
     res.status(200).json({ answer });
     await keep(200, answer);
+    // Usage counts the app sent along with this question (src/track.ts): one Blob, after the reply
+    await logEvents(log, input.ev, { env });
   };
 }
 

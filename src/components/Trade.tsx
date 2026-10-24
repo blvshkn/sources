@@ -1,10 +1,11 @@
+import { track } from "../track";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { deny, denyOn } from "../deny";
 import { IdeaScan } from "./IdeaScan";
 import { WhyNone } from "./WhyNone";
 import { LeagueSwitch } from "./LeagueSwitch";
 import { PlayerSearch } from "./PlayerSearch";
-import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER } from "../data";
+import { ManagerTag, ManagerTagKind, MyTag, Player, Pos, TEAMS, Team, playerById, YOU, POS_ORDER, isDemo } from "../data";
 import { kickLine } from "../kickoff";
 import { DealLeg, MultiTrade, Lineup, Trade as TradeT, eff, lineupChanges, lineupFor, offerRead, rosterAfter, tendencies, verdict, fmt , acceptance, packageValue, sumValue } from "../engine";
 import { AiLabel, Delta, Icon, Stamp, StatusPill, useSticky, PageTabs } from "./ui";
@@ -291,6 +292,8 @@ function TradeRead({ them, give, get, tags, myTags, prices, received }: {
   const { trace, result, start } = useTrace<Read>();
   const key = `${them.id}|${give.join(",")}>${get.join(",")}|${received}|${tags.map((t) => t.id).join(",")}|${JSON.stringify(myTags)}|${JSON.stringify(prices)}`;
   useEffect(() => { start(() => readSteps(them, give, get, tags, myTags, prices, received)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Usage counts: a deal with players on both sides, once a day
+  useEffect(() => { if (give.length && get.length) track("deal_built", { once: true, demo: isDemo() }); }, [give.length > 0 && get.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
   const [shown, setShown] = useState<Read | null>(null);
   useEffect(() => { if (result) setShown(result); }, [result]);
   const r = result ?? shown;
@@ -395,6 +398,8 @@ export function TradeBuilder({ partnerId, setPartner, give, get, toggle, clear, 
   // The finished scan stays on the Ideas tab, folded, until you leave it
   const [shownScan, setShownScan] = useState<string | null>(null);
   useEffect(() => { if (view !== "ideas") setShownScan(null); }, [view]);
+  // Usage counts (track.ts): trade ideas seen, once a day
+  useEffect(() => { if (view === "ideas") track("ideas_viewed", { once: true, demo: isDemo() }); }, [view]);
   const loadIdea = (t: TradeT) => { onLoad(t); setView("build"); };
   const [searching, setSearching] = useState(false);
   const [profile, setProfile] = useState(false);

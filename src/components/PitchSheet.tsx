@@ -1,3 +1,4 @@
+import { track } from "../track";
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { haptic } from "../haptics";
 import { useTrace } from "../think";
@@ -10,7 +11,7 @@ import { useFocusTrap } from "./focusTrap";
 import { useLoadedIn } from "../loadedIn";
 import { useDismiss } from "./useDismiss";
 import { Trade } from "../engine";
-import { LEAGUE_NAME, WEEK, YOU, playerById, teamById, sleeperUrl } from "../data";
+import { LEAGUE_NAME, WEEK, YOU, isDemo, playerById, teamById, sleeperUrl } from "../data";
 import { Audience, Tone, cardHeight, draftPitch, draftPitchSteps, reasonsFor } from "../pitch";
 import { sleeperId, teamColors } from "../jersey";
 import { AiLabel, Icon, Seg } from "./ui";
@@ -242,7 +243,7 @@ export function PitchSheet({ trade, onClose, onSent, onRecord, onMark }: {
   const [shareOpen, setShareOpen] = useState(false);
   // Once anything here sends the deal, it's in Sent offers, and the Mark as sent button says so
   const [saved, setSaved] = useState(false);
-  const record = (via: string) => { setSaved(true); onRecord?.(text, via); };
+  const record = (via: string) => { setSaved(true); onRecord?.(text, via); track("pitch_shared", { via: via.replace(/\s+/g, "-"), demo: isDemo() }); };
   const [app, setApp] = useState<LeagueApp>("Sleeper");
   const audience: Audience = method === "group" ? "group" : "dm";
   const [text, setText] = useState(() => draftPitch(trade, "friendly"));
